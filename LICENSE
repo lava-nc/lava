@@ -1,0 +1,10 @@
+Lava repository has multiple license files and is being licensed as such.
+
+lava/magma/core:            BSD 3-Clause
+lava/magma/compiler:        LGPL 3.0
+lava/magma/runtime:         LGPL 3.0
+
+lava/proc:                  BSD 3-Clause
+lava/utils:                 BSD 3-Clause
+lava/tutorials:             BSD 3-Clause
+
