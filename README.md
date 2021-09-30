@@ -117,7 +117,6 @@ lif = LIF(shape=(10,), vth=10)
 so = SpikeOutput(path='result_data_path', shape=(10,))
 
 # Connect processes via their directional input and output ports
-si.out_ports.s_out.connect(dense.in_ports.s_in)
 si.out_ports.s_out.reshape(784, 1).connect(dense.in_ports.s_in)
 dense.out_ports.a_out.connect(lif.in_ports.a_in)
 lif.out_ports.s_out.connect(so.in_ports.s_in)
