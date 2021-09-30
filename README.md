@@ -111,16 +111,16 @@ from lava.proc.io import SpikeInput, SpikeOutput
 from lava.proc import Dense, LIF
 
 si = SpikeInput(path='source_data_path', shape=(28, 28))
-dense = Dense(in_shape=(28, 28),
-              out_shape=(10, 1),
-              weights=np.random.random((28, 28)))
+dense = Dense(shape=(10, 784),
+              weights=np.random.random((10, 784)))
 lif = LIF(shape=(10,), vth=10)
 so = SpikeOutput(path='result_data_path', shape=(10,))
 
 # Connect processes via their directional input and output ports
-si.out_port.s_out.connect(dense.in_ports.s_in)
-dense.out_port.a_out.connect(lif.in_ports.a_in)
-lif.out_port.s_out.connect(so.in_ports.s_in)
+si.out_ports.s_out.connect(dense.in_ports.s_in)
+si.out_ports.s_out.reshape(784, 1).connect(dense.in_ports.s_in)
+dense.out_ports.a_out.connect(lif.in_ports.a_in)
+lif.out_ports.s_out.connect(so.in_ports.s_in)
 
 # Execute processes for fixed number of steps on Loihi 2 (by running any of them)
 from lava.magma import run_configs as rcfg
