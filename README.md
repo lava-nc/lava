@@ -28,7 +28,7 @@ Future planned enhancements include support for emerging computational paradigms
 
 For maximum developer productivity, Lava blends a simple Python Interface with accelerated performance using underlying C/C++/CUDA/OpenCL code.
 
-For more information, visit the Lava Documentation: https://lava-nc.github.io/
+For more information, visit the Lava Documentation: http://lava-nc.org/
 
 # Release plan
 Intel's Neuromorphic Computing Lab (NCL) developed the initial Lava architecture as the result of an iterative (re-)design process starting from its initial Loihi Nx SDK software.  As of October, 2021, this serves as the seed of the Lava open source project, which will be released in stages beginning October 2021 as final refactoring for the new Lava software architecture is completed.
