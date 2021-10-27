@@ -300,14 +300,14 @@ class NcLifModel(NcLoihiProcessModel):
 	   net.connect(self.s_out, out_ax)
 	   # Allocate compartments
 	   cx_cfg = net.cx_cfg.alloc(size=1,
-							  du=self.du,
-							  dv=self.dv,
-							  vth=self.vth)
+							     du=self.du,
+							     dv=self.dv,
+							     vth=self.vth)
 	   cx = net.cx.alloc(size=num_neurons,
-								  u=self.u,
-								  v=self.v,
-							 b_mant=self.b,
-							 cfg=cx_cfg)
+						 u=self.u,
+						 v=self.v,
+						 b_mant=self.b,
+						 cfg=cx_cfg)
 	   cx.connect(out_ax)
 	   # Allocate dendritic accumulators
 	   da = net.da.alloc(size=num_neurons)
