@@ -1,8 +1,8 @@
 Lava repository has multiple license files and is being licensed as such.
 
 lava/magma/core:            BSD 3-Clause
-lava/magma/compiler:        LGPL 3.0
-lava/magma/runtime:         LGPL 3.0
+lava/magma/compiler:        LGPL 2.1 or later
+lava/magma/runtime:         LGPL 2.1 or later
 
 lava/proc:                  BSD 3-Clause
 lava/utils:                 BSD 3-Clause
