@@ -12,3 +12,4 @@
 # This software and the related documents are provided as is, with
 # no express or implied warranties, other than those that are
 # expressly stated in the License.
+__import__("pkg_resources").declare_namespace(__name__)
