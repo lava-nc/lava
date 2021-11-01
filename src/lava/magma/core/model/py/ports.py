@@ -38,6 +38,8 @@ class PyInPort(AbstractPyPort):
 
 
 class PyInPortVectorDense(PyInPort):
+    """Python implementation of Vector Dense InPort
+    """
     def recv(self) -> np.ndarray:
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.recv(),
@@ -54,27 +56,53 @@ class PyInPortVectorDense(PyInPort):
 
 
 class PyInPortVectorSparse(PyInPort):
+    """Python implementation of Vector Sparse InPort
+    """
     def recv(self) -> ty.Tuple[np.ndarray, np.ndarray]:
-        pass
+        if self._csp_port:
+            return self._csp_port.recv()
+        else:
+            return (np.zeros(self._shape, self._d_type),
+                    np.zeros(self._shape, self._d_type))
 
     def peek(self) -> ty.Tuple[np.ndarray, np.ndarray]:
-        pass
+        if self._csp_port:
+            return self._csp_port.peek()
+        else:
+            return (np.zeros(self._shape, self._d_type),
+                    np.zeros(self._shape, self._d_type))
 
 
 class PyInPortScalarDense(PyInPort):
+    """Python implementation of Scalar Dense InPort
+    """
     def recv(self) -> int:
-        pass
+        if self._csp_port:
+            return self._csp_port.recv()
+        else:
+            return 0
 
     def peek(self) -> int:
-        pass
+        if self._csp_port:
+            return self._csp_port.peek()
+        else:
+            return 0
 
 
 class PyInPortScalarSparse(PyInPort):
+    """Python implementation of Scalar Sparse InPort
+    """
     def recv(self) -> ty.Tuple[int, int]:
-        pass
+        if self._csp_port:
+            return self._csp_port.recv()
+        else:
+            return (0, 0)
 
     def peek(self) -> ty.Tuple[int, int]:
-        pass
+        if self._csp_port:
+            return self._csp_port.peek()
+        else:
+            return (0, 0)
 
 
 PyInPort.VEC_DENSE = PyInPortVectorDense
