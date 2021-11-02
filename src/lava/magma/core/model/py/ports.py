@@ -58,16 +58,25 @@ class PyInPortVectorDense(PyInPort):
 class PyInPortVectorSparse(PyInPort):
     """Python implementation of Vector Sparse InPort
     """
+    # sparse port recieves twice, for val and index.
+    # if not sparse port we need to convert to dense,
+    # vice-versa, possible scipy or numpy tools for conversion
     def recv(self) -> ty.Tuple[np.ndarray, np.ndarray]:
+        # Draf Impl. Receives Vector from Sparse
+        #
+        # if not from PyOutPortVectorSparse we need to
+        # process the data received
         if self._csp_port:
-            return self._csp_port.recv()
+            return (self._csp_port.recv(),
+                    self._csp_port.recv())
         else:
             return (np.zeros(self._shape, self._d_type),
                     np.zeros(self._shape, self._d_type))
 
     def peek(self) -> ty.Tuple[np.ndarray, np.ndarray]:
         if self._csp_port:
-            return self._csp_port.peek()
+            return (self._csp_port.peek(),
+                    self._csp_port.peek())
         else:
             return (np.zeros(self._shape, self._d_type),
                     np.zeros(self._shape, self._d_type))
@@ -77,12 +86,17 @@ class PyInPortScalarDense(PyInPort):
     """Python implementation of Scalar Dense InPort
     """
     def recv(self) -> int:
+        # Draf Impl. Receives Scalar from Dense
+        #
+        # if not from PyOutPortScalarDense we need to
+        # process the data received
         if self._csp_port:
             return self._csp_port.recv()
         else:
             return 0
 
     def peek(self) -> int:
+        # Receives Scalar from Dense
         if self._csp_port:
             return self._csp_port.peek()
         else:
@@ -93,14 +107,21 @@ class PyInPortScalarSparse(PyInPort):
     """Python implementation of Scalar Sparse InPort
     """
     def recv(self) -> ty.Tuple[int, int]:
+        # Draf Impl. Receives Scalar from Sparse
+        #
+        # if not from PyOutPortScalarSparse we need to
+        # process the data received
         if self._csp_port:
-            return self._csp_port.recv()
+            return (self._csp_port.recv(),
+                    self._csp_port.recv())
         else:
             return (0, 0)
 
     def peek(self) -> ty.Tuple[int, int]:
+        # Receives Scalar from Sparse
         if self._csp_port:
-            return self._csp_port.peek()
+            return (self._csp_port.peek(),
+                    self._csp_port.peek())
         else:
             return (0, 0)
 
