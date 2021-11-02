@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements, requires, tags
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -200,6 +200,63 @@ class Decorators(unittest.TestCase):
             class TestModel(AbstractProcessModel):
                 def run(self):
                     pass
+
+    def test_tags(self):
+        """Checks 'tags' decorator"""
+        # Define minimal ProcModel that requires a single 'AbstractResource'
+        @tags('keyword1', 'keyword2')
+        class TestModel(AbstractProcessModel):
+            def run(self):
+                pass
+
+        self.assertListEqual(TestModel.tag_list, ['keyword1', 'keyword2'])
+
+        @tags('keyword1', ['keyword2', 'keyword3'])
+        class TestModel2(AbstractProcessModel):
+            def run(self):
+                pass
+
+        self.assertListEqual(TestModel2.tag_list, ['keyword1', 'keyword2',
+                                                   'keyword3'])
+
+    def test_tags_subclassing(self):
+        """Checks that tags are additive over sub-classing/inheritance"""
+
+        # Define minimal ProcModel that requires a single 'AbstractResource'
+        @tags('loihi-1')
+        class TestModel(AbstractProcessModel):
+            def run(self):
+                pass
+
+        # This adds CPU to the list of required resources
+        self.assertEqual(TestModel.tag_list, ['loihi-1'])
+
+        # Sub classes can add further requirements
+        @tags('hardware')
+        class SubTestModel(TestModel):
+            pass
+
+        # This adds Loihi1NeuroCore to the list of requirements...
+        self.assertEqual(SubTestModel.tag_list,
+                         ['loihi-1', 'hardware'])
+
+        # ...but does not modify requirements of parent class
+        self.assertEqual(TestModel.tag_list, ['loihi-1'])
+
+    def test_tags_failing(self):
+        """Checks if 'tags' decorator fails appropriately"""
+
+        # Only decorating ProcessModels is allowed
+        with self.assertRaises(AssertionError):
+            @tags('some-tag')
+            class SomeClass(AbstractProcess):
+                pass
+
+        # Only strings or list of strings can be keywords
+        with self.assertRaises(AssertionError):
+            @tags('tag1', [['tag2'], 'tag4'])
+            class SomeOtherClass(AbstractProcess):
+                pass
 
 
 if __name__ == "__main__":
