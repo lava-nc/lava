@@ -93,26 +93,6 @@ class Compiler:
         return seen_procs
 
     @staticmethod
-    def _find_proc_models_in_module(proc: AbstractProcess,
-                                    module: types.ModuleType) \
-            -> ty.List[ty.Type[AbstractProcessModel]]:
-        """Finds and returns all ProcModels that implement given Process in
-        given Python module."""
-
-        proc_models = []
-        for name, cls in module.__dict__.items():
-            if (
-                    hasattr(cls, "implements_process")
-                    and issubclass(cls, AbstractProcessModel)
-                    and cls.implements_process is not None
-                    and isinstance(proc, cls.implements_process)
-            ):
-                # Collect ProcessModel
-                proc_models.append(cls)
-
-        return proc_models
-
-    @staticmethod
     def _find_proc_models(proc: AbstractProcess) \
             -> ty.List[ty.Type[AbstractProcessModel]]:
         """Returns all ProcessModels that for given Process."""
