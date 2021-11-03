@@ -5,7 +5,7 @@ import unittest
 
 from lava.magma.compiler.compiler import Compiler
 import lava.magma.compiler.exceptions as ex
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements_protocol, requires, has_models
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.reduce_ops import ReduceSum
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -20,38 +20,6 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var, VarServer
 from lava.magma.core.resources import CPU
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-
-
-# minimal process with an InPort and OutPortA
-class ProcA(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Use ReduceOp to allow for multiple input connections
-        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
-        self.out = OutPort(shape=(1,))
-
-
-# Another minimal process (does not matter that it's identical to ProcA)
-class ProcB(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Use ReduceOp to allow for multiple input connections
-        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
-        self.out = OutPort(shape=(1,))
-        self.some_var = Var((10,), init=10)
-
-
-# Another minimal process (does not matter that it's identical to ProcA)
-class ProcC(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Use ReduceOp to allow for multiple input connections
-        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
-        self.out = OutPort(shape=(1,))
-
-
-class MockRuntimeService:
-    pass
 
 
 # Define minimal Protocol to be implemented
@@ -69,7 +37,7 @@ class ProtocolB(AbstractSyncProtocol):
 
 
 # A minimal PyProcModel implementing ProcA
-@implements(proc=ProcA, protocol=ProtocolA)
+@implements_protocol(ProtocolA)
 @requires(CPU)
 class PyProcModelA(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
@@ -80,7 +48,7 @@ class PyProcModelA(AbstractPyProcessModel):
 
 
 # A minimal PyProcModel implementing ProcB
-@implements(ProcB, protocol=ProtocolB)
+@implements_protocol(ProtocolB)
 @requires(CPU)
 class PyProcModelB(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
@@ -92,7 +60,6 @@ class PyProcModelB(AbstractPyProcessModel):
 
 
 # A minimal PyProcModel implementing ProcC
-@implements(proc=ProcC)
 @requires(CPU)
 class PyProcModelC(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
@@ -104,7 +71,6 @@ class PyProcModelC(AbstractPyProcessModel):
 
 # A minimal SubProcModel implementing ProcA using ProcB as sub processes
 # which we consider a LeafProcess that has no further sub process decomposition
-@implements(ProcA)
 class SubProcModelA(AbstractSubProcessModel):
     def __init__(self, proc):
         self.proc1 = ProcB()
@@ -115,6 +81,41 @@ class SubProcModelA(AbstractSubProcessModel):
 
     def run(self):
         pass
+
+
+# minimal process with an InPort and OutPortA
+@has_models(PyProcModelA, SubProcModelA)
+class ProcA(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Use ReduceOp to allow for multiple input connections
+        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
+        self.out = OutPort(shape=(1,))
+
+
+# Another minimal process (does not matter that it's identical to ProcA)
+@has_models(PyProcModelB)
+class ProcB(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Use ReduceOp to allow for multiple input connections
+        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
+        self.out = OutPort(shape=(1,))
+        self.some_var = Var((10,), init=10)
+
+
+# Another minimal process (does not matter that it's identical to ProcA)
+@has_models(PyProcModelC)
+class ProcC(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Use ReduceOp to allow for multiple input connections
+        self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
+        self.out = OutPort(shape=(1,))
+
+
+class MockRuntimeService:
+    pass
 
 
 # A minimal RunConfig that will select SubProcModel if there is one

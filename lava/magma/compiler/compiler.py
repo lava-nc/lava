@@ -112,79 +112,14 @@ class Compiler:
 
         return proc_models
 
-    # ToDo: (AW) This is a mess and should be cleaned up
-    def _find_proc_models(self, proc: AbstractProcess) \
+    @staticmethod
+    def _find_proc_models(proc: AbstractProcess) \
             -> ty.List[ty.Type[AbstractProcessModel]]:
-        """Finds all ProcessModels that implement given Process.
-
-        First, we search in the same Python module, in which 'proc' is defined,
-        for ProcModels implementing 'proc'. Next, we search through modules in
-        the same directory.
-        """
-
-        # Find all ProcModel classes that implement 'proc' in same module
-        proc_module = sys.modules[proc.__module__]
-        proc_models = self._find_proc_models_in_module(proc, proc_module)
-
-        # Find all ProcModel classes that implement 'proc' in same directory
-        # search for the file of the module
-        # ToDo: (AW) I think this could be simplified by using checking if
-        #  get_ipython exists and then use it to get get_ipython(
-        #  ).user_global_ns. This will return globally known classes,
-        #  including those in the jupyter namespace and therefore allow
-        #  using any ProcModels defined there.
-        file = None
-        if inspect.isclass(proc.__class__):
-            if hasattr(proc.__class__, '__module__'):
-                proc_ = sys.modules.get(proc.__class__.__module__)
-                # check if it has file (classes in jupyter nb do not)
-                if hasattr(proc_, '__file__'):
-                    file = proc_.__file__
-            else:
-                raise TypeError('Source for {!r} not found'.format(object))
-
-            if file is None:
-                # class is probably defined in a jupyter notebook
-                # lookup file name per methods
-                for _, m in inspect.getmembers(proc.__class__):
-                    if inspect.isfunction(m) and \
-                            proc.__class__.__qualname__ + '.' \
-                            + m.__name__ == m.__qualname__:
-                        file = inspect.getfile(m)
-                        break
-        else:
-            file = inspect.getfile(proc.__class__)
-
-        dir_name = os.path.dirname(file)
-        for _, name, _ in pkgutil.iter_modules([dir_name]):
-            import_path = os.path.join(dir_name, name)
-            name_not_dir = not os.path.isdir(import_path)
-            if name_not_dir:
-                spec = import_utils.spec_from_file_location(
-                    name, os.path.join(dir_name, name + ".py"))
-                module = import_utils.module_from_spec(spec)
-                try:
-                    spec.loader.exec_module(module)
-                    if module != proc_module:
-                        pm = self._find_proc_models_in_module(proc, module)
-                        # TODO: Remove this hack of getting the qualified
-                        #  name path of the class in this manner
-                        for proc_model in pm:
-                            proc_cls_mod = \
-                                inspect.getmodule(proc).__package__ + '.' + \
-                                proc_model.__module__
-                            proc_cls_mod = importlib. \
-                                import_module(proc_cls_mod)
-                            class_ = getattr(proc_cls_mod, proc_model.__name__)
-                            proc_models.append(class_)
-                except Exception:
-                    warn(f"Cannot import module '{module}' when searching "
-                         f"ProcessModels for Process "
-                         f"'{proc.__class__.__name__}'.")
-
-        if not proc_models:
+        """Returns all ProcessModels that for given Process."""
+        if not proc.__class__.process_models:
             raise ex.NoProcessModelFound(proc)
-        return proc_models
+
+        return proc.__class__.process_models
 
     @staticmethod
     def _select_proc_models(

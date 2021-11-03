@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements_protocol, requires, has_models
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -11,34 +11,100 @@ from lava.magma.core.resources import CPU, Loihi1NeuroCore, ECPU
 
 
 class Decorators(unittest.TestCase):
+    def test_has_models(self):
+        """Checks 'has_models' decorator."""
+
+        # Define three minimal ProcessModel
+        class TestModel1(AbstractProcessModel):
+            def run(self):
+                pass
+
+        class TestModel2(AbstractProcessModel):
+            def run(self):
+                pass
+
+        class TestModel3(AbstractProcessModel):
+            def run(self):
+                pass
+
+        # Define Process with one TestModel1 model
+        @has_models(TestModel1)
+        class TestProc1(AbstractProcess):
+            pass
+
+        # This adds TestModel1 to model list and links it to process
+        self.assertEqual(TestProc1.process_models, [TestModel1])
+        self.assertEqual(TestModel1.implements_process, TestProc1)
+
+        # Define Process with several models
+        @has_models(TestModel2, TestModel3)
+        class TestProc2(AbstractProcess):
+            pass
+
+        # Several models are added
+        self.assertEqual(TestProc2.process_models, [TestModel2, TestModel3])
+        self.assertEqual(TestModel2.implements_process, TestProc2)
+        self.assertEqual(TestModel3.implements_process, TestProc2)
+
+    def test_has_models_failing(self):
+        """Checks failing 'has_models' usage."""
+
+        # Define not ProcessModel
+        class NotProcModel:
+            pass
+
+        # Define two minimal ProcessModel
+        class TestModel1(AbstractProcessModel):
+            def run(self):
+                pass
+
+        class TestModel2(AbstractProcessModel):
+            def run(self):
+                pass
+
+        # Define Process with TestModel2 model
+        @has_models(TestModel2)
+        class TestProc2(AbstractProcess):
+            pass
+
+        # We must decorate a Process and nothing else:
+        with self.assertRaises(AssertionError):
+            @has_models(TestModel1)
+            class Something(AbstractProcessModel):
+                pass
+
+        # We must decorate a Process with an 'ProcessModel' class
+        # and nothing else
+        with self.assertRaises(AssertionError):
+            @has_models(NotProcModel)  # type: ignore
+            class TestProc1(AbstractProcess):
+                pass
+
+        # The model must not be used by other Process
+        with self.assertRaises(AssertionError):
+            @has_models(TestModel2)
+            class TestProc3(AbstractProcess):
+                pass
+
     def test_implements(self):
         """Checks 'implements' decorator."""
-
-        # Define minimal Process to be implemented
-        class TestProc(AbstractProcess):
-            pass
 
         # Define minimal Protocol to be implemented
         class TestProtocol(AbstractSyncProtocol):
             pass
 
-        # Define minimal ProcModel that implements 'TestProc'
-        @implements(proc=TestProc, protocol=TestProtocol)
+        # Define minimal ProcModel that implements 'TestProtocol'
+        @implements_protocol(TestProtocol)
         class TestModel(AbstractProcessModel):
             def run(self):
                 pass
 
         # The 'implements' decorator adds class variables that allows
         # ProcessModels to be filtered by the compiler
-        self.assertEqual(TestModel.implements_process, TestProc)
         self.assertEqual(TestModel.implements_protocol, TestProtocol)
 
     def test_implements_failing(self):
         """Checks failing 'implements' usage."""
-
-        # Define minimal Process to be implemented
-        class TestProc(AbstractProcess):
-            pass
 
         # Define minimal Protocol to be implemented
         class TestProtocol(AbstractSyncProtocol):
@@ -46,66 +112,19 @@ class Decorators(unittest.TestCase):
 
         # We must pass a class, not an instance or anything else
         with self.assertRaises(TypeError):
-            @implements(proc=TestProc(), protocol=TestProtocol)  # type: ignore
-            class TestModel(AbstractProcessModel):  # type: ignore
-                def run(self):
-                    pass
-
-        # Same for 'protocol'
-        with self.assertRaises(TypeError):
-            @implements(proc=TestProc, protocol=TestProtocol())  # type: ignore
-            class TestModel2(AbstractProcessModel):
+            @implements_protocol(TestProtocol())  # type: ignore
+            class TestModel(AbstractProcessModel):
                 def run(self):
                     pass
 
         # And we can only decorate a subclass of 'AbstractProcessModel'
         with self.assertRaises(AssertionError):
-            @implements(proc=TestProc, protocol=TestProtocol)
+            @implements_protocol(TestProtocol)
             class TestProcess2(AbstractProcess):
                 pass
 
-    def test_implements_subclassing(self):
-        """Check that 'implements' can also only be called on sub classes."""
-
-        # Define minimal Process to be implemented
-        class TestProc(AbstractProcess):
-            pass
-
-        # Define two minimal SyncProtocol
-        class TestProtocol(AbstractSyncProtocol):
-            pass
-
-        # A process model that serves as a base class may only specify 'proc'
-        # or 'protocol'
-        @implements(proc=TestProc)
-        class TestModel(AbstractProcessModel):
-            def run(self):
-                pass
-
-        # In this case, 'implements_process' will be set but
-        # 'implements_protocol' will not be set
-        self.assertEqual(TestModel.implements_process, TestProc)
-        self.assertEqual(TestModel.implements_protocol, None)
-
-        @implements(protocol=TestProtocol)
-        class SubTestModel(TestModel):
-            pass
-
-        # Finally both class attributes will be set
-        self.assertEqual(SubTestModel.implements_process, TestProc)
-        self.assertEqual(SubTestModel.implements_protocol, TestProtocol)
-
-        # ...but attributes of parent class have not changed
-        self.assertEqual(TestModel.implements_process, TestProc)
-        self.assertEqual(TestModel.implements_protocol, None)
-
     def test_implements_subclassing_due_to_overwrite(self):
-        """Check that we cannot overwrite an already set Process or
-        SyncProtocol class."""
-
-        # Define minimal Process to be implemented
-        class TestProc(AbstractProcess):
-            pass
+        """Check that we cannot overwrite an already set SyncProtocol class."""
 
         # Define two minimal SyncProtocol
         class TestProtocol1(AbstractSyncProtocol):
@@ -114,16 +133,15 @@ class Decorators(unittest.TestCase):
         class TestProtocol2(AbstractSyncProtocol):
             pass
 
-        # A new ProcessModel might implement TestProc with TestProtocol1
-        @implements(proc=TestProc, protocol=TestProtocol1)
+        # A new ProcessModel might implement TestProtocol1
+        @implements_protocol(TestProtocol1)
         class TestModel(AbstractProcessModel):
             def run(self):
                 pass
 
-        # Attempting to overwrite either of the 'proc' or 'protocol'
-        # attributes must fail
+        # Attempting to overwrite  'protocol' attribute must fail
         with self.assertRaises(AssertionError):
-            @implements(protocol=TestProtocol2)
+            @implements_protocol(TestProtocol2)
             class SubTestModel(TestModel):
                 pass
 

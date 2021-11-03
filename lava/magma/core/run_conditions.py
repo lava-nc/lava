@@ -12,8 +12,8 @@ class AbstractRunCondition(ABC):
 
 
 class RunSteps(AbstractRunCondition):
-    """Runs a process for a specified number of current_ts steps with respect to a
-    SyncDomain assigned to any sub processes."""
+    """Runs a process for a specified number of current_ts steps with respect to
+     a SyncDomain assigned to any sub processes."""
 
     def __init__(self, num_steps: int, blocking: bool = True):
         super().__init__(blocking)

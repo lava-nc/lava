@@ -8,12 +8,11 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements_protocol, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.dense.process import Dense
 
 
-@implements(proc=Dense, protocol=LoihiProtocol)
+@implements_protocol(protocol=LoihiProtocol)
 @requires(CPU)
 class PyDenseModel(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)

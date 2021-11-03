@@ -1,6 +1,6 @@
 import unittest
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements_protocol, requires, has_models
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
@@ -12,6 +12,26 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
+@implements_protocol(LoihiProtocol)
+@requires(CPU)
+class SimpleProcessModel(PyLoihiProcessModel):
+    u = LavaPyType(int, int)
+    v = LavaPyType(int, int)
+
+    def post_guard(self):
+        return False
+
+    def pre_guard(self):
+        return False
+
+    def lrn_guard(self):
+        return False
+
+    def host_guard(self):
+        return True
+
+
+@has_models(SimpleProcessModel)
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -34,25 +54,6 @@ class SimpleRunConfig(RunConfig):
                 return proc_models[1]
 
         return proc_models[0]
-
-
-@implements(proc=SimpleProcess, protocol=LoihiProtocol)
-@requires(CPU)
-class SimpleProcessModel(PyLoihiProcessModel):
-    u = LavaPyType(int, int)
-    v = LavaPyType(int, int)
-
-    def post_guard(self):
-        return False
-
-    def pre_guard(self):
-        return False
-
-    def lrn_guard(self):
-        return False
-
-    def host_guard(self):
-        return True
 
 
 class TestProcess(unittest.TestCase):

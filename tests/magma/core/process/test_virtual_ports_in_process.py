@@ -3,7 +3,7 @@
 import unittest
 import numpy as np
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import has_models, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
@@ -75,24 +75,7 @@ class TestVirtualPorts(unittest.TestCase):
         sender1.run(RunSteps(num_steps=2), MyRunCfg())
 
 
-# minimal process with an OutPort
-class P1(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (3,))
-        self.out = OutPort(shape=shape)
-
-
-# minimal process with an InPort
-class P2(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (3,))
-        self.inp = InPort(shape=shape)
-
-
 # A minimal PyProcModel implementing P1
-@implements(proc=P1)
 @requires(CPU)
 class PyProcModelA(AbstractPyProcessModel):
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
@@ -104,7 +87,6 @@ class PyProcModelA(AbstractPyProcessModel):
 
 
 # A minimal PyProcModel implementing P2
-@implements(proc=P2)
 @requires(CPU)
 class PyProcModelB(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
@@ -112,6 +94,24 @@ class PyProcModelB(AbstractPyProcessModel):
     def run(self):
         in_data = self.inp.recv()
         print("Received input data for P2: ", str(in_data))
+
+
+# minimal process with an OutPort
+@has_models(PyProcModelA)
+class P1(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        shape = kwargs.get('shape', (3,))
+        self.out = OutPort(shape=shape)
+
+
+# minimal process with an InPort
+@has_models(PyProcModelB)
+class P2(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        shape = kwargs.get('shape', (3,))
+        self.inp = InPort(shape=shape)
 
 
 class MyRunCfg(RunConfig):

@@ -13,6 +13,7 @@ from lava.magma.core.process.interfaces import \
     AbstractProcessMember, IdGeneratorSingleton
 from lava.magma.compiler.executable import Executable
 from lava.magma.runtime.runtime import Runtime
+from lava.magma.core.model.model import AbstractProcessModel
 
 
 # Abbreviation for type annotation in Collection class
@@ -215,6 +216,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     In order to save current_ts setting up processes for future use, processes
     can also be saved and reloaded from disk.
     """
+    process_models: ty.List[ty.Type[AbstractProcessModel]] = []
 
     def __init__(self, **kwargs):
         """Initializes the process. Key/value pairs provided by the user will

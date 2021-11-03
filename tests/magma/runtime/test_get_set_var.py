@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import has_models, requires, implements_protocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.process import AbstractProcess
@@ -13,6 +13,14 @@ from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 
+@implements_protocol(LoihiProtocol)
+@requires(CPU)
+class SimpleProcessModel(PyLoihiProcessModel):
+    u = LavaPyType(np.ndarray, np.int32, precision=32)
+    v = LavaPyType(np.ndarray, np.int32, precision=32)
+
+
+@has_models(SimpleProcessModel)
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -37,13 +45,6 @@ class SimpleRunConfig(RunConfig):
                 return proc_models[1]
 
         return proc_models[0]
-
-
-@implements(proc=SimpleProcess, protocol=LoihiProtocol)
-@requires(CPU)
-class SimpleProcessModel(PyLoihiProcessModel):
-    u = LavaPyType(np.ndarray, np.int32, precision=32)
-    v = LavaPyType(np.ndarray, np.int32, precision=32)
 
 
 class TestGetSetVar(unittest.TestCase):

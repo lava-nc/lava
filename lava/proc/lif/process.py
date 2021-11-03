@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from lava.magma.core.decorator import has_models
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.proc.lif.models import PyLifModel
 
 
+@has_models(PyLifModel)
 class LIF(AbstractProcess):
     """Leaky-Integrate-and-Fire neural process with activation input and spike
     output ports a_in and s_out.

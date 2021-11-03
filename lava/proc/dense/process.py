@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from lava.magma.core.decorator import has_models
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.proc.dense.models import PyDenseModel
 
 
+@has_models(PyDenseModel)
 class Dense(AbstractProcess):
     """Dense connections between neurons.
     Realizes the following abstract behavior:

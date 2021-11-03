@@ -9,7 +9,7 @@ import numpy as np
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import has_models, requires
 from lava.magma.core.resources import CPU
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
@@ -20,25 +20,11 @@ from lava.magma.compiler.builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
 
-# A test Process with a variety of Ports and Vars of different shapes,
-# with and without initial values that may require broadcasting or not
-class Proc(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.in_port = InPort((2, 1))
-        self.v1_scalar = Var((1,))
-        self.v2_scalar_init = Var((1,), init=2)
-        self.v3_tensor_broadcast = Var((2, 3), init=10)
-        self.v4_tensor = Var((3, 2), init=[[1, 2], [3, 4], [5, 6]])
-        self.out_port = OutPort((3, 2))
-
-
 # A test PyProcessModel with corresponding LavaPyTypes for each Proc Port or Var
 # Vars and Ports should have type annotations such that linter does not throw
 # warnings in run(..) method because it otherwise assumes the type of the
 # instance variables (created by Compiler) for every class variable is a
 # LavaPyType.
-@implements(proc=Proc)
 @requires(CPU)
 class ProcModel(AbstractPyProcessModel):
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int, 8)
@@ -53,6 +39,20 @@ class ProcModel(AbstractPyProcessModel):
         just some fake computation to demonstrate initialized Vars can be used.
         """
         return self.v1_scalar + 1
+
+
+# A test Process with a variety of Ports and Vars of different shapes,
+# with and without initial values that may require broadcasting or not
+@has_models(ProcModel)
+class Proc(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.in_port = InPort((2, 1))
+        self.v1_scalar = Var((1,))
+        self.v2_scalar_init = Var((1,), init=2)
+        self.v3_tensor_broadcast = Var((2, 3), init=10)
+        self.v4_tensor = Var((3, 2), init=[[1, 2], [3, 4], [5, 6]])
+        self.out_port = OutPort((3, 2))
 
 
 # A fake CspPort just to test ProcBuilder
@@ -83,39 +83,37 @@ class FakeCspPort(AbstractCspPort):
         pass
 
 
-# Another Process for LavaPyType validation
-class ProcForLavaPyType(AbstractProcess):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.port = InPort((1, ))
-
-
 # A correct ProcessModel
-@implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType0(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
 
 # A wrong ProcessModel with completely wrong type
-@implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType1(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(123, int)  # type: ignore
 
 
 # A wrong ProcessModel with wrong syb type
-@implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType2(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyInPort, int)
 
 
 # A wrong ProcessModel with wrong port type
-@implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType3(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyOutPort, int)
+
+
+# Another Process for LavaPyType validation
+@has_models(ProcModelForLavaPyType0, ProcModelForLavaPyType1,
+            ProcModelForLavaPyType2, ProcModelForLavaPyType3)
+class ProcForLavaPyType(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.port = InPort((1, ))
 
 
 class TestPyProcessBuilder(unittest.TestCase):

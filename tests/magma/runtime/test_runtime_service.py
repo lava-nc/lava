@@ -4,7 +4,7 @@ from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.magma.core.decorator import implements
+from lava.magma.core.decorator import implements_protocol, has_models
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -26,14 +26,15 @@ class SimpleSyncProtocol(AbstractSyncProtocol):
     pass
 
 
-class SimpleProcess(AbstractProcess):
-    pass
-
-
-@implements(proc=SimpleProcess, protocol=SimpleSyncProtocol)
+@implements_protocol(SimpleSyncProtocol)
 class SimpleProcessModel(AbstractPyProcessModel):
     def run(self):
         pass
+
+
+@has_models(SimpleProcessModel)
+class SimpleProcess(AbstractProcess):
+    pass
 
 
 class SimplePyRuntimeService(PyRuntimeService):
