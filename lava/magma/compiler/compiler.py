@@ -1,16 +1,8 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import importlib
-import importlib.util as import_utils
-import inspect
-import os
-import pkgutil
-import sys
-import types
 import typing as ty
 from collections import OrderedDict, defaultdict
-from warnings import warn
 
 import numpy as np
 
