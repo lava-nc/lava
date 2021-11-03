@@ -50,7 +50,6 @@ class Compiler:
             self._compile_config.update(compile_cfg)
 
     # ToDo: (AW) Clean this up by avoiding redundant search paths
-    # ToDo: (AW) @PP Please include RefPorts/VarPorts in connection tracing
     def _find_processes(self,
                         proc: AbstractProcess,
                         seen_procs: ty.List[AbstractProcess] = None) \
@@ -70,14 +69,14 @@ class Compiler:
         new_list: ty.List[AbstractProcess] = []
 
         # add processes connecting to the main process
-        for in_port in proc.in_ports:
+        for in_port in proc.in_ports.members + proc.var_ports.members:
             for con in in_port.in_connections:
                 new_list.append(con.process)
             for con in in_port.out_connections:
                 new_list.append(con.process)
 
         # add processes connecting from the main process
-        for out_port in proc.out_ports:
+        for out_port in proc.out_ports.members + proc.ref_ports.members:
             for con in out_port.in_connections:
                 new_list.append(con.process)
             for con in out_port.out_connections:
@@ -273,7 +272,7 @@ class Compiler:
                     v = [VarInitializer(v.name, v.shape, v.init, v.id)
                          for v in p.vars]
                     ports = (list(p.in_ports) + list(p.out_ports)
-                             + list(p.ref_ports))
+                             + list(p.ref_ports) + list(p.var_ports))
                     ports = [PortInitializer(pt.name,
                                              pt.shape,
                                              getattr(pm, pt.name).d_type,
