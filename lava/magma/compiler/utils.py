@@ -16,6 +16,6 @@ class VarInitializer:
 class PortInitializer:
     name: str
     shape: ty.Tuple[int, ...]
-    d_type: ty.Type[np.intc]
+    d_type: type
     port_type: str
     size: int

@@ -275,7 +275,7 @@ class Compiler:
                              + list(p.ref_ports) + list(p.var_ports))
                     ports = [PortInitializer(pt.name,
                                              pt.shape,
-                                             getattr(pm, pt.name).d_type,
+                                             self._get_port_dtype(pt, pm),
                                              pt.__class__.__name__,
                                              pp_ch_size) for pt in ports]
                     # Assigns initializers to builder
@@ -496,6 +496,23 @@ class Compiler:
                 f"'({src.__name__}, {dst.__name__})' yet."
             )
 
+    @staticmethod
+    def _get_port_dtype(port: "AbstractPort",
+                        proc_model: ty.Type[AbstractProcessModel]) -> type:
+        """Returns the type of a port, as specified in the corresponding
+         ProcessModel."""
+
+        # In-, Out-, Ref- and explicit VarPorts
+        if hasattr(proc_model, port.name):
+            return getattr(proc_model, port.name).d_type
+        # Implicitly created VarPorts
+        elif hasattr(proc_model, port.var.name):
+            return getattr(proc_model, port.var.name).d_type
+        # Port has different name in Process and ProcessModel
+        else:
+            raise AssertionError("Port {!r} not found in "
+                                 "ProcessModel {!r}".format(port, proc_model))
+
     # ToDo: (AW) Fix hard-coded hacks in this method and extend to other
     #  channel types
     def _create_channel_builders(self, proc_map: PROC_MAP) \
@@ -525,7 +542,7 @@ class Compiler:
             # Find destination ports for each source port
             for src_pt in src_ports:
                 # Create PortInitializer for source port
-                src_pt_dtype = getattr(src_pm, src_pt.name).d_type
+                src_pt_dtype = self._get_port_dtype(src_pt, src_pm)
                 src_pt_init = PortInitializer(
                     src_pt.name, src_pt.shape, src_pt_dtype,
                     src_pt.__class__.__name__, ch_size)
@@ -540,7 +557,7 @@ class Compiler:
                         # Find appropriate channel type
                         ch_type = self._get_channel_type(src_pm, dst_pm)
                         # Create PortInitializer for destination port
-                        dst_pt_d_type = getattr(dst_pm, dst_pt.name).d_type
+                        dst_pt_d_type = self._get_port_dtype(dst_pt, dst_pm)
                         dst_pt_init = PortInitializer(
                             dst_pt.name, dst_pt.shape, dst_pt_d_type,
                             dst_pt.__class__.__name__, ch_size)

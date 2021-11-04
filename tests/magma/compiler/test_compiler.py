@@ -689,7 +689,7 @@ class TestCompiler(unittest.TestCase):
 
     def test_create_channel_builders_ref_ports(self):
         """Checks creation of channel builders when a process is connected
-        using a RefPort to another process."""
+        using a RefPort to another process VarPort."""
 
         # Create a process with a RefPort (source)
         src = ProcA()
@@ -699,6 +699,36 @@ class TestCompiler(unittest.TestCase):
 
         # Connect them using RefPort and VarPort
         src.ref.connect(dst.var_port)
+
+        # Create a manual proc_map
+        proc_map = {
+            src: PyProcModelA,
+            dst: PyProcModelB
+        }
+
+        # Create channel builders
+        c = Compiler()
+        cbs = c._create_channel_builders(proc_map)
+
+        # This should result in 1 channel builder
+        from lava.magma.compiler.builder import ChannelBuilderMp
+        self.assertEqual(len(cbs), 1)
+        self.assertIsInstance(cbs[0], ChannelBuilderMp)
+        self.assertEqual(cbs[0].src_process, src)
+        self.assertEqual(cbs[0].dst_process, dst)
+
+    def test_create_channel_builders_ref_ports_implicit(self):
+        """Checks creation of channel builders when a process is connected
+        using a RefPort to another process Var (implicit VarPort)."""
+
+        # Create a process with a RefPort (source)
+        src = ProcA()
+
+        # Create a process with a var (destination)
+        dst = ProcB()
+
+        # Connect them using RefPort and Var (creates implicitly a VarPort)
+        src.ref.connect_var(dst.some_var)
 
         # Create a manual proc_map
         proc_map = {
