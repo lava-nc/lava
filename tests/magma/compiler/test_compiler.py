@@ -272,13 +272,11 @@ class TestCompiler(unittest.TestCase):
         [p1 -> ref/var -> p2 -> in/out -> p3]"""
 
         # Create processes
-        p1, p2, p3 = (
-            ProcA(),
-            ProcB(),
-            ProcC()
-        )
-        # Create complicated circular structure with joins and forks
+        p1, p2, p3 = ProcA(), ProcB(), ProcC()
+
+        # Connect p1 (RefPort) with p2 (VarPort)
         p1.ref.connect(p2.var_port)
+        # Connect p2 (OutPort) with p3 (InPort)
         p2.out.connect(p3.inp)
 
         # Regardless where we start searching...
@@ -693,13 +691,13 @@ class TestCompiler(unittest.TestCase):
         """Checks creation of channel builders when a process is connected
         using a RefPort to another process."""
 
-        # create a process with a RefPort (source)
+        # Create a process with a RefPort (source)
         src = ProcA()
 
-        # create a process with a var (destination)
+        # Create a process with a var (destination)
         dst = ProcB()
 
-        # connect them using RefPort and VarPort
+        # Connect them using RefPort and VarPort
         src.ref.connect(dst.var_port)
 
         # Create a manual proc_map
