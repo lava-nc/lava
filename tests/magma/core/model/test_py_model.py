@@ -169,10 +169,10 @@ class TestPyProcessBuilder(unittest.TestCase):
         # name
         self.assertEqual(list(b.vars.values()), v)
         self.assertEqual(list(b.py_ports.values()), py_ports)
-        self.assertEqual(list(b.csp_ports.values()), csp_ports)
+        self.assertEqual(list(v for vv in b.csp_ports.values() for v in vv), csp_ports)
         self.assertEqual(b.vars["v1_scalar"], v[0])
         self.assertEqual(b.py_ports["in_port"], py_ports[0])
-        self.assertEqual(b.csp_ports["out_port"], csp_ports[1])
+        self.assertEqual(b.csp_ports["out_port"], [csp_ports[1]])
 
     def test_setting_non_existing_var(self):
         """Checks that setting Var not defined in ProcModel fails. Same will
@@ -409,14 +409,14 @@ class TestPyProcessBuilder(unittest.TestCase):
         # Validate that the Process with no OutPorts indeed has no output
         # CspPort
         self.assertIsInstance(
-            pm_with_no_out_ports.in_port._csp_port, FakeCspPort)
-        self.assertEqual(pm_with_no_out_ports.out_port._csp_port, None)
+            pm_with_no_out_ports.in_port._csp_ports[0], FakeCspPort)
+        self.assertEqual(pm_with_no_out_ports.out_port._csp_ports, [])
 
         # Validate that the Process with no InPorts indeed has no input
         # CspPort
-        self.assertEqual(pm_with_no_in_ports.in_port._csp_port, None)
+        self.assertEqual(pm_with_no_in_ports.in_port._csp_ports, [])
         self.assertIsInstance(
-            pm_with_no_in_ports.out_port._csp_port, FakeCspPort)
+            pm_with_no_in_ports.out_port._csp_ports[0], FakeCspPort)
 
 
 if __name__ == "__main__":

@@ -89,7 +89,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self._model_id = model_id
         self.vars: ty.Dict[str, VarInitializer] = {}
         self.py_ports: ty.Dict[str, PortInitializer] = {}
-        self.csp_ports: ty.Dict[str, AbstractCspPort] = {}
+        self.csp_ports: ty.Dict[str, List[AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
 
@@ -195,7 +195,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
                         f"PyRefPort in '{self.proc_model.__name__}'.")
 
     # ToDo: Also check that Vars are initializable with var.value provided
-    def set_variables(self, variables: ty.List[VarInitializer]):
+    def set_variables(self, variables: ty.List[VarInitializer]): 
         """Set variables list
 
         Parameters
@@ -237,7 +237,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         AssertionError
             PyProcessModel has no port of that name
         """
-        new_ports = {p.name: p for p in csp_ports}
+        new_ports = {}
+        for p in csp_ports:
+            new_ports.setdefault(p.name,[]).extend(p if isinstance(p,list) else [p])
         self._check_not_assigned_yet(
             self.csp_ports, new_ports.keys(), "csp_ports"
         )
@@ -248,7 +250,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 raise AssertionError("PyProcessModel '{}' has \
                 no port named '{}'.".format(proc_name, port_name))
         # Set new CspPorts
-        self.csp_ports.update(new_ports)
+        for key,ports in new_ports.items():
+            self.csp_ports.setdefault(key,[]).extend(ports)
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """ Set RS CSP Ports
@@ -301,10 +304,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
             # Build PyPort
             lt = self._get_lava_type(name)
             port_cls = ty.cast(ty.Type[AbstractPyPort], lt.cls)
-            csp_port = None
+            csp_ports = []
             if name in self.csp_ports:
-                csp_port = self.csp_ports[name]
-            port = port_cls(pm, csp_port, p.shape, lt.d_type)
+                csp_ports = self.csp_ports[name]
+                if not isinstance(csp_ports,list):
+                    csp_ports = [csp_ports]
+            port = port_cls(pm, csp_ports, p.shape, lt.d_type)
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)
