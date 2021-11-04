@@ -5,23 +5,56 @@ import unittest
 from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
+import scipy.sparse as sparse
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.core.model.interfaces import PortMessageFormat
 from lava.magma.core.model.py.ports import PyInPort, PyInPortVectorDense, \
-    PyOutPortVectorDense, PyOutPort
+    PyOutPortVectorDense, PyOutPort, PyPortMessage, \
+    PyPortMessageHeader, PyPortMessagePayload
+
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
 
 
 def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
-    channel = PyPyChannel(
+    return PyPyChannel(
         smm=smm, src_name=name, dst_name=name, shape=data.shape,
         dtype=data.dtype, size=size
     )
-    return channel
+
+
+def create_message(fmt, n_elem, data) -> PyPortMessage:
+    msg_header = PyPortMessageHeader(fmt, n_elem)
+    msg_payload = PyPortMessagePayload(data)
+    return PyPortMessage(msg_header,
+                         payload=msg_payload)
 
 
 class TestPyPorts(unittest.TestCase):
+
+    def message_creation():
+        VectorDenseMessage = create_message(
+            PortMessageFormat.VECTOR_DENSE,
+            2,
+            np.random.randint(5, size=(2, 4))
+        )
+        VectorSparseMessage = create_message(
+            PortMessageFormat.SCALAR_DENSE,
+            5,
+            sparse.random(5, 5, density=0.05)
+        )
+        ScalarDenseMessage = create_message(
+            PortMessageFormat.SCALAR_DENSE,
+            4,
+            np.random.randint(5, size=(1, 4))
+        )
+        # ScalarSparseMessage =
+
+        print(VectorDenseMessage)
+        print(VectorSparseMessage)
+        print(ScalarDenseMessage)
+
     def test_port_send_out_vec_dense_to_in_vec_dense(self):
         """Tests sending data over a dense vector outport to a dense vector
         inport"""

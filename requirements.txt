@@ -2,4 +2,5 @@ pytest
 unittest2
 
 numpy
+scipy
 matplotlib

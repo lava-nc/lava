@@ -186,7 +186,7 @@ class CspRecvPort(AbstractCspRecvPort):
             np.ndarray(
                 shape=self._shape,
                 dtype=self._dtype,
-                buffer=self._shm.buf[self._nbytes * i : self._nbytes * (i + 1)],
+                buffer=self._shm.buf[self._nbytes * i: self._nbytes * (i + 1)],
             )
             for i in range(self._size)
         ]

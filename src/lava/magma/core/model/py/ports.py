@@ -8,10 +8,37 @@ import functools as ft
 
 import numpy as np
 
-from lava.magma.core.model.interfaces import AbstractPortImplementation
+from lava.magma.core.model.interfaces import (AbstractPortImplementation,
+                                              AbstractPortMessage,
+                                              AbstractMessageHeader,
+                                              AbstractMessagePayload)
 
 
 class AbstractPyPort(AbstractPortImplementation):
+    pass
+
+
+class AbstractPyPortMessage(AbstractPortMessage):
+    pass
+
+
+class AbstractPyPortMessageHeader(AbstractMessageHeader):
+    pass
+
+
+class AbstractPyPortMessagePayload(AbstractMessagePayload):
+    pass
+
+
+class PyPortMessage(AbstractPyPortMessage):
+    pass
+
+
+class PyPortMessageHeader(AbstractPyPortMessageHeader):
+    pass
+
+
+class PyPortMessagePayload(AbstractPyPortMessagePayload):
     pass
 
 
@@ -40,6 +67,17 @@ class PyInPort(AbstractPyPort):
 class PyInPortVectorDense(PyInPort):
     """Python implementation of Vector Dense InPort
     """
+
+    # Draf Impl. Receives Vector from Dense
+    #
+    # if not from PyOutPortVectorDense we need to
+    # process the data received
+    #   format, elements, payload =
+    #   if format not in (PortMessageFormat.VECTOR_DENSE,
+    #   PortMessageFormat.VECTOR_SPARSE, PortMessageFormat.SCALAR_DENSE,
+    #   PortMessageFormat.SCALAR_SPARSE):
+    #      raise AssertionError("Message format " + format + "
+    #   not recognized, should be one of: PortMessageFormat")
     def recv(self) -> np.ndarray:
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.recv(),
@@ -165,17 +203,23 @@ class PyOutPortVectorDense(PyOutPort):
 
 class PyOutPortVectorSparse(PyOutPort):
     def send(self, data: np.ndarray, idx: np.ndarray):
-        pass
+        """Sends data, idx only if port is not dangling."""
+        if self._csp_port:
+            self._csp_port.send(data, idx)
 
 
 class PyOutPortScalarDense(PyOutPort):
     def send(self, data: int):
-        pass
+        """Sends data only if port is not dangling."""
+        if self._csp_port:
+            self._csp_port.send(data)
 
 
 class PyOutPortScalarSparse(PyOutPort):
     def send(self, data: int, idx: int):
-        pass
+        """Sends data, idx only if port is not dangling."""
+        if self._csp_port:
+            self._csp_port.send(data, idx)
 
 
 PyOutPort.VEC_DENSE = PyOutPortVectorDense

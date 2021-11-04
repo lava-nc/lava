@@ -3,13 +3,22 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC
+from enum import Enum, unique
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.compiler.channels.interfaces import AbstractCspRecvPort, \
+    AbstractCspSendPort
+from lava.magma.core.model.model import AbstractProcessModel
 
 
-# ToDo: (AW) This type hierarchy is still not clean. csp_port could be a
-#  CspSendPort or CspRecvPort so down-stream classes can't do proper type
-#  inference to determine if there is a send/peek/recv/probe method.
+@unique
+class PortMessageFormat(Enum):
+    VECTOR_DENSE = 1
+    VECTOR_SPARSE = 2
+    SCALAR_DENSE = 3
+    SCALAR_SPARSE = 4
+    DONE = 1111
+
+
 class AbstractPortImplementation(ABC):
     def __init__(
         self,
