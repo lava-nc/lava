@@ -1,8 +1,6 @@
 import typing as ty
 from dataclasses import dataclass
 
-import numpy as np
-
 
 @dataclass
 class VarInitializer:
