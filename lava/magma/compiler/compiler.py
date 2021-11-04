@@ -32,6 +32,7 @@ from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.nc.model import AbstractNcProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
+from lava.magma.core.process.ports.ports import AbstractPort, VarPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.run_configs import RunConfig
@@ -497,7 +498,7 @@ class Compiler:
             )
 
     @staticmethod
-    def _get_port_dtype(port: "AbstractPort",
+    def _get_port_dtype(port: AbstractPort,
                         proc_model: ty.Type[AbstractProcessModel]) -> type:
         """Returns the type of a port, as specified in the corresponding
          ProcessModel."""
@@ -506,7 +507,7 @@ class Compiler:
         if hasattr(proc_model, port.name):
             return getattr(proc_model, port.name).d_type
         # Implicitly created VarPorts
-        elif hasattr(proc_model, port.var.name):
+        elif isinstance(port, VarPort):
             return getattr(proc_model, port.var.name).d_type
         # Port has different name in Process and ProcessModel
         else:
