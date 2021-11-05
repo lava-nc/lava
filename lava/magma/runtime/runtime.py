@@ -9,14 +9,17 @@ import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.compiler.exec_var import AbstractExecVar
+from lava.magma.core.process.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
+    import MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure.factory import \
+    MessageInfrastructureFactory
 from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, \
     enum_to_np, REQ_TYPE
 from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-from multiprocessing import Process as UnixProcess
-from multiprocessing.managers import SharedMemoryManager
 from lava.magma.compiler.builder import AbstractProcessBuilder, \
     RuntimeChannelBuilderMp, ServiceChannelBuilderMp, \
     RuntimeServiceBuilder
@@ -40,13 +43,17 @@ class Runtime:
     the APIs to start, pause, stop and wait on an execution. Execution could
     be blocking and non-blocking as specified by the run run_condition."""
 
-    def __init__(self, run_cond: AbstractRunCondition, exe: Executable):
+    def __init__(self,
+                 run_cond: AbstractRunCondition,
+                 exe: Executable,
+                 message_infrastructure_type: ActorType):
         self._run_cond: AbstractRunCondition = run_cond
         self._executable: Executable = exe
 
-        # Abstract the SharedMemoryManager to Generic Messaging Infrastructure
-        self._messaging_infrastructure: ty.Optional[SharedMemoryManager] = None
-        self._actors: ty.List[UnixProcess] = []
+        self._messaging_infrastructure_type: ActorType = \
+            message_infrastructure_type
+        self._messaging_infrastructure: \
+            ty.Optional[MessageInfrastructureInterface] = None
         self.current_ts = 0
         self._is_initialized = False
         self._is_running = False
@@ -99,16 +106,9 @@ class Runtime:
         """Returns the selected NodeCfg."""
         return self._executable.node_configs[0]
 
-    def _build_mp_actor(self, target_fn, builder):
-        """Given a target_fn starts a unix process"""
-        unix_process = UnixProcess(target=target_fn,
-                                   args=(),
-                                   kwargs={"builder": builder})
-        unix_process.start()
-        self._actors.append(unix_process)
-
     def _build_message_infrastructure(self):
-        self._messaging_infrastructure = SharedMemoryManager()
+        self._messaging_infrastructure = MessageInfrastructureFactory.create(
+            self._messaging_infrastructure_type)
         self._messaging_infrastructure.start()
 
     def _get_process_builder_for_process(self, process):
@@ -189,15 +189,17 @@ class Runtime:
                 for proc, proc_builder in process_builders.items():
                     # Assign current Runtime to process
                     proc._runtime = self
-                    self._build_mp_actor(target_fn=target_fn,
-                                         builder=proc_builder)
+                    self._messaging_infrastructure.build_actor(
+                        target_fn=target_fn,
+                        builder=proc_builder)
 
     def _build_runtime_services(self):
         runtime_service_builders = self._executable.rs_builders
         if self._executable.rs_builders:
             for sd, rs_builder in runtime_service_builders.items():
-                self._build_mp_actor(target_fn=target_fn,
-                                     builder=rs_builder)
+                self._messaging_infrastructure.build_actor(
+                    target_fn=target_fn,
+                    builder=rs_builder)
 
     def start(self, run_condition: AbstractRunCondition):
         if self._is_initialized:
@@ -259,7 +261,7 @@ class Runtime:
             else:
                 print("Runtime not started yet.")
         finally:
-            self._messaging_infrastructure.shutdown()
+            self._messaging_infrastructure.stop()
 
     def join(self):
         """Join all ports and processes"""
@@ -273,8 +275,6 @@ class Runtime:
             port.join()
         for port in self.runtime_to_service_data:
             port.join()
-        for actor in self._actors:
-            actor.join()
 
     @property
     def global_time(self):

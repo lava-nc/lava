@@ -1,16 +1,28 @@
+# Copyright (C) 2021 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+import typing as ty
 import unittest
 from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 
 from lava.magma.compiler.builder import ChannelBuilderMp
-from lava.magma.compiler.channels.interfaces import Channel
+from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.compiler.channels.pypychannel import (
     PyPyChannel,
     CspSendPort,
     CspRecvPort,
 )
+
+
+class MockMessageInterface:
+    def __init__(self, smm):
+        self.smm = smm
+
+    def channel_class(self, channel_type: ChannelType) -> ty.Type:
+        return PyPyChannel
 
 
 # ToDo: (AW) This test does not work for me. Something broken with d_type.
@@ -24,7 +36,7 @@ class TestChannelBuilder(unittest.TestCase):
                 name="mock", shape=(1, 2), d_type=np.int32,
                 port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=PyPyChannel,
+                channel_type=ChannelType.PyPy,
                 src_port_initializer=port_initializer,
                 dst_port_initializer=port_initializer,
                 src_process=None,
@@ -32,7 +44,8 @@ class TestChannelBuilder(unittest.TestCase):
             )
 
             smm.start()
-            channel: Channel = channel_builder.build(smm)
+            mock = MockMessageInterface(smm)
+            channel: Channel = channel_builder.build(mock)
             assert isinstance(channel, PyPyChannel)
             assert isinstance(channel.src_port, CspSendPort)
             assert isinstance(channel.dst_port, CspRecvPort)
