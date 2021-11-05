@@ -21,8 +21,8 @@ license = ["BSD-3-Clause", "LGPL-2.1"]
 
 @init
 def set_properties(project):
-    project.set_property("dir_source_main_python", "src/python")
-    project.set_property("dir_source_unittest_python", "tests/python")
+    project.set_property("dir_source_main_python", "src")
+    project.set_property("dir_source_unittest_python", "tests")
     project.set_property("dir_source_main_scripts", "scripts")
     project.set_property("dir_docs", "docs")
 
@@ -62,8 +62,8 @@ def set_properties(project):
 
 @init(environments="unit")
 def set_properties_unit(project):
-    project.set_property("dir_source_main_python", "src/python")
-    project.set_property("dir_source_unittest_python", "tests/python")
+    project.set_property("dir_source_main_python", "src")
+    project.set_property("dir_source_unittest_python", "tests")
     project.set_property("dir_source_main_scripts", "scripts")
     project.set_property("dir_docs", "docs")
 
