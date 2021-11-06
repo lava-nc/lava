@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.decorator import implements, requires, tags
+from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -202,59 +202,57 @@ class Decorators(unittest.TestCase):
                     pass
 
     def test_tags(self):
-        """Checks 'tags' decorator"""
-        # Define minimal ProcModel that requires a single 'AbstractResource'
-        @tags('keyword1', 'keyword2')
+        """Checks 'tag' decorator"""
+        # Define minimal ProcModel and tag it
+        @tag('keyword1', 'keyword2')
         class TestModel(AbstractProcessModel):
             def run(self):
                 pass
 
-        self.assertListEqual(TestModel.tag_list, ['keyword1', 'keyword2'])
-
-        @tags('keyword1', ['keyword2', 'keyword3'])
-        class TestModel2(AbstractProcessModel):
-            def run(self):
-                pass
-
-        self.assertListEqual(TestModel2.tag_list, ['keyword1', 'keyword2',
-                                                   'keyword3'])
+        self.assertListEqual(TestModel.tags, ['keyword1', 'keyword2'])
 
     def test_tags_subclassing(self):
         """Checks that tags are additive over sub-classing/inheritance"""
 
-        # Define minimal ProcModel that requires a single 'AbstractResource'
-        @tags('loihi-1')
+        # Define minimal ProcModel and tag it with first tag
+        @tag('loihi-1')
         class TestModel(AbstractProcessModel):
             def run(self):
                 pass
 
-        # This adds CPU to the list of required resources
-        self.assertEqual(TestModel.tag_list, ['loihi-1'])
+        self.assertEqual(TestModel.tags, ['loihi-1'])
 
-        # Sub classes can add further requirements
-        @tags('hardware')
+        # Sub classes can add further tags
+        @tag('hardware')
         class SubTestModel(TestModel):
             pass
 
-        # This adds Loihi1NeuroCore to the list of requirements...
-        self.assertEqual(SubTestModel.tag_list,
+        # Sub-classed ProcessModel should inherit parent's tags...
+        self.assertEqual(SubTestModel.tags,
                          ['loihi-1', 'hardware'])
 
-        # ...but does not modify requirements of parent class
-        self.assertEqual(TestModel.tag_list, ['loihi-1'])
+        # ...but does not modify the tags of parent class
+        self.assertEqual(TestModel.tags, ['loihi-1'])
 
     def test_tags_failing(self):
-        """Checks if 'tags' decorator fails appropriately"""
+        """Checks if 'tag' decorator fails appropriately"""
 
         # Only decorating ProcessModels is allowed
         with self.assertRaises(AssertionError):
-            @tags('some-tag')
+            @tag('some-tag')
             class SomeClass(AbstractProcess):
                 pass
 
-        # Only strings or list of strings can be keywords
+        # Tags should be just comma-separated keywords
         with self.assertRaises(AssertionError):
-            @tags('tag1', [['tag2'], 'tag4'])
+            @tag('keyword1', ['keyword2', 'keyword3'])
+            class TestModel2(AbstractProcessModel):
+                def run(self):
+                    pass
+
+        # Tags should be just comma-separated keywords
+        with self.assertRaises(AssertionError):
+            @tag('tag1', [['tag2'], 'tag4'])
             class SomeOtherClass(AbstractProcess):
                 pass
 
