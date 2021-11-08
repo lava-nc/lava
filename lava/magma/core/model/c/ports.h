@@ -1,5 +1,6 @@
 #ifndef _PORTS_H
 #define _PORTS_H
+
 #include <stdint.h>
 
 #ifdef PYTHON
@@ -9,18 +10,17 @@ typedef PyObject Port;
 #include "csp.h"
 typedef struct {
     CspPort *csp_ports;
-    uint32_t n_csp_ports;
-    uint8_t type;
-    uint8_t precision;
+    uint8_t n_csp_ports;
+    uint8_t bits;
     uint16_t size;
 } Port;
 
 #endif
 
-int port_send(Port *port,void* data);
-int port_recv(Port *port,void** data);
-int port_peek(Port *port);
-int port_probe(Port *port);
+size_t port_send(Port *port,void* data);
+size_t port_recv(Port *port,void** data);
+size_t port_peek(Port *port);
+size_t port_probe(Port *port);
 
 #endif
 
