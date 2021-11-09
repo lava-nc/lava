@@ -5,7 +5,6 @@ import typing as ty
 from abc import abstractmethod
 from enum import Enum
 import functools as ft
-import operator as op
 
 import numpy as np
 
@@ -40,10 +39,18 @@ class PyInPort(AbstractPyPort):
 
 class PyInPortVectorDense(PyInPort):
     def recv(self) -> np.ndarray:
-        return ft.reduce(lambda acc,csp_port:acc+csp_port.recv(),self._csp_ports,np.zeros(self._shape, self._d_type))
+        return ft.reduce(
+            lambda acc, csp_port: acc + csp_port.recv(),
+            self._csp_ports,
+            np.zeros(self._shape, self._d_type),
+        )
 
     def peek(self) -> np.ndarray:
-        return ft.reduce(lambda acc,csp_port:acc+csp_port.peek(),self._csp_ports,np.zeros(self._shape, self._d_type))
+        return ft.reduce(
+            lambda acc, csp_port: acc + csp_port.peek(),
+            self._csp_ports,
+            np.zeros(self._shape, self._d_type),
+        )
 
 
 class PyInPortVectorSparse(PyInPort):

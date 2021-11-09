@@ -12,14 +12,16 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort
 #  inference to determine if there is a send/peek/recv/probe method.
 class AbstractPortImplementation(ABC):
     def __init__(
-            self,
-            process_model: "AbstractProcessModel",  # noqa: F821
-            csp_ports: ty.List[AbstractCspPort] = [],
-            shape: ty.Tuple[int, ...] = tuple(),
-            d_type: type = int 
-            ):
+        self,
+        process_model: "AbstractProcessModel",  # noqa: F821
+        csp_ports: ty.List[AbstractCspPort] = [],
+        shape: ty.Tuple[int, ...] = tuple(),
+        d_type: type = int,
+    ):
         self._process_model = process_model
-        self._csp_ports = csp_ports if isinstance(csp_ports,list) else [csp_ports]
+        self._csp_ports = (
+            csp_ports if isinstance(csp_ports, list) else [csp_ports]
+        )
         self._shape = shape
         self._d_type = d_type
 

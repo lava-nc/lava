@@ -169,7 +169,8 @@ class TestPyProcessBuilder(unittest.TestCase):
         # name
         self.assertEqual(list(b.vars.values()), v)
         self.assertEqual(list(b.py_ports.values()), py_ports)
-        self.assertEqual(list(v for vv in b.csp_ports.values() for v in vv), csp_ports)
+        self.assertEqual(list(v for vv in b.csp_ports.values()
+                         for v in vv), csp_ports)
         self.assertEqual(b.vars["v1_scalar"], v[0])
         self.assertEqual(b.py_ports["in_port"], py_ports[0])
         self.assertEqual(b.csp_ports["out_port"], [csp_ports[1]])
@@ -329,7 +330,8 @@ class TestPyProcessBuilder(unittest.TestCase):
         )
         self.assertTrue(
             np.array_equal(
-                pm.v4_tensor, np.array([[1, 2], [3, 4], [5, 6]], dtype=np.int32)
+                pm.v4_tensor, np.array(
+                    [[1, 2], [3, 4], [5, 6]], dtype=np.int32)
             )
         )
 
