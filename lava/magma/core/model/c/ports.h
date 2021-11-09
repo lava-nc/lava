@@ -17,10 +17,10 @@ typedef struct {
 
 #endif
 
-size_t port_send(Port *port,void* data);
-size_t port_recv(Port *port,void** data);
-size_t port_peek(Port *port);
-size_t port_probe(Port *port);
+size_t send(Port *port,void* data);
+size_t recv(Port *port,void** data);
+size_t peek(Port *port);
+size_t probe(Port *port);
 
 #endif
 
