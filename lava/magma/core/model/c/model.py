@@ -25,7 +25,7 @@ class AbstractCProcessModel(AbstractProcessModel, ABC):
         By default, it should be in same directory as Python module of
         Process and Executable.
         """
-        pass
+        pass 
 
 
 class AbstractParallelCProcessModel(AbstractCProcessModel, ABC):
