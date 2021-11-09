@@ -44,8 +44,8 @@ class MultiProcessing(MessageInfrastructureInterface):
             SyncDomain, 'AbstractRuntimeServiceBuilder']]) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
         system_process = SystemProcess(target=target_fn,
-                                     args=(),
-                                     kwargs={"builder": builder})
+                                       args=(),
+                                       kwargs={"builder": builder})
         system_process.start()
         self._actors.append(system_process)
         return system_process
