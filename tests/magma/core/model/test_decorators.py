@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -200,6 +200,61 @@ class Decorators(unittest.TestCase):
             class TestModel(AbstractProcessModel):
                 def run(self):
                     pass
+
+    def test_tags(self):
+        """Checks 'tag' decorator"""
+        # Define minimal ProcModel and tag it
+        @tag('keyword1', 'keyword2')
+        class TestModel(AbstractProcessModel):
+            def run(self):
+                pass
+
+        self.assertListEqual(TestModel.tags, ['keyword1', 'keyword2'])
+
+    def test_tags_subclassing(self):
+        """Checks that tags are additive over sub-classing/inheritance"""
+
+        # Define minimal ProcModel and tag it with first tag
+        @tag('loihi-1')
+        class TestModel(AbstractProcessModel):
+            def run(self):
+                pass
+
+        self.assertEqual(TestModel.tags, ['loihi-1'])
+
+        # Sub classes can add further tags
+        @tag('hardware')
+        class SubTestModel(TestModel):
+            pass
+
+        # Sub-classed ProcessModel should inherit parent's tags...
+        self.assertEqual(SubTestModel.tags,
+                         ['loihi-1', 'hardware'])
+
+        # ...but does not modify the tags of parent class
+        self.assertEqual(TestModel.tags, ['loihi-1'])
+
+    def test_tags_failing(self):
+        """Checks if 'tag' decorator fails appropriately"""
+
+        # Only decorating ProcessModels is allowed
+        with self.assertRaises(AssertionError):
+            @tag('some-tag')
+            class SomeClass(AbstractProcess):
+                pass
+
+        # Tags should be just comma-separated keywords
+        with self.assertRaises(AssertionError):
+            @tag('keyword1', ['keyword2', 'keyword3'])
+            class TestModel2(AbstractProcessModel):
+                def run(self):
+                    pass
+
+        # Tags should be just comma-separated keywords
+        with self.assertRaises(AssertionError):
+            @tag('tag1', [['tag2'], 'tag4'])
+            class SomeOtherClass(AbstractProcess):
+                pass
 
 
 if __name__ == "__main__":
