@@ -1,3 +1,7 @@
+# Copyright (C) 2021 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+import typing as ty
 from collections import namedtuple
 from dataclasses import dataclass
 
@@ -32,11 +36,7 @@ class LoihiProtocol(AbstractSyncProtocol):
         Proc_Function_With_Guard("host_guard", "run_host_mgmt"),
         Proc_Function_With_Guard(None, "run_spk"),
     ]
-    # Synchronizer classes that implement protocol in a domain
-    # TODO: Convert this to a dictionary runtime_service = {Node: Class}
-    # runtime_service = {CPU: LoihiPyRuntimeService, Loihi1:
-    # LoihiCRuntimeService}
 
     @property
-    def runtime_service(self):
+    def synchronizer(self) -> ty.Dict[ty.Type, ty.Type]:
         return {CPU: LoihiPyRuntimeService, NeuroCore: LoihiCRuntimeService}

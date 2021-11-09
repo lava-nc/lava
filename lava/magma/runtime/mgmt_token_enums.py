@@ -51,3 +51,12 @@ class MGMT_RESPONSE:
     """Signifies Termination"""
     PAUSED = enum_to_np(-2)
     """Signifies Execution State to be Paused"""
+
+
+class SynchronizationPhase:
+    """Phases of a synchronizer"""
+    SPK = enum_to_np(1)
+    PRE_MGMT = enum_to_np(2)
+    LRN = enum_to_np(3)
+    POST_MGMT = enum_to_np(4)
+    HOST = enum_to_np(5)

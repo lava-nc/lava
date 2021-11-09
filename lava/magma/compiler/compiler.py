@@ -32,7 +32,7 @@ from lava.magma.core.model.nc.model import AbstractNcProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.resources import CPU, NeuroCore
+from lava.magma.core.resources import CPU, NeuroCore, AbstractComputeResource
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
@@ -564,13 +564,12 @@ class Compiler:
         for node, sync_domains in node_to_sync_domain_dict.items():
             sync_domain_set = set(sync_domains)
             for sync_domain in sync_domain_set:
+                resource: ty.Type[AbstractComputeResource] = CPU
                 if NeuroCore in node.node_type.resources:
-                    rs_class = sync_domain.protocol.runtime_service[NeuroCore]
-                else:
-                    rs_class = sync_domain.protocol.runtime_service[CPU]
+                    resource = NeuroCore
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
                 rs_builder = \
-                    RuntimeServiceBuilder(rs_class=rs_class,
+                    RuntimeServiceBuilder(compute_resource_type=resource,
                                           protocol=sync_domain.protocol,
                                           runtime_service_id=rs_id,
                                           model_ids=model_ids)

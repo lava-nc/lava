@@ -46,10 +46,18 @@ class AbstractCspSendPort(AbstractCspPort):
     def send(self, data: np.ndarray):
         pass
 
+    @abstractmethod
+    def probe(self):
+        pass
+
 
 class AbstractCspRecvPort(AbstractCspPort):
     @abstractmethod
     def recv(self) -> np.ndarray:
+        pass
+
+    @abstractmethod
+    def probe(self):
         pass
 
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import unittest
+import typing as ty
 
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.compiler import Compiler
@@ -57,15 +58,15 @@ class MockRuntimeService:
 # Define minimal Protocol to be implemented
 class ProtocolA(AbstractSyncProtocol):
     @property
-    def runtime_service(self):
-        return {CPU: MockRuntimeService()}
+    def synchronizer(self) -> ty.Dict[ty.Type, ty.Type]:
+        return {CPU: MockRuntimeService}
 
 
 # Define minimal Protocol to be implemented
 class ProtocolB(AbstractSyncProtocol):
     @property
-    def runtime_service(self):
-        return {CPU: MockRuntimeService()}
+    def synchronizer(self) -> ty.Dict[ty.Type, ty.Type]:
+        return {CPU: MockRuntimeService}
 
 
 # A minimal PyProcModel implementing ProcA

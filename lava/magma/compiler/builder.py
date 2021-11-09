@@ -4,11 +4,11 @@
 
 import typing as ty
 
+from lava.magma.core.resources import AbstractComputeResource
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
-from lava.magma.runtime.runtime_service import PyRuntimeService, \
-    AbstractRuntimeService
+from lava.magma.runtime.runtime_service import RuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -42,8 +42,8 @@ class AbstractProcessBuilder(ABC):
 
 
 class AbstractRuntimeServiceBuilder(ABC):
-    def __init__(self, rs_class, sync_protocol):
-        self.rs_class = rs_class
+    def __init__(self, compute_resource_type, sync_protocol):
+        self.compute_resource_type = compute_resource_type
         self.sync_protocol = sync_protocol
 
     @property
@@ -369,11 +369,12 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
     """Run Time Service Builder
     """
     def __init__(self,
-                 rs_class: ty.Type[AbstractRuntimeService],
+                 compute_resource_type: ty.Type[AbstractComputeResource],
                  protocol: AbstractSyncProtocol,
                  runtime_service_id: int,
                  model_ids: ty.List[int]):
-        super(RuntimeServiceBuilder, self).__init__(rs_class, protocol)
+        super(RuntimeServiceBuilder, self).__init__(compute_resource_type,
+                                                    protocol)
         self._runtime_service_id = runtime_service_id
         self._model_ids: ty.List[int] = model_ids
         self.csp_send_port: ty.Dict[str, CspSendPort] = {}
@@ -413,14 +414,15 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
             if isinstance(port, CspRecvPort):
                 self.csp_proc_recv_port.update({port.name: port})
 
-    def build(self) -> PyRuntimeService:
+    def build(self) -> RuntimeService:
         """Build Runtime Service
 
         Returns
         -------
         PyRuntimeService
         """
-        rs = self.rs_class(protocol=self.sync_protocol)
+        rs = RuntimeService(protocol=self.sync_protocol,
+                            compute_resource_type=self.compute_resource_type)
         rs.runtime_service_id = self._runtime_service_id
         rs.model_ids = self._model_ids
 
