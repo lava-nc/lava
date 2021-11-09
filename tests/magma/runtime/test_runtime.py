@@ -11,6 +11,7 @@ from lava.magma.runtime.runtime import Runtime
 
 class TestRuntime(unittest.TestCase):
     def test_runtime_creation(self):
+        """Tests runtime constructor"""
         exe: Executable = Executable()
         run_cond: AbstractRunCondition = RunSteps(num_steps=10)
         mp = ActorType.MultiProcessing
@@ -23,6 +24,7 @@ class TestRuntime(unittest.TestCase):
         ), f"Expected type {expected_type} doesn't match {(type(runtime))}"
 
     def test_executable_node_config_assertion(self):
+        """Tests runtime constructions with expected constraints"""
         exec: Executable = Executable()
         run_cond: AbstractRunCondition = RunSteps(num_steps=10)
 

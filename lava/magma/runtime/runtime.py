@@ -178,7 +178,8 @@ class Runtime:
     # ToDo: (AW) Why not pass the builder as an argument to the mp.Process
     #  constructor which will then be passed to the target function?
     def _build_processes(self):
-        process_builders_collection = [
+        process_builders_collection: ty.List[
+            ty.Dict[AbstractProcess, AbstractProcessBuilder]] = [
             self._executable.py_builders,
             self._executable.c_builders,
             self._executable.nc_builders,

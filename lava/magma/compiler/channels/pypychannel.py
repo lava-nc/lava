@@ -15,8 +15,9 @@ from lava.magma.compiler.channels.interfaces import (
     AbstractCspSendPort,
     AbstractCspRecvPort,
 )
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
-    import MessageInfrastructureInterface
+if ty.TYPE_CHECKING:
+    from lava.magma.runtime.message_infrastructure\
+        .message_infrastructure_interface import MessageInfrastructureInterface
 
 
 @dataclass
@@ -244,7 +245,7 @@ class PyPyChannel(Channel):
     them inside a common structure. We call this a PyPyChannel"""
 
     def __init__(self,
-                 message_infrastructure: MessageInfrastructureInterface,
+                 message_infrastructure: 'MessageInfrastructureInterface',
                  src_name,
                  dst_name,
                  shape,
