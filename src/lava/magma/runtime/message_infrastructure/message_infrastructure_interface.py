@@ -30,7 +30,7 @@ class MessageInfrastructureInterface(ABC):
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
             SyncDomain, 'AbstractRuntimeServiceBuilder']]):
-        """Given a target_fn starts a unix process"""
+        """Given a target_fn starts a system process"""
         pass
 
     @property

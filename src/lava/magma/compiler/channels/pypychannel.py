@@ -27,7 +27,6 @@ class Proto:
     nbytes: int
 
 
-# ToDo: (AW) Do not create any class attributes outside of __init__
 class CspSendPort(AbstractCspSendPort):
     """
     CspSendPort is a low level send port implementation based on CSP
@@ -35,22 +34,16 @@ class CspSendPort(AbstractCspSendPort):
     """
 
     def __init__(self, name, shm, proto, size, req, ack):
-        """[summary]
+        """Instantiates CspSendPort object and class attributes
 
         Parameters
         ----------
         name : str
-            [description]
-        shm : [type]
-            [description]
-        proto : [type]
-            [description]
-        size : [type]
-            [description]
-        req : [type]
-            [description]
-        ack : [type]
-            [description]
+        shm : SharedMemory
+        proto : Proto
+        size : int
+        req : Pipe
+        ack : Pipe
         """
         self._name = name
         self._shm = shm
@@ -174,16 +167,16 @@ class CspRecvPort(AbstractCspRecvPort):
     """
 
     def __init__(self, name, shm, proto, size, req, ack):
-        """[summary]
+        """Instantiates CspRecvPort object and class attributes
 
         Parameters
         ----------
         name : str
         shm : SharedMemory
-        proto : [type]
+        proto : Proto
         size : int
-        req : [type]
-        ack : [type]
+        req : Pipe
+        ack : Pipe
         """
         self._name = name
         self._shm = shm
@@ -283,7 +276,7 @@ class PyPyChannel(Channel):
                  shape,
                  dtype,
                  size):
-        """[summary]
+        """Instantiates PyPyChannel object and class attributes
 
         Parameters
         ----------
