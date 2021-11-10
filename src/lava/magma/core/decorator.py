@@ -102,3 +102,65 @@ def requires(*args: ty.Union[ty.Type[AbstractResource],
         return cls
 
     return decorate_process_model
+
+
+def tag(*args: ty.Union[str, ty.List[str]]):
+    """
+    Decorator for ProcessModel to add a class variable (a list of tags) to
+    ProcessModel class, which further distinguishes ProcessModels
+    implementing the same Process, with the same type and requiring the same
+    ComputeResources.
+
+    For example, a user may write multiple ProcessModels in Python (
+    `PyProcessModels`), requiring CPU for execution (`@requires(CPU)`). The
+    compiler selects the appropriate ProcessModel via `RunConfig` using
+    the keywords stored in the list of tags set by this decorator.
+
+    The list of tags is additive over inheritance. Which means, if `@tag`
+    decorates a child class, whose parent is already decorated, then the new
+    keywords are appended to the tag-list inherited from the parent.
+
+    Parameters
+    ----------
+    args: keywords that tag a ProcessModel
+
+    Returns
+    -------
+    Decorated class
+
+    Examples
+    --------
+    @implements(proc=ExampleProcess)
+    @tag('bit-accurate', 'loihi')
+    class ExampleProcModel(AbstractProcessModel):...
+        -> these tags identify a particular ProcessModel as being
+        bit-accurate with Loihi hardware platform. Which means,
+        the numerical output produced by such a ProcessModel on a CPU would be
+        exactly same as that of Loihi.
+    """
+
+    arg_list = list(args)
+    tags = []
+
+    for arg in arg_list:
+        if isinstance(arg, str):
+            tags.append(arg)
+        else:
+            raise AssertionError("Invalid input to the 'tags' decorator. "
+                                 "Valid input should be comma-separated "
+                                 "keywords as strings")
+
+    def decorate_process_model(cls: type):
+        if not issubclass(cls, AbstractProcessModel):
+            raise AssertionError("Decorated class must be a subclass "
+                                 "of 'AbstractProcessModel'.")
+        # Check existing 'tags' from parent in case of sub-classing
+        if hasattr(cls, 'tags'):
+            super_tags = cls.tags.copy()
+            # Add to the parent's tags
+            setattr(cls, 'tags', super_tags + tags)
+        else:
+            setattr(cls, 'tags', tags)
+        return cls
+
+    return decorate_process_model

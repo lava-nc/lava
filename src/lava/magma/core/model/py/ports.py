@@ -4,6 +4,7 @@
 import typing as ty
 from abc import abstractmethod
 from enum import Enum
+import functools as ft
 
 import numpy as np
 
@@ -38,16 +39,18 @@ class PyInPort(AbstractPyPort):
 
 class PyInPortVectorDense(PyInPort):
     def recv(self) -> np.ndarray:
-        if self._csp_port:
-            return self._csp_port.recv()
-        else:
-            return np.zeros(self._shape, self._d_type)
+        return ft.reduce(
+            lambda acc, csp_port: acc + csp_port.recv(),
+            self._csp_ports,
+            np.zeros(self._shape, self._d_type),
+        )
 
     def peek(self) -> np.ndarray:
-        if self._csp_port:
-            return self._csp_port.peek()
-        else:
-            return np.zeros(self._shape, self._d_type)
+        return ft.reduce(
+            lambda acc, csp_port: acc + csp_port.peek(),
+            self._csp_ports,
+            np.zeros(self._shape, self._d_type),
+        )
 
 
 class PyInPortVectorSparse(PyInPort):
@@ -107,8 +110,8 @@ class PyOutPort(AbstractPyPort):
 class PyOutPortVectorDense(PyOutPort):
     def send(self, data: np.ndarray):
         """Sends data only if port is not dangling."""
-        if self._csp_port:
-            self._csp_port.send(data)
+        for csp_port in self._csp_ports:
+            csp_port.send(data)
 
 
 class PyOutPortVectorSparse(PyOutPort):

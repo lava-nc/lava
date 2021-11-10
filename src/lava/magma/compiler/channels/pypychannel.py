@@ -15,6 +15,9 @@ from lava.magma.compiler.channels.interfaces import (
     AbstractCspSendPort,
     AbstractCspRecvPort,
 )
+if ty.TYPE_CHECKING:
+    from lava.magma.runtime.message_infrastructure\
+        .message_infrastructure_interface import MessageInfrastructureInterface
 
 
 @dataclass
@@ -273,12 +276,18 @@ class PyPyChannel(Channel):
     """Helper class to create the set of send and recv port and encapsulate
     them inside a common structure. We call this a PyPyChannel"""
 
-    def __init__(self, smm, src_name, dst_name, shape, dtype, size):
+    def __init__(self,
+                 message_infrastructure: 'MessageInfrastructureInterface',
+                 src_name,
+                 dst_name,
+                 shape,
+                 dtype,
+                 size):
         """[summary]
 
         Parameters
         ----------
-        smm : SharedMemory
+        message_infrastructure: MessageInfrastructureInterface
         src_name : str
         dst_name : str
         shape : ty.Tuple[int, ...]
@@ -286,6 +295,7 @@ class PyPyChannel(Channel):
         size : int
         """
         nbytes = np.prod(shape) * np.dtype(dtype).itemsize
+        smm = message_infrastructure.smm
         shm = smm.SharedMemory(int(nbytes * size))
         req = Pipe(duplex=False)
         ack = Pipe(duplex=False)

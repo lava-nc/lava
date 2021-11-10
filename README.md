@@ -138,8 +138,6 @@ $  pyb analyze
 
 # Run unit tests
 $  pyb -E unit
-# Alternately
-$  python -m unittest discover -s tests -p "test_*.py" -vvv
 
 # Generate documentation
 $  pyb sphinx_generate_documentation
