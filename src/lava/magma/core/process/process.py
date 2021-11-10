@@ -248,6 +248,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         # Current runtime environment
         self._runtime: ty.Optional[Runtime] = None
 
+    def __del__(self):
+        """On destructor call automatically
+        stop the process.
+        """
+        self.stop()
+
     def _post_init(self):
         """Called after __init__() method of any sub class via
         ProcessMetaClass to finalize initialization leading to following

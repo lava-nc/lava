@@ -57,6 +57,13 @@ class Runtime:
         self.service_to_runtime_data: ty.Iterable[CspRecvPort] = []
         self.runtime_to_service_data: ty.Iterable[CspSendPort] = []
 
+    def __del__(self):
+        """On destructor call automatically
+        stop the Runtime.
+        """
+        if self._is_started:
+            self.stop()
+
     def initialize(self):
         """Initializes the runtime"""
         # Right now assume there is only 1 node config
