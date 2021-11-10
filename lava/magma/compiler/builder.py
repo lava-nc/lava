@@ -5,8 +5,10 @@
 import typing as ty
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.runtime_service import PyRuntimeService, \
-    AbstractRuntimeService
+from lava.magma.runtime.runtime_service import (
+    PyRuntimeService,
+    AbstractRuntimeService,
+)
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -19,13 +21,20 @@ from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 from dataclasses import dataclass
 
-from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspSendPort, \
-    CspRecvPort
+from lava.magma.compiler.channels.pypychannel import (
+    PyPyChannel,
+    CspSendPort,
+    CspRecvPort,
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer
-from lava.magma.core.model.py.ports import AbstractPyPort, \
-    PyInPort, PyOutPort, PyRefPort
+from lava.magma.core.model.py.ports import (
+    AbstractPyPort,
+    PyInPort,
+    PyOutPort,
+    PyRefPort,
+)
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel
 
 
@@ -52,7 +61,8 @@ class AbstractRuntimeServiceBuilder(ABC):
 
     def build(self):
         raise NotImplementedError(
-            "build function for RuntimeServiceBuilder is not implemented")
+            "build function for RuntimeServiceBuilder is not implemented"
+        )
 
 
 # ToDo: Some of this implementation may actually go to AbstractProcessBuilder
@@ -80,16 +90,16 @@ class PyProcessBuilder(AbstractProcessBuilder):
     locally, PyInPorts and PyOutPorts must be fed manually with data.
     """
 
-    def __init__(self,
-                 proc_model: ty.Type[AbstractPyProcessModel],
-                 model_id: int):
+    def __init__(
+        self, proc_model: ty.Type[AbstractPyProcessModel], model_id: int
+    ):
         if not issubclass(proc_model, AbstractPyProcessModel):
             raise AssertionError("Is not a subclass of AbstractPyProcessModel")
         self._proc_model = proc_model
         self._model_id = model_id
         self.vars: ty.Dict[str, VarInitializer] = {}
         self.py_ports: ty.Dict[str, PortInitializer] = {}
-        self.csp_ports: ty.Dict[str, AbstractCspPort] = {}
+        self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
 
@@ -125,7 +135,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
     @staticmethod
     def _check_not_assigned_yet(
-            collection: dict, keys: ty.Iterable[str], m_type: str):
+        collection: dict, keys: ty.Iterable[str], m_type: str
+    ):
         """Checks that collection dictionary not already contain given keys
         to prevent overwriting of existing elements.
 
@@ -146,7 +157,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
         for key in keys:
             if key in collection:
                 raise AssertionError(
-                    f"Member '{key}' already found in {m_type}.")
+                    f"Member '{key}' already found in {m_type}."
+                )
 
     def check_all_vars_and_ports_set(self):
         """Checks that Vars and PyPorts assigned from Process have a
@@ -160,11 +172,14 @@ class PyProcessBuilder(AbstractProcessBuilder):
         for attr_name in dir(self.proc_model):
             attr = getattr(self.proc_model, attr_name)
             if isinstance(attr, LavaPyType):
-                if attr_name not in self.vars and \
-                        attr_name not in self.py_ports:
+                if (
+                    attr_name not in self.vars
+                    and attr_name not in self.py_ports
+                ):
                     raise AssertionError(
                         f"No LavaPyType '{attr_name}' found in ProcModel "
-                        f"'{self.proc_model.__name__}'.")
+                        f"'{self.proc_model.__name__}'."
+                    )
 
     def check_lava_py_types(self):
         """Checks correctness of LavaPyTypes.
@@ -177,22 +192,26 @@ class PyProcessBuilder(AbstractProcessBuilder):
             if not isinstance(lt.cls, type):
                 raise AssertionError(
                     f"LavaPyType.cls for '{name}' is not a type in '"
-                    f"{self.proc_model.__name__}'.")
+                    f"{self.proc_model.__name__}'."
+                )
             if port_init.port_type == "InPort":
                 if not (issubclass(lt.cls, PyInPort) and lt.cls != PyInPort):
                     raise AssertionError(
                         f"LavaPyType for '{name}' must be a strict sub-type "
-                        f"of PyInPort in '{self.proc_model.__name__}'.")
+                        f"of PyInPort in '{self.proc_model.__name__}'."
+                    )
             elif port_init.port_type == "OutPort":
                 if not (issubclass(lt.cls, PyOutPort) and lt.cls != PyOutPort):
                     raise AssertionError(
                         f"LavaPyType for '{name}' must be a strict sub-type of "
-                        f"PyOutPort in '{self.proc_model.__name__}'.")
+                        f"PyOutPort in '{self.proc_model.__name__}'."
+                    )
             elif port_init.port_type == "RefPort":
                 if not (issubclass(lt.cls, PyRefPort) and lt.cls != PyRefPort):
                     raise AssertionError(
                         f"LavaPyType for '{name}' must be a strict sub-type of "
-                        f"PyRefPort in '{self.proc_model.__name__}'.")
+                        f"PyRefPort in '{self.proc_model.__name__}'."
+                    )
 
     # ToDo: Also check that Vars are initializable with var.value provided
     def set_variables(self, variables: ty.List[VarInitializer]):
@@ -237,7 +256,11 @@ class PyProcessBuilder(AbstractProcessBuilder):
         AssertionError
             PyProcessModel has no port of that name
         """
-        new_ports = {p.name: p for p in csp_ports}
+        new_ports = {}
+        for p in csp_ports:
+            new_ports.setdefault(p.name, []).extend(
+                p if isinstance(p, list) else [p]
+            )
         self._check_not_assigned_yet(
             self.csp_ports, new_ports.keys(), "csp_ports"
         )
@@ -245,13 +268,18 @@ class PyProcessBuilder(AbstractProcessBuilder):
         proc_name = self.proc_model.implements_process.__name__
         for port_name in new_ports:
             if not hasattr(self.proc_model, port_name):
-                raise AssertionError("PyProcessModel '{}' has \
-                no port named '{}'.".format(proc_name, port_name))
+                raise AssertionError(
+                    "PyProcessModel '{}' has \
+                no port named '{}'.".format(
+                        proc_name, port_name
+                    )
+                )
         # Set new CspPorts
-        self.csp_ports.update(new_ports)
+        for key, ports in new_ports.items():
+            self.csp_ports.setdefault(key, []).extend(ports)
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        """ Set RS CSP Ports
+        """Set RS CSP Ports
 
         Parameters
         ----------
@@ -301,10 +329,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
             # Build PyPort
             lt = self._get_lava_type(name)
             port_cls = ty.cast(ty.Type[AbstractPyPort], lt.cls)
-            csp_port = None
+            csp_ports = []
             if name in self.csp_ports:
-                csp_port = self.csp_ports[name]
-            port = port_cls(pm, csp_port, p.shape, lt.d_type)
+                csp_ports = self.csp_ports[name]
+                if not isinstance(csp_ports, list):
+                    csp_ports = [csp_ports]
+            port = port_cls(pm, csp_ports, p.shape, lt.d_type)
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)
@@ -353,25 +383,27 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
 
 class CProcessBuilder(AbstractProcessBuilder):
-    """C Process Builder
-    """
+    """C Process Builder"""
+
     pass
 
 
 class NcProcessBuilder(AbstractProcessBuilder):
-    """Neuromorphic Core Process Builder
-    """
+    """Neuromorphic Core Process Builder"""
+
     pass
 
 
 class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
-    """Run Time Service Builder
-    """
-    def __init__(self,
-                 rs_class: ty.Type[AbstractRuntimeService],
-                 protocol: AbstractSyncProtocol,
-                 runtime_service_id: int,
-                 model_ids: ty.List[int]):
+    """Run Time Service Builder"""
+
+    def __init__(
+        self,
+        rs_class: ty.Type[AbstractRuntimeService],
+        protocol: AbstractSyncProtocol,
+        runtime_service_id: int,
+        model_ids: ty.List[int],
+    ):
         super(RuntimeServiceBuilder, self).__init__(rs_class, protocol)
         self._runtime_service_id = runtime_service_id
         self._model_ids: ty.List[int] = model_ids
@@ -455,8 +487,8 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
 
 
 class AbstractChannelBuilder(ABC):
-    """Abstract Channel Builder
-    """
+    """Abstract Channel Builder"""
+
     pass
 
 
@@ -465,6 +497,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     """A ChannelBuilder assuming Python multi-processing is used as messaging
     and multi processing backbone.
     """
+
     channel_type: ty.Type[Channel]
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
@@ -506,9 +539,12 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     """A RuntimeServiceChannelBuilder assuming Python multi-processing is used
     as messaging and multi processing backbone.
     """
+
     channel_type: ty.Type[Channel]
-    src_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
-    dst_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
+    src_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
+    dst_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
     port_initializer: PortInitializer
 
     def build(self, messaging_infrastructure: SharedMemoryManager) -> Channel:
@@ -529,9 +565,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
             Can't build channel of type specified
         """
         if self.channel_type == PyPyChannel:
-            channel_name: str = (
-                self.port_initializer.name
-            )
+            channel_name: str = self.port_initializer.name
             return PyPyChannel(
                 messaging_infrastructure,
                 channel_name + "_src",
@@ -549,6 +583,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     """A RuntimeChannelBuilder assuming Python multi-processing is
     used as messaging and multi processing backbone.
     """
+
     channel_type: ty.Type[Channel]
     src_process: ty.Union[AbstractRuntimeServiceBuilder, ty.Type["Runtime"]]
     dst_process: ty.Union[AbstractRuntimeServiceBuilder, ty.Type["Runtime"]]
@@ -572,9 +607,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
             Can't build channel of type specified
         """
         if self.channel_type == PyPyChannel:
-            channel_name: str = (
-                self.port_initializer.name
-            )
+            channel_name: str = self.port_initializer.name
             return PyPyChannel(
                 messaging_infrastructure,
                 channel_name + "_src",
