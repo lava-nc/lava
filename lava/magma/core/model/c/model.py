@@ -1,11 +1,49 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier:  BSD-3-Clause
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
-from lava.magma.core.model.model import AbstractProcessModel
+from numpy.distutils.core import setup
+from numpy.distutils.misc_util import Configuration, get_info
+
+from importlib import import_module, invalidate_caches
+
+import numpy as np
+from typing import List, Callable
+
+from lava.magma.core.model.py.model import AbstractPyProcessModel
+
+AbstractCProcessModel = None
 
 
-class AbstractCProcessModel(AbstractProcessModel, ABC):
+class CProcessModelMeta(type):
+    """
+    Compiles the sources specified in the class definition and then generates a type that includes the custom module in its base classes
+    """
+
+    def __new__(cls, name, bases, attrs):
+        if AbstractCProcessModel and AbstractCProcessModel in bases:
+
+            def configuration(parent_package="", top_path=None):
+                config = Configuration("", parent_package, top_path)
+                config.add_extension(
+                    "custom",
+                    attrs["source_files"],
+                    extra_info=get_info("npymath"),
+                )
+                return config
+
+            setup(
+                configuration=configuration,
+                script_args=["build_ext", "--inplace"],
+            )
+            invalidate_caches()
+            module = import_module("custom")
+            # from custom import Custom
+            bases += (module.Custom, AbstractPyProcessModel)
+        return super().__new__(cls, name, bases, attrs)
+
+
+class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """Abstract interface for a C ProcessModels.
 
     Example for how variables and ports might be initialized:
@@ -17,24 +55,5 @@ class AbstractCProcessModel(AbstractProcessModel, ABC):
         du:    LavaCType(scalar, 'short int', precision=12)
     """
 
-    @property
-    @abstractmethod
-    def source_file_name(self) -> str:
-        """Returns file name of *.h and *.c file containing implementation of
-        Process behavior.
-        By default, it should be in same directory as Python module of
-        Process and Executable.
-        """
-        pass 
-
-
-class AbstractParallelCProcessModel(AbstractCProcessModel, ABC):
-    """Abstract interface for a C ProcessModel that can be distributed over
-    multiple cores.
-    Idea: This should be an implementation of a CProcessModel that can in
-    particular be distributed over multiple embedded processors to accelerate
-    sequential behavior or to provide larger contiguous virtual space of
-    spike counters.
-    """
-
-    pass
+    source_files: List[str] = None
+    
