@@ -21,8 +21,7 @@ from lava.magma.compiler.builder import PyProcessBuilder, \
     AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
     AbstractChannelBuilder, ServiceChannelBuilderMp
 from lava.magma.compiler.builder import RuntimeChannelBuilderMp
-from lava.magma.compiler.channels.interfaces import Channel
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig, Node
 from lava.magma.compiler.utils import VarInitializer, PortInitializer
@@ -483,14 +482,14 @@ class Compiler:
     @staticmethod
     def _get_channel_type(src: ty.Type[AbstractProcessModel],
                           dst: ty.Type[AbstractProcessModel]) \
-            -> ty.Type[Channel]:
+            -> ChannelType:
         """Returns appropriate ChannelType for a given (source, destination)
         pair of ProcessModels."""
 
         if issubclass(src, AbstractPyProcessModel) and issubclass(
                 dst, AbstractPyProcessModel
         ):
-            return PyPyChannel
+            return ChannelType.PyPy
         else:
             raise NotImplementedError(
                 f"No support for (source, destination) pairs of type "
@@ -596,7 +595,7 @@ class Compiler:
         sync_channel_builders: ty.List[AbstractChannelBuilder] = []
         for sync_domain in rsb:
             runtime_to_service_cmd = \
-                RuntimeChannelBuilderMp(PyPyChannel,
+                RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         Runtime,
                                         rsb[sync_domain],
                                         self._create_mgmt_port_initializer(
@@ -605,7 +604,7 @@ class Compiler:
             sync_channel_builders.append(runtime_to_service_cmd)
 
             service_to_runtime_ack = \
-                RuntimeChannelBuilderMp(PyPyChannel,
+                RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         rsb[sync_domain],
                                         Runtime,
                                         self._create_mgmt_port_initializer(
@@ -614,7 +613,7 @@ class Compiler:
             sync_channel_builders.append(service_to_runtime_ack)
 
             runtime_to_service_req = \
-                RuntimeChannelBuilderMp(PyPyChannel,
+                RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         Runtime,
                                         rsb[sync_domain],
                                         self._create_mgmt_port_initializer(
@@ -623,7 +622,7 @@ class Compiler:
             sync_channel_builders.append(runtime_to_service_req)
 
             service_to_runtime_data = \
-                RuntimeChannelBuilderMp(PyPyChannel,
+                RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         rsb[sync_domain],
                                         Runtime,
                                         self._create_mgmt_port_initializer(
@@ -632,7 +631,7 @@ class Compiler:
             sync_channel_builders.append(service_to_runtime_data)
 
             runtime_to_service_data = \
-                RuntimeChannelBuilderMp(PyPyChannel,
+                RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         Runtime,
                                         rsb[sync_domain],
                                         self._create_mgmt_port_initializer(
@@ -642,7 +641,7 @@ class Compiler:
 
             for process in sync_domain.processes:
                 service_to_process_cmd = \
-                    ServiceChannelBuilderMp(PyPyChannel,
+                    ServiceChannelBuilderMp(ChannelType.PyPy,
                                             rsb[sync_domain],
                                             process,
                                             self._create_mgmt_port_initializer(
@@ -651,7 +650,7 @@ class Compiler:
                 sync_channel_builders.append(service_to_process_cmd)
 
                 process_to_service_ack = \
-                    ServiceChannelBuilderMp(PyPyChannel,
+                    ServiceChannelBuilderMp(ChannelType.PyPy,
                                             process,
                                             rsb[sync_domain],
                                             self._create_mgmt_port_initializer(
@@ -660,7 +659,7 @@ class Compiler:
                 sync_channel_builders.append(process_to_service_ack)
 
                 service_to_process_req = \
-                    ServiceChannelBuilderMp(PyPyChannel,
+                    ServiceChannelBuilderMp(ChannelType.PyPy,
                                             rsb[sync_domain],
                                             process,
                                             self._create_mgmt_port_initializer(
@@ -669,7 +668,7 @@ class Compiler:
                 sync_channel_builders.append(service_to_process_req)
 
                 process_to_service_data = \
-                    ServiceChannelBuilderMp(PyPyChannel,
+                    ServiceChannelBuilderMp(ChannelType.PyPy,
                                             process,
                                             rsb[sync_domain],
                                             self._create_mgmt_port_initializer(
@@ -678,7 +677,7 @@ class Compiler:
                 sync_channel_builders.append(process_to_service_data)
 
                 service_to_process_data = \
-                    ServiceChannelBuilderMp(PyPyChannel,
+                    ServiceChannelBuilderMp(ChannelType.PyPy,
                                             rsb[sync_domain],
                                             process,
                                             self._create_mgmt_port_initializer(

@@ -6,10 +6,20 @@ from multiprocessing.managers import SharedMemoryManager
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
 
 
+class MockInterface:
+    def __init__(self, smm):
+        self.smm = smm
+
+
 def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
+    mock = MockInterface(smm)
     channel = PyPyChannel(
-        smm=smm, src_name=name, dst_name=name, shape=data.shape,
-        dtype=data.dtype, size=size
+        message_infrastructure=mock,
+        src_name=name,
+        dst_name=name,
+        shape=data.shape,
+        dtype=data.dtype,
+        size=size
     )
     return channel
 

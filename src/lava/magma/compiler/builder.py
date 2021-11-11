@@ -5,10 +5,10 @@
 import typing as ty
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.runtime_service import (
-    PyRuntimeService,
-    AbstractRuntimeService,
-)
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
+    import MessageInfrastructureInterface
+from lava.magma.runtime.runtime_service import PyRuntimeService, \
+    AbstractRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -16,26 +16,18 @@ if ty.TYPE_CHECKING:
     from lava.magma.runtime.runtime import Runtime
 
 from abc import ABC, abstractmethod
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 from dataclasses import dataclass
 
-from lava.magma.compiler.channels.pypychannel import (
-    PyPyChannel,
-    CspSendPort,
-    CspRecvPort,
-)
+from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer
-from lava.magma.core.model.py.ports import (
-    AbstractPyPort,
-    PyInPort,
-    PyOutPort,
-    PyRefPort,
-)
-from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel
+from lava.magma.core.model.py.ports import AbstractPyPort, \
+    PyInPort, PyOutPort, PyRefPort
+from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
+    ChannelType
 
 
 class AbstractProcessBuilder(ABC):
@@ -497,19 +489,19 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     """A ChannelBuilder assuming Python multi-processing is used as messaging
     and multi processing backbone.
     """
-
-    channel_type: ty.Type[Channel]
+    channel_type: ChannelType
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
     src_port_initializer: PortInitializer
     dst_port_initializer: PortInitializer
 
-    def build(self, messaging_infrastructure: SharedMemoryManager) -> Channel:
+    def build(self, messaging_infrastructure: MessageInfrastructureInterface) \
+            -> Channel:
         """Given the message passing framework builds a channel
 
         Parameters
         ----------
-        messaging_infrastructure : SharedMemoryManager
+        messaging_infrastructure : MessageInfrastructureInterface
 
         Returns
         -------
@@ -521,17 +513,16 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        if self.channel_type == PyPyChannel:
-            return PyPyChannel(
-                messaging_infrastructure,
-                self.src_port_initializer.name,
-                self.dst_port_initializer.name,
-                self.src_port_initializer.shape,
-                self.src_port_initializer.d_type,
-                self.src_port_initializer.size,
-            )
-        else:
-            raise Exception(f"Can't build channel of type {self.channel_type}")
+        channel_class = messaging_infrastructure.channel_class(
+            channel_type=self.channel_type)
+        return channel_class(
+            messaging_infrastructure,
+            self.src_port_initializer.name,
+            self.dst_port_initializer.name,
+            self.src_port_initializer.shape,
+            self.src_port_initializer.d_type,
+            self.src_port_initializer.size,
+        )
 
 
 @dataclass
@@ -539,20 +530,18 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     """A RuntimeServiceChannelBuilder assuming Python multi-processing is used
     as messaging and multi processing backbone.
     """
-
-    channel_type: ty.Type[Channel]
-    src_process: ty.Union[AbstractRuntimeServiceBuilder,
-                          "AbstractProcessModel"]
-    dst_process: ty.Union[AbstractRuntimeServiceBuilder,
-                          "AbstractProcessModel"]
+    channel_type: ChannelType
+    src_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
+    dst_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
     port_initializer: PortInitializer
 
-    def build(self, messaging_infrastructure: SharedMemoryManager) -> Channel:
+    def build(self, messaging_infrastructure: MessageInfrastructureInterface) \
+            -> Channel:
         """Given the message passing framework builds a channel
 
         Parameters
         ----------
-        messaging_infrastructure : SharedMemoryManager
+        messaging_infrastructure : MessageInfrastructureInterface
 
         Returns
         -------
@@ -564,18 +553,20 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        if self.channel_type == PyPyChannel:
-            channel_name: str = self.port_initializer.name
-            return PyPyChannel(
-                messaging_infrastructure,
-                channel_name + "_src",
-                channel_name + "_dst",
-                self.port_initializer.shape,
-                self.port_initializer.d_type,
-                self.port_initializer.size,
-            )
-        else:
-            raise Exception(f"Can't build channel of type {self.channel_type}")
+        channel_class = messaging_infrastructure.channel_class(
+            channel_type=self.channel_type)
+
+        channel_name: str = (
+            self.port_initializer.name
+        )
+        return channel_class(
+            messaging_infrastructure,
+            channel_name + "_src",
+            channel_name + "_dst",
+            self.port_initializer.shape,
+            self.port_initializer.d_type,
+            self.port_initializer.size,
+        )
 
 
 @dataclass
@@ -583,18 +574,18 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     """A RuntimeChannelBuilder assuming Python multi-processing is
     used as messaging and multi processing backbone.
     """
-
-    channel_type: ty.Type[Channel]
+    channel_type: ChannelType
     src_process: ty.Union[AbstractRuntimeServiceBuilder, ty.Type["Runtime"]]
     dst_process: ty.Union[AbstractRuntimeServiceBuilder, ty.Type["Runtime"]]
     port_initializer: PortInitializer
 
-    def build(self, messaging_infrastructure: SharedMemoryManager) -> Channel:
+    def build(self, messaging_infrastructure: MessageInfrastructureInterface) \
+            -> Channel:
         """Given the message passing framework builds a channel
 
         Parameters
         ----------
-        messaging_infrastructure : SharedMemoryManager
+        messaging_infrastructure : MessageInfrastructureInterface
 
         Returns
         -------
@@ -606,15 +597,17 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        if self.channel_type == PyPyChannel:
-            channel_name: str = self.port_initializer.name
-            return PyPyChannel(
-                messaging_infrastructure,
-                channel_name + "_src",
-                channel_name + "_dst",
-                self.port_initializer.shape,
-                self.port_initializer.d_type,
-                self.port_initializer.size,
-            )
-        else:
-            raise Exception(f"Can't build channel of type {self.channel_type}")
+        channel_class = messaging_infrastructure.channel_class(
+            channel_type=self.channel_type)
+
+        channel_name: str = (
+            self.port_initializer.name
+        )
+        return channel_class(
+            messaging_infrastructure,
+            channel_name + "_src",
+            channel_name + "_dst",
+            self.port_initializer.shape,
+            self.port_initializer.d_type,
+            self.port_initializer.size,
+        )
