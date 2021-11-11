@@ -15,6 +15,9 @@ from lava.magma.compiler.channels.interfaces import (
     AbstractCspSendPort,
     AbstractCspRecvPort,
 )
+if ty.TYPE_CHECKING:
+    from lava.magma.runtime.message_infrastructure\
+        .message_infrastructure_interface import MessageInfrastructureInterface
 
 
 @dataclass
@@ -24,7 +27,6 @@ class Proto:
     nbytes: int
 
 
-# ToDo: (AW) Do not create any class attributes outside of __init__
 class CspSendPort(AbstractCspSendPort):
     """
     CspSendPort is a low level send port implementation based on CSP
@@ -32,6 +34,17 @@ class CspSendPort(AbstractCspSendPort):
     """
 
     def __init__(self, name, shm, proto, size, req, ack):
+        """Instantiates CspSendPort object and class attributes
+
+        Parameters
+        ----------
+        name : str
+        shm : SharedMemory
+        proto : Proto
+        size : int
+        req : Pipe
+        ack : Pipe
+        """
         self._name = name
         self._shm = shm
         self._shape = proto.shape
@@ -42,6 +55,8 @@ class CspSendPort(AbstractCspSendPort):
         self._size = size
         self._idx = 0
         self._done = False
+        self._array = []
+        self._semaphore = None
         self.thread = None
 
     @property
@@ -66,7 +81,7 @@ class CspSendPort(AbstractCspSendPort):
             np.ndarray(
                 shape=self._shape,
                 dtype=self._dtype,
-                buffer=self._shm.buf[self._nbytes * i : self._nbytes * (i + 1)],
+                buffer=self._shm.buf[self._nbytes * i: self._nbytes * (i + 1)],
             )
             for i in range(self._size)
         ]
@@ -152,6 +167,17 @@ class CspRecvPort(AbstractCspRecvPort):
     """
 
     def __init__(self, name, shm, proto, size, req, ack):
+        """Instantiates CspRecvPort object and class attributes
+
+        Parameters
+        ----------
+        name : str
+        shm : SharedMemory
+        proto : Proto
+        size : int
+        req : Pipe
+        ack : Pipe
+        """
         self._name = name
         self._shm = shm
         self._shape = proto.shape
@@ -162,6 +188,8 @@ class CspRecvPort(AbstractCspRecvPort):
         self._ack = ack
         self._idx = 0
         self._done = False
+        self._array = []
+        self._queue = None
         self.thread = None
 
     @property
@@ -241,8 +269,26 @@ class PyPyChannel(Channel):
     """Helper class to create the set of send and recv port and encapsulate
     them inside a common structure. We call this a PyPyChannel"""
 
-    def __init__(self, smm, src_name, dst_name, shape, dtype, size):
+    def __init__(self,
+                 message_infrastructure: 'MessageInfrastructureInterface',
+                 src_name,
+                 dst_name,
+                 shape,
+                 dtype,
+                 size):
+        """Instantiates PyPyChannel object and class attributes
+
+        Parameters
+        ----------
+        message_infrastructure: MessageInfrastructureInterface
+        src_name : str
+        dst_name : str
+        shape : ty.Tuple[int, ...]
+        dtype : ty.Type[np.intc]
+        size : int
+        """
         nbytes = np.prod(shape) * np.dtype(dtype).itemsize
+        smm = message_infrastructure.smm
         shm = smm.SharedMemory(int(nbytes * size))
         req = Pipe(duplex=False)
         ack = Pipe(duplex=False)
