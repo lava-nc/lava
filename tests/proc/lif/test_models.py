@@ -85,7 +85,7 @@ class PyVecSendModel1(PyLoihiProcessModel):
         """
         Send `spikes_to_send` if current time-step requires it
         """
-        if self.send_at_times[self.current_ts-1]:
+        if self.send_at_times[self.current_ts - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -104,7 +104,7 @@ class PyVecSendModel2(PyLoihiProcessModel):
         """
         Send `spikes_to_send` if current time-step requires it
         """
-        if self.send_at_times[self.current_ts-1]:
+        if self.send_at_times[self.current_ts - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -121,7 +121,7 @@ class PySpkRecvModel1(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts-1, :] = spk_in
+        self.spk_data[self.current_ts - 1, :] = spk_in
 
 
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
@@ -135,7 +135,7 @@ class PySpkRecvModel2(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts-1, :] = spk_in
+        self.spk_data[self.current_ts - 1, :] = spk_in
 
 
 class TestLIFProcessModels(unittest.TestCase):
@@ -179,7 +179,8 @@ class TestLIFProcessModels(unittest.TestCase):
         num_steps = 8
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=(2**7)*np.ones(shape, dtype=np.float),
+                             vec_to_send=(2 ** 7) * np.ones(shape,
+                                                            dtype=np.float),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -200,7 +201,7 @@ class TestLIFProcessModels(unittest.TestCase):
             lif.run(condition=rcnd, run_cfg=rcfg)
             lif_u.append(lif.u.get()[0])
         lif.stop()
-        expected_u_timeseries = [2.**(7-j) for j in range(8)]
+        expected_u_timeseries = [2. ** (7 - j) for j in range(8)]
         self.assertListEqual(expected_u_timeseries, lif_u)
 
     def test_float_pm_impulse_dv(self):
@@ -213,7 +214,8 @@ class TestLIFProcessModels(unittest.TestCase):
         num_steps = 8
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=(2**7)*np.ones(shape, dtype=np.float),
+                             vec_to_send=(2 ** 7) * np.ones(shape,
+                                                            dtype=np.float),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -251,8 +253,8 @@ class TestLIFProcessModels(unittest.TestCase):
                              send_at_times=np.ones((num_steps,), dtype=np.bool))
         lif = LIF(shape=shape,
                   du=0, dv=0,
-                  bias=2*np.ones(shape, dtype=np.int32),
-                  bias_exp=6*np.ones(shape, dtype=np.int32),
+                  bias=2 * np.ones(shape, dtype=np.int32),
+                  bias_exp=6 * np.ones(shape, dtype=np.int32),
                   vth=8)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.out_ports.s_out.connect(lif.in_ports.a_in)
@@ -278,7 +280,7 @@ class TestLIFProcessModels(unittest.TestCase):
         num_steps = 8
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=128*np.ones(shape, dtype=np.int32),
+                             vec_to_send=128 * np.ones(shape, dtype=np.int32),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -287,7 +289,7 @@ class TestLIFProcessModels(unittest.TestCase):
                   dv=0,
                   bias=np.zeros(shape, dtype=np.int16),
                   bias_exp=np.ones(shape, dtype=np.int16),
-                  vth=256*np.ones(shape, dtype=np.int32))  # high thr, no spikes
+                  vth=256 * np.ones(shape, dtype=np.int32))
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.out_ports.s_out.connect(lif.in_ports.a_in)
         lif.out_ports.s_out.connect(spr.in_ports.s_in)
@@ -299,8 +301,8 @@ class TestLIFProcessModels(unittest.TestCase):
             lif.run(condition=rcnd, run_cfg=rcfg)
             lif_u.append(lif.u.get().astype(np.int32)[0])
         lif.stop()
-        expected_u_timeseries = [1 << (13-j) for j in range(8)]
-        expected_float_u = [1 << (7-j) for j in range(8)]
+        expected_u_timeseries = [1 << (13 - j) for j in range(8)]
+        expected_float_u = [1 << (7 - j) for j in range(8)]
         self.assertListEqual(expected_u_timeseries, lif_u)
         self.assertListEqual(expected_float_u, np.right_shift(np.array(
             lif_u), 6).tolist())
@@ -320,7 +322,7 @@ class TestLIFProcessModels(unittest.TestCase):
         num_steps = 8
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=128*np.ones(shape, dtype=np.int32),
+                             vec_to_send=128 * np.ones(shape, dtype=np.int32),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -329,7 +331,7 @@ class TestLIFProcessModels(unittest.TestCase):
                   dv=2048,  # decay_v = 1/2
                   bias=np.zeros(shape, dtype=np.int16),
                   bias_exp=np.ones(shape, dtype=np.int16),
-                  vth=256*np.ones(shape, dtype=np.int32))  # high thr, no spikes
+                  vth=256 * np.ones(shape, dtype=np.int32))
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.out_ports.s_out.connect(lif.in_ports.a_in)
         lif.out_ports.s_out.connect(spr.in_ports.s_in)

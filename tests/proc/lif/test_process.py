@@ -11,9 +11,9 @@ class TestLIFProcess(unittest.TestCase):
     def test_init(self):
         """Tests instantiation of LIF"""
         lif = LIF(shape=(100,),
-                  du=100*np.ones((100,), dtype=np.float),
+                  du=100 * np.ones((100,), dtype=np.float),
                   dv=np.ones((100,), dtype=np.float),
-                  bias=2*np.ones((100,), dtype=np.float),
+                  bias=2 * np.ones((100,), dtype=np.float),
                   bias_exp=np.ones((100,), dtype=np.float),
                   vth=np.ones((100,), dtype=np.float))
 
