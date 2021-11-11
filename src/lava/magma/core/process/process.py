@@ -250,8 +250,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         self._runtime: ty.Optional[Runtime] = None
 
     def __del__(self):
-        """On destructor call automatically
-        stop the process.
+        """On destruction, terminate Runtime automatically to
+        free compute resources.
         """
         self.stop()
 
