@@ -65,8 +65,8 @@ class Runtime:
         self.runtime_to_service_data: ty.Iterable[CspSendPort] = []
 
     def __del__(self):
-        """On destructor call automatically
-        stop the Runtime.
+        """On destruction, terminate Runtime automatically to 
+        free compute resources.
         """
         if self._is_started:
             self.stop()
