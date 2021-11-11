@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
+from enum import IntEnum
+
 import numpy as np
 from abc import ABC, abstractmethod
 
@@ -61,3 +63,10 @@ class Channel(ABC):
     @abstractmethod
     def dst_port(self) -> AbstractCspRecvPort:
         pass
+
+
+class ChannelType(IntEnum):
+    """Type of a channel given the two process models"""
+    PyPy = 0
+    CPy = 1
+    PyC = 2

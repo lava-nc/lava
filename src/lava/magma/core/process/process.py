@@ -4,6 +4,7 @@
 import typing as ty
 from _collections import OrderedDict
 
+from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.process.ports.ports import \
@@ -383,7 +384,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """
         if not self._runtime:
             executable = self.compile(run_cfg)
-            self._runtime = Runtime(condition, executable)
+            self._runtime = Runtime(condition,
+                                    executable,
+                                    ActorType.MultiProcessing)
             self._runtime.initialize()
 
         self._runtime.start(condition)
