@@ -28,32 +28,29 @@ def create_message(fmt, n_elem, data) -> PyPortMessage:
     msg_header = PyPortMessageHeader(fmt, n_elem)
     msg_payload = PyPortMessagePayload(data)
     return PyPortMessage(msg_header,
-                         payload=msg_payload)
+                         msg_payload)
 
 
 class TestPyPorts(unittest.TestCase):
 
     def message_creation():
-        VectorDenseMessage = create_message(
+        return create_message(
             PortMessageFormat.VECTOR_DENSE,
             2,
             np.random.randint(5, size=(2, 4))
-        )
-        VectorSparseMessage = create_message(
-            PortMessageFormat.SCALAR_DENSE,
+        ), create_message(
+            PortMessageFormat.VECTOR_SPARSE,
             5,
             sparse.random(5, 5, density=0.05)
-        )
-        ScalarDenseMessage = create_message(
+        ), create_message(
             PortMessageFormat.SCALAR_DENSE,
             4,
             np.random.randint(5, size=(1, 4))
+        ), create_message(
+            PortMessageFormat.SCALAR_SPARSE,
+            4,
+            np.random.randint(5, size=(2, 4))
         )
-        # ScalarSparseMessage =
-
-        print(VectorDenseMessage)
-        print(VectorSparseMessage)
-        print(ScalarDenseMessage)
 
     def test_port_send_out_vec_dense_to_in_vec_dense(self):
         """Tests sending data over a dense vector outport to a dense vector
@@ -64,8 +61,12 @@ class TestPyPorts(unittest.TestCase):
 
             shape = (2, 4)
             d_type = np.int32
-            data: np.ndarray = np.random.randint(5, size=shape)
-            channel = get_channel(smm, data, size=2)
+            message = create_message(
+                PortMessageFormat.VECTOR_DENSE,
+                2,
+                np.random.randint(5, size=(2, 4))
+            )
+            channel = get_channel(smm, message.payload(), size=2)
 
             send_csp_port: AbstractCspPort = channel.src_port
             recv_csp_port: AbstractCspPort = channel.dst_port
@@ -84,9 +85,9 @@ class TestPyPorts(unittest.TestCase):
             recv_py_port.start()
             send_py_port.start()
 
-            send_py_port.send(data)
+            send_py_port.send(message)
 
-            assert np.array_equal(data, recv_py_port.recv())
+            assert np.array_equal(message.payload(), recv_py_port.recv())
         finally:
             smm.shutdown()
 

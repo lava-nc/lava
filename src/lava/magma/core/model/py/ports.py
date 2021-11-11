@@ -10,8 +10,9 @@ import numpy as np
 
 from lava.magma.core.model.interfaces import (AbstractPortImplementation,
                                               AbstractPortMessage,
-                                              AbstractMessageHeader,
-                                              AbstractMessagePayload)
+                                              AbstractPortMessageHeader,
+                                              AbstractPortMessagePayload,
+                                              PortMessageFormat)
 
 
 class AbstractPyPort(AbstractPortImplementation):
@@ -22,24 +23,36 @@ class AbstractPyPortMessage(AbstractPortMessage):
     pass
 
 
-class AbstractPyPortMessageHeader(AbstractMessageHeader):
+class AbstractPyPortMessageHeader(AbstractPortMessageHeader):
     pass
 
 
-class AbstractPyPortMessagePayload(AbstractMessagePayload):
-    pass
-
-
-class PyPortMessage(AbstractPyPortMessage):
+class AbstractPyPortMessagePayload(AbstractPortMessagePayload):
     pass
 
 
 class PyPortMessageHeader(AbstractPyPortMessageHeader):
-    pass
+
+    def __init__(self,
+                 format: 'PortMessageFormat',
+                 number_elements: ty.Type[int]):
+        self._format = format
+        self._number_elements = number_elements
 
 
 class PyPortMessagePayload(AbstractPyPortMessagePayload):
-    pass
+
+    def __init__(self, payload: ty.Union[int, np.ndarray, np.array]):
+        self._payload = payload
+
+
+class PyPortMessage(AbstractPyPortMessage):
+
+    def __init__(self,
+                 message_header: 'PyPortMessageHeader',
+                 message_payload: 'PyPortMessagePayload'):
+        self._header = message_header
+        self._payload = message_payload
 
 
 class PyInPort(AbstractPyPort):
@@ -79,16 +92,22 @@ class PyInPortVectorDense(PyInPort):
     #      raise AssertionError("Message format " + format + "
     #   not recognized, should be one of: PortMessageFormat")
     def recv(self) -> np.ndarray:
+        messages = []
+        for csp_port in self._csp_ports:
+            messages.append(csp_port.recv())
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.recv(),
-            self._csp_ports,
+            lambda acc, message: acc + message.payload(),
+            messages,
             np.zeros(self._shape, self._d_type),
         )
 
     def peek(self) -> np.ndarray:
+        messages = []
+        for csp_port in self._csp_ports:
+            messages.append(csp_port.peek())
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.peek(),
-            self._csp_ports,
+            lambda acc, message: acc + message.payload(),
+            messages,
             np.zeros(self._shape, self._d_type),
         )
 
@@ -170,14 +189,6 @@ PyInPort.SCALAR_DENSE = PyInPortScalarDense
 PyInPort.SCALAR_SPARSE = PyInPortScalarSparse
 
 
-# ToDo: Remove... not needed anymore
-class _PyInPort(Enum):
-    VEC_DENSE = PyInPortVectorDense
-    VEC_SPARSE = PyInPortVectorSparse
-    SCALAR_DENSE = PyInPortScalarDense
-    SCALAR_SPARSE = PyInPortScalarSparse
-
-
 class PyOutPort(AbstractPyPort):
     """Python implementation of OutPort used within AbstractPyProcessModels."""
 
@@ -195,45 +206,134 @@ class PyOutPort(AbstractPyPort):
 
 
 class PyOutPortVectorDense(PyOutPort):
+    """PyOutPort that sends VECTOR_DENSE messages"""
+
     def send(self, data: np.ndarray):
-        """Sends data only if port is not dangling."""
+        """Sends VECTOR_DENSE message encoded with data
+        only if port is not dangling.
+
+        Parameters
+        ----------
+        data : np.ndarray
+        """
+        message_payload = PyPortMessagePayload(
+            data
+        )
+        message_header = PyPortMessageHeader(
+            PortMessageFormat.VECTOR_DENSE,
+            data.size
+        )
+        message = PyPortMessage(
+            message_header,
+            message_payload
+        )
         for csp_port in self._csp_ports:
-            csp_port.send(data)
+            csp_port.send(message)
 
 
 class PyOutPortVectorSparse(PyOutPort):
+    """PyOutPort that sends VECTOR_SPARSE messages"""
+
     def send(self, data: np.ndarray, idx: np.ndarray):
-        """Sends data, idx only if port is not dangling."""
-        if self._csp_port:
-            self._csp_port.send(data, idx)
+        """Sends VECTOR_SPARSE message encoded with data, idx
+        only if port is not dangling.
+
+        Parameters
+        ----------
+        data : np.ndarray
+        idx : np.ndarray
+        """
+        msg_data = self.interleave_message(data, idx)
+        message_payload = PyPortMessagePayload(
+            msg_data
+        )
+        message_header = PyPortMessageHeader(
+            PortMessageFormat.VECTOR_SPARSE,
+            msg_data.size
+        )
+        message = PyPortMessage(
+            message_header,
+            message_payload
+        )
+        for csp_port in self._csp_ports:
+            csp_port.send(message)
+
+    def interleave(self,
+                   data: np.ndarray,
+                   idx: np.ndarray) -> np.ndarray:
+        """Interleave two np.ndarrays
+
+        Parameters
+        ----------
+        data : np.ndarray
+        idx : np.ndarray
+
+        Returns
+        -------
+        np.ndarray
+            interleaved np.ndarray composed of data, idx
+        """
+        return np.vstack((data, idx)).reshape((-1,), order='F')
 
 
 class PyOutPortScalarDense(PyOutPort):
+    """PyOutPort that sends SCALAR_DENSE messages"""
+
     def send(self, data: int):
-        """Sends data only if port is not dangling."""
-        if self._csp_port:
-            self._csp_port.send(data)
+        """Sends SCALAR_DENSE message encoded with data
+        only if port is not dangling.
+
+        Parameters
+        ----------
+        data : int
+        """
+        message_payload = PyPortMessagePayload(
+            data
+        )
+        message_header = PyPortMessageHeader(
+            PortMessageFormat.SCALAR_DENSE,
+            data.size
+        )
+        message = PyPortMessage(
+            message_header,
+            message_payload
+        )
+        for csp_port in self._csp_ports:
+            csp_port.send(message)
 
 
 class PyOutPortScalarSparse(PyOutPort):
+    """PyOutPort that sends SCALAR_SPARSE messages"""
+
     def send(self, data: int, idx: int):
-        """Sends data, idx only if port is not dangling."""
-        if self._csp_port:
-            self._csp_port.send(data, idx)
+        """Sends SCALAR_SPARSE message encoding data,
+        idx only if port is not dangling.
+
+        Parameters
+        ----------
+        data : int
+        idx : int
+        """
+        msg_data = np.array(data, idx)
+        message_payload = PyPortMessagePayload(
+            msg_data
+        )
+        message_header = PyPortMessageHeader(
+            PortMessageFormat.SCALAR_SPARSE,
+            msg_data.size
+        )
+        message = PyPortMessage(
+            message_header,
+            message_payload
+        )
+        for csp_port in self._csp_ports:
+            csp_port.send(message)
 
 
 PyOutPort.VEC_DENSE = PyOutPortVectorDense
 PyOutPort.VEC_SPARSE = PyOutPortVectorSparse
 PyOutPort.SCALAR_DENSE = PyOutPortScalarDense
 PyOutPort.SCALAR_SPARSE = PyOutPortScalarSparse
-
-
-# ToDo: Remove... not needed anymore
-class _PyOutPort(Enum):
-    VEC_DENSE = PyOutPortVectorDense
-    VEC_SPARSE = PyOutPortVectorSparse
-    SCALAR_DENSE = PyOutPortScalarDense
-    SCALAR_SPARSE = PyOutPortScalarSparse
 
 
 class PyRefPort(AbstractPyPort):
