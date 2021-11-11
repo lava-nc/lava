@@ -1,6 +1,7 @@
 #ifndef _PORTS_H
 #define _PORTS_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef PYTHON
