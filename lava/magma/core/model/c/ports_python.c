@@ -1,4 +1,4 @@
-#define PYTHON
+#ifdef PYTHON
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
@@ -41,3 +41,4 @@ size_t probe(PyObject *port){ // simple call and return of simple type
     Py_DECREF(result);
     return n;
 }
+#endif
