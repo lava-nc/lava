@@ -31,7 +31,7 @@ from lava.magma.core.model.c.model import AbstractCProcessModel
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.nc.model import AbstractNcProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import PyVarPort, RefVarTypeMapping
+from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
     ImplicitVarPort

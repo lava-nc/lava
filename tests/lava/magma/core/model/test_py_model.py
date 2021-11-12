@@ -458,7 +458,7 @@ class TestPyProcessBuilder(unittest.TestCase):
             pt.shape,
             getattr(PyProcModelRefVar, pt.name).d_type,
             pt.__class__.__name__, 32)
-                     for pt in ports]
+            for pt in ports]
         # Similarly, the Compiler would create VarPortInitializers from all
         # var ports holding only its name, shape and var_name
         ports = list(proc.var_ports)
@@ -468,7 +468,7 @@ class TestPyProcessBuilder(unittest.TestCase):
             pt.var.name,
             getattr(PyProcModelRefVar, pt.name).d_type,
             pt.__class__.__name__, 32, PyRefPort.VEC_DENSE)
-                     for pt in ports]
+            for pt in ports]
         # Later, the Runtime, would normally create CspPorts that implements
         # the actual message passing via channels between RefPorts and
         # VarPorts. Here we just create some fake CspPorts for each Ref- and
