@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
+from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.compiler import Compiler
 import lava.magma.compiler.exceptions as ex
 from lava.magma.core.decorator import implements, requires
@@ -19,7 +20,6 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var, VarServer
 from lava.magma.core.resources import CPU
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
 
 
 # minimal process with an InPort and OutPortA
@@ -617,7 +617,7 @@ class TestCompiler(unittest.TestCase):
         # Each channel builder should connect its source and destination
         # process and port
         # Let's check the first one in detail
-        self.assertEqual(cbs[0].channel_type, PyPyChannel)
+        self.assertEqual(cbs[0].channel_type, ChannelType.PyPy)
         self.assertEqual(cbs[0].src_process, p1)
         self.assertEqual(cbs[0].src_port_initializer.name, "out")
         self.assertEqual(cbs[0].src_port_initializer.shape, (1,))

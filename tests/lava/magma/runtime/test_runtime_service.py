@@ -11,9 +11,15 @@ from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_service import PyRuntimeService
 
 
-def create_channel(messaging_infrastructure: SharedMemoryManager, name: str):
+class MockInterface:
+    def __init__(self, smm):
+        self.smm = smm
+
+
+def create_channel(smm: SharedMemoryManager, name: str):
+    mock = MockInterface(smm=smm)
     return PyPyChannel(
-        messaging_infrastructure,
+        mock,
         name,
         name,
         (1,),
