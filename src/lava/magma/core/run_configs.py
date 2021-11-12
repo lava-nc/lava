@@ -68,12 +68,19 @@ class RunConfig(ABC):
 
 
 # ToDo: This is only a minimal RunConfig that will select SubProcModel if there
-#       is one. Needs to be modified in future releases.
+#       is one and if not selects a PyProcessModel with the correct tag.
+#       Needs to be modified in future releases to support more complicated
+#       sync domains, @requires (example: GPU support), and to select
+#       LeafProcModels of type other than PyProcessModel.
 class Loihi1SimCfg(RunConfig):
-    """A RunConfig for simulating a Loihi 1 model CPU/GPU."""
+    """Run configuration selects appropriate ProcessModel -- either SubProcessModel for a
+     Hierarchical Process or else a PyProcessModel for a standard Process. The appropriate
+     PyProcessModel is selected based @tag('floating_pt') or @tag('fixed_pt'), for
+    floating point precision or Loihi bit-accurate fixed point precision respectively"""
 
-    def __init__(self, custom_sync_domains=None, select_sub_proc_model=False):
+    def __init__(self, custom_sync_domains=None, select_tag='floating_pt', select_sub_proc_model=False):
         super().__init__(custom_sync_domains=custom_sync_domains)
+        self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
 
     def select(self, proc, proc_models):
@@ -81,20 +88,19 @@ class Loihi1SimCfg(RunConfig):
         from lava.magma.core.model.py.model import AbstractPyProcessModel
         py_proc_model = None
         sub_proc_model = None
-        # Find PyProcModel or SubProcModel
         for pm in proc_models:
             if issubclass(pm, AbstractSubProcessModel):
                 sub_proc_model = pm
             if issubclass(pm, AbstractPyProcessModel):
                 py_proc_model = pm
-        # Make selection
-        if self.select_sub_proc_model and sub_proc_model:
-            return sub_proc_model
-        elif py_proc_model:
-            return py_proc_model
-        else:
-            raise AssertionError("No legal ProcessModel found.")
-
+                # Make selection
+            if self.select_sub_proc_model and sub_proc_model:
+                return sub_proc_model
+            elif py_proc_model:
+                if self.select_tag in py_proc_model.tags:
+                    return py_proc_model
+            else:
+                raise AssertionError("No legal ProcessModel found.")
 
 class Loihi1HwCfg(RunConfig):
     """A RunConfig for executing model on Loihi 1 HW."""
