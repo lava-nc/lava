@@ -8,7 +8,7 @@ import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.core.model.py.ports import AbstractPyPort
+from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     MGMT_COMMAND,
@@ -37,12 +37,15 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.process_to_service_data: ty.Optional[CspSendPort] = None
         self.service_to_process_data: ty.Optional[CspRecvPort] = None
         self.py_ports: ty.List[AbstractPyPort] = []
+        self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
 
     def __setattr__(self, key: str, value: ty.Any):
         self.__dict__[key] = value
         if isinstance(value, AbstractPyPort):
             self.py_ports.append(value)
+            if isinstance(value, PyVarPort):
+                self.var_ports.append(value)
 
     def start(self):
         self.service_to_process_cmd.start()
@@ -92,9 +95,6 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
     def run_post_mgmt(self):
         pass
 
-    def run_host_mgmt(self):
-        pass
-
     def pre_guard(self):
         pass
 
@@ -104,9 +104,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
     def post_guard(self):
         pass
 
-    def host_guard(self):
-        pass
-
+    # TODO: (PP) need to handle PAUSE command
     def run(self):
         while True:
             if self.service_to_process_cmd.probe():
@@ -118,36 +116,43 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 if np.array_equal(phase, PyLoihiProcessModel.Phase.SPK):
                     self.current_ts += 1
                     self.run_spk()
+                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
                     if self.pre_guard():
                         self.run_pre_mgmt()
-                    self._handle_get_set_var()
+                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    if len(self.var_ports) > 0:
+                        self._handle_var_ports()
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.LRN):
                     if self.lrn_guard():
                         self.run_lrn()
+                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
                     if self.post_guard():
                         self.run_post_mgmt()
-                    self._handle_get_set_var()
+                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    if len(self.var_ports) > 0:
+                        self._handle_var_ports()
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.HOST):
-                    if self.host_guard():
-                        self.run_host_mgmt()
+                    self._handle_get_set_var()
                 else:
                     raise ValueError(f"Wrong Phase Info Received : {phase}")
-                self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-            else:
-                self._handle_get_set_var()
 
+    # FIXME: (PP) might not be able to perform get/set during pause
     def _handle_get_set_var(self):
-        while self.service_to_process_req.probe():
-            req_port: CspRecvPort = self.service_to_process_req
-            request: np.ndarray = req_port.recv()
-            if np.array_equal(request, REQ_TYPE.GET):
-                self._handle_get_var()
-            elif np.array_equal(request, REQ_TYPE.SET):
-                self._handle_set_var()
-            else:
-                raise RuntimeError(f"Unknown request type {request}")
+        while True:
+            if self.service_to_process_req.probe():
+                req_port: CspRecvPort = self.service_to_process_req
+                request: np.ndarray = req_port.recv()
+                if np.array_equal(request, REQ_TYPE.GET):
+                    self._handle_get_var()
+                elif np.array_equal(request, REQ_TYPE.SET):
+                    self._handle_set_var()
+                else:
+                    raise RuntimeError(f"Unknown request type {request}")
+
+            if self.service_to_process_cmd.probe():
+                return
 
     def _handle_get_var(self):
         # 1. Recv Var ID
@@ -162,6 +167,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             data_port.send(enum_to_np(1))
             data_port.send(enum_to_np(var))
         elif isinstance(var, np.ndarray):
+            # FIXME: send a whole vector (also runtime_service.py)
             var_iter = np.nditer(var)
             num_items: np.integer = np.prod(var.shape)
             data_port.send(enum_to_np(num_items))
@@ -195,3 +201,12 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 i[...] = data_port.recv()[0]
         else:
             raise RuntimeError("Unsupported type")
+
+    def _handle_var_ports(self):
+        """Check if a VarPort either receives data from a RefPort or needs to
+         send data to a RefPort."""
+        while True:
+            for vp in self.var_ports:
+                vp.service()
+            if self.service_to_process_cmd.probe():
+                return

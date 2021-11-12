@@ -91,15 +91,19 @@ class LoihiPyRuntimeService(PyRuntimeService):
         POST_MGMT = enum_to_np(4)
         HOST = enum_to_np(5)
 
-    def _next_phase(self, curr_phase):
+    def _next_phase(self, curr_phase, is_last_time_step: bool):
         if curr_phase == LoihiPyRuntimeService.Phase.SPK:
             return LoihiPyRuntimeService.Phase.PRE_MGMT
         elif curr_phase == LoihiPyRuntimeService.Phase.PRE_MGMT:
             return LoihiPyRuntimeService.Phase.LRN
         elif curr_phase == LoihiPyRuntimeService.Phase.LRN:
             return LoihiPyRuntimeService.Phase.POST_MGMT
-        elif curr_phase == LoihiPyRuntimeService.Phase.POST_MGMT:
+        elif curr_phase == LoihiPyRuntimeService.Phase.POST_MGMT and \
+                is_last_time_step:
             return LoihiPyRuntimeService.Phase.HOST
+        elif curr_phase == LoihiPyRuntimeService.Phase.POST_MGMT and not \
+                is_last_time_step:
+            return LoihiPyRuntimeService.Phase.SPK
         elif curr_phase == LoihiPyRuntimeService.Phase.HOST:
             return LoihiPyRuntimeService.Phase.SPK
 
@@ -113,13 +117,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
         for request in requests:
             req_port.send(request)
 
-    def _get_pm_resp(self, phase) -> ty.Iterable[MGMT_RESPONSE]:
+    def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
         rcv_msgs = []
         num_responses_expected: int = len(self.model_ids)
         counter: int = 0
         while counter < num_responses_expected:
             ptos_recv_port = self.process_to_service_ack[counter]
-            self._handle_get_set(phase)
             if ptos_recv_port.probe():
                 rcv_msgs.append(ptos_recv_port.recv())
                 counter += 1
@@ -158,13 +161,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
         ack_relay_port.send(ack_recv_port.recv())
 
     def run(self):
-        phase = LoihiPyRuntimeService.Phase.SPK
+        phase = LoihiPyRuntimeService.Phase.HOST
         while True:
             if self.runtime_to_service_cmd.probe():
                 command = self.runtime_to_service_cmd.recv()
                 if np.array_equal(command, MGMT_COMMAND.STOP):
                     self._send_pm_cmd(command)
-                    rsps = self._get_pm_resp(phase)
+                    rsps = self._get_pm_resp()
                     for rsp in rsps:
                         if not np.array_equal(rsp, MGMT_RESPONSE.TERMINATED):
                             raise ValueError(f"Wrong Response Received : {rsp}")
@@ -173,7 +176,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     return
                 elif np.array_equal(command, MGMT_COMMAND.PAUSE):
                     self._send_pm_cmd(command)
-                    rsps = self._get_pm_resp(phase)
+                    rsps = self._get_pm_resp()
                     for rsp in rsps:
                         if not np.array_equal(rsp, MGMT_RESPONSE.PAUSED):
                             raise ValueError(f"Wrong Response Received : {rsp}")
@@ -181,65 +184,70 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     break
                 else:
                     curr_time_step = 0
-                    phase = LoihiPyRuntimeService.Phase.SPK
-                    while not np.array_equal(enum_to_np(curr_time_step),
-                                             command):
+                    phase = LoihiPyRuntimeService.Phase.HOST
+                    while True:
+                        is_last_ts = np.array_equal(enum_to_np(curr_time_step),
+                                                    command)
+                        phase = self._next_phase(phase, is_last_ts)
                         if np.array_equal(phase,
                                           LoihiPyRuntimeService.Phase.SPK):
                             curr_time_step += 1
                         self._send_pm_cmd(phase)
-                        rsps = self._get_pm_resp(phase)
-                        for rsp in rsps:
-                            if not np.array_equal(rsp, MGMT_RESPONSE.DONE):
-                                raise ValueError(
-                                    f"Wrong Response Received : {rsp}")
-                        is_last_ts = np.array_equal(enum_to_np(curr_time_step),
-                                                    command)
-                        is_last_phase = np.array_equal(phase,
-                                                       LoihiPyRuntimeService.
-                                                       Phase.POST_MGMT)
-                        if not (is_last_ts and is_last_phase):
-                            phase = self._next_phase(phase)
+                        if not np.array_equal(
+                                phase, LoihiPyRuntimeService.Phase.HOST):
+                            rsps = self._get_pm_resp()
+                            for rsp in rsps:
+                                if not np.array_equal(rsp, MGMT_RESPONSE.DONE):
+                                    raise ValueError(
+                                        f"Wrong Response Received : {rsp}")
+
+                        if np.array_equal(
+                                phase, LoihiPyRuntimeService.Phase.HOST):
+                            break
+
                     self.service_to_runtime_ack.send(MGMT_RESPONSE.DONE)
 
             self._handle_get_set(phase)
 
     def _handle_get_set(self, phase):
-        if np.array_equal(phase, LoihiPyRuntimeService.Phase.PRE_MGMT) or \
-                np.array_equal(phase, LoihiPyRuntimeService.Phase.POST_MGMT):
-            while self.runtime_to_service_req.probe():
-                request = self.runtime_to_service_req.recv()
-                if np.array_equal(request, REQ_TYPE.GET):
-                    requests: ty.List[np.ndarray] = [request]
-                    # recv model_id
-                    model_id: int = \
-                        self.runtime_to_service_req.recv()[
-                            0].item()
-                    # recv var_id
-                    requests.append(
-                        self.runtime_to_service_req.recv())
-                    self._send_pm_req_given_model_id(model_id,
-                                                     *requests)
+        if np.array_equal(phase, LoihiPyRuntimeService.Phase.HOST):
+            while True:
+                if self.runtime_to_service_req.probe():
+                    request = self.runtime_to_service_req.recv()
+                    if np.array_equal(request, REQ_TYPE.GET):
+                        requests: ty.List[np.ndarray] = [request]
+                        # recv model_id
+                        model_id: int = \
+                            self.runtime_to_service_req.recv()[
+                                0].item()
+                        # recv var_id
+                        requests.append(
+                            self.runtime_to_service_req.recv())
+                        self._send_pm_req_given_model_id(model_id,
+                                                         *requests)
 
-                    self._relay_to_runtime_data_given_model_id(
-                        model_id)
-                elif np.array_equal(request, REQ_TYPE.SET):
-                    requests: ty.List[np.ndarray] = [request]
-                    # recv model_id
-                    model_id: int = \
-                        self.runtime_to_service_req.recv()[
-                            0].item()
-                    # recv var_id
-                    requests.append(
-                        self.runtime_to_service_req.recv())
-                    self._send_pm_req_given_model_id(model_id,
-                                                     *requests)
+                        self._relay_to_runtime_data_given_model_id(
+                            model_id)
+                    elif np.array_equal(request, REQ_TYPE.SET):
+                        requests: ty.List[np.ndarray] = [request]
+                        # recv model_id
+                        model_id: int = \
+                            self.runtime_to_service_req.recv()[
+                                0].item()
+                        # recv var_id
+                        requests.append(
+                            self.runtime_to_service_req.recv())
+                        self._send_pm_req_given_model_id(model_id,
+                                                         *requests)
 
-                    self._relay_to_pm_data_given_model_id(
-                        model_id)
-                else:
-                    raise RuntimeError(
-                        f"Unknown request {request}")
+                        self._relay_to_pm_data_given_model_id(
+                            model_id)
+                    else:
+                        raise RuntimeError(
+                            f"Unknown request {request}")
+
+                if self.runtime_to_service_cmd.probe():
+                    return
 
 
 class LoihiCRuntimeService(AbstractRuntimeService):

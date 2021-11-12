@@ -389,12 +389,19 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if var_shape != v.shape:
                 raise AssertionError("All 'vars' must have same shape.")
             # Create a VarPort to wrap Var
-            vp = VarPort(v)
+            vp = ImplicitVarPort(v)
             # Propagate name and parent process of Var to VarPort
-            vp.name = v.name + "_port"
+            vp.name = "_" + v.name + "_implicit_port"
             if v.process is not None:
                 # Only assign when parent process is already assigned
                 vp.process = v.process
+                # VarPort Name could shadow existing attribute
+                if hasattr(v.process, vp.name):
+                    raise AssertionError(
+                        "Name of implicit VarPort might conflict"
+                        " with existing attribute.")
+                setattr(v.process, vp.name, vp)
+                v.process.var_ports.add_members({vp.name: vp})
             var_ports.append(vp)
         # Connect RefPort to VarPorts that wrap Vars
         self.connect(var_ports)
@@ -453,6 +460,12 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         :param ports: The AbstractRVPort(s) that connect to this VarPort.
         """
         self._connect_backward(to_list(ports), AbstractRVPort)
+
+
+class ImplicitVarPort(VarPort):
+    """Wrapper class for VarPort to identify implicitly created VarPorts when
+    a RefPort connects directly to a Var."""
+    pass
 
 
 class AbstractVirtualPort(ABC):
