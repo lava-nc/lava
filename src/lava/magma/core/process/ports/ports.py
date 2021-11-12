@@ -556,7 +556,7 @@ class ConcatPort(AbstractPort, AbstractVirtualPort):
             # Compute total size along concatenation axis
             total_size += shape[axis]
             # Extract shape dimensions other than concatenation axis
-            shapes_ex_axis.append(shape[:axis] + shape[axis + 1 :])
+            shapes_ex_axis.append(shape[:axis] + shape[axis + 1:])
             if len(shapes_ex_axis) > 1:
                 shapes_incompatible = shapes_ex_axis[-2] != shapes_ex_axis[-1]
 
