@@ -1,21 +1,21 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier:  BSD-3-Clause
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty, ABCMeta
 
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration, get_info
 
 from importlib import import_module, invalidate_caches
 
-import numpy as np
 from typing import List, Callable
+import os
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 
 AbstractCProcessModel = None
 
 
-class CProcessModelMeta(type):
+class CProcessModelMeta(ABCMeta):
     """
     Compiles the sources specified in the class definition and then generates a type that includes the custom module in its base classes
     """
@@ -34,7 +34,14 @@ class CProcessModelMeta(type):
 
             setup(
                 configuration=configuration,
-                script_args=["build_ext", "--inplace"],
+                script_args=[
+                    "clean",
+                    "--all",
+                    "build_ext",
+                    "--inplace",
+                    "--include-dirs",
+                    os.path.dirname(os.path.abspath(__file__)),
+                ],
             )
             invalidate_caches()
             module = import_module("custom")
@@ -56,4 +63,3 @@ class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """
 
     source_files: List[str] = None
-    
