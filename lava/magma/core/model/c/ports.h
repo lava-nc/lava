@@ -7,7 +7,8 @@
 #ifdef PYTHON
 #include <Python.h>
 typedef PyObject Port;
-#else // HOST or EMBEDDED
+#else 
+// HOST or EMBEDDED
 #include "csp.h"
 typedef struct {
     CspPort *csp_ports;
