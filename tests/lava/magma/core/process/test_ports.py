@@ -1,7 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier:  BSD-3-Clause
 import unittest
-
+from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import (
     InPort,
     OutPort,
@@ -245,9 +245,68 @@ class TestRVPorts(unittest.TestCase):
 
         # In this case, the VarPort inherits its name and parent process from
         # the Var it wraps
-        self.assertEqual(vp.name, v.name + "_port")
+        self.assertEqual(vp.name, "_" + v.name + "_implicit_port")
         # (We can't check for the same parent process here because it has not
-        # been assigned ot the Var yet)
+        # been assigned to the Var yet)
+
+    def test_connect_RefPort_to_Var_process(self):
+        """Checks connecting RefPort implicitly to Var, with registered
+        processes."""
+
+        # Create a mock parent process
+        class VarProcess(AbstractProcess):
+            ...
+
+        # Create a Var and RefPort...
+        v = Var((1, 2, 3))
+        rp = RefPort((1, 2, 3))
+
+        # ...register a process for the Var
+        v.process = VarProcess()
+
+        # ...then connect them directly via connect_var(..)
+        rp.connect_var(v)
+
+        # This has the same effect as connecting a RefPort explicitly via a
+        # VarPort to a Var...
+        self.assertEqual(rp.get_dst_vars(), [v])
+        # ... but still creates a VarPort implicitly
+        vp = rp.get_dst_ports()[0]
+        self.assertIsInstance(vp, VarPort)
+        # ... which wraps the original Var
+        self.assertEqual(vp.var, v)
+
+        # In this case, the VarPort inherits its name and parent process from
+        # the Var it wraps
+        self.assertEqual(vp.name, "_" + v.name + "_implicit_port")
+        self.assertEqual(vp.process, v.process)
+
+    def test_connect_RefPort_to_Var_process_conflict(self):
+        """Checks connecting RefPort implicitly to Var, with registered
+        processes and conflicting names. -> AssertionError"""
+
+        # Create a mock parent process
+        class VarProcess(AbstractProcess):
+            # Attribute is named like our implicit VarPort after creation
+            _existing_attr_implicit_port = None
+
+        # Create a Var and RefPort...
+        v = Var((1, 2, 3))
+        rp = RefPort((1, 2, 3))
+
+        # Create a Var and RefPort...
+        v = Var((1, 2, 3))
+        rp = RefPort((1, 2, 3))
+
+        # ...register a process for the Var and name it so it conflicts with
+        # the attribute ov VarProcess (very unlikely to happen)
+        v.process = VarProcess()
+        v.name = "existing_attr"
+
+        # ... and connect it directly via connect_var(..)
+        # The naming conflict should raise an AssertionError
+        with self.assertRaises(AssertionError):
+            rp.connect_var(v)
 
     def test_connect_RefPort_to_many_Vars(self):
         """Checks that RefPort can be connected to many Vars."""

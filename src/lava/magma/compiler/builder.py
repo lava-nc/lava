@@ -19,13 +19,17 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from dataclasses import dataclass
-
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.compiler.utils import VarInitializer, PortInitializer
-from lava.magma.core.model.py.ports import AbstractPyPort, \
-    PyInPort, PyOutPort, PyRefPort
+from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
+    VarPortInitializer
+from lava.magma.core.model.py.ports import (
+    AbstractPyPort,
+    PyInPort,
+    PyOutPort,
+    PyRefPort, PyVarPort,
+)
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
 
@@ -91,6 +95,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self._model_id = model_id
         self.vars: ty.Dict[str, VarInitializer] = {}
         self.py_ports: ty.Dict[str, PortInitializer] = {}
+        self.ref_ports: ty.Dict[str, PortInitializer] = {}
+        self.var_ports: ty.Dict[str, VarPortInitializer] = {}
         self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
@@ -167,6 +173,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 if (
                     attr_name not in self.vars
                     and attr_name not in self.py_ports
+                    and attr_name not in self.ref_ports
+                    and attr_name not in self.var_ports
                 ):
                     raise AssertionError(
                         f"No LavaPyType '{attr_name}' found in ProcModel "
@@ -235,6 +243,29 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self._check_not_assigned_yet(self.py_ports, new_ports.keys(), "ports")
         self.py_ports.update(new_ports)
 
+    def set_ref_ports(self, ref_ports: ty.List[PortInitializer]):
+        """Set py_ports
+
+        Parameters
+        ----------
+        ref_ports : ty.List[PortInitializer]
+        """
+        self._check_members_exist(ref_ports, "Port")
+        new_ports = {p.name: p for p in ref_ports}
+        self._check_not_assigned_yet(self.ref_ports, new_ports.keys(), "ports")
+        self.ref_ports.update(new_ports)
+
+    def set_var_ports(self, var_ports: ty.List[VarPortInitializer]):
+        """Set var_ports
+
+        Parameters
+        ----------
+        var_ports : ty.List[VarPortInitializer]
+        """
+        new_ports = {p.name: p for p in var_ports}
+        self._check_not_assigned_yet(self.var_ports, new_ports.keys(), "ports")
+        self.var_ports.update(new_ports)
+
     def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """Set CSP Ports
 
@@ -253,22 +284,18 @@ class PyProcessBuilder(AbstractProcessBuilder):
             new_ports.setdefault(p.name, []).extend(
                 p if isinstance(p, list) else [p]
             )
-        self._check_not_assigned_yet(
-            self.csp_ports, new_ports.keys(), "csp_ports"
-        )
+
         # Check that there's a PyPort for each new CspPort
         proc_name = self.proc_model.implements_process.__name__
         for port_name in new_ports:
             if not hasattr(self.proc_model, port_name):
-                raise AssertionError(
-                    "PyProcessModel '{}' has \
-                no port named '{}'.".format(
-                        proc_name, port_name
-                    )
-                )
-        # Set new CspPorts
-        for key, ports in new_ports.items():
-            self.csp_ports.setdefault(key, []).extend(ports)
+                raise AssertionError("PyProcessModel '{}' has \
+                no port named '{}'.".format(proc_name, port_name))
+
+            if port_name in self.csp_ports:
+                self.csp_ports[port_name].extend(new_ports[port_name])
+            else:
+                self.csp_ports[port_name] = new_ports[port_name]
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """Set RS CSP Ports
@@ -326,12 +353,52 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 csp_ports = self.csp_ports[name]
                 if not isinstance(csp_ports, list):
                     csp_ports = [csp_ports]
-            port = port_cls(pm, csp_ports, p.shape, lt.d_type)
+            port = port_cls(csp_ports, pm, p.shape, lt.d_type)
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)
             # Create private attribute for port precision
             # setattr(pm, "_" + name + "_p", lt.precision)
+
+        # Initialize RefPorts
+        for name, p in self.ref_ports.items():
+            # Build PyPort
+            lt = self._get_lava_type(name)
+            port_cls = ty.cast(ty.Type[PyRefPort], lt.cls)
+            csp_recv = None
+            csp_send = None
+            if name in self.csp_ports:
+                csp_ports = self.csp_ports[name]
+                csp_recv = csp_ports[0] if isinstance(
+                    csp_ports[0], CspRecvPort) else csp_ports[1]
+                csp_send = csp_ports[0] if isinstance(
+                    csp_ports[0], CspSendPort) else csp_ports[1]
+
+            port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type)
+
+            # Create dynamic PyPort attribute on ProcModel
+            setattr(pm, name, port)
+
+        # Initialize VarPorts
+        for name, p in self.var_ports.items():
+            # Build PyPort
+            if p.port_cls is None:
+                # VarPort is not connected
+                continue
+            port_cls = ty.cast(ty.Type[PyVarPort], p.port_cls)
+            csp_recv = None
+            csp_send = None
+            if name in self.csp_ports:
+                csp_ports = self.csp_ports[name]
+                csp_recv = csp_ports[0] if isinstance(
+                    csp_ports[0], CspRecvPort) else csp_ports[1]
+                csp_send = csp_ports[0] if isinstance(
+                    csp_ports[0], CspSendPort) else csp_ports[1]
+            port = port_cls(
+                p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type)
+
+            # Create dynamic PyPort attribute on ProcModel
+            setattr(pm, name, port)
 
         for port in self.csp_rs_recv_port.values():
             if "service_to_process_cmd" in port.name:
