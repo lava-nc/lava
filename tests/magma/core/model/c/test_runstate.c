@@ -57,7 +57,7 @@ static PyObject* Custom_run(CustomObject *self,PyObject* Py_UNUSED(ignored)){
 }
 
 void run(runState* state){
-    printf("run called with state %d\n",state->state);
+    printf("run called with state %d\n",state->phase);
 }
 
 static PyMethodDef Custom_methods[] = {
