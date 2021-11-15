@@ -21,7 +21,8 @@ class Test_Creation(unittest.TestCase):
         class PM(AbstractCProcessModel):
             source_files = ["test_array.c"]
 
-        pm = PM()
+        pm = PM(np.zeros(10))
+        pm.run()
         self.assertEqual(np.sum(pm.x), 10)
 
 

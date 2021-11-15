@@ -12,7 +12,7 @@
 typedef struct {
     PyObject ob_base; 
     /* Type-specific fields go here. */
-    PyObject *x;
+    PyArrayObject *x;
 } CustomObject;
 
 static void Custom_dealloc(CustomObject* self){
@@ -22,13 +22,13 @@ static void Custom_dealloc(CustomObject* self){
 
 static PyObject* Custom_new(PyTypeObject *type,PyObject *args,PyObject *kwds){
     CustomObject *self = (CustomObject*) type->tp_alloc(type,0);if(!self) return NULL; // create self object or fail
-    self->x = PyArray_New(&PyArray_Type,1,(npy_intp[]){1},NPY_INT64,NULL,NULL,0,0,NULL); // create numpy array 
+    self->x = (PyArrayObject *)PyArray_New(&PyArray_Type,1,(npy_intp[]){1},NPY_INT64,NULL,NULL,0,0,NULL); // create numpy array 
     if(!self->x){Py_DECREF(self);return NULL;} // or destroy and fail
     return (PyObject*) self;
 }
 
 static int Custom_init(CustomObject* self,PyObject* args,PyObject* kwargs){
-    PyObject *x=NULL,*tmp;
+    PyArrayObject *x=NULL,*tmp;
     if(!PyArg_ParseTupleAndKeywords(args,kwargs,"|O",(char*[]){"x",NULL},&x))return -1; // parse or fail
     if(x){
         tmp = self->x; // store old attribute pointer to trash later
@@ -45,14 +45,17 @@ static PyMemberDef Custom_members[] = {
 };
 
 static PyObject* Custom_run(CustomObject *self,PyObject* Py_UNUSED(ignored)){
+    printf("run\n");
     npy_intp n = PyArray_SIZE(self->x);
     for(npy_intp i=0;i<n;++i){
         void* p = PyArray_GETPTR1(self->x,i);
         switch(PyArray_TYPE(self->x)){
             case NPY_INT64:
+                printf("int inc\n");
                 (*(npy_int64*)p)+=1;
                 break;
             case NPY_FLOAT64:
+                printf("float inc\n");
                 (*(npy_float64*)p)+=1.0f;
                 break;
         }
