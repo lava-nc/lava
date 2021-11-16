@@ -138,3 +138,4 @@ dmypy.json
 .idea/
 .vscode/
 .history/
+*.DS_Store
