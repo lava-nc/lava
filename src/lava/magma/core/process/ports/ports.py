@@ -347,6 +347,14 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         -----------
         :param ports: The AbstractRVPort(s) to connect to.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort) and not isinstance(p, VarPort):
+                raise TypeError(
+                    "RefPorts can only be connected to RefPorts or "
+                    "VarPorts: {!r}: {!r} -> {!r}: {!r}  To connect a RefPort "
+                    "to a Var, use <connect_var>".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), AbstractRVPort)
 
     def connect_from(self, ports: ty.Union["RefPort", ty.List["RefPort"]]):
@@ -357,6 +365,13 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         :param ports: The RefPort(s) that connect to this RefPort.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort):
+                raise TypeError(
+                    "RefPorts can only receive connections from RefPorts: "
+                    "{!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_backward(to_list(ports), RefPort)
 
     def connect_var(self, variables: ty.Union[Var, ty.List[Var]]):
@@ -395,7 +410,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if v.process is not None:
                 # Only assign when parent process is already assigned
                 vp.process = v.process
-                # VarPort Name could shadow existing attribute
+                # VarPort name could shadow existing attribute
                 if hasattr(v.process, vp.name):
                     raise AssertionError(
                         "Name of implicit VarPort might conflict"
@@ -447,6 +462,13 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The VarPort(s) to connect to.
         """
+        for p in to_list(ports):
+            if not isinstance(p, VarPort):
+                raise TypeError(
+                    "VarPorts can only be connected to VarPorts: "
+                    "{!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), VarPort)
 
     def connect_from(
@@ -459,11 +481,18 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The AbstractRVPort(s) that connect to this VarPort.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort) and not isinstance(p, VarPort):
+                raise TypeError(
+                    "VarPorts can only receive connections from RefPorts or "
+                    "VarPorts: {!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_backward(to_list(ports), AbstractRVPort)
 
 
 class ImplicitVarPort(VarPort):
-    """Wrapper class for VarPort to identify implicitly created VarPorts when
+    """Sub class for VarPort to identify implicitly created VarPorts when
     a RefPort connects directly to a Var."""
     pass
 

@@ -30,7 +30,7 @@ class TestLifDenseLif(unittest.TestCase):
         self.lif1 = LIF()
         self.dense = Dense()
         self.lif2 = LIF()
-        self.lif1.out_ports.s_out.connect(self.dense.in_ports.s_in)
+        #self.lif1.out_ports.s_out.connect(self.dense.in_ports.s_in)
         self.dense.out_ports.a_out.connect(self.lif2.in_ports.a_in)
         self.lif1.run(condition=RunSteps(num_steps=10),
                       run_cfg=SimpleRunConfig(sync_domains=[]))

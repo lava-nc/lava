@@ -6,13 +6,18 @@ from abc import abstractmethod
 import functools as ft
 import numpy as np
 
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
 
 
 class AbstractPyPort(AbstractPortImplementation):
-    pass
+    @property
+    @abstractmethod
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        pass
 
 
 class PyInPort(AbstractPyPort):
@@ -20,22 +25,19 @@ class PyInPort(AbstractPyPort):
     If buffer is empty, recv() will be blocking.
     """
 
-    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args):
-        self._csp_recv_ports = csp_recv_ports
-        super().__init__(*args)
-
     VEC_DENSE: ty.Type["PyInPortVectorDense"] = None
     VEC_SPARSE: ty.Type["PyInPortVectorSparse"] = None
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
-    def start(self):
-        for csp_port in self._csp_recv_ports:
-            csp_port.start()
+    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args):
+        self._csp_recv_ports = csp_recv_ports
+        super().__init__(*args)
 
-    def join(self):
-        for csp_port in self._csp_recv_ports:
-            csp_port.join()
+    @property
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        return self._csp_recv_ports
 
     @abstractmethod
     def recv(self):
@@ -98,22 +100,19 @@ PyInPort.SCALAR_SPARSE = PyInPortScalarSparse
 class PyOutPort(AbstractPyPort):
     """Python implementation of OutPort used within AbstractPyProcessModels."""
 
-    def __init__(self, csp_send_ports: ty.List[CspSendPort], *args):
-        self._csp_send_ports = csp_send_ports
-        super().__init__(*args)
-
     VEC_DENSE: ty.Type["PyOutPortVectorDense"] = None
     VEC_SPARSE: ty.Type["PyOutPortVectorSparse"] = None
     SCALAR_DENSE: ty.Type["PyOutPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyOutPortScalarSparse"] = None
 
-    def start(self):
-        for csp_port in self._csp_send_ports:
-            csp_port.start()
+    def __init__(self, csp_send_ports: ty.List[CspSendPort], *args):
+        self._csp_send_ports = csp_send_ports
+        super().__init__(*args)
 
-    def join(self):
-        for csp_port in self._csp_send_ports:
-            csp_port.join()
+    @property
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        return self._csp_send_ports
 
     @abstractmethod
     def send(self, data: ty.Union[np.ndarray, int]):
@@ -159,6 +158,11 @@ class VarPortCmd:
 class PyRefPort(AbstractPyPort):
     """Python implementation of RefPort used within AbstractPyProcessModels."""
 
+    VEC_DENSE: ty.Type["PyRefPortVectorDense"] = None
+    VEC_SPARSE: ty.Type["PyRefPortVectorSparse"] = None
+    SCALAR_DENSE: ty.Type["PyRefPortScalarDense"] = None
+    SCALAR_SPARSE: ty.Type["PyRefPortScalarSparse"] = None
+
     def __init__(self,
                  csp_send_port: ty.Optional[CspSendPort],
                  csp_recv_port: ty.Optional[CspRecvPort], *args):
@@ -166,22 +170,14 @@ class PyRefPort(AbstractPyPort):
         self._csp_send_port = csp_send_port
         super().__init__(*args)
 
-    VEC_DENSE: ty.Type["PyRefPortVectorDense"] = None
-    VEC_SPARSE: ty.Type["PyRefPortVectorSparse"] = None
-    SCALAR_DENSE: ty.Type["PyRefPortScalarDense"] = None
-    SCALAR_SPARSE: ty.Type["PyRefPortScalarSparse"] = None
-
-    def start(self):
-        if self._csp_send_port is not None:
-            self._csp_send_port.start()
-        if self._csp_recv_port is not None:
-            self._csp_recv_port.start()
-
-    def join(self):
-        if self._csp_send_port is not None:
-            self._csp_send_port.join()
-        if self._csp_recv_port is not None:
-            self._csp_recv_port.join()
+    @property
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        if self._csp_send_port is not None and self._csp_recv_port is not None:
+            return [self._csp_send_port, self._csp_recv_port]
+        else:
+            # In this case the port was not connected
+            return []
 
     def read(
         self,
@@ -252,9 +248,13 @@ PyRefPort.SCALAR_SPARSE = PyRefPortScalarSparse
 
 
 class PyVarPort(AbstractPyPort):
-    """Python implementation of InPort used within AbstractPyProcessModel.
-    If buffer is empty, recv() will be blocking.
+    """Python implementation of VarPort used within AbstractPyProcessModel.
     """
+
+    VEC_DENSE: ty.Type["PyVarPortVectorDense"] = None
+    VEC_SPARSE: ty.Type["PyVarPortVectorSparse"] = None
+    SCALAR_DENSE: ty.Type["PyVarPortScalarDense"] = None
+    SCALAR_SPARSE: ty.Type["PyVarPortScalarSparse"] = None
 
     def __init__(self,
                  var_name: str,
@@ -265,22 +265,14 @@ class PyVarPort(AbstractPyPort):
         self.var_name = var_name
         super().__init__(*args)
 
-    VEC_DENSE: ty.Type["PyVarPortVectorDense"] = None
-    VEC_SPARSE: ty.Type["PyVarPortVectorSparse"] = None
-    SCALAR_DENSE: ty.Type["PyVarPortScalarDense"] = None
-    SCALAR_SPARSE: ty.Type["PyVarPortScalarSparse"] = None
-
-    def start(self):
-        if self._csp_send_port is not None:
-            self._csp_send_port.start()
-        if self._csp_recv_port is not None:
-            self._csp_recv_port.start()
-
-    def join(self):
-        if self._csp_send_port is not None:
-            self._csp_send_port.join()
-        if self._csp_recv_port is not None:
-            self._csp_recv_port.join()
+    @property
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        if self._csp_send_port is not None and self._csp_recv_port is not None:
+            return [self._csp_send_port, self._csp_recv_port]
+        else:
+            # In this case the port was not connected
+            return []
 
     def service(self):
         pass
@@ -294,7 +286,7 @@ class PyVarPortVectorDense(PyVarPort):
 
         # Inspect incoming data
         if self._csp_send_port is not None and self._csp_recv_port is not None:
-            while self._csp_recv_port.probe():
+            if self._csp_recv_port.probe():
                 cmd = enum_to_np(self._csp_recv_port.recv()[0])
 
                 # Set the value of the Var with the given data

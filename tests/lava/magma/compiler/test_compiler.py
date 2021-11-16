@@ -16,14 +16,15 @@ from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.core.process.ports.ports import (
     InPort, OutPort, RefPort, VarPort)
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
+    PyVarPort
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var, VarServer
 from lava.magma.core.resources import CPU
 
 
-# minimal process with an InPort and OutPortA
+# A minimal process (A) with an InPort, OutPort and RefPort
 class ProcA(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -33,7 +34,7 @@ class ProcA(AbstractProcess):
         self.ref = RefPort(shape=(10,))
 
 
-# Another minimal process (does not matter that it's identical to ProcA)
+# Another minimal process (B) with a Var and an InPort, OutPort and VarPort
 class ProcB(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -44,7 +45,7 @@ class ProcB(AbstractProcess):
         self.var_port = VarPort(self.some_var)
 
 
-# Another minimal process (does not matter that it's identical to ProcA)
+# Another minimal process (C) with an InPort and OutPort
 class ProcC(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -90,7 +91,7 @@ class PyProcModelB(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
     some_var: int = LavaPyType(int, int)
-    var_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
+    var_port: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
 
     def run(self):
         pass
@@ -269,7 +270,7 @@ class TestCompiler(unittest.TestCase):
 
     def test_find_process_ref_ports(self):
         """Checks finding all processes for RefPort connection.
-        [p1 -> ref/var -> p2 -> in/out -> p3]"""
+        [p1 -> ref/var -> p2 -> out/in -> p3]"""
 
         # Create processes
         p1, p2, p3 = ProcA(), ProcB(), ProcC()

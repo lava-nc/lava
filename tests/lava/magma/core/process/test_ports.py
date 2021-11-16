@@ -1,5 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier:  BSD-3-Clause
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 import unittest
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import (
@@ -299,7 +300,7 @@ class TestRVPorts(unittest.TestCase):
         rp = RefPort((1, 2, 3))
 
         # ...register a process for the Var and name it so it conflicts with
-        # the attribute ov VarProcess (very unlikely to happen)
+        # the attribute of VarProcess (very unlikely to happen)
         v.process = VarProcess()
         v.name = "existing_attr"
 

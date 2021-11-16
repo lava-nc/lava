@@ -469,10 +469,10 @@ class TestPyProcessBuilder(unittest.TestCase):
             getattr(PyProcModelRefVar, pt.name).d_type,
             pt.__class__.__name__, 32, PyRefPort.VEC_DENSE)
             for pt in ports]
-        # Later, the Runtime, would normally create CspPorts that implements
-        # the actual message passing via channels between RefPorts and
-        # VarPorts. Here we just create some fake CspPorts for each Ref- and
-        # VarPort. 2 CspChannels per Ref-/VarPort.
+        # The Runtime, would normally create CspPorts that implement the actual
+        # message passing via channels between RefPorts and VarPorts. Here we
+        # just create some fake CspPorts for each Ref- and VarPort.
+        # 2 CspChannels per Ref-/VarPort.
         csp_ports = []
         for port in list(ref_ports):
             csp_ports.append(FakeCspPort(port.name))
