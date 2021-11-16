@@ -95,7 +95,7 @@ class TestRefVarPorts(unittest.TestCase):
         sender.stop()
 
     def test_explicit_Ref_Var_port_write(self):
-        """Tests the connection of a RefPort to a explicitly created VarPort.
+        """Tests the connection of a RefPort to an explicitly created VarPort.
         The RefPort sends data after the first time step to the VarPort,
         starting with (5 + current time step) = 7). The initial value of the
         var is 4. We read out the value after each time step."""
@@ -129,7 +129,7 @@ class TestRefVarPorts(unittest.TestCase):
         sender.stop()
 
     def test_implicit_Ref_Var_port_write(self):
-        """Tests the connection of a RefPort to a implicitly created VarPort.
+        """Tests the connection of a RefPort to an implicitly created VarPort.
         The RefPort sends data after the first time step to the VarPort,
         starting with (5 + current time step) = 7). The initial value of the
         var is 4. We read out the value after each time step."""
@@ -163,7 +163,7 @@ class TestRefVarPorts(unittest.TestCase):
         sender.stop()
 
     def test_explicit_Ref_Var_port_read(self):
-        """Tests the connection of a RefPort to a explicitly created VarPort.
+        """Tests the connection of a RefPort to an explicitly created VarPort.
         The RefPort "ref_read" reads data after the first time step of the
         VarPort "var_port_read" which has the value of the Var "v" (= 17) and
         writes this value into the Var "var_read". The initial value of the var
@@ -192,7 +192,7 @@ class TestRefVarPorts(unittest.TestCase):
         sender.stop()
 
     def test_implicit_Ref_Var_port_read(self):
-        """Tests the connection of a RefPort to a implicitly created VarPort.
+        """Tests the connection of a RefPort to an implicitly created VarPort.
         The RefPort "ref_read" reads data after the first time step of the
         of the Var "v" (= 17) using an implicit VarPort and writes this value
         into the Var "var_read". The initial value of the var "var_read" is 1.
