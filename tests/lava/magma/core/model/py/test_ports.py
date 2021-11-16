@@ -603,12 +603,13 @@ class TestPyPorts(unittest.TestCase):
         try:
             smm.start()
 
+            dense_matrix = np.random.randint(5, size=(1, 4))
             message = PyPortMessage(
                 PortMessageFormat.SCALAR_DENSE,
-                np.random.randint(5, size=(1, 4)).size,
-                np.random.randint(5, size=(1, 4))
+                dense_matrix.size,
+                dense_matrix
             )
-            data = np.random.randint(5, size=(1, 4))
+            data = dense_matrix
 
             channel = get_channel(smm,
                                   message._payload,
@@ -649,12 +650,13 @@ class TestPyPorts(unittest.TestCase):
         try:
             smm.start()
 
+            sparse_matrix = np.random.randint(5, size=(2, 4))
             message = PyPortMessage(
                 PortMessageFormat.SCALAR_SPARSE,
-                np.random.randint(5, size=(2, 4)).size,
-                np.random.randint(5, size=(2, 4))
+                sparse_matrix.size,
+                sparse_matrix
             )
-            data = np.random.randint(5, size=(2, 4))
+            data = sparse_matrix
 
             channel = get_channel(smm,
                                   message._payload,
@@ -695,12 +697,13 @@ class TestPyPorts(unittest.TestCase):
         try:
             smm.start()
 
+            sparse_matrix = np.random.randint(5, size=(2, 4))
             message = PyPortMessage(
                 PortMessageFormat.SCALAR_SPARSE,
-                np.random.randint(5, size=(2, 4)).size,
-                np.random.randint(5, size=(2, 4))
+                sparse_matrix.size,
+                sparse_matrix
             )
-            data = np.random.randint(5, size=(2, 4))
+            data = sparse_matrix
 
             channel = get_channel(smm,
                                   message._payload,
@@ -741,12 +744,13 @@ class TestPyPorts(unittest.TestCase):
         try:
             smm.start()
 
+            sparse_matrix = np.random.randint(5, size=(2, 4))
             message = PyPortMessage(
                 PortMessageFormat.SCALAR_SPARSE,
-                np.random.randint(5, size=(2, 4)).size,
-                np.random.randint(5, size=(2, 4))
+                sparse_matrix.size,
+                sparse_matrix
             )
-            data = np.random.randint(5, size=(2, 4))
+            data = sparse_matrix
 
             channel = get_channel(smm,
                                   message._payload,
@@ -787,12 +791,13 @@ class TestPyPorts(unittest.TestCase):
         try:
             smm.start()
 
+            sparse_matrix = np.random.randint(5, size=(2, 4))
             message = PyPortMessage(
                 PortMessageFormat.SCALAR_SPARSE,
-                np.random.randint(5, size=(2, 4)).size,
-                np.random.randint(5, size=(2, 4))
+                sparse_matrix.size,
+                sparse_matrix
             )
-            data = np.random.randint(5, size=(2, 4))
+            data = sparse_matrix
 
             channel = get_channel(smm,
                                   message._payload,
