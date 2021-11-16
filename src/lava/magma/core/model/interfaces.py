@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC
-from enum import IntEnum, unique
+from enum import Enum, unique
 import numpy as np
 
 from lava.magma.compiler.channels.interfaces import (
@@ -14,48 +14,42 @@ from lava.magma.core.model.model import AbstractProcessModel
 
 
 @unique
-class PortMessageFormat(IntEnum):
+class PortMessageFormat(Enum):
     VECTOR_DENSE = 1
     VECTOR_SPARSE = 2
     SCALAR_DENSE = 3
     SCALAR_SPARSE = 4
     DONE = 1111
-
-
-class AbstractPortMessageHeader(ABC):
-
-    def __init__(self,
-                 format: 'PortMessageFormat',
-                 number_elements: ty.Type[int]):
-        self._format = format
-        self._number_elements = number_elements
-
-    def return_header(self) -> ty.Tuple['PortMessageFormat', ty.Type[int]]:
-        return self._format, self._number_elements
-
-
-class AbstractPortMessagePayload(ABC):
-
-    def __init__(self, payload: ty.Union[int, np.ndarray, np.array]):
-        self._payload = payload
-
-    def return_payload(self) -> ty.Union[int, np.ndarray, np.array]:
-        return self._payload
+    MGMT = 2222
 
 
 class AbstractPortMessage(ABC):
 
     def __init__(self,
-                 message_header: 'AbstractPortMessageHeader',
-                 message_payload: 'AbstractPortMessagePayload'):
-        self._header = message_header
-        self._payload = message_payload
+                 format: 'PortMessageFormat',
+                 num_elem: ty.Type[int],
+                 data: ty.Union[int, np.ndarray, np.array]) -> np.ndarray:
+        self._payload = np.array([format, num_elem, data])
 
-    def payload(self) -> ty.Union[int, np.ndarray, np.array]:
-        return self._payload.return_payload()
+    @property
+    def payload(self) -> ty.Type[np.array]:
+        return self._payload
 
-    def header(self) -> ty.Tuple['PortMessageFormat', ty.Type[int]]:
-        return self._header.return_header()
+    @property
+    def message_type(self) -> ty.Type[np.array]:
+        return self._payload[0]
+
+    @property
+    def num_elements(self) -> ty.Type[np.array]:
+        return self._payload[1]
+
+    @property
+    def data(self) -> ty.Type[np.array]:
+        return self._payload[2]
+
+
+
+
 
 
 class AbstractPortImplementation(ABC):

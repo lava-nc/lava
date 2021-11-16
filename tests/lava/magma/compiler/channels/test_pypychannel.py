@@ -4,6 +4,8 @@ from multiprocessing import Process
 from multiprocessing.managers import SharedMemoryManager
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.core.model.interfaces import PortMessageFormat
+from lava.magma.core.model.py.ports import PyPortMessage
 
 
 class MockInterface:
@@ -30,8 +32,12 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         try:
             smm.start()
 
-            data = np.ones((2, 2, 2))
-            channel = get_channel(smm, data, size=2)
+            data = PyPortMessage(
+                PortMessageFormat.VECTOR_DENSE,
+                8,
+                np.ones((2, 2, 2))
+            )
+            channel = get_channel(smm, data, data.size)
 
             channel.src_port.start()
             channel.dst_port.start()
@@ -47,8 +53,13 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         try:
             smm.start()
 
-            data = np.random.randint(100, size=(100, 100), dtype=np.int32)
-            channel = get_channel(smm, data, size=100)
+            data = PyPortMessage(
+                PortMessageFormat.VECTOR_DENSE,
+                10000,
+                np.random.randint(100, size=(100, 100), dtype=np.int32)
+            )
+
+            channel = get_channel(smm, data, data.size)
 
             channel.src_port.start()
             channel.dst_port.start()
@@ -64,8 +75,13 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         try:
             smm.start()
 
-            data = np.random.randint(1000, size=100, dtype=np.int16)
-            channel = get_channel(smm, data, size=10)
+            data = PyPortMessage(
+                PortMessageFormat.VECTOR_DENSE,
+                100,
+                np.random.randint(1000, size=100, dtype=np.int16)
+            )
+
+            channel = get_channel(smm, data, data.size)
 
             channel.src_port.start()
             channel.dst_port.start()
@@ -126,12 +142,17 @@ class TestPyPyChannelMultiProcess(unittest.TestCase):
         smm = SharedMemoryManager()
         try:
             smm.start()
-            data = np.ones((2, 2))
+            data = PyPortMessage(
+                PortMessageFormat.VECTOR_DENSE,
+                4,
+                np.ones((2, 2))
+            )
+
             channel_source_to_buffer = get_channel(
-                smm, data, size=2, name="channel_source_to_buffer"
+                smm, data, data.size, name="channel_source_to_buffer"
             )
             channel_buffer_to_sink = get_channel(
-                smm, data, size=2, name="channel_buffer_to_sink"
+                smm, data, data.size, name="channel_buffer_to_sink"
             )
 
             jobs = [

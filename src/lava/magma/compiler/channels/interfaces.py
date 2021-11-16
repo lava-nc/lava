@@ -52,6 +52,10 @@ class AbstractCspRecvPort(AbstractCspPort):
     def recv(self) -> 'AbstractPortMessage':  # noqa: F821
         pass
 
+    @abstractmethod
+    def peek(self) -> 'AbstractPortMessage':  # noqa: F821
+        pass
+
 
 class Channel(ABC):
     @property

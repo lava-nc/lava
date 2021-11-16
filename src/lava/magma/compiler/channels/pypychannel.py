@@ -15,10 +15,7 @@ from lava.magma.compiler.channels.interfaces import (
     AbstractCspSendPort,
     AbstractCspRecvPort,
 )
-from lava.magma.core.model.interfaces import (
-    AbstractPortMessage,
-    PortMessageFormat
-)
+from lava.magma.core.model.interfaces import AbstractPortMessage
 if ty.TYPE_CHECKING:
     from lava.magma.runtime.message_infrastructure\
         .message_infrastructure_interface import MessageInfrastructureInterface
@@ -119,10 +116,11 @@ class CspSendPort(AbstractCspSendPort):
         """
         Send data on the channel. May block if the channel is already full.
         """
-        data = message.payload()
-        fmt, num_elem = message.header()
-        if fmt != PortMessageFormat.SCALAR_DENSE \
-                and np.shape(data) != self._shape:
+        if not isinstance(message, AbstractPortMessage):
+            raise AssertionError("Sending " + str(message) + " which is "
+                                 + "not an instance of AbstractPortMessage")
+        data = message._payload
+        if data.shape != self._shape:
             raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
         self._semaphore.acquire()
         self._array[self._idx][:] = data[:]

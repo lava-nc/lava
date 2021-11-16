@@ -10,6 +10,7 @@ from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort
 from lava.magma.runtime.mgmt_token_enums import (
+    enum_to_message,
     enum_to_np,
     MGMT_COMMAND,
     MGMT_RESPONSE, REQ_TYPE,
@@ -112,7 +113,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             if self.service_to_process_cmd.probe():
                 phase = self.service_to_process_cmd.recv()
                 if np.array_equal(phase, MGMT_COMMAND.STOP):
-                    self.process_to_service_ack.send(MGMT_RESPONSE.TERMINATED)
+                    self.process_to_service_ack.send(
+                        enum_to_message(MGMT_RESPONSE.TERMINATED)
+                    )
                     self.join()
                     return
                 if np.array_equal(phase, PyLoihiProcessModel.Phase.SPK):
@@ -134,7 +137,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                         self.run_host_mgmt()
                 else:
                     raise ValueError(f"Wrong Phase Info Received : {phase}")
-                self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                self.process_to_service_ack.send(
+                    enum_to_message(MGMT_RESPONSE.DONE)
+                )
             else:
                 self._handle_get_set_var()
 
@@ -159,14 +164,14 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         # 2. Send Var data
         data_port: CspSendPort = self.process_to_service_data
         if isinstance(var, int) or isinstance(var, np.integer):
-            data_port.send(enum_to_np(1))
-            data_port.send(enum_to_np(var))
+            data_port.send(enum_to_message(1))
+            data_port.send(enum_to_message(var))
         elif isinstance(var, np.ndarray):
             var_iter = np.nditer(var)
             num_items: np.integer = np.prod(var.shape)
-            data_port.send(enum_to_np(num_items))
+            data_port.send(enum_to_message(num_items))
             for value in var_iter:
-                data_port.send(enum_to_np(value))
+                data_port.send(enum_to_message(value))
 
     def _handle_set_var(self):
         # 1. Recv Var ID

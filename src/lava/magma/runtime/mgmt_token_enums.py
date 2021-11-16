@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
+from lava.magma.core.model.interfaces import AbstractPortMessage, PortMessageFormat
 
 
 def enum_to_np(value: int) -> np.array:
@@ -13,6 +14,27 @@ def enum_to_np(value: int) -> np.array:
     :return: np array with the value
     """
     return np.array([value], dtype=np.int32)
+
+
+def enum_to_message(value: int) -> AbstractPortMessage:
+    """Helper function to convert an int (or EnumInt) to a
+    AbstractPortMessage to pass it via the message passing framework
+
+    Parameters
+    ----------
+    value : int
+        value to be converted to AbstractPortMessage
+
+    Returns
+    -------
+    AbstractPortMessage
+    """
+    data = np.array([value], dtype=np.int32)
+    return AbstractPortMessage(
+                PortMessageFormat.MGMT,
+                data.size,
+                data
+    )
 
 
 class MGMT_COMMAND:
