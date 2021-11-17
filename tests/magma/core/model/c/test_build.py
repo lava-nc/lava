@@ -10,6 +10,17 @@ import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
+class MockServicePort:
+    phase: int = 0
+
+    def probe(self) -> int:
+        return 1
+
+    def recv(self) -> int:
+        self.phase += 1
+        return self.phase
+
+
 class Test_Build(unittest.TestCase):
     """
     def test_boring(self):
@@ -22,10 +33,12 @@ class Test_Build(unittest.TestCase):
 
     def test_runstate(self):
         class PM(AbstractCProcessModel):
+            service_to_process_cmd: MockServicePort = MockServicePort()
             source_files = ["test_runstate.c"]
 
         pm = PM()
         pm.run()
+        self.assertEqual(pm.service_to_process_cmd.phase, 1)
 
 
 if __name__ == "__main__":
