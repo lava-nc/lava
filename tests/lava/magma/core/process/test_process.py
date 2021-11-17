@@ -15,6 +15,7 @@ from lava.magma.core.process.ports.ports import (
     RefPort,
     VarPort,
 )
+from lava.magma.core.run_conditions import RunSteps
 
 
 class MinimalProcess(AbstractProcess):
@@ -259,6 +260,16 @@ class TestProcessSetup(unittest.TestCase):
         # ... nor is any other random process a sub process of proc1
         yet_another_proc = Proc()
         self.assertFalse(yet_another_proc.is_sub_proc_of(proc1))
+
+    # TODO: (PP) Modify unit test when non-blocking execution is implemented
+    def test_non_blocking_execution_fail(self):
+        """Checks that non-blocking execution raises an NotImplementedError, as
+        non-blocking execution is currently not available."""
+
+        proc = MinimalProcess()
+
+        with self.assertRaises(NotImplementedError):
+            proc.run(RunSteps(num_steps=0, blocking=False), ...)
 
 
 if __name__ == "__main__":
