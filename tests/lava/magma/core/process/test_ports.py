@@ -1,5 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier:  BSD-3-Clause
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 import unittest
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import (
@@ -294,12 +295,8 @@ class TestRVPorts(unittest.TestCase):
         v = Var((1, 2, 3))
         rp = RefPort((1, 2, 3))
 
-        # Create a Var and RefPort...
-        v = Var((1, 2, 3))
-        rp = RefPort((1, 2, 3))
-
         # ...register a process for the Var and name it so it conflicts with
-        # the attribute ov VarProcess (very unlikely to happen)
+        # the attribute of VarProcess (very unlikely to happen)
         v.process = VarProcess()
         v.name = "existing_attr"
 
@@ -349,6 +346,64 @@ class TestRVPorts(unittest.TestCase):
         # ...to a Var must fail
         with self.assertRaises(VarNotSharableError):
             rp.connect_var(v)
+
+    def test_connect_RefPort_to_InPort_OutPort(self):
+        """Checks connecting RefPort to an InPort or OutPort. -> TypeError"""
+
+        # Create an InPort, OutPort, RefPort...
+        ip = InPort((1, 2, 3))
+        op = OutPort((1, 2, 3))
+        rp = RefPort((1, 2, 3))
+
+        # ... and connect them via connect(..)
+        # The type conflict should raise an TypeError
+        with self.assertRaises(TypeError):
+            rp.connect(ip)
+
+        with self.assertRaises(TypeError):
+            rp.connect(op)
+
+        # Connect them via connect_from(..)
+        # The type conflict should raise an TypeError
+        with self.assertRaises(TypeError):
+            rp.connect_from(ip)
+
+        with self.assertRaises(TypeError):
+            rp.connect_from(op)
+
+    def test_connect_VarPort_to_InPort_OutPort_RefPort(self):
+        """Checks connecting VarPort to an InPort, OutPort or RefPort.
+        -> TypeError (RefPort can only be connected via connect_from(..) to
+        VarPort."""
+
+        # Create an InPort, OutPort, RefPort, Var with VarPort...
+        ip = InPort((1, 2, 3))
+        op = OutPort((1, 2, 3))
+        rp = RefPort((1, 2, 3))
+        v = Var((1, 2, 3))
+        vp = VarPort(v)
+
+        # ... and connect them via connect(..)
+        # The type conflict should raise an TypeError
+        with self.assertRaises(TypeError):
+            vp.connect(ip)
+
+        with self.assertRaises(TypeError):
+            vp.connect(op)
+
+        with self.assertRaises(TypeError):
+            vp.connect(rp)
+
+        # Connect them via connect_from(..)
+        # The type conflict should raise an TypeError
+        with self.assertRaises(TypeError):
+            vp.connect_from(ip)
+
+        with self.assertRaises(TypeError):
+            vp.connect_from(op)
+
+        # Connect RefPort via connect_from(..) raises no error
+        vp.connect_from(rp)
 
 
 class TestVirtualPorts(unittest.TestCase):

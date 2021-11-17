@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
 
-class AbstractPortImplementation(metaclass=ABCMeta):
+class AbstractPortImplementation(ABC):
     def __init__(
         self,
         process_model: "AbstractProcessModel",  # noqa: F821
@@ -16,12 +17,18 @@ class AbstractPortImplementation(metaclass=ABCMeta):
         self._shape = shape
         self._d_type = d_type
 
+    @property
     @abstractmethod
-    def start(self):
-        # start all csp ports
-        ...
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        pass
 
-    @abstractmethod
+    def start(self):
+        """Start all csp ports."""
+        for csp_port in self.csp_ports:
+            csp_port.start()
+
     def join(self):
-        # join all csp ports
-        ...
+        """Join all csp ports"""
+        for csp_port in self.csp_ports:
+            csp_port.join()

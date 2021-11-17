@@ -45,6 +45,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.__dict__[key] = value
         if isinstance(value, AbstractPyPort):
             self.py_ports.append(value)
+            # Store all VarPorts for efficient RefPort -> VarPort handling
             if isinstance(value, PyVarPort):
                 self.var_ports.append(value)
 
@@ -107,44 +108,67 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
 
     # TODO: (PP) need to handle PAUSE command
     def run(self):
+        """Retrieves commands from the runtime service to iterate through the
+        phases of Loihi and calls their corresponding methods of the
+        ProcessModels. The phase is retrieved from runtime service
+        (service_to_process_cmd). After calling the method of a phase of all
+        ProcessModels the runtime service is informed about completion. The
+        loop ends when the STOP command is received."""
         while True:
+            # Probe if there is a new command from the runtime service
             if self.service_to_process_cmd.probe():
                 phase = self.service_to_process_cmd.recv()
                 if np.array_equal(phase, MGMT_COMMAND.STOP):
                     self.process_to_service_ack.send(MGMT_RESPONSE.TERMINATED)
                     self.join()
                     return
+                # Spiking phase - increase time step
                 if np.array_equal(phase, PyLoihiProcessModel.Phase.SPK):
                     self.current_ts += 1
                     self.run_spk()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                # Pre-management phase
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
+                    # Enable via guard method
                     if self.pre_guard():
                         self.run_pre_mgmt()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Handle VarPort requests from RefPorts
                     if len(self.var_ports) > 0:
                         self._handle_var_ports()
+                # Learning phase
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.LRN):
+                    # Enable via guard method
                     if self.lrn_guard():
                         self.run_lrn()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                # Post-management phase
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                    # Enable via guard method
                     if self.post_guard():
                         self.run_post_mgmt()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Handle VarPort requests from RefPorts
                     if len(self.var_ports) > 0:
                         self._handle_var_ports()
+                # Host phase - called at the last time step before STOP
                 elif np.array_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                    # Handle get/set Var requests from runtime service
                     self._handle_get_set_var()
                 else:
                     raise ValueError(f"Wrong Phase Info Received : {phase}")
 
     # FIXME: (PP) might not be able to perform get/set during pause
     def _handle_get_set_var(self):
+        """Handles all get/set Var requests from the runtime service and calls
+        the corresponding handling methods. The loop ends upon a
+        new command from runtime service after all get/set Var requests have
+        been handled."""
         while True:
+            # Probe if there is a get/set Var request from runtime service
             if self.service_to_process_req.probe():
-                req_port: CspRecvPort = self.service_to_process_req
-                request: np.ndarray = req_port.recv()
+                # Get the type of the request
+                request = self.service_to_process_req.recv()
                 if np.array_equal(request, REQ_TYPE.GET):
                     self._handle_get_var()
                 elif np.array_equal(request, REQ_TYPE.SET):
@@ -152,18 +176,21 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 else:
                     raise RuntimeError(f"Unknown request type {request}")
 
+            # End if another command from runtime service arrives
             if self.service_to_process_cmd.probe():
                 return
 
     def _handle_get_var(self):
-        # 1. Recv Var ID
-        req_port: CspRecvPort = self.service_to_process_req
-        var_id: int = req_port.recv()[0].item()
-        var_name: str = self.var_id_to_var_map[var_id]
-        var: ty.Any = getattr(self, var_name)
+        """Handles the get Var command from runtime service."""
+        # 1. Receive Var ID and retrieve the Var
+        var_id = self.service_to_process_req.recv()[0].item()
+        var_name = self.var_id_to_var_map[var_id]
+        var = getattr(self, var_name)
 
         # 2. Send Var data
-        data_port: CspSendPort = self.process_to_service_data
+        data_port = self.process_to_service_data
+        # Header corresponds to number of values
+        # Data is either send once (for int) or one by one (array)
         if isinstance(var, int) or isinstance(var, np.integer):
             data_port.send(enum_to_np(1))
             data_port.send(enum_to_np(var))
@@ -176,25 +203,28 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 data_port.send(enum_to_np(value))
 
     def _handle_set_var(self):
-        # 1. Recv Var ID
-        req_port: CspRecvPort = self.service_to_process_req
-        var_id: int = req_port.recv()[0].item()
-        var_name: str = self.var_id_to_var_map[var_id]
-        var: ty.Any = getattr(self, var_name)
+        """Handles the set Var command from runtime service."""
+        # 1. Receive Var ID and retrieve the Var
+        var_id = self.service_to_process_req.recv()[0].item()
+        var_name = self.var_id_to_var_map[var_id]
+        var = getattr(self, var_name)
 
-        # 2. Recv Var data
-        data_port: CspRecvPort = self.service_to_process_data
+        # 2. Receive Var data
+        data_port = self.service_to_process_data
         if isinstance(var, int) or isinstance(var, np.integer):
-            data_port.recv()  # Ignore as this will be 1 (num_items)
+            # First item is number of items (1) - not needed
+            data_port.recv()
+            # Data to set
             buffer = data_port.recv()[0]
             if isinstance(var, int):
                 setattr(self, var_name, buffer.item())
             else:
                 setattr(self, var_name, buffer.astype(var.dtype))
         elif isinstance(var, np.ndarray):
+            # First item is number of items
             num_items = data_port.recv()[0]
             var_iter = np.nditer(var, op_flags=['readwrite'])
-
+            # Set data one by one
             for i in var_iter:
                 if num_items == 0:
                     break
@@ -203,11 +233,16 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         else:
             raise RuntimeError("Unsupported type")
 
+    # TODO: (PP) use select(..) to service VarPorts instead of a loop
     def _handle_var_ports(self):
-        """Check if a VarPort either receives data from a RefPort or needs to
-         send data to a RefPort."""
+        """Handles read/write requests on any VarPorts. The loop ends upon a
+        new command from runtime service after all VarPort service requests have
+        been handled."""
         while True:
+            # Loop through read/write requests of each VarPort
             for vp in self.var_ports:
                 vp.service()
+
+            # End if another command from runtime service arrives
             if self.service_to_process_cmd.probe():
                 return

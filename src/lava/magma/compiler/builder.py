@@ -217,7 +217,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
     # ToDo: Also check that Vars are initializable with var.value provided
     def set_variables(self, variables: ty.List[VarInitializer]):
-        """Set variables list
+        """Appends the given list of variables to the ProcessModel. Used by the
+         compiler to create a ProcessBuilder during the compilation of
+         ProcessModels.
 
         Parameters
         ----------
@@ -230,7 +232,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.vars.update(new_vars)
 
     def set_py_ports(self, py_ports: ty.List[PortInitializer], check=True):
-        """Set py_ports
+        """Appends the given list of PyPorts to the ProcessModel. Used by the
+         compiler to create a ProcessBuilder during the compilation of
+         ProcessModels.
 
         Parameters
         ----------
@@ -246,7 +250,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.py_ports.update(new_ports)
 
     def set_ref_ports(self, ref_ports: ty.List[PortInitializer]):
-        """Set py_ports
+        """Appends the given list of RefPorts to the ProcessModel. Used by the
+         compiler to create a ProcessBuilder during the compilation of
+         ProcessModels.
 
         Parameters
         ----------
@@ -258,7 +264,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.ref_ports.update(new_ports)
 
     def set_var_ports(self, var_ports: ty.List[VarPortInitializer]):
-        """Set var_ports
+        """Appends the given list of VarPorts to the ProcessModel. Used by the
+         compiler to create a ProcessBuilder during the compilation of
+         ProcessModels.
 
         Parameters
         ----------
@@ -269,7 +277,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.var_ports.update(new_ports)
 
     def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        """Set CSP Ports
+        """Appends the given list of CspPorts to the ProcessModel. Used by the
+        runtime to configure csp ports during initialization (_build_channels).
 
         Parameters
         ----------
@@ -292,7 +301,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         for port_name in new_ports:
             if not hasattr(self.proc_model, port_name):
                 raise AssertionError("PyProcessModel '{}' has \
-                no port named '{}'.".format(proc_name, port_name))
+                    no port named '{}'.".format(proc_name, port_name))
 
             if port_name in self.csp_ports:
                 self.csp_ports[port_name].extend(new_ports[port_name])
@@ -317,6 +326,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         return getattr(self.proc_model, name)
 
     # ToDo: Need to differentiate signed and unsigned variable precisions
+    # TODO: (PP) Combine PyPort/RefPort/VarPort initialization
+    # TODO: (PP) Find a cleaner way to find/address csp_send/csp_recv ports (in
+    #  Ref/VarPort initialization)
     def build(self):
         """Builds a PyProcModel at runtime within Runtime.
 
@@ -365,7 +377,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
         # Initialize RefPorts
         for name, p in self.ref_ports.items():
-            # Build PyPort
+            # Build RefPort
             lt = self._get_lava_type(name)
             port_cls = ty.cast(ty.Type[PyRefPort], lt.cls)
             csp_recv = None
@@ -379,12 +391,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
             port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type)
 
-            # Create dynamic PyPort attribute on ProcModel
+            # Create dynamic RefPort attribute on ProcModel
             setattr(pm, name, port)
 
         # Initialize VarPorts
         for name, p in self.var_ports.items():
-            # Build PyPort
+            # Build VarPort
             if p.port_cls is None:
                 # VarPort is not connected
                 continue
@@ -400,7 +412,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             port = port_cls(
                 p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type)
 
-            # Create dynamic PyPort attribute on ProcModel
+            # Create dynamic VarPort attribute on ProcModel
             setattr(pm, name, port)
 
         for port in self.csp_rs_recv_port.values():

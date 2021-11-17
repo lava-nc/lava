@@ -260,7 +260,9 @@ class Compiler:
     def _map_var_port_class(port: VarPort,
                             proc_groups: ty.Dict[ty.Type[AbstractProcessModel],
                                                  ty.List[AbstractProcess]]):
-        """Derives the port class of a given VarPort from its source RefPort."""
+        """Maps the port class of a given VarPort from its source RefPort. This
+        is needed as implicitly created VarPorts created by connecting RefPorts
+        directly to Vars, have no LavaType."""
 
         # Get the source RefPort of the VarPort
         rp = port.get_src_ports()
@@ -330,7 +332,8 @@ class Compiler:
                                 pp_ch_size,
                                 self._map_var_port_class(pt, proc_groups)))
 
-                        # Set implicit VarPorts as attribute to ProcessModel
+                        # Set implicit VarPorts (created by connecting a RefPort
+                        # directly to a Var) as attribute to ProcessModel
                         if isinstance(pt, ImplicitVarPort):
                             setattr(pm, pt.name, pt)
 
@@ -557,8 +560,9 @@ class Compiler:
     @staticmethod
     def _get_port_dtype(port: AbstractPort,
                         proc_model: ty.Type[AbstractProcessModel]) -> type:
-        """Returns the type of a port, as specified in the corresponding
-         ProcessModel."""
+        """Returns the d_type of a Process Port, as specified in the
+        corresponding PortImplementation of the ProcessModel implementing the
+        Process"""
 
         # In-, Out-, Ref- and explicit VarPorts
         if hasattr(proc_model, port.name):
