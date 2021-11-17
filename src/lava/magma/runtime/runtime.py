@@ -10,7 +10,7 @@ import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.compiler.exec_var import AbstractExecVar
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface \
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
