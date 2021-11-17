@@ -38,7 +38,7 @@ class Test_Build(unittest.TestCase):
 
         pm = PM()
         pm.run()
-        self.assertEqual(pm.service_to_process_cmd.phase, 1)
+        self.assertEqual(pm.service_to_process_cmd.phase, 10)
 
 
 if __name__ == "__main__":
