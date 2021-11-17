@@ -87,8 +87,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
     """
 
     def __init__(
-        self, proc_model: ty.Type[AbstractPyProcessModel], model_id: int
-    ):
+            self, proc_model: ty.Type[AbstractPyProcessModel],
+            model_id: int,
+            proc_params: ty.Dict[str,ty.Any]):
         if not issubclass(proc_model, AbstractPyProcessModel):
             raise AssertionError("Is not a subclass of AbstractPyProcessModel")
         self._proc_model = proc_model
@@ -100,6 +101,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
+        self.proc_params = proc_params
 
     @property
     def proc_model(self) -> ty.Type[AbstractPyProcessModel]:
@@ -342,6 +344,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         # Create the ProcessModel
         pm = self.proc_model()
         pm.model_id = self._model_id
+        pm.proc_params = self.proc_params # default: empty dictornary
 
         # Initialize PyPorts
         for name, p in self.py_ports.items():
