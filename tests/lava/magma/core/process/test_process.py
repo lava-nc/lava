@@ -15,7 +15,7 @@ from lava.magma.core.process.ports.ports import (
     RefPort,
     VarPort,
 )
-from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_conditions import RunSteps, RunContinuous
 
 
 class MinimalProcess(AbstractProcess):
@@ -270,6 +270,9 @@ class TestProcessSetup(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             proc.run(RunSteps(num_steps=0, blocking=False), ...)
+
+        with self.assertRaises(NotImplementedError):
+            proc.run(RunContinuous(), ...)
 
 
 if __name__ == "__main__":
