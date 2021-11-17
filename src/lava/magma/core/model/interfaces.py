@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
+<<<<<<< HEAD
 from abc import ABC
 from enum import Enum, unique
 import numpy as np
@@ -46,28 +47,41 @@ class AbstractPortMessage(ABC):
     @property
     def data(self) -> ty.Type[np.array]:
         return self._payload[2]
+=======
+from abc import ABC, abstractmethod
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
+>>>>>>> main
 
 
 class AbstractPortImplementation(ABC):
     def __init__(
         self,
+<<<<<<< HEAD
         process_model: 'AbstractProcessModel',  # noqa: F821
         csp_ports: ty.List[ty.Union['AbstractCspRecvPort',
                                     'AbstractCspSendPort']] = [],
+=======
+        process_model: "AbstractProcessModel",  # noqa: F821
+>>>>>>> main
         shape: ty.Tuple[int, ...] = tuple(),
         d_type: type = int,
     ):
         self._process_model = process_model
-        self._csp_ports = (
-            csp_ports if isinstance(csp_ports, list) else [csp_ports]
-        )
         self._shape = shape
         self._d_type = d_type
 
+    @property
+    @abstractmethod
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        pass
+
     def start(self):
-        for csp_port in self._csp_ports:
+        """Start all csp ports."""
+        for csp_port in self.csp_ports:
             csp_port.start()
 
     def join(self):
-        for csp_port in self._csp_ports:
+        """Join all csp ports"""
+        for csp_port in self.csp_ports:
             csp_port.join()
