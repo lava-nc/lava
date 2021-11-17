@@ -22,14 +22,7 @@ class AbstractPyPortMessage(AbstractPortMessage):
 
 
 class PyPortMessage(AbstractPyPortMessage):
-    def __init__(self,
-                 format: 'PortMessageFormat',
-                 num_elem: ty.Type[int],
-                 data: ty.Union[int, np.ndarray, np.array]) -> np.ndarray:
-        self._payload = np.array([format, num_elem, data])
-
-    def payload(self) -> ty.Type[np.array]:
-        return self._payload
+    pass
 
 
 class PyInPort(AbstractPyPort):
@@ -126,16 +119,16 @@ class PyInPortVectorDense(PyInPort):
         return ft.reduce(
             lambda acc, message: acc + message.data,
             messages,
-            np.zeros(messages[0].data.shape, messages[0].data.dtype),
+            np.zeros(messages[0].data.shape, messages[0].data.dtype)
         )
 
     def _recv_VECTOR_SPARSE(self, messages: ty.List[PyPortMessage]) -> \
             np.ndarray:
         reduced = ft.reduce(
-                    lambda acc, message: acc + message.data(),
-                    messages,
-                    np.zeros(messages[0].data.shape, messages[0].data.dtype),
-                )
+            lambda acc, message: acc + message.data(),
+            messages,
+            np.zeros(messages[0].data.shape, messages[0].data.dtype)
+        )
         uninterleaved = [reduced[idx::2] for idx in range(2)]
         return (uninterleaved[0], uninterleaved[1])
         # n_reduced = reduced.shape[1]
@@ -179,7 +172,7 @@ class PyInPortVectorSparse(PyInPort):
                 ft.reduce(
                     lambda acc, message: acc + message.data(),
                     messages,
-                    np.zeros(messages[0].data().shape, messages[0].data.dtype),
+                    np.zeros(messages[0].data().shape, messages[0].data.dtype)
                 )
             )
         )
@@ -188,10 +181,10 @@ class PyInPortVectorSparse(PyInPort):
     def _recv_VECTOR_SPARSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
         reduced = ft.reduce(
-                    lambda acc, message: acc + message.data(),
-                    messages,
-                    np.zeros(messages[0].data.shape, messages[0].data.dtype),
-                )
+            lambda acc, message: acc + message.data(),
+            messages,
+            np.zeros(messages[0].data.shape, messages[0].data.dtype)
+        )
         uninterleaved = [reduced[idx::2] for idx in range(2)]
         return (uninterleaved[0], uninterleaved[1])
         # n_reduced = reduced.shape[1]

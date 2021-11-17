@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
-from lava.magma.core.model.interfaces import AbstractPortMessage, PortMessageFormat
+from lava.magma.core.model.interfaces import AbstractPortMessage, \
+    PortMessageFormat
 
 
 def enum_to_np(value: int) -> np.array:
@@ -31,9 +32,9 @@ def enum_to_message(value: int) -> AbstractPortMessage:
     """
     data = np.array([value], dtype=np.int32)
     return AbstractPortMessage(
-                PortMessageFormat.MGMT,
-                data.size,
-                data
+        PortMessageFormat.MGMT,
+        data.size,
+        data
     )
 
 

@@ -288,7 +288,7 @@ class TestPyPorts(unittest.TestCase):
             send_py_port.start()
 
             send_py_port.send(data, idx)
-            recv_idx, recv_data  = recv_py_port.recv()
+            recv_idx, recv_data = recv_py_port.recv()
 
             print("If working, below arrays are np.array_equal")
             print(data)

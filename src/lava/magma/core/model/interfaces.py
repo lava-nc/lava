@@ -29,7 +29,7 @@ class AbstractPortMessage(ABC):
                  format: 'PortMessageFormat',
                  num_elem: ty.Type[int],
                  data: ty.Union[int, np.ndarray, np.array]) -> np.ndarray:
-        self._payload = np.array([format, num_elem, data])
+        self._payload = np.array([format, num_elem, data], dtype=object)
 
     @property
     def payload(self) -> ty.Type[np.array]:
@@ -46,10 +46,6 @@ class AbstractPortMessage(ABC):
     @property
     def data(self) -> ty.Type[np.array]:
         return self._payload[2]
-
-
-
-
 
 
 class AbstractPortImplementation(ABC):
