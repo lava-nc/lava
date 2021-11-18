@@ -21,7 +21,7 @@ from lava.magma.core.run_configs import Loihi1SimCfg
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.v = Var(shape=(1,), init=1)
+        self.s = Var(shape=(1,), init=1)
         self.u = Var(shape=(1,), init=0)
 
 
@@ -29,7 +29,7 @@ class P1(AbstractProcess):
 @implements(proc=P1, protocol=LoihiProtocol)
 @requires(CPU)
 class PyProcModel1(PyLoihiProcessModel):
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32)
+    s: np.ndarray = LavaPyType(np.ndarray, np.int32)
     u: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
     def pre_guard(self):
@@ -37,11 +37,12 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_pre_mgmt(self):
         if self.current_ts > 1:
-            self.v = np.array([self.current_ts])
+            self.s = np.array([self.current_ts])
             self.u = 2*np.array([self.current_ts])
 
 
 class Monitors(unittest.TestCase):
+
     def test_monitor_constructor(self):
         monitor = Monitor()
 
@@ -56,13 +57,14 @@ class Monitors(unittest.TestCase):
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
+        self.assertIsInstance(monitor.ref_ports.members[0], RefPort)
 
     def test_monitor_add_probe_create_connection(self):
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
 
         # Regardless where we start searching...
         c = Compiler()
@@ -78,7 +80,7 @@ class Monitors(unittest.TestCase):
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
 
         class MyRunCfg(RunConfig):
             def select(self, proc, proc_models):
@@ -96,15 +98,15 @@ class Monitors(unittest.TestCase):
     # def test_monitor_probe_created_empty_data_collection_structure(self):
     #     monitor = Monitor()
     #     some_proc = P1()
-    #     monitor.probe(var=some_proc.v)
+    #     monitor.probe(var=some_proc.s)
     #
-    #     self.assertEqual(monitor.data[some_proc.name][some_proc.v.name], [])
+    #     self.assertEqual(monitor.data[some_proc.name][some_proc.s.name], [])
 
     def test_monitor_collects_correct_data_from_one_var(self):
         num_steps = 6
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
 
         class MyRunCfg(RunConfig):
             def select(self, proc, proc_models):
@@ -117,41 +119,43 @@ class Monitors(unittest.TestCase):
         some_proc.run(RunSteps(num_steps=num_steps, blocking=True),
                       MyRunCfg(custom_sync_domains=[simple_sync_domain]))
 
-        print(monitor.var_read.get())
-        self.assertTrue(
-            np.all(monitor.var_read.get() == np.array([1, 2, 3, 4, 5, 6])))
+        probe1_data = getattr(monitor, monitor.proc_params["VarsRead"][0]).get()
+        print(probe1_data)
+        self.assertTrue(np.all(probe1_data == np.array([1, 2, 3, 4, 5, 6])))
 
         some_proc.stop()
-        # self.assertEqual(monitor.data[some_proc.name][some_proc.v.name],
+        # self.assertEqual(monitor.data[some_proc.name][some_proc.s.name],
         #                  np.array([1, 2, 3, 4]))
 
     def test_monitor_collects_correct_data_from_two_vars(self):
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
         monitor.probe(var=some_proc.u, num_steps=num_steps)
-        print("a")
-        # class MyRunCfg(RunConfig):
-        #     def select(self, proc, proc_models):
-        #         return proc_models[0]
-        #
-        # simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-        #                                 [some_proc, monitor])
-        #
-        # # should run without error (not doing anything)
-        # some_proc.run(RunSteps(num_steps=4, blocking=True),
-        #               MyRunCfg(custom_sync_domains=[simple_sync_domain]))
-        #
-        # self.assertTrue(
-        #         np.all(monitor.var_read.get() == np.array([1, 2, 3, 4])))
-        # some_proc.stop()
+
+        class MyRunCfg(RunConfig):
+            def select(self, proc, proc_models):
+                return proc_models[0]
+
+        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
+                                        [some_proc, monitor])
+
+        # should run without error (not doing anything)
+        some_proc.run(RunSteps(num_steps=4, blocking=True),
+                      MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+
+        probe1_data = getattr(monitor, monitor.proc_params["VarsRead"][0]).get()
+        probe2_data = getattr(monitor, monitor.proc_params["VarsRead"][1]).get()
+        self.assertTrue(np.all(probe1_data == np.array([1, 2, 3, 4])))
+        self.assertTrue(np.all(probe2_data == np.array([2, 4, 6, 8])))
+        some_proc.stop()
 
     def test_proc_params_accessible_in_proc_model(self):
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.v, num_steps=num_steps)
+        monitor.probe(var=some_proc.s, num_steps=num_steps)
         monitor.proc_params = {"test": 0}
 
         class MyRunCfg(RunConfig):
