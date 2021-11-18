@@ -2,22 +2,29 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
+import typing as ty
+
 from lava.magma.core.model.interfaces import AbstractPortMessage, \
     PortMessageFormat
 
 
-def enum_to_np(value: int) -> np.array:
+def enum_to_np(value: ty.Union[int, float],
+               d_type: type = np.int32) -> np.array:
     """
-    Helper function to convert an int (or EnumInt) to a single value np array
-    so as to pass it via the message passing framework
+    Helper function to convert an int (or EnumInt) or a float to a single value
+    np array so as to pass it via the message passing framework. The dtype of
+    the np array is specified by d_type with the default of np.int32.
 
     :param value: value to be converted to a 1-D array
+    :param d_type: type of the converted np array
     :return: np array with the value
     """
-    return np.array([value], dtype=np.int32)
+
+    return np.array([value], dtype=d_type)
 
 
-def enum_to_message(value: int,
+def enum_to_message(value: ty.Union[int, float],
+                    d_type: type = np.int32,
                     msg_fmt: PortMessageFormat
                     = PortMessageFormat.MGMT) -> AbstractPortMessage:
     """Helper function to convert an int (or EnumInt) to a
@@ -32,7 +39,7 @@ def enum_to_message(value: int,
     -------
     AbstractPortMessage
     """
-    data = np.array([value], dtype=np.int32)
+    data = np.array([value], dtype=d_type)
     return AbstractPortMessage(
         msg_fmt,
         data.size,
