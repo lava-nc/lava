@@ -80,9 +80,11 @@ $ git clone git@github.com:lava-nc/lava.git
 $ cd lava
 $ pip install -r build-requirements.txt
 $ pip install -r requirements.txt
-$ export PYTHONPATH=~/lava
+$ export PYTHONPATH=$(pwd)/src
 $ pyb -E unit
 ```
+Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl. Test your PYTHONPATH using `echo $PYTHONPATH` and ensure 'lava/src' is the first entry that precedes any additional Lava library src paths. 
+
 #### [Windows]
 ```cmd
 cd %HOMEPATH%
@@ -93,9 +95,10 @@ git clone git@github.com:lava-nc/lava.git
 cd lava
 pip install -r build-requirements.txt
 pip install -r requirements.txt
-set PYTHONPATH=%HOMEPATH%\lava
+set PYTHONPATH=%cd%\src
 pyb -E unit
 ```
+Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl. Test your PYTHONPATH using `echo %PYTHONPATH%` and ensure 'lava\src' is the first entry that precedes any additional Lava library src paths. 
 
 You should expect the following output after running the unit tests:
 ```
@@ -138,8 +141,6 @@ $  pyb analyze
 
 # Run unit tests
 $  pyb -E unit
-# Alternately
-$  python -m unittest discover -s tests -p "test_*.py" -vvv
 
 # Generate documentation
 $  pyb sphinx_generate_documentation
