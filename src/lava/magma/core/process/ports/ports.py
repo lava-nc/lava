@@ -347,6 +347,14 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         -----------
         :param ports: The AbstractRVPort(s) to connect to.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort) and not isinstance(p, VarPort):
+                raise TypeError(
+                    "RefPorts can only be connected to RefPorts or "
+                    "VarPorts: {!r}: {!r} -> {!r}: {!r}  To connect a RefPort "
+                    "to a Var, use <connect_var>".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), AbstractRVPort)
 
     def connect_from(self, ports: ty.Union["RefPort", ty.List["RefPort"]]):
@@ -357,6 +365,13 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         :param ports: The RefPort(s) that connect to this RefPort.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort):
+                raise TypeError(
+                    "RefPorts can only receive connections from RefPorts: "
+                    "{!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_backward(to_list(ports), RefPort)
 
     def connect_var(self, variables: ty.Union[Var, ty.List[Var]]):
@@ -389,12 +404,19 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if var_shape != v.shape:
                 raise AssertionError("All 'vars' must have same shape.")
             # Create a VarPort to wrap Var
-            vp = VarPort(v)
+            vp = ImplicitVarPort(v)
             # Propagate name and parent process of Var to VarPort
-            vp.name = v.name + "_port"
+            vp.name = "_" + v.name + "_implicit_port"
             if v.process is not None:
                 # Only assign when parent process is already assigned
                 vp.process = v.process
+                # VarPort name could shadow existing attribute
+                if hasattr(v.process, vp.name):
+                    raise AssertionError(
+                        "Name of implicit VarPort might conflict"
+                        " with existing attribute.")
+                setattr(v.process, vp.name, vp)
+                v.process.var_ports.add_members({vp.name: vp})
             var_ports.append(vp)
         # Connect RefPort to VarPorts that wrap Vars
         self.connect(var_ports)
@@ -440,6 +462,13 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The VarPort(s) to connect to.
         """
+        for p in to_list(ports):
+            if not isinstance(p, VarPort):
+                raise TypeError(
+                    "VarPorts can only be connected to VarPorts: "
+                    "{!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), VarPort)
 
     def connect_from(
@@ -452,7 +481,20 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The AbstractRVPort(s) that connect to this VarPort.
         """
+        for p in to_list(ports):
+            if not isinstance(p, RefPort) and not isinstance(p, VarPort):
+                raise TypeError(
+                    "VarPorts can only receive connections from RefPorts or "
+                    "VarPorts: {!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
         self._connect_backward(to_list(ports), AbstractRVPort)
+
+
+class ImplicitVarPort(VarPort):
+    """Sub class for VarPort to identify implicitly created VarPorts when
+    a RefPort connects directly to a Var."""
+    pass
 
 
 class AbstractVirtualPort(ABC):
@@ -543,7 +585,7 @@ class ConcatPort(AbstractPort, AbstractVirtualPort):
             # Compute total size along concatenation axis
             total_size += shape[axis]
             # Extract shape dimensions other than concatenation axis
-            shapes_ex_axis.append(shape[:axis] + shape[axis + 1 :])
+            shapes_ex_axis.append(shape[:axis] + shape[axis + 1:])
             if len(shapes_ex_axis) > 1:
                 shapes_incompatible = shapes_ex_axis[-2] != shapes_ex_axis[-1]
 

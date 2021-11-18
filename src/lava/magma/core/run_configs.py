@@ -102,6 +102,7 @@ class Loihi1SimCfg(RunConfig):
             else:
                 raise AssertionError("No legal ProcessModel found.")
 
+
 class Loihi1HwCfg(RunConfig):
     """A RunConfig for executing model on Loihi 1 HW."""
 
