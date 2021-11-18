@@ -73,12 +73,14 @@ class RunConfig(ABC):
 #       sync domains, @requires (example: GPU support), and to select
 #       LeafProcModels of type other than PyProcessModel.
 class Loihi1SimCfg(RunConfig):
-    """Run configuration selects appropriate ProcessModel -- either SubProcessModel for a
-     Hierarchical Process or else a PyProcessModel for a standard Process. The appropriate
-     PyProcessModel is selected based @tag('floating_pt') or @tag('fixed_pt'), for
-    floating point precision or Loihi bit-accurate fixed point precision respectively"""
+    """Run configuration selects appropriate ProcessModel -- either
+    SubProcessModel for a Hierarchical Process or else a PyProcessModel for a
+    standard Process. The appropriate PyProcessModel is selected based @tag(
+    'floating_pt') or @tag('fixed_pt'), for floating point precision or Loihi
+    bit-accurate fixed point precision respectively"""
 
-    def __init__(self, custom_sync_domains=None, select_tag='floating_pt', select_sub_proc_model=False):
+    def __init__(self, custom_sync_domains=None, select_tag='floating_pt',
+                 select_sub_proc_model=False):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
