@@ -322,7 +322,7 @@ class Runtime:
                 runtime_srv_id]
             data_port.send(enum_to_np(num_items))
             for i in range(num_items):
-                data_port.send(enum_to_np(buffer[0, i]))
+                data_port.send(enum_to_np(buffer[0, i], np.float64))
         else:
             raise RuntimeError("Runtime has not started")
 
@@ -352,7 +352,7 @@ class Runtime:
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspRecvPort = self.service_to_runtime_data[
                 runtime_srv_id]
-            num_items: int = data_port.recv()[0].item()
+            num_items: int = int(data_port.recv()[0].item())
             buffer: np.ndarray = np.empty((1, num_items))
             for i in range(num_items):
                 buffer[0, i] = data_port.recv()[0]
