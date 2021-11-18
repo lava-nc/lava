@@ -62,6 +62,7 @@ class AbstractPySendModel(PyLoihiProcessModel):
             data = self.data[..., (self.current_ts - 1) % buffer]
             print(f'Sending data ={data[data!=0]}')
         self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
+        self.s_out.flush()
 
 
 @implements(proc=SendProcess, protocol=LoihiProtocol)
