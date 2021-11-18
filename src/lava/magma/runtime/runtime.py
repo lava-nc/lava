@@ -258,7 +258,7 @@ class Runtime:
         try:
             if self._is_started:
                 for send_port in self.runtime_to_service_cmd:
-                    send_port.send(enum_to_message(MGMT_COMMAND.STOP))
+                    send_port.send(MGMT_COMMAND.STOP)
                 for recv_port in self.service_to_runtime_ack:
                     message = recv_port.recv()
                     if not np.array_equal(message.data,
@@ -307,7 +307,7 @@ class Runtime:
 
             # 1. Send SET Command
             req_port: CspSendPort = self.runtime_to_service_req[runtime_srv_id]
-            req_port.send(enum_to_message(REQ_TYPE.SET))
+            req_port.send(REQ_TYPE.SET)
             req_port.send(enum_to_message(model_id))
             req_port.send(enum_to_message(var_id))
 

@@ -7,16 +7,13 @@ import functools as ft
 import numpy as np
 import scipy.sparse as sparse
 
-<<<<<<< HEAD
+
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.interfaces import (AbstractPortImplementation,
                                               AbstractPortMessage,
                                               PortMessageFormat)
-=======
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
-from lava.magma.core.model.interfaces import AbstractPortImplementation
-from lava.magma.runtime.mgmt_token_enums import enum_to_np
->>>>>>> main
+from lava.magma.runtime.mgmt_token_enums import enum_to_message
 
 
 class AbstractPyPort(AbstractPortImplementation):
@@ -45,14 +42,10 @@ class PyInPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
-<<<<<<< HEAD
-    def __init__(self, *args, **kwargs):
-        super(PyInPort, self).__init__(*args, **kwargs)
-        self.format: PortMessageFormat = None
-
-=======
-    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args):
+    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args, **kwargs):
         self._csp_recv_ports = csp_recv_ports
+        self.format: PortMessageFormat = None
+        super(PyInPort, self).__init__(*args, **kwargs)
         super().__init__(*args)
 
     @property
@@ -60,8 +53,6 @@ class PyInPort(AbstractPyPort):
         """Returns all csp ports of the port."""
         return self._csp_recv_ports
 
-    @abstractmethod
->>>>>>> main
     def recv(self):
 
         messages = []
@@ -140,7 +131,6 @@ class PyInPortVectorDense(PyInPort):
     def _recv_VECTOR_DENSE(self, messages: ty.List[PyPortMessage]) -> \
             np.ndarray:
         return ft.reduce(
-<<<<<<< HEAD
             lambda acc, message: acc + message.data,
             messages,
             np.zeros(messages[0].data.shape, messages[0].data.dtype)
@@ -152,18 +142,6 @@ class PyInPortVectorDense(PyInPort):
             lambda acc, message: acc + message.data(),
             messages,
             np.zeros(messages[0].data.shape, messages[0].data.dtype)
-=======
-            lambda acc, csp_port: acc + csp_port.recv(),
-            self._csp_recv_ports,
-            np.zeros(self._shape, self._d_type),
-        )
-
-    def peek(self) -> np.ndarray:
-        return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.peek(),
-            self._csp_recv_ports,
-            np.zeros(self._shape, self._d_type),
->>>>>>> main
         )
         uninterleaved = [reduced[idx::2] for idx in range(2)]
         return (uninterleaved[0], uninterleaved[1])
@@ -332,7 +310,6 @@ class PyOutPortVectorDense(PyOutPort):
     """PyOutPort that sends VECTOR_DENSE messages"""
 
     def send(self, data: np.ndarray):
-<<<<<<< HEAD
         """Sends VECTOR_DENSE message encoded with data
         only if port is not dangling.
 
@@ -347,11 +324,6 @@ class PyOutPortVectorDense(PyOutPort):
         )
         for csp_port in self._csp_ports:
             csp_port.send(message)
-=======
-        """Sends data only if port is not dangling."""
-        for csp_port in self._csp_send_ports:
-            csp_port.send(data)
->>>>>>> main
 
 
 class PyOutPortVectorSparse(PyOutPort):
@@ -442,14 +414,11 @@ PyOutPort.SCALAR_DENSE = PyOutPortScalarDense
 PyOutPort.SCALAR_SPARSE = PyOutPortScalarSparse
 
 
-<<<<<<< HEAD
-=======
 class VarPortCmd:
-    GET = enum_to_np(0)
-    SET = enum_to_np(1)
+    GET = enum_to_message(0)
+    SET = enum_to_message(1)
 
 
->>>>>>> main
 class PyRefPort(AbstractPyPort):
     """Python implementation of RefPort used within AbstractPyProcessModels."""
 
@@ -540,8 +509,6 @@ PyRefPort.VEC_DENSE = PyRefPortVectorDense
 PyRefPort.VEC_SPARSE = PyRefPortVectorSparse
 PyRefPort.SCALAR_DENSE = PyRefPortScalarDense
 PyRefPort.SCALAR_SPARSE = PyRefPortScalarSparse
-<<<<<<< HEAD
-=======
 
 
 class PyVarPort(AbstractPyPort):
@@ -584,11 +551,11 @@ class PyVarPortVectorDense(PyVarPort):
         # Inspect incoming data
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             if self._csp_recv_port.probe():
-                cmd = enum_to_np(self._csp_recv_port.recv()[0])
+                cmd = self._csp_recv_port.recv().data[0]
 
                 # Set the value of the Var with the given data
                 if np.array_equal(cmd, VarPortCmd.SET):
-                    data = self._csp_recv_port.recv()
+                    data = self._csp_recv_port.recv().data
                     setattr(self._process_model, self.var_name, data)
                 elif np.array_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)
@@ -639,4 +606,3 @@ class RefVarTypeMapping:
     @classmethod
     def get(cls, ref_port: PyRefPort):
         return cls.mapping[ref_port]
->>>>>>> main

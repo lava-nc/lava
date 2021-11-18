@@ -17,7 +17,9 @@ def enum_to_np(value: int) -> np.array:
     return np.array([value], dtype=np.int32)
 
 
-def enum_to_message(value: int) -> AbstractPortMessage:
+def enum_to_message(value: int,
+                    msg_fmt: PortMessageFormat
+                    = PortMessageFormat.MGMT) -> AbstractPortMessage:
     """Helper function to convert an int (or EnumInt) to a
     AbstractPortMessage to pass it via the message passing framework
 
@@ -32,7 +34,7 @@ def enum_to_message(value: int) -> AbstractPortMessage:
     """
     data = np.array([value], dtype=np.int32)
     return AbstractPortMessage(
-        PortMessageFormat.MGMT,
+        msg_fmt,
         data.size,
         data
     )
@@ -45,12 +47,12 @@ class MGMT_COMMAND:
     and process model.
     """
 
-    RUN = enum_to_np(0)
+    RUN = enum_to_message(0)
     """Signifies a RUN command for 0 timesteps from one actor to another. Any
     non negative integer signifies a run command"""
-    STOP = enum_to_np(-1)
+    STOP = enum_to_message(-1)
     """Signifies a STOP command from one actor to another"""
-    PAUSE = enum_to_np(-2)
+    PAUSE = enum_to_message(-2)
     """Signifies a PAUSE command from one actor to another"""
 
 
@@ -58,9 +60,9 @@ class REQ_TYPE:
     """
     Signifies type of request
     """
-    GET = enum_to_np(0)
+    GET = enum_to_message(0)
     """Read a variable"""
-    SET = enum_to_np(1)
+    SET = enum_to_message(1)
     """Write to a variable"""
 
 
@@ -68,9 +70,9 @@ class MGMT_RESPONSE:
     """Signifies the response to a Mgmt command. This response can be sent
     by any actor upon receiving a Mgmt command"""
 
-    DONE = enum_to_np(0)
+    DONE = enum_to_message(0)
     """Signfies Ack or Finished with the Command"""
-    TERMINATED = enum_to_np(-1)
+    TERMINATED = enum_to_message(-1)
     """Signifies Termination"""
-    PAUSED = enum_to_np(-2)
+    PAUSED = enum_to_message(-2)
     """Signifies Execution State to be Paused"""

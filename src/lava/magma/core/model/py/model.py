@@ -79,11 +79,11 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.current_ts = 0
 
     class Phase:
-        SPK = enum_to_np(1)
-        PRE_MGMT = enum_to_np(2)
-        LRN = enum_to_np(3)
-        POST_MGMT = enum_to_np(4)
-        HOST = enum_to_np(5)
+        SPK = enum_to_message(1)
+        PRE_MGMT = enum_to_message(2)
+        LRN = enum_to_message(3)
+        POST_MGMT = enum_to_message(4)
+        HOST = enum_to_message(5)
 
     def run_spk(self):
         pass
@@ -120,7 +120,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 phase = self.service_to_process_cmd.recv()
                 if np.array_equal(phase, MGMT_COMMAND.STOP):
                     self.process_to_service_ack.send(
-                        enum_to_message(MGMT_RESPONSE.TERMINATED)
+                        MGMT_RESPONSE.TERMINATED
                     )
                     self.join()
                     return
@@ -159,14 +159,6 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     self._handle_get_set_var()
                 else:
                     raise ValueError(f"Wrong Phase Info Received : {phase}")
-<<<<<<< HEAD
-                self.process_to_service_ack.send(
-                    enum_to_message(MGMT_RESPONSE.DONE)
-                )
-            else:
-                self._handle_get_set_var()
-=======
->>>>>>> main
 
     # FIXME: (PP) might not be able to perform get/set during pause
     def _handle_get_set_var(self):

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.mgmt_token_enums import enum_to_np
+from lava.magma.runtime.mgmt_token_enums import enum_to_message
 from lava.magma.runtime.runtime_service import (
     LoihiPyRuntimeService,
     LoihiCRuntimeService,
@@ -13,11 +13,11 @@ Proc_Function_With_Guard = namedtuple("Proc_Function_With_Guard", "guard func")
 
 
 class Phase:
-    SPK = enum_to_np(1)
-    PRE_MGMT = enum_to_np(2)
-    LRN = enum_to_np(3)
-    POST_MGMT = enum_to_np(4)
-    HOST = enum_to_np(5)
+    SPK = enum_to_message(1)
+    PRE_MGMT = enum_to_message(2)
+    LRN = enum_to_message(3)
+    POST_MGMT = enum_to_message(4)
+    HOST = enum_to_message(5)
 
 
 @dataclass

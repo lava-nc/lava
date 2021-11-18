@@ -11,7 +11,7 @@ from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
     MGMT_RESPONSE,
     MGMT_COMMAND,
-    enum_to_np, REQ_TYPE,
+    enum_to_message, REQ_TYPE,
 )
 
 
@@ -85,11 +85,11 @@ class LoihiPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Loihi SyncProtocol in Python."""
 
     class Phase:
-        SPK = enum_to_np(1)
-        PRE_MGMT = enum_to_np(2)
-        LRN = enum_to_np(3)
-        POST_MGMT = enum_to_np(4)
-        HOST = enum_to_np(5)
+        SPK = enum_to_message(1)
+        PRE_MGMT = enum_to_message(2)
+        LRN = enum_to_message(3)
+        POST_MGMT = enum_to_message(4)
+        HOST = enum_to_message(5)
 
     def _next_phase(self, curr_phase, is_last_time_step: bool):
         """Advances the current phase to the next phase.
@@ -210,8 +210,10 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     phase = LoihiPyRuntimeService.Phase.HOST
                     while True:
                         # Check if it is the last time step
-                        is_last_ts = np.array_equal(enum_to_np(curr_time_step),
-                                                    command)
+                        is_last_ts = np.array_equal(
+                            enum_to_message(curr_time_step),
+                            command
+                        )
                         # Advance to the next phase
                         phase = self._next_phase(phase, is_last_ts)
                         # Increase time step if spiking phase

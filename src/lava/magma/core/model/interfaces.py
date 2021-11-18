@@ -2,15 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
-<<<<<<< HEAD
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum, unique
 import numpy as np
 
-from lava.magma.compiler.channels.interfaces import (
-    AbstractCspRecvPort,
-    AbstractCspSendPort)
-
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.core.model.model import AbstractProcessModel
 
 
@@ -47,22 +43,13 @@ class AbstractPortMessage(ABC):
     @property
     def data(self) -> ty.Type[np.array]:
         return self._payload[2]
-=======
-from abc import ABC, abstractmethod
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
->>>>>>> main
+
 
 
 class AbstractPortImplementation(ABC):
     def __init__(
         self,
-<<<<<<< HEAD
-        process_model: 'AbstractProcessModel',  # noqa: F821
-        csp_ports: ty.List[ty.Union['AbstractCspRecvPort',
-                                    'AbstractCspSendPort']] = [],
-=======
         process_model: "AbstractProcessModel",  # noqa: F821
->>>>>>> main
         shape: ty.Tuple[int, ...] = tuple(),
         d_type: type = int,
     ):
