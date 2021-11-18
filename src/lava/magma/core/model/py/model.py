@@ -199,7 +199,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             num_items: np.integer = np.prod(var.shape)
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
-                data_port.send(np.array([value], dtype=np.float64))
+                data_port.send(enum_to_np(value))
 
     def _handle_set_var(self):
         """Handles the set Var command from runtime service."""

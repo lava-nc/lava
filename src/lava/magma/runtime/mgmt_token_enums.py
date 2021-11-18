@@ -2,17 +2,31 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
+import typing as ty
 
 
-def enum_to_np(value: int) -> np.array:
+def enum_to_np(value: ty.Union[int, float]) -> np.array:
     """
-    Helper function to convert an int (or EnumInt) to a single value np array
-    so as to pass it via the message passing framework
+    Helper function to convert an int (or EnumInt) or a float to a single value
+    np.array so as to pass it via the message passing framework.
 
     :param value: value to be converted to a 1-D array
     :return: np array with the value
     """
-    return np.array([value], dtype=np.int32)
+
+    if isinstance(value, (int, np.integer)):
+        return np.array([value], dtype=np.int32)
+    elif isinstance(value, (float, np.floating)):
+        return np.array([value], dtype=np.float64)
+    elif isinstance(value, np.ndarray):
+        if value.dtype == np.integer:
+            return np.array([value], dtype=np.int32)
+        elif value.dtype == np.floating:
+            return np.array([value], dtype=np.float64)
+        else:
+            raise TypeError("Type of {!r} must be int or float.".format(value))
+    else:
+        raise TypeError("Type of {!r} must be int or float.".format(value))
 
 
 class MGMT_COMMAND:

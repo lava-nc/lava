@@ -322,7 +322,7 @@ class Runtime:
                 runtime_srv_id]
             data_port.send(enum_to_np(num_items))
             for i in range(num_items):
-                data_port.send(np.array([buffer[0, i]], dtype=np.float64))
+                data_port.send(enum_to_np(buffer[0, i]))
         else:
             raise RuntimeError("Runtime has not started")
 
