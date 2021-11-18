@@ -359,7 +359,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             if issubclass(lt.cls, np.ndarray):
                 var = lt.cls(v.shape, lt.d_type)
                 var[:] = v.value
-            elif issubclass(lt.cls, int) or issubclass(lt.cls, float):
+            elif issubclass(lt.cls, (int, float)):
                 var = v.value
             else:
                 raise NotImplementedError
