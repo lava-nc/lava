@@ -11,7 +11,6 @@ from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_message,
-    enum_to_np,
     MGMT_COMMAND,
     MGMT_RESPONSE, REQ_TYPE,
 )
