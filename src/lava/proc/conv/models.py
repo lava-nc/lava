@@ -17,6 +17,10 @@ from lava.proc.conv import utils
 
 class AbstractPyConvModel(PyLoihiProcessModel):
     """Abstract template implemetation of PyConvModel."""
+    s_in = None
+    a_out = None
+    weight = None
+
     kernel_size: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
     stride: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
     padding: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
@@ -31,10 +35,6 @@ class AbstractPyConvModel(PyLoihiProcessModel):
             self.groups[0]
         )
         self.a_out.send(self.clamp_precision(a_out))
-        self.a_out.flush()
-
-    def run_lrn(self):
-        pass
 
     def clamp_precision(self, x):
         return x
@@ -61,21 +61,3 @@ class PyConvModelBinaryFixed(AbstractPyConvModel):
 
     def clamp_precision(self, x):
         return utils.signed_clamp(x, bits=24)
-
-
-# @implements(proc=Conv, protocol=LoihiProtocol)
-# @requires(CPU)
-# @tag('fixed_pt', 'graded')
-# class PyConvModelGradedFloat(AbstractPyConvModel):
-#     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-#     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-#     weight: np.ndarray = LavaPyType(np.ndarray, float)
-
-
-# @implements(proc=Conv, protocol=LoihiProtocol)
-# @requires(CPU)
-# @tag('fixed_pt', 'graded')
-# class PyConvModelGradedFixed(AbstractPyConvModel):
-#     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=16)
-#     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32,precision=16)
-#     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)

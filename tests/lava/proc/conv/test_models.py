@@ -5,19 +5,12 @@ import unittest
 import numpy as np
 import sys
 
-from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import OutPort, InPort
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
-from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.conv.process import Conv
 from lava.proc.conv import utils
+from lava.proc.io.source import SendProcess
+from lava.proc.io.sink import ReceiveProcess
 
 
 verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False
@@ -36,100 +29,6 @@ class ConvRunConfig(RunConfig):
             if self.select_tag in pm.tags:
                 return pm
         raise AssertionError('No legal ProcessModel found.')
-
-
-class SendProcess(AbstractProcess):
-    """Spike generator process
-
-    Parameters
-    ----------
-    data: np array
-        data to generate spike from. Last dimension is assumed as time.
-    """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        data = kwargs.pop('data')
-        self.data = Var(shape=data.shape, init=data)
-        self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
-
-
-class AbstractPySendModel(PyLoihiProcessModel):
-    """Template send process model."""
-    def run_spk(self):
-        buffer = self.data.shape[-1]
-        if verbose:
-            print(f'{self.current_ts=}')
-            data = self.data[..., (self.current_ts - 1) % buffer]
-            print(f'Sending data ={data[data!=0]}')
-        self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
-        self.s_out.flush()
-
-
-@implements(proc=SendProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PySendModelFloat(AbstractPySendModel):
-    """Float send process model."""
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    data: np.ndarray = LavaPyType(np.ndarray, float)
-
-
-@implements(proc=SendProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('fixed_pt')
-class PySendModelFixed(AbstractPySendModel):
-    """Fixed point send process model."""
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-
-
-class ReceiveProcess(AbstractProcess):
-    """Receive process
-
-    Parameters
-    ----------
-    shape: tuple
-        shape of the process
-    buffer: int
-        size of data sink buffer
-    """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (1,))
-        buffer = kwargs.get('buffer')
-        self.shape = shape
-        self.a_in = InPort(shape=shape)
-        buffer_shape = shape + (buffer,)
-        self.data = Var(shape=buffer_shape, init=np.zeros(buffer_shape))
-
-
-class AbstractPyReceiveModel(PyLoihiProcessModel):
-    """Template receive process model."""
-    def run_spk(self):
-        """Receive spikes and store in an internal variable"""
-        data = self.a_in.recv()
-        buffer = self.data.shape[-1]
-        if verbose:
-            print(f'Received data={data[data!=0]}')
-        self.data[..., (self.current_ts - 1) % buffer] = data
-
-
-@implements(proc=ReceiveProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PyReceiveModelFloat(AbstractPyReceiveModel):
-    """Float receive process model."""
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-
-
-@implements(proc=ReceiveProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('fixed_pt')
-class PyReceiveModelFixed(AbstractPyReceiveModel):
-    """Fixed point receive process model."""
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-    data: np.ndarray = LavaPyType(np.ndarray, float)
 
 
 def setup_conv():
@@ -184,7 +83,7 @@ class TestConvProcessModels(unittest.TestCase):
     """Tests for all ProcessModels of Conv"""
 
     def test_source_sink(self):
-        """Test for source-sink process."""
+        """Test whatever is being sent form source is received at sink."""
         num_steps = 10
         shape = np.random.randint([128, 128, 16]) + 1
         input = np.random.randint(

@@ -12,7 +12,7 @@ from lava.proc.conv import utils
 
 
 class Conv(AbstractProcess):
-    """Convolution connections between neurons.
+    """Convolution connection process between neurons.
 
     Parameters
     ----------
@@ -35,8 +35,8 @@ class Conv(AbstractProcess):
     padding, stride and dilation are expected in (X, Y) or (W, H) if tuple.
     """
     def __init__(self, **kwargs):
-        # the process In/OutPort shapes are considered to be XYZ(WHC) format.
-        # the kernel weight shape is expected to be in (C_out, W, H, C_in)
+        # The process In/OutPort shapes are considered to be XYZ(WHC) format.
+        # The kernel weight shape is expected to be in (C_out, W, H, C_in)
         # format.
         # Why? This is the format that Loihi conv feature uses.
         super().__init__(**kwargs)
