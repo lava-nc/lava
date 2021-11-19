@@ -12,6 +12,44 @@ try:
 except ModuleNotFoundError:
     TORCH_IS_AVAILABLE = False
 
+# TODO: add tensorflow support
+
+
+def get_tuple(kwargs, name, default):
+    """Get tuple value from keyword argument.
+
+    Parameters
+    ----------
+    kwargs : dict
+        keyword argument
+    name : str
+        name/key string
+    default : int
+        default value
+
+    Returns
+    -------
+    tuple of two int
+        tuple value of input
+
+    Raises
+    ------
+    Exception
+        if argument value is not 1/2 dimensional.
+    """
+    shape = kwargs.get(name, default)
+    if np.isscalar(shape):
+        return (shape, shape)
+    elif len(shape) == 1:
+        return (shape[0], shape[0])
+    elif len(shape) == 2:
+        return (shape[0], shape[1])
+    else:
+        raise Exception(
+            f'Expected {name} to be two dimensional.'
+            f'Found {name} = {shape}.'
+        )
+
 
 def signed_clamp(x, bits):
     """clamps as if input is a signed value within the precision of bits.
@@ -29,7 +67,7 @@ def signed_clamp(x, bits):
         clamped value
     """
     base = 1 << bits
-    return (x - base // 2) % base + base // 2  # signed value clamping
+    return (x + base // 2) % base - base // 2  # signed value clamping
 
 
 def output_shape(
@@ -105,7 +143,7 @@ def output_shape(
     return x_out, y_out, out_channels
 
 
-# This might be needed later. The reverse mapping is ambiguous though
+# TODO: This might be needed later. The reverse mapping is ambiguous though
 # def input_shape(
 #     output_shape, in_channels, kernel_size, stride, padding, dilation
 # ):

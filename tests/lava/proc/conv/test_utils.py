@@ -15,6 +15,8 @@ except ModuleNotFoundError:
     # in this case, the test only checks for error during
     # utils.conv calculation
 
+# TODO: add tensorflow support
+
 
 class TestConv(unittest.TestCase):
     def test_conv(self):

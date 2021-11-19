@@ -15,8 +15,9 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
-class ReceiveProcess(AbstractProcess):
-    """Receive process
+class RingBuffer(AbstractProcess):
+    """Process for receiving arbitrarily shaped data into a ring buffer
+    memory. Works as a substitute for probing.
 
     Parameters
     ----------
@@ -36,7 +37,7 @@ class ReceiveProcess(AbstractProcess):
 
 
 class AbstractPyReceiveModel(PyLoihiProcessModel):
-    """Template receive process model."""
+    """Abstract ring buffer receive process model."""
     a_in = None
     data = None
 
@@ -47,19 +48,19 @@ class AbstractPyReceiveModel(PyLoihiProcessModel):
         self.data[..., (self.current_ts - 1) % buffer] = data
 
 
-@implements(proc=ReceiveProcess, protocol=LoihiProtocol)
+@implements(proc=RingBuffer, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
 class PyReceiveModelFloat(AbstractPyReceiveModel):
-    """Float receive process model."""
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    """Float ring buffer receive process model."""
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    data: np.ndarray = LavaPyType(np.ndarray, float)
 
 
-@implements(proc=ReceiveProcess, protocol=LoihiProtocol)
+@implements(proc=RingBuffer, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('fixed_pt')
 class PyReceiveModelFixed(AbstractPyReceiveModel):
-    """Fixed point receive process model."""
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-    data: np.ndarray = LavaPyType(np.ndarray, float)
+    """Fixed point ring buffer receive process model."""
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
+    data: np.ndarray = LavaPyType(np.ndarray, np.int32)

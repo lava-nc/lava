@@ -6,8 +6,8 @@ import numpy as np
 
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
-from lava.proc.io.source import SendProcess
-from lava.proc.io.sink import ReceiveProcess
+from lava.proc.io.source import RingBuffer as SendProcess
+from lava.proc.io.sink import RingBuffer as ReceiveProcess
 
 
 class TestRunConfig(RunConfig):

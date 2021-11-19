@@ -15,8 +15,8 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
-class SendProcess(AbstractProcess):
-    """Spike generator process
+class RingBuffer(AbstractProcess):
+    """Spike generator process from circular data buffer.
 
     Parameters
     ----------
@@ -30,8 +30,8 @@ class SendProcess(AbstractProcess):
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
 
 
-class AbstractPySendModel(PyLoihiProcessModel):
-    """Template send process model."""
+class AbstractPyRingBuffer(PyLoihiProcessModel):
+    """Abstract ring buffer process model."""
     s_out = None
     data = None
 
@@ -40,19 +40,19 @@ class AbstractPySendModel(PyLoihiProcessModel):
         self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
 
 
-@implements(proc=SendProcess, protocol=LoihiProtocol)
+@implements(proc=RingBuffer, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PySendModelFloat(AbstractPySendModel):
-    """Float send process model."""
+class PySendModelFloat(AbstractPyRingBuffer):
+    """Float ring buffer send process model."""
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     data: np.ndarray = LavaPyType(np.ndarray, float)
 
 
-@implements(proc=SendProcess, protocol=LoihiProtocol)
+@implements(proc=RingBuffer, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('fixed_pt')
-class PySendModelFixed(AbstractPySendModel):
-    """Fixed point send process model."""
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+class PySendModelFixed(AbstractPyRingBuffer):
+    """Fixed point ring buffer send process model."""
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    data: np.ndarray = LavaPyType(np.ndarray, np.int32)

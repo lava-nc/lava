@@ -9,8 +9,8 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.conv.process import Conv
 from lava.proc.conv import utils
-from lava.proc.io.source import SendProcess
-from lava.proc.io.sink import ReceiveProcess
+from lava.proc.io.source import RingBuffer as SendProcess
+from lava.proc.io.sink import RingBuffer as ReceiveProcess
 
 
 verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False

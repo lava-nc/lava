@@ -41,27 +41,13 @@ class Conv(AbstractProcess):
         # Why? This is the format that Loihi conv feature uses.
         super().__init__(**kwargs)
 
-        def broadcast_arg(name, default):
-            shape = kwargs.get(name, default)
-            if np.isscalar(shape):
-                return (shape, shape)
-            elif len(shape) == 1:
-                return (shape[0], shape[0])
-            elif len(shape) == 2:
-                return (shape[0], shape[1])
-            else:
-                raise Exception(
-                    f'Expected {name} to be two dimensional.'
-                    f'Found {name} = {shape}.'
-                )
-
         input_shape = kwargs.get('input_shape', (1, 1, 1))
         kernel_size = kwargs['weight'].shape[1:3]
         in_channels = input_shape[-1]
         out_channels = kwargs['weight'].shape[0]
-        padding = broadcast_arg('padding', 0)
-        stride = broadcast_arg('stride', 1)
-        dilation = broadcast_arg('dilation', 1)
+        padding = utils.get_tuple(kwargs, 'padding', 0)
+        stride = utils.get_tuple(kwargs, 'stride', 1)
+        dilation = utils.get_tuple(kwargs, 'dilation', 1)
         groups = kwargs.get('groups', 1)
 
         if len(input_shape) != 3:
