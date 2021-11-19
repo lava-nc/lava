@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import os
 import unittest
 import numpy as np
 from lava.proc.conv import utils
@@ -86,3 +87,29 @@ class TestConv(unittest.TestCase):
                     f'{out.flatten()[:50] = }\n'
                     f'{out_gt.flatten()[:50] = }\n'
                 )
+
+    def test_conv_saved_data(self):
+        """Test convolution implementation against saved data."""
+        for i in range(10):  # testing with 10 random combinations
+            gt_data = np.load(
+                os.path.dirname(os.path.abspath(__file__))
+                + f'/ground_truth/gt_conv_paris_{i}.npz'
+            )
+            out = utils.conv_scipy(
+                gt_data['input'],
+                gt_data['weights'],
+                gt_data['kernel_size'],
+                gt_data['stride'],
+                gt_data['padding'],
+                gt_data['dilation'],
+                gt_data['groups']
+            )
+            out_gt = gt_data['out_gt']
+            error = np.abs(out - out_gt).mean()
+            self.assertTrue(
+                error < 1e-3,
+                f'Conv calculation does not match with torch ground truth.'
+                f'Found\n'
+                f'{out.flatten()[:50] = }\n'
+                f'{out_gt.flatten()[:50] = }\n'
+            )

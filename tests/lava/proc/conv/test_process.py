@@ -6,7 +6,7 @@ import numpy as np
 from lava.proc.conv.process import Conv
 
 
-class TestLIFProcess(unittest.TestCase):
+class TestConvProcess(unittest.TestCase):
     """Tests for Conv class"""
     def test_init(self):
         """Tests instantiation of Conv"""
