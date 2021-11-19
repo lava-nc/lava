@@ -17,11 +17,7 @@ from lava.magma.runtime.mgmt_token_enums import enum_to_message
 
 
 class AbstractPyPort(AbstractPortImplementation):
-    @property
-    @abstractmethod
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Returns all csp ports of the port."""
-        pass
+    pass
 
 
 class AbstractPyPortMessage(AbstractPortMessage):
@@ -42,11 +38,10 @@ class PyInPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
-    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args, **kwargs):
-        self._csp_recv_ports = csp_recv_ports
-        self.format: PortMessageFormat = None
+    def __init__(self, *args, **kwargs):
         super(PyInPort, self).__init__(*args, **kwargs)
-        super().__init__(*args)
+        self._csp_recv_ports = self._csp_ports
+        self.format: PortMessageFormat = None
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
@@ -57,8 +52,9 @@ class PyInPort(AbstractPyPort):
 
         messages = []
         for csp_port in self._csp_ports:
-            messages.append(csp_port.recv())
-        self.format = messages[0][0]
+            msg = csp_port.recv()
+            messages.append(PyPortMessage(msg[0], msg[1], msg[2]))
+        self.format = messages[0].message_type
 
         return getattr(self,
                        '_recv_' + str(self.format.name),
@@ -117,17 +113,6 @@ class PyInPortVectorDense(PyInPort):
     """Python implementation of Vector Dense InPort
     """
 
-    # Draf Impl. Receives Vector from Dense
-    #
-    # if not from PyOutPortVectorDense we need to
-    # process the data received
-    #   format, elements, payload =
-    #   if format not in (PortMessageFormat.VECTOR_DENSE,
-    #   PortMessageFormat.VECTOR_SPARSE, PortMessageFormat.SCALAR_DENSE,
-    #   PortMessageFormat.SCALAR_SPARSE):
-    #      raise AssertionError("Message format " + format + "
-    #   not recognized, should be one of: PortMessageFormat")
-
     def _recv_VECTOR_DENSE(self, messages: ty.List[PyPortMessage]) -> \
             np.ndarray:
         return ft.reduce(
@@ -143,8 +128,8 @@ class PyInPortVectorDense(PyInPort):
             messages,
             np.zeros(messages[0].data.shape, messages[0].data.dtype)
         )
-        uninterleaved = [reduced[idx::2] for idx in range(2)]
-        return (uninterleaved[0], uninterleaved[1])
+        # uninterleaved = [reduced[idx::2] for idx in range(2)]
+        return (reduced[0], reduced[1])
         # n_reduced = reduced.shape[1]
         # data, idx = reduced.reshape(-1, 2, n_reduced). \
         #    swapaxes(1, 2).reshape(-1, n_reduced * 2)
@@ -181,38 +166,51 @@ class PyInPortVectorSparse(PyInPort):
 
     def _recv_VECTOR_DENSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
-        rows, columns, values = sparse.find(
-            sparse.csr_matrix(
-                ft.reduce(
-                    lambda acc, message: acc + message.data(),
-                    messages,
-                    np.zeros(messages[0].data().shape, messages[0].data.dtype)
-                )
+        data = sparse.csr_matrix(
+            ft.reduce(
+                lambda acc, message: acc + message.data,
+                messages,
+                np.zeros(messages[0].data.shape, messages[0].data.dtype)
             )
         )
-        return (values, np.vstack((rows, columns)).T)
+        return (data.data, data.indices)
 
     def _recv_VECTOR_SPARSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
         reduced = ft.reduce(
-            lambda acc, message: acc + message.data(),
+            lambda acc, message: acc + message.data,
             messages,
             np.zeros(messages[0].data.shape, messages[0].data.dtype)
         )
-        uninterleaved = [reduced[idx::2] for idx in range(2)]
-        return (uninterleaved[0], uninterleaved[1])
-        # n_reduced = reduced.shape[1]
-        # data, idx = reduced.reshape(-1, 2, n_reduced). \
-        #    swapaxes(1, 2).reshape(-1, n_reduced * 2)
-        # np.vstack((data, idx)).reshape((-1,), order='F')
+        # uninterleaved = [reduced[idx::2] for idx in range(2)]
+        return ([reduced[1],
+                 reduced[2]],
+                [reduced[0]]
+                )
 
     def _recv_SCALAR_DENSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
-        raise NotImplementedError
+        data = sparse.csr_matrix(
+            ft.reduce(
+                lambda acc, message: acc + message.data,
+                messages,
+                np.zeros(messages[0].data.shape, messages[0].data.dtype)
+            )
+        )
+        return (data.data, data.indices)
 
     def _recv_SCALAR_SPARSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
-        raise NotImplementedError
+        reduced = ft.reduce(
+            lambda acc, message: acc + message.data,
+            messages,
+            np.zeros(messages[0].data.shape, messages[0].data.dtype)
+        )
+        # uninterleaved = [reduced[idx::2] for idx in range(2)]
+        return ([reduced[1],
+                 reduced[2]],
+                [reduced[0]]
+                )
 
     def _peek_VECTOR_DENSE(self, messages: ty.List[PyPortMessage]) -> \
             ty.Tuple[np.ndarray, np.ndarray]:
@@ -289,9 +287,9 @@ class PyOutPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyOutPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyOutPortScalarSparse"] = None
 
-    def __init__(self, csp_send_ports: ty.List[CspSendPort], *args):
-        self._csp_send_ports = csp_send_ports
-        super().__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(PyOutPort, self).__init__(*args, **kwargs)
+        self._csp_send_ports = self._csp_ports
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
@@ -339,6 +337,7 @@ class PyOutPortVectorSparse(PyOutPort):
         idx : np.ndarray
         """
         msg_data = self.interleave(data, idx)
+        # msg_data = [data, idx]
 
         message = PyPortMessage(
             PortMessageFormat.VECTOR_SPARSE,
@@ -364,6 +363,7 @@ class PyOutPortVectorSparse(PyOutPort):
             interleaved np.ndarray composed of data, idx
         """
         return np.vstack((data, idx)).reshape((-1,), order='F')
+        # return np.dstack((data, idx)).reshape(data.shape[0], -1)
 
 
 class PyOutPortScalarDense(PyOutPort):
@@ -398,7 +398,7 @@ class PyOutPortScalarSparse(PyOutPort):
         data : int
         idx : int
         """
-        msg_data = np.array(data, idx)
+        msg_data = np.array((data, idx))
         message = PyPortMessage(
             PortMessageFormat.SCALAR_SPARSE,
             msg_data.size,

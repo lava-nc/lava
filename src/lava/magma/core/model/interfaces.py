@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 from enum import Enum, unique
 import numpy as np
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.compiler.channels.interfaces import \
+    AbstractCspRecvPort, AbstractCspSendPort
 from lava.magma.core.model.model import AbstractProcessModel
 
 
@@ -41,25 +42,30 @@ class AbstractPortMessage(ABC):
         return self._payload[1]
 
     @property
-    def data(self) -> ty.Type[np.array]:
+    def data(self) -> ty.Union[int, np.ndarray, np.array]:
         return self._payload[2]
-
 
 
 class AbstractPortImplementation(ABC):
     def __init__(
         self,
         process_model: "AbstractProcessModel",  # noqa: F821
+        csp_ports: ty.List[ty.Union['AbstractCspRecvPort',
+                                    'AbstractCspSendPort']] = [],
         shape: ty.Tuple[int, ...] = tuple(),
         d_type: type = int,
     ):
         self._process_model = process_model
+        self._csp_ports = (
+            csp_ports if isinstance(csp_ports, list) else [csp_ports]
+        )
         self._shape = shape
         self._d_type = d_type
 
     @property
     @abstractmethod
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[ty.Union['AbstractCspRecvPort',
+                                            'AbstractCspSendPort']]:
         """Returns all csp ports of the port."""
         pass
 
