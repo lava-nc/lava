@@ -7,8 +7,9 @@ from numpy.distutils.misc_util import Configuration, get_info
 
 from importlib import import_module, invalidate_caches
 
-from typing import List, Callable
+import typing as ty
 import os
+from lava.magma.core.model.interfaces import AbstractPortImplementation
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 
@@ -17,6 +18,7 @@ AbstractCProcessModel = None
 
 class CProcessModelMeta(ABCMeta):
     """
+    Self-building python extention class type
     Compiles the sources specified in the class definition and then generates a type that includes the custom module in its base classes
     """
 
@@ -46,10 +48,27 @@ class CProcessModelMeta(ABCMeta):
             invalidate_caches()
             module = import_module("custom")
             # from custom import Custom
-            bases += (module.Custom, AbstractPyProcessModel)
+            bases = (module.Custom,) + bases + (AbstractPyProcessModel,)
         return super().__new__(cls, name, bases, attrs)
 
+    def get_ports(cls) -> ty.List[str]:
+        return [
+            v for v in vars(cls) if isinstance(v, AbstractPortImplementation)
+        ]
 
+    def get_methods(cls) -> ty.List[str]:
+        if hasattr(cls, "implements_protocol"):
+            return [
+                name
+                for tups in cls.implements_protocol.proc_functions
+                for name in tups
+                if name
+            ]
+        else:
+            return []
+
+
+'''
 class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """Abstract interface for a C ProcessModels.
 
@@ -62,4 +81,5 @@ class AbstractCProcessModel(metaclass=CProcessModelMeta):
         du:    LavaCType(scalar, 'short int', precision=12)
     """
 
-    source_files: List[str] = None
+    source_files: ty.List[str] = None
+'''
