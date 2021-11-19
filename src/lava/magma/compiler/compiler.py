@@ -673,7 +673,7 @@ class Compiler:
         return PortInitializer(
             name,
             (1,),
-            np.int32,
+            np.float64,
             'MgmtPort',
             self._compile_config["pypy_channel_size"],
         )
