@@ -11,6 +11,7 @@ from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
+    enum_equal,
     MGMT_COMMAND,
     MGMT_RESPONSE, REQ_TYPE,
 )
@@ -117,17 +118,17 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             # Probe if there is a new command from the runtime service
             if self.service_to_process_cmd.probe():
                 phase = self.service_to_process_cmd.recv()
-                if np.array_equal(phase, MGMT_COMMAND.STOP):
+                if enum_equal(phase, MGMT_COMMAND.STOP):
                     self.process_to_service_ack.send(MGMT_RESPONSE.TERMINATED)
                     self.join()
                     return
                 # Spiking phase - increase time step
-                if np.array_equal(phase, PyLoihiProcessModel.Phase.SPK):
+                if enum_equal(phase, PyLoihiProcessModel.Phase.SPK):
                     self.current_ts += 1
                     self.run_spk()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 # Pre-management phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
                     # Enable via guard method
                     if self.pre_guard():
                         self.run_pre_mgmt()
@@ -136,13 +137,13 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if len(self.var_ports) > 0:
                         self._handle_var_ports()
                 # Learning phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.LRN):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.LRN):
                     # Enable via guard method
                     if self.lrn_guard():
                         self.run_lrn()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 # Post-management phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
                     # Enable via guard method
                     if self.post_guard():
                         self.run_post_mgmt()
@@ -151,7 +152,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if len(self.var_ports) > 0:
                         self._handle_var_ports()
                 # Host phase - called at the last time step before STOP
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
                     # Handle get/set Var requests from runtime service
                     self._handle_get_set_var()
                 else:
@@ -168,9 +169,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             if self.service_to_process_req.probe():
                 # Get the type of the request
                 request = self.service_to_process_req.recv()
-                if np.array_equal(request, REQ_TYPE.GET):
+                if enum_equal(request, REQ_TYPE.GET):
                     self._handle_get_var()
-                elif np.array_equal(request, REQ_TYPE.SET):
+                elif enum_equal(request, REQ_TYPE.SET):
                     self._handle_set_var()
                 else:
                     raise RuntimeError(f"Unknown request type {request}")

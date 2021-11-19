@@ -9,9 +9,11 @@ import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
+    enum_to_np,
+    enum_equal,
     MGMT_RESPONSE,
     MGMT_COMMAND,
-    enum_to_np, REQ_TYPE,
+    REQ_TYPE,
 )
 
 
@@ -183,23 +185,23 @@ class LoihiPyRuntimeService(PyRuntimeService):
             # Probe if there is a new command from the runtime
             if self.runtime_to_service_cmd.probe():
                 command = self.runtime_to_service_cmd.recv()
-                if np.array_equal(command, MGMT_COMMAND.STOP):
+                if enum_equal(command, MGMT_COMMAND.STOP):
                     # Inform all ProcessModels about the STOP command
                     self._send_pm_cmd(command)
                     rsps = self._get_pm_resp()
                     for rsp in rsps:
-                        if not np.array_equal(rsp, MGMT_RESPONSE.TERMINATED):
+                        if not enum_equal(rsp, MGMT_RESPONSE.TERMINATED):
                             raise ValueError(f"Wrong Response Received : {rsp}")
                     # Inform the runtime about successful termination
                     self.service_to_runtime_ack.send(MGMT_RESPONSE.TERMINATED)
                     self.join()
                     return
-                elif np.array_equal(command, MGMT_COMMAND.PAUSE):
+                elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     # Inform all ProcessModels about the PAUSE command
                     self._send_pm_cmd(command)
                     rsps = self._get_pm_resp()
                     for rsp in rsps:
-                        if not np.array_equal(rsp, MGMT_RESPONSE.PAUSED):
+                        if not enum_equal(rsp, MGMT_RESPONSE.PAUSED):
                             raise ValueError(f"Wrong Response Received : {rsp}")
                     # Inform the runtime about successful pausing
                     self.service_to_runtime_ack.send(MGMT_RESPONSE.PAUSED)
@@ -211,27 +213,26 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     phase = LoihiPyRuntimeService.Phase.HOST
                     while True:
                         # Check if it is the last time step
-                        is_last_ts = np.array_equal(enum_to_np(curr_time_step),
-                                                    command)
+                        is_last_ts = enum_equal(enum_to_np(curr_time_step),
+                                                command)
                         # Advance to the next phase
                         phase = self._next_phase(phase, is_last_ts)
                         # Increase time step if spiking phase
-                        if np.array_equal(phase,
-                                          LoihiPyRuntimeService.Phase.SPK):
+                        if enum_equal(phase, LoihiPyRuntimeService.Phase.SPK):
                             curr_time_step += 1
                         # Inform ProcessModels about current phase
                         self._send_pm_cmd(phase)
                         # ProcessModels respond with DONE if not HOST phase
-                        if not np.array_equal(
+                        if not enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST):
                             rsps = self._get_pm_resp()
                             for rsp in rsps:
-                                if not np.array_equal(rsp, MGMT_RESPONSE.DONE):
+                                if not enum_equal(rsp, MGMT_RESPONSE.DONE):
                                     raise ValueError(
                                         f"Wrong Response Received : {rsp}")
 
                         # If HOST phase (last time step ended) break the loop
-                        if np.array_equal(
+                        if enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST):
                             break
 
@@ -242,11 +243,11 @@ class LoihiPyRuntimeService(PyRuntimeService):
             self._handle_get_set(phase)
 
     def _handle_get_set(self, phase):
-        if np.array_equal(phase, LoihiPyRuntimeService.Phase.HOST):
+        if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
             while True:
                 if self.runtime_to_service_req.probe():
                     request = self.runtime_to_service_req.recv()
-                    if np.array_equal(request, REQ_TYPE.GET):
+                    if enum_equal(request, REQ_TYPE.GET):
                         requests: ty.List[np.ndarray] = [request]
                         # recv model_id
                         model_id: int = \
@@ -260,7 +261,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
                         self._relay_to_runtime_data_given_model_id(
                             model_id)
-                    elif np.array_equal(request, REQ_TYPE.SET):
+                    elif enum_equal(request, REQ_TYPE.SET):
                         requests: ty.List[np.ndarray] = [request]
                         # recv model_id
                         model_id: int = \
@@ -304,11 +305,11 @@ class AsyncPyRuntimeService(PyRuntimeService):
     def run(self):
         while True:
             command = self.runtime_to_service_cmd.recv()
-            if np.array_equal(command, MGMT_COMMAND.STOP):
+            if enum_equal(command, MGMT_COMMAND.STOP):
                 self._send_pm_cmd(command)
                 rsps = self._get_pm_resp()
                 for rsp in rsps:
-                    if not np.array_equal(rsp, MGMT_RESPONSE.TERMINATED):
+                    if not enum_equal(rsp, MGMT_RESPONSE.TERMINATED):
                         raise ValueError(f"Wrong Response Received : {rsp}")
                 self.service_to_runtime_ack.send(MGMT_RESPONSE.TERMINATED)
                 self.join()
@@ -317,6 +318,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self._send_pm_cmd(MGMT_COMMAND.RUN)
                 rsps = self._get_pm_resp()
                 for rsp in rsps:
-                    if not np.array_equal(rsp, MGMT_RESPONSE.DONE):
+                    if not enum_equal(rsp, MGMT_RESPONSE.DONE):
                         raise ValueError(f"Wrong Response Received : {rsp}")
                 self.service_to_runtime_ack.send(MGMT_RESPONSE.DONE)

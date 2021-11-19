@@ -9,7 +9,7 @@ import numpy as np
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.interfaces import AbstractPortImplementation
-from lava.magma.runtime.mgmt_token_enums import enum_to_np
+from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 
 
 class AbstractPyPort(AbstractPortImplementation):
@@ -301,10 +301,10 @@ class PyVarPortVectorDense(PyVarPort):
                 cmd = enum_to_np(self._csp_recv_port.recv()[0])
 
                 # Set the value of the Var with the given data
-                if np.array_equal(cmd, VarPortCmd.SET):
+                if enum_equal(cmd, VarPortCmd.SET):
                     data = self._csp_recv_port.recv()
                     setattr(self._process_model, self.var_name, data)
-                elif np.array_equal(cmd, VarPortCmd.GET):
+                elif enum_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)
                     self._csp_send_port.send(data)
                 else:
