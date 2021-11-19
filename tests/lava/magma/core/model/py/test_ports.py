@@ -6,9 +6,11 @@ import time
 from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 
-from lava.magma.compiler.channels.interfaces import AbstractCspSendPort, AbstractCspRecvPort
+from lava.magma.compiler.channels.interfaces import AbstractCspSendPort, \
+    AbstractCspRecvPort
 
-from lava.magma.core.model.py.ports import PyInPort, PyInPortVectorDense, PyOutPort, PyOutPortVectorDense
+from lava.magma.core.model.py.ports import PyInPort, PyInPortVectorDense, \
+    PyOutPort, PyOutPortVectorDense
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
 
@@ -43,8 +45,10 @@ class TestPyPorts(unittest.TestCase):
             send_csp_port: AbstractCspSendPort = channel.src_port
             recv_csp_port: AbstractCspRecvPort = channel.dst_port
 
-            send_py_port: PyOutPort = PyOutPortVectorDense([send_csp_port], None)
-            recv_py_port: PyInPort = PyInPortVectorDense([recv_csp_port], None)
+            send_py_port: PyOutPort = \
+                PyOutPortVectorDense([send_csp_port], None)
+            recv_py_port: PyInPort = \
+                PyInPortVectorDense([recv_csp_port], None)
 
             recv_py_port.start()
             send_py_port.start()
@@ -85,9 +89,12 @@ class TestPyPorts(unittest.TestCase):
             send_csp_port_2: AbstractCspSendPort = channel_2.src_port
             recv_csp_port_2: AbstractCspRecvPort = channel_2.dst_port
 
-            send_py_port_1: PyOutPort = PyOutPortVectorDense([send_csp_port_1], None)
-            send_py_port_2: PyOutPort = PyOutPortVectorDense([send_csp_port_2], None)
-            recv_py_port: PyInPort = PyInPortVectorDense([recv_csp_port_1, recv_csp_port_2], None)
+            send_py_port_1: PyOutPort = \
+                PyOutPortVectorDense([send_csp_port_1], None)
+            send_py_port_2: PyOutPort = \
+                PyOutPortVectorDense([send_csp_port_2], None)
+            recv_py_port: PyInPort = PyInPortVectorDense(
+                [recv_csp_port_1, recv_csp_port_2], None)
 
             recv_py_port.start()
             send_py_port_1.start()
