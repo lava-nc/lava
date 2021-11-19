@@ -144,8 +144,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
         data_relay_port = self.service_to_runtime_data
         num_items = data_recv_port.recv()
         data_relay_port.send(num_items)
-        for i in range(num_items[0]):
-            data_relay_port.send(data_recv_port.recv())
+        for i in range(int(num_items[0])):
+            value = data_recv_port.recv()
+            data_relay_port.send(value)
 
     def _relay_to_pm_data_given_model_id(self, model_id: int):
         """Relays data received from the runtime to the ProcessModel given by
@@ -158,7 +159,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         num_items = data_recv_port.recv()
         data_relay_port.send(num_items)
         # Receive and relay data1, data2, ...
-        for i in range(num_items[0].item()):
+        for i in range(int(num_items[0].item())):
             data_relay_port.send(data_recv_port.recv())
 
     def _relay_pm_ack_given_model_id(self, model_id: int):
