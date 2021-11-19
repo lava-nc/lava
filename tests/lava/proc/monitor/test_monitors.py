@@ -14,10 +14,29 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.decorator import implements, requires
 from lava.proc.monitor.process import Monitor
+from lava.proc.lif.process import LIF
 from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.run_configs import Loihi1SimCfg
 
 
+class SimpleRunConfig(RunConfig):
+    """
+    The RunConfic class for the unittests
+    """
+    def __init__(self, **kwargs):
+        sync_domains = kwargs.pop("sync_domains")
+        super().__init__(custom_sync_domains=sync_domains)
+        self.model = None
+        if "model" in kwargs:
+            self.model = kwargs.pop("model")
+
+    def select(self, process, proc_models):
+        if self.model is not None:
+            if self.model == "sub" and isinstance(process, AbstractProcess):
+                return proc_models[1]
+        return proc_models[0]
+
+# a dummy proc with two Vars
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -44,134 +63,203 @@ class PyProcModel1(PyLoihiProcessModel):
 class Monitors(unittest.TestCase):
 
     def test_monitor_constructor(self):
+        """Check if a Monitor process is correctly instantiated"""
         monitor = Monitor()
-
+        # check if correct instance is created
         self.assertIsInstance(monitor, Monitor)
 
-        # simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-        #                                 [some_proc, monitor])
-        # Dynamically create refPorts for each var to be monitored rather
-        # than hard-coding the refports
+    def test_proc_compiled_without_error(self):
+        """ Check if Monitor Proc is compiled without an error"""
+        monitor = Monitor()
+        c = Compiler()
+        # Compiling should run without error
+        c.compile(monitor, SimpleRunConfig(sync_domains=[]))
 
     def test_monitor_add_probe_create_ref_var_ports(self):
+        """Check if probe(..) method of MOnitor Proc creates a new RefPort
+        to facilitate the monitoring"""
         num_steps = 4
+        # Create a Monitor Process and a dummy process to be probed
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
+
+        # Probing a Var with Monitor Process
+        monitor.probe(target=some_proc.s, num_steps=num_steps)
+
+        # Check if a new RefPort created
         self.assertIsInstance(monitor.ref_ports.members[0], RefPort)
 
-    def test_monitor_add_probe_create_connection(self):
+    def test_probing_input_port_raise_error(self):
+        """Check if trying to monitor an InPort raise an error"""
+        monitor = Monitor()
+        # create a LIF neuron which has an InPort called a_in
+        neuron = LIF(shape=(1,),
+                     vth=200,
+                     b=5)
+
+        # Check if the type error is raised
+        with self.assertRaises(TypeError):
+            monitor.probe(target=neuron.a_in, num_steps=2)
+
+    def test_monitor_adding_probe_create_connection(self):
+        """ Check if probe(..) actually makes the connection between Monitor
+        proc and the dummy proc to be monitored"""
         num_steps = 4
+        # create the procs
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
+
+        # probe
+        monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # Regardless where we start searching...
         c = Compiler()
         procs1 = c._find_processes(some_proc)
         procs2 = c._find_processes(monitor)
 
-        # ...we will find all of them
+        # ...we will find all of the processes
         all_procs = {some_proc, monitor}
         self.assertEqual(set(procs1), all_procs)
         self.assertEqual(set(procs2), all_procs)
 
     def test_monitor_and_proc_run_without_error(self):
+        """Check if the procs run after being probed by Monitor proc"""
         num_steps = 4
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
-
-        class MyRunCfg(RunConfig):
-            def select(self, proc, proc_models):
-                return proc_models[0]
-
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-                                        [some_proc, monitor])
+        monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # should run without error (not doing anything)
-        some_proc.run(RunSteps(num_steps=num_steps, blocking=True),
-                      MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+        some_proc.run(condition=RunSteps(num_steps=num_steps),
+                    run_cfg=SimpleRunConfig(sync_domains=[]))
 
         some_proc.stop()
 
-    # def test_monitor_probe_created_empty_data_collection_structure(self):
-    #     monitor = Monitor()
-    #     some_proc = P1()
-    #     monitor.probe(var=some_proc.s)
-    #
-    #     self.assertEqual(monitor.data[some_proc.name][some_proc.s.name], [])
-
     def test_monitor_collects_correct_data_from_one_var(self):
+        """Check if the collected data in Monitor process matches the
+        expected data"""
         num_steps = 6
         monitor = Monitor()
         some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
+        monitor.probe(target=some_proc.s, num_steps=num_steps)
 
-        class MyRunCfg(RunConfig):
-            def select(self, proc, proc_models):
-                return proc_models[0]
+        # Run
+        some_proc.run(condition=RunSteps(num_steps=num_steps),
+                      run_cfg=SimpleRunConfig(sync_domains=[]))
 
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-                                        [some_proc, monitor])
+        # Fetch and construct the monitored data with get_data(..) method
+        data = monitor.get_data()
 
-        # should run without error (not doing anything)
-        some_proc.run(RunSteps(num_steps=num_steps, blocking=True),
-                      MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+        # access the collected data with the names of monitor proc and var
+        probe_data = data[some_proc.name][some_proc.s.name]
 
-        probe1_data = getattr(monitor, monitor.proc_params["VarsRead"][0]).get()
-        print(probe1_data)
-        self.assertTrue(np.all(probe1_data == np.array([1, 2, 3, 4, 5, 6])))
+        # Check if the collected data match the expected data
+        self.assertTrue(np.all(probe_data == np.array([1, 2, 3, 4, 5, 6])))
 
+        # stop running
         some_proc.stop()
-        # self.assertEqual(monitor.data[some_proc.name][some_proc.s.name],
-        #                  np.array([1, 2, 3, 4]))
 
-    def test_monitor_collects_correct_data_from_two_vars(self):
-        num_steps = 4
-        monitor = Monitor()
-        some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
-        monitor.probe(var=some_proc.u, num_steps=num_steps)
+    def test_monitor_collects_voltage_and_spike_data_from_lif_neuron(self):
+        """Check if two different Monitor process can monitor voltage (Var) and
+        s_out (OutPort) of a LIF neuron. Check the collected data with
+        expected data.
+        Note: The LIF neuron integrate the given bias, voltage accumulates
+        and once pass the threshold, there will be a spike outputted and
+        voltage will be reset to zero
+        """
+        # Setup
+        monitor1 = Monitor()
+        monitor2 = Monitor()
+        shape = (1,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     b=1)
 
-        class MyRunCfg(RunConfig):
-            def select(self, proc, proc_models):
-                return proc_models[0]
+        # Probe voltage of LIF with the first monitor
+        monitor1.probe(target=neuron.v, num_steps=num_steps)
 
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-                                        [some_proc, monitor])
+        # Probe spike output of LIF with the second monitor
+        monitor2.probe(target=neuron.s_out, num_steps=num_steps)
 
-        # should run without error (not doing anything)
-        some_proc.run(RunSteps(num_steps=4, blocking=True),
-                      MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+        # Run
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=SimpleRunConfig(sync_domains=[]))
 
-        probe1_data = getattr(monitor, monitor.proc_params["VarsRead"][0]).get()
-        probe2_data = getattr(monitor, monitor.proc_params["VarsRead"][1]).get()
-        self.assertTrue(np.all(probe1_data == np.array([1, 2, 3, 4])))
-        self.assertTrue(np.all(probe2_data == np.array([2, 4, 6, 8])))
-        some_proc.stop()
+        # Get data from both monitor
+        data1 = monitor1.get_data()
+        data2 = monitor2.get_data()
+
+        # stop
+        neuron.stop()
+
+        # Access the relevant data in the corresponding data dicts
+        volt_data = data1[neuron.name][neuron.v.name]
+        spike_data = data2[neuron.name][neuron.s_out.name]
+
+        # Check if this data match the expected data
+        self.assertTrue(np.all(volt_data == np.array([1, 2, 3, 0, 1, 2])))
+        self.assertTrue(np.all(spike_data == np.array([0, 0, 0, 0, 1, 0])))
+
+    def test_monitor_collects_voltage_and_spike_data_from_population_lif(self):
+        """Check if two different Monitor process can monitor voltage (Var) and
+        s_out (OutPort) of a population of two LIF neurons. Check the
+        collected data with expected data.
+        Note: The LIF neurons integrate the given bias, voltage accumulates
+        and once pass the threshold, there will be a spike outputted and
+        voltage will be reset to zero
+        """
+        # Setup
+        monitor1 = Monitor()
+        monitor2 = Monitor()
+        shape = (2,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     b=1)
+
+        # Probe voltage of LIF neurons with the first monitor
+        monitor1.probe(target=neuron.v, num_steps=num_steps)
+
+        # Probe spike output of LIF neurons with the second monitor
+        monitor2.probe(target=neuron.s_out, num_steps=num_steps)
+
+        # Run
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=SimpleRunConfig(sync_domains=[]))
+
+        # Get data from both monitor
+        data1 = monitor1.get_data()
+        data2 = monitor2.get_data()
+
+        # Stop
+        neuron.stop()
+
+        # Access the relevant data in the corresponding data dicts
+        volt_data = data1[neuron.name][neuron.v.name]
+        spike_data = data2[neuron.name][neuron.s_out.name]
+
+        # Check if this data match the expected data
+        self.assertTrue(np.all(volt_data == np.array([[1, 2, 3, 0, 1, 2],
+                                                      [1, 2, 3, 0, 1, 2]])))
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 0, 1, 0],
+                                                       [0, 0, 0, 0, 1, 0]])))
 
     def test_proc_params_accessible_in_proc_model(self):
-        num_steps = 4
+        """Check if proc_params are accessible in ProcessModel. This
+        functionality is necessary to access dynamically created Ports/Vars"""
+
         monitor = Monitor()
-        some_proc = P1()
-        monitor.probe(var=some_proc.s, num_steps=num_steps)
+        # Set some dummy proc_params to be transferred to ProcessModel
         monitor.proc_params = {"test": 0}
 
-        class MyRunCfg(RunConfig):
-            def select(self, proc, proc_models):
-                return proc_models[0]
-
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-                                        [some_proc, monitor])
-
-        # Regardless where we start searching...
+        # compile
         c = Compiler()
-        exe = c.compile(some_proc,
-                        MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+        exe = c.compile(monitor, SimpleRunConfig(sync_domains=[]))
+
+        # Check if built model has these proc_params
         self.assertEqual(next(iter(exe.py_builders)).proc_params,
                          monitor.proc_params)
-        print("done")
 
 
 if __name__ == '__main__':
