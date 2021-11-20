@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from typing import Tuple, Union
 import numpy as np
 
 from lava.magma.core.process.process import AbstractProcess
@@ -26,7 +27,7 @@ class RingBuffer(AbstractProcess):
     buffer: int
         size of data sink buffer
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Union[int, Tuple[int, ...]]) -> None:
         super().__init__(**kwargs)
         shape = kwargs.get('shape', (1,))
         buffer = kwargs.get('buffer')
@@ -41,7 +42,7 @@ class AbstractPyReceiveModel(PyLoihiProcessModel):
     a_in = None
     data = None
 
-    def run_spk(self):
+    def run_spk(self) -> None:
         """Receive spikes and store in an internal variable"""
         data = self.a_in.recv()
         buffer = self.data.shape[-1]

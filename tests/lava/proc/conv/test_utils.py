@@ -18,9 +18,12 @@ except ModuleNotFoundError:
 
 # TODO: add tensorflow support
 
+seed = np.random.randint(1000)
+np.random.seed(seed)
+
 
 class TestConv(unittest.TestCase):
-    def test_conv(self):
+    def test_conv(self) -> None:
         """Test convolution implementation"""
         for _ in range(10):  # testing with 10 random combinations
             groups = np.random.randint(4) + 1
@@ -86,9 +89,10 @@ class TestConv(unittest.TestCase):
                     f'Found\n'
                     f'{out.flatten()[:50] = }\n'
                     f'{out_gt.flatten()[:50] = }\n'
+                    f'{seed = }'
                 )
 
-    def test_conv_saved_data(self):
+    def test_conv_saved_data(self) -> None:
         """Test convolution implementation against saved data."""
         for i in range(10):  # testing with 10 random combinations
             gt_data = np.load(

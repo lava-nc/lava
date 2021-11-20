@@ -8,7 +8,7 @@ from lava.proc.conv.process import Conv
 
 class TestConvProcess(unittest.TestCase):
     """Tests for Conv class"""
-    def test_init(self):
+    def test_init(self) -> None:
         """Tests instantiation of Conv"""
         weight = np.random.randint(256, size=[8, 3, 5, 3]) - 128
         conv = Conv(

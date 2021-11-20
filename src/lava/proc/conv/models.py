@@ -16,18 +16,18 @@ from lava.proc.conv import utils
 
 
 class AbstractPyConvModel(PyLoihiProcessModel):
-    """Abstract template implemetation of PyConvModel."""
+    """Abstract template implementation of PyConvModel."""
     s_in = None
     a_out = None
     weight = None
 
-    kernel_size: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    stride: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    padding: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    dilation: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    groups: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    kernel_size: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
+    stride: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
+    padding: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
+    dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
+    groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
 
-    def run_spk(self):
+    def run_spk(self) -> None:
         s_in = self.s_in.recv()
         a_out = utils.conv(
             s_in, self.weight,
@@ -36,7 +36,7 @@ class AbstractPyConvModel(PyLoihiProcessModel):
         )
         self.a_out.send(self.clamp_precision(a_out))
 
-    def clamp_precision(self, x):
+    def clamp_precision(self, x: np.ndarray) -> np.ndarray:
         return x
 
 
@@ -44,7 +44,7 @@ class AbstractPyConvModel(PyLoihiProcessModel):
 @requires(CPU)
 @tag('floating_pt')
 class PyConvModelBinaryFloat(AbstractPyConvModel):
-    """Binary spike float synapse implementation."""
+    """Binary spikes, and float synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     weight: np.ndarray = LavaPyType(np.ndarray, float)
@@ -54,10 +54,10 @@ class PyConvModelBinaryFloat(AbstractPyConvModel):
 @requires(CPU)
 @tag('fixed_pt')
 class PyConvModelBinaryFixed(AbstractPyConvModel):
-    """Binary spike fixed point synapse implementation."""
+    """Binary spike, and fixed point synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
 
-    def clamp_precision(self, x):
+    def clamp_precision(self, x: np.ndarray) -> np.ndarray:
         return utils.signed_clamp(x, bits=24)

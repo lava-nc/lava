@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import typing
 import numpy as np
 
 from lava.magma.core.process.process import AbstractProcess
@@ -34,7 +35,10 @@ class Conv(AbstractProcess):
     ----
     padding, stride and dilation are expected in (X, Y) or (W, H) if tuple.
     """
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        **kwargs: typing.Union[int, typing.Tuple[int, ...]]
+    ) -> None:
         # The process In/OutPort shapes are considered to be XYZ(WHC) format.
         # The kernel weight shape is expected to be in (C_out, W, H, C_in)
         # format.
@@ -51,22 +55,22 @@ class Conv(AbstractProcess):
         groups = kwargs.get('groups', 1)
 
         if len(input_shape) != 3:
-            raise Exception(
+            raise ValueError(
                 f'Expected input shape to be 3 dimensional.'
                 f'Found {input_shape}.'
             )
         if not np.isscalar(groups):
-            raise Exception(
+            raise ValueError(
                 f'Expected groups to be a scalar.'
                 f'found {groups = }.'
             )
         if in_channels % groups != 0:
-            raise Exception(
+            raise ValueError(
                 f'Expected number of in_channels to be divisible by groups.'
                 f'Found {in_channels = } and {groups = }.'
             )
         if out_channels % groups != 0:
-            raise Exception(
+            raise ValueError(
                 f'Expected number of out_channels to be divisible by groups.'
                 f'Found {out_channels = } and {groups = }.'
             )

@@ -23,9 +23,8 @@ class RingBuffer(AbstractProcess):
     data: np array
         data to generate spike from. Last dimension is assumed as time.
     """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        data = kwargs.pop('data')
+    def __init__(self, data: np.ndarray) -> None:
+        super().__init__(data=data)
         self.data = Var(shape=data.shape, init=data)
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
 
@@ -35,7 +34,7 @@ class AbstractPyRingBuffer(PyLoihiProcessModel):
     s_out = None
     data = None
 
-    def run_spk(self):
+    def run_spk(self) -> None:
         buffer = self.data.shape[-1]
         self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
 

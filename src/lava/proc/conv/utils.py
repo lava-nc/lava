@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from typing import Tuple, Union
 import numpy as np
 from scipy import signal
 
@@ -15,7 +16,10 @@ except ModuleNotFoundError:
 # TODO: add tensorflow support
 
 
-def get_tuple(kwargs, name, default):
+def get_tuple(
+    kwargs: dict,
+    name: str, default: Union[int, Tuple[int, ...]]
+) -> Tuple[int, int]:
     """Get tuple value from keyword argument.
 
     Parameters
@@ -45,13 +49,16 @@ def get_tuple(kwargs, name, default):
     elif len(shape) == 2:
         return (shape[0], shape[1])
     else:
-        raise Exception(
+        raise ValueError(
             f'Expected {name} to be two dimensional.'
             f'Found {name} = {shape}.'
         )
 
 
-def signed_clamp(x, bits):
+def signed_clamp(
+    x: Union[int, float, np.array],
+    bits: int
+) -> Union[int, float, np.array]:
     """clamps as if input is a signed value within the precision of bits.
 
     Parameters
@@ -71,8 +78,13 @@ def signed_clamp(x, bits):
 
 
 def output_shape(
-    input_shape, out_channels, kernel_size, stride, padding, dilation
-):
+    input_shape: Tuple[int, int, int],
+    out_channels: int,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int]
+) -> Tuple[int, int, int]:
     """Calculates the output shape of convolution operation.
 
     Parameters
@@ -150,7 +162,15 @@ def output_shape(
 #     pass
 
 
-def conv(input, weight, kernel_size, stride, padding, dilation, groups):
+def conv(
+    input: np.ndarray,
+    weight: np.ndarray,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+    groups: int
+) -> np.ndarray:
     """Convolution implementation
 
     Parameters
@@ -183,7 +203,7 @@ def conv(input, weight, kernel_size, stride, padding, dilation, groups):
                 dim=0,
             ),
             torch.FloatTensor(
-                # torch acutally does correlation
+                # torch actually does correlation
                 # so flipping the spatial dimension of weight
                 # copy() is needed because
                 # torch cannot handle negative stride
@@ -202,7 +222,15 @@ def conv(input, weight, kernel_size, stride, padding, dilation, groups):
     return output.astype(weight.dtype)
 
 
-def conv_scipy(input, weight, kernel_size, stride, padding, dilation, groups):
+def conv_scipy(
+    input: np.ndarray,
+    weight: np.ndarray,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+    groups: int
+) -> np.ndarray:
     """Scipy based implementation of convolution
 
     Parameters
