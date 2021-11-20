@@ -1,10 +1,15 @@
-#ifdef PYTHON
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include <assert.h>
 #include <stdint.h>
+#define PYTHON
 #include "ports.h"
+#include "custom.h"
+
+PyObject* get_port(const char* name){
+    return PyObject_GetAttrString(self_object, name);
+}
 
 size_t send(PyObject *port, void *data, size_t m){ // send via pointer
     PyObject *pyDataObj = PyArray_New(&PyArray_Type, 1, (npy_intp[]){m},NPY_INT, NULL,data,0, NPY_ARRAY_CARRAY, NULL);
@@ -41,4 +46,3 @@ size_t probe(PyObject *port){ // simple call and return of simple type
     Py_DECREF(result);
     return n;
 }
-#endif
