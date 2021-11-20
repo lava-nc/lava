@@ -24,12 +24,16 @@ class CProcessModelMeta(ABCMeta):
 
     def __new__(cls, name, bases, attrs):
         if AbstractCProcessModel and AbstractCProcessModel in bases:
+            path: str = os.path.dirname(os.path.abspath(__file__))
+            sources: ty.List[str] = [
+                path + "/" + fname for fname in ["custom.c", "run.c"]
+            ]
 
             def configuration(parent_package="", top_path=None):
                 config = Configuration("", parent_package, top_path)
                 config.add_extension(
                     "custom",
-                    attrs["source_files"],
+                    attrs["source_files"] + sources,
                     extra_info=get_info("npymath"),
                 )
                 return config
@@ -42,13 +46,15 @@ class CProcessModelMeta(ABCMeta):
                     "build_ext",
                     "--inplace",
                     "--include-dirs",
-                    os.path.dirname(os.path.abspath(__file__)),
+                    path,
                 ],
             )
             invalidate_caches()
             module = import_module("custom")
             # from custom import Custom
-            bases = (module.Custom,) + bases + (AbstractPyProcessModel,)
+            bases = (module.Custom,) + bases
+            if AbstractPyProcessModel not in bases:
+                bases += (AbstractPyProcessModel,)
         return super().__new__(cls, name, bases, attrs)
 
     def get_ports(cls) -> ty.List[str]:
@@ -68,7 +74,6 @@ class CProcessModelMeta(ABCMeta):
             return []
 
 
-'''
 class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """Abstract interface for a C ProcessModels.
 
@@ -82,4 +87,3 @@ class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """
 
     source_files: ty.List[str] = None
-'''

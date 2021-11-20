@@ -11,8 +11,9 @@
 
 #define PYTHON
 #include "methods.h"
+#include "run.h"
 
-static PyObject* Custom_run(PyObject *self,PyObject* Py_UNUSED(ignored)){
+PyObject* Custom_run(PyObject *self,PyObject* Py_UNUSED(ignored)){
     printf("test_runstate.c run function called\n");
     PyObject *state_port = PyObject_GetAttrString(self, "service_to_process_cmd");
     while(1){
