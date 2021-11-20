@@ -56,9 +56,9 @@ def get_tuple(
 
 
 def signed_clamp(
-    x: Union[int, float, np.array],
+    x: Union[int, float, np.ndarray],
     bits: int
-) -> Union[int, float, np.array]:
+) -> Union[int, float, np.ndarray]:
     """clamps as if input is a signed value within the precision of bits.
 
     Parameters
