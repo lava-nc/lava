@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.model.c.model import CProcessModelMeta
+from lava.magma.core.model.c.model import AbstractCProcessModel
 
 import os
 
@@ -11,13 +11,13 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 class MockServicePort:
-    phase: int = 0
+    phase: int = 10
 
     def probe(self) -> int:
         return 1
 
     def recv(self) -> int:
-        self.phase += 1
+        self.phase = (self.phase + 1) % 10
         return self.phase
 
 
@@ -50,14 +50,14 @@ class Test_Build(unittest.TestCase):
         pm.run()
     """
 
-    def test_runstate(self):
-        class PM(metaclass=CProcessModelMeta):
+    def test_run(self):
+        class PM(AbstractCProcessModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
-            source_files = ["test_runstate.c"]
+            source_files = ["test_run.c"]
 
         pm = PM()
         pm.run()
-        self.assertEqual(pm.service_to_process_cmd.phase, 10)
+        self.assertEqual(pm.service_to_process_cmd.phase, 0)
 
 
 if __name__ == "__main__":
