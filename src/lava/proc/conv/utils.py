@@ -155,13 +155,6 @@ def output_shape(
     return x_out, y_out, out_channels
 
 
-# TODO: This might be needed later. The reverse mapping is ambiguous though
-# def input_shape(
-#     output_shape, in_channels, kernel_size, stride, padding, dilation
-# ):
-#     pass
-
-
 def conv(
     input: np.ndarray,
     weight: np.ndarray,
