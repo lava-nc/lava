@@ -14,12 +14,13 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.decorator import implements, requires
 from lava.proc.monitor.process import Monitor
+from lava.proc.monitor.models import PyMonitorModel
 from lava.proc.lif.process import LIF
 from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.run_configs import Loihi1SimCfg
 
 
-class SimpleRunConfig(RunConfig):
+class MonitorRunConfig(RunConfig):
     """
     The RunConfic class for the unittests
     """
@@ -36,8 +37,23 @@ class SimpleRunConfig(RunConfig):
                 return proc_models[1]
         return proc_models[0]
 
-# a dummy proc with two Vars
+
+class LifRunConfig(RunConfig):
+    """Run configuration selects appropriate LIF ProcessModel based on tag:
+    floating point precision or Loihi bit-accurate fixed point precision"""
+    def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
+        super().__init__(custom_sync_domains=custom_sync_domains)
+        self.select_tag = select_tag
+
+    def select(self, proc, proc_models):
+        for pm in proc_models:
+            if self.select_tag in pm.tags:
+                return pm
+        raise AssertionError("No legal ProcessModel found.")
+
+
 class P1(AbstractProcess):
+    """a dummy proc with two Vars"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.s = Var(shape=(1,), init=1)
@@ -73,7 +89,7 @@ class Monitors(unittest.TestCase):
         monitor = Monitor()
         c = Compiler()
         # Compiling should run without error
-        c.compile(monitor, SimpleRunConfig(sync_domains=[]))
+        c.compile(monitor, MonitorRunConfig(sync_domains=[]))
 
     def test_monitor_add_probe_create_ref_var_ports(self):
         """Check if probe(..) method of MOnitor Proc creates a new RefPort
@@ -131,7 +147,7 @@ class Monitors(unittest.TestCase):
 
         # should run without error (not doing anything)
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                    run_cfg=SimpleRunConfig(sync_domains=[]))
+                      run_cfg=MonitorRunConfig(sync_domains=[]))
 
         some_proc.stop()
 
@@ -145,7 +161,7 @@ class Monitors(unittest.TestCase):
 
         # Run
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=SimpleRunConfig(sync_domains=[]))
+                      run_cfg=MonitorRunConfig(sync_domains=[]))
 
         # Fetch and construct the monitored data with get_data(..) method
         data = monitor.get_data()
@@ -174,7 +190,10 @@ class Monitors(unittest.TestCase):
         num_steps = 6
         neuron = LIF(shape=shape,
                      vth=3,
-                     b=1)
+                     bias=1)
+
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='floating_pt')
 
         # Probe voltage of LIF with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -183,8 +202,7 @@ class Monitors(unittest.TestCase):
         monitor2.probe(target=neuron.s_out, num_steps=num_steps)
 
         # Run
-        neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=SimpleRunConfig(sync_domains=[]))
+        neuron.run(condition=rcnd, run_cfg=rcfg)
 
         # Get data from both monitor
         data1 = monitor1.get_data()
@@ -198,8 +216,10 @@ class Monitors(unittest.TestCase):
         spike_data = data2[neuron.name][neuron.s_out.name]
 
         # Check if this data match the expected data
-        self.assertTrue(np.all(volt_data == np.array([1, 2, 3, 0, 1, 2])))
-        self.assertTrue(np.all(spike_data == np.array([0, 0, 0, 0, 1, 0])))
+        print(volt_data)
+        print(spike_data)
+        self.assertTrue(np.all(volt_data == np.array([1, 2, 0, 1, 2, 0])))
+        self.assertTrue(np.all(spike_data == np.array([0, 0, 0, 1, 0, 0])))
 
     def test_monitor_collects_voltage_and_spike_data_from_population_lif(self):
         """Check if two different Monitor process can monitor voltage (Var) and
@@ -216,7 +236,7 @@ class Monitors(unittest.TestCase):
         num_steps = 6
         neuron = LIF(shape=shape,
                      vth=3,
-                     b=1)
+                     bias=1)
 
         # Probe voltage of LIF neurons with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -226,7 +246,7 @@ class Monitors(unittest.TestCase):
 
         # Run
         neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=SimpleRunConfig(sync_domains=[]))
+                   run_cfg=MonitorRunConfig(sync_domains=[]))
 
         # Get data from both monitor
         data1 = monitor1.get_data()
@@ -239,11 +259,13 @@ class Monitors(unittest.TestCase):
         volt_data = data1[neuron.name][neuron.v.name]
         spike_data = data2[neuron.name][neuron.s_out.name]
 
+        print(volt_data)
+        print(spike_data)
         # Check if this data match the expected data
-        self.assertTrue(np.all(volt_data == np.array([[1, 2, 3, 0, 1, 2],
-                                                      [1, 2, 3, 0, 1, 2]])))
-        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 0, 1, 0],
-                                                       [0, 0, 0, 0, 1, 0]])))
+        self.assertTrue(np.all(volt_data == np.array([[1, 2, 0, 1, 2, 0],
+                                                      [1, 2, 0, 1, 2, 0]])))
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 1, 0, 0],
+                                                       [0, 0, 0, 1, 0, 0]])))
 
     def test_proc_params_accessible_in_proc_model(self):
         """Check if proc_params are accessible in ProcessModel. This
@@ -255,7 +277,7 @@ class Monitors(unittest.TestCase):
 
         # compile
         c = Compiler()
-        exe = c.compile(monitor, SimpleRunConfig(sync_domains=[]))
+        exe = c.compile(monitor, MonitorRunConfig(sync_domains=[]))
 
         # Check if built model has these proc_params
         self.assertEqual(next(iter(exe.py_builders)).proc_params,

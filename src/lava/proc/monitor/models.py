@@ -4,23 +4,25 @@ from lava.proc.monitor.process import Monitor
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.resources import CPU
+
 
 # A minimal PyProcModel implementing P1
 @implements(proc=Monitor, protocol=LoihiProtocol)
 @requires(CPU)
+@tag('floating_pt')
 class PyMonitorModel(PyLoihiProcessModel):
     """
     This process model contains prototypical Ports and Vars to have
     one-to-one correspondes with Monitor process.
     """
     var_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                                  np.int32,
-                                                  precision=24)
+                                        np.float,
+                                        precision=24)
     out_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                                  np.int32,
-                                                  precision=24)
+                                        np.float,
+                                        precision=24)
     ref_port_0: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     in_port_0: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
