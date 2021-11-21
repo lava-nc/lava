@@ -92,7 +92,7 @@ class TestPyPorts(unittest.TestCase):
         classes = [PyInPortVectorDense]
 
         for cls in classes:
-            self.probe_testing_routine(cls)
+            self.probe_test_routine(cls)
 
 
 if __name__ == '__main__':
