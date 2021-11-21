@@ -17,8 +17,7 @@ from lava.proc.io.sink import RingBuffer as ReceiveProcess
 
 verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False
 TORCH_IS_AVAILABLE = utils.TORCH_IS_AVAILABLE
-seed = np.random.randint(1000)
-np.random.seed(seed)
+np.random.seed(9933)
 
 
 class ConvRunConfig(RunConfig):
@@ -137,7 +136,6 @@ class TestConvProcessModels(unittest.TestCase):
             f'Output and ground truth do not match.\n'
             f'{output[output!=output_gt]   =}\n'
             f'{output_gt[output!=output_gt]=}\n'
-            f'{seed = }'
         )
 
     def test_conv_fixed(self) -> None:
@@ -185,5 +183,4 @@ class TestConvProcessModels(unittest.TestCase):
             f'Output and ground truth do not match.\n'
             f'{output[output!=output_gt]   =}\n'
             f'{output_gt[output!=output_gt]=}\n'
-            f'{seed = }'
         )

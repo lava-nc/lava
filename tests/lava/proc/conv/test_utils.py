@@ -18,8 +18,7 @@ except ModuleNotFoundError:
 
 # TODO: add tensorflow support
 
-seed = np.random.randint(1000)
-np.random.seed(seed)
+np.random.seed(8534)
 
 
 class TestConv(unittest.TestCase):
@@ -89,7 +88,6 @@ class TestConv(unittest.TestCase):
                     f'Found\n'
                     f'{out.flatten()[:50] = }\n'
                     f'{out_gt.flatten()[:50] = }\n'
-                    f'{seed = }'
                 )
 
     def test_conv_saved_data(self) -> None:

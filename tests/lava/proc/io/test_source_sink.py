@@ -11,8 +11,7 @@ from lava.proc.io.source import RingBuffer as SendProcess
 from lava.proc.io.sink import RingBuffer as ReceiveProcess
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
-seed = np.random.randint(1000)
-np.random.seed(seed)
+np.random.seed(7739)
 
 
 class TestRunConfig(RunConfig):
@@ -57,5 +56,4 @@ class TestSendReceive(unittest.TestCase):
             f'Input and Ouptut do not match.\n'
             f'{output[output!=input]=}\n'
             f'{input[output!=input] =}\n'
-            f'{seed = }'
         )
