@@ -8,14 +8,17 @@ import numpy as np
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
+    VarPort
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import CPU
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
+    PyVarPort
 
-from lava.magma.compiler.utils import VarInitializer, PortInitializer
+from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
+    VarPortInitializer
 from lava.magma.compiler.builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
@@ -104,7 +107,7 @@ class ProcModelForLavaPyType1(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(123, int)  # type: ignore
 
 
-# A wrong ProcessModel with wrong syb type
+# A wrong ProcessModel with wrong sub type
 @implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType2(AbstractPyProcessModel):
@@ -116,6 +119,24 @@ class ProcModelForLavaPyType2(AbstractPyProcessModel):
 @requires(CPU)
 class ProcModelForLavaPyType3(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyOutPort, int)
+
+
+# A minimal process to test RefPorts and VarPorts
+class ProcRefVar(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ref = RefPort(shape=(3,))
+        self.var = Var(shape=(3,), init=4)
+        self.var_port = VarPort(self.var)
+
+
+# A minimal PyProcModel implementing ProcRefVar
+@implements(proc=ProcRefVar)
+@requires(CPU)
+class PyProcModelRefVar(AbstractPyProcessModel):
+    ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
+    var: np.ndarray = LavaPyType(np.ndarray, np.int32)
+    var_port: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
 
 
 class TestPyProcessBuilder(unittest.TestCase):
@@ -234,7 +255,7 @@ class TestPyProcessBuilder(unittest.TestCase):
         InPort called 'port'
         """
 
-        # Create univeral PortInitializer reflecting the 'port' in
+        # Create universal PortInitializer reflecting the 'port' in
         # ProcForLavaPyType
         pi = PortInitializer("port", (1,), np.intc, "InPort", 32)
 
@@ -411,14 +432,73 @@ class TestPyProcessBuilder(unittest.TestCase):
         # Validate that the Process with no OutPorts indeed has no output
         # CspPort
         self.assertIsInstance(
-            pm_with_no_out_ports.in_port._csp_ports[0], FakeCspPort)
-        self.assertEqual(pm_with_no_out_ports.out_port._csp_ports, [])
+            pm_with_no_out_ports.in_port._csp_recv_ports[0], FakeCspPort)
+        self.assertEqual(pm_with_no_out_ports.out_port._csp_send_ports, [])
 
         # Validate that the Process with no InPorts indeed has no input
         # CspPort
-        self.assertEqual(pm_with_no_in_ports.in_port._csp_ports, [])
+        self.assertEqual(pm_with_no_in_ports.in_port._csp_recv_ports, [])
         self.assertIsInstance(
-            pm_with_no_in_ports.out_port._csp_ports[0], FakeCspPort)
+            pm_with_no_in_ports.out_port._csp_send_ports[0], FakeCspPort)
+
+    def test_set_ref_var_ports(self):
+        """Check RefPorts and VarPorts can be set."""
+
+        # Create a new ProcBuilder
+        b = PyProcessBuilder(PyProcModelRefVar, 0)
+
+        # Create Process for which we want to build PyProcModel
+        proc = ProcRefVar()
+
+        # Normally, the Compiler would create PortInitializers from all
+        # ref ports holding only its name and shape
+        ports = list(proc.ref_ports)
+        ref_ports = [PortInitializer(
+            pt.name,
+            pt.shape,
+            getattr(PyProcModelRefVar, pt.name).d_type,
+            pt.__class__.__name__, 32)
+            for pt in ports]
+        # Similarly, the Compiler would create VarPortInitializers from all
+        # var ports holding only its name, shape and var_name
+        ports = list(proc.var_ports)
+        var_ports = [VarPortInitializer(
+            pt.name,
+            pt.shape,
+            pt.var.name,
+            getattr(PyProcModelRefVar, pt.name).d_type,
+            pt.__class__.__name__, 32, PyRefPort.VEC_DENSE)
+            for pt in ports]
+        # The Runtime, would normally create CspPorts that implement the actual
+        # message passing via channels between RefPorts and VarPorts. Here we
+        # just create some fake CspPorts for each Ref- and VarPort.
+        # 2 CspChannels per Ref-/VarPort.
+        csp_ports = []
+        for port in list(ref_ports):
+            csp_ports.append(FakeCspPort(port.name))
+            csp_ports.append(FakeCspPort(port.name))
+        for port in list(var_ports):
+            csp_ports.append(FakeCspPort(port.name))
+            csp_ports.append(FakeCspPort(port.name))
+
+        # During compilation, the Compiler creates and then sets
+        # PortInitializers and VarPortInitializers
+        b.set_ref_ports(ref_ports)
+        b.set_var_ports(var_ports)
+        # The Runtime sets CspPorts
+        b.set_csp_ports(csp_ports)
+
+        # All the objects are converted into dictionaries to retrieve them by
+        # name
+        self.assertEqual(list(b.py_ports.values()), [])
+        self.assertEqual(list(b.ref_ports.values()), ref_ports)
+        self.assertEqual(list(b.var_ports.values()), var_ports)
+        self.assertEqual(list(v for vv in b.csp_ports.values()
+                              for v in vv), csp_ports)
+        self.assertEqual(b.ref_ports["ref"], ref_ports[0])
+        self.assertEqual(b.csp_ports["ref"], [csp_ports[0], csp_ports[1]])
+        self.assertEqual(b.var_ports["var_port"], var_ports[0])
+        self.assertEqual(b.csp_ports["var_port"], [csp_ports[2], csp_ports[3]])
 
 
 if __name__ == "__main__":

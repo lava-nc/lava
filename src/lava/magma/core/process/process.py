@@ -249,6 +249,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         # Current runtime environment
         self._runtime: ty.Optional[Runtime] = None
 
+    def __del__(self):
+        """On destruction, terminate Runtime automatically to
+        free compute resources.
+        """
+        self.stop()
+
     def _post_init(self):
         """Called after __init__() method of any sub class via
         ProcessMetaClass to finalize initialization leading to following
@@ -349,6 +355,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """Loads and de-serializes Process from disk."""
         pass
 
+    # TODO: (PP) Remove  if condition on blocking as soon as non-blocking
+    #  execution is completely implemented
     def run(self, condition: AbstractRunCondition, run_cfg: RunConfig):
         """Runs process given RunConfig and RunCondition.
 
@@ -376,6 +384,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             :param run_cfg: RunConfig is used by compiler to select a
             ProcessModel for each compiled process.
         """
+
+        if not condition.blocking:
+            # Currently non-blocking execution is not implemented
+            raise NotImplementedError("Non-blocking Execution is currently not"
+                                      " supported. Please use blocking=True.")
+
         if not self._runtime:
             executable = self.compile(run_cfg)
             self._runtime = Runtime(condition,

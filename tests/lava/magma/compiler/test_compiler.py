@@ -14,24 +14,27 @@ from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
-from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.process.ports.ports import (
+    InPort, OutPort, RefPort, VarPort)
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
+    PyVarPort
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var, VarServer
 from lava.magma.core.resources import CPU
 
 
-# minimal process with an InPort and OutPortA
+# A minimal process (A) with an InPort, OutPort and RefPort
 class ProcA(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Use ReduceOp to allow for multiple input connections
         self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
         self.out = OutPort(shape=(1,))
+        self.ref = RefPort(shape=(10,))
 
 
-# Another minimal process (does not matter that it's identical to ProcA)
+# Another minimal process (B) with a Var and an InPort, OutPort and VarPort
 class ProcB(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -39,9 +42,10 @@ class ProcB(AbstractProcess):
         self.inp = InPort(shape=(1,), reduce_op=ReduceSum)
         self.out = OutPort(shape=(1,))
         self.some_var = Var((10,), init=10)
+        self.var_port = VarPort(self.some_var)
 
 
-# Another minimal process (does not matter that it's identical to ProcA)
+# Another minimal process (C) with an InPort and OutPort
 class ProcC(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -74,6 +78,7 @@ class ProtocolB(AbstractSyncProtocol):
 class PyProcModelA(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+    ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
     def run(self):
         pass
@@ -86,6 +91,7 @@ class PyProcModelB(AbstractPyProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
     some_var: int = LavaPyType(int, int)
+    var_port: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
 
     def run(self):
         pass
@@ -261,6 +267,30 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(set(procs2), all_procs)
         self.assertEqual(set(procs4), all_procs)
         self.assertEqual(set(procs6), all_procs)
+
+    def test_find_process_ref_ports(self):
+        """Checks finding all processes for RefPort connection.
+        [p1 -> ref/var -> p2 -> out/in -> p3]"""
+
+        # Create processes
+        p1, p2, p3 = ProcA(), ProcB(), ProcC()
+
+        # Connect p1 (RefPort) with p2 (VarPort)
+        p1.ref.connect(p2.var_port)
+        # Connect p2 (OutPort) with p3 (InPort)
+        p2.out.connect(p3.inp)
+
+        # Regardless where we start searching...
+        c = Compiler()
+        procs1 = c._find_processes(p1)
+        procs2 = c._find_processes(p2)
+        procs3 = c._find_processes(p3)
+
+        # ...we will find all of them
+        all_procs = {p1, p2, p3}
+        self.assertEqual(set(procs1), all_procs)
+        self.assertEqual(set(procs2), all_procs)
+        self.assertEqual(set(procs3), all_procs)
 
     def test_find_proc_models(self):
         """Check finding of ProcModels that implement a Process."""
@@ -657,6 +687,66 @@ class TestCompiler(unittest.TestCase):
         self.assertIsInstance(chb[0], ChannelBuilderMp)
         self.assertEqual(chb[0].src_process, p.procs.proc1)
         self.assertEqual(chb[0].dst_process, p.procs.proc2)
+
+    def test_create_channel_builders_ref_ports(self):
+        """Checks creation of channel builders when a process is connected
+        using a RefPort to another process VarPort."""
+
+        # Create a process with a RefPort (source)
+        src = ProcA()
+
+        # Create a process with a var (destination)
+        dst = ProcB()
+
+        # Connect them using RefPort and VarPort
+        src.ref.connect(dst.var_port)
+
+        # Create a manual proc_map
+        proc_map = {
+            src: PyProcModelA,
+            dst: PyProcModelB
+        }
+
+        # Create channel builders
+        c = Compiler()
+        cbs = c._create_channel_builders(proc_map)
+
+        # This should result in 2 channel builder
+        from lava.magma.compiler.builder import ChannelBuilderMp
+        self.assertEqual(len(cbs), 2)
+        self.assertIsInstance(cbs[0], ChannelBuilderMp)
+        self.assertEqual(cbs[0].src_process, src)
+        self.assertEqual(cbs[0].dst_process, dst)
+
+    def test_create_channel_builders_ref_ports_implicit(self):
+        """Checks creation of channel builders when a process is connected
+        using a RefPort to another process Var (implicit VarPort)."""
+
+        # Create a process with a RefPort (source)
+        src = ProcA()
+
+        # Create a process with a var (destination)
+        dst = ProcB()
+
+        # Connect them using RefPort and Var (creates implicitly a VarPort)
+        src.ref.connect_var(dst.some_var)
+
+        # Create a manual proc_map
+        proc_map = {
+            src: PyProcModelA,
+            dst: PyProcModelB
+        }
+
+        # Create channel builders
+        c = Compiler()
+        cbs = c._create_channel_builders(proc_map)
+
+        # This should result in 2 channel builder
+        from lava.magma.compiler.builder import ChannelBuilderMp
+        self.assertEqual(len(cbs), 2)
+        self.assertIsInstance(cbs[0], ChannelBuilderMp)
+        self.assertEqual(cbs[0].src_process, src)
+        self.assertEqual(cbs[0].dst_process, dst)
 
     # ToDo: (AW) @YS/@JM Please fix unit test by passing run_srv_builders to
     #  _create_exec_vars when ready

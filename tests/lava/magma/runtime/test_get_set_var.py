@@ -1,3 +1,7 @@
+# Copyright (C) 2021 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
 
@@ -19,8 +23,8 @@ class SimpleProcess(AbstractProcess):
         shape = kwargs["shape"]
         self.u = Var(shape=shape, init=np.array([[7, 8], [9, 10]],
                                                 dtype=np.int32))
-        self.v = Var(shape=shape, init=np.array([[1, 2], [4, 5]],
-                                                dtype=np.int32))
+        self.v = Var(shape=shape, init=np.array([[1., 2.55], [4.2, 5.1]],
+                                                dtype=np.float64))
 
 
 class SimpleRunConfig(RunConfig):
@@ -43,45 +47,88 @@ class SimpleRunConfig(RunConfig):
 @requires(CPU)
 class SimpleProcessModel(PyLoihiProcessModel):
     u = LavaPyType(np.ndarray, np.int32, precision=32)
-    v = LavaPyType(np.ndarray, np.int32, precision=32)
+    v = LavaPyType(np.ndarray, np.float64, precision=32)
 
 
 class TestGetSetVar(unittest.TestCase):
     def test_get_set_var_using_runtime(self):
+        """Checks that get_var() method of the runtime retrieves expected
+        values, set_var() method modifies the values and retrieve them again.
+        Different data types are tested also (int and float)."""
         process = SimpleProcess(shape=(2, 2))
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
 
-        expected_result = np.array([[7, 8], [9, 10]], dtype=np.int32)
+        # Retrieve value of u
+        expected_result_u = np.array([[7, 8], [9, 10]], dtype=np.int32)
         assert np.array_equal(process._runtime.get_var(process.u.id),
-                              expected_result)
-        expected_result *= 10
-        process._runtime.set_var(process.u.id, expected_result)
+                              expected_result_u)
+
+        # Retrieve value of v
+        expected_result_v = np.array([[1., 2.55], [4.2, 5.1]], dtype=np.float64)
+        assert np.array_equal(process._runtime.get_var(process.v.id),
+                              expected_result_v)
+
+        # Modify value of u
+        expected_result_u *= 10
+        process._runtime.set_var(process.u.id, expected_result_u)
+
+        # Check if value was modified by retrieving it again
         assert np.array_equal(process._runtime.get_var(process.u.id),
-                              expected_result)
+                              expected_result_u)
+
+        # Modify value of v
+        expected_result_v *= 10
+        process._runtime.set_var(process.v.id, expected_result_v)
+
+        # Check if value was modified by retrieving it again
+        assert np.array_equal(process._runtime.get_var(process.v.id),
+                              expected_result_v)
+
+        # Check if values stay modified after another execution
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
         assert np.array_equal(process._runtime.get_var(process.u.id),
-                              expected_result)
+                              expected_result_u)
+        assert np.array_equal(process._runtime.get_var(process.v.id),
+                              expected_result_v)
         self.assertEqual(process.runtime.global_time, 15)
         process.stop()
 
     def test_get_set_var_using_var_api(self):
+        """Checks that get_var() method of Var retrieves expected values,
+        set_var() method modifies the values and retrieve them again."""
         process = SimpleProcess(shape=(2, 2))
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
 
-        expected_result = np.array([[7, 8], [9, 10]], dtype=np.int32)
-        assert np.array_equal(process.u.get(),
-                              expected_result)
-        expected_result *= 10
-        process.u.set(expected_result)
-        assert np.array_equal(process.u.get(),
-                              expected_result)
+        # Retrieve value of u
+        expected_result_u = np.array([[7, 8], [9, 10]], dtype=np.int32)
+        assert np.array_equal(process.u.get(), expected_result_u)
+
+        # Retrieve value of v
+        expected_result_v = np.array([[1., 2.55], [4.2, 5.1]], dtype=np.float64)
+        assert np.array_equal(process.v.get(), expected_result_v)
+
+        # Modify value of u
+        expected_result_u *= 10
+        process.u.set(expected_result_u)
+
+        # Check if value was modified by retrieving it again
+        assert np.array_equal(process.u.get(), expected_result_u)
+
+        # Modify value of v
+        expected_result_v *= 10
+        process.v.set(expected_result_v)
+
+        # Check if value was modified by retrieving it again
+        assert np.array_equal(process.v.get(), expected_result_v)
+
+        # Check if values stay modified after another execution
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
-        assert np.array_equal(process.u.get(),
-                              expected_result)
+        assert np.array_equal(process.u.get(), expected_result_u)
+        assert np.array_equal(process.v.get(), expected_result_v)
         self.assertEqual(process.runtime.global_time, 15)
         process.stop()
 

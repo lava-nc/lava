@@ -24,13 +24,17 @@ from lava.magma.compiler.builder import RuntimeChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig, Node
-from lava.magma.compiler.utils import VarInitializer, PortInitializer
+from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
+    VarPortInitializer
 from lava.magma.core import resources
 from lava.magma.core.model.c.model import AbstractCProcessModel
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.nc.model import AbstractNcProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
+from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
+from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
+    ImplicitVarPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.run_configs import RunConfig
@@ -49,7 +53,6 @@ class Compiler:
             self._compile_config.update(compile_cfg)
 
     # ToDo: (AW) Clean this up by avoiding redundant search paths
-    # ToDo: (AW) @PP Please include RefPorts/VarPorts in connection tracing
     def _find_processes(self,
                         proc: AbstractProcess,
                         seen_procs: ty.List[AbstractProcess] = None) \
@@ -69,14 +72,14 @@ class Compiler:
         new_list: ty.List[AbstractProcess] = []
 
         # add processes connecting to the main process
-        for in_port in proc.in_ports:
+        for in_port in proc.in_ports.members + proc.var_ports.members:
             for con in in_port.in_connections:
                 new_list.append(con.process)
             for con in in_port.out_connections:
                 new_list.append(con.process)
 
         # add processes connecting from the main process
-        for out_port in proc.out_ports:
+        for out_port in proc.out_ports.members + proc.ref_ports.members:
             for con in out_port.in_connections:
                 new_list.append(con.process)
             for con in out_port.out_connections:
@@ -251,6 +254,37 @@ class Compiler:
 
         return grouped_models
 
+    # TODO: (PP) This currently only works for PyPorts - needs general solution
+    # TODO: (PP) Currently does not support 1:many/many:1 connections
+    @staticmethod
+    def _map_var_port_class(port: VarPort,
+                            proc_groups: ty.Dict[ty.Type[AbstractProcessModel],
+                                                 ty.List[AbstractProcess]]):
+        """Maps the port class of a given VarPort from its source RefPort. This
+        is needed as implicitly created VarPorts created by connecting RefPorts
+        directly to Vars, have no LavaType."""
+
+        # Get the source RefPort of the VarPort
+        rp = port.get_src_ports()
+        if len(rp) > 0:
+            rp = rp[0]
+        else:
+            # VarPort is not connect, hence there is no LavaType
+            return None
+
+        # Get the ProcessModel of the source RefPort
+        r_pm = None
+        for pm in proc_groups:
+            if rp.process in proc_groups[pm]:
+                r_pm = pm
+
+        # Get the LavaType of the RefPort from its ProcessModel
+        lt = getattr(r_pm, rp.name)
+
+        # Return mapping of the RefPort class to VarPort class
+        return RefVarTypeMapping.get(lt.cls)
+
+    # TODO: (PP) possible shorten creation of PortInitializers
     def _compile_proc_models(
             self,
             proc_groups: ty.Dict[ty.Type[AbstractProcessModel],
@@ -271,16 +305,43 @@ class Compiler:
                     # and Ports
                     v = [VarInitializer(v.name, v.shape, v.init, v.id)
                          for v in p.vars]
-                    ports = (list(p.in_ports) + list(p.out_ports)
-                             + list(p.ref_ports))
+                    ports = (list(p.in_ports) + list(p.out_ports))
                     ports = [PortInitializer(pt.name,
                                              pt.shape,
-                                             getattr(pm, pt.name).d_type,
+                                             self._get_port_dtype(pt, pm),
                                              pt.__class__.__name__,
                                              pp_ch_size) for pt in ports]
+                    # Create RefPort (also use PortInitializers)
+                    ref_ports = list(p.ref_ports)
+                    ref_ports = [
+                        PortInitializer(pt.name,
+                                        pt.shape,
+                                        self._get_port_dtype(pt, pm),
+                                        pt.__class__.__name__,
+                                        pp_ch_size) for pt in ref_ports]
+                    # Create VarPortInitializers (contain also the Var name)
+                    var_ports = []
+                    for pt in list(p.var_ports):
+                        var_ports.append(
+                            VarPortInitializer(
+                                pt.name,
+                                pt.shape,
+                                pt.var.name,
+                                self._get_port_dtype(pt, pm),
+                                pt.__class__.__name__,
+                                pp_ch_size,
+                                self._map_var_port_class(pt, proc_groups)))
+
+                        # Set implicit VarPorts (created by connecting a RefPort
+                        # directly to a Var) as attribute to ProcessModel
+                        if isinstance(pt, ImplicitVarPort):
+                            setattr(pm, pt.name, pt)
+
                     # Assigns initializers to builder
                     b.set_variables(v)
                     b.set_py_ports(ports)
+                    b.set_ref_ports(ref_ports)
+                    b.set_var_ports(var_ports)
                     b.check_all_vars_and_ports_set()
                     py_builders[p] = b
             elif issubclass(pm, AbstractCProcessModel):
@@ -496,6 +557,27 @@ class Compiler:
                 f"'({src.__name__}, {dst.__name__})' yet."
             )
 
+    @staticmethod
+    def _get_port_dtype(port: AbstractPort,
+                        proc_model: ty.Type[AbstractProcessModel]) -> type:
+        """Returns the d_type of a Process Port, as specified in the
+        corresponding PortImplementation of the ProcessModel implementing the
+        Process"""
+
+        # In-, Out-, Ref- and explicit VarPorts
+        if hasattr(proc_model, port.name):
+            # Handle VarPorts (use dtype of corresponding Var)
+            if isinstance(port, VarPort):
+                return getattr(proc_model, port.var.name).d_type
+            return getattr(proc_model, port.name).d_type
+        # Implicitly created VarPorts
+        elif isinstance(port, ImplicitVarPort):
+            return getattr(proc_model, port.var.name).d_type
+        # Port has different name in Process and ProcessModel
+        else:
+            raise AssertionError("Port {!r} not found in "
+                                 "ProcessModel {!r}".format(port, proc_model))
+
     # ToDo: (AW) Fix hard-coded hacks in this method and extend to other
     #  channel types
     def _create_channel_builders(self, proc_map: PROC_MAP) \
@@ -525,7 +607,7 @@ class Compiler:
             # Find destination ports for each source port
             for src_pt in src_ports:
                 # Create PortInitializer for source port
-                src_pt_dtype = getattr(src_pm, src_pt.name).d_type
+                src_pt_dtype = self._get_port_dtype(src_pt, src_pm)
                 src_pt_init = PortInitializer(
                     src_pt.name, src_pt.shape, src_pt_dtype,
                     src_pt.__class__.__name__, ch_size)
@@ -540,7 +622,7 @@ class Compiler:
                         # Find appropriate channel type
                         ch_type = self._get_channel_type(src_pm, dst_pm)
                         # Create PortInitializer for destination port
-                        dst_pt_d_type = getattr(dst_pm, dst_pt.name).d_type
+                        dst_pt_d_type = self._get_port_dtype(dst_pt, dst_pm)
                         dst_pt_init = PortInitializer(
                             dst_pt.name, dst_pt.shape, dst_pt_d_type,
                             dst_pt.__class__.__name__, ch_size)
@@ -548,6 +630,13 @@ class Compiler:
                         chb = ChannelBuilderMp(
                             ch_type, src_p, dst_p, src_pt_init, dst_pt_init)
                         channel_builders.append(chb)
+                        # Create additional channel builder for every VarPort
+                        if isinstance(dst_pt, VarPort):
+                            # RefPort to VarPort connections need channels for
+                            # read and write
+                            rv_chb = ChannelBuilderMp(
+                                ch_type, dst_p, src_p, dst_pt_init, src_pt_init)
+                            channel_builders.append(rv_chb)
 
         return channel_builders
 
@@ -584,7 +673,7 @@ class Compiler:
         return PortInitializer(
             name,
             (1,),
-            np.int32,
+            np.float64,
             'MgmtPort',
             self._compile_config["pypy_channel_size"],
         )
