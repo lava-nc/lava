@@ -52,8 +52,9 @@ class PyInPort(AbstractPyPort):
         bool values with and operation. The accumulator acc is initialized to
         True.
 
-        Returns the accumulated bool value. Equals to True only when
+        Returns the accumulated bool value.
         """
+        # Returns True only when probe returns True for all _csp_recv_ports.
         return ft.reduce(
             lambda acc, csp_port: acc and csp_port.probe(),
             self._csp_recv_ports,
