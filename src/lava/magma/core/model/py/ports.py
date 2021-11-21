@@ -48,6 +48,12 @@ class PyInPort(AbstractPyPort):
         pass
 
     def probe(self) -> bool:
+        """Executes probe method of all csp ports and accumulates the returned
+        bool values with and operation. The accumulator acc is initialized to
+        True.
+
+        Returns the accumulated bool value. Equals to True only when
+        """
         return ft.reduce(
             lambda acc, csp_port: acc and csp_port.probe(),
             self._csp_recv_ports,
