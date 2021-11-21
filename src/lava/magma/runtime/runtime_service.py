@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort,\
+    CspSelector
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
@@ -132,9 +133,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
         counter = 0
         while counter < num_responses_expected:
             ptos_recv_port = self.process_to_service_ack[counter]
-            if ptos_recv_port.probe():
-                rcv_msgs.append(ptos_recv_port.recv())
-                counter += 1
+            rcv_msgs.append(ptos_recv_port.recv())
+            counter += 1
         return rcv_msgs
 
     def _relay_to_runtime_data_given_model_id(self, model_id: int):
@@ -180,10 +180,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
         In this case iterate through the phases of the Loihi protocol until the
         last time step is reached. The runtime is informed after the last time
         step. The loop ends when receiving the STOP command from the runtime."""
+        selector = CspSelector()
         phase = LoihiPyRuntimeService.Phase.HOST
         while True:
             # Probe if there is a new command from the runtime
-            if self.runtime_to_service_cmd.probe():
+            cmd = selector.select((self.runtime_to_service_cmd, lambda: True),
+                                  (self.runtime_to_service_req, lambda: False))
+            if cmd:
                 command = self.runtime_to_service_cmd.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     # Inform all ProcessModels about the STOP command
@@ -238,49 +241,44 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
                     # Inform the runtime that last time step was reached
                     self.service_to_runtime_ack.send(MGMT_RESPONSE.DONE)
-
-            # Handle get/set Var
-            self._handle_get_set(phase)
+            else:
+                # Handle get/set Var
+                self._handle_get_set(phase)
 
     def _handle_get_set(self, phase):
         if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
-            while True:
-                if self.runtime_to_service_req.probe():
-                    request = self.runtime_to_service_req.recv()
-                    if enum_equal(request, REQ_TYPE.GET):
-                        requests: ty.List[np.ndarray] = [request]
-                        # recv model_id
-                        model_id: int = \
-                            self.runtime_to_service_req.recv()[
-                                0].item()
-                        # recv var_id
-                        requests.append(
-                            self.runtime_to_service_req.recv())
-                        self._send_pm_req_given_model_id(model_id,
-                                                         *requests)
+            request = self.runtime_to_service_req.recv()
+            if enum_equal(request, REQ_TYPE.GET):
+                requests: ty.List[np.ndarray] = [request]
+                # recv model_id
+                model_id: int = \
+                    self.runtime_to_service_req.recv()[
+                        0].item()
+                # recv var_id
+                requests.append(
+                    self.runtime_to_service_req.recv())
+                self._send_pm_req_given_model_id(model_id,
+                                                 *requests)
 
-                        self._relay_to_runtime_data_given_model_id(
-                            model_id)
-                    elif enum_equal(request, REQ_TYPE.SET):
-                        requests: ty.List[np.ndarray] = [request]
-                        # recv model_id
-                        model_id: int = \
-                            self.runtime_to_service_req.recv()[
-                                0].item()
-                        # recv var_id
-                        requests.append(
-                            self.runtime_to_service_req.recv())
-                        self._send_pm_req_given_model_id(model_id,
-                                                         *requests)
+                self._relay_to_runtime_data_given_model_id(
+                    model_id)
+            elif enum_equal(request, REQ_TYPE.SET):
+                requests: ty.List[np.ndarray] = [request]
+                # recv model_id
+                model_id: int = \
+                    self.runtime_to_service_req.recv()[
+                        0].item()
+                # recv var_id
+                requests.append(
+                    self.runtime_to_service_req.recv())
+                self._send_pm_req_given_model_id(model_id,
+                                                 *requests)
 
-                        self._relay_to_pm_data_given_model_id(
-                            model_id)
-                    else:
-                        raise RuntimeError(
-                            f"Unknown request {request}")
-
-                if self.runtime_to_service_cmd.probe():
-                    return
+                self._relay_to_pm_data_given_model_id(
+                    model_id)
+            else:
+                raise RuntimeError(
+                    f"Unknown request {request}")
 
 
 class LoihiCRuntimeService(AbstractRuntimeService):

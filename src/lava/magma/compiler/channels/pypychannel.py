@@ -3,12 +3,12 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from queue import Queue, Empty
-from threading import Thread
+from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from dataclasses import dataclass
 
 import numpy as np
-from multiprocessing import Pipe, BoundedSemaphore
+from multiprocessing import Pipe
 
 from lava.magma.compiler.channels.interfaces import (
     Channel,
@@ -57,6 +57,7 @@ class CspSendPort(AbstractCspSendPort):
         self._done = False
         self._array = []
         self._semaphore = None
+        self.observer = None
         self.thread = None
 
     @property
@@ -97,7 +98,10 @@ class CspSendPort(AbstractCspSendPort):
         try:
             while not self._done:
                 self._ack.recv_bytes(0)
+                not_full = self.probe()
                 self._semaphore.release()
+                if self.observer and not not_full:
+                    self.observer()
         except EOFError:
             pass
 
@@ -190,6 +194,7 @@ class CspRecvPort(AbstractCspRecvPort):
         self._done = False
         self._array = []
         self._queue = None
+        self.observer = None
         self.thread = None
 
     @property
@@ -230,7 +235,10 @@ class CspRecvPort(AbstractCspRecvPort):
         try:
             while not self._done:
                 self._req.recv_bytes(0)
+                not_empty = self.probe()
                 self._queue.put_nowait(0)
+                if self.observer and not not_empty:
+                    self.observer()
         except EOFError:
             pass
 
@@ -263,6 +271,43 @@ class CspRecvPort(AbstractCspRecvPort):
 
     def join(self):
         self._done = True
+
+
+class CspSelector:
+    """
+    Utility class to allow waiting for multiple channels to become ready
+    """
+
+    def __init__(self):
+        """Instantiates CspSelector object and class attributes"""
+        self._cv = Condition()
+
+    def _changed(self):
+        with self._cv:
+            self._cv.notify_all()
+
+    def _set_observer(self, channel_actions, observer):
+        for channel, _ in channel_actions:
+            channel.observer = observer
+
+    def select(
+        self,
+        *args: ty.Tuple[ty.Union[CspSendPort, CspRecvPort],
+                        ty.Callable[[], ty.Any]
+                        ]
+    ):
+        """
+        Wait for any channel to become ready, then execute the corresponding
+        callable and return the result.
+        """
+        with self._cv:
+            self._set_observer(args, self._changed)
+            while True:
+                for channel, action in args:
+                    if channel.probe():
+                        self._set_observer(args, None)
+                        return action()
+                self._cv.wait()
 
 
 class PyPyChannel(Channel):
