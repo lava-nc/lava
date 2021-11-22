@@ -195,9 +195,6 @@ dense.out_ports.a_out.connect(lif2.in_ports.a_in)
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import RunConfig
 
-from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.run_configs import RunConfig
-
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
