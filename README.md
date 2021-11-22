@@ -194,6 +194,24 @@ dense.out_ports.a_out.connect(lif2.in_ports.a_in)
 # Execute process lif1 and all processes connected to it for fixed number of steps
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import RunConfig
+
+from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_configs import RunConfig
+
+class SimpleRunConfig(RunConfig):
+    def __init__(self, **kwargs):
+        sync_domains = kwargs.pop("sync_domains")
+        super().__init__(custom_sync_domains=sync_domains)
+        self.model = None
+        if "model" in kwargs:
+            self.model = kwargs.pop("model")
+
+    def select(self, process, proc_models):
+        if self.model is not None:
+            if self.model == "sub" and isinstance(process, AbstractProcess):
+                return proc_models[1]
+        return proc_models[0]
+
 lif1.run(condition=RunSteps(num_steps=10), run_cfg=SimpleRunConfig(
             sync_domains=[]))
 lif1.stop()
