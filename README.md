@@ -80,25 +80,25 @@ $ git clone git@github.com:lava-nc/lava.git
 $ cd lava
 $ pip install -r build-requirements.txt
 $ pip install -r requirements.txt
-$ export PYTHONPATH=$(pwd)/src
+$ pip install -e .
 $ pyb -E unit
 ```
-Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl. Test your PYTHONPATH using `echo $PYTHONPATH` and ensure 'lava/src' is the first entry that precedes any additional Lava library src paths. 
+Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
 #### [Windows]
 ```cmd
 cd %HOMEPATH%
-python3 -m venv python3_venv
-source python3_venv\bin\activate.bat
-pip install -U pip
+python -m venv python3_venv
+source python3_venv\Scripts\activate.bat
+python -m pip install --upgrade pip
 git clone git@github.com:lava-nc/lava.git
 cd lava
 pip install -r build-requirements.txt
 pip install -r requirements.txt
-set PYTHONPATH=%cd%\src
+pip install -e .
 pyb -E unit
 ```
-Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl. Test your PYTHONPATH using `echo %PYTHONPATH%` and ensure 'lava\src' is the first entry that precedes any additional Lava library src paths. 
+Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
 You should expect the following output after running the unit tests:
 ```
