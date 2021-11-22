@@ -287,7 +287,7 @@ class PyLifModel(PyLoihiProcessModel):
 
 In contrast this process model also implements the LIF process but by structurally allocating neural network resources on a virtual Loihi 1 neuro core.
 ```python
- from lava.proc.lif.process import LIF
+from lava.proc.lif.process import LIF
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import Loihi1NeuroCore
 from lava.magma.core.model.nc.model import NcLoihiProcessModel
