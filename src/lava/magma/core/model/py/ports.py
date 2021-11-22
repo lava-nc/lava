@@ -49,7 +49,7 @@ class PyInPort(AbstractPyPort):
 
     def probe(self) -> bool:
         """Executes probe method of all csp ports and accumulates the returned
-        bool values with and operation. The accumulator acc is initialized to
+        bool values with AND operation. The accumulator acc is initialized to
         True.
 
         Returns the accumulated bool value.
