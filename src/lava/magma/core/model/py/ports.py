@@ -48,7 +48,18 @@ class PyInPort(AbstractPyPort):
         pass
 
     def probe(self) -> bool:
-        pass
+        """Executes probe method of all csp ports and accumulates the returned
+        bool values with AND operation. The accumulator acc is initialized to
+        True.
+
+        Returns the accumulated bool value.
+        """
+        # Returns True only when probe returns True for all _csp_recv_ports.
+        return ft.reduce(
+            lambda acc, csp_port: acc and csp_port.probe(),
+            self._csp_recv_ports,
+            True,
+        )
 
 
 class PyInPortVectorDense(PyInPort):
@@ -180,20 +191,20 @@ class PyRefPort(AbstractPyPort):
             return []
 
     def read(
-        self,
+            self,
     ) -> ty.Union[
         np.ndarray, ty.Tuple[np.ndarray, np.ndarray], int, ty.Tuple[int, int]
     ]:
         pass
 
     def write(
-        self,
-        data: ty.Union[
-            np.ndarray,
-            ty.Tuple[np.ndarray, np.ndarray],
-            int,
-            ty.Tuple[int, int],
-        ],
+            self,
+            data: ty.Union[
+                np.ndarray,
+                ty.Tuple[np.ndarray, np.ndarray],
+                int,
+                ty.Tuple[int, int],
+            ],
     ):
         pass
 
