@@ -50,6 +50,7 @@ class AbstractProcessModel(ABC):
     implements_process: ty.Optional[ty.Type[AbstractProcess]] = None
     implements_protocol: ty.Optional[ty.Type[AbstractSyncProtocol]] = None
     required_resources: ty.List[ty.Type[AbstractResource]] = []
+    tags: ty.List[str] = []
 
     def __repr__(self):
         pm_name = self.__class__.__qualname__
