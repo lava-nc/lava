@@ -188,8 +188,8 @@ dense = Dense()
 lif2 = LIF()
 
 # Connect processes via their directional input and output ports
-lif1.out_ports.s_out.connect(self.dense.in_ports.s_in)
-dense.out_ports.a_out.connect(self.lif2.in_ports.a_in)
+lif1.out_ports.s_out.connect(dense.in_ports.s_in)
+dense.out_ports.a_out.connect(lif2.in_ports.a_in)
 
 # Execute process lif1 and all processes connected to it for fixed number of steps
 from lava.magma.core.run_conditions import RunSteps
