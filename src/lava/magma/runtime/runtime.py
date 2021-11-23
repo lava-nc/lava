@@ -14,8 +14,8 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
-from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, \
-    enum_to_np, REQ_TYPE
+from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
+    MGMT_COMMAND, MGMT_RESPONSE, REQ_TYPE
 from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
@@ -227,7 +227,7 @@ class Runtime:
                 if run_condition.blocking:
                     for recv_port in self.service_to_runtime_ack:
                         data = recv_port.recv()
-                        if not np.array_equal(data, MGMT_RESPONSE.DONE):
+                        if not enum_equal(data, MGMT_RESPONSE.DONE):
                             raise RuntimeError(f"Runtime Received {data}")
                 if run_condition.blocking:
                     self.current_ts += self.num_steps
@@ -244,7 +244,7 @@ class Runtime:
         if self._is_running:
             for recv_port in self.service_to_runtime_ack:
                 data = recv_port.recv()
-                if not np.array_equal(data, MGMT_RESPONSE.DONE):
+                if not enum_equal(data, MGMT_RESPONSE.DONE):
                     raise RuntimeError(f"Runtime Received {data}")
             self.current_ts += self.num_steps
             self._is_running = False
@@ -260,7 +260,7 @@ class Runtime:
                     send_port.send(MGMT_COMMAND.STOP)
                 for recv_port in self.service_to_runtime_ack:
                     data = recv_port.recv()
-                    if not np.array_equal(data, MGMT_RESPONSE.TERMINATED):
+                    if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
                         raise RuntimeError(f"Runtime Received {data}")
                 self.join()
                 self._is_running = False

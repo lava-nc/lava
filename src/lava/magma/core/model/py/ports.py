@@ -9,7 +9,7 @@ import numpy as np
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.interfaces import AbstractPortImplementation
-from lava.magma.runtime.mgmt_token_enums import enum_to_np
+from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 
 
 class AbstractPyPort(AbstractPortImplementation):
@@ -48,7 +48,18 @@ class PyInPort(AbstractPyPort):
         pass
 
     def probe(self) -> bool:
-        pass
+        """Executes probe method of all csp ports and accumulates the returned
+        bool values with AND operation. The accumulator acc is initialized to
+        True.
+
+        Returns the accumulated bool value.
+        """
+        # Returns True only when probe returns True for all _csp_recv_ports.
+        return ft.reduce(
+            lambda acc, csp_port: acc and csp_port.probe(),
+            self._csp_recv_ports,
+            True,
+        )
 
 
 class PyInPortVectorDense(PyInPort):
@@ -180,20 +191,20 @@ class PyRefPort(AbstractPyPort):
             return []
 
     def read(
-        self,
+            self,
     ) -> ty.Union[
         np.ndarray, ty.Tuple[np.ndarray, np.ndarray], int, ty.Tuple[int, int]
     ]:
         pass
 
     def write(
-        self,
-        data: ty.Union[
-            np.ndarray,
-            ty.Tuple[np.ndarray, np.ndarray],
-            int,
-            ty.Tuple[int, int],
-        ],
+            self,
+            data: ty.Union[
+                np.ndarray,
+                ty.Tuple[np.ndarray, np.ndarray],
+                int,
+                ty.Tuple[int, int],
+            ],
     ):
         pass
 
@@ -290,10 +301,10 @@ class PyVarPortVectorDense(PyVarPort):
                 cmd = enum_to_np(self._csp_recv_port.recv()[0])
 
                 # Set the value of the Var with the given data
-                if np.array_equal(cmd, VarPortCmd.SET):
+                if enum_equal(cmd, VarPortCmd.SET):
                     data = self._csp_recv_port.recv()
                     setattr(self._process_model, self.var_name, data)
-                elif np.array_equal(cmd, VarPortCmd.GET):
+                elif enum_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)
                     self._csp_send_port.send(data)
                 else:
