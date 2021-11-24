@@ -18,7 +18,7 @@ class MockServicePort:
         return 1
 
     def recv(self) -> int:
-        self.phase = (self.phase + 1) % 10
+        self.phase = (self.phase - 1) % 10
         return self.phase
 
 
@@ -54,7 +54,6 @@ class Test_Build(unittest.TestCase):
         pm.run()
     """
 
-    """
     def test_run(self):
         class PM(AbstractCProcessModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
@@ -63,16 +62,22 @@ class Test_Build(unittest.TestCase):
         pm = PM()
         pm.run()
         self.assertEqual(pm.service_to_process_cmd.phase, 0)
-    """
 
+
+'''
     def test_loihi(self):
+        """
+        compile a loihi protocol CProcessModel
+        expect it to fail because of the mock service port
+        """
+
         class PM(AbstractCProcessModel, PyDenseModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
             source_files = ["test_loihi.c"]
 
         pm = PM()
-        pm.run()
+        self.assertRaises(ValueError, pm.run)
 
-
+'''
 if __name__ == "__main__":
     unittest.main()
