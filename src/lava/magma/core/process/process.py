@@ -242,6 +242,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         # ProcessModel chosen during compilation
         self._model = None
+        self.proc_params = {}
 
         # Flag indicating whether process has been compiled already
         self._is_compiled: bool = False

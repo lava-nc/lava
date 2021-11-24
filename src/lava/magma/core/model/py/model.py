@@ -41,6 +41,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
+        self.proc_params: ty.Dict[str, ty.Any] = {}
 
     def __setattr__(self, key: str, value: ty.Any):
         self.__dict__[key] = value

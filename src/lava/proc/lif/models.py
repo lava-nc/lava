@@ -21,15 +21,15 @@ class PyLifModelFloat(PyLoihiProcessModel):
     algorithmic prototyping, without engaging with the nuances of a fixed
     point implementation.
     """
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float)
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
-    u: np.ndarray = LavaPyType(np.ndarray, np.float)
-    v: np.ndarray = LavaPyType(np.ndarray, np.float)
-    bias: np.ndarray = LavaPyType(np.ndarray, np.float)
-    bias_exp: np.ndarray = LavaPyType(np.ndarray, np.float)
-    du: float = LavaPyType(float, np.float)
-    dv: float = LavaPyType(float, np.float)
-    vth: float = LavaPyType(float, np.float)
+    u: np.ndarray = LavaPyType(np.ndarray, float)
+    v: np.ndarray = LavaPyType(np.ndarray, float)
+    bias: np.ndarray = LavaPyType(np.ndarray, float)
+    bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
+    du: float = LavaPyType(float, float)
+    dv: float = LavaPyType(float, float)
+    vth: float = LavaPyType(float, float)
 
     def run_spk(self):
         a_in_data = self.a_in.recv()
