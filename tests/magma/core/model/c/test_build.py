@@ -40,6 +40,9 @@ class MockDataPort:
         self.sent += 1
         pass
 
+    def flush(self):
+        pass
+
 
 class Test_Build(unittest.TestCase):
     """
