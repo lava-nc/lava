@@ -300,7 +300,7 @@ class Compiler:
         for pm, procs in proc_groups.items():
             if issubclass(pm, AbstractPyProcessModel):
                 for p in procs:
-                    b = PyProcessBuilder(pm, p.id)
+                    b = PyProcessBuilder(pm, p.id, p.proc_params)
                     # Create Var- and PortInitializers from lava.process Vars
                     # and Ports
                     v = [VarInitializer(v.name, v.shape, v.init, v.id)
