@@ -12,6 +12,7 @@ import os
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
+from lava.magma.core.model.c import generate
 
 AbstractCProcessModel = None
 
@@ -26,8 +27,18 @@ class CProcessModelMeta(ABCMeta):
         if AbstractCProcessModel and AbstractCProcessModel in bases:
             path: str = os.path.dirname(os.path.abspath(__file__))
             sources: ty.List[str] = [
-                path + "/" + fname for fname in ["custom.c", "run.c"]
+                path + "/" + fname for fname in ["custom.c", "ports_python.c"]
             ]
+            methods = generate.get_protocol_methods((cls,) + bases)
+            if methods:  # protocol specified
+                with open("methods.c", "w") as f:
+                    f.write(generate.gen_methods_c(methods))
+                sources.append("methods.c")
+            else:  # use basic phase run loop
+                methods = ["run"]
+                sources.append(path + "/run_phases.c")
+            with open("methods.h", "w") as f:
+                f.write(generate.gen_methods_h(methods))
 
             def configuration(parent_package="", top_path=None):
                 config = Configuration("", parent_package, top_path)
@@ -38,6 +49,16 @@ class CProcessModelMeta(ABCMeta):
                 )
                 return config
 
+            with open(f"proto.h", "w") as f:
+                f.write(generate.gen_proto_h(methods))
+
+            if not attrs["source_files"]:
+                with open(f"proto.c", "w") as f:
+                    f.write(generate.gen_proto_c(methods))
+                raise Exception(
+                    "no source files given for protocol methods - prototypes automatically generated in proto.c"
+                )
+
             setup(
                 configuration=configuration,
                 script_args=[
@@ -46,7 +67,7 @@ class CProcessModelMeta(ABCMeta):
                     "build_ext",
                     "--inplace",
                     "--include-dirs",
-                    path,
+                    f"{path}:{os.getcwd()}",
                 ],
             )
             invalidate_caches()
@@ -56,22 +77,6 @@ class CProcessModelMeta(ABCMeta):
             if AbstractPyProcessModel not in bases:
                 bases += (AbstractPyProcessModel,)
         return super().__new__(cls, name, bases, attrs)
-
-    def get_ports(cls) -> ty.List[str]:
-        return [
-            v for v in vars(cls) if isinstance(v, AbstractPortImplementation)
-        ]
-
-    def get_methods(cls) -> ty.List[str]:
-        if hasattr(cls, "implements_protocol"):
-            return [
-                name
-                for tups in cls.implements_protocol.proc_functions
-                for name in tups
-                if name
-            ]
-        else:
-            return []
 
 
 class AbstractCProcessModel(metaclass=CProcessModelMeta):

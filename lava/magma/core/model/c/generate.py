@@ -1,12 +1,14 @@
 import typing as ty
 import textwrap as tw
 
+from lava.magma.core.model.interfaces import AbstractPortImplementation
+
 
 def gen_proto_h(names: ty.List[str]):
     return (
-        "#ifndef _RUN_H\n"
-        + "#define _RUN_H\n"
-        + "\n".join(f"void {name}();" for name in names)
+        "#ifndef _PROTO_H\n"
+        + "#define _PROTO_H\n"
+        + "\n".join(f"int {name}();" for name in names)
         + "\n#endif\n"
     )
 
@@ -15,7 +17,10 @@ def gen_proto_c(names: ty.List[str]) -> str:
     return tw.dedent(
         "".join(
             f"""
-            void {name}(){{
+            #include "ports.h"
+
+            int {name}(){{
+                return 0;
             }}
             """
             for name in names
@@ -23,14 +28,37 @@ def gen_proto_c(names: ty.List[str]) -> str:
     )
 
 
+def get_ports(bases) -> ty.List[str]:
+    return [
+        v
+        for cls in bases
+        for v in vars(cls)
+        if isinstance(v, AbstractPortImplementation)
+    ]
+
+
+def get_protocol_methods(bases: ty.List[type]) -> ty.List[str]:
+    """
+    Takes in a list of class bases and returns header and code strings
+    """
+    return [
+        name
+        for cls in bases
+        for tup in getattr(
+            getattr(cls, "implements_protocol", None), "proc_functions", []
+        )
+        for name in tup
+        if name
+    ]
+
+
 def gen_methods(names: ty.List[str]):
     return tw.dedent(
         "".join(
             f"""
-        static PyObject* Custom_{name}(CustomObject *self,PyObject* Py_UNUSED(ignored)){{
+        PyObject* Custom_{name}(PyObject *self,PyObject* Py_UNUSED(ignored)){{
             printf("{name} method called\\n");
-            {name}();
-            Py_RETURN_NONE;
+            return PyLong_FromLong({name}());
         }}
         """
             for name in names
@@ -40,13 +68,13 @@ def gen_methods(names: ty.List[str]):
 
 def gen_entry(name: str = "MyFunc"):
     return tw.dedent(
-        f"""{{{name},(PyCFunction)Custom_{name},METH_NOARGS,"no description"}}"""
+        f"""{{"{name}",(PyCFunction)Custom_{name},METH_NOARGS,"no description"}}"""
     )
 
 
 def gen_method_decls(names: ty.List[str]) -> str:
     return "".join(
-        f"static PyObject* Custom_{name}(CustomObject *self,PyObject* Py_UNUSED(ignored));"
+        f"PyObject* Custom_{name}(PyObject *self,PyObject* Py_UNUSED(ignored));"
         + "\n"
         for name in names
     )
@@ -56,7 +84,7 @@ def gen_method_def(names: ty.List[str]) -> str:
     entries = ",\n            ".join(gen_entry(name) for name in names)
     return tw.dedent(
         f"""
-        static PyMethodDef Custom_methods[] = {{
+        PyMethodDef Custom_methods[] = {{
             {entries},
             {{NULL}}
             }};
@@ -85,27 +113,25 @@ def gen_ports_load(names: ty.List[str]):
 
 def gen_init(ports: ty.List[str]) -> str:
     return (
-        "static int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored)){\n"
+        "int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored)){\n"
         + tw.indent(gen_ports_load(ports), "    ")
         + "\n    return 0;\n}\n"
     )
 
 
-def gen_methods_h(methods: ty.List[str], ports: ty.List[str]) -> str:
+def gen_methods_h(methods: ty.List[str]) -> str:
     return (
-        "#ifndef _METHODS_H\n" + "#define _METHODS_H\n"
-        "static int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored));\n"
+        "#ifndef _METHODS_H\n"
+        + "#define _METHODS_H\n"
+        # "int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored));\n"
         + gen_method_decls(methods)
         + gen_method_def(methods)
-        + gen_port_struct(ports)
         + "#endif\n"
     )
     pass
 
 
-def gen_methods_c(
-    methods: ty.List[str], ports: ty.List[str], header: str
-) -> str:
+def gen_methods_c(methods: ty.List[str]) -> str:
     return (
         tw.dedent(
             """
@@ -116,8 +142,6 @@ def gen_methods_c(
             #include "proto.h"\n
             """
         )
-        + gen_init(ports)
-        + "\n"
         + gen_methods(methods)
         + "\n"
     )
