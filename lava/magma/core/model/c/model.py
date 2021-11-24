@@ -8,6 +8,7 @@ from numpy.distutils.misc_util import Configuration, get_info
 from importlib import import_module, invalidate_caches
 
 import typing as ty
+import types
 import os
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 
@@ -29,7 +30,9 @@ class CProcessModelMeta(ABCMeta):
             sources: ty.List[str] = [
                 path + "/" + fname for fname in ["custom.c", "ports_python.c"]
             ]
-            methods = generate.get_protocol_methods((cls,) + bases)
+            methods = generate.get_protocol_methods(
+                (cls, types.SimpleNamespace(**attrs)) + bases
+            )
             if methods:  # protocol specified
                 with open("methods.c", "w") as f:
                     f.write(generate.gen_methods_c(methods))
