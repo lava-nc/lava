@@ -350,8 +350,11 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(ports)) > 1 or len(self.get_dst_ports()) > 0 or \
-                len(self.get_src_ports()) > 0:
+        if len(to_list(ports)) > 1 or \
+                (len(self.get_dst_ports()) > 0 and
+                 not isinstance(ports, AbstractSrcPort)) or \
+                (len(self.get_src_ports()) > 0 and
+                 not isinstance(ports, AbstractDstPort)):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
                 " {!r}: {!r}".format(
@@ -377,8 +380,11 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(ports)) > 1 or len(self.get_dst_ports()) > 0 or \
-                len(self.get_src_ports()) > 0:
+        if len(to_list(ports)) > 1 or \
+                (len(self.get_dst_ports()) > 0 and
+                 not isinstance(ports, AbstractSrcPort)) or \
+                (len(self.get_src_ports()) > 0 and
+                 not isinstance(ports, AbstractDstPort)):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
                 " {!r}: {!r}".format(
@@ -403,8 +409,11 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(variables)) > 1 or len(self.get_dst_ports()) > 0 or \
-                len(self.get_src_ports()) > 0:
+        if len(to_list(variables)) > 1 or \
+                (len(self.get_dst_ports()) > 0 and
+                 not isinstance(variables, AbstractSrcPort)) or \
+                (len(self.get_src_ports()) > 0 and
+                 not isinstance(variables, AbstractDstPort)):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
                 " {!r}: {!r}".format(
@@ -492,8 +501,11 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(ports)) > 1 or len(self.get_dst_ports()) > 0 or \
-                len(self.get_src_ports()) > 0:
+        if len(to_list(ports)) > 1 or \
+                (len(self.get_dst_ports()) > 0 and
+                 not isinstance(ports, AbstractSrcPort)) or \
+                (len(self.get_src_ports()) > 0 and
+                 not isinstance(ports, AbstractDstPort)):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for VarPorts:"
                 " {!r}: {!r}".format(
@@ -520,8 +532,11 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(ports)) > 1 or len(self.get_dst_ports()) > 0 or \
-                len(self.get_src_ports()) > 0:
+        if len(to_list(ports)) > 1 or \
+                (len(self.get_dst_ports()) > 0 and
+                 not isinstance(ports, AbstractSrcPort)) or \
+                (len(self.get_src_ports()) > 0 and
+                 not isinstance(ports, AbstractDstPort)):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for VarPorts:"
                 " {!r}: {!r}".format(
