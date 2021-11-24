@@ -1,69 +1,40 @@
+# Copyright (C) 2021 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
 
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyRefPort, PyVarPort
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import RefPort, VarPort
+from lava.magma.core.process.ports.ports import RefPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements, requires, tag
 from lava.proc.monitor.process import Monitor
-from lava.proc.monitor.models import PyMonitorModel
 from lava.proc.lif.process import LIF
 from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.run_configs import Loihi1SimCfg
 
 
-class MonitorRunConfig(RunConfig):
-    """
-    The RunConfic class for the unittests
-    """
-    def __init__(self, **kwargs):
-        sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains)
-        self.model = None
-        if "model" in kwargs:
-            self.model = kwargs.pop("model")
-
-    def select(self, process, proc_models):
-        if self.model is not None:
-            if self.model == "sub" and isinstance(process, AbstractProcess):
-                return proc_models[1]
-        return proc_models[0]
-
-
-class LifRunConfig(RunConfig):
-    """Run configuration selects appropriate LIF ProcessModel based on tag:
-    floating point precision or Loihi bit-accurate fixed point precision"""
-    def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
-        super().__init__(custom_sync_domains=custom_sync_domains)
-        self.select_tag = select_tag
-
-    def select(self, proc, proc_models):
-        for pm in proc_models:
-            if self.select_tag in pm.tags:
-                return pm
-        raise AssertionError("No legal ProcessModel found.")
-
-
 class P1(AbstractProcess):
-    """a dummy proc with two Vars"""
+    """A dummy proc with two Vars"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.s = Var(shape=(1,), init=1)
         self.u = Var(shape=(1,), init=0)
 
 
-# A minimal PyProcModel implementing P1
 @implements(proc=P1, protocol=LoihiProtocol)
 @requires(CPU)
+@tag('floating_pt')
 class PyProcModel1(PyLoihiProcessModel):
+    """A minimal PyProcModel implementing P1"""
+
     s: np.ndarray = LavaPyType(np.ndarray, np.int32)
     u: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
@@ -73,7 +44,7 @@ class PyProcModel1(PyLoihiProcessModel):
     def run_pre_mgmt(self):
         if self.current_ts > 1:
             self.s = np.array([self.current_ts])
-            self.u = 2*np.array([self.current_ts])
+            self.u = 2 * np.array([self.current_ts])
 
 
 class Monitors(unittest.TestCase):
@@ -85,14 +56,14 @@ class Monitors(unittest.TestCase):
         self.assertIsInstance(monitor, Monitor)
 
     def test_proc_compiled_without_error(self):
-        """ Check if Monitor Proc is compiled without an error"""
+        """Check if Monitor Proc is compiled without an error"""
         monitor = Monitor()
         c = Compiler()
         # Compiling should run without error
-        c.compile(monitor, MonitorRunConfig(sync_domains=[]))
+        c.compile(monitor, Loihi1SimCfg())
 
     def test_monitor_add_probe_create_ref_var_ports(self):
-        """Check if probe(..) method of MOnitor Proc creates a new RefPort
+        """Check if probe(..) method of Monitor Proc creates a new RefPort
         to facilitate the monitoring"""
         num_steps = 4
         # Create a Monitor Process and a dummy process to be probed
@@ -108,7 +79,7 @@ class Monitors(unittest.TestCase):
     def test_probing_input_port_raise_error(self):
         """Check if trying to monitor an InPort raise an error"""
         monitor = Monitor()
-        # create a LIF neuron which has an InPort called a_in
+        # Create a LIF neuron which has an InPort called a_in
         neuron = LIF(shape=(1,),
                      vth=200,
                      b=5)
@@ -125,7 +96,7 @@ class Monitors(unittest.TestCase):
         monitor = Monitor()
         some_proc = P1()
 
-        # probe
+        # Probing a Var with Monitor Process
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # Regardless where we start searching...
@@ -145,9 +116,9 @@ class Monitors(unittest.TestCase):
         some_proc = P1()
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
-        # should run without error (not doing anything)
+        # Should run without error (not doing anything)
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=MonitorRunConfig(sync_domains=[]))
+                      run_cfg=Loihi1SimCfg())
 
         some_proc.stop()
 
@@ -159,20 +130,20 @@ class Monitors(unittest.TestCase):
         some_proc = P1()
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
-        # Run
+        # Run all connected processes
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=MonitorRunConfig(sync_domains=[]))
+                      run_cfg=Loihi1SimCfg())
 
         # Fetch and construct the monitored data with get_data(..) method
         data = monitor.get_data()
 
-        # access the collected data with the names of monitor proc and var
+        # Access the collected data with the names of monitor proc and var
         probe_data = data[some_proc.name][some_proc.s.name]
 
         # Check if the collected data match the expected data
         self.assertTrue(np.all(probe_data == np.array([1, 2, 3, 4, 5, 6])))
 
-        # stop running
+        # Stop running
         some_proc.stop()
 
     def test_monitor_collects_voltage_and_spike_data_from_lif_neuron(self):
@@ -181,9 +152,11 @@ class Monitors(unittest.TestCase):
         expected data.
         Note: The LIF neuron integrate the given bias, voltage accumulates
         and once pass the threshold, there will be a spike outputted and
-        voltage will be reset to zero
+        voltage will be reset to zero.
         """
-        # Setup
+
+        # Setup two Monitor Processes and LIF Process (a single neuron) that
+        # will be monitored
         monitor1 = Monitor()
         monitor2 = Monitor()
         shape = (1,)
@@ -193,7 +166,7 @@ class Monitors(unittest.TestCase):
                      bias=1)
 
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = LifRunConfig(select_tag='floating_pt')
+        rcfg = Loihi1SimCfg(select_tag='floating_pt')
 
         # Probe voltage of LIF with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -201,14 +174,13 @@ class Monitors(unittest.TestCase):
         # Probe spike output of LIF with the second monitor
         monitor2.probe(target=neuron.s_out, num_steps=num_steps)
 
-        # Run
+        # Run all connected processes
         neuron.run(condition=rcnd, run_cfg=rcfg)
 
         # Get data from both monitor
         data1 = monitor1.get_data()
         data2 = monitor2.get_data()
 
-        # stop
         neuron.stop()
 
         # Access the relevant data in the corresponding data dicts
@@ -216,8 +188,6 @@ class Monitors(unittest.TestCase):
         spike_data = data2[neuron.name][neuron.s_out.name]
 
         # Check if this data match the expected data
-        print(volt_data)
-        print(spike_data)
         self.assertTrue(np.all(volt_data == np.array([1, 2, 0, 1, 2, 0])))
         self.assertTrue(np.all(spike_data == np.array([0, 0, 0, 1, 0, 0])))
 
@@ -227,9 +197,11 @@ class Monitors(unittest.TestCase):
         collected data with expected data.
         Note: The LIF neurons integrate the given bias, voltage accumulates
         and once pass the threshold, there will be a spike outputted and
-        voltage will be reset to zero
+        voltage will be reset to zero.
         """
-        # Setup
+
+        # Setup two Monitor Processes and LIF Process (population of neurons)
+        # that will be monitored
         monitor1 = Monitor()
         monitor2 = Monitor()
         shape = (2,)
@@ -244,23 +216,20 @@ class Monitors(unittest.TestCase):
         # Probe spike output of LIF neurons with the second monitor
         monitor2.probe(target=neuron.s_out, num_steps=num_steps)
 
-        # Run
+        # Run all connected processes
         neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=MonitorRunConfig(sync_domains=[]))
+                   run_cfg=Loihi1SimCfg())
 
         # Get data from both monitor
         data1 = monitor1.get_data()
         data2 = monitor2.get_data()
 
-        # Stop
         neuron.stop()
 
         # Access the relevant data in the corresponding data dicts
         volt_data = data1[neuron.name][neuron.v.name]
         spike_data = data2[neuron.name][neuron.s_out.name]
 
-        print(volt_data)
-        print(spike_data)
         # Check if this data match the expected data
         self.assertTrue(np.all(volt_data == np.array([[1, 2, 0, 1, 2, 0],
                                                       [1, 2, 0, 1, 2, 0]])))
@@ -272,12 +241,13 @@ class Monitors(unittest.TestCase):
         functionality is necessary to access dynamically created Ports/Vars"""
 
         monitor = Monitor()
+
         # Set some dummy proc_params to be transferred to ProcessModel
         monitor.proc_params = {"test": 0}
 
-        # compile
+        # Compile
         c = Compiler()
-        exe = c.compile(monitor, MonitorRunConfig(sync_domains=[]))
+        exe = c.compile(monitor, Loihi1SimCfg())
 
         # Check if built model has these proc_params
         self.assertEqual(next(iter(exe.py_builders)).proc_params,

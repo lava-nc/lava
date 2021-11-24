@@ -89,7 +89,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
     def __init__(
             self, proc_model: ty.Type[AbstractPyProcessModel],
             model_id: int,
-            proc_params: ty.Dict[str,ty.Any]):
+            proc_params: ty.Dict[str, ty.Any] = None):
         if not issubclass(proc_model, AbstractPyProcessModel):
             raise AssertionError("Is not a subclass of AbstractPyProcessModel")
         self._proc_model = proc_model
@@ -356,7 +356,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
         # Create the ProcessModel
         pm = self.proc_model()
         pm.model_id = self._model_id
-        pm.proc_params = self.proc_params # default: empty dictornary
+
+        # Default value of pm.proc_params in ProcessModel is an empty dictionary
+        # If a proc_params argument is provided in PyProcessBuilder,
+        # this will be carried to ProcessModel
+        if self.proc_params is not None:
+            pm.proc_params = self.proc_params
 
         # Initialize PyPorts
         for name, p in self.py_ports.items():
