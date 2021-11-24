@@ -56,6 +56,7 @@ class AbstractProcessModel(ABC):
         pm_name = self.__class__.__qualname__
         p_name = self.implements_process.__qualname__
         dev_names = " ".join([d.__qualname__ for d in self.required_resources])
+        tags = ", ".join([t.__qualname__ for t in self.tags])
         return (
             pm_name
             + " implements "
@@ -64,6 +65,10 @@ class AbstractProcessModel(ABC):
             + " " * len(pm_name)
             + " supports   "
             + dev_names
+            + "\n"
+            + " " * len(pm_name)
+            + " has tags   "
+            + tags
         )
 
     # ToDo: (AW) Should AbstractProcessModel even have a run() method? What
