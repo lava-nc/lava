@@ -3,12 +3,12 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from queue import Queue, Empty
-from threading import Thread
+from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from dataclasses import dataclass
 
 import numpy as np
-from multiprocessing import Pipe, BoundedSemaphore
+from multiprocessing import Semaphore
 
 from lava.magma.compiler.channels.interfaces import (
     Channel,
@@ -42,8 +42,8 @@ class CspSendPort(AbstractCspSendPort):
         shm : SharedMemory
         proto : Proto
         size : int
-        req : Pipe
-        ack : Pipe
+        req : Semaphore
+        ack : Semaphore
         """
         self._name = name
         self._shm = shm
@@ -57,6 +57,7 @@ class CspSendPort(AbstractCspSendPort):
         self._done = False
         self._array = []
         self._semaphore = None
+        self.observer = None
         self.thread = None
 
     @property
@@ -96,8 +97,11 @@ class CspSendPort(AbstractCspSendPort):
     def _ack_callback(self):
         try:
             while not self._done:
-                self._ack.recv_bytes(0)
+                self._ack.acquire()
+                not_full = self.probe()
                 self._semaphore.release()
+                if self.observer and not not_full:
+                    self.observer()
         except EOFError:
             pass
 
@@ -120,7 +124,7 @@ class CspSendPort(AbstractCspSendPort):
         self._semaphore.acquire()
         self._array[self._idx][:] = data[:]
         self._idx = (self._idx + 1) % self._size
-        self._req.send_bytes(bytes(0))
+        self._req.release()
 
     def join(self):
         self._done = True
@@ -175,8 +179,8 @@ class CspRecvPort(AbstractCspRecvPort):
         shm : SharedMemory
         proto : Proto
         size : int
-        req : Pipe
-        ack : Pipe
+        req : Semaphore
+        ack : Semaphore
         """
         self._name = name
         self._shm = shm
@@ -190,6 +194,7 @@ class CspRecvPort(AbstractCspRecvPort):
         self._done = False
         self._array = []
         self._queue = None
+        self.observer = None
         self.thread = None
 
     @property
@@ -229,8 +234,11 @@ class CspRecvPort(AbstractCspRecvPort):
     def _req_callback(self):
         try:
             while not self._done:
-                self._req.recv_bytes(0)
+                self._req.acquire()
+                not_empty = self.probe()
                 self._queue.put_nowait(0)
+                if self.observer and not not_empty:
+                    self.observer()
         except EOFError:
             pass
 
@@ -257,12 +265,49 @@ class CspRecvPort(AbstractCspRecvPort):
         self._queue.get()
         result = self._array[self._idx].copy()
         self._idx = (self._idx + 1) % self._size
-        self._ack.send_bytes(bytes(0))
+        self._ack.release()
 
         return result
 
     def join(self):
         self._done = True
+
+
+class CspSelector:
+    """
+    Utility class to allow waiting for multiple channels to become ready
+    """
+
+    def __init__(self):
+        """Instantiates CspSelector object and class attributes"""
+        self._cv = Condition()
+
+    def _changed(self):
+        with self._cv:
+            self._cv.notify_all()
+
+    def _set_observer(self, channel_actions, observer):
+        for channel, _ in channel_actions:
+            channel.observer = observer
+
+    def select(
+        self,
+        *args: ty.Tuple[ty.Union[CspSendPort, CspRecvPort],
+                        ty.Callable[[], ty.Any]
+                        ]
+    ):
+        """
+        Wait for any channel to become ready, then execute the corresponding
+        callable and return the result.
+        """
+        with self._cv:
+            self._set_observer(args, self._changed)
+            while True:
+                for channel, action in args:
+                    if channel.probe():
+                        self._set_observer(args, None)
+                        return action()
+                self._cv.wait()
 
 
 class PyPyChannel(Channel):
@@ -290,11 +335,11 @@ class PyPyChannel(Channel):
         nbytes = np.prod(shape) * np.dtype(dtype).itemsize
         smm = message_infrastructure.smm
         shm = smm.SharedMemory(int(nbytes * size))
-        req = Pipe(duplex=False)
-        ack = Pipe(duplex=False)
+        req = Semaphore(0)
+        ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
-        self._src_port = CspSendPort(src_name, shm, proto, size, req[1], ack[0])
-        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req[0], ack[1])
+        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack)
+        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack)
 
     @property
     def src_port(self) -> AbstractCspSendPort:

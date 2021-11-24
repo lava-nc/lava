@@ -6,11 +6,13 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort,\
+    CspSelector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
+    enum_equal,
     MGMT_COMMAND,
     MGMT_RESPONSE, REQ_TYPE,
 )
@@ -39,6 +41,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
+        self.proc_params: ty.Dict[str, ty.Any] = {}
 
     def __setattr__(self, key: str, value: ty.Any):
         self.__dict__[key] = value
@@ -113,49 +116,61 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         (service_to_process_cmd). After calling the method of a phase of all
         ProcessModels the runtime service is informed about completion. The
         loop ends when the STOP command is received."""
+        selector = CspSelector()
+        action = 'cmd'
         while True:
-            # Probe if there is a new command from the runtime service
-            if self.service_to_process_cmd.probe():
+            if action == 'cmd':
                 phase = self.service_to_process_cmd.recv()
-                if np.array_equal(phase, MGMT_COMMAND.STOP):
+                if enum_equal(phase, MGMT_COMMAND.STOP):
                     self.process_to_service_ack.send(MGMT_RESPONSE.TERMINATED)
                     self.join()
                     return
                 # Spiking phase - increase time step
-                if np.array_equal(phase, PyLoihiProcessModel.Phase.SPK):
+                if enum_equal(phase, PyLoihiProcessModel.Phase.SPK):
                     self.current_ts += 1
                     self.run_spk()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 # Pre-management phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
                     # Enable via guard method
                     if self.pre_guard():
                         self.run_pre_mgmt()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                    # Handle VarPort requests from RefPorts
-                    if len(self.var_ports) > 0:
-                        self._handle_var_ports()
                 # Learning phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.LRN):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.LRN):
                     # Enable via guard method
                     if self.lrn_guard():
                         self.run_lrn()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
                 # Post-management phase
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
                     # Enable via guard method
                     if self.post_guard():
                         self.run_post_mgmt()
                     self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                    # Handle VarPort requests from RefPorts
-                    if len(self.var_ports) > 0:
-                        self._handle_var_ports()
                 # Host phase - called at the last time step before STOP
-                elif np.array_equal(phase, PyLoihiProcessModel.Phase.HOST):
-                    # Handle get/set Var requests from runtime service
-                    self._handle_get_set_var()
+                elif enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                    pass
                 else:
                     raise ValueError(f"Wrong Phase Info Received : {phase}")
+            elif action == 'req':
+                # Handle get/set Var requests from runtime service
+                self._handle_get_set_var()
+            else:
+                # Handle VarPort requests from RefPorts
+                self._handle_var_port(action)
+
+            channel_actions = [(self.service_to_process_cmd, lambda: 'cmd')]
+            if enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
+                    enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                for var_port in self.var_ports:
+                    for csp_port in var_port.csp_ports:
+                        if isinstance(csp_port, CspRecvPort):
+                            channel_actions.append((csp_port, lambda: var_port))
+            elif enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                channel_actions.append((self.service_to_process_req,
+                                        lambda: 'req'))
+            action = selector.select(*channel_actions)
 
     # FIXME: (PP) might not be able to perform get/set during pause
     def _handle_get_set_var(self):
@@ -163,21 +178,14 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         the corresponding handling methods. The loop ends upon a
         new command from runtime service after all get/set Var requests have
         been handled."""
-        while True:
-            # Probe if there is a get/set Var request from runtime service
-            if self.service_to_process_req.probe():
-                # Get the type of the request
-                request = self.service_to_process_req.recv()
-                if np.array_equal(request, REQ_TYPE.GET):
-                    self._handle_get_var()
-                elif np.array_equal(request, REQ_TYPE.SET):
-                    self._handle_set_var()
-                else:
-                    raise RuntimeError(f"Unknown request type {request}")
-
-            # End if another command from runtime service arrives
-            if self.service_to_process_cmd.probe():
-                return
+        # Get the type of the request
+        request = self.service_to_process_req.recv()
+        if enum_equal(request, REQ_TYPE.GET):
+            self._handle_get_var()
+        elif enum_equal(request, REQ_TYPE.SET):
+            self._handle_set_var()
+        else:
+            raise RuntimeError(f"Unknown request type {request}")
 
     def _handle_get_var(self):
         """Handles the get Var command from runtime service."""
@@ -232,16 +240,6 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         else:
             raise RuntimeError("Unsupported type")
 
-    # TODO: (PP) use select(..) to service VarPorts instead of a loop
-    def _handle_var_ports(self):
-        """Handles read/write requests on any VarPorts. The loop ends upon a
-        new command from runtime service after all VarPort service requests have
-        been handled."""
-        while True:
-            # Loop through read/write requests of each VarPort
-            for vp in self.var_ports:
-                vp.service()
-
-            # End if another command from runtime service arrives
-            if self.service_to_process_cmd.probe():
-                return
+    def _handle_var_port(self, var_port):
+        """Handles read/write requests on the given VarPort."""
+        var_port.service()
