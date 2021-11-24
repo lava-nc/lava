@@ -20,6 +20,17 @@ def enum_to_np(value: ty.Union[int, float],
     return np.array([value], dtype=d_type)
 
 
+def enum_equal(a: np.array, b: np.array) -> bool:
+    """
+    Helper function to compare two np arrays created by enum_to_np.
+
+    :param a: 1-D array created by enum_to_np
+    :param b: 1-D array created by enum_to_np
+    :return: True if the two arrays are equal
+    """
+    return a[0] == b[0]
+
+
 class MGMT_COMMAND:
     """
     Signifies the Mgmt Command being sent between two actors. These may be
