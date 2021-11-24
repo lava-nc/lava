@@ -339,7 +339,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         spk_data_through_run = spr.spk_data.get()
         dense.stop()
         # Gold standard for the test
-        print(spk_data_through_run)
         expected_spk_data = np.zeros((num_steps, shape[0]))
         # Expected behavior is that a_out corresponding to layer 1, neuron 2
         # will
@@ -383,7 +382,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         spk_data_through_run = spr.spk_data.get()
         dense.stop()
         # Gold standard for the test
-        print(spk_data_through_run)
         expected_spk_data = np.zeros((num_steps, shape[0]))
         # Expected behavior is that a_out corresponding to layer 1, neuron 2
         # will
@@ -428,7 +426,7 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         spk_data_through_run = spr.spk_data.get()
         dense.stop()
         # Gold standard for the test
-        print(spk_data_through_run)
+        #print(spk_data_through_run)
         expected_spk_data = np.zeros((num_steps, shape[0]))
         # Expected behavior is that a_out corresponding to layer 1, neuron 2
         # will
@@ -473,7 +471,7 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         spk_data_through_run = spr.spk_data.get()
         dense.stop()
         # Gold standard for the test
-        print(spk_data_through_run)
+        #print(spk_data_through_run)
         expected_spk_data = np.zeros((num_steps, shape[0]))
         # Expected behavior is that a_out corresponding to layer 1, neuron 2
         # will
@@ -485,102 +483,3 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
 
 
 
-
-
-
-    def test_bitacc_pm_impulse_du(self):
-        """
-        Tests fixed point LIF ProcessModel's impulse response with no
-        voltage decay and input activation at the very first time-step.
-        """
-        shape = (1,)  # a single neuron
-        num_steps = 8
-        # send activation of 128. at timestep = 1
-        sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=128 * np.ones(shape, dtype=np.int32),
-                             send_at_times=np.array([True, False, False,
-                                                     False, False, False,
-                                                     False, False]))
-        # Set up no bias, no voltage decay. Current decay is a 12-bit
-        # unsigned variable in Loihi hardware. Therefore, du = 2047 is
-        # equivalent to (1/2) * (2**12) - 1. The subtracted 1 is added by
-        # default in the hardware, via a setting ds_offset, thereby finally
-        # giving du = 2048 = 0.5 * 2**12
-        # Set up threshold high, such that there are no output spikes. By
-        # default the threshold value here is left-shifted by 6.
-        lif = LIF(shape=shape,
-                  du=2047, dv=0,
-                  bias=np.zeros(shape, dtype=np.int16),
-                  bias_exp=np.ones(shape, dtype=np.int16),
-                  vth=256 * np.ones(shape, dtype=np.int32))
-        spr = VecRecvProcess(shape=(num_steps, shape[0]))
-        sps.s_out.connect(lif.a_in)
-        lif.s_out.connect(spr.s_in)
-        # Configure to run 1 step at a time
-        rcnd = RunSteps(num_steps=1)
-        rcfg = LifRunConfig(select_tag='fixed_pt')
-        lif_u = []
-        # Run 1 timestep at a time and collect state variable u
-        for j in range(num_steps):
-            lif.run(condition=rcnd, run_cfg=rcfg)
-            lif_u.append(lif.u.get().astype(np.int32)[0])
-        lif.stop()
-        # Gold standard for testing: current decay of 0.5 should halve the
-        # current every time-step.
-        expected_u_timeseries = [1 << (13 - j) for j in range(8)]
-        # Gold standard for floating point equivalent of the current,
-        # which would be all Loihi-bit-accurate values right shifted by 6 bits
-        expected_float_u = [1 << (7 - j) for j in range(8)]
-        self.assertListEqual(expected_u_timeseries, lif_u)
-        self.assertListEqual(expected_float_u, np.right_shift(np.array(
-            lif_u), 6).tolist())
-
-    def test_bitacc_pm_impulse_dv(self):
-        """
-        Tests fixed point LIF ProcessModel's impulse response with no
-        current decay and input activation at the very first time-step.
-        """
-        shape = (1,)  # a single neuron
-        num_steps = 8
-        # send activation of 128. at timestep = 1
-        sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=128 * np.ones(shape, dtype=np.int32),
-                             send_at_times=np.array([True, False, False,
-                                                     False, False, False,
-                                                     False, False]))
-        # Set up no bias, no current decay. Voltage decay is a 12-bit
-        # unsigned variable in Loihi hardware. Therefore, dv = 2048 is
-        # equivalent to (1/2) * (2**12).
-        # Set up threshold high, such that there are no output spikes.
-        # Threshold provided here is left-shifted by 6-bits.
-        lif = LIF(shape=shape,
-                  du=0, dv=2048,
-                  bias=np.zeros(shape, dtype=np.int16),
-                  bias_exp=np.ones(shape, dtype=np.int16),
-                  vth=256 * np.ones(shape, dtype=np.int32))
-        spr = VecRecvProcess(shape=(num_steps, shape[0]))
-        sps.s_out.connect(lif.a_in)
-        lif.s_out.connect(spr.s_in)
-        # Configure to run 1 step at a time
-        rcnd = RunSteps(num_steps=1)
-        rcfg = LifRunConfig(select_tag='fixed_pt')
-        lif_v = []
-        # Run 1 timestep at a time and collect state variable u
-        for j in range(num_steps):
-            lif.run(condition=rcnd, run_cfg=rcfg)
-            lif_v.append(lif.v.get().astype(np.int32)[0])
-        lif.stop()
-        # Gold standard for testing: with a voltage decay of 2048, voltage
-        # should integrate from 128<<6 to 255<<6. But it is slightly smaller,
-        # because current decay is not exactly 0. Due to the default
-        # ds_offset = 1 setting in the hardware, current decay = 1. So
-        # voltage is slightly smaller than 128<<6 to 255<<6.
-        expected_v_timeseries = [8192, 12286, 14331, 15351, 15859, 16111,
-                                 16235, 16295]
-        # Gold standard for floating point equivalent of the voltage,
-        # which would be all Loihi-bit-accurate values right shifted by 6 bits
-        expected_float_v = [128, 192, 224, 240, 248, 252, 254, 255]
-        lif_v_float = np.right_shift(np.array(lif_v), 6)
-        lif_v_float[1:] += 1
-        self.assertListEqual(expected_v_timeseries, lif_v)
-        self.assertListEqual(expected_float_v, lif_v_float.tolist())
