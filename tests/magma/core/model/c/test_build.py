@@ -4,6 +4,7 @@
 import unittest
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
+from lava.proc.dense.models import PyDenseModel
 
 import os
 
@@ -50,6 +51,7 @@ class Test_Build(unittest.TestCase):
         pm.run()
     """
 
+    """
     def test_run(self):
         class PM(AbstractCProcessModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
@@ -58,6 +60,15 @@ class Test_Build(unittest.TestCase):
         pm = PM()
         pm.run()
         self.assertEqual(pm.service_to_process_cmd.phase, 0)
+    """
+
+    def test_loihi(self):
+        class PM(AbstractCProcessModel, PyDenseModel):
+            service_to_process_cmd: MockServicePort = MockServicePort()
+            source_files = ["test_loihi.c"]
+
+        pm = PM()
+        pm.run()
 
 
 if __name__ == "__main__":
