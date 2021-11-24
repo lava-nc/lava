@@ -10,7 +10,6 @@
 #include "numpy/npy_3kcompat.h"
 
 #define PYTHON
-#include "custom.h"
 #include "ports.h"
 #include "methods.h"
 
@@ -24,10 +23,12 @@ static void Custom_dealloc(CustomObject* self){
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
+PyObject* self_object;
+
 static PyObject* Custom_new(PyTypeObject *type,PyObject *args,PyObject *kwds){
     CustomObject *self = (CustomObject*) type->tp_alloc(type,0);
     if(!self) return NULL;
-    self_object = self;
+    self_object = &(self->ob_base);
     return (PyObject*) self;
 }
 

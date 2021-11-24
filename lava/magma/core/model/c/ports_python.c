@@ -5,7 +5,8 @@
 #include <stdint.h>
 #define PYTHON
 #include "ports.h"
-#include "custom.h"
+
+extern PyObject* self_object;
 
 PyObject* get_port(const char* name){
     return PyObject_GetAttrString(self_object, name);
