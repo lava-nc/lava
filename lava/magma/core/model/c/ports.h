@@ -25,6 +25,7 @@ size_t send(Port *port,void* data,size_t m);
 size_t recv(Port *port,void** data);
 size_t peek(Port *port);
 size_t probe(Port *port);
+size_t flush(Port *port);
 
 #endif
 
