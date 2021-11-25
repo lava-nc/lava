@@ -194,7 +194,16 @@ class Compiler:
             models: ty.List[ty.Type[AbstractProcessModel]],
             run_cfg: RunConfig) -> ty.Type[AbstractProcessModel]:
         """Selects a ProcessModel from list of provided models given RunCfg."""
-        return run_cfg.select(proc, models)
+        selected_proc_model = run_cfg.select(proc, models)
+        err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select() must " \
+            f"return a sub-class of AbstractProcessModel. Got" \
+            f" {type(selected_proc_model)} instead."
+        if not isinstance(selected_proc_model, type):
+            raise AssertionError(err_msg)
+        if not issubclass(selected_proc_model, AbstractProcessModel):
+            raise AssertionError(err_msg)
+
+        return selected_proc_model
 
     def _expand_sub_proc_model(self,
                                model_cls: ty.Type[AbstractSubProcessModel],

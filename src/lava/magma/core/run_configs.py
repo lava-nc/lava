@@ -67,42 +67,60 @@ class RunConfig(ABC):
         pass
 
 
-# ToDo: This is only a minimal RunConfig that will select SubProcModel if there
-#       is one and if not selects a PyProcessModel with the correct tag.
-#       Needs to be modified in future releases to support more complicated
-#       sync domains, @requires (example: GPU support), and to select
-#       LeafProcModels of type other than PyProcessModel.
 class Loihi1SimCfg(RunConfig):
     """Run configuration selects appropriate ProcessModel -- either
-    SubProcessModel for a Hierarchical Process or else a PyProcessModel for a
-    standard Process. The appropriate PyProcessModel is selected based @tag(
-    'floating_pt') or @tag('fixed_pt'), for floating point precision or Loihi
-    bit-accurate fixed point precision respectively"""
+    `SubProcessModel` for a hierarchical Process or else a `PyProcessModel`
+    for a standard Process.
 
-    def __init__(self, custom_sync_domains=None, select_tag='floating_pt',
-                 select_sub_proc_model=False):
+    If any `SubProcessModel`s are available, then they will be returned first.
+
+    In case of `PyProcessModel`s, an appropriate `PyProcessModel` is selected
+    based on the tags associated with it. Tags are set using the `@tag`
+    decorator. If no tags are set for `ProcessModel`s and no tag is selected,
+    then the first matching `ProcessModel` will be returned.
+
+    If any exceptions are needed, they can be specified in
+    `exception_proc_model_map` dictionary as `{Process: ProcessModel}`
+    key-value pairs. These explicit specifications are given
+    precedence over the subsequent logic for `ProcessModel` selection"""
+
+    def __init__(self,
+                 custom_sync_domains=None,
+                 select_tag=None,
+                 select_sub_proc_model=False,
+                 exception_proc_model_map=None):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
+        self.exception_proc_model_map = exception_proc_model_map
+        if not exception_proc_model_map:
+            self.exception_proc_model_map = {}
 
     def select(self, proc, proc_models):
         from lava.magma.core.model.sub.model import AbstractSubProcessModel
         from lava.magma.core.model.py.model import AbstractPyProcessModel
-        py_proc_model = None
-        sub_proc_model = None
+        # First priority to the exceptions. We will simply return the
+        # ProcessModel class associated with a Process class in the
+        # exceptions dictionary
+        if proc.__class__ in self.exception_proc_model_map:
+            return self.exception_proc_model_map[proc.__class__]
+        # Now, we loop over all ProcessModels proc_models of a Process proc
         for pm in proc_models:
-            if issubclass(pm, AbstractSubProcessModel):
-                sub_proc_model = pm
-            if issubclass(pm, AbstractPyProcessModel):
-                py_proc_model = pm
-                # Make selection
-            if self.select_sub_proc_model and sub_proc_model:
-                return sub_proc_model
-            elif py_proc_model:
-                if self.select_tag in py_proc_model.tags:
-                    return py_proc_model
-            else:
-                raise AssertionError("No legal ProcessModel found.")
+            # Priority given to SubProcessModels
+            if issubclass(pm, AbstractSubProcessModel) and \
+                    self.select_sub_proc_model:
+                return pm
+            elif issubclass(pm, AbstractPyProcessModel):
+                # If ProcessModel has tags AND user asked for a specific tag
+                if len(pm.tags) > 0 and (self.select_tag in pm.tags):
+                    return pm
+                # If ProcessModel has no tags and no one asked for a tag anyway
+                elif len(pm.tags) == 0 and not self.select_tag:
+                    return pm
+        # We could not find any ProcessModel in the end:
+        raise AssertionError(f"No ProcessModel could be selected with "
+                             f"tag '{self.select_tag}' for Process "
+                             f"{proc.name}::{proc.__class__.__qualname__}.")
 
 
 class Loihi1HwCfg(RunConfig):
