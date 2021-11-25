@@ -305,6 +305,8 @@ class TestRVPorts(unittest.TestCase):
         with self.assertRaises(AssertionError):
             rp.connect_var(v)
 
+    # TODO: (PP) enable unit test as soon as 1:many connections are implemented
+    @unittest.skip("Currently not supported")
     def test_connect_RefPort_to_many_Vars(self):
         """Checks that RefPort can be connected to many Vars."""
 
