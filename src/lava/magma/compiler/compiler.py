@@ -203,6 +203,34 @@ class Compiler:
 
         return selected_proc_model
 
+    @staticmethod
+    def _propagate_var_ports(proc: AbstractProcess):
+        """Checks if the process has VarPorts configured and if they reference
+        an aliased Var. If this is the case an implicit VarPort is created in
+        the sub process and the VarPort is connected to the new implicit
+        VarPort.
+        This is needed since a RefPort or VarPort of a sub process cannot be
+         directly targeted from processes of a different parent process."""
+
+        for vp in proc.var_ports:
+            v = vp.var.aliased_var
+            if v is not None:
+                sub_proc = v.process
+                # Create an implicit Var port in the sub process
+                new_vp = ImplicitVarPort(v)
+                # Propagate name and parent process of Var to VarPort
+                new_vp.name = "_" + v.name + "_implicit_port"
+                new_vp.process = sub_proc
+                # VarPort name could shadow existing attribute
+                if hasattr(sub_proc, new_vp.name):
+                    raise AssertionError(
+                        "Name of implicit VarPort might conflict"
+                        " with existing attribute.")
+                setattr(sub_proc, new_vp.name, new_vp)
+                sub_proc.var_ports.add_members({new_vp.name: new_vp})
+                # Connect the VarPort to the new VarPort
+                vp.connect(new_vp)
+
     def _expand_sub_proc_model(self,
                                model_cls: ty.Type[AbstractSubProcessModel],
                                proc: AbstractProcess,
@@ -213,6 +241,8 @@ class Compiler:
 
         # Build SubProcessModel
         model = model_cls(proc)
+        # Check if VarPorts are configured and propagate them to the sub process
+        self._propagate_var_ports(proc)
         # Discover sub processes and register with parent process
         sub_procs = model.find_sub_procs()
         proc.register_sub_procs(sub_procs)
