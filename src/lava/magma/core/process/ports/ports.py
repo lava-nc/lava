@@ -317,6 +317,7 @@ class InPort(AbstractIOPort, AbstractDstPort):
         self._connect_backward(to_list(ports), AbstractIOPort)
 
 
+# TODO: (PP) enable connecting multiple Vars/VarPorts/RefPort to a RefPort
 class RefPort(AbstractRVPort, AbstractSrcPort):
     """RefPorts are members of a Lava Process and can be connected to
     internal Lava Vars of other processes to facilitate direct shared memory
@@ -333,7 +334,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
 
     Here, VarPorts only serve as a wrapper for Vars. VarPorts can be created
     statically during process definition to explicitly expose a Var for
-    shared memory access (which might be safer).
+    remote memory access (which might be safer).
     Alternatively, VarPorts can be created dynamically by connecting a
     RefPort to a Var via the connect_var(..) method."""
 
@@ -347,6 +348,18 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         -----------
         :param ports: The AbstractRVPort(s) to connect to.
         """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(ports)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(ports, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(ports, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for RefPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
+
         for p in to_list(ports):
             if not isinstance(p, RefPort) and not isinstance(p, VarPort):
                 raise TypeError(
@@ -365,6 +378,18 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         :param ports: The RefPort(s) that connect to this RefPort.
         """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(ports)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(ports, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(ports, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for RefPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
+
         for p in to_list(ports):
             if not isinstance(p, RefPort):
                 raise TypeError(
@@ -382,6 +407,17 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         -----------
         :param variables: Var or list of Vars to connect to.
         """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(variables)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(variables, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(variables, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for RefPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
 
         variables: ty.List[Var] = to_list(variables)
         # Check all 'variables' are actually Vars and don't have same parent
@@ -426,6 +462,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
 
 
+# TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
 class VarPort(AbstractRVPort, AbstractDstPort):
     """VarPorts are members of a Lava Process and act as a wrapper for
     internal Lava Vars to facilitate connections between RefPorts and Vars
@@ -462,6 +499,18 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The VarPort(s) to connect to.
         """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(ports)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(ports, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(ports, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for VarPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
+
         for p in to_list(ports):
             if not isinstance(p, VarPort):
                 raise TypeError(
@@ -481,6 +530,18 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         :param ports: The AbstractRVPort(s) that connect to this VarPort.
         """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(ports)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(ports, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(ports, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for VarPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
+
         for p in to_list(ports):
             if not isinstance(p, RefPort) and not isinstance(p, VarPort):
                 raise TypeError(
