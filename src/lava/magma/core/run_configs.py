@@ -70,7 +70,13 @@ class RunConfig(ABC):
 class Loihi1SimCfg(RunConfig):
     """Run configuration selects appropriate ProcessModel -- either
     `SubProcessModel` for a hierarchical Process or else a `PyProcessModel`
-    for a standard Process.
+    for a standard Process. Implements and overrides `select()` method of the
+    parent class `RunConfig` to achieve this.
+
+    First, exceptions are checked in `exception_proc_model_map` dictionary
+    as key-value pairs `{Process: ProcessModel}`. These explicit
+    specifications are given precedence over the subsequent logic for
+    `ProcessModel` selection
 
     If any `SubProcessModel`s are available, then they will be returned first.
 
@@ -78,11 +84,7 @@ class Loihi1SimCfg(RunConfig):
     based on the tags associated with it. Tags are set using the `@tag`
     decorator. If no tags are set for `ProcessModel`s and no tag is selected,
     then the first matching `ProcessModel` will be returned.
-
-    If any exceptions are needed, they can be specified in
-    `exception_proc_model_map` dictionary as `{Process: ProcessModel}`
-    key-value pairs. These explicit specifications are given
-    precedence over the subsequent logic for `ProcessModel` selection"""
+    """
 
     def __init__(self,
                  custom_sync_domains=None,
