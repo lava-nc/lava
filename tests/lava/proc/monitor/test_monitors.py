@@ -60,7 +60,7 @@ class Monitors(unittest.TestCase):
         monitor = Monitor()
         c = Compiler()
         # Compiling should run without error
-        c.compile(monitor, Loihi1SimCfg())
+        c.compile(monitor, Loihi1SimCfg(select_tag='floating_pt'))
 
     def test_monitor_add_probe_create_ref_var_ports(self):
         """Check if probe(..) method of Monitor Proc creates a new RefPort
@@ -118,7 +118,7 @@ class Monitors(unittest.TestCase):
 
         # Should run without error (not doing anything)
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=Loihi1SimCfg())
+                      run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
 
         some_proc.stop()
 
@@ -132,7 +132,7 @@ class Monitors(unittest.TestCase):
 
         # Run all connected processes
         some_proc.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=Loihi1SimCfg())
+                      run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
 
         # Fetch and construct the monitored data with get_data(..) method
         data = monitor.get_data()
@@ -218,7 +218,7 @@ class Monitors(unittest.TestCase):
 
         # Run all connected processes
         neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=Loihi1SimCfg())
+                   run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
 
         # Get data from both monitor
         data1 = monitor1.get_data()
@@ -247,7 +247,7 @@ class Monitors(unittest.TestCase):
 
         # Compile
         c = Compiler()
-        exe = c.compile(monitor, Loihi1SimCfg())
+        exe = c.compile(monitor, Loihi1SimCfg(select_tag='floating_pt'))
 
         # Check if built model has these proc_params
         self.assertEqual(next(iter(exe.py_builders)).proc_params,
