@@ -31,19 +31,12 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     sign_mode: float = LavaPyType(float,np.float)
 
     def run_spk(self):
-
+        # The a_out sent on a each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
         s_in = self.s_in.recv()
         self.a_buff = self.weights[:,s_in].sum(axis=1)
-
-
-        '''
-        a_out = self.weights[:, self.s_buff].sum(axis=1)
-        self.a_out.send(a_out)
-        self.s_buff = self.s_in.recv()
-        '''
-
-
 
 @implements(proc=Dense,protocol=LoihiProtocol)
 @requires(CPU)
@@ -52,10 +45,6 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.
-
-    Precisions of state variables
-    -----------------------------
-
     """
 
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -68,6 +57,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 
     def __init__(self):
         super(PyDenseModelBitAcc,self).__init__()
+        #Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
     def _set_wgts(self):
@@ -88,7 +78,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 
         saturated_wgts = np.clip(wgt_vals,min_wgt,max_wgt)
 
-        #Truncate least significant bits given sign_mode and num_wgt_bits
+        #Truncate least significant bits given sign_mode and num_wgt_bits.
         num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
 
         truncated_wgts = np.left_shift(
@@ -101,20 +91,17 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         self.weights_set = True
         return wgts_scaled
 
-
     def run_spk(self):
-        #Since this model has no learning, weights are assumed to be static
-        # and need only be scaled on the first run timestep.
+        # Since this Process has no learning, weights are assumed to be static
+        # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
             self.weights = self._set_wgts()
-
+        # The a_out sent on a each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
         s_in = self.s_in.recv()
         a_accum = self.weights[:, s_in].sum(axis=1)
         self.a_buff = np.left_shift(a_accum,self.weight_exp) if \
             self.weight_exp > 0 \
             else np.right_shift(a_accum,-self.weight_exp)
-
-
-
-
