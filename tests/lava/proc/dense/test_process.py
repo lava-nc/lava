@@ -8,9 +8,9 @@ from lava.proc.dense.process import Dense
 
 
 class TestConnProcess(unittest.TestCase):
-    """Tests for Conn class"""
+    """Tests for Dense class"""
     def test_init(self):
-        """Tests instantiation of Conn"""
+        """Tests instantiation of Dense"""
         shape=(100,200)
         weights = np.random.randint(100,size=shape)
         weight_exp = 2
