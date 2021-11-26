@@ -50,9 +50,8 @@ class P2(AbstractProcess):
 
 
 # A minimal hierarchical PyProcModel implementing HP2
-@implements(proc=HP1, protocol=LoihiProtocol)
+@implements(proc=HP1)
 class PyProcModelHP1(AbstractSubProcessModel):
-    h_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def __init__(self, proc):
         """Builds sub Process structure of the Process."""
@@ -64,10 +63,8 @@ class PyProcModelHP1(AbstractSubProcessModel):
 
 
 # A minimal hierarchical PyProcModel implementing HP2
-@implements(proc=HP2, protocol=LoihiProtocol)
+@implements(proc=HP2)
 class PyProcModelHP2(AbstractSubProcessModel):
-    h_var: np.ndarray = LavaPyType(np.ndarray, np.int32)
-    h_inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def __init__(self, proc):
         """Builds sub Process structure of the Process."""
