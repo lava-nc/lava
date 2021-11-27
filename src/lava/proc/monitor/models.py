@@ -52,17 +52,11 @@ class PyMonitorModel(PyLoihiProcessModel):
         During this phase, InPorts of Monitor process collects data from
         monitored OutPorts
         """
-
         # Check if this Monitor Process instance has been assigned to monitor
-        # any OutPort by checking proc_params["n_in_ports"], if so loop over
-        # those InPorts; readout their values to correspoinding data-stroing
-        # Var
+        # any OutPort by checking proc_params["n_in_ports"]. If so, loop over
+        # those InPorts and store their values in their corresponding Var
         for i in range(self.proc_params["n_in_ports"]):
             in_port_name = self.proc_params["InPorts"][i]
             out_read_name = self.proc_params["VarsData2"][i]
-            # Check if buffer is non-empty, otherwise add zero to the list
-            if getattr(self, in_port_name).csp_ports[0].probe():
-                getattr(self, out_read_name)[:, self.current_ts - 1] = \
-                    np.squeeze(np.array(getattr(self, in_port_name).recv()))
-            else:
-                getattr(self, out_read_name)[:, self.current_ts - 1] = 0
+            getattr(self, out_read_name)[:, self.current_ts - 1] = \
+                np.squeeze(np.array(getattr(self, in_port_name).recv()))
