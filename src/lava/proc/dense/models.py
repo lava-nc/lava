@@ -23,12 +23,12 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     fixed point implementation.
     """
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.float)
-    a_buff: np.ndarray = LavaPyType(np.ndarray, np.float)
-    weights: np.ndarray = LavaPyType(np.ndarray, np.float)
-    weight_exp: float = LavaPyType(float, np.float)
-    num_weight_bits: float = LavaPyType(float, np.float)
-    sign_mode: float = LavaPyType(float, np.float)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
+    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    weight_exp: float = LavaPyType(float, float)
+    num_weight_bits: float = LavaPyType(float, float)
+    sign_mode: float = LavaPyType(float, float)
 
     def run_spk(self):
         # The a_out sent on a each timestep is a buffered value from dendritic

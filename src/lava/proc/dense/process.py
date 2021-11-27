@@ -11,7 +11,8 @@ class Dense(AbstractProcess):
     """Dense connections between neurons. Realizes the      following abstract
     behavior: a_out = weights * s_in '
 
-    Parameters ----------
+    Parameters
+    ----------
 
     weights:
     Connection weight matrix.
@@ -41,15 +42,16 @@ class Dense(AbstractProcess):
     w_scale =  8 - num_weight_bits + weight_exp + isMixed()
 
     a_buff:
-    1 timestep buffer on the dendritic accumulator that ensures the
-    process sends a_out of the previous (and not current)
-    timestep. This prevents deadlocking for recurrent connectivity
-    architectures.
+    Circular buffer that stores output activations accumulated in current
+    timestep for future timesteps.
 
     """
 
-    # ToDo: Implement a ProcModel that supports synaptic delays. a_buff must
-    # then be adjusted to the length of the delay (DR).
+    # ToDo: (DR) Implement a ProcModel that supports synaptic delays. a_buff
+    # must then be adjusted to the length of the delay.
+
+    #ToDo: (DR) Revisit the implementation of w_scale so that less of this
+    # computation is exposed at the level of the Process.
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

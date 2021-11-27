@@ -47,7 +47,6 @@ class VecSendandRecvProcess(AbstractProcess):
     vec_to_send: np.ndarray, vector of spike values to send
     send_at_times: np.ndarray, vector bools. Send the `vec_to_send` at times
     when there is a True
-
     """
 
     def __init__(self, **kwargs):
@@ -153,7 +152,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
         self.spk_data[self.current_ts - 1, :] = spk_in
 
 
-class TestDenseProcessModelsFloat(unittest.TestCase):
+class TestDenseProcessModelFloat(unittest.TestCase):
     """Tests for floating point ProcessModels of Dense"""
 
     def test_float_pm_buffer(self):
@@ -163,7 +162,6 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
                    once at time           t=4, and only 1 connection weight
                    in the Dense Process is non-zero. The          non-zero
                    connection should have an activation of 1 at timestep t=5.
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -202,7 +200,6 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         """
         Tests floating point Dense ProcessModel dendritic accumulation
         behavior when the fan in to a receiving neuron is greater than 1.
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -241,7 +238,6 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         """
         Tests floating point Dense ProcessModel dendritic accumulation
         behavior when the fan out of a projecting neuron is greater than 1.
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -277,10 +273,9 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_recurrence(self):
-        """
+       """
         Tests that floating Dense ProcessModel has non-blocking dynamics for
         recurrent connectivity architectures.
-
         """
         shape = (3, 3)
         num_steps = 6
@@ -305,7 +300,7 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         dense.stop()
 
 
-class TestDenseProcessModelsFixed(unittest.TestCase):
+class TestDenseProcessModelFixed(unittest.TestCase):
     """Tests for fixed point, ProcessModels of Dense, which are bit-accurate
     with Loihi hardware"""
 
@@ -314,7 +309,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         Tests fixed point Dense ProcessModel dendritic accumulation
         behavior when the fan out of a projecting neuron is greater than 1
         and all connections are excitatory (sign_mode = 2).
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -358,7 +352,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         and connections are both excitatory and inhibitory (sign_mode = 1).
         When using mixed sign weights and full 8 bit weight precision,
         a_out can take even values from -256 to 254.
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -405,7 +398,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
          and weight_exp = 1, a_out can take even values from -512 to 508.
          As a result of setting weight_exp = 1, the expected a_out result is 2x
          that of the previous unit test.
-
          """
 
         shape = (3, 4)
@@ -452,7 +444,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
          and num_weight_bits = 7.
          When using mixed sign weights and 7 bit weight precision,
          a_out can take values from -256 to 252 such that a_out % 4 = 0.
-
          """
 
         shape = (3, 4)
@@ -498,7 +489,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         and connections are both excitatory and inhibitory (sign_mode = 1).
         When using mixed sign weights and full 8 bit weight precision,
         a_out can take even values from -256 to 254.
-
         """
         shape = (3, 4)
         num_steps = 6
@@ -539,7 +529,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         """
         Tests that bit accurate Dense ProcessModel has non-blocking dynamics for
         recurrent connectivity architectures.
-
         """
         shape = (3, 3)
         num_steps = 6
