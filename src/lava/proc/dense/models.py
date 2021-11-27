@@ -23,12 +23,12 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     fixed point implementation.
     """
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE,np.float)
-    a_buff: np.ndarray = LavaPyType(np.ndarray,np.float)
-    weights: np.ndarray = LavaPyType(np.ndarray,np.float)
-    weight_exp: float = LavaPyType(float,np.float)
-    num_weight_bits: float = LavaPyType(float,np.float)
-    sign_mode: float = LavaPyType(float,np.float)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.float)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, np.float)
+    weights: np.ndarray = LavaPyType(np.ndarray, np.float)
+    weight_exp: float = LavaPyType(float, np.float)
+    num_weight_bits: float = LavaPyType(float, np.float)
+    sign_mode: float = LavaPyType(float, np.float)
 
     def run_spk(self):
         # The a_out sent on a each timestep is a buffered value from dendritic
@@ -36,9 +36,10 @@ class PyDenseModelFloat(PyLoihiProcessModel):
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
         s_in = self.s_in.recv()
-        self.a_buff = self.weights[:,s_in].sum(axis=1)
+        self.a_buff = self.weights[:, s_in].sum(axis=1)
 
-@implements(proc=Dense,protocol=LoihiProtocol)
+
+@implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
 class PyDenseModelBitAcc(PyLoihiProcessModel):
@@ -49,42 +50,40 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=16)
-    a_buff: np.ndarray = LavaPyType(np.ndarray,np.int32,precision=16)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
     weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    weight_exp: np.ndarray = LavaPyType(np.ndarray,np.int32, precision=4)
-    num_weight_bits: np.ndarray = LavaPyType(np.ndarray,np.int32,precision=3)
-    sign_mode: np.ndarray = LavaPyType(np.ndarray,np.int32,precision=2)
+    weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=4)
+    num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    sign_mode: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=2)
 
     def __init__(self):
-        super(PyDenseModelBitAcc,self).__init__()
-        #Flag to determine whether weights have already been scaled.
+        super(PyDenseModelBitAcc, self).__init__()
+        # Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
     def _set_wgts(self):
-
         wgt_vals = np.copy(self.weights)
 
-        #Saturate the weights according to the sign_mode:
-            # 0 : null
-            # 1 : mixed
-            # 2 : excitatory
-            # 3 : inhibitory
-        mixed_idx = np.equal(self.sign_mode,1).astype(np.int32)
-        excitatory_idx = np.equal(self.sign_mode,2).astype(np.int32)
-        inhibitory_idx = np.equal(self.sign_mode,3).astype(np.int32)
+        # Saturate the weights according to the sign_mode:
+        # 0 : null
+        # 1 : mixed
+        # 2 : excitatory
+        # 3 : inhibitory
+        mixed_idx = np.equal(self.sign_mode, 1).astype(np.int32)
+        excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
+        inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
 
-        min_wgt = -2 ** 8 * (mixed_idx+inhibitory_idx)
+        min_wgt = -2 ** 8 * (mixed_idx + inhibitory_idx)
         max_wgt = (2 ** 8 - 1) * (mixed_idx + excitatory_idx)
 
-        saturated_wgts = np.clip(wgt_vals,min_wgt,max_wgt)
+        saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
 
-        #Truncate least significant bits given sign_mode and num_wgt_bits.
+        # Truncate least significant bits given sign_mode and num_wgt_bits.
         num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
 
         truncated_wgts = np.left_shift(
-            np.right_shift(saturated_wgts,num_truncate_bits),
-            num_truncate_bits
-        )
+            np.right_shift(saturated_wgts, num_truncate_bits),
+            num_truncate_bits)
 
         wgt_vals = truncated_wgts.astype(np.int32)
         wgts_scaled = np.copy(wgt_vals)
@@ -102,6 +101,6 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         self.a_out.send(self.a_buff)
         s_in = self.s_in.recv()
         a_accum = self.weights[:, s_in].sum(axis=1)
-        self.a_buff = np.left_shift(a_accum,self.weight_exp) if \
-            self.weight_exp > 0 \
-            else np.right_shift(a_accum,-self.weight_exp)
+        self.a_buff = np.left_shift(a_accum,
+                                    self.weight_exp) if self.weight_exp > 0 \
+            else np.right_shift(a_accum, -self.weight_exp)

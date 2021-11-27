@@ -21,6 +21,7 @@ from lava.proc.dense.process import Dense
 class DenseRunConfig(RunConfig):
     """Run configuration selects appropriate Dense ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
+
     def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
@@ -48,6 +49,7 @@ class VecSendandRecvProcess(AbstractProcess):
     when there is a True
 
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         shape = kwargs.pop("shape", (1,))
@@ -59,7 +61,7 @@ class VecSendandRecvProcess(AbstractProcess):
         self.vec_to_send = Var(shape=shape, init=vec_to_send)
         self.send_at_times = Var(shape=(num_steps,), init=send_at_times)
         self.s_out = OutPort(shape=shape)
-        self.a_in = InPort(shape=shape) #enables recurrence test
+        self.a_in = InPort(shape=shape)  # enables recurrence test
 
 
 class VecRecvProcess(AbstractProcess):
@@ -70,6 +72,7 @@ class VecRecvProcess(AbstractProcess):
     ----------
     shape: tuple, shape of the process
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         shape = kwargs.get("shape", (1,))
@@ -84,7 +87,7 @@ class VecRecvProcess(AbstractProcess):
 @tag('floating_pt')
 class PyVecSendModelFloat(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE,float)
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     vec_to_send: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
     send_at_times: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
@@ -106,7 +109,7 @@ class PyVecSendModelFloat(PyLoihiProcessModel):
 @tag('fixed_pt')
 class PyVecSendModelFixed(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32,precision=16)
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=16)
     vec_to_send: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
     send_at_times: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
@@ -152,28 +155,31 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
 
 class TestDenseProcessModelsFloat(unittest.TestCase):
     """Tests for floating point ProcessModels of Dense"""
+
     def test_float_pm_buffer(self):
         """
-        Tests floating point Dense ProcessModel connectivity and temporal                dynamics. All input 'neurons' from the VecSendandRcv fire once at time           t=4, and only 1 connection weight in the Dense Process is non-zero. The          non-zero connection should have an activation of 1 at timestep t=5.
+        Tests floating point Dense ProcessModel connectivity and temporal
+                   dynamics. All input 'neurons' from the VecSendandRcv fire
+                   once at time           t=4, and only 1 connection weight
+                   in the Dense Process is non-zero. The          non-zero
+                   connection should have an activation of 1 at timestep t=5.
 
         """
-        shape = (3,4)
+        shape = (3, 4)
         num_steps = 6
         # Set up external input to emulate every neuron spiking once on
         # timestep 4
-        vec_to_send = np.ones((shape[1],),dtype=np.float)
-        send_at_times = np.repeat(False,(num_steps,))
+        vec_to_send = np.ones((shape[1],), dtype=np.float)
+        send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process with a single non-zero connection weight at
         # entry [2,2] of the connectivity mat.
         weights = np.zeros(shape, dtype=float)
-        weights[2,2] = 1
-        dense = Dense(shape=shape,
-                  weights=weights
-            )
+        weights[2, 2] = 1
+        dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -186,7 +192,8 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         spk_data_through_run = spr.spk_data.get()
         dense.stop()
         # Gold standard for the test
-        # a_out will be equal to 1 at timestep 5, because the dendritic                  # accumulators work on inputs from the previous timestep.
+        # a_out will be equal to 1 at timestep 5, because the dendritic
+        #  accumulators work on inputs from the previous timestep.
         expected_spk_data = np.zeros((num_steps, shape[0]))
         expected_spk_data[4, 2] = 1.
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
@@ -205,15 +212,13 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up a Dense Process where all input layer neurons project to a
         # single output layer neuron.
         weights = np.zeros(shape, dtype=np.float)
-        weights[2, :] = [2,-3,4,-5]
-        dense = Dense(shape=shape,
-                      weights=weights
-                      )
+        weights[2, :] = [2, -3, 4, -5]
+        dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -238,23 +243,21 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         behavior when the fan out of a projecting neuron is greater than 1.
 
         """
-        shape = (3,4)
+        shape = (3, 4)
         num_steps = 6
         # Set up external input to emulate every neuron spiking once on
         # timestep t=4.
-        vec_to_send = np.ones((shape[1],),dtype=np.float)
-        send_at_times = np.repeat(False,(num_steps,))
+        vec_to_send = np.ones((shape[1],), dtype=np.float)
+        send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up a Dense Process where a single input layer neuron projects to
         # all output layer neurons.
         weights = np.zeros(shape, dtype=np.float)
-        weights[:,2] = [3,4,5]
-        dense = Dense(shape=shape,
-                  weights=weights
-            )
+        weights[:, 2] = [3, 4, 5]
+        dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -270,7 +273,7 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         # Expected behavior is that a_out corresponding to output
         # neurons 1-3 will be equal to 3, 4, and 5, respectively, at timestep 5.
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[4, :] = [3,4,5]
+        expected_spk_data[4, :] = [3, 4, 5]
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_recurrence(self):
@@ -279,21 +282,19 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         recurrent connectivity architectures.
 
         """
-        shape = (3,3)
+        shape = (3, 3)
         num_steps = 6
         # Set up external input to emulate every neuron spiking once on
         # timestep 4.
-        vec_to_send = np.ones((shape[1],),dtype=np.float)
-        send_at_times = np.repeat(True,(num_steps,))
+        vec_to_send = np.ones((shape[1],), dtype=np.float)
+        send_at_times = np.repeat(True, (num_steps,))
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process with fully connected recurrent connectivity
         # architecture
         weights = np.ones(shape, dtype=np.float)
-        dense = Dense(shape=shape,
-                  weights=weights
-            )
+        dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -308,6 +309,7 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
 class TestDenseProcessModelsFixed(unittest.TestCase):
     """Tests for fixed point, ProcessModels of Dense, which are bit-accurate
     with Loihi hardware"""
+
     def test_bitacc_pm_fan_out_e(self):
         """
         Tests fixed point Dense ProcessModel dendritic accumulation
@@ -323,16 +325,13 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process in which a single input neuron projects to all
         #  output neurons.
         weights = np.zeros(shape, dtype=np.float)
-        weights[:, 2] = [0.5,300,40]
-        dense = Dense(shape=shape,
-                      weights=weights,
-                      sign_mode=2
-                      )
+        weights[:, 2] = [0.5, 300, 40]
+        dense = Dense(shape=shape, weights=weights, sign_mode=2)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -370,16 +369,13 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process in which a single input neuron projects to all
         # output neurons with both excitatory and inhibitory weights.
         weights = np.zeros(shape, dtype=np.float)
-        weights[:, 2] = [300,-300,39]
-        dense = Dense(shape=shape,
-                      weights=weights,
-                      sign_mode=1
-                      )
+        weights[:, 2] = [300, -300, 39]
+        dense = Dense(shape=shape, weights=weights, sign_mode=1)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -421,17 +417,14 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process in which all input neurons project to a single
         # output neuron with mixed sign connection weights.
         weights = np.zeros(shape, dtype=np.float)
-        weights[:, 2] = [300,-300,39]
-        #Set weight_exp = 1. This affects weight scaling.
-        dense = Dense(shape=shape,
-                      weights=weights,
-                      weight_exp=1
-                      )
+        weights[:, 2] = [300, -300, 39]
+        # Set weight_exp = 1. This affects weight scaling.
+        dense = Dense(shape=shape, weights=weights, weight_exp=1)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -449,7 +442,7 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         # at timestep 5, because a_out can only have values between -512
         # and 508 such that a_out % 4 = 0.
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[4, :] = [508,-512,76]
+        expected_spk_data[4, :] = [508, -512, 76]
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_bitacc_pm_fan_out_weight_precision(self):
@@ -496,7 +489,7 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         # at timestep 5, because a_out can only have values between -256
         # and 252 such that a_out % 4 = 0.
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[4, :] = [252,-256, 36]
+        expected_spk_data[4, :] = [252, -256, 36]
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_bitacc_pm_fan_in_mixed_sign(self):
@@ -516,17 +509,14 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
         sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                             vec_to_send=vec_to_send,
-                             send_at_times=send_at_times)
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
         # Set up Dense Process in which all input layer neurons project to a
         # single output layer neuron with both excitatory and inhibitory
         # weights.
         weights = np.zeros(shape, dtype=np.float)
         weights[2, :] = [300, -300, 39, -0.4]
-        dense = Dense(shape=shape,
-                      weights=weights,
-                      sign_mode=1
-                      )
+        dense = Dense(shape=shape, weights=weights, sign_mode=1)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -574,8 +564,3 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         rcfg = DenseRunConfig(select_tag='fixed_pt')
         dense.run(condition=rcnd, run_cfg=rcfg)
         dense.stop()
-
-
-
-
-
