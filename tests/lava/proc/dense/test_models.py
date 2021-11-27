@@ -496,7 +496,7 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         # at timestep 5, because a_out can only have values between -256
         # and 252 such that a_out % 4 = 0.
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[4, :] = [508, -512, 76]
+        expected_spk_data[4, :] = [252,-256, 36]
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_bitacc_pm_fan_in_mixed_sign(self):
