@@ -70,27 +70,45 @@ class RunConfig(ABC):
 class Loihi1SimCfg(RunConfig):
     """Run configuration selects appropriate ProcessModel -- either
     `SubProcessModel` for a hierarchical Process or else a `PyProcessModel`
-    for a standard Process. Implements and overrides `select()` method of the
-    parent class `RunConfig` to achieve this.
-
-    First, exceptions are checked in `exception_proc_model_map` dictionary
-    as key-value pairs `{Process: ProcessModel}`. These explicit
-    specifications are given precedence over the subsequent logic for
-    `ProcessModel` selection
+    for a standard Process.
 
     If any `SubProcessModel`s are available, then they will be returned first.
 
     In case of `PyProcessModel`s, an appropriate `PyProcessModel` is selected
-    based on the tags associated with it. Tags are set using the `@tag`
-    decorator. If no tags are set for `ProcessModel`s and no tag is selected,
+    based on the tags associated with it (the tags are set using the `@tag`
+    decorator):
+        (a) If no tags are set for `ProcessModel`s and no tag is selected,
     then the first matching `ProcessModel` will be returned.
+        (b) If there is only one ProcessModel for a Process, it will be
+        returned irrespective of the tags associated with it.
+        (c) In all other cases, we take the queried tag and return the
+        ProcessModel matching with it
+
+    Exceptions, if any, are checked in `exception_proc_model_map` dictionary
+    as key-value pairs `{Process: ProcessModel}`. These explicit
+    specifications are given precedence over the subsequent logic for
+    `ProcessModel` selection.
+
+    Parameters
+    ----------
+    custom_sync_domains: list of synchronization domains
+    select_tag: str, ProcessModels with this tag need to be selected
+    select_sub_proc_model: bool, preferentially select SubProcessModel when
+        True and return
+    exception_proc_model_map: dict, explicit dictionary of {Process:
+        ProcessModel} classes, provided as exceptions to the ProcessModel
+        selection logic. The choices made in this dict are respected over
+        any logic. For example, {Dense: PyDenseModel}. Note that this is a
+        dict mapping classnames to classnames.
     """
 
     def __init__(self,
-                 custom_sync_domains=None,
-                 select_tag=None,
-                 select_sub_proc_model=False,
-                 exception_proc_model_map=None):
+                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+                 select_tag: ty.Optional[str] = None,
+                 select_sub_proc_model: ty.Optional[bool] = False,
+                 exception_proc_model_map: ty.Optional[ty.Dict[
+                     ty.Type[AbstractProcess], ty.Type[
+                         AbstractProcessModel]]] = None):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
@@ -98,29 +116,88 @@ class Loihi1SimCfg(RunConfig):
         if not exception_proc_model_map:
             self.exception_proc_model_map = {}
 
-    def select(self, proc, proc_models):
+    def select(self,
+               proc: AbstractProcess,
+               proc_models: ty.List[ty.Type[AbstractProcessModel]]) \
+            -> ty.Type[AbstractProcessModel]:
+        """
+        Selects an appropriate ProcessModel from a list of ProcessModels for
+        a Process, based on user requests
+        Parameters
+        ----------
+        proc: AbstractProcess, Process for which ProcessModel is selected
+        proc_models: List[AbstractProcessModel], list of ProcessModels of
+            Process
+
+        Returns
+        -------
+        Selected ProcessModel class
+        """
         from lava.magma.core.model.sub.model import AbstractSubProcessModel
         from lava.magma.core.model.py.model import AbstractPyProcessModel
+
+        def issubpm(pm: ty.Type[AbstractProcessModel]) -> bool:
+            """Checks if input ProcessModel is a SubProcessModel"""
+            return issubclass(pm, AbstractSubProcessModel)
+
+        def ispypm(pm: ty.Type[AbstractProcessModel]) -> bool:
+            """Checks if input ProcessModel is a PyProcessModel"""
+            return issubclass(pm, AbstractPyProcessModel)
+
         # First priority to the exceptions. We will simply return the
         # ProcessModel class associated with a Process class in the
         # exceptions dictionary
         if proc.__class__ in self.exception_proc_model_map:
             return self.exception_proc_model_map[proc.__class__]
-        # Now, we loop over all ProcessModels proc_models of a Process proc
-        for pm in proc_models:
-            # Priority given to SubProcessModels
-            if issubclass(pm, AbstractSubProcessModel) and \
-                    self.select_sub_proc_model:
+
+        # If there is only one ProcessModel available, then we just return
+        # it by default after confirming that it is Sub or Py ProcessModel
+        if len(proc_models) == 1 and (issubpm(proc_models[0]) or ispypm(
+                proc_models[0])):
+            print(f"[{self.__class__.__qualname__}]: Using the only "
+                  f"ProcessModel {proc_models[0].__qualname__} "
+                  f"available for Process "
+                  f"{proc.name}::{proc.__class__.__qualname__}.")
+            return proc_models[0]
+
+        # If SubProcessModel is asked for
+        if self.select_sub_proc_model:
+            # Get the indices of SubProcessModels in the list of ProcessModels
+            sub_pm_idxs = [idx for idx, pm in enumerate(proc_models) if
+                           issubpm(pm)]
+            if len(sub_pm_idxs) == 0:
+                raise AssertionError(f"[{self.__class__.__qualname__}]: "
+                                     f"SubProcessModel was asked, but none "
+                                     f"found for Process {proc.name}::"
+                                     f"{proc.__class__.__qualname__}.")
+            elif len(sub_pm_idxs) > 1:
+                print(f"[{self.__class__.__qualname__}]: Using the first "
+                      f"SubProcessModel "
+                      f"{proc_models[sub_pm_idxs[0]].__qualname__} "
+                      f"available for Process "
+                      f"{proc.name}::{proc.__class__.__qualname__}.")
+            return proc_models[sub_pm_idxs[0]]
+
+        # Get the indices of PyProcessModels in the list of ProcessModels
+        py_pm_idxs = [idx for idx, pm in enumerate(proc_models) if ispypm(pm)]
+        if len(py_pm_idxs) == 0:
+            raise AssertionError(f"[{self.__class__.__qualname__}]: "
+                                 f"No PyProcessModels were "
+                                 f"found for Process {proc.name}::"
+                                 f"{proc.__class__.__qualname__}. "
+                                 f"Try setting select_sub_proc_model=True.")
+        # Now, we loop over all PyProcessModels
+        for pp_idx in py_pm_idxs:
+            pm = proc_models[pp_idx]
+            # If ProcessModel has tags AND user asked for a specific tag
+            if len(pm.tags) > 0 and (self.select_tag in pm.tags):
                 return pm
-            elif issubclass(pm, AbstractPyProcessModel):
-                # If ProcessModel has tags AND user asked for a specific tag
-                if len(pm.tags) > 0 and (self.select_tag in pm.tags):
-                    return pm
-                # If ProcessModel has no tags and no one asked for a tag anyway
-                elif len(pm.tags) == 0 and not self.select_tag:
-                    return pm
+            # If ProcessModel has no tags and no one asked for a tag anyway
+            elif len(pm.tags) == 0 and not self.select_tag:
+                return pm
         # We could not find any ProcessModel in the end:
-        raise AssertionError(f"No ProcessModel could be selected with "
+        raise AssertionError(f"[{self.__class__.__qualname__}]: No "
+                             f"ProcessModel could be selected with "
                              f"tag '{self.select_tag}' for Process "
                              f"{proc.name}::{proc.__class__.__qualname__}.")
 
