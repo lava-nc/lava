@@ -50,7 +50,7 @@ class Dense(AbstractProcess):
     # ToDo: (DR) Implement a ProcModel that supports synaptic delays. a_buff
     # must then be adjusted to the length of the delay.
 
-    #ToDo: (DR) Revisit the implementation of w_scale so that less of this
+    # ToDo: (DR) Revisit the implementation of w_scale so that less of this
     # computation is exposed at the level of the Process.
 
     def __init__(self, **kwargs):

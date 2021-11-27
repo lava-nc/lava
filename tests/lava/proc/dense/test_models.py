@@ -20,7 +20,7 @@ from lava.proc.dense.process import Dense
 
 class DenseRunConfig(RunConfig):
     """Run configuration selects appropriate Dense ProcessModel based on tag:
-    floating point precision or Loihi bit-accurate fixed point precision"""
+    floating point precision or Loihi bit-accurate fixed-point precision"""
 
     def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
         super().__init__(custom_sync_domains=custom_sync_domains)
@@ -199,7 +199,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
     def test_float_pm_fan_in(self):
         """
         Tests floating point Dense ProcessModel dendritic accumulation
-        behavior when the fan in to a receiving neuron is greater than 1.
+        behavior when the fan-in to a receiving neuron is greater than 1.
         """
         shape = (3, 4)
         num_steps = 6
@@ -237,7 +237,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
     def test_float_pm_fan_out(self):
         """
         Tests floating point Dense ProcessModel dendritic accumulation
-        behavior when the fan out of a projecting neuron is greater than 1.
+        behavior when the fan-out of a projecting neuron is greater than 1.
         """
         shape = (3, 4)
         num_steps = 6
@@ -273,10 +273,10 @@ class TestDenseProcessModelFloat(unittest.TestCase):
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_recurrence(self):
-       """
-        Tests that floating Dense ProcessModel has non-blocking dynamics for
-        recurrent connectivity architectures.
         """
+         Tests that floating Dense ProcessModel has non-blocking dynamics for
+         recurrent connectivity architectures.
+         """
         shape = (3, 3)
         num_steps = 6
         # Set up external input to emulate every neuron spiking once on
@@ -301,13 +301,13 @@ class TestDenseProcessModelFloat(unittest.TestCase):
 
 
 class TestDenseProcessModelFixed(unittest.TestCase):
-    """Tests for fixed point, ProcessModels of Dense, which are bit-accurate
+    """Tests for fixed-point, ProcessModels of Dense, which are bit-accurate
     with Loihi hardware"""
 
     def test_bitacc_pm_fan_out_e(self):
         """
-        Tests fixed point Dense ProcessModel dendritic accumulation
-        behavior when the fan out of a projecting neuron is greater than 1
+        Tests fixed-point Dense ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
         and all connections are excitatory (sign_mode = 2).
         """
         shape = (3, 4)
@@ -347,8 +347,8 @@ class TestDenseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_out_mixed_sign(self):
         """
-        Tests fixed point Dense ProcessModel dendritic accumulation
-        behavior when the fan out of a projecting neuron is greater than 1
+        Tests fixed-point Dense ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
         and connections are both excitatory and inhibitory (sign_mode = 1).
         When using mixed sign weights and full 8 bit weight precision,
         a_out can take even values from -256 to 254.
@@ -390,8 +390,8 @@ class TestDenseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_out_weight_exp(self):
         """
-         Tests fixed point Dense ProcessModel dendritic accumulation
-         behavior when the fan out of a projecting neuron is greater than 1
+         Tests fixed-point Dense ProcessModel dendritic accumulation
+         behavior when the fan-out of a projecting neuron is greater than 1
          , connections are both excitatory and inhibitory (sign_mode = 1),
          and weight_exp = 1.
          When using mixed sign weights, full 8 bit weight precision,
@@ -438,8 +438,8 @@ class TestDenseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_out_weight_precision(self):
         """
-         Tests fixed point Dense ProcessModel dendritic accumulation
-         behavior when the fan out of a projecting neuron is greater than 1
+         Tests fixed-point Dense ProcessModel dendritic accumulation
+         behavior when the fan-out of a projecting neuron is greater than 1
          , connections are both excitatory and inhibitory (sign_mode = 1),
          and num_weight_bits = 7.
          When using mixed sign weights and 7 bit weight precision,
@@ -484,8 +484,8 @@ class TestDenseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_in_mixed_sign(self):
         """
-        Tests fixed point Dense ProcessModel dendritic accumulation
-        behavior when the fan in of a receiving neuron is greater than 1
+        Tests fixed-point Dense ProcessModel dendritic accumulation
+        behavior when the fan-in of a receiving neuron is greater than 1
         and connections are both excitatory and inhibitory (sign_mode = 1).
         When using mixed sign weights and full 8 bit weight precision,
         a_out can take even values from -256 to 254.
