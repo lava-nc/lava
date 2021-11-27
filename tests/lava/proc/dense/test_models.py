@@ -296,7 +296,6 @@ class TestDenseProcessModelsFloat(unittest.TestCase):
         weights = np.ones(shape, dtype=np.float)
         dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
-        spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
         dense.a_out.connect(sps.a_in)
         # Configure execution and run
@@ -556,7 +555,6 @@ class TestDenseProcessModelsFixed(unittest.TestCase):
         weights = np.ones(shape, dtype=np.float)
         dense = Dense(shape=shape, weights=weights)
         # Receive neuron spikes
-        spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
         dense.a_out.connect(sps.a_in)
         # Configure execution and run
