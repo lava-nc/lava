@@ -165,18 +165,14 @@ class Loihi1SimCfg(RunConfig):
             # Get the indices of SubProcessModels in the list of ProcessModels
             sub_pm_idxs = [idx for idx, pm in enumerate(proc_models) if
                            issubpm(pm)]
-            if len(sub_pm_idxs) == 0:
-                raise AssertionError(f"[{self.__class__.__qualname__}]: "
-                                     f"SubProcessModel was asked, but none "
-                                     f"found for Process {proc.name}::"
-                                     f"{proc.__class__.__qualname__}.")
-            elif len(sub_pm_idxs) > 1:
-                print(f"[{self.__class__.__qualname__}]: Using the first "
-                      f"SubProcessModel "
-                      f"{proc_models[sub_pm_idxs[0]].__qualname__} "
-                      f"available for Process "
-                      f"{proc.name}::{proc.__class__.__qualname__}.")
-            return proc_models[sub_pm_idxs[0]]
+            if len(sub_pm_idxs) > 0:
+                if len(sub_pm_idxs) > 1:
+                    print(f"[{self.__class__.__qualname__}]: Using the first "
+                          f"SubProcessModel "
+                          f"{proc_models[sub_pm_idxs[0]].__qualname__} "
+                          f"available for Process "
+                          f"{proc.name}::{proc.__class__.__qualname__}.")
+                return proc_models[sub_pm_idxs[0]]
 
         # Get the indices of PyProcessModels in the list of ProcessModels
         py_pm_idxs = [idx for idx, pm in enumerate(proc_models) if ispypm(pm)]
