@@ -189,7 +189,7 @@ class Monitors(unittest.TestCase):
 
         # Check if this data match the expected data
         self.assertTrue(np.all(volt_data == np.array([1, 2, 0, 1, 2, 0])))
-        self.assertTrue(np.all(spike_data == np.array([0, 0, 0, 1, 0, 0])))
+        self.assertTrue(np.all(spike_data == np.array([0, 0, 1, 0, 0, 1])))
 
     def test_monitor_collects_voltage_and_spike_data_from_population_lif(self):
         """Check if two different Monitor process can monitor voltage (Var) and
@@ -233,8 +233,8 @@ class Monitors(unittest.TestCase):
         # Check if this data match the expected data
         self.assertTrue(np.all(volt_data == np.array([[1, 2, 0, 1, 2, 0],
                                                       [1, 2, 0, 1, 2, 0]])))
-        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 1, 0, 0],
-                                                       [0, 0, 0, 1, 0, 0]])))
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 1, 0, 0, 1],
+                                                       [0, 0, 1, 0, 0, 1]])))
 
     def test_proc_params_accessible_in_proc_model(self):
         """Check if proc_params are accessible in ProcessModel. This
