@@ -31,7 +31,7 @@ class TestConnProcess(unittest.TestCase):
     def test_no_in_args(self):
         """Tests instantiation of Dense with no input arguments"""
         conn = Dense()
-        self.assertEqual(np.shape(conn.weights.init),(1,1))
+        self.assertEqual(np.shape(conn.weights.init), (1, 1))
 
     def test_input_validation_shape(self):
         """Tests input validation on the dimensions of 'shape'. (Must be 2D.)"""
