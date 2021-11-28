@@ -37,9 +37,6 @@ class TestConnProcess(unittest.TestCase):
     def test_input_validation_weights(self):
         """Tests input validation on the dimensions of 'weights'. (Must be
         2D.)"""
-        weights = np.random.randint(100,size=(2,3,4))
+        weights = np.random.randint(100, size=(2, 3, 4))
         with self.assertRaises(AssertionError):
             conn = Dense(weights=weights)
-
-
-
