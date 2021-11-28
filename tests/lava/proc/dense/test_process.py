@@ -32,11 +32,11 @@ class TestConnProcess(unittest.TestCase):
         """Tests input validation on the dimensions of 'shape'. (Must be 2D.)"""
         shape = (100, 200, 300)
         with self.assertRaises(AssertionError):
-            conn = Dense(shape=shape)
+            Dense(shape=shape)
 
     def test_input_validation_weights(self):
         """Tests input validation on the dimensions of 'weights'. (Must be
         2D.)"""
         weights = np.random.randint(100, size=(2, 3, 4))
         with self.assertRaises(AssertionError):
-            conn = Dense(weights=weights)
+            Dense(weights=weights)
