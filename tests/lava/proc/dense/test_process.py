@@ -28,6 +28,11 @@ class TestConnProcess(unittest.TestCase):
         self.assertEqual(conn.num_weight_bits.init, num_weight_bits)
         self.assertEqual(conn.sign_mode.init, sign_mode)
 
+    def test_no_in_args(self):
+        """Tests instantiation of Dense with no input arguments"""
+        conn = Dense()
+        self.assertEqual(np.shape(conn.weights.init),(1,1))
+
     def test_input_validation_shape(self):
         """Tests input validation on the dimensions of 'shape'. (Must be 2D.)"""
         shape = (100, 200, 300)

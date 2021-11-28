@@ -60,7 +60,7 @@ class Dense(AbstractProcess):
         shape = kwargs.get("shape", (1, 1))
         if len(shape) != 2:
             raise AssertionError("Dense Process 'shape' expected a 2D tensor.")
-        weights = kwargs.pop("weights", 0)
+        weights = kwargs.pop("weights", np.zeros(shape=shape))
         if len(np.shape(weights)) != 2:
             raise AssertionError("Dense Process 'weights' expected a 2D "
                                  "matrix.")
