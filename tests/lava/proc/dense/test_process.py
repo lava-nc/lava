@@ -27,3 +27,19 @@ class TestConnProcess(unittest.TestCase):
         self.assertEqual(conn.weight_exp.init, weight_exp)
         self.assertEqual(conn.num_weight_bits.init, num_weight_bits)
         self.assertEqual(conn.sign_mode.init, sign_mode)
+
+    def test_input_validation_shape(self):
+        """Tests input validation on the dimensions of 'shape'. (Must be 2D.)"""
+        shape = (100, 200, 300)
+        with self.assertRaises(AssertionError):
+            conn = Dense(shape=shape)
+
+    def test_input_validation_weights(self):
+        """Tests input validation on the dimensions of 'weights'. (Must be
+        2D.)"""
+        weights = np.random.randint(100,size=(2,3,4))
+        with self.assertRaises(AssertionError):
+            conn = Dense(weights=weights)
+
+
+

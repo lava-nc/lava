@@ -25,6 +25,8 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
+    # weights is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons)in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     weight_exp: float = LavaPyType(float, float)
     num_weight_bits: float = LavaPyType(float, float)
@@ -51,6 +53,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=16)
     a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
+    # weights is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
     weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=4)
     num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)

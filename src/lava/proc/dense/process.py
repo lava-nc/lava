@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import numpy as np
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
@@ -15,7 +16,8 @@ class Dense(AbstractProcess):
     ----------
 
     weights:
-    Connection weight matrix.
+    2D Connection weight matrix of form (num_flat_output_neurons,
+    num_flat_input_neurons) in C-order (row major).
 
     weight_exp:
     Shared weight exponent used to
@@ -56,7 +58,12 @@ class Dense(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         shape = kwargs.get("shape", (1, 1))
+        if len(shape) != 2:
+            raise AssertionError("Dense Process 'shape' expected a 2D tensor.")
         weights = kwargs.pop("weights", 0)
+        if len(np.shape(weights)) != 2:
+            raise AssertionError("Dense Process 'weights' expected a 2D "
+                                 "matrix.")
         weight_exp = kwargs.pop("weight_exp", 0)
         num_weight_bits = kwargs.pop("num_weight_bits", 8)
         sign_mode = kwargs.pop("sign_mode", 1)
