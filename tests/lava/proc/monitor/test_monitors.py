@@ -166,7 +166,7 @@ class Monitors(unittest.TestCase):
                      bias=1)
 
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = Loihi1SimCfg(select_tag='floating_pt')
+        rcfg = Loihi1SimCfg()
 
         # Probe voltage of LIF with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
