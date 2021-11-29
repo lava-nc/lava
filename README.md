@@ -193,9 +193,12 @@ dense.out_ports.a_out.connect(lif2.in_ports.a_in)
 
 # Execute process lif1 and all processes connected to it for fixed number of steps
 from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.run_configs import RunConfig
-lif1.run(condition=RunSteps(num_steps=10), run_cfg=SimpleRunConfig(
-            sync_domains=[]))
+from lava.magma.core.run_configs import \
+    RunConfig, Loihi1SimCfg
+
+lif1.run(condition=RunSteps(num_steps=10),
+         run_cfg=Loihi1SimCfg(custom_sync_domains=[])
+)
 lif1.stop()
 
 ```
@@ -272,7 +275,7 @@ class PyLifModel(PyLoihiProcessModel):
 
 In contrast this process model also implements the LIF process but by structurally allocating neural network resources on a virtual Loihi 1 neuro core.
 ```python
- from lava.proc.lif.process import LIF
+from lava.proc.lif.process import LIF
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import Loihi1NeuroCore
 from lava.magma.core.model.nc.model import NcLoihiProcessModel
