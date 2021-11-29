@@ -14,7 +14,6 @@ from lava.magma.core.resources import CPU
 
 @implements(proc=Monitor, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
 class PyMonitorModel(PyLoihiProcessModel):
     """
     This process model contains prototypical Ports and Vars to have
