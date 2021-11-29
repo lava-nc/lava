@@ -7,6 +7,7 @@ from lava.magma.core.model.c.model import AbstractCProcessModel
 from lava.proc.dense.models import PyDenseModel
 
 import os
+import numpy as np
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -27,20 +28,25 @@ class MockDataPort:
     recd: int = 0
 
     def peek(self):
+        print("peek")
         return 1
 
     def probe(self):
+        print("probe")
         return 1
 
     def recv(self):
+        print("recv")
         self.recd += 1
         return np.ones(1)
 
     def send(self, data):
+        print("send")
         self.sent += 1
         pass
 
     def flush(self):
+        print("flush")
         pass
 
 

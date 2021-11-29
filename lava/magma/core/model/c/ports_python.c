@@ -1,18 +1,29 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #define PYTHON
 #include "ports.h"
 
 extern PyObject* self_object;
+
+void* init_numpy(){
+    Py_Initialize;
+    import_array();
+}
+
 
 PyObject* get_port(const char* name){
     return PyObject_GetAttrString(self_object, name);
 }
 
 size_t send(PyObject *port, void *data, size_t m){ // send via pointer
+    init_numpy(); 
     PyObject *pyDataObj = PyArray_New(&PyArray_Type, 1, (npy_intp[]){m},NPY_INT, NULL,data,0, NPY_ARRAY_CARRAY, NULL);
     PyObject* result = PyObject_CallMethod(port,"send","O",pyDataObj); // call python port method directly
     Py_DECREF(pyDataObj);
@@ -23,12 +34,20 @@ size_t send(PyObject *port, void *data, size_t m){ // send via pointer
 }
 
 size_t recv(PyObject *port,void** data){ // recieve pointer to pointer
+    init_numpy(); 
+    printf("calling recv on: %p , to: %p\n",(void*)port,data);
     PyObject *pyDataObj = PyObject_CallMethod(port,"recv",NULL); // call python port object method
+    printf("recv called, got: %p\n",(void*)pyDataObj);
     size_t n  = (size_t) PyArray_Size(pyDataObj);
-    PyObject *arrayObj = PyArray_ContiguousFromObject(pyDataObj,NPY_INT,0,0);
+    printf("got size: %d\n",n);
+    //PyObject *arrayObj = PyArray_ContiguousFromObject(pyDataObj,NPY_INT,0,1);
+    //printf("array object created: %p\n",(void*)arrayObj);
+    void *ptr = PyArray_DATA(pyDataObj); // assign pointer to data pointer
+    printf("pointer retrieved: %p\n",ptr);
+    *data = ptr;
+    printf("pointer assigned: %p\n",(void*)*data);  
+    //Py_DECREF(arrayObj); // WARNING: Not sure what to do about this. Possible deallocated pointer or leave in for possible memory leak 
     Py_DECREF(pyDataObj);
-    *data = PyArray_DATA(arrayObj); // assign pointer to data pointer
-    Py_DECREF(arrayObj); // WARNING: Not sure what to do about this. Possible deallocated pointer or leave in for possible memory leak 
     return n; 
 }
 
