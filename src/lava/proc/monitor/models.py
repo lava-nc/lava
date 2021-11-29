@@ -38,7 +38,7 @@ class PyMonitorModel(PyLoihiProcessModel):
         """
         # Check if this Monitor Process instance has been assigned to monitor
         # any Var by checking proc_params["n_ref_ports"], if so loop over
-        # those RefPorts; readout their values to correspoinding data-stroing
+        # those RefPorts; readout their values to corresponding data-storing
         # Var
         for i in range(self.proc_params["n_ref_ports"]):
             ref_port_name = self.proc_params["RefPorts"][i]
