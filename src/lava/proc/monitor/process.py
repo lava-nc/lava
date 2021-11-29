@@ -153,13 +153,13 @@ class Monitor(AbstractProcess):
 
         # Create and set new Refport and corresponding Var to store data
         setattr(self, self.new_ref_port_name, RefPort(shape=target.shape))
-        setattr(self, self.new_var_read_name, Var(shape=(target.shape[0],
-                                                         num_steps), init=0))
+        setattr(self, self.new_var_read_name,
+                Var(shape=(num_steps,)+target.shape, init=0))
 
         # Create and set new InPort and corresponding Var to store data
         setattr(self, self.new_in_port_name, InPort(shape=target.shape))
-        setattr(self, self.new_out_read_name, Var(shape=(target.shape[0],
-                                                         num_steps), init=0))
+        setattr(self, self.new_out_read_name,
+                Var(shape=(num_steps,)+target.shape, init=0))
 
         # Add the names of new RefPort and Var_read name to proc_params dict
         self.proc_params["RefPorts"].append(self.new_ref_port_name)
