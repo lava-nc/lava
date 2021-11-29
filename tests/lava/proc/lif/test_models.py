@@ -149,15 +149,15 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         num_steps = 10
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
-                             vec_to_send=np.zeros(shape, dtype=np.float),
-                             send_at_times=np.ones((num_steps,), dtype=np.bool))
+                             vec_to_send=np.zeros(shape, dtype=float),
+                             send_at_times=np.ones((num_steps,), dtype=bool))
         # Set up bias = 1 * 2**1 = 2. and threshold = 4.
         # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
         lif = LIF(shape=shape,
                   du=0.,
                   dv=0.,
-                  bias=np.ones(shape, dtype=np.float),
-                  bias_exp=np.ones(shape, dtype=np.float),
+                  bias=np.ones(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
                   vth=4.)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -185,7 +185,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=(2 ** 7) * np.ones(shape,
-                                                            dtype=np.float),
+                                                            dtype=float),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -193,8 +193,8 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         lif = LIF(shape=shape,
                   du=0.5, dv=0,
-                  bias=np.zeros(shape, dtype=np.float),
-                  bias_exp=np.ones(shape, dtype=np.float),
+                  bias=np.zeros(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
                   vth=256.)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(lif.a_in)
@@ -223,7 +223,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=(2 ** 7) * np.ones(shape,
-                                                            dtype=np.float),
+                                                            dtype=float),
                              send_at_times=np.array([True, False, False,
                                                      False, False, False,
                                                      False, False]))
@@ -231,8 +231,8 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         lif = LIF(shape=shape,
                   du=0, dv=0.5,
-                  bias=np.zeros(shape, dtype=np.float),
-                  bias_exp=np.ones(shape, dtype=np.float),
+                  bias=np.zeros(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
                   vth=256.)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(lif.a_in)
@@ -265,7 +265,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=np.int16),
-                             send_at_times=np.ones((num_steps,), dtype=np.bool))
+                             send_at_times=np.ones((num_steps,), dtype=bool))
         # Set up bias = 2 * 2**6 = 128 and threshold = 8<<6
         # du and dv = 0 => bias driven neurons spike at every 4th time-step.
         lif = LIF(shape=shape,
