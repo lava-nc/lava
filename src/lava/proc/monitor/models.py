@@ -8,7 +8,7 @@ from lava.proc.monitor.process import Monitor
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import CPU
 
 
