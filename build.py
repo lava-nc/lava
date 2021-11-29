@@ -13,7 +13,7 @@ use_plugin('pypi:pybuilder_bandit')
 
 name = "lava-nc"
 default_task = ["analyze", "publish"]
-version = "0.1.0"
+version = "0.2.0"
 summary = "A Software Framework for Neuromorphic Computing"
 url = "https://lava-nc.org"
 license = ["BSD-3-Clause", "LGPL-2.1"]
