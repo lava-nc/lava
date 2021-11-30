@@ -49,7 +49,9 @@ class MnistDataset:
                 try:
                     # Disabling security linter and using hardcoded
                     # URLs specified above
-                    res = urllib.request.urlopen(f"{mirror}{file}")  # nosec
+                    url = f"{mirror}{file}"
+                    assert url.lower().startswith("http")
+                    res = urllib.request.urlopen(url)  # nosec
                     with open(os.path.join(path, file), "wb") as f:
                         f.write(res.read())
                     break
