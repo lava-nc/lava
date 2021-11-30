@@ -38,15 +38,16 @@ size_t recv(PyObject *port,void** data){ // recieve pointer to pointer
     printf("calling recv on: %p , to: %p\n",(void*)port,data);
     PyObject *pyDataObj = PyObject_CallMethod(port,"recv",NULL); // call python port object method
     printf("recv called, got: %p\n",(void*)pyDataObj);
+    int dtype = PyArray_DESCR(pyDataObj)->type_num;
     size_t n  = (size_t) PyArray_Size(pyDataObj);
-    printf("got size: %d\n",n);
-    //PyObject *arrayObj = PyArray_ContiguousFromObject(pyDataObj,NPY_INT,0,1);
-    //printf("array object created: %p\n",(void*)arrayObj);
-    void *ptr = PyArray_DATA(pyDataObj); // assign pointer to data pointer
+    printf("got type: %d of size: %d\n",dtype,n);
+    PyObject *arrayObj = PyArray_ContiguousFromObject(pyDataObj,dtype,0,0);
+    printf("array object created: %p\n",(void*)arrayObj);
+    void *ptr = PyArray_DATA(arrayObj); // get pointer from array
     printf("pointer retrieved: %p\n",ptr);
     *data = ptr;
     printf("pointer assigned: %p\n",(void*)*data);  
-    //Py_DECREF(arrayObj); // WARNING: Not sure what to do about this. Possible deallocated pointer or leave in for possible memory leak 
+    Py_DECREF(arrayObj); // WARNING: Not sure what to do about this. Possible deallocated pointer or leave in for possible memory leak 
     Py_DECREF(pyDataObj);
     return n; 
 }

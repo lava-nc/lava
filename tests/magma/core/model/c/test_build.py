@@ -38,7 +38,7 @@ class MockDataPort:
     def recv(self):
         print("recv")
         self.recd += 1
-        return np.ones(1)
+        return np.ones(1, dtype=np.int64)
 
     def send(self, data):
         print("send")
