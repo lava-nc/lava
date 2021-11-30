@@ -9,6 +9,7 @@ import numpy as np
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.core.model.interfaces import AbstractPortImplementation
+from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 
 
@@ -20,7 +21,22 @@ class AbstractPyPort(AbstractPortImplementation):
         pass
 
 
-class PyInPort(AbstractPyPort):
+class AbstractIOPyPort(AbstractPyPort):
+    def __init__(self,
+                 csp_ports: ty.List[AbstractCspPort],
+                 process_model: AbstractProcessModel,
+                 shape: ty.Tuple[int, ...] = tuple(),
+                 d_type: type = int):
+        self._csp_ports = csp_ports
+        super().__init__(process_model, shape, d_type)
+
+    @property
+    def csp_ports(self) -> ty.List[AbstractCspPort]:
+        """Returns all csp ports of the port."""
+        return self._csp_ports
+
+
+class PyInPort(AbstractIOPyPort):
     """Python implementation of InPort used within AbstractPyProcessModel.
     If buffer is empty, recv() will be blocking.
     """
@@ -29,15 +45,6 @@ class PyInPort(AbstractPyPort):
     VEC_SPARSE: ty.Type["PyInPortVectorSparse"] = None
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
-
-    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args):
-        self._csp_recv_ports = csp_recv_ports
-        super().__init__(*args)
-
-    @property
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Returns all csp ports of the port."""
-        return self._csp_recv_ports
 
     @abstractmethod
     def recv(self):
@@ -57,7 +64,7 @@ class PyInPort(AbstractPyPort):
         # Returns True only when probe returns True for all _csp_recv_ports.
         return ft.reduce(
             lambda acc, csp_port: acc and csp_port.probe(),
-            self._csp_recv_ports,
+            self.csp_ports,
             True,
         )
 
@@ -66,14 +73,14 @@ class PyInPortVectorDense(PyInPort):
     def recv(self) -> np.ndarray:
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.recv(),
-            self._csp_recv_ports,
+            self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
 
     def peek(self) -> np.ndarray:
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.peek(),
-            self._csp_recv_ports,
+            self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
 
@@ -108,22 +115,13 @@ PyInPort.SCALAR_DENSE = PyInPortScalarDense
 PyInPort.SCALAR_SPARSE = PyInPortScalarSparse
 
 
-class PyOutPort(AbstractPyPort):
+class PyOutPort(AbstractIOPyPort):
     """Python implementation of OutPort used within AbstractPyProcessModels."""
 
     VEC_DENSE: ty.Type["PyOutPortVectorDense"] = None
     VEC_SPARSE: ty.Type["PyOutPortVectorSparse"] = None
     SCALAR_DENSE: ty.Type["PyOutPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyOutPortScalarSparse"] = None
-
-    def __init__(self, csp_send_ports: ty.List[CspSendPort], *args):
-        self._csp_send_ports = csp_send_ports
-        super().__init__(*args)
-
-    @property
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Returns all csp ports of the port."""
-        return self._csp_send_ports
 
     @abstractmethod
     def send(self, data: ty.Union[np.ndarray, int]):
@@ -136,7 +134,7 @@ class PyOutPort(AbstractPyPort):
 class PyOutPortVectorDense(PyOutPort):
     def send(self, data: np.ndarray):
         """Sends data only if port is not dangling."""
-        for csp_port in self._csp_send_ports:
+        for csp_port in self.csp_ports:
             csp_port.send(data)
 
 
@@ -176,10 +174,13 @@ class PyRefPort(AbstractPyPort):
 
     def __init__(self,
                  csp_send_port: ty.Optional[CspSendPort],
-                 csp_recv_port: ty.Optional[CspRecvPort], *args):
+                 csp_recv_port: ty.Optional[CspRecvPort],
+                 process_model: AbstractProcessModel,
+                 shape: ty.Tuple[int, ...] = tuple(),
+                 d_type: type = int):
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
-        super().__init__(*args)
+        super().__init__(process_model, shape, d_type)
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
@@ -270,11 +271,14 @@ class PyVarPort(AbstractPyPort):
     def __init__(self,
                  var_name: str,
                  csp_send_port: ty.Optional[CspSendPort],
-                 csp_recv_port: ty.Optional[CspRecvPort], *args):
+                 csp_recv_port: ty.Optional[CspRecvPort],
+                 process_model: AbstractProcessModel,
+                 shape: ty.Tuple[int, ...] = tuple(),
+                 d_type: type = int):
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         self.var_name = var_name
-        super().__init__(*args)
+        super().__init__(process_model, shape, d_type)
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
