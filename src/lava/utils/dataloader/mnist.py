@@ -47,7 +47,9 @@ class MnistDataset:
             err = None
             for mirror in MnistDataset.mirrors:
                 try:
-                    res = urllib.request.urlopen(f"{mirror}{file}")
+                    # Disabling security linter and using hardcoded
+                    # URLs specified above
+                    res = urllib.request.urlopen(f"{mirror}{file}")  # nosec
                     with open(os.path.join(path, file), "wb") as f:
                         f.write(res.read())
                     break
