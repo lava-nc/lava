@@ -34,7 +34,7 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
-    ImplicitVarPort
+    ImplicitVarPort, RefPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.run_configs import RunConfig
@@ -219,19 +219,9 @@ class Compiler:
             if v is not None:
                 sub_proc = v.process
                 # Create an implicit Var port in the sub process
-                new_vp = ImplicitVarPort(v)
-                # Propagate name and parent process of Var to VarPort
-                new_vp.name = "_" + v.name + "_implicit_port"
-                new_vp.process = sub_proc
-                # VarPort name could shadow existing attribute
-                if hasattr(sub_proc, new_vp.name):
-                    raise AssertionError(
-                        "Name of implicit VarPort might conflict"
-                        " with existing attribute.")
-                setattr(sub_proc, new_vp.name, new_vp)
-                sub_proc.var_ports.add_members({new_vp.name: new_vp})
+                imp_vp = RefPort.create_implicit_var_port(v)
                 # Connect the VarPort to the new VarPort
-                vp.connect(new_vp)
+                vp.connect(imp_vp)
 
     def _expand_sub_proc_model(self,
                                model_cls: ty.Type[AbstractSubProcessModel],
