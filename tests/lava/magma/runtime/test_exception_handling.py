@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 import unittest
 
 from lava.magma.core.decorator import implements, requires, tag
@@ -11,7 +10,6 @@ from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
