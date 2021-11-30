@@ -231,8 +231,33 @@ class LoihiPyRuntimeService(PyRuntimeService):
                             rsps = self._get_pm_resp()
                             for rsp in rsps:
                                 if not enum_equal(rsp, MGMT_RESPONSE.DONE):
-                                    raise ValueError(
-                                        f"Wrong Response Received : {rsp}")
+                                    if enum_equal(rsp, MGMT_RESPONSE.ERROR):
+                                        # Receive error messages from pm
+                                        errors = []
+                                        for p in self.process_to_service_data:
+                                            if p.probe():
+                                                num_bytes = int(p.recv()[0])
+                                                data = []
+                                                for i in range(num_bytes):
+                                                    data.append(
+                                                        int(p.recv()[0]))
+                                                errors.append(data)
+
+                                        # Forward error messages to runtime
+                                        send_port = self.service_to_runtime_data
+                                        send_port.send(enum_to_np(len(errors)))
+                                        for e in errors:
+                                            send_port.send(enum_to_np(len(e)))
+                                            for b in e:
+                                                send_port.send(enum_to_np(b))
+
+                                        self.service_to_runtime_ack.send(
+                                            MGMT_RESPONSE.ERROR)
+
+                                        return
+                                    else:
+                                        raise ValueError(
+                                            f"Wrong Response Received : {rsp}")
 
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(

@@ -228,7 +228,28 @@ class Runtime:
                     for recv_port in self.service_to_runtime_ack:
                         data = recv_port.recv()
                         if not enum_equal(data, MGMT_RESPONSE.DONE):
-                            raise RuntimeError(f"Runtime Received {data}")
+                            if enum_equal(data, MGMT_RESPONSE.ERROR):
+                                # Receive all error messages from service
+                                error_msgs = []
+                                for p in self.service_to_runtime_data:
+                                    if p.probe():
+                                        num_errors = int(p.recv()[0])
+                                        for i in range(num_errors):
+                                            num_bytes = int(p.recv()[0])
+                                            data = []
+                                            for i in range(num_bytes):
+                                                data.append(int(p.recv()[0]))
+                                            error_msgs.append(
+                                                bytes(data).decode())
+
+                                # Gather all exceptions
+                                exceptions = []
+                                for msg in error_msgs:
+                                    exceptions.append(Exception(msg))
+
+                                raise Exception(exceptions)
+                            else:
+                                raise RuntimeError(f"Runtime Received {data}")
                 if run_condition.blocking:
                     self.current_ts += self.num_steps
                     self._is_running = False
