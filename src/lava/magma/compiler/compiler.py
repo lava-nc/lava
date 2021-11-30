@@ -217,7 +217,6 @@ class Compiler:
         for vp in proc.var_ports:
             v = vp.var.aliased_var
             if v is not None:
-                sub_proc = v.process
                 # Create an implicit Var port in the sub process
                 imp_vp = RefPort.create_implicit_var_port(v)
                 # Connect the VarPort to the new VarPort
