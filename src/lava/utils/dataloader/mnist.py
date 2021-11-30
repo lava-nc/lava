@@ -79,16 +79,18 @@ class MnistDataset:
         for file in MnistDataset.files:
             with gzip.open(os.path.join(download_path, file), "rb") as f:
                 if "images" in file:
-                    arr = np.frombuffer(f.read(), np.uint8, offset=16).reshape(-1, 28, 28)
+                    arr = np.frombuffer(f.read(), np.uint8, offset=16)
+                    arr = arr.reshape(-1, 28, 28)
                 else:
                     arr = np.frombuffer(f.read(), np.uint8, offset=8)
                 arrays.append(arr)
 
         np.save(
             save_path,
-            np.array([[arrays[0], arrays[1]], [arrays[2], arrays[3]]], dtype="object"),
+            np.array(
+                [[arrays[0], arrays[1]], [arrays[2], arrays[3]]],
+                dtype="object"),
         )
-
 
     @property
     def train_images(self):
