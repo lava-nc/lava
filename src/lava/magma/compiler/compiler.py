@@ -48,7 +48,7 @@ PROC_MAP = ty.Dict[AbstractProcess, ty.Type[AbstractProcessModel]]
 # ToDo: (AW) Document all class methods and class
 class Compiler:
     def __init__(self, compile_cfg: ty.Optional[ty.Dict[str, ty.Any]] = None):
-        self._compile_config = {"pypy_channel_size": 64}
+        self._compile_config = {"pypy_channel_size": 256}
         if compile_cfg:
             self._compile_config.update(compile_cfg)
 
