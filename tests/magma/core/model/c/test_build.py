@@ -51,16 +51,6 @@ class MockDataPort:
 
 
 class Test_Build(unittest.TestCase):
-    """
-    def test_boring(self):
-        class PM(AbstractCProcessModel):
-            source_files = ["test_boring.c"]
-
-        pm = PM()
-        pm.run()
-    """
-
-    """
     def test_run(self):
         class PM(AbstractCProcessModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
@@ -69,7 +59,6 @@ class Test_Build(unittest.TestCase):
         pm = PM()
         pm.run()
         self.assertEqual(pm.service_to_process_cmd.phase, 0)
-    """
 
     def test_io(self):
         class PM(AbstractCProcessModel):
@@ -83,7 +72,6 @@ class Test_Build(unittest.TestCase):
         self.assertEqual(pm.in_port.recd, 1)
         self.assertEqual(pm.out_port.sent, 1)
 
-    '''
     def test_loihi(self):
         """
         compile a loihi protocol CProcessModel
@@ -96,7 +84,6 @@ class Test_Build(unittest.TestCase):
 
         pm = PM()
         self.assertRaises(ValueError, pm.run)
-    '''
 
 
 if __name__ == "__main__":
