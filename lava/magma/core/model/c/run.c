@@ -13,7 +13,6 @@
 #include "run.h"
 
 PyObject* Custom_run(PyObject *self,PyObject* Py_UNUSED(ignored)){
-    printf("run method called\n");
     PyObject *state_port = PyObject_GetAttrString(self, "service_to_process_cmd");
     while(1){
         PyObject *probe_obj = PyObject_CallMethod(state_port,"probe",NULL);
