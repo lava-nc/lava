@@ -9,8 +9,6 @@ from lava.proc.dense.models import PyDenseModel
 import os
 import numpy as np
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
 
 class MockServicePort:
     phase: int = 10
@@ -51,6 +49,11 @@ class MockDataPort:
 
 
 class Test_Build(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        return super().setUpClass()
+
     def test_run(self):
         class PM(AbstractCProcessModel):
             service_to_process_cmd: MockServicePort = MockServicePort()
