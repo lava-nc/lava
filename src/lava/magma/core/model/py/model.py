@@ -155,16 +155,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     else:
                         raise ValueError(f"Wrong Phase Info Received : {phase}")
                 except Exception as inst:
-                    # Forward exception text to runtime service
-                    error = str(
-                        self.__class__.__name__ + ": " + repr(inst)).encode()
-                    self.process_to_service_data.send(enum_to_np(len(error)))
-                    for byte in error:
-                        self.process_to_service_data.send(enum_to_np(byte))
-
-                    # Inform process about termination
+                    # Inform runtime service about termination
                     self.process_to_service_ack.send(MGMT_RESPONSE.ERROR)
-
                     self.join()
                     raise inst
 

@@ -229,25 +229,19 @@ class Runtime:
                         data = recv_port.recv()
                         if not enum_equal(data, MGMT_RESPONSE.DONE):
                             if enum_equal(data, MGMT_RESPONSE.ERROR):
-                                # Receive all error messages from service
-                                error_msgs = []
-                                for p in self.service_to_runtime_data:
-                                    if p.probe():
-                                        num_errors = int(p.recv()[0])
-                                        for i in range(num_errors):
-                                            num_bytes = int(p.recv()[0])
-                                            data = []
-                                            for i in range(num_bytes):
-                                                data.append(int(p.recv()[0]))
-                                            error_msgs.append(
-                                                bytes(data).decode())
+                                # Receive all errors from the ProcessModels
+                                error_cnt = 0
+                                for actors in \
+                                        self._messaging_infrastructure.actors:
+                                    actors.join()
+                                    if actors.exception:
+                                        _, traceback = actors.exception
+                                        print(traceback)
+                                        error_cnt += 1
 
-                                # Gather all exceptions
-                                exceptions = []
-                                for msg in error_msgs:
-                                    exceptions.append(Exception(msg))
-
-                                raise Exception(exceptions)
+                                raise RuntimeError(
+                                    f"{error_cnt} Exception(s) occurred. See "
+                                    f"output above for details.")
                             else:
                                 raise RuntimeError(f"Runtime Received {data}")
                 if run_condition.blocking:

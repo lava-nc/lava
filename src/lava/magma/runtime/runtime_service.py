@@ -228,40 +228,19 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # ProcessModels respond with DONE if not HOST phase
                         if not enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST):
-                            rsps = self._get_pm_resp()
-                            errors = []
-                            for i, rsp in enumerate(rsps):
+
+                            for rsp in self._get_pm_resp():
                                 if not enum_equal(rsp, MGMT_RESPONSE.DONE):
                                     if enum_equal(rsp, MGMT_RESPONSE.ERROR):
-                                        # Receive error messages from pm
-                                        for k, p in enumerate(
-                                                self.process_to_service_data):
-                                            if i == k:
-                                                num_bytes = int(p.recv()[0])
-                                                data = []
-                                                for i in range(num_bytes):
-                                                    data.append(
-                                                        int(p.recv()[0]))
-                                                errors.append(data)
+                                        # Forward error to runtime
+                                        self.service_to_runtime_ack.send(
+                                            MGMT_RESPONSE.ERROR)
+                                        # stop all other pm
+                                        self._send_pm_cmd(MGMT_COMMAND.STOP)
+                                        return
                                     else:
                                         raise ValueError(
                                             f"Wrong Response Received : {rsp}")
-
-                            if len(errors):
-                                # Forward error messages to runtime
-                                send_port = self.service_to_runtime_data
-                                send_port.send(enum_to_np(len(errors)))
-                                for e in errors:
-                                    send_port.send(enum_to_np(len(e)))
-                                    for b in e:
-                                        send_port.send(enum_to_np(b))
-
-                                self.service_to_runtime_ack.send(
-                                    MGMT_RESPONSE.ERROR)
-                                # stop all other pm
-                                self._send_pm_cmd(MGMT_COMMAND.STOP)
-
-                                return
 
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(

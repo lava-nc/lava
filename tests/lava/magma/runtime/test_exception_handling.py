@@ -45,8 +45,9 @@ class PyProcModel1(PyLoihiProcessModel):
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_spk(self):
-        # Raise exception
-        raise AssertionError("All the error info")
+        if self.current_ts > 1:
+            # Raise exception
+            raise AssertionError("All the error info")
 
 
 # A minimal PyProcModel implementing P2
@@ -57,8 +58,9 @@ class PyProcModel2(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_spk(self):
-        # Raise exception
-        raise TypeError("All the error info")
+        if self.current_ts > 1:
+            # Raise exception
+            raise TypeError("All the error info")
 
 
 # A minimal PyProcModel implementing P3
@@ -80,13 +82,17 @@ class TestExceptionHandling(unittest.TestCase):
         # Create an instance of P1
         proc = P1()
 
-        # Run the network for 1 time step
+        # Run the network for 1 time step -> no exception
         proc.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
         # Run the network for another time step -> expect exception
-        proc.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+        with self.assertRaises(RuntimeError) as context:
+            proc.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
-        # self.assertTrue('This is broken' in context.exception)
+        exception = context.exception
+        self.assertEqual(RuntimeError, type(exception))
+        # 1 exception in the ProcessModel expected
+        self.assertTrue('1 Exception(s) occurred' in str(exception))
 
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
@@ -99,12 +105,17 @@ class TestExceptionHandling(unittest.TestCase):
         # Connect sender with receiver
         sender.out.connect(recv.inp)
 
-        # Run the network for 2 time steps
-        sender.run(condition=RunSteps(num_steps=2), run_cfg=Loihi1SimCfg())
+        # Run the network for 1 time step -> no exception
+        sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
-        # The expected value of var in the recv is [1, 2]
+        # Run the network for another time step -> expect exception
+        with self.assertRaises(RuntimeError) as context:
+            sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
-        sender.stop()
+        exception = context.exception
+        self.assertEqual(RuntimeError, type(exception))
+        # 2 Exceptions in the ProcessModels expected
+        self.assertTrue('2 Exception(s) occurred' in str(exception))
 
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
@@ -118,13 +129,18 @@ class TestExceptionHandling(unittest.TestCase):
         # Connect sender with receiver
         sender.out.connect([recv1.inp, recv2.inp])
 
-        # Run the network for 2 time steps
-        sender.run(condition=RunSteps(num_steps=2), run_cfg=Loihi1SimCfg())
+        # Run the network for 1 time step -> no exception
+        sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
-        # The expected value of var in the recv is [1, 2]
+        # Run the network for another time step -> expect exception
+        with self.assertRaises(RuntimeError) as context:
+            sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
 
-        sender.stop()
+        exception = context.exception
+        self.assertEqual(RuntimeError, type(exception))
+        # 2 Exceptions in the ProcessModels expected
+        self.assertTrue('2 Exception(s) occurred' in str(exception))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(buffer=True)
