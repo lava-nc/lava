@@ -20,10 +20,10 @@ class PyMonitorModel(PyLoihiProcessModel):
     one-to-one correspondes with Monitor process.
     """
     var_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                        np.float,
+                                        float,
                                         precision=24)
     out_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                        np.float,
+                                        float,
                                         precision=24)
     ref_port_0: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     in_port_0: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
@@ -38,12 +38,12 @@ class PyMonitorModel(PyLoihiProcessModel):
         """
         # Check if this Monitor Process instance has been assigned to monitor
         # any Var by checking proc_params["n_ref_ports"], if so loop over
-        # those RefPorts; readout their values to correspoinding data-stroing
+        # those RefPorts; readout their values to corresponding data-storing
         # Var
         for i in range(self.proc_params["n_ref_ports"]):
             ref_port_name = self.proc_params["RefPorts"][i]
             var_read_name = self.proc_params["VarsData1"][i]
-            getattr(self, var_read_name)[:, self.current_ts - 1] = \
+            getattr(self, var_read_name)[self.current_ts - 1, ...] = \
                 np.squeeze(np.array(getattr(self, ref_port_name).read()))
 
     def run_spk(self):
@@ -57,5 +57,5 @@ class PyMonitorModel(PyLoihiProcessModel):
         for i in range(self.proc_params["n_in_ports"]):
             in_port_name = self.proc_params["InPorts"][i]
             out_read_name = self.proc_params["VarsData2"][i]
-            getattr(self, out_read_name)[:, self.current_ts - 1] = \
+            getattr(self, out_read_name)[self.current_ts - 1, ...] = \
                 np.squeeze(np.array(getattr(self, in_port_name).recv()))
