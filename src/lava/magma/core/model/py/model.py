@@ -125,34 +125,41 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     self.process_to_service_ack.send(MGMT_RESPONSE.TERMINATED)
                     self.join()
                     return
-                # Spiking phase - increase time step
-                if enum_equal(phase, PyLoihiProcessModel.Phase.SPK):
-                    self.current_ts += 1
-                    self.run_spk()
-                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                # Pre-management phase
-                elif enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
-                    # Enable via guard method
-                    if self.pre_guard():
-                        self.run_pre_mgmt()
-                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                # Learning phase
-                elif enum_equal(phase, PyLoihiProcessModel.Phase.LRN):
-                    # Enable via guard method
-                    if self.lrn_guard():
-                        self.run_lrn()
-                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                # Post-management phase
-                elif enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
-                    # Enable via guard method
-                    if self.post_guard():
-                        self.run_post_mgmt()
-                    self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
-                # Host phase - called at the last time step before STOP
-                elif enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
-                    pass
-                else:
-                    raise ValueError(f"Wrong Phase Info Received : {phase}")
+                try:
+                    # Spiking phase - increase time step
+                    if enum_equal(phase, PyLoihiProcessModel.Phase.SPK):
+                        self.current_ts += 1
+                        self.run_spk()
+                        self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Pre-management phase
+                    elif enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT):
+                        # Enable via guard method
+                        if self.pre_guard():
+                            self.run_pre_mgmt()
+                        self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Learning phase
+                    elif enum_equal(phase, PyLoihiProcessModel.Phase.LRN):
+                        # Enable via guard method
+                        if self.lrn_guard():
+                            self.run_lrn()
+                        self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Post-management phase
+                    elif enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                        # Enable via guard method
+                        if self.post_guard():
+                            self.run_post_mgmt()
+                        self.process_to_service_ack.send(MGMT_RESPONSE.DONE)
+                    # Host phase - called at the last time step before STOP
+                    elif enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                        pass
+                    else:
+                        raise ValueError(f"Wrong Phase Info Received : {phase}")
+                except Exception as inst:
+                    # Inform runtime service about termination
+                    self.process_to_service_ack.send(MGMT_RESPONSE.ERROR)
+                    self.join()
+                    raise inst
+
             elif action == 'req':
                 # Handle get/set Var requests from runtime service
                 self._handle_get_set_var()
