@@ -228,11 +228,19 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # ProcessModels respond with DONE if not HOST phase
                         if not enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST):
-                            rsps = self._get_pm_resp()
-                            for rsp in rsps:
+
+                            for rsp in self._get_pm_resp():
                                 if not enum_equal(rsp, MGMT_RESPONSE.DONE):
-                                    raise ValueError(
-                                        f"Wrong Response Received : {rsp}")
+                                    if enum_equal(rsp, MGMT_RESPONSE.ERROR):
+                                        # Forward error to runtime
+                                        self.service_to_runtime_ack.send(
+                                            MGMT_RESPONSE.ERROR)
+                                        # stop all other pm
+                                        self._send_pm_cmd(MGMT_COMMAND.STOP)
+                                        return
+                                    else:
+                                        raise ValueError(
+                                            f"Wrong Response Received : {rsp}")
 
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(
