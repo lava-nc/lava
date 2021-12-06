@@ -228,7 +228,22 @@ class Runtime:
                     for recv_port in self.service_to_runtime_ack:
                         data = recv_port.recv()
                         if not enum_equal(data, MGMT_RESPONSE.DONE):
-                            raise RuntimeError(f"Runtime Received {data}")
+                            if enum_equal(data, MGMT_RESPONSE.ERROR):
+                                # Receive all errors from the ProcessModels
+                                error_cnt = 0
+                                for actors in \
+                                        self._messaging_infrastructure.actors:
+                                    actors.join()
+                                    if actors.exception:
+                                        _, traceback = actors.exception
+                                        print(traceback)
+                                        error_cnt += 1
+
+                                raise RuntimeError(
+                                    f"{error_cnt} Exception(s) occurred. See "
+                                    f"output above for details.")
+                            else:
+                                raise RuntimeError(f"Runtime Received {data}")
                 if run_condition.blocking:
                     self.current_ts += self.num_steps
                     self._is_running = False
