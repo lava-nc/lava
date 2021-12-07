@@ -12,7 +12,7 @@
 #define PYTHON
 #include "ports.h"
 #include "methods.h"
-
+#include "names.h"
 typedef struct {
     //PyObject ob_base; 
     PyObject_HEAD
@@ -42,8 +42,8 @@ static PyMemberDef Custom_members[] = {
 
 static PyTypeObject CustomType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "custom.Custom",
-    .tp_doc = "Custom Lava Process object",
+    .tp_name = FULLNAME ,
+    .tp_doc = "Lava Process object",
     .tp_basicsize = sizeof(CustomObject),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
@@ -56,8 +56,8 @@ static PyTypeObject CustomType = {
 
 static PyModuleDef custommodule = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "custom",
-    .m_doc = "boring extension module with boring run function",
+    .m_name = CLASS ,
+    .m_doc = "extension module",
     .m_size = -1,
 };
 
@@ -73,7 +73,7 @@ PyInit_custom(void)
         return NULL;
 
     Py_INCREF(&CustomType);
-    if (PyModule_AddObject(m, "Custom", (PyObject *) &CustomType) < 0) {
+    if (PyModule_AddObject(m, CLASS , (PyObject *) &CustomType) < 0) {
         Py_DECREF(&CustomType);
         Py_DECREF(m);
         return NULL;
