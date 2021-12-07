@@ -147,6 +147,21 @@ def gen_methods_c(methods: ty.List[str]) -> str:
     )
 
 
+def gen_names_h(mod: str, cls: str):
+    return tw.dedent(
+        f"""
+        #ifndef _NAMES_H_
+        #define _NAMES_H_
+
+        #define CLASS "{cls}"
+        #define MODULE "{mod}"
+        #define FULLNAME "{mod}.{cls}"
+
+        #endif
+        """
+    )
+
+
 if __name__ == "__main__":
     methods = ["a", "b", "c"]
     ports = ["d", "e", "f"]
@@ -158,3 +173,5 @@ if __name__ == "__main__":
     print(gen_proto_h(methods))
     print("=====proto.c========")
     print(gen_proto_c(methods))
+    print("==========names.h======")
+    print(gen_names_h("Module", "class"))

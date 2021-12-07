@@ -42,6 +42,8 @@ class CProcessModelMeta(ABCMeta):
                 sources.append(path + "/run_phases.c")
             with open("methods.h", "w") as f:
                 f.write(generate.gen_methods_h(methods))
+            with open("names.h", "w") as f:
+                f.write(generate.gen_names_h("custom", "Custom"))
 
             def configuration(parent_package="", top_path=None):
                 config = Configuration("", parent_package, top_path)
@@ -62,7 +64,7 @@ class CProcessModelMeta(ABCMeta):
                     "no source files given for protocol methods - prototypes automatically generated in proto.c"
                 )
 
-            setup(
+            objects = setup(
                 configuration=configuration,
                 script_args=[
                     "clean",
@@ -95,3 +97,11 @@ class AbstractCProcessModel(metaclass=CProcessModelMeta):
     """
 
     source_files: ty.List[str] = None
+
+    @classmethod
+    def compile(cls: type) -> type:
+        """
+        will need to migrate compile away from metaclass because of the way that the class discovery mechanism works.
+        currently, it recompiles every time a derived class from the metaclass is imported from a module
+        """
+        return cls
