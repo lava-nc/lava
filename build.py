@@ -13,7 +13,7 @@ use_plugin('pypi:pybuilder_bandit')
 
 name = "lava-nc"
 default_task = ["analyze", "publish"]
-version = "0.1.0"
+version = "0.2.0"
 summary = "A Software Framework for Neuromorphic Computing"
 url = "https://lava-nc.org"
 license = ["BSD-3-Clause", "LGPL-2.1"]
@@ -22,7 +22,7 @@ license = ["BSD-3-Clause", "LGPL-2.1"]
 @init
 def set_properties(project):
     project.set_property("dir_source_main_python", "src")
-    project.set_property("dir_source_unittest_python", "tests")
+    project.set_property("dir_source_unittest_python", "tests/lava")
     project.set_property("dir_source_main_scripts", "scripts")
     project.set_property("dir_docs", "docs")
 
@@ -63,7 +63,7 @@ def set_properties(project):
 @init(environments="unit")
 def set_properties_unit(project):
     project.set_property("dir_source_main_python", "src")
-    project.set_property("dir_source_unittest_python", "tests")
+    project.set_property("dir_source_unittest_python", "tests/lava")
     project.set_property("dir_source_main_scripts", "scripts")
     project.set_property("dir_docs", "docs")
 
