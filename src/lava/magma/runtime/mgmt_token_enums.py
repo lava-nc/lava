@@ -65,5 +65,7 @@ class MGMT_RESPONSE:
     """Signfies Ack or Finished with the Command"""
     TERMINATED = enum_to_np(-1)
     """Signifies Termination"""
-    PAUSED = enum_to_np(-2)
+    ERROR = enum_to_np(-2)
+    """Signifies Error raised"""
+    PAUSED = enum_to_np(-3)
     """Signifies Execution State to be Paused"""

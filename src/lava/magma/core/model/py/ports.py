@@ -302,7 +302,9 @@ class PyVarPortVectorDense(PyVarPort):
         # Inspect incoming data
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             if self._csp_recv_port.probe():
-                cmd = enum_to_np(self._csp_recv_port.recv()[0])
+                # If received data is a matrix, flatten and take the first
+                # element as cmd
+                cmd = enum_to_np((self._csp_recv_port.recv()).flatten()[0])
 
                 # Set the value of the Var with the given data
                 if enum_equal(cmd, VarPortCmd.SET):
