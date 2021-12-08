@@ -7,7 +7,29 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
-class LIF(AbstractProcess):
+class AbstractLIF(AbstractProcess):
+    """Abstract class for variables common to all neurons with leaky
+    integrator dynamics."""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        shape = kwargs.get("shape", (1,))
+        du = kwargs.pop("du", 0)
+        dv = kwargs.pop("dv", 0)
+        bias = kwargs.pop("bias", 0)
+        bias_exp = kwargs.pop("bias_exp", 0)
+
+        self.shape = shape
+        self.a_in = InPort(shape=shape)
+        self.s_out = OutPort(shape=shape)
+        self.u = Var(shape=shape, init=0)
+        self.v = Var(shape=shape, init=0)
+        self.du = Var(shape=(1,), init=du)
+        self.dv = Var(shape=(1,), init=dv)
+        self.bias = Var(shape=shape, init=bias)
+        self.bias_exp = Var(shape=shape, init=bias_exp)
+
+
+class LIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process.
 
     LIF dynamics abstracts to:
@@ -28,20 +50,39 @@ class LIF(AbstractProcess):
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        shape = kwargs.get("shape", (1,))
-        du = kwargs.pop("du", 0)
-        dv = kwargs.pop("dv", 0)
-        bias = kwargs.pop("bias", 0)
-        bias_exp = kwargs.pop("bias_exp", 0)
         vth = kwargs.pop("vth", 10)
 
-        self.shape = shape
-        self.a_in = InPort(shape=shape)
-        self.s_out = OutPort(shape=shape)
-        self.u = Var(shape=shape, init=0)
-        self.v = Var(shape=shape, init=0)
-        self.du = Var(shape=(1,), init=du)
-        self.dv = Var(shape=(1,), init=dv)
-        self.bias = Var(shape=shape, init=bias)
-        self.bias_exp = Var(shape=shape, init=bias_exp)
         self.vth = Var(shape=(1,), init=vth)
+
+
+class TernaryLIF(AbstractLIF):
+    """Leaky-Integrate-and-Fire (LIF) neural Process with *ternary* spiking
+    output, i.e., +1, 0, and -1 spikes. When the voltage of a T-LIF neuron
+    exceeds its upper threshold (UTh), it issues a positive spike and when
+    the voltage drops below its lower threshold (LTh), it issues a negative
+    spike. Between the two thresholds, the neuron follows leaky linear
+    dynamics.
+
+    This class inherits the state variables and ports from LIF and adds two
+    new threshold variables for upper and lower thresholds.
+
+    Parameters
+    ----------
+    vth_hi: Upper threshold voltage, exceeding which the neuron spikes +1
+    vth_lo: Lower threshold voltage, below which the neuron spikes -1
+
+    See Also
+    --------
+    lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        vth_hi = kwargs.pop("vth_hi", 10)
+        vth_lo = kwargs.pop("vth_lo", -10)
+        if vth_lo > vth_hi:
+            raise AssertionError(f"Lower threshold {vth_lo} is larger than the "
+                                 f"upper threshold {vth_hi} for Ternary LIF "
+                                 f"neurons. Consider switching the values.")
+        self.vth_hi = Var(shape=(1,), init=vth_hi)
+        self.vth_lo = Var(shape=(1,), init=vth_lo)

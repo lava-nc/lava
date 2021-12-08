@@ -15,7 +15,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF
+from lava.proc.lif.process import LIF, TernaryLIF
 
 
 class LifRunConfig(RunConfig):
@@ -382,6 +382,327 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         # which would be all Loihi-bit-accurate values right shifted by 6 bits
         expected_float_v = [128, 192, 224, 240, 248, 252, 254, 255]
         lif_v_float = np.right_shift(np.array(lif_v), 6)
-        lif_v_float[1:] += 1
+        lif_v_float[1:] += 1  # This compensates the drift caused by dsOffset
+        self.assertListEqual(expected_v_timeseries, lif_v)
+        self.assertListEqual(expected_float_v, lif_v_float.tolist())
+
+
+class TestTLIFProcessModelsFloat(unittest.TestCase):
+    """Tests for ternary LIF floating point neuron model"""
+    def test_float_pm_neg_no_decay_1(self):
+        """Tests floating point ternary LIF model with negative bias
+        driving a neuron without any decay of current and voltage states."""
+        shape = (10,)
+        num_steps = 30
+        # Set up external input to 0
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=np.zeros(shape, dtype=float),
+                             send_at_times=np.ones((num_steps,), dtype=bool))
+        # Set up bias = 1 * 2**1 = 2. and threshold = 4.
+        # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
+        tlif = TernaryLIF(shape=shape, du=0., dv=0.,
+                          bias=(-1) * np.ones(shape, dtype=float),
+                          bias_exp=np.ones(shape, dtype=float),
+                          vth_lo=-7., vth_hi=5.)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        tlif.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        tlif.stop()
+        # Gold standard for the test
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[3:30:4, :] = -1.
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+
+    def test_float_pm_neg_no_decay_2(self):
+        """Tests +1 and -1 spike responses of a floating point ternary LIF
+        model driven by alternating spiking inputs. No current or voltage
+        decay, no bias."""
+        shape = (10,)
+        num_steps = 11
+        pos_idx = np.hstack((np.arange(3), np.arange(9, 11)))
+        send_steps_pos = np.zeros((num_steps,), dtype=bool)
+        send_steps_pos[pos_idx] = True
+        send_steps_neg = (1 - send_steps_pos).astype(bool)
+        # Set up external input to 0
+        sps_pos = VecSendProcess(shape=shape, num_steps=num_steps,
+                                 vec_to_send=np.ones(shape, dtype=float),
+                                 send_at_times=send_steps_pos)
+        sps_neg = VecSendProcess(shape=shape, num_steps=num_steps,
+                                 vec_to_send=(-1) * np.ones(shape, dtype=float),
+                                 send_at_times=send_steps_neg)
+        # Set up bias = 1 * 2**1 = 2. and threshold = 4.
+        # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
+        tlif = TernaryLIF(shape=shape, du=0., dv=0.,
+                          bias=np.zeros(shape, dtype=float),
+                          bias_exp=np.ones(shape, dtype=float),
+                          vth_lo=-3., vth_hi=5.)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps_pos.s_out.connect(tlif.a_in)
+        sps_neg.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        tlif.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        tlif.stop()
+        # Gold standard for the test
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[2, :] = 1.
+        expected_spk_data[(8, 10), :] = -1.
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+
+    def test_float_pm_neg_impulse_du(self):
+        """Tests the impulse response of the floating point ternary LIF
+        neuron model with current decay but without voltage decay"""
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of -128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(-2 ** 7) * np.ones(shape,
+                                                             dtype=float),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no voltage decay. Current decay = 0.5
+        # Set up threshold high, such that there are no output spikes
+        tlif = TernaryLIF(shape=shape,
+                          du=0.5, dv=0,
+                          bias=np.zeros(shape, dtype=float),
+                          bias_exp=np.ones(shape, dtype=float),
+                          vth_lo=-256., vth_hi=2)
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        lif_u = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            tlif.run(condition=rcnd, run_cfg=rcfg)
+            lif_u.append(tlif.u.get()[0])
+        tlif.stop()
+        # Gold standard for testing: current decay of 0.5 should halve the
+        # current every time-step
+        expected_u_timeseries = [-2. ** (7 - j) for j in range(8)]
+        self.assertListEqual(expected_u_timeseries, lif_u)
+
+    def test_float_pm_neg_impulse_dv(self):
+        """Tests the impulse response of the floating point ternary LIF
+        neuron model with voltage decay but without current decay"""
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of -128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(-2 ** 7) * np.ones(shape,
+                                                             dtype=float),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no current decay. Voltage decay = 0.5
+        # Set up threshold high, such that there are no output spikes
+        tlif = TernaryLIF(shape=shape,
+                          du=0, dv=0.5,
+                          bias=np.zeros(shape, dtype=float),
+                          bias_exp=np.ones(shape, dtype=float),
+                          vth_lo=-256., vth_hi=2.)
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        lif_v = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            tlif.run(condition=rcnd, run_cfg=rcfg)
+            lif_v.append(tlif.v.get()[0])
+        tlif.stop()
+        # Gold standard for testing: voltage decay of 0.5 should integrate
+        # the voltage from -128. to -255., with steps of -64., -32., -16., etc.
+        expected_v_timeseries = [-128., -192., -224., -240., -248., -252.,
+                                 -254., -255.]
+        self.assertListEqual(expected_v_timeseries, lif_v)
+
+
+class TestTLIFProcessModelsFixed(unittest.TestCase):
+    """Tests for ternary LIF fixed point neuron model"""
+    def test_fixed_pm_neg_no_decay_1(self):
+        """Tests fixed point ProcessModel for ternary LIF neurons without any
+        current or voltage decay, solely driven by (negative) bias"""
+        shape = (5,)
+        num_steps = 10
+        # Set up external input to 0
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=np.zeros(shape, dtype=np.int16),
+                             send_at_times=np.ones((num_steps,), dtype=bool))
+        # Set up bias = 2 * 2**6 = 128 and threshold = 8<<6
+        # du and dv = 0 => bias driven neurons spike at every 4th time-step.
+        tlif = TernaryLIF(shape=shape,
+                          du=0, dv=0,
+                          bias=(-2) * np.ones(shape, dtype=np.int32),
+                          bias_exp=6 * np.ones(shape, dtype=np.int32),
+                          vth_lo=(-8), vth_hi=2)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='fixed_pt')
+        tlif.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        tlif.stop()
+        # Gold standard for the test
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[3:10:4, :] = -1
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+
+    def test_fixed_pm_neg_no_decay_2(self):
+        """Tests fixed point ProcessModel for ternary LIF neurons without any
+        current or voltage decay, driven by positive and negative spikes and
+        no bias."""
+        shape = (10,)
+        num_steps = 11
+        pos_idx = np.hstack((np.arange(3), np.arange(9, 11)))
+        send_steps_pos = np.zeros((num_steps,), dtype=bool)
+        send_steps_pos[pos_idx] = True
+        send_steps_neg = (1 - send_steps_pos).astype(bool)
+        # Set up external input to 0
+        sps_pos = VecSendProcess(shape=shape, num_steps=num_steps,
+                                 vec_to_send=np.ones(shape, dtype=np.int32),
+                                 send_at_times=send_steps_pos)
+        sps_neg = VecSendProcess(shape=shape, num_steps=num_steps,
+                                 vec_to_send=(-1) * np.ones(shape,
+                                                            dtype=np.int32),
+                                 send_at_times=send_steps_neg)
+        # Set up bias = 1 * 2**1 = 2. and threshold = 4.
+        # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
+        tlif = TernaryLIF(shape=shape, du=0, dv=0,
+                          bias=np.zeros(shape, dtype=np.int32),
+                          bias_exp=np.ones(shape, dtype=np.int32),
+                          vth_lo=-3, vth_hi=5)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps_pos.s_out.connect(tlif.a_in)
+        sps_neg.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='fixed_pt')
+        tlif.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        tlif.stop()
+        # Gold standard for the test
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[2, :] = 1.
+        expected_spk_data[(8, 10), :] = -1.
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+
+    def test_fixed_pm_neg_impulse_du(self):
+        """Tests the impulse response of the fixed point ternary LIF neuron
+        model with no voltage decay"""
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of 128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(-128) * np.ones(shape,
+                                                          dtype=np.int32),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no voltage decay. Current decay is a 12-bit
+        # unsigned variable in Loihi hardware. Therefore, du = 2047 is
+        # equivalent to (1/2) * (2**12) - 1. The subtracted 1 is added by
+        # default in the hardware, via a setting ds_offset, thereby finally
+        # giving du = 2048 = 0.5 * 2**12
+        # Set up threshold high, such that there are no output spikes. By
+        # default the threshold value here is left-shifted by 6.
+        tlif = TernaryLIF(shape=shape,
+                          du=2047, dv=0,
+                          bias=np.zeros(shape, dtype=np.int16),
+                          bias_exp=np.ones(shape, dtype=np.int16),
+                          vth_lo=(-256) * np.ones(shape, dtype=np.int32),
+                          vth_hi=2 * np.ones(shape, dtype=np.int32))
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='fixed_pt')
+        lif_u = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            tlif.run(condition=rcnd, run_cfg=rcfg)
+            lif_u.append(tlif.u.get().astype(np.int32)[0])
+        tlif.stop()
+        # Gold standard for testing: current decay of 0.5 should halve the
+        # current every time-step.
+        expected_u_timeseries = [(-1) << (13 - j) for j in range(8)]
+        # Gold standard for floating point equivalent of the current,
+        # which would be all Loihi-bit-accurate values right shifted by 6 bits
+        expected_float_u = [(-1) << (7 - j) for j in range(8)]
+        self.assertListEqual(expected_u_timeseries, lif_u)
+        self.assertListEqual(expected_float_u, np.right_shift(np.array(
+            lif_u), 6).tolist())
+
+    def test_fixed_pm_neg_impulse_dv(self):
+        """Tests the impulse response of the fixed point ternary LIF neuron
+        model with no current decay"""
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of 128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(-128) * np.ones(shape,
+                                                          dtype=np.int32),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no current decay. Voltage decay is a 12-bit
+        # unsigned variable in Loihi hardware. Therefore, dv = 2048 is
+        # equivalent to (1/2) * (2**12).
+        # Set up threshold high, such that there are no output spikes.
+        # Threshold provided here is left-shifted by 6-bits.
+        tlif = TernaryLIF(shape=shape,
+                          du=0, dv=2048,
+                          bias=np.zeros(shape, dtype=np.int16),
+                          bias_exp=np.ones(shape, dtype=np.int16),
+                          vth_lo=(-256) * np.ones(shape, dtype=np.int32),
+                          vth_hi=2 * np.ones(shape, dtype=np.int32))
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(tlif.a_in)
+        tlif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='fixed_pt')
+        lif_v = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            tlif.run(condition=rcnd, run_cfg=rcfg)
+            lif_v.append(tlif.v.get().astype(np.int32)[0])
+        tlif.stop()
+        # Gold standard for testing: with a voltage decay of 2048, voltage
+        # should integrate from 128<<6 to 255<<6. But it is slightly smaller,
+        # because current decay is not exactly 0. Due to the default
+        # ds_offset = 1 setting in the hardware, current decay = 1. So
+        # voltage is slightly smaller than 128<<6 to 255<<6.
+        expected_v_timeseries = [-8192, -12286, -14331, -15351, -15859, -16111,
+                                 -16235, -16295]
+        # Gold standard for floating point equivalent of the voltage,
+        # which would be all Loihi-bit-accurate values right shifted by 6 bits
+        expected_float_v = [-128, -192, -224, -240, -248, -252, -254, -255]
+        lif_v_float = np.right_shift(np.array(lif_v), 6)
         self.assertListEqual(expected_v_timeseries, lif_v)
         self.assertListEqual(expected_float_v, lif_v_float.tolist())
