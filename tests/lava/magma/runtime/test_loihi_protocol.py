@@ -51,9 +51,6 @@ class SimpleProcessModel(PyLoihiProcessModel):
     def lrn_guard(self):
         return False
 
-    def host_guard(self):
-        return True
-
 
 class TestProcess(unittest.TestCase):
     def test_synchronization_single_process_model(self):
