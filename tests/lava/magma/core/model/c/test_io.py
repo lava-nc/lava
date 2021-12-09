@@ -3,24 +3,28 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import os, sys
+import os
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 
-from .mockports import MockDataPort, MockServicePort
+import mockports
 
 
 class Test_io(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        # os.chdir(os.path.dirname(os.path.abspath(__file__)))
         return super().setUpClass()
 
     def test_io(self):
         class IOPM(AbstractCProcessModel):
-            service_to_process_cmd: MockServicePort = MockServicePort()
-            port: MockDataPort = MockDataPort()
-            source_files = ["test_io.c"]
+            service_to_process_cmd: mockports.MockServicePort = (
+                mockports.MockServicePort()
+            )
+            port: mockports.MockDataPort = mockports.MockDataPort()
+            source_files = [
+                os.path.dirname(os.path.abspath(__file__)) + "test_io.c"
+            ]
 
         pm = IOPM()
         pm.run()

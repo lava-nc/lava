@@ -7,19 +7,24 @@ import os, sys
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 
-from .mockports import MockServicePort
+import mockports
 
 
 class Test_run(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        # os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        # sys.path.append(os.getcwd())
         return super().setUpClass()
 
     def test_run(self):
         class RunPM(AbstractCProcessModel):
-            service_to_process_cmd: MockServicePort = MockServicePort(10)
-            source_files = ["test_run.c"]
+            service_to_process_cmd: mockports.MockServicePort = (
+                mockports.MockServicePort(10)
+            )
+            source_files = [
+                os.path.dirname(os.path.abspath(__file__)) + "/test_run.c"
+            ]
 
         pm = RunPM()
         pm.run()
