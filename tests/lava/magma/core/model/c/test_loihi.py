@@ -10,8 +10,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.decorator import implements
 
-sys.path.append(os.getcwd())
-from mockports import MockNpServicePort
+from .mockports import MockNpServicePort
 
 
 @implements(protocol=LoihiProtocol)

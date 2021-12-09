@@ -7,8 +7,7 @@ import os, sys
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 
-sys.path.append(os.getcwd())
-from mockports import MockDataPort, MockServicePort
+from .mockports import MockDataPort, MockServicePort
 
 
 class Test_io(unittest.TestCase):
