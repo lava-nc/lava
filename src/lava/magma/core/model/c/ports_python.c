@@ -1,3 +1,9 @@
+/* 
+ * Copyright (C) 2021 Intel Corporation
+ * SPDX-License-Identifier: BSD-3-Clause
+ * See: https://spdx.org/licenses/
+ */
+
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
