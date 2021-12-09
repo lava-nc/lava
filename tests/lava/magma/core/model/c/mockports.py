@@ -15,6 +15,17 @@ class MockServicePort:
         self.phase = (self.phase + 1) % self.phases
         return self.phase
 
+    def peek(self) -> int:
+        return 1
+
+    def send(self, msg) -> int:
+        return 1
+
+
+class MockNpServicePort(MockServicePort):
+    def recv(self) -> int:
+        return np.array([super().recv()])
+
 
 class MockDataPort:
     sent = None

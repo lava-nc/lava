@@ -33,11 +33,5 @@ int run_host_mgmt(){
 }
 
 int run_spk(){
-    Port* p_in = get_port("s_in");
-    Port* p_out = get_port("a_out");
-    void** data;
-    recv(p_in,data);
-    send(p_out,*data,1);
-    flush(p_out);
     return 0;
 }
