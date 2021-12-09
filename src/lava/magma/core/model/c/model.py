@@ -11,7 +11,7 @@ from importlib import import_module, invalidate_caches
 
 import typing as ty
 import types
-import os
+import os, sys
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.c import generate
@@ -80,7 +80,8 @@ class CProcessModelMeta(ABCMeta):
                 ],
             )
             invalidate_caches()
-            module = import_module(".custom")
+            sys.path.append(os.getcwd())
+            module = import_module("custom")
             # from custom import Custom
             bases = (module.Custom,) + bases
             if AbstractPyProcessModel not in bases:

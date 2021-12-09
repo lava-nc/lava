@@ -3,14 +3,15 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import os
+import os, sys
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.decorator import implements
 
-from .mockports import MockNpServicePort
+sys.path.append(os.getcwd())
+from mockports import MockNpServicePort
 
 
 @implements(protocol=LoihiProtocol)

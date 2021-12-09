@@ -3,11 +3,12 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import os
+import os, sys
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 
-from .mockports import MockDataPort, MockServicePort
+sys.path.append(os.getcwd())
+from mockports import MockDataPort, MockServicePort
 
 
 class Test_io(unittest.TestCase):
