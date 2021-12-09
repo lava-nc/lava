@@ -1,6 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier:  BSD-3-Clause
-from abc import ABC, abstractmethod, abstractproperty, ABCMeta
+from abc import ABCMeta
 
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration, get_info
@@ -10,7 +10,6 @@ from importlib import import_module, invalidate_caches
 import typing as ty
 import types
 import os
-from lava.magma.core.model.interfaces import AbstractPortImplementation
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.c import generate
@@ -21,7 +20,9 @@ AbstractCProcessModel = None
 class CProcessModelMeta(ABCMeta):
     """
     Self-building python extention class type
-    Compiles the sources specified in the class definition and then generates a type that includes the custom module in its base classes
+    Compiles the sources specified in the class definition
+    and then generates a type that includes the custom module
+    in its base classes
     """
 
     def __new__(cls, name, bases, attrs):
@@ -54,17 +55,18 @@ class CProcessModelMeta(ABCMeta):
                 )
                 return config
 
-            with open(f"proto.h", "w") as f:
+            with open("proto.h", "w") as f:
                 f.write(generate.gen_proto_h(methods))
 
             if not attrs["source_files"]:
-                with open(f"proto.c", "w") as f:
+                with open("proto.c", "w") as f:
                     f.write(generate.gen_proto_c(methods))
                 raise Exception(
-                    "no source files given for protocol methods - prototypes automatically generated in proto.c"
+                    "no source files given for protocol methods"
+                    " - prototypes automatically generated in proto.c"
                 )
 
-            objects = setup(
+            setup(
                 configuration=configuration,
                 script_args=[
                     "clean",
@@ -101,7 +103,9 @@ class AbstractCProcessModel(metaclass=CProcessModelMeta):
     @classmethod
     def compile(cls: type) -> type:
         """
-        will need to migrate compile away from metaclass because of the way that the class discovery mechanism works.
-        currently, it recompiles every time a derived class from the metaclass is imported from a module
+        will need to migrate compile away from metaclass because
+        of the way that the class discovery mechanism works.
+        currently, it recompiles every time a derived class from
+        the metaclass is imported from a module
         """
         return cls

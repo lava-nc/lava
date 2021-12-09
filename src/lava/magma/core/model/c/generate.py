@@ -68,7 +68,13 @@ def gen_methods(names: ty.List[str]):
 
 def gen_entry(name: str = "MyFunc"):
     return tw.dedent(
-        f"""{{"{name}",(PyCFunction)Custom_{name},METH_NOARGS,"no description"}}"""
+        f"""
+        {{
+            "{name}",
+            (PyCFunction)Custom_{name},
+            METH_NOARGS,"no description"
+        }}
+        """
     )
 
 
@@ -113,7 +119,8 @@ def gen_ports_load(names: ty.List[str]):
 
 def gen_init(ports: ty.List[str]) -> str:
     return (
-        "int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored)){\n"
+        "int Custom_init(CustomObject* self,PyObject* args,"
+        + "PyObject* Py_UNUSED(ignored)){\n"
         + tw.indent(gen_ports_load(ports), "    ")
         + "\n    return 0;\n}\n"
     )
@@ -123,7 +130,6 @@ def gen_methods_h(methods: ty.List[str]) -> str:
     return (
         "#ifndef _METHODS_H\n"
         + "#define _METHODS_H\n"
-        # "int Custom_init(CustomObject* self,PyObject* args,PyObject* Py_UNUSED(ignored));\n"
         + gen_method_decls(methods)
         + gen_method_def(methods)
         + "#endif\n"
