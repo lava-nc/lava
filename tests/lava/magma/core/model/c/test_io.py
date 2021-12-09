@@ -7,7 +7,7 @@ import os
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 
-from mockports import MockDataPort, MockServicePort
+from .mockports import MockDataPort, MockServicePort
 
 
 class Test_io(unittest.TestCase):
