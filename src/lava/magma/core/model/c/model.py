@@ -80,7 +80,7 @@ class CProcessModelMeta(ABCMeta):
                 ],
             )
             invalidate_caches()
-            module = import_module("custom")
+            module = import_module(".custom")
             # from custom import Custom
             bases = (module.Custom,) + bases
             if AbstractPyProcessModel not in bases:
