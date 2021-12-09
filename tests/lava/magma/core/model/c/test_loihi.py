@@ -11,7 +11,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.decorator import implements
 
-import mockports
+from . import mockports
 
 
 @implements(protocol=LoihiProtocol)
