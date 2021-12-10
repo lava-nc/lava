@@ -22,10 +22,30 @@ AbstractCProcessModel = None
 
 class CProcessModelMeta(ABCMeta):
     """
+    Overview:
+
     Self-building python extention class type
     Compiles the sources specified in the class definition
     and then generates a type that includes the custom module
-    in its base classes
+    in its base classes.
+
+    Run function:
+
+    If no protocol is specified, creates a "run" function that is exposed
+    to the python object, which is implemented as a loop that recieves the
+    phase from a port named "service_to_process_cmd" and then calls the
+    user-defined "run" function with the runState structure. See "run_phase.c".
+
+    Protocols:
+
+    If a protocol is specified, it will assume that there is a "run" function
+    implemented in the python class, and exposes the phase functions for the
+    run function call. To find the protocol, scans the type heirarchy for
+    a protocol, then extracts the method names, and generates a templace
+    C code for the user if no code is provided. If code is provided,
+    generates a python extension object with pass-through function
+    objects that will be called by the protocol, and passed to the user
+    code.
     """
 
     def __new__(cls, name, bases, attrs):
@@ -91,25 +111,14 @@ class CProcessModelMeta(ABCMeta):
 
 
 class AbstractCProcessModel(metaclass=CProcessModelMeta):
-    """Abstract interface for a C ProcessModels.
+    """
+    To create a process model with behavior in C, inherit from this type and
+    provide the source files as an attribute.
 
-    Example for how variables and ports might be initialized:
-        a_in:  LavaCType(CInPort, 'short', precision=16)
-        s_out: LavaCType(COutPort, 'short', precision=1)
-        u:     LavaCType(array, 'signed long int', precision=24)
-        v:     LavaCType(array, 'signed long int, precision=24)
-        bias:  LavaCType(array, 'signed short int', precision=12)
-        du:    LavaCType(scalar, 'short int', precision=12)
+    See the documentation on
+    CProcessModelMeta for details about compiling and class creation.
+
+    For examples, see: tests/lava/magma/core/model/c/test.py
     """
 
     source_files: ty.List[str] = None
-
-    @classmethod
-    def compile(cls: type) -> type:
-        """
-        will need to migrate compile away from metaclass because
-        of the way that the class discovery mechanism works.
-        currently, it recompiles every time a derived class from
-        the metaclass is imported from a module
-        """
-        return cls
