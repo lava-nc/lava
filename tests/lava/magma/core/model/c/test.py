@@ -23,6 +23,12 @@ class Test(unittest.TestCase):
 
     @unittest.skip("avoid problems with parallel compile")
     def test_run(self):
+        """
+        Tests a basic run function without use of the API.
+        The CProcessModel metaclass generates source to call
+        the user-defined "run" function with the runState structure
+        """
+
         class RunPM(AbstractCProcessModel):
             service_to_process_cmd: mockports.MockServicePort = (
                 mockports.MockServicePort(10)
@@ -37,6 +43,15 @@ class Test(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.startswith("darwin"), "run this on mac")
     def test_io(self):
+        """
+        Tests use of the ports API using a dummy port object
+        defined in the python class.
+        Peeks at port until ready to read. Then recieves a numpy array
+        from the data port. Then converts it to a C-style array
+        and saves the pointer. Then probes until availble to send.
+        Then converts c pointer to numpy array object and sends.
+        """
+
         class IOPM(AbstractCProcessModel):
             service_to_process_cmd: mockports.MockServicePort = (
                 mockports.MockServicePort()
@@ -54,6 +69,14 @@ class Test(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.startswith("linux"), "run this on linux")
     def test_loihi(self):
+        """
+        Test/demo of a user-defined behavior in C code following a protocol definition.
+        THe CProcessModel metaclass scans the type heirarchy for a protocol, then extracts
+        the method names, and generates a templace C code for the user if no code is provided.
+        If code is provided, generates a python extension object with pass-through function
+        objects that will be called by the protocol, and passed to the user code.
+        """
+
         @implements(protocol=LoihiProtocol)
         class PyLoihiDummy(PyLoihiProcessModel):
             service_to_process_cmd: mockports.MockNpServicePort = (
