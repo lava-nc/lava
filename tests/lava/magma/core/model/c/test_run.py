@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import os, sys
+import os
 
 from lava.magma.core.model.c.model import AbstractCProcessModel
 

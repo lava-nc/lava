@@ -11,7 +11,8 @@ from importlib import import_module, invalidate_caches
 
 import typing as ty
 import types
-import os, sys
+import os
+import sys
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.c import generate
