@@ -70,11 +70,13 @@ class Test(unittest.TestCase):
     @unittest.skipUnless(sys.platform.startswith("linux"), "run this on linux")
     def test_loihi(self):
         """
-        Test/demo of a user-defined behavior in C code following a protocol definition.
-        THe CProcessModel metaclass scans the type heirarchy for a protocol, then extracts
-        the method names, and generates a templace C code for the user if no code is provided.
-        If code is provided, generates a python extension object with pass-through function
-        objects that will be called by the protocol, and passed to the user code.
+        Test/demo of a user-defined behavior in C code following a protocol
+        definition. THe CProcessModel metaclass scans the type heirarchy for
+        a protocol, then extracts the method names, and generates a templace
+        C code for the user if no code is provided. If code is provided,
+        generates a python extension object with pass-through function
+        objects that will be called by the protocol, and passed to the user
+        code.
         """
 
         @implements(protocol=LoihiProtocol)
