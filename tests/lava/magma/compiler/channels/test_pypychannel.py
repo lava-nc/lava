@@ -21,7 +21,7 @@ def get_channel(smm, msg, size, name="test_channel") -> PyPyChannel:
         dst_name=name,
         shape=msg.shape,
         dtype=msg.dtype,
-        size=size+3
+        size=size + 3
     )
     return channel
 
