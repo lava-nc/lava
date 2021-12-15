@@ -57,10 +57,10 @@ class TestChannelBuilder(unittest.TestCase):
 
             expected_data = np.array([[1, 2]])
             message = PyPortMessage(
-                    PortMessageFormat.VECTOR_DENSE,
-                    expected_data.size,
-                    expected_data
-                )
+                PortMessageFormat.VECTOR_DENSE,
+                expected_data.size,
+                expected_data
+            )
             channel.src_port.send(message=message)
             data = channel.dst_port.recv()
             assert np.array_equal(data[2], expected_data)

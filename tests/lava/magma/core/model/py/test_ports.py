@@ -57,7 +57,7 @@ class PortCombos:
                 5, 5, density=0.05, random_state=1, format='csr'),
             "ScalarDense": np.ones((1, 4)),
             "ScalarSparse": sparse.random(
-                    5, 0, density=0.05, random_state=1, format='csr')
+                5, 0, density=0.05, random_state=1, format='csr')
         }
 
 
@@ -181,9 +181,9 @@ class TestPyPorts(unittest.TestCase):
 
             data = np.ones((4, 4))
             msg = PyPortMessage(
-                    PortMessageFormat.VECTOR_DENSE,
-                    data.size,
-                    data
+                PortMessageFormat.VECTOR_DENSE,
+                data.size,
+                data
             )
 
             channel_1 = get_channel(smm, msg, msg.num_elements)

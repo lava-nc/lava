@@ -114,9 +114,9 @@ def source(shape, port):
         for j in range(2):
             msg[i][j] = 1
             message = PyPortMessage(
-                    PortMessageFormat.VECTOR_DENSE,
-                    msg.size,
-                    msg
+                PortMessageFormat.VECTOR_DENSE,
+                msg.size,
+                msg
             )
             port.send(message)
 
@@ -142,9 +142,9 @@ def buffer(shape, recv_port, send_port):
             assert msg.shape == shape
             msg[i][j] += 1
             message = PyPortMessage(
-                    PortMessageFormat.VECTOR_DENSE,
-                    msg.size,
-                    msg
+                PortMessageFormat.VECTOR_DENSE,
+                msg.size,
+                msg
             )
             send_port.send(message)
 
