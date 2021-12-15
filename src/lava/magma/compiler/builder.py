@@ -373,7 +373,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 csp_ports = self.csp_ports[name]
                 if not isinstance(csp_ports, list):
                     csp_ports = [csp_ports]
-            port = port_cls(csp_ports, pm, p.shape, lt.d_type)
+            port = port_cls(pm, csp_ports, p.shape, lt.d_type)
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)

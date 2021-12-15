@@ -4,6 +4,13 @@
 import numpy as np
 import typing as ty
 
+from lava.magma.core.model.interfaces import AbstractPortMessage, \
+    PortMessageFormat
+
+
+class PortMessage(AbstractPortMessage):
+    pass
+
 
 def enum_to_np(value: ty.Union[int, float],
                d_type: type = np.int32) -> np.array:
@@ -31,6 +38,28 @@ def enum_equal(a: np.array, b: np.array) -> bool:
     return a[0] == b[0]
 
 
+def enum_to_message(value: ty.Union[int, float],
+                    d_type: type = np.int32,
+                    msg_fmt: PortMessageFormat
+                    = PortMessageFormat.MGMT) -> PortMessage:
+    """Helper function to convert an int (or EnumInt) to a
+    AbstractPortMessage to pass it via the message passing framework
+    Parameters
+    ----------
+    value : int
+        value to be converted to AbstractPortMessage
+    Returns
+    -------
+    AbstractPortMessage
+    """
+    data = np.array([value], dtype=d_type)
+    return PortMessage(
+        msg_fmt,
+        data.size,
+        data
+    )
+
+
 class MGMT_COMMAND:
     """
     Signifies the Mgmt Command being sent between two actors. These may be
@@ -38,12 +67,12 @@ class MGMT_COMMAND:
     and process model.
     """
 
-    RUN = enum_to_np(0)
+    RUN = enum_to_message(0)
     """Signifies a RUN command for 0 timesteps from one actor to another. Any
     non negative integer signifies a run command"""
-    STOP = enum_to_np(-1)
+    STOP = enum_to_message(-1)
     """Signifies a STOP command from one actor to another"""
-    PAUSE = enum_to_np(-2)
+    PAUSE = enum_to_message(-2)
     """Signifies a PAUSE command from one actor to another"""
 
 
@@ -51,9 +80,9 @@ class REQ_TYPE:
     """
     Signifies type of request
     """
-    GET = enum_to_np(0)
+    GET = enum_to_message(0)
     """Read a variable"""
-    SET = enum_to_np(1)
+    SET = enum_to_message(1)
     """Write to a variable"""
 
 
@@ -61,11 +90,11 @@ class MGMT_RESPONSE:
     """Signifies the response to a Mgmt command. This response can be sent
     by any actor upon receiving a Mgmt command"""
 
-    DONE = enum_to_np(0)
+    DONE = enum_to_message(0)
     """Signfies Ack or Finished with the Command"""
-    TERMINATED = enum_to_np(-1)
+    TERMINATED = enum_to_message(-1)
     """Signifies Termination"""
-    ERROR = enum_to_np(-2)
+    ERROR = enum_to_message(-2)
     """Signifies Error raised"""
-    PAUSED = enum_to_np(-3)
+    PAUSED = enum_to_message(-3)
     """Signifies Execution State to be Paused"""

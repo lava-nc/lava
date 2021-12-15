@@ -15,6 +15,8 @@ from lava.magma.compiler.channels.pypychannel import (
     CspSendPort,
     CspRecvPort,
 )
+from lava.magma.core.model.interfaces import PortMessageFormat
+from lava.magma.core.model.py.ports import PyPortMessage
 
 
 class MockMessageInterface:
@@ -33,7 +35,7 @@ class TestChannelBuilder(unittest.TestCase):
         smm: SharedMemoryManager = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
-                name="mock", shape=(1, 2), d_type=np.int32,
+                name="mock", shape=(3,), d_type=object,
                 port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
                 channel_type=ChannelType.PyPy,
@@ -54,9 +56,14 @@ class TestChannelBuilder(unittest.TestCase):
             channel.dst_port.start()
 
             expected_data = np.array([[1, 2]])
-            channel.src_port.send(data=expected_data)
+            message = PyPortMessage(
+                    PortMessageFormat.VECTOR_DENSE,
+                    expected_data.size,
+                    expected_data
+                )
+            channel.src_port.send(message=message)
             data = channel.dst_port.recv()
-            assert np.array_equal(data, expected_data)
+            assert np.array_equal(data[2], expected_data)
 
             channel.src_port.join()
             channel.dst_port.join()
