@@ -75,7 +75,7 @@ class AbstractPortImplementation(ABC):
         process_model: "AbstractProcessModel" = None,  # noqa: F821
         shape: ty.Tuple[int, ...] = tuple(),
         d_type: type = int,
-        shared_mem_name: ty.Str = ""
+        shared_mem_name: str = ""
     ):
         self._process_model = process_model
         self._shared_mem_name = shared_mem_name
