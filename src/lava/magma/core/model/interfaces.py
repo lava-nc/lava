@@ -27,7 +27,7 @@ class AbstractPortMessage(ABC):
                  format: ty.Union[int, 'PortMessageFormat'],
                  num_elem: ty.Type[int],
                  data: ty.Union[int, np.ndarray, np.array],
-                 shm_buf_name: ty.Str = "") -> np.ndarray:
+                 shm_buf_name: str = "") -> np.ndarray:
         if isinstance(format, PortMessageFormat):
             format_value = format.value
         elif isinstance(format, int):
