@@ -6,14 +6,14 @@ import numpy as np
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import OutPort, RefPort
+from lava.magma.core.process.ports.ports import OutPort
 
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyOutPort, PyRefPort
+from lava.magma.core.model.py.ports import PyOutPort
 
 
 # Ring Buffer #################################################################
