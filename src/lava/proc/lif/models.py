@@ -147,7 +147,6 @@ class PyLifModelBitAcc(PyLoihiProcessModel):
 
         # Spike when exceeds threshold
         # ----------------------------
-        # s_out = self.v >= self.effective_vth
         s_out = self.v > self.effective_vth
         # Reset voltage of spiked neurons to 0
         self.v[s_out] = 0

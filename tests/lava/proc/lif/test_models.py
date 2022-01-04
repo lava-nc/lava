@@ -286,7 +286,6 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         lif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        # expected_spk_data[3:10:4, :] = 1
         expected_spk_data[4:10:5, :] = 1
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
