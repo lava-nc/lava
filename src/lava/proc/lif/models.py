@@ -127,7 +127,7 @@ class PyLifModelBitAcc(PyLoihiProcessModel):
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
         wrapped_curr = np.mod(decayed_curr,
-                              np.sign(decayed_curr) * self.max_uv_val)
+                              (2 * (decayed_curr > 0) - 1) * self.max_uv_val)
         self.u[:] = wrapped_curr
         # Update voltage
         # --------------
@@ -147,7 +147,8 @@ class PyLifModelBitAcc(PyLoihiProcessModel):
 
         # Spike when exceeds threshold
         # ----------------------------
-        s_out = self.v >= self.effective_vth
+        # s_out = self.v >= self.effective_vth
+        s_out = self.v > self.effective_vth
         # Reset voltage of spiked neurons to 0
         self.v[s_out] = 0
         self.s_out.send(s_out)

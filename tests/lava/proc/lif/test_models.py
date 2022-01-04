@@ -267,7 +267,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
                              vec_to_send=np.zeros(shape, dtype=np.int16),
                              send_at_times=np.ones((num_steps,), dtype=bool))
         # Set up bias = 2 * 2**6 = 128 and threshold = 8<<6
-        # du and dv = 0 => bias driven neurons spike at every 4th time-step.
+        # du and dv = 0 => bias driven neurons spike at every 5th time-step.
         lif = LIF(shape=shape,
                   du=0, dv=0,
                   bias=2 * np.ones(shape, dtype=np.int32),
@@ -286,7 +286,8 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         lif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[3:10:4, :] = 1
+        # expected_spk_data[3:10:4, :] = 1
+        expected_spk_data[4:10:5, :] = 1
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_bitacc_pm_impulse_du(self):

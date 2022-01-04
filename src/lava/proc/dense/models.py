@@ -103,7 +103,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
-        s_in = self.s_in.recv()
+        s_in = self.s_in.recv().astype(bool)
         a_accum = self.weights[:, s_in].sum(axis=1)
         self.a_buff = np.left_shift(a_accum,
                                     self.weight_exp) if self.weight_exp > 0 \

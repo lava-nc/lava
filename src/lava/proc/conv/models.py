@@ -27,6 +27,10 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.a_buf = None
+
     def run_spk(self) -> None:
         s_in = self.s_in.recv()
         a_out = utils.conv(
@@ -34,7 +38,13 @@ class AbstractPyConvModel(PyLoihiProcessModel):
             self.kernel_size, self.stride, self.padding, self.dilation,
             self.groups[0]
         )
-        self.a_out.send(self.clamp_precision(a_out))
+
+        if self.a_buf is None:
+            self.a_buf = np.zeros_like(a_out)
+
+        # self.a_out.send(self.clamp_precision(a_out))
+        self.a_out.send(self.a_buf)
+        self.a_buf = self.clamp_precision(a_out)
 
     def clamp_precision(self, x: np.ndarray) -> np.ndarray:
         return x
