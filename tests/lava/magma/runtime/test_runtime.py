@@ -4,7 +4,6 @@ import unittest
 from lava.magma.compiler.executable import Executable
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.core.resources import HeadNode
-from lava.magma.core.run_conditions import RunSteps, AbstractRunCondition
 from lava.magma.compiler.node import Node, NodeConfig
 from lava.magma.runtime.runtime import Runtime
 
