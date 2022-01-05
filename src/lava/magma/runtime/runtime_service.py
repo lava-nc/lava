@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort,\
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
     CspSelector
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
@@ -14,7 +14,6 @@ from lava.magma.runtime.mgmt_token_enums import (
     enum_equal,
     MGMT_RESPONSE,
     MGMT_COMMAND,
-    REQ_TYPE,
 )
 
 
@@ -32,11 +31,8 @@ class AbstractRuntimeService(ABC):
 
         self.model_ids: ty.List[int] = []
 
-        self.service_to_process_cmd: ty.Iterable[CspSendPort] = []
-        self.process_to_service_ack: ty.Iterable[CspRecvPort] = []
-        self.service_to_process_req: ty.Iterable[CspSendPort] = []
-        self.process_to_service_data: ty.Iterable[CspRecvPort] = []
-        self.service_to_process_data: ty.Iterable[CspSendPort] = []
+        self.service_to_process: ty.Iterable[CspSendPort] = []
+        self.process_to_service: ty.Iterable[CspRecvPort] = []
 
     def __repr__(self):
         return f"Synchronizer : {self.__class__}, \
@@ -49,12 +45,9 @@ class AbstractRuntimeService(ABC):
         self.runtime_to_service_req.start()
         self.service_to_runtime_data.start()
         self.runtime_to_service_data.start()
-        for i in range(len(self.service_to_process_cmd)):
-            self.service_to_process_cmd[i].start()
-            self.process_to_service_ack[i].start()
-            self.service_to_process_req[i].start()
-            self.process_to_service_data[i].start()
-            self.service_to_process_data[i].start()
+        for i in range(len(self.service_to_process)):
+            self.service_to_process[i].start()
+            self.process_to_service[i].start()
         self.run()
 
     @abstractmethod
@@ -68,12 +61,9 @@ class AbstractRuntimeService(ABC):
         self.service_to_runtime_data.join()
         self.runtime_to_service_data.join()
 
-        for i in range(len(self.service_to_process_cmd)):
-            self.service_to_process_cmd[i].join()
-            self.process_to_service_ack[i].join()
-            self.service_to_process_req[i].join()
-            self.process_to_service_data[i].join()
-            self.service_to_process_data[i].join()
+        for i in range(len(self.service_to_process)):
+            self.service_to_process[i].join()
+            self.process_to_service[i].join()
 
 
 class PyRuntimeService(AbstractRuntimeService):
@@ -116,13 +106,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
     def _send_pm_cmd(self, phase: MGMT_COMMAND):
         """Sends a command (phase information) to all ProcessModels."""
-        for send_port in self.service_to_process_cmd:
+        for send_port in self.service_to_process:
             send_port.send(phase)
 
     def _send_pm_req_given_model_id(self, model_id: int, *requests):
         """Sends requests to a ProcessModel given by the model id."""
         process_idx = self.model_ids.index(model_id)
-        req_port = self.service_to_process_req[process_idx]
+        req_port = self.service_to_process[process_idx]
         for request in requests:
             req_port.send(request)
 
@@ -132,7 +122,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         num_responses_expected = len(self.model_ids)
         counter = 0
         while counter < num_responses_expected:
-            ptos_recv_port = self.process_to_service_ack[counter]
+            ptos_recv_port = self.process_to_service[counter]
             rcv_msgs.append(ptos_recv_port.recv())
             counter += 1
         return rcv_msgs
@@ -140,9 +130,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
     def _relay_to_runtime_data_given_model_id(self, model_id: int):
         """Relays data received from ProcessModel given by model id  to the
         runtime"""
-        process_idx = self.model_ids.index(model_id)
-
-        data_recv_port = self.process_to_service_data[process_idx]
+        process_idx = self.model_ids.index(int(model_id))
+        data_recv_port = self.process_to_service[process_idx]
         data_relay_port = self.service_to_runtime_data
         num_items = data_recv_port.recv()
         data_relay_port.send(num_items)
@@ -156,7 +145,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         process_idx = self.model_ids.index(model_id)
 
         data_recv_port = self.runtime_to_service_data
-        data_relay_port = self.service_to_process_data[process_idx]
+        data_relay_port = self.service_to_process[process_idx]
         # Receive and relay number of items
         num_items = data_recv_port.recv()
         data_relay_port.send(num_items)
@@ -169,7 +158,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         runtime."""
         process_idx = self.model_ids.index(model_id)
 
-        ack_recv_port = self.process_to_service_ack[process_idx]
+        ack_recv_port = self.process_to_service[process_idx]
         ack_relay_port = self.service_to_runtime_ack
         ack_relay_port.send(ack_recv_port.recv())
 
@@ -256,7 +245,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
     def _handle_get_set(self, phase):
         if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
             request = self.runtime_to_service_req.recv()
-            if enum_equal(request, REQ_TYPE.GET):
+            if enum_equal(request, MGMT_COMMAND.GET_DATA):
                 requests: ty.List[np.ndarray] = [request]
                 # recv model_id
                 model_id: int = \
@@ -270,7 +259,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
                 self._relay_to_runtime_data_given_model_id(
                     model_id)
-            elif enum_equal(request, REQ_TYPE.SET):
+            elif enum_equal(request, MGMT_COMMAND.SET_DATA):
                 requests: ty.List[np.ndarray] = [request]
                 # recv model_id
                 model_id: int = \
@@ -298,14 +287,13 @@ class AsyncPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Async SyncProtocol in Py."""
 
     def _send_pm_cmd(self, cmd: MGMT_COMMAND):
-        for stop_send_port in self.service_to_process_cmd:
+        for stop_send_port in self.service_to_process:
             stop_send_port.send(cmd)
 
     def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
         rcv_msgs = []
-        for ptos_recv_port in self.process_to_service_ack:
+        for ptos_recv_port in self.process_to_service:
             rcv_msgs.append(ptos_recv_port.recv())
-
         return rcv_msgs
 
     def run(self):

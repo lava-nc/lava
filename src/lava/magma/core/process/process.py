@@ -4,17 +4,16 @@
 import typing as ty
 from _collections import OrderedDict
 
+from lava.magma.compiler.executable import Executable
+from lava.magma.core.process.interfaces import \
+    AbstractProcessMember, IdGeneratorSingleton
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.core.run_conditions import AbstractRunCondition
-from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.process.ports.ports import \
     InPort, OutPort, RefPort, VarPort
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.interfaces import \
-    AbstractProcessMember, IdGeneratorSingleton
-from lava.magma.compiler.executable import Executable
+from lava.magma.core.run_conditions import AbstractRunCondition
+from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
-
 
 # Abbreviation for type annotation in Collection class
 mem_type = ty.Union[InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"]
@@ -358,7 +357,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     # TODO: (PP) Remove  if condition on blocking as soon as non-blocking
     #  execution is completely implemented
-    def run(self, condition: AbstractRunCondition, run_cfg: RunConfig):
+    def run(self, condition: AbstractRunCondition = None, run_cfg:
+    RunConfig = None):
         """Runs process given RunConfig and RunCondition.
 
         run(..) compiles this and any process connected to this process
@@ -393,7 +393,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         if not self._runtime:
             executable = self.compile(run_cfg)
-            self._runtime = Runtime(condition,
+            self._runtime = Runtime(
                                     executable,
                                     ActorType.MultiProcessing)
             self._runtime.initialize()

@@ -188,7 +188,6 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
         Any Py{In/Out/Ref}Ports must be strict sub-types of Py{In/Out/Ref}Ports.
         """
-
         for name, port_init in self.py_ports.items():
             lt = self._get_lava_type(name)
             if not isinstance(lt.cls, type):
@@ -421,22 +420,13 @@ class PyProcessBuilder(AbstractProcessBuilder):
             setattr(pm, name, port)
 
         for port in self.csp_rs_recv_port.values():
-            if "service_to_process_cmd" in port.name:
-                pm.service_to_process_cmd = port
-                continue
-            if "service_to_process_req" in port.name:
-                pm.service_to_process_req = port
-                continue
-            if "service_to_process_data" in port.name:
-                pm.service_to_process_data = port
+            if "service_to_process" in port.name:
+                pm.service_to_process = port
                 continue
 
         for port in self.csp_rs_send_port.values():
-            if "process_to_service_ack" in port.name:
-                pm.process_to_service_ack = port
-                continue
-            if "process_to_service_data" in port.name:
-                pm.process_to_service_data = port
+            if "process_to_service" in port.name:
+                pm.process_to_service = port
                 continue
 
         # Initialize Vars
@@ -535,18 +525,12 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         rs.model_ids = self._model_ids
 
         for port in self.csp_proc_send_port.values():
-            if "service_to_process_cmd" in port.name:
-                rs.service_to_process_cmd.append(port)
-            if "service_to_process_req" in port.name:
-                rs.service_to_process_req.append(port)
-            if "service_to_process_data" in port.name:
-                rs.service_to_process_data.append(port)
+            if "service_to_process" in port.name:
+                rs.service_to_process.append(port)
 
         for port in self.csp_proc_recv_port.values():
-            if "process_to_service_ack" in port.name:
-                rs.process_to_service_ack.append(port)
-            if "process_to_service_data" in port.name:
-                rs.process_to_service_data.append(port)
+            if "process_to_service" in port.name:
+                rs.process_to_service.append(port)
 
         for port in self.csp_send_port.values():
             if "service_to_runtime_ack" in port.name:

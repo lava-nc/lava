@@ -768,50 +768,23 @@ class Compiler:
             sync_channel_builders.append(runtime_to_service_data)
 
             for process in sync_domain.processes:
-                service_to_process_cmd = \
+                service_to_process = \
                     ServiceChannelBuilderMp(ChannelType.PyPy,
                                             rsb[sync_domain],
                                             process,
                                             self._create_mgmt_port_initializer(
-                                                f"service_to_process_cmd_"
+                                                f"service_to_process_"
                                                 f"{process.id}"))
-                sync_channel_builders.append(service_to_process_cmd)
+                sync_channel_builders.append(service_to_process)
 
-                process_to_service_ack = \
+                process_to_service = \
                     ServiceChannelBuilderMp(ChannelType.PyPy,
                                             process,
                                             rsb[sync_domain],
                                             self._create_mgmt_port_initializer(
-                                                f"process_to_service_ack_"
+                                                f"process_to_service_"
                                                 f"{process.id}"))
-                sync_channel_builders.append(process_to_service_ack)
-
-                service_to_process_req = \
-                    ServiceChannelBuilderMp(ChannelType.PyPy,
-                                            rsb[sync_domain],
-                                            process,
-                                            self._create_mgmt_port_initializer(
-                                                f"service_to_process_req_"
-                                                f"{process.id}"))
-                sync_channel_builders.append(service_to_process_req)
-
-                process_to_service_data = \
-                    ServiceChannelBuilderMp(ChannelType.PyPy,
-                                            process,
-                                            rsb[sync_domain],
-                                            self._create_mgmt_port_initializer(
-                                                f"process_to_service_data_"
-                                                f"{process.id}"))
-                sync_channel_builders.append(process_to_service_data)
-
-                service_to_process_data = \
-                    ServiceChannelBuilderMp(ChannelType.PyPy,
-                                            rsb[sync_domain],
-                                            process,
-                                            self._create_mgmt_port_initializer(
-                                                f"service_to_process_data_"
-                                                f"{process.id}"))
-                sync_channel_builders.append(service_to_process_data)
+                sync_channel_builders.append(process_to_service)
         return sync_channel_builders
 
     def _create_exec_vars(self,

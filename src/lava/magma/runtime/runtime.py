@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
+import typing
 import typing as ty
 
 import numpy as np
@@ -15,7 +16,7 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
-    MGMT_COMMAND, MGMT_RESPONSE, REQ_TYPE
+    MGMT_COMMAND, MGMT_RESPONSE
 from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
@@ -44,17 +45,15 @@ class Runtime:
     be blocking and non-blocking as specified by the run run_condition."""
 
     def __init__(self,
-                 run_cond: AbstractRunCondition,
                  exe: Executable,
                  message_infrastructure_type: ActorType):
-        self._run_cond: AbstractRunCondition = run_cond
+        self._run_cond: typing.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
         self._messaging_infrastructure_type: ActorType = \
             message_infrastructure_type
         self._messaging_infrastructure: \
             ty.Optional[MessageInfrastructureInterface] = None
-        self.current_ts = 0
         self._is_initialized = False
         self._is_running = False
         self._is_started = False
@@ -245,7 +244,6 @@ class Runtime:
                             else:
                                 raise RuntimeError(f"Runtime Received {data}")
                 if run_condition.blocking:
-                    self.current_ts += self.num_steps
                     self._is_running = False
             elif isinstance(run_condition, RunContinuous):
                 pass
@@ -261,7 +259,6 @@ class Runtime:
                 data = recv_port.recv()
                 if not enum_equal(data, MGMT_RESPONSE.DONE):
                     raise RuntimeError(f"Runtime Received {data}")
-            self.current_ts += self.num_steps
             self._is_running = False
 
     def pause(self):
@@ -299,10 +296,6 @@ class Runtime:
         for port in self.runtime_to_service_data:
             port.join()
 
-    @property
-    def global_time(self):
-        return self.current_ts
-
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
         node_config: NodeConfig = self._executable.node_configs[0]
@@ -320,7 +313,7 @@ class Runtime:
 
             # 1. Send SET Command
             req_port: CspSendPort = self.runtime_to_service_req[runtime_srv_id]
-            req_port.send(REQ_TYPE.SET)
+            req_port.send(MGMT_COMMAND.SET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
@@ -360,7 +353,7 @@ class Runtime:
 
             # 1. Send GET Command
             req_port: CspSendPort = self.runtime_to_service_req[runtime_srv_id]
-            req_port.send(REQ_TYPE.GET)
+            req_port.send(MGMT_COMMAND.GET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
