@@ -357,8 +357,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     # TODO: (PP) Remove  if condition on blocking as soon as non-blocking
     #  execution is completely implemented
-    def run(self, condition: AbstractRunCondition = None, run_cfg:
-    RunConfig = None):
+    def run(self,
+            condition: AbstractRunCondition = None,
+            run_cfg: RunConfig = None):
         """Runs process given RunConfig and RunCondition.
 
         run(..) compiles this and any process connected to this process
@@ -393,8 +394,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         if not self._runtime:
             executable = self.compile(run_cfg)
-            self._runtime = Runtime(
-                                    executable,
+            self._runtime = Runtime(executable,
                                     ActorType.MultiProcessing)
             self._runtime.initialize()
 

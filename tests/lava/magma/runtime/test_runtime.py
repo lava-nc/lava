@@ -13,10 +13,8 @@ class TestRuntime(unittest.TestCase):
     def test_runtime_creation(self):
         """Tests runtime constructor"""
         exe: Executable = Executable()
-        run_cond: AbstractRunCondition = RunSteps(num_steps=10)
         mp = ActorType.MultiProcessing
-        runtime: Runtime = Runtime(
-                                   exe=exe,
+        runtime: Runtime = Runtime(exe=exe,
                                    message_infrastructure_type=mp)
         expected_type: ty.Type = Runtime
         assert isinstance(
@@ -26,7 +24,6 @@ class TestRuntime(unittest.TestCase):
     def test_executable_node_config_assertion(self):
         """Tests runtime constructions with expected constraints"""
         exec: Executable = Executable()
-        run_cond: AbstractRunCondition = RunSteps(num_steps=10)
 
         runtime1: Runtime = Runtime(exec, ActorType.MultiProcessing)
         with self.assertRaises(AssertionError):

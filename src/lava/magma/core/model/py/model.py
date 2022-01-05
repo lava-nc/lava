@@ -155,8 +155,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                         # Handle get/set Var requests from runtime service
                         self._handle_get_var()
                     elif enum_equal(cmd,
-                                    MGMT_COMMAND.SET_DATA) and enum_equal(phase,
-                                                                          PyLoihiProcessModel.Phase.HOST):
+                                    MGMT_COMMAND.SET_DATA) and \
+                            enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
                         # Handle get/set Var requests from runtime service
                         self._handle_set_var()
                     else:
