@@ -722,50 +722,23 @@ class Compiler:
             -> ty.Iterable[AbstractChannelBuilder]:
         sync_channel_builders: ty.List[AbstractChannelBuilder] = []
         for sync_domain in rsb:
-            runtime_to_service_cmd = \
+            runtime_to_service = \
                 RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         Runtime,
                                         rsb[sync_domain],
                                         self._create_mgmt_port_initializer(
-                                            f"runtime_to_service_cmd_"
+                                            f"runtime_to_service_"
                                             f"{sync_domain.name}"))
-            sync_channel_builders.append(runtime_to_service_cmd)
+            sync_channel_builders.append(runtime_to_service)
 
-            service_to_runtime_ack = \
+            service_to_runtime = \
                 RuntimeChannelBuilderMp(ChannelType.PyPy,
                                         rsb[sync_domain],
                                         Runtime,
                                         self._create_mgmt_port_initializer(
-                                            f"service_to_runtime_ack_"
+                                            f"service_to_runtime_"
                                             f"{sync_domain.name}"))
-            sync_channel_builders.append(service_to_runtime_ack)
-
-            runtime_to_service_req = \
-                RuntimeChannelBuilderMp(ChannelType.PyPy,
-                                        Runtime,
-                                        rsb[sync_domain],
-                                        self._create_mgmt_port_initializer(
-                                            f"runtime_to_service_req_"
-                                            f"{sync_domain.name}"))
-            sync_channel_builders.append(runtime_to_service_req)
-
-            service_to_runtime_data = \
-                RuntimeChannelBuilderMp(ChannelType.PyPy,
-                                        rsb[sync_domain],
-                                        Runtime,
-                                        self._create_mgmt_port_initializer(
-                                            f"service_to_runtime_data_"
-                                            f"{sync_domain.name}"))
-            sync_channel_builders.append(service_to_runtime_data)
-
-            runtime_to_service_data = \
-                RuntimeChannelBuilderMp(ChannelType.PyPy,
-                                        Runtime,
-                                        rsb[sync_domain],
-                                        self._create_mgmt_port_initializer(
-                                            f"runtime_to_service_data_"
-                                            f"{sync_domain.name}"))
-            sync_channel_builders.append(runtime_to_service_data)
+            sync_channel_builders.append(service_to_runtime)
 
             for process in sync_domain.processes:
                 service_to_process = \

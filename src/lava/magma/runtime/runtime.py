@@ -57,11 +57,8 @@ class Runtime:
         self._is_initialized = False
         self._is_running = False
         self._is_started = False
-        self.runtime_to_service_cmd: ty.Iterable[CspSendPort] = []
-        self.service_to_runtime_ack: ty.Iterable[CspRecvPort] = []
-        self.runtime_to_service_req: ty.Iterable[CspSendPort] = []
-        self.service_to_runtime_data: ty.Iterable[CspRecvPort] = []
-        self.runtime_to_service_data: ty.Iterable[CspSendPort] = []
+        self.runtime_to_service: ty.Iterable[CspSendPort] = []
+        self.service_to_runtime: ty.Iterable[CspRecvPort] = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -95,15 +92,9 @@ class Runtime:
         self._is_initialized = True
 
     def _start_ports(self):
-        for port in self.runtime_to_service_cmd:
+        for port in self.runtime_to_service:
             port.start()
-        for port in self.service_to_runtime_ack:
-            port.start()
-        for port in self.runtime_to_service_req:
-            port.start()
-        for port in self.service_to_runtime_data:
-            port.start()
-        for port in self.runtime_to_service_data:
+        for port in self.service_to_runtime:
             port.start()
 
     # ToDo: (AW) Hack: This currently just returns the one and only NodeCfg
@@ -154,16 +145,10 @@ class Runtime:
                         sync_channel_builder.dst_process.set_csp_ports(
                             [channel.dst_port])
                     # TODO: Get rid of if/else ladder
-                    if "runtime_to_service_cmd" in channel.src_port.name:
-                        self.runtime_to_service_cmd.append(channel.src_port)
-                    elif "service_to_runtime_ack" in channel.src_port.name:
-                        self.service_to_runtime_ack.append(channel.dst_port)
-                    elif "runtime_to_service_req" in channel.src_port.name:
-                        self.runtime_to_service_req.append(channel.src_port)
-                    elif "service_to_runtime_data" in channel.src_port.name:
-                        self.service_to_runtime_data.append(channel.dst_port)
-                    elif "runtime_to_service_data" in channel.src_port.name:
-                        self.runtime_to_service_data.append(channel.src_port)
+                    if "runtime_to_service" in channel.src_port.name:
+                        self.runtime_to_service.append(channel.src_port)
+                    elif "service_to_runtime" in channel.src_port.name:
+                        self.service_to_runtime.append(channel.dst_port)
                 elif isinstance(sync_channel_builder, ServiceChannelBuilderMp):
                     if isinstance(sync_channel_builder.src_process,
                                   RuntimeServiceBuilder):
@@ -221,10 +206,10 @@ class Runtime:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
                 self.num_steps = run_condition.num_steps
-                for send_port in self.runtime_to_service_cmd:
+                for send_port in self.runtime_to_service:
                     send_port.send(enum_to_np(self.num_steps))
                 if run_condition.blocking:
-                    for recv_port in self.service_to_runtime_ack:
+                    for recv_port in self.service_to_runtime:
                         data = recv_port.recv()
                         if not enum_equal(data, MGMT_RESPONSE.DONE):
                             if enum_equal(data, MGMT_RESPONSE.ERROR):
@@ -255,7 +240,7 @@ class Runtime:
 
     def wait(self):
         if self._is_running:
-            for recv_port in self.service_to_runtime_ack:
+            for recv_port in self.service_to_runtime:
                 data = recv_port.recv()
                 if not enum_equal(data, MGMT_RESPONSE.DONE):
                     raise RuntimeError(f"Runtime Received {data}")
@@ -268,9 +253,9 @@ class Runtime:
         """Stops an ongoing or paused run."""
         try:
             if self._is_started:
-                for send_port in self.runtime_to_service_cmd:
+                for send_port in self.runtime_to_service:
                     send_port.send(MGMT_COMMAND.STOP)
-                for recv_port in self.service_to_runtime_ack:
+                for recv_port in self.service_to_runtime:
                     data = recv_port.recv()
                     if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
                         raise RuntimeError(f"Runtime Received {data}")
@@ -285,15 +270,9 @@ class Runtime:
 
     def join(self):
         """Join all ports and processes"""
-        for port in self.runtime_to_service_cmd:
+        for port in self.runtime_to_service:
             port.join()
-        for port in self.service_to_runtime_ack:
-            port.join()
-        for port in self.runtime_to_service_req:
-            port.join()
-        for port in self.service_to_runtime_data:
-            port.join()
-        for port in self.runtime_to_service_data:
+        for port in self.service_to_runtime:
             port.join()
 
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
@@ -312,7 +291,7 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send SET Command
-            req_port: CspSendPort = self.runtime_to_service_req[runtime_srv_id]
+            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.SET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
@@ -326,8 +305,7 @@ class Runtime:
             buffer = buffer.reshape((1, num_items))
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspSendPort = self.runtime_to_service_data[
-                runtime_srv_id]
+            data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             data_port.send(enum_to_np(num_items))
             for i in range(num_items):
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
@@ -352,14 +330,13 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send GET Command
-            req_port: CspSendPort = self.runtime_to_service_req[runtime_srv_id]
+            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.GET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspRecvPort = self.service_to_runtime_data[
-                runtime_srv_id]
+            data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
             num_items: int = int(data_port.recv()[0].item())
             buffer: np.ndarray = np.empty((1, num_items))
             for i in range(num_items):

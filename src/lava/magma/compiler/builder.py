@@ -533,18 +533,12 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
                 rs.process_to_service.append(port)
 
         for port in self.csp_send_port.values():
-            if "service_to_runtime_ack" in port.name:
-                rs.service_to_runtime_ack = port
-            elif "service_to_runtime_data" in port.name:
-                rs.service_to_runtime_data = port
+            if "service_to_runtime" in port.name:
+                rs.service_to_runtime = port
 
         for port in self.csp_recv_port.values():
-            if "runtime_to_service_cmd" in port.name:
-                rs.runtime_to_service_cmd = port
-            elif "runtime_to_service_req" in port.name:
-                rs.runtime_to_service_req = port
-            elif "runtime_to_service_data" in port.name:
-                rs.runtime_to_service_data = port
+            if "runtime_to_service" in port.name:
+                rs.runtime_to_service = port
 
         return rs
 
