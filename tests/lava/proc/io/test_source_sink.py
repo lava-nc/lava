@@ -10,8 +10,8 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.io.source import RingBuffer as SendProcess
 from lava.proc.io.sink import RingBuffer as ReceiveProcess
-from lava.proc.io.sink import ReadVar
-from lava.proc.io.reset import ResetVar
+from lava.proc.io.sink import Read
+from lava.proc.io.reset import Reset
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
@@ -52,7 +52,7 @@ class PyIntegrator(PyLoihiProcessModel):
 class TestRunConfig(RunConfig):
     """Run configuration selects appropriate ProcessModel based on tag
     """
-    def __init__(self, select_tag: str = 'fixed_pt'):
+    def __init__(self, select_tag: str = 'fixed_pt') -> None:
         super(TestRunConfig, self).__init__(custom_sync_domains=None)
         self.select_tag = select_tag
 
@@ -93,16 +93,14 @@ class TestSendReceive(unittest.TestCase):
             f'{input[output!=input] =}\n'
         )
 
-    def test_read_var(self) -> None:
+    def test_read(self) -> None:
         num_steps = 15
         delta = 5
         interval = 4
         offset = 2
         integrator = Integrator(delta)
-        logger = ReadVar(
-            integrator.state,
-            num_steps // interval + 1, interval, offset
-        )
+        logger = Read(num_steps // interval + 1, interval, offset)
+        logger.connect_var(integrator.state)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = TestRunConfig(select_tag='fixed_pt')
@@ -122,7 +120,7 @@ class TestSendReceive(unittest.TestCase):
             f'Read Var has errors. Expected {ground_truth=}, found {output=}.'
         )
 
-    def test_reset_var(self) -> None:
+    def test_reset(self) -> None:
         num_steps = 15
         delta = 5
         interval = 4
@@ -130,13 +128,14 @@ class TestSendReceive(unittest.TestCase):
         integrator = Integrator(delta)
         # TODO: DISCUSS
         # It is not possible to attach two RefPort to same var
-        # so ReadVar and ResetVar cannot be used on same process
-        # logger = ReadVar(
+        # so Read and Reset cannot be used on same process
+        # logger = Read(
         #     integrator.state,
         #     num_steps // interval + 1, interval, offset + 1
         # )
-        ResetVar(integrator.state, -delta, interval, offset)
+        resetter = Reset(reset_value=-delta, interval=interval, offset=offset)
         sink = ReceiveProcess(shape=integrator.shape, buffer=num_steps)
+        resetter.connect_var(integrator.state)
         integrator.out.connect(sink.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)

@@ -107,7 +107,7 @@ class PyLifModelBitAcc(PyLoihiProcessModel):
             # In Loihi, user specified threshold is just the mantissa, with a
             # constant exponent of 6
             self.effective_vth = np.left_shift(self.vth, self.vth_shift)
-            self.b_vth_computed = True
+            # self.b_vth_computed = True
 
         # Update current
         # --------------

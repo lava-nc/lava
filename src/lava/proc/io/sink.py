@@ -69,17 +69,15 @@ class PyReceiveModelFixed(AbstractPyReceiveModel):
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
-# Read Var ###################################################################
-class ReadVar(AbstractProcess):
-    """Reads and logs the variable of another process linked to this object at a
+# Read #######################################################################
+class Read(AbstractProcess):
+    """Reads and logs the data of it's internal state at a
     set interval and offset (phase).
 
     Parameters
     ----------
-    read_var : Var
-        the variable that needs to be read.
     buffer: int
-        size of data buffer
+        number of samples to buffer
     interval : int, optional
         reset interval, by default 1
     offset : int, optional
@@ -87,7 +85,6 @@ class ReadVar(AbstractProcess):
     """
     def __init__(
         self,
-        read_var: Var,
         buffer: int,
         interval: int = 1,
         offset: int = 0,
@@ -95,20 +92,27 @@ class ReadVar(AbstractProcess):
         super().__init__()
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
-        self.state = RefPort(read_var.shape)
-        self.state.connect_var(read_var)
-        buffer_shape = read_var.shape + (buffer,)
+        self.buffer = buffer
+        self.state = RefPort((1,))
+        buffer_shape = (1,) + (self.buffer,)
         self.data = Var(shape=buffer_shape, init=np.zeros(buffer_shape))
 
+    def connect_var(self, var: Var) -> None:
+        self.state = RefPort(var.shape)
+        self.state.connect_var(var)
+        buffer_shape = var.shape + (self.buffer,)
+        self.data = Var(shape=buffer_shape, init=np.zeros(buffer_shape))
+        self._post_init()
 
-class AbstractPyReadVar(PyLoihiProcessModel):
+
+class AbstractPyRead(PyLoihiProcessModel):
     """Abstract Read Var process implementation."""
-    state = None
+    state: Union[PyRefPort, None] = None
     data = None
     interval: np.ndarray = LavaPyType(np.ndarray, int)
     offset: np.ndarray = LavaPyType(np.ndarray, int)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.counter = 0
 
@@ -122,19 +126,19 @@ class AbstractPyReadVar(PyLoihiProcessModel):
         self.counter += 1
 
 
-@implements(proc=ReadVar, protocol=LoihiProtocol)
+@implements(proc=Read, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('fixed_pt')
-class PyReadVarFixed(AbstractPyReadVar):
+class PyReadFixed(AbstractPyRead):
     """Read Var process implementation for int type."""
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
-@implements(proc=ReadVar, protocol=LoihiProtocol)
+@implements(proc=Read, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PyReadVarFloat(AbstractPyReadVar):
+class PyReadFloat(AbstractPyRead):
     """Read Var process implementation for float type."""
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)
     data: np.ndarray = LavaPyType(np.ndarray, float)

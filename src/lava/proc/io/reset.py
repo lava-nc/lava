@@ -16,14 +16,11 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyRefPort
 
 
-class ResetVar(AbstractProcess):
-    """Resets the variable of another process linked to this object at a
-    set interval and offset (phase).
+class Reset(AbstractProcess):
+    """Resets it's internal state at a set interval and offset (phase).
 
     Parameters
     ----------
-    reset_var : Var
-        the variable that needs to be reset.
     reset_value : int or float
         reset value, by default 0
     interval : int, optional
@@ -33,7 +30,6 @@ class ResetVar(AbstractProcess):
     """
     def __init__(
         self,
-        reset_var: Var,
         reset_value: Union[int, float] = 0,
         interval: int = 1,
         offset: int = 0,
@@ -42,13 +38,17 @@ class ResetVar(AbstractProcess):
         self.reset_value = Var((1,), reset_value)
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
-        self.state = RefPort(reset_var.shape)
-        self.state.connect_var(reset_var)
+        self.state = RefPort((1,))
+
+    def connect_var(self, var: Var) -> None:
+        self.state = RefPort(var.shape)
+        self.state.connect_var(var)
+        self._post_init()
 
 
-class AbstractPyResetVar(PyLoihiProcessModel):
+class AbstractPyReset(PyLoihiProcessModel):
     """Abstract Reset process implementation."""
-    state = None
+    state: Union[PyRefPort, None] = None
     reset_value: np.ndarray = LavaPyType(np.ndarray, int)
     interval: np.ndarray = LavaPyType(np.ndarray, int)
     offset: np.ndarray = LavaPyType(np.ndarray, int)
@@ -60,17 +60,17 @@ class AbstractPyResetVar(PyLoihiProcessModel):
         self.state.write(0 * self.state.read() + self.reset_value)
 
 
-@implements(proc=ResetVar, protocol=LoihiProtocol)
+@implements(proc=Reset, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('fixed_pt')
-class PyResetVarFixed(AbstractPyResetVar):
+class PyResetFixed(AbstractPyReset):
     """Reset process implementation for int type."""
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
 
-@implements(proc=ResetVar, protocol=LoihiProtocol)
+@implements(proc=Reset, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PyResetVarFloat(AbstractPyResetVar):
+class PyResetFloat(AbstractPyReset):
     """Reset process implementation for float type."""
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)
