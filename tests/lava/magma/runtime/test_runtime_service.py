@@ -8,6 +8,7 @@ from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
+from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND
 from lava.magma.runtime.runtime_service import PyRuntimeService
 
 
@@ -57,7 +58,11 @@ class TestRuntimeService(unittest.TestCase):
         self.assertEqual(rs.runtime_to_service, None)
         self.assertEqual(rs.process_to_service, [])
 
+    @unittest.skip
     def test_runtime_service_start_run(self):
+        # Will remove this test as start in pm now calls
+        # _run(), which waits for cmd from rs, so won't work
+        # in the future
         pm = SimpleProcessModel()
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
@@ -74,6 +79,7 @@ class TestRuntimeService(unittest.TestCase):
         pm.process_to_service = process_to_service[0].src_port
         pm.py_ports = []
         pm.start()
+
         rs.runtime_to_service = runtime_to_service.src_port
         rs.service_to_runtime = service_to_runtime.dst_port
         rs.service_to_process = [service_to_process[0].src_port]
