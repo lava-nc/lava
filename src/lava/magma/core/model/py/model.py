@@ -65,12 +65,138 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             p.start()
         self._run()
 
+    @abstractmethod
+    def run(self):
+        pass
+
+    def join(self):
+        self.service_to_process.join()
+        self.process_to_service.join()
+        for p in self.py_ports:
+            p.join()
+
     def _stop(self):
         self.process_to_service.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def _pause(self):
         self.process_to_service.send(MGMT_RESPONSE.PAUSED)
+
+class PyLoihiProcessModel(AbstractPyProcessModel):
+    def __init__(self):
+        super(PyLoihiProcessModel, self).__init__()
+        self.current_ts = 0
+
+    class Phase:
+        SPK = enum_to_np(1)
+        PRE_MGMT = enum_to_np(2)
+        LRN = enum_to_np(3)
+        POST_MGMT = enum_to_np(4)
+        HOST = enum_to_np(5)
+
+    def run_spk(self):
+        pass
+
+    def run_pre_mgmt(self):
+        pass
+
+    def run_lrn(self):
+        pass
+
+    def run_post_mgmt(self):
+        pass
+
+    def pre_guard(self):
+        pass
+
+    def lrn_guard(self):
+        pass
+
+    def post_guard(self):
+        pass
+
+    # TODO: (PP) need to handle PAUSE command
+    def run(self):
+        """Retrieves commands from the runtime service to iterate through the
+        phases of Loihi and calls their corresponding methods of the
+        ProcessModels. The phase is retrieved from runtime service
+        (service_to_process). After calling the method of a phase of all
+        ProcessModels the runtime service is informed about completion. The
+        loop ends when the STOP command is received."""
+        selector = CspSelector()
+        action = 'cmd'
+        phase = PyLoihiProcessModel.Phase.SPK
+        while True:
+            if action == 'cmd':
+                cmd = self.service_to_process.recv()
+                if enum_equal(cmd, MGMT_COMMAND.STOP):
+                    self.process_to_service.send(MGMT_RESPONSE.TERMINATED)
+                    self.join()
+                    return
+                try:
+                    # Spiking phase - increase time step
+                    if enum_equal(cmd, PyLoihiProcessModel.Phase.SPK):
+                        self.current_ts += 1
+                        phase = PyLoihiProcessModel.Phase.SPK
+                        self.run_spk()
+                        self.process_to_service.send(MGMT_RESPONSE.DONE)
+                    # Pre-management phase
+                    elif enum_equal(cmd,
+                                    PyLoihiProcessModel.Phase.PRE_MGMT):
+                        # Enable via guard method
+                        phase = PyLoihiProcessModel.Phase.PRE_MGMT
+                        if self.pre_guard():
+                            self.run_pre_mgmt()
+                        self.process_to_service.send(MGMT_RESPONSE.DONE)
+                    # Learning phase
+                    elif enum_equal(cmd, PyLoihiProcessModel.Phase.LRN):
+                        # Enable via guard method
+                        phase = PyLoihiProcessModel.Phase.LRN
+                        if self.lrn_guard():
+                            self.run_lrn()
+                        self.process_to_service.send(MGMT_RESPONSE.DONE)
+                    # Post-management phase
+                    elif enum_equal(cmd,
+                                    PyLoihiProcessModel.Phase.POST_MGMT):
+                        # Enable via guard method
+                        phase = PyLoihiProcessModel.Phase.POST_MGMT
+                        if self.post_guard():
+                            self.run_post_mgmt()
+                        self.process_to_service.send(MGMT_RESPONSE.DONE)
+                    # Host phase - called at the last time step before STOP
+                    elif enum_equal(cmd, PyLoihiProcessModel.Phase.HOST):
+                        phase = PyLoihiProcessModel.Phase.HOST
+                        pass
+                    elif enum_equal(cmd, MGMT_COMMAND.GET_DATA) and \
+                            enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                        # Handle get/set Var requests from runtime service
+                        self._handle_get_var()
+                    elif enum_equal(cmd,
+                                    MGMT_COMMAND.SET_DATA) and \
+                            enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                        # Handle get/set Var requests from runtime service
+                        self._handle_set_var()
+                    else:
+                        raise ValueError(
+                            f"Wrong Phase Info Received : {cmd}")
+                except Exception as inst:
+                    print("Exception happened")
+                    # Inform runtime service about termination
+                    self.process_to_service.send(MGMT_RESPONSE.ERROR)
+                    self.join()
+                    raise inst
+            else:
+                # Handle VarPort requests from RefPorts
+                self._handle_var_port(action)
+
+            channel_actions = [(self.service_to_process, lambda: 'cmd')]
+            if enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
+                    enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                for var_port in self.var_ports:
+                    for csp_port in var_port.csp_ports:
+                        if isinstance(csp_port, CspRecvPort):
+                            channel_actions.append((csp_port, lambda: var_port))
+            action = selector.select(*channel_actions)
 
     def _handle_get_var(self):
         """Handles the get Var command from runtime service."""
