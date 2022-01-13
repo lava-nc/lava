@@ -79,7 +79,6 @@ class TestRuntimeService(unittest.TestCase):
         pm.process_to_service = process_to_service[0].src_port
         pm.py_ports = []
         pm.start()
-
         rs.runtime_to_service = runtime_to_service.src_port
         rs.service_to_runtime = service_to_runtime.dst_port
         rs.service_to_process = [service_to_process[0].src_port]
