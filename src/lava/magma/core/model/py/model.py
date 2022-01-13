@@ -248,6 +248,4 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, CspRecvPort):
                         self._channel_actions.append((csp_port, lambda:
-                        var_port))
-
-
+                                                        var_port))

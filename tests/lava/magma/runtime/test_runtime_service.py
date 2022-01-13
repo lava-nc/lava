@@ -8,7 +8,6 @@ from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND
 from lava.magma.runtime.runtime_service import PyRuntimeService
 
 
