@@ -3,13 +3,14 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from lava.magma.core.model.py.ports import PyRefPort, PyInPort
-from lava.proc.monitor.process import Monitor
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.type import LavaPyType
+
 from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.ports import PyRefPort, PyInPort
+from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.proc.monitor.process import Monitor
 
 
 @implements(proc=Monitor, protocol=LoihiProtocol)
@@ -28,10 +29,10 @@ class PyMonitorModel(PyLoihiProcessModel):
     ref_port_0: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     in_port_0: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
-    def pre_guard(self):
+    def post_guard(self):
         return True
 
-    def run_pre_mgmt(self):
+    def run_post_mgmt(self):
         """
         During this phase, RefPorts of Monitor process collects data from
         monitored Vars

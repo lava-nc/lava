@@ -178,7 +178,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             PyLoihiProcessModel.Phase.POST_MGMT[0]: self._post_mgmt,
             PyLoihiProcessModel.Phase.HOST[0]: self._host
         })
-        pass
+        self._req_pause: bool = False
+        self._req_stop:bool = False
 
     class Phase:
         SPK = enum_to_np(1)
@@ -186,6 +187,26 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         LRN = enum_to_np(3)
         POST_MGMT = enum_to_np(4)
         HOST = enum_to_np(5)
+
+    class Response:
+        STATUS_DONE = enum_to_np(0)
+        """Signfies Ack or Finished with the Command"""
+        STATUS_TERMINATED = enum_to_np(-1)
+        """Signifies Termination"""
+        STATUS_ERROR = enum_to_np(-2)
+        """Signifies Error raised"""
+        STATUS_PAUSED = enum_to_np(-3)
+        """Signifies Execution State to be Paused"""
+        REQ_PRE_LRN_MGMT = enum_to_np(-4)
+        """Signifies Request of PREMPTION"""
+        REQ_LEARNING = enum_to_np(-5)
+        """Signifies Request of LEARNING"""
+        REQ_POST_LRN_MGMT = enum_to_np(-6)
+        """Signifies Request of PREMPTION"""
+        REQ_PAUSE = enum_to_np(-7)
+        """Signifies Request of PAUSE"""
+        REQ_STOP = enum_to_np(-8)
+        """Signifies Request of STOP"""
 
     def run_spk(self):
         pass
@@ -212,28 +233,75 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.current_ts += 1
         self.phase = PyLoihiProcessModel.Phase.SPK
         self.run_spk()
-        self.process_to_service.send(MGMT_RESPONSE.DONE)
+        if self._req_pause or self._req_stop:
+            self._handle_pause_or_stop()
+            return
+        if self.lrn_guard() and self.pre_guard():
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT)
+        elif self.lrn_guard():
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_LEARNING)
+        elif self.post_guard():
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+        else:
+            self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _pre_mgmt(self):
         self.phase = PyLoihiProcessModel.Phase.PRE_MGMT
         if self.pre_guard():
             self.run_pre_mgmt()
-        self.process_to_service.send(MGMT_RESPONSE.DONE)
+        if self._req_pause or self._req_stop:
+            self._handle_pause_or_stop()
+            return
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _post_mgmt(self):
         self.phase = PyLoihiProcessModel.Phase.POST_MGMT
         if self.post_guard():
             self.run_post_mgmt()
-        self.process_to_service.send(MGMT_RESPONSE.DONE)
+        if self._req_pause or self._req_stop:
+            self._handle_pause_or_stop()
+            return
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _lrn(self):
         self.phase = PyLoihiProcessModel.Phase.LRN
         if self.lrn_guard():
             self.run_lrn()
-        self.process_to_service.send(MGMT_RESPONSE.DONE)
+        if self._req_pause or self._req_stop:
+            self._handle_pause_or_stop()
+            return
+        if self.post_guard():
+            self.process_to_service.send(
+            PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+            return
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _host(self):
         self.phase = PyLoihiProcessModel.Phase.HOST
+
+    def _stop(self):
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_TERMINATED)
+        self.join()
+
+    def _pause(self):
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
+
+    def _handle_pause_or_stop(self):
+        if self._req_pause:
+            self._req_rs_pause()
+        elif self._req_stop:
+            self._req_rs_stop()
+
+    def _req_rs_pause(self):
+        self._req_pause = False
+        self.process_to_service.send(PyLoihiProcessModel.Response.REQ_PAUSE)
+
+    def _req_rs_stop(self):
+        self._req_stop = False
+        self.process_to_service.send(PyLoihiProcessModel.Response.REQ_STOP)
 
     def run(self):
         """Retrieves commands from the runtime service to iterate through the
