@@ -209,21 +209,4 @@ class TestDataloader(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    num_steps = 30
-    shape = (5, 7)
-
-    dataloader = Spike(SpikeDataset(shape + (5,)), interval=5)
-    gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
-    out = ReceiveProcess(shape=shape, buffer=num_steps)
-    dataloader.gt.connect(gt.a_in)
-    dataloader.s_out.connect(out.a_in)
-
-    run_condition = RunSteps(num_steps=num_steps)
-    run_config = TestRunConfig(select_tag='fixed_pt')
-    dataloader.run(condition=run_condition, run_cfg=run_config)
-    gt_data = gt.data.get()
-    out_data = out.data.get()
-    dataloader.stop()
-
-    print(f'{gt_data=}')
-    print(f'{out_data=}')
+    pass
