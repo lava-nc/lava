@@ -28,9 +28,10 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
         how spikes are generated"""
-        return self.s_out
+        raise NotImplementedError("spiking activation() cannot be called from "
+                                  "an abstract ProcessModel")
 
-    def subthr_dynamics(self, activation_in):
+    def subthr_dynamics(self, activation_in: np.ndarray):
         """Common sub-threshold dynamics of current and voltage variables for
         all LIF models. This is where the 'leaky integration' happens."""
         self.u[:] = self.u * (1 - self.du)
@@ -38,7 +39,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         bias = self.bias * (2 ** self.bias_exp)
         self.v[:] = self.v * (1 - self.dv) + self.u + bias
 
-    def reset_voltage(self, spike_vector):
+    def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
         models."""
         self.v[spike_vector] = 0
@@ -104,13 +105,15 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
     def scale_threshold(self):
         """Placeholder method for scaling threshold(s)."""
-        pass
+        raise NotImplementedError("spiking activation() cannot be called from "
+                                  "an abstract ProcessModel")
 
     def spiking_activation(self):
         """Placeholder method to specify spiking behaviour of a LIF neuron."""
-        return self.s_out
+        raise NotImplementedError("spiking activation() cannot be called from "
+                                  "an abstract ProcessModel")
 
-    def subthr_dynamics(self, activation_in):
+    def subthr_dynamics(self, activation_in: np.ndarray):
         """Common sub-threshold dynamics of current and voltage variables for
         all LIF models. This is where the 'leaky integration' happens."""
 
@@ -154,7 +157,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         updated_volt = decayed_volt + self.u + self.effective_bias
         self.v[:] = np.clip(updated_volt, neg_voltage_limit, pos_voltage_limit)
 
-    def reset_voltage(self, spike_vector):
+    def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
             models.
         """
@@ -219,7 +222,7 @@ class PyTernLifModelFloat(AbstractPyLifModelFloat):
         +1 spikes above upper threshold"""
         return (-1) * (self.v <= self.vth_lo) + (self.v >= self.vth_hi)
 
-    def reset_voltage(self, spike_vector):
+    def reset_voltage(self, spike_vector: np.ndarray):
         """Reset voltage of all spiking neurons to 0"""
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
 
@@ -299,6 +302,6 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
         pos_spikes = self.v >= self.effective_vth_hi
         return (-1) * neg_spikes + pos_spikes
 
-    def reset_voltage(self, spike_vector):
+    def reset_voltage(self, spike_vector: np.ndarray):
         """Reset voltage of all spiking neurons to 0"""
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
