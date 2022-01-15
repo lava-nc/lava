@@ -110,7 +110,11 @@ class TestDataloader(unittest.TestCase):
             id = (i - offset - 1) // interval
             data, gt = dataset[id]
             self.assertTrue(np.array_equal(gt, gt_data[..., i].item()))
-            self.assertTrue(np.array_equal(data, out_data[..., i]))
+            self.assertTrue(
+                np.array_equal(data, out_data[..., i]),
+                f'Expected data and out_data at {i=} to be same. '
+                f'Found {data=} and {out_data[..., i]=}'
+            )
 
     def test_spike_loader(self) -> None:
         """Tests spike dataloder"""
@@ -139,7 +143,11 @@ class TestDataloader(unittest.TestCase):
             gt_error = np.abs(gt_data[..., i:i + interval] - gt).sum()
             spike_error = np.abs(out_data[..., i:i + interval] - data).sum()
             self.assertTrue(gt_error == 0)
-            self.assertTrue(spike_error == 0)
+            self.assertTrue(
+                spike_error == 0,
+                f'Expected data and out_data at {i=} to be same. '
+                f'Found {data=} and {out_data[..., i:i + interval]=}'
+            )
 
     def test_spike_loader_less_steps(self) -> None:
         """Tests spike dataloder when data load interval is less than sample
@@ -171,7 +179,11 @@ class TestDataloader(unittest.TestCase):
             spike_error = np.abs(out_data[..., i:i + steps] - data).sum()
             gap_error = np.abs(out_data[..., i + steps:i + interval]).sum()
             self.assertTrue(gt_error == 0)
-            self.assertTrue(spike_error == 0)
+            self.assertTrue(
+                spike_error == 0,
+                f'Expected data and out_data at {i=} to be same. '
+                f'Found {data=} and {out_data[..., i:i + steps]=}'
+            )
             self.assertTrue(gap_error == 0)
 
     def test_spike_loader_more_steps(self) -> None:
@@ -205,7 +217,12 @@ class TestDataloader(unittest.TestCase):
                 out_data[..., i:i + interval] - data[..., :interval]
             ).sum()
             self.assertTrue(gt_error == 0)
-            self.assertTrue(spike_error == 0)
+            self.assertTrue(
+                spike_error == 0,
+                f'Expected data and out_data at {i=} to be same. '
+                f'Found {data[..., :interval]=} and '
+                f'{out_data[..., i:i + interval]=}'
+            )
 
 
 if __name__ == '__main__':
