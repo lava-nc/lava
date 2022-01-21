@@ -34,6 +34,20 @@ class ConcatShapeError(Exception):
         super().__init__(self, msg)
 
 
+class PermuteError(Exception):
+    """Raised when permute order is incompatible with old shape dimension."""
+
+    def __init__(
+        self, old_shape: ty.Tuple, order: ty.Union[ty.Tuple, ty.List]
+    ) -> None:
+        msg = (
+            "Cannot permute 'old_shape'={} with permutation 'order={}. "
+            "Total number of dimensions must not change during "
+            "reshaping.".format(old_shape, order)
+        )
+        super().__init__(msg)
+
+
 class VarNotSharableError(Exception):
     """Raised when an attempt is made to connect a RefPort or VarPort to a
     non-sharable Var."""

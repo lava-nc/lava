@@ -204,6 +204,28 @@ class AbstractPort(AbstractProcessMember):
         self._validate_ports(ports, port_type, assert_same_shape=False)
         return ConcatPort(ports, axis)
 
+    def permute(
+        self,
+        order: ty.Union[ty.Tuple, ty.List]
+    ) -> "PermutePort":
+        """Permutes the tensor dimensio of this port by deriving and returning
+        a new virtual PermutePort the new permuted dimension. This implies that
+        the resulting PermutePort can only be forward connected to another port.
+
+        Parameters
+        ----------
+        :param order: Order of permutation. Number of total elements and number
+        of dimensions must not change.
+        """
+        if len(self.shape) != len(order):
+            raise pe.PermuteError(self.shape, order)
+
+        permute_port = PermutePort(tuple([self.shape[i] for i in order]))
+        self._connect_forward(
+            [permute_port], AbstractPort, assert_same_shape=False
+        )
+        return permute_port
+
 
 class AbstractIOPort(AbstractPort):
     """Abstract base class for InPorts and OutPorts.
@@ -701,7 +723,38 @@ class PermutePort(AbstractPort, AbstractVirtualPort):
         out_port.permute([3, 1, 2]).connect(in_port)
     """
 
-    pass
+    def __init__(self, shape: ty.Tuple):
+        AbstractPort.__init__(self, shape)
+
+    @property
+    def _parent_port(self) -> AbstractPort:
+        return self.in_connections[0]
+
+    def connect(self, ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]):
+        """Connects this ReshapePort to other port(s).
+
+        Parameters
+        ----------
+        :param ports: The port(s) to connect to. Connections from an IOPort
+        to a RVPort and vice versa are not allowed.
+        """
+        # Determine allows port_type
+        if isinstance(self._parent_port, OutPort):
+            # If OutPort, only allow other IO ports
+            port_type = AbstractIOPort
+        elif isinstance(self._parent_port, InPort):
+            # If InPort, only allow other InPorts
+            port_type = InPort
+        elif isinstance(self._parent_port, RefPort):
+            # If RefPort, only allow other Ref- or VarPorts
+            port_type = AbstractRVPort
+        elif isinstance(self._parent_port, VarPort):
+            # If VarPort, only allow other VarPorts
+            port_type = VarPort
+        else:
+            raise TypeError("Illegal parent port.")
+        # Connect to ports
+        self._connect_forward(to_list(ports), port_type)
 
 
 # ToDo: TBD...
