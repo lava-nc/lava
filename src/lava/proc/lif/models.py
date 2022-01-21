@@ -13,8 +13,9 @@ from lava.proc.lif.process import LIF, TernaryLIF
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
     """Abstract implementation of floating point precision
-    leaky-integrate-and-fire neuron model. Specific implementations
-    inherit from here.
+    leaky-integrate-and-fire neuron model.
+
+    Specific implementations inherit from here.
     """
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = None  # This will be an OutPort of different LavaPyTypes
@@ -27,17 +28,18 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
-        how spikes are generated"""
+        how spikes are generated.
+        """
         raise NotImplementedError("spiking activation() cannot be called from "
                                   "an abstract ProcessModel")
 
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Common sub-threshold dynamics of current and voltage variables for
-        all LIF models. This is where the 'leaky integration' happens."""
+        all LIF models. This is where the 'leaky integration' happens.
+        """
         self.u[:] = self.u * (1 - self.du)
         self.u[:] += activation_in
-        bias = self.bias * (2 ** self.bias_exp)
-        self.v[:] = self.v * (1 - self.dv) + self.u + bias
+        self.v[:] = self.v * (1 - self.dv) + self.u + self.bias
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
@@ -47,7 +49,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         """The run function that performs the actual computation during
         execution orchestrated by a PyLoihiProcessModel using the
-        LoihiProtocol"""
+        LoihiProtocol.
+        """
         a_in_data = self.a_in.recv()
         self.subthr_dynamics(activation_in=a_in_data)
         s_out = self.spiking_activation()
@@ -58,7 +61,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
     """Abstract implementation of fixed point precision
     leaky-integrate-and-fire neuron model. Implementations like those
-    bit-accurate with Loihi hardware inherit from here."""
+    bit-accurate with Loihi hardware inherit from here.
+    """
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
     s_out: None  # This will be an OutPort of different LavaPyTypes
     u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
@@ -76,7 +80,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned du and dv is 0 to 4095.
         # ToDo: Currently, these instance variables cannot be set from
-        #  outside, but this will change in the future.
+        #  outside. From experience, there have been hardly any applications
+        #  which have needed to change the defaults. It is straight-forward
+        #  to change in the future.
         self.ds_offset = 1
         self.dm_offset = 0
         self.isbiasscaled = False
@@ -95,27 +101,29 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
     def scale_bias(self):
         """Scale bias with bias exponent by taking into account sign of the
-        exponent"""
+        exponent.
+        """
         self.effective_bias = np.where(self.bias_exp >= 0, np.left_shift(
             self.bias, self.bias_exp), np.right_shift(self.bias,
                                                       -self.bias_exp))
-        # self.effective_bias = np.left_shift(self.bias, self.bias_exp) if \
-        #     self.bias_exp >= 0 else np.right_shift(self.bias, -self.bias_exp)
         self.isbiasscaled = True
 
     def scale_threshold(self):
-        """Placeholder method for scaling threshold(s)."""
+        """Placeholder method for scaling threshold(s).
+        """
         raise NotImplementedError("spiking activation() cannot be called from "
                                   "an abstract ProcessModel")
 
     def spiking_activation(self):
-        """Placeholder method to specify spiking behaviour of a LIF neuron."""
+        """Placeholder method to specify spiking behaviour of a LIF neuron.
+        """
         raise NotImplementedError("spiking activation() cannot be called from "
                                   "an abstract ProcessModel")
 
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Common sub-threshold dynamics of current and voltage variables for
-        all LIF models. This is where the 'leaky integration' happens."""
+        all LIF models. This is where the 'leaky integration' happens.
+        """
 
         # Update current
         # --------------
@@ -127,7 +135,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         decayed_curr = np.sign(decayed_curr) * np.right_shift(np.abs(
             decayed_curr), self.decay_shift)
         decayed_curr = np.int32(decayed_curr)
-        # Hardware left-shifts synpatic input for MSB alignment
+        # Hardware left-shifts synaptic input for MSB alignment
         activation_in = np.left_shift(activation_in, self.act_shift)
         # Add synptic input to decayed current
         decayed_curr += activation_in
@@ -166,14 +174,19 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     def run_spk(self):
         """The run function that performs the actual computation during
         execution orchestrated by a PyLoihiProcessModel using the
-        LoihiProtocol
+        LoihiProtocol.
         """
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
-        # Compute effective bias and threshold only once, not every time-step
-        if not self.isbiasscaled:
-            self.scale_bias()
+        # ToDo: If bias is set through Var.set() API, the Boolean flag
+        #  isbiasscaled does not get reset. This needs to change through
+        #  Var.set() API. Until that change, we will scale bias at every
+        #  time-step.
+        self.scale_bias()
+        # # Compute effective bias and threshold only once, not every time-step
+        # if not self.isbiasscaled:
+        #     self.scale_bias()
 
         if not self.isthrscaled:
             self.scale_threshold()
@@ -200,8 +213,9 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     vth: float = LavaPyType(float, float)
 
     def spiking_activation(self):
-        """Spiking activation function for LIF"""
-        return self.v >= self.vth
+        """Spiking activation function for LIF.
+        """
+        return self.v > self.vth
 
 
 @implements(proc=TernaryLIF, protocol=LoihiProtocol)
@@ -219,11 +233,13 @@ class PyTernLifModelFloat(AbstractPyLifModelFloat):
 
     def spiking_activation(self):
         """Spiking activation for T-LIF: -1 spikes below lower threshold,
-        +1 spikes above upper threshold"""
-        return (-1) * (self.v <= self.vth_lo) + (self.v >= self.vth_hi)
+        +1 spikes above upper threshold.
+        """
+        return (-1) * (self.v < self.vth_lo) + (self.v > self.vth_hi)
 
     def reset_voltage(self, spike_vector: np.ndarray):
-        """Reset voltage of all spiking neurons to 0"""
+        """Reset voltage of all spiking neurons to 0.
+        """
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
 
 
@@ -245,7 +261,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     dv: unsigned 12-bit integer (0 to 4095)
     bias: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron bias.
     bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    vth: unsigned 17-bit integer (0 to 131071)
+    vth: unsigned 17-bit integer (0 to 131071).
     """
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     vth: int = LavaPyType(int, np.int32, precision=17)
@@ -263,8 +279,9 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
         self.isthrscaled = True
 
     def spiking_activation(self):
-        """Spike when voltage exceeds threshold"""
-        return self.v >= self.effective_vth
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
 
 
 @implements(proc=TernaryLIF, protocol=LoihiProtocol)
@@ -272,9 +289,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 @tag('fixed_pt')
 class PyTernLifModelFixed(AbstractPyLifModelFixed):
     """Implementation of Ternary Leaky-Integrate-and-Fire neural process
-    with fixed point precision. Some state variables are bit-accurate
-    with Loihi's hardware LIF dynamics, which means, they follow Loihi
-    behaviour bit-by-bit.
+    with fixed point precision.
 
     See Also
     --------
@@ -298,10 +313,11 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
     def spiking_activation(self):
         # Spike when exceeds threshold
         # ----------------------------
-        neg_spikes = self.v <= self.effective_vth_lo
-        pos_spikes = self.v >= self.effective_vth_hi
+        neg_spikes = self.v < self.effective_vth_lo
+        pos_spikes = self.v > self.effective_vth_hi
         return (-1) * neg_spikes + pos_spikes
 
     def reset_voltage(self, spike_vector: np.ndarray):
-        """Reset voltage of all spiking neurons to 0"""
+        """Reset voltage of all spiking neurons to 0.
+        """
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked

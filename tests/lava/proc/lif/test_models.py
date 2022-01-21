@@ -172,7 +172,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         lif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[1:10:2, :] = 1.
+        expected_spk_data[4:10:5, :] = 1.
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_impulse_du(self):
@@ -286,7 +286,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         lif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[3:10:4, :] = 1
+        expected_spk_data[4:10:5, :] = 1
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_bitacc_pm_impulse_du(self):
@@ -417,7 +417,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         tlif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[3:30:4, :] = -1.
+        expected_spk_data[7:30:8, :] = -1.
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_neg_no_decay_2(self):
@@ -458,7 +458,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
         expected_spk_data[2, :] = 1.
-        expected_spk_data[(8, 10), :] = -1.
+        expected_spk_data[9, :] = -1.
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_neg_impulse_du(self):
@@ -566,7 +566,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         tlif.stop()
         # Gold standard for the test
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[3:10:4, :] = -1
+        expected_spk_data[4:10:5, :] = -1
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_fixed_pm_neg_no_decay_2(self):

@@ -44,8 +44,8 @@ class LIF(AbstractLIF):
     dv: Inverse of decay time-constant for voltage decay.
     bias: Mantissa part of neuron bias.
     bias_exp: Exponent part of neuron bias, if needed. Mostly for fixed point
-              implementations. Unnecessary for floating point
-              implementations. If specified, bias = bias * 2**bias_exp.
+              implementations. Ignored for floating point
+              implementations.
     vth: Neuron threshold voltage, exceeding which, the neuron will spike.
     """
     def __init__(self, **kwargs):
@@ -63,8 +63,8 @@ class TernaryLIF(AbstractLIF):
     spike. Between the two thresholds, the neuron follows leaky linear
     dynamics.
 
-    This class inherits the state variables and ports from LIF and adds two
-    new threshold variables for upper and lower thresholds.
+    This class inherits the state variables and ports from AbstractLIF and
+    adds two new threshold variables for upper and lower thresholds.
 
     Parameters
     ----------
@@ -73,7 +73,8 @@ class TernaryLIF(AbstractLIF):
 
     See Also
     --------
-    lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron
+    lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron for
+    documentation on rest of the parameters.
     """
 
     def __init__(self, **kwargs):
