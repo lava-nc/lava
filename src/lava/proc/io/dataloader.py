@@ -17,7 +17,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
 # State dataloader ###########################################################
-class State(AbstractProcess):
+class StateDataloader(AbstractProcess):
     """Dataloader object that loads new data sample to internal state at a
     set interval and offset (phase).
 
@@ -93,20 +93,20 @@ class AbstractPyStateModel(PyLoihiProcessModel):
             self.sample_id = 0
 
 
-@implements(proc=State, protocol=LoihiProtocol)
+@implements(proc=StateDataloader, protocol=LoihiProtocol)
 @tag('fixed_pt')
 class PyStateModelFixed(AbstractPyStateModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
 
 
-@implements(proc=State, protocol=LoihiProtocol)
+@implements(proc=StateDataloader, protocol=LoihiProtocol)
 @tag('floating_pt')
 class PyStateModelFloat(AbstractPyStateModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)
 
 
 # Spike Dataloader ############################################################
-class Spike(AbstractProcess):
+class SpikeDataloader(AbstractProcess):
     """Dataloader object that sends spike for a input sample at a
     set interval and offset (phase).
 
@@ -179,14 +179,14 @@ class AbstractPySpikeModel(PyLoihiProcessModel):
             self.sample_id = 0
 
 
-@implements(proc=Spike, protocol=LoihiProtocol)
+@implements(proc=SpikeDataloader, protocol=LoihiProtocol)
 @tag('fixed_pt')
 class PySpikeModelFixed(AbstractPySpikeModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
-@implements(proc=Spike, protocol=LoihiProtocol)
+@implements(proc=SpikeDataloader, protocol=LoihiProtocol)
 @tag('floating_pt')
 class PySpikeModelFloat(AbstractPySpikeModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)

@@ -11,21 +11,20 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.variable import Var
 from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
-
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 from lava.proc.io.sink import RingBuffer as ReceiveProcess
-from lava.proc.io.dataloader import State, Spike
+from lava.proc.io.dataloader import StateDataloader, SpikeDataloader
 
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import RunConfig
 
 
 class TestRunConfig(RunConfig):
-    """Run configuration selects appropriate Conv ProcessModel based on tag:
+    """Run configuration selects appropriate ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
     def __init__(self, select_tag: str = 'fixed_pt'):
         super().__init__(custom_sync_domains=None)
@@ -82,16 +81,16 @@ class PyDummyProc(PyLoihiProcessModel):
         self.s_out.send(self.state)
 
 
-class TestDataloader(unittest.TestCase):
+class TestStateDataloader(unittest.TestCase):
     def test_state_loader(self) -> None:
-        """Tests state dataloder"""
+        """Tests state dataloader"""
         num_steps = 30
         shape = (5, 7)
         interval = 5
         offset = 2
 
         proc = DummyProc(shape)
-        dataloader = State(DummyDataset(shape), interval, offset)
+        dataloader = StateDataloader(DummyDataset(shape), interval, offset)
         gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
         out = ReceiveProcess(shape=shape, buffer=num_steps)
         dataloader.connect_var(proc.state)
@@ -116,49 +115,20 @@ class TestDataloader(unittest.TestCase):
                 f'Found {data=} and {out_data[..., i]=}'
             )
 
-    def test_spike_loader(self) -> None:
-        """Tests spike dataloder"""
-        shape = (5, 7)
-        interval = 5
-        offset = 2
-        num_steps = 31 + offset
 
-        dataloader = Spike(SpikeDataset(shape + (interval,)), interval, offset)
-        gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
-        out = ReceiveProcess(shape=shape, buffer=num_steps)
-        dataloader.gt.connect(gt.a_in)
-        dataloader.s_out.connect(out.a_in)
+class TestSpikeDataloader(unittest.TestCase):
+    def run_test(
+        self,
+        shape: tuple,
+        steps: int,
+        interval: int,
+        offset: int,
+        num_steps: int,
+    ) -> None:
+        dataloader = SpikeDataloader(
+            SpikeDataset(shape + (steps,)), interval, offset
+        )
 
-        run_condition = RunSteps(num_steps=num_steps)
-        run_config = TestRunConfig(select_tag='fixed_pt')
-        dataloader.run(condition=run_condition, run_cfg=run_config)
-        gt_data = gt.data.get()
-        out_data = out.data.get()
-        dataloader.stop()
-
-        dataset = SpikeDataset(shape + (interval,))
-        for i in range(offset + 1, num_steps, interval):
-            id = (i - offset - 1) // interval
-            data, gt = dataset[id]
-            gt_error = np.abs(gt_data[..., i:i + interval] - gt).sum()
-            spike_error = np.abs(out_data[..., i:i + interval] - data).sum()
-            self.assertTrue(gt_error == 0)
-            self.assertTrue(
-                spike_error == 0,
-                f'Expected data and out_data at {i=} to be same. '
-                f'Found {data=} and {out_data[..., i:i + interval]=}'
-            )
-
-    def test_spike_loader_less_steps(self) -> None:
-        """Tests spike dataloder when data load interval is less than sample
-        time steps"""
-        shape = (5, 7)
-        steps = 3
-        interval = 5
-        offset = 2
-        num_steps = 31 + offset
-
-        dataloader = Spike(SpikeDataset(shape + (steps,)), interval, offset)
         gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
         out = ReceiveProcess(shape=shape, buffer=num_steps)
         dataloader.gt.connect(gt.a_in)
@@ -176,18 +146,45 @@ class TestDataloader(unittest.TestCase):
             id = (i - offset - 1) // interval
             data, gt = dataset[id]
             gt_error = np.abs(gt_data[..., i:i + interval] - gt).sum()
-            spike_error = np.abs(out_data[..., i:i + steps] - data).sum()
-            gap_error = np.abs(out_data[..., i + steps:i + interval]).sum()
+            if steps > interval:
+                spike_error = np.abs(
+                    out_data[..., i:i + interval] - data[..., :interval]
+                ).sum()
+            else:
+                spike_error = np.abs(out_data[..., i:i + steps] - data).sum()
+
             self.assertTrue(gt_error == 0)
             self.assertTrue(
                 spike_error == 0,
                 f'Expected data and out_data at {i=} to be same. '
                 f'Found {data=} and {out_data[..., i:i + steps]=}'
             )
-            self.assertTrue(gap_error == 0)
+
+            if steps < interval:
+                gap_error = np.abs(out_data[..., i + steps:i + interval]).sum()
+                self.assertTrue(gap_error == 0)
+
+    def test_spike_loader(self) -> None:
+        """Tests spike dataloader"""
+        shape = (5, 7)
+        steps = 5
+        interval = 5
+        offset = 2
+        num_steps = 31 + offset
+        self.run_test(shape, steps, interval, offset, num_steps)
+
+    def test_spike_loader_less_steps(self) -> None:
+        """Tests spike dataloader when data load interval is less than sample
+        time steps"""
+        shape = (5, 7)
+        steps = 3
+        interval = 5
+        offset = 2
+        num_steps = 31 + offset
+        self.run_test(shape, steps, interval, offset, num_steps)
 
     def test_spike_loader_more_steps(self) -> None:
-        """Tests spike dataloder when data load interval is less than sample
+        """Tests spike dataloader when data load interval is less than sample
         time steps."""
         shape = (5, 7)
         steps = 8
@@ -195,34 +192,7 @@ class TestDataloader(unittest.TestCase):
         offset = 2
         num_steps = 31 + offset
 
-        dataloader = Spike(SpikeDataset(shape + (steps,)), interval, offset)
-        gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
-        out = ReceiveProcess(shape=shape, buffer=num_steps)
-        dataloader.gt.connect(gt.a_in)
-        dataloader.s_out.connect(out.a_in)
-
-        run_condition = RunSteps(num_steps=num_steps)
-        run_config = TestRunConfig(select_tag='fixed_pt')
-        dataloader.run(condition=run_condition, run_cfg=run_config)
-        gt_data = gt.data.get()
-        out_data = out.data.get()
-        dataloader.stop()
-
-        dataset = SpikeDataset(shape + (steps,))
-        for i in range(offset + 1, num_steps, interval):
-            id = (i - offset - 1) // interval
-            data, gt = dataset[id]
-            gt_error = np.abs(gt_data[..., i:i + interval] - gt).sum()
-            spike_error = np.abs(
-                out_data[..., i:i + interval] - data[..., :interval]
-            ).sum()
-            self.assertTrue(gt_error == 0)
-            self.assertTrue(
-                spike_error == 0,
-                f'Expected data and out_data at {i=} to be same. '
-                f'Found {data[..., :interval]=} and '
-                f'{out_data[..., i:i + interval]=}'
-            )
+        self.run_test(shape, steps, interval, offset, num_steps)
 
 
 if __name__ == '__main__':
