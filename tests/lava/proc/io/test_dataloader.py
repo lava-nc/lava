@@ -5,6 +5,7 @@
 from typing import List, Tuple
 import unittest
 import numpy as np
+from lava.magma.core.model.model import AbstractProcessModel
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
@@ -15,23 +16,24 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_configs import RunConfig
 
 from lava.proc.io.sink import RingBuffer as ReceiveProcess
 from lava.proc.io.dataloader import StateDataloader, SpikeDataloader
-
-from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.run_configs import RunConfig
 
 
 class TestRunConfig(RunConfig):
     """Run configuration selects appropriate ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
-    def __init__(self, select_tag: str = 'fixed_pt'):
+    def __init__(self, select_tag: str = 'fixed_pt') -> None:
         super().__init__(custom_sync_domains=None)
         self.select_tag = select_tag
 
     def select(
-        self, _, proc_models: List[PyLoihiProcessModel]
+        self,
+        _: List[AbstractProcessModel],
+        proc_models: List[PyLoihiProcessModel]
     ) -> PyLoihiProcessModel:
         # print(proc_models)
         for pm in proc_models:
@@ -91,24 +93,30 @@ class TestStateDataloader(unittest.TestCase):
 
         proc = DummyProc(shape)
         dataloader = StateDataloader(DummyDataset(shape), interval, offset)
-        gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
+
+        ground_truth = ReceiveProcess(
+            shape=dataloader.ground_truth.shape, buffer=num_steps
+        )
+
         out = ReceiveProcess(shape=shape, buffer=num_steps)
         dataloader.connect_var(proc.state)
-        dataloader.gt.connect(gt.a_in)
+        dataloader.ground_truth.connect(ground_truth.a_in)
         proc.s_out.connect(out.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = TestRunConfig(select_tag='fixed_pt')
         proc.run(condition=run_condition, run_cfg=run_config)
-        gt_data = gt.data.get()
+        ground_truth_data = ground_truth.data.get()
         out_data = out.data.get()
         proc.stop()
 
         dataset = DummyDataset(shape)
         for i in range(offset + 1, num_steps):
             id = (i - offset - 1) // interval
-            data, gt = dataset[id]
-            self.assertTrue(np.array_equal(gt, gt_data[..., i].item()))
+            data, ground_truth = dataset[id]
+            self.assertTrue(
+                np.array_equal(ground_truth, ground_truth_data[..., i].item())
+            )
             self.assertTrue(
                 np.array_equal(data, out_data[..., i]),
                 f'Expected data and out_data at {i=} to be same. '
@@ -129,23 +137,30 @@ class TestSpikeDataloader(unittest.TestCase):
             SpikeDataset(shape + (steps,)), interval, offset
         )
 
-        gt = ReceiveProcess(shape=dataloader.gt.shape, buffer=num_steps)
+        ground_truth = ReceiveProcess(
+            shape=dataloader.ground_truth.shape, buffer=num_steps
+        )
+
         out = ReceiveProcess(shape=shape, buffer=num_steps)
-        dataloader.gt.connect(gt.a_in)
+        dataloader.ground_truth.connect(ground_truth.a_in)
         dataloader.s_out.connect(out.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = TestRunConfig(select_tag='fixed_pt')
         dataloader.run(condition=run_condition, run_cfg=run_config)
-        gt_data = gt.data.get()
+        ground_truth_data = ground_truth.data.get()
         out_data = out.data.get()
         dataloader.stop()
 
         dataset = SpikeDataset(shape + (steps,))
         for i in range(offset + 1, num_steps, interval):
             id = (i - offset - 1) // interval
-            data, gt = dataset[id]
-            gt_error = np.abs(gt_data[..., i:i + interval] - gt).sum()
+            data, ground_truth = dataset[id]
+
+            ground_truth_error = np.abs(
+                ground_truth_data[..., i:i + interval] - ground_truth
+            ).sum()
+
             if steps > interval:
                 spike_error = np.abs(
                     out_data[..., i:i + interval] - data[..., :interval]
@@ -153,7 +168,7 @@ class TestSpikeDataloader(unittest.TestCase):
             else:
                 spike_error = np.abs(out_data[..., i:i + steps] - data).sum()
 
-            self.assertTrue(gt_error == 0)
+            self.assertTrue(ground_truth_error == 0)
             self.assertTrue(
                 spike_error == 0,
                 f'Expected data and out_data at {i=} to be same. '
