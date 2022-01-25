@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from typing import Iterable, Union
+from typing import Iterable, Tuple, Union
 import numpy as np
 
 from lava.magma.core.process.process import AbstractProcess
@@ -16,8 +16,55 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
+# Abstract Dataloader #########################################################
+class AbstractDataloader(AbstractProcess):
+    """Abstract dataloader object.
+
+    Parameters
+    ----------
+    dataset : Iterable
+        The actual dataset object. Dataset is expected to return
+        ``(input, label/ground_truth)`` when indexed.
+    interval : int, optional
+        Interval between each data load, by default 1
+    offset : int, optional
+        Offset (phase) for each data load, by default 0
+    """
+    def __init__(
+        self,
+        gt_shape: Tuple[int],
+        dataset: Iterable,
+        interval: int = 1,
+        offset: int = 0,
+    ) -> None:
+        super().__init__()
+        self.interval = Var((1,), interval)
+        self.offset = Var((1,), offset % interval)
+
+        self.ground_truth = OutPort(shape=gt_shape)
+        self.proc_params['saved_dataset'] = dataset
+
+
+@requires(HostCPU)
+class AbstractPyDataloaderModel(PyLoihiProcessModel):
+    ground_truth: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    interval: np.ndarray = LavaPyType(np.ndarray, int)
+    offset: np.ndarray = LavaPyType(np.ndarray, int)
+
+    def __init__(self, proc_params: dict) -> None:
+        super().__init__(proc_params)
+        self.sample_id = 0
+        self.ground_truth_state = 0
+        self.dataset = self.proc_params['saved_dataset']
+
+    def ground_truth_array(self) -> np.ndarray:
+        if np.isscalar(self.ground_truth_state):
+            return np.array([self.ground_truth_state])
+        return self.ground_truth_state
+
+
 # State dataloader ###########################################################
-class StateDataloader(AbstractProcess):
+class StateDataloader(AbstractDataloader):
     """Dataloader object that loads new data sample to internal state at a
     set interval and offset (phase).
 
@@ -37,13 +84,12 @@ class StateDataloader(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__()
-        self.interval = Var((1,), interval)
-        self.offset = Var((1,), offset % interval)
-        data, gt = dataset[0]
+        data, ground_truth = dataset[0]
+        gt_shape = (1,) if np.isscalar(ground_truth) else ground_truth.shape
+
+        super().__init__(gt_shape, dataset, interval, offset)
+
         self.state = RefPort(data.shape)
-        self.gt = OutPort((1,) if np.isscalar(gt) else gt.shape)
-        self.proc_params['saved_dataset'] = dataset
 
     def connect_var(self, var: Var) -> None:
         """Connects the internal state (ref-port) to the variable. The variable
@@ -60,33 +106,18 @@ class StateDataloader(AbstractProcess):
         self._post_init()
 
 
-@requires(HostCPU)
-class AbstractPyStateModel(PyLoihiProcessModel):
+class AbstractPyStateModel(AbstractPyDataloaderModel):
     state: Union[PyRefPort, None] = None
-    gt: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    interval: np.ndarray = LavaPyType(np.ndarray, int)
-    offset: np.ndarray = LavaPyType(np.ndarray, int)
-
-    def __init__(self, proc_params: dict) -> None:
-        super().__init__(proc_params)
-        self.sample_id = 0
-        self.gt_state = 0
-        self.dataset = self.proc_params['saved_dataset']
-
-    def gt_array(self) -> np.ndarray:
-        if np.isscalar(self.gt_state):
-            return np.array([self.gt_state])
-        return self.gt_state
 
     def run_spk(self) -> None:
-        self.gt.send(self.gt_array())
+        self.ground_truth.send(self.ground_truth_array())
 
     def post_guard(self) -> None:
         return (self.current_ts - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        data, self.gt_state = self.dataset[self.sample_id]
-        self.gt_state = self.gt_array()
+        data, self.ground_truth_state = self.dataset[self.sample_id]
+        self.ground_truth_state = self.ground_truth_array()
         self.state.write(data)
         self.sample_id += 1
         if self.sample_id == len(self.dataset):
@@ -106,7 +137,7 @@ class PyStateModelFloat(AbstractPyStateModel):
 
 
 # Spike Dataloader ############################################################
-class SpikeDataloader(AbstractProcess):
+class SpikeDataloader(AbstractDataloader):
     """Dataloader object that sends spike for a input sample at a
     set interval and offset (phase).
 
@@ -126,48 +157,35 @@ class SpikeDataloader(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__()
-        self.interval = Var((1,), interval)
-        self.offset = Var((1,), offset % interval)
-        data, gt = dataset[0]
+        data, ground_truth = dataset[0]
+        gt_shape = (1,) if np.isscalar(ground_truth) else ground_truth.shape
+
+        super().__init__(gt_shape, dataset, interval, offset)
+
         data_shape = data.shape[:-1] + (interval,)
         self.data = Var(shape=data_shape, init=np.zeros(data_shape))
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
-        self.gt = OutPort(shape=(1,) if np.isscalar(gt) else gt.shape)
-        self.proc_params['saved_dataset'] = dataset
 
 
-@requires(HostCPU)
-class AbstractPySpikeModel(PyLoihiProcessModel):
+class AbstractPySpikeModel(AbstractPyDataloaderModel):
     s_out: Union[PyOutPort, None] = None
-    gt: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     data: Union[np.ndarray, None] = None
-    interval: np.ndarray = LavaPyType(np.ndarray, int)
-    offset: np.ndarray = LavaPyType(np.ndarray, int)
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
-        self.sample_id = 0
         self.sample_time = 0
-        self.gt_state = 0
-        self.dataset = self.proc_params['saved_dataset']
-
-    def gt_array(self) -> np.ndarray:
-        if np.isscalar(self.gt_state):
-            return np.array([self.gt_state])
-        return self.gt_state
 
     def run_spk(self) -> None:
         self.s_out.send(self.data[..., self.sample_time % self.interval.item()])
-        self.gt.send(self.gt_array())
+        self.ground_truth.send(self.ground_truth_array())
         self.sample_time += 1
 
     def post_guard(self) -> None:
         return (self.current_ts - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        data, self.gt_state = self.dataset[self.sample_id]
-        self.gt_state = self.gt_array()
+        data, self.ground_truth_state = self.dataset[self.sample_id]
+        self.ground_truth_state = self.ground_truth_array()
         if data.shape[-1] >= self.interval:
             self.data = data[..., :self.interval.item()]
         else:
