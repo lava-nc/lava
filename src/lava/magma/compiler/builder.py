@@ -359,11 +359,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
         if self.proc_params:
             pm = self.proc_model(self.proc_params)
         else:
-            # Empty argument because some existing process models where __init__
-            # is overloaded without proc_model argument, the execution hangs.
-            # However, when the base class constructor is called, proc_model
-            # is initialized to a default value of {} which is the desired
+            # Calling base class constructor directly where proc_params is
+            # initialized to a default value of {} which is the desired
             # behavior.
+            # This enables backward compatibility with some existing processes
+            # where __init__ is overloaded without proc_params argument.
+            # Without this, the execution hangs for such processes.
             pm = self.proc_model()
         pm.model_id = self._model_id
 
