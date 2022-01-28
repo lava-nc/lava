@@ -29,15 +29,14 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any] = {}):
-        super().__init__()
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
+        super().__init__(proc_params)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
         self.process_to_service: ty.Optional[CspSendPort] = None
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
-        self.proc_params: ty.Dict[str, ty.Any] = proc_params
 
     def __setattr__(self, key: str, value: ty.Any):
         self.__dict__[key] = value
@@ -66,7 +65,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
-    def __init__(self, proc_params: ty.Dict[str, ty.Any] = {}):
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]):
         super(PyLoihiProcessModel, self).__init__(proc_params)
         self.current_ts = 0
 

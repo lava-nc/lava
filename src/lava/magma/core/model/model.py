@@ -52,6 +52,9 @@ class AbstractProcessModel(ABC):
     required_resources: ty.List[ty.Type[AbstractResource]] = []
     tags: ty.List[str] = []
 
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
+        self.proc_params: ty.Dict[str, ty.Any] = proc_params
+
     def __repr__(self):
         pm_name = self.__class__.__qualname__
         p_name = self.implements_process.__qualname__
