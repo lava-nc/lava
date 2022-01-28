@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
-
 import numpy as np
+
+"""Defines message tokens for Actions (Commands) and Responses. Also defines
+helper functions to convert scalar values to these message tokens"""
 
 
 def enum_to_np(value: ty.Union[int, float],
