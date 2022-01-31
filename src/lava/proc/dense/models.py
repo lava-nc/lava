@@ -60,8 +60,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     sign_mode: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=2)
 
-    def __init__(self):
-        super(PyDenseModelBitAcc, self).__init__()
+    def __init__(self, proc_params):
+        super(PyDenseModelBitAcc, self).__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
