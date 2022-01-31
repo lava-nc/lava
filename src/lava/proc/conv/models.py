@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+from typing import Any, Dict
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -27,8 +28,8 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, proc_params: Dict[str, Any]) -> None:
+        super().__init__(proc_params)
         self.a_buf = None
 
     def run_spk(self) -> None:
@@ -42,7 +43,6 @@ class AbstractPyConvModel(PyLoihiProcessModel):
         if self.a_buf is None:
             self.a_buf = np.zeros_like(a_out)
 
-        # self.a_out.send(self.clamp_precision(a_out))
         self.a_out.send(self.a_buf)
         self.a_buf = self.clamp_precision(a_out)
 

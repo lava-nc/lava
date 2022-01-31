@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from typing import Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
@@ -17,7 +17,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyRefPort
 
 
-# Ring Buffer #################################################################
+# Ring Buffer
 class RingBuffer(AbstractProcess):
     """Process for receiving arbitrarily shaped data into a ring buffer
     memory. Works as a substitute for probing.
@@ -69,7 +69,7 @@ class PyReceiveModelFixed(AbstractPyReceiveModel):
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
-# Read #######################################################################
+# Read
 class Read(AbstractProcess):
     """Reads and logs the data of it's internal state at a
     set interval and offset (phase).
@@ -112,8 +112,8 @@ class AbstractPyRead(PyLoihiProcessModel):
     interval: np.ndarray = LavaPyType(np.ndarray, int)
     offset: np.ndarray = LavaPyType(np.ndarray, int)
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, proc_params: Dict[str, Any]) -> None:
+        super().__init__(proc_params)
         self.counter = 0
 
     def post_guard(self) -> None:

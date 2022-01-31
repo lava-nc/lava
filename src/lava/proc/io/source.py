@@ -16,7 +16,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyOutPort
 
 
-# Ring Buffer #################################################################
+# Ring Buffer
 class RingBuffer(AbstractProcess):
     """Spike generator process from circular data buffer.
 
