@@ -106,7 +106,7 @@ class StateDataloader(AbstractDataloader):
         self._post_init()
 
 
-class AbstractPyStateModel(AbstractPyDataloaderModel):
+class AbstractPyStateDataloaderModel(AbstractPyDataloaderModel):
     state: Union[PyRefPort, None] = None
 
     def run_spk(self) -> None:
@@ -126,13 +126,13 @@ class AbstractPyStateModel(AbstractPyDataloaderModel):
 
 @implements(proc=StateDataloader, protocol=LoihiProtocol)
 @tag('fixed_pt')
-class PyStateModelFixed(AbstractPyStateModel):
+class PyStateModelFixed(AbstractPyStateDataloaderModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
 
 
 @implements(proc=StateDataloader, protocol=LoihiProtocol)
 @tag('floating_pt')
-class PyStateModelFloat(AbstractPyStateModel):
+class PyStateModelFloat(AbstractPyStateDataloaderModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)
 
 
@@ -167,7 +167,7 @@ class SpikeDataloader(AbstractDataloader):
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
 
 
-class AbstractPySpikeModel(AbstractPyDataloaderModel):
+class AbstractPySpikeDataloaderModel(AbstractPyDataloaderModel):
     s_out: Union[PyOutPort, None] = None
     data: Union[np.ndarray, None] = None
 
@@ -199,13 +199,13 @@ class AbstractPySpikeModel(AbstractPyDataloaderModel):
 
 @implements(proc=SpikeDataloader, protocol=LoihiProtocol)
 @tag('fixed_pt')
-class PySpikeModelFixed(AbstractPySpikeModel):
+class PySpikeModelFixed(AbstractPySpikeDataloaderModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
 @implements(proc=SpikeDataloader, protocol=LoihiProtocol)
 @tag('floating_pt')
-class PySpikeModelFloat(AbstractPySpikeModel):
+class PySpikeModelFloat(AbstractPySpikeDataloaderModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     data: np.ndarray = LavaPyType(np.ndarray, float)
