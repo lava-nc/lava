@@ -85,7 +85,7 @@ class TernaryLIF(AbstractLIF):
         super().__init__(**kwargs)
         vth_hi = kwargs.pop("vth_hi", 10)
         vth_lo = kwargs.pop("vth_lo", -10)
-        graded_spike = kwargs.pop("graded_spike", False)
+        graded_spike = kwargs.pop("graded_spike", True)
         if vth_lo > vth_hi:
             raise AssertionError(f"Lower threshold {vth_lo} is larger than the "
                                  f"upper threshold {vth_hi} for Ternary LIF "
