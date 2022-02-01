@@ -30,6 +30,8 @@ class Conv(AbstractProcess):
         convolution dilation. Default is 1.
     groups : int
         number of groups in convolution. Default is 1.
+    graded_spike: bool
+        flag to indicate graded spike. Default is False
 
     Note
     ----
@@ -53,6 +55,7 @@ class Conv(AbstractProcess):
         stride = utils.get_tuple(kwargs, 'stride', 1)
         dilation = utils.get_tuple(kwargs, 'dilation', 1)
         groups = kwargs.get('groups', 1)
+        graded_spike = kwargs.get('graded_spike', False)
 
         if len(input_shape) != 3:
             raise ValueError(
@@ -92,3 +95,4 @@ class Conv(AbstractProcess):
         self.stride = Var(shape=(2,), init=stride)
         self.dilation = Var(shape=(2,), init=dilation)
         self.groups = Var(shape=(1,), init=groups)
+        self.graded_spike = Var(shape=(1,), init=graded_spike)

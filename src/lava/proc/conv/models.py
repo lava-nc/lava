@@ -27,13 +27,18 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     padding: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
+    graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def __init__(self, proc_params: Dict[str, Any]) -> None:
         super().__init__(proc_params)
         self.a_buf = None
 
     def run_spk(self) -> None:
-        s_in = self.s_in.recv()
+        if self.graded_spike.item():
+            s_in = self.s_in.recv()
+        else:
+            s_in = self.s_in.recv().astype(bool)
+
         a_out = utils.conv(
             s_in, self.weight,
             self.kernel_size, self.stride, self.padding, self.dilation,
@@ -55,7 +60,7 @@ class AbstractPyConvModel(PyLoihiProcessModel):
 @tag('floating_pt')
 class PyConvModelBinaryFloat(AbstractPyConvModel):
     """Binary spikes, and float synapse implementation."""
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     weight: np.ndarray = LavaPyType(np.ndarray, float)
 
@@ -65,7 +70,7 @@ class PyConvModelBinaryFloat(AbstractPyConvModel):
 @tag('fixed_pt')
 class PyConvModelBinaryFixed(AbstractPyConvModel):
     """Binary spike, and fixed point synapse implementation."""
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
 
