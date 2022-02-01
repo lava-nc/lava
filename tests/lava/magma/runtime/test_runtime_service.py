@@ -58,7 +58,7 @@ class TestRuntimeService(unittest.TestCase):
         self.assertEqual(rs.process_to_service, [])
 
     def test_runtime_service_start_run(self):
-        pm = SimpleProcessModel()
+        pm = SimpleProcessModel(proc_params={})
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
         smm = SharedMemoryManager()
