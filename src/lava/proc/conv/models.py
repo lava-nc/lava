@@ -20,6 +20,7 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     """Abstract template implementation of PyConvModel."""
     s_in = None
     a_out = None
+    a_buf = None
     weight = None
 
     kernel_size: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
@@ -28,10 +29,6 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
-
-    def __init__(self, proc_params: Dict[str, Any]) -> None:
-        super().__init__(proc_params)
-        self.a_buf = None
 
     def run_spk(self) -> None:
         if self.graded_spike.item():
@@ -62,6 +59,7 @@ class PyConvModelBinaryFloat(AbstractPyConvModel):
     """Binary spikes, and float synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    a_buf: PyOutPort = LavaPyType(np.ndarray, float)
     weight: np.ndarray = LavaPyType(np.ndarray, float)
 
 
@@ -72,6 +70,7 @@ class PyConvModelBinaryFixed(AbstractPyConvModel):
     """Binary spike, and fixed point synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    a_buf: PyOutPort = LavaPyType(np.ndarray, np.int32, precision=24)
     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
 
     def clamp_precision(self, x: np.ndarray) -> np.ndarray:

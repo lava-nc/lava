@@ -36,9 +36,9 @@ class Reset(AbstractProcess):
         offset: int = 0,
     ) -> None:
         super().__init__()
-        self.reset_value = Var((1,), reset_value)
-        self.interval = Var((1,), interval)
-        self.offset = Var((1,), offset % interval)
+        self.reset_value = Var((1,), init=reset_value)
+        self.interval = Var((1,), init=interval)
+        self.offset = Var((1,), init=offset % interval)
         self.state = RefPort((1,))
 
     def connect_var(self, var: Var) -> None:

@@ -95,4 +95,5 @@ class Conv(AbstractProcess):
         self.stride = Var(shape=(2,), init=stride)
         self.dilation = Var(shape=(2,), init=dilation)
         self.groups = Var(shape=(1,), init=groups)
+        self.a_buf = Var(shape=output_shape, init=0)
         self.graded_spike = Var(shape=(1,), init=graded_spike)

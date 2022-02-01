@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from lava.magma.core.model.py.ports import PyOutPort
 
-from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.io.source import RingBuffer as SendProcess
 from lava.proc.io.sink import RingBuffer as ReceiveProcess
@@ -49,22 +49,6 @@ class PyIntegrator(PyLoihiProcessModel):
         self.out.send(self.state)
 
 
-class TestRunConfig(RunConfig):
-    """Run configuration selects appropriate ProcessModel based on tag
-    """
-    def __init__(self, select_tag: str = 'fixed_pt') -> None:
-        super(TestRunConfig, self).__init__(custom_sync_domains=None)
-        self.select_tag = select_tag
-
-    def select(
-        self, _, proc_models: List[PyLoihiProcessModel]
-    ) -> PyLoihiProcessModel:
-        for pm in proc_models:
-            if self.select_tag in pm.tags:
-                return pm
-        raise AssertionError('No legal ProcessModel found.')
-
-
 class TestSendReceive(unittest.TestCase):
     """Tests for all SendProces and ReceiveProcess."""
 
@@ -81,7 +65,7 @@ class TestSendReceive(unittest.TestCase):
         source.out_ports.s_out.connect(sink.in_ports.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
-        run_config = TestRunConfig(select_tag='floating_pt')
+        run_config = Loihi1SimCfg(select_tag='floating_pt')
         sink.run(condition=run_condition, run_cfg=run_config)
         output = sink.data.get()
         sink.stop()
@@ -103,7 +87,7 @@ class TestSendReceive(unittest.TestCase):
         logger.connect_var(integrator.state)
 
         run_condition = RunSteps(num_steps=num_steps)
-        run_config = TestRunConfig(select_tag='fixed_pt')
+        run_config = Loihi1SimCfg(select_tag='fixed_pt')
         integrator.run(condition=run_condition, run_cfg=run_config)
         output = logger.data.get()
         integrator.stop()
@@ -139,7 +123,7 @@ class TestSendReceive(unittest.TestCase):
         integrator.out.connect(sink.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
-        run_config = TestRunConfig(select_tag='fixed_pt')
+        run_config = Loihi1SimCfg(select_tag='fixed_pt')
         integrator.run(condition=run_condition, run_cfg=run_config)
         # output = logger.data.get()
         output = sink.data.get()
