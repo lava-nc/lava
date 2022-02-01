@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from typing import Any, Dict
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
