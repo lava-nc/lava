@@ -181,7 +181,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     ```
     Processes do only specify their states, ports and other public interface
     methods but they do not specify the behavior. Instead, ProcessModels
-    specify which Processes they implement.
+    specify which Processes they implement. Typically, Processes share their
+    states, ports and other public interface methods with their ProcessModels.
+    For special cases, one can use proc_params memeber of the process to
+    communicate arbitrary object between Processes and their PorcessModels.
     For more information on connecting process, see documentation of InPort,
     OutPort and RefPort.
 
