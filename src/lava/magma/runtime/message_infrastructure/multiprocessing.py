@@ -32,6 +32,7 @@ class SystemProcess(mp.Process):
         except Exception as e:
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
+            raise e
 
     @property
     def exception(self):
