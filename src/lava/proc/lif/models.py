@@ -25,7 +25,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     du: float = LavaPyType(float, float)
     dv: float = LavaPyType(float, float)
-    graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -72,7 +72,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     dv: int = LavaPyType(int, np.uint16, precision=12)
     bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
-    graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -217,7 +217,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     def spiking_activation(self):
         """Spiking activation function for LIF.
         """
-        if self.graded_spike.item():
+        if self.use_graded_spike.item():
             return self.v * (self.v > self.effective_vth)
         return self.v > self.vth
 
@@ -285,7 +285,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     def spiking_activation(self):
         """Spike when voltage exceeds threshold.
         """
-        if self.graded_spike.item():
+        if self.use_graded_spike.item():
             return self.v * (self.v > self.effective_vth)
         return self.v > self.effective_vth
 

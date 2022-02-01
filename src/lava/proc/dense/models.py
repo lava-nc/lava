@@ -31,14 +31,14 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     weight_exp: float = LavaPyType(float, float)
     num_weight_bits: float = LavaPyType(float, float)
     sign_mode: float = LavaPyType(float, float)
-    graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def run_spk(self):
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
-        if self.graded_spike.item():
+        if self.use_graded_spike.item():
             s_in = self.s_in.recv()
             self.a_buff = self.weights.dot(s_in)
         else:
@@ -64,7 +64,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=4)
     num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     sign_mode: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=2)
-    graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def __init__(self, proc_params):
         super(PyDenseModelBitAcc, self).__init__(proc_params)
@@ -109,7 +109,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
-        if self.graded_spike.item():
+        if self.use_graded_spike.item():
             s_in = self.s_in.recv()
             a_accum = self.weights.dot(s_in)
         else:
