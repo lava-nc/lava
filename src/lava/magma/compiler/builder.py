@@ -188,7 +188,6 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
         Any Py{In/Out/Ref}Ports must be strict sub-types of Py{In/Out/Ref}Ports.
         """
-
         for name, port_init in self.py_ports.items():
             lt = self._get_lava_type(name)
             if not isinstance(lt.cls, type):
@@ -354,14 +353,11 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
 
         # Create the ProcessModel
-        pm = self.proc_model()
-        pm.model_id = self._model_id
-
         # Default value of pm.proc_params in ProcessModel is an empty dictionary
         # If a proc_params argument is provided in PyProcessBuilder,
         # this will be carried to ProcessModel
-        if self.proc_params is not None:
-            pm.proc_params = self.proc_params
+        pm = self.proc_model(self.proc_params)
+        pm.model_id = self._model_id
 
         # Initialize PyPorts
         for name, p in self.py_ports.items():
@@ -421,22 +417,13 @@ class PyProcessBuilder(AbstractProcessBuilder):
             setattr(pm, name, port)
 
         for port in self.csp_rs_recv_port.values():
-            if "service_to_process_cmd" in port.name:
-                pm.service_to_process_cmd = port
-                continue
-            if "service_to_process_req" in port.name:
-                pm.service_to_process_req = port
-                continue
-            if "service_to_process_data" in port.name:
-                pm.service_to_process_data = port
+            if "service_to_process" in port.name:
+                pm.service_to_process = port
                 continue
 
         for port in self.csp_rs_send_port.values():
-            if "process_to_service_ack" in port.name:
-                pm.process_to_service_ack = port
-                continue
-            if "process_to_service_data" in port.name:
-                pm.process_to_service_data = port
+            if "process_to_service" in port.name:
+                pm.process_to_service = port
                 continue
 
         # Initialize Vars
@@ -535,32 +522,20 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         rs.model_ids = self._model_ids
 
         for port in self.csp_proc_send_port.values():
-            if "service_to_process_cmd" in port.name:
-                rs.service_to_process_cmd.append(port)
-            if "service_to_process_req" in port.name:
-                rs.service_to_process_req.append(port)
-            if "service_to_process_data" in port.name:
-                rs.service_to_process_data.append(port)
+            if "service_to_process" in port.name:
+                rs.service_to_process.append(port)
 
         for port in self.csp_proc_recv_port.values():
-            if "process_to_service_ack" in port.name:
-                rs.process_to_service_ack.append(port)
-            if "process_to_service_data" in port.name:
-                rs.process_to_service_data.append(port)
+            if "process_to_service" in port.name:
+                rs.process_to_service.append(port)
 
         for port in self.csp_send_port.values():
-            if "service_to_runtime_ack" in port.name:
-                rs.service_to_runtime_ack = port
-            elif "service_to_runtime_data" in port.name:
-                rs.service_to_runtime_data = port
+            if "service_to_runtime" in port.name:
+                rs.service_to_runtime = port
 
         for port in self.csp_recv_port.values():
-            if "runtime_to_service_cmd" in port.name:
-                rs.runtime_to_service_cmd = port
-            elif "runtime_to_service_req" in port.name:
-                rs.runtime_to_service_req = port
-            elif "runtime_to_service_data" in port.name:
-                rs.runtime_to_service_data = port
+            if "runtime_to_service" in port.name:
+                rs.runtime_to_service = port
 
         return rs
 

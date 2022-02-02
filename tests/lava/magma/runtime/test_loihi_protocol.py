@@ -55,9 +55,6 @@ class SimpleProcessModel(PyLoihiProcessModel):
     def lrn_guard(self):
         return False
 
-    def host_guard(self):
-        return True
-
 
 class TestProcess(unittest.TestCase):
     def test_synchronization_single_process_model(self):
@@ -66,7 +63,6 @@ class TestProcess(unittest.TestCase):
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
-        self.assertEqual(process.runtime.global_time, 15)
         process.stop()
 
 

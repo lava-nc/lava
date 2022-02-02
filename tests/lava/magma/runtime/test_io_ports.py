@@ -105,7 +105,7 @@ class PyProcModel2(PyLoihiProcessModel):
         self.var = data
 
 
-class TestGetSetVar(unittest.TestCase):
+class TestIOPorts(unittest.TestCase):
     def test_send_recv(self):
         """Checks if sending data via an OutPort in P1 to an InPort in P2
         works. The data is received in P2 and stored in its Var var to compare

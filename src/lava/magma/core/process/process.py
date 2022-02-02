@@ -5,17 +5,16 @@
 import typing as ty
 from _collections import OrderedDict
 
+from lava.magma.compiler.executable import Executable
+from lava.magma.core.process.interfaces import \
+    AbstractProcessMember, IdGeneratorSingleton
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.core.run_conditions import AbstractRunCondition
-from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.process.ports.ports import \
     InPort, OutPort, RefPort, VarPort
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.interfaces import \
-    AbstractProcessMember, IdGeneratorSingleton
-from lava.magma.compiler.executable import Executable
+from lava.magma.core.run_conditions import AbstractRunCondition
+from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
-
 
 # Abbreviation for type annotation in Collection class
 mem_type = ty.Union[InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"]
@@ -183,7 +182,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     ```
     Processes do only specify their states, ports and other public interface
     methods but they do not specify the behavior. Instead, ProcessModels
-    specify which Processes they implement.
+    specify which Processes they implement. Typically, Processes share their
+    states, ports and other public interface methods with their ProcessModels.
+    For special cases, one can use proc_params memeber of the process to
+    communicate arbitrary object between Processes and their PorcessModels.
     For more information on connecting process, see documentation of InPort,
     OutPort and RefPort.
 
@@ -359,7 +361,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     # TODO: (PP) Remove  if condition on blocking as soon as non-blocking
     #  execution is completely implemented
-    def run(self, condition: AbstractRunCondition, run_cfg: RunConfig):
+    def run(self,
+            condition: AbstractRunCondition = None,
+            run_cfg: RunConfig = None):
         """Runs process given RunConfig and RunCondition.
 
         run(..) compiles this and any process connected to this process
@@ -394,8 +398,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         if not self._runtime:
             executable = self.compile(run_cfg)
-            self._runtime = Runtime(condition,
-                                    executable,
+            self._runtime = Runtime(executable,
                                     ActorType.MultiProcessing)
             self._runtime.initialize()
 

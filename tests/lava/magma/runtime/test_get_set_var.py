@@ -92,7 +92,6 @@ class TestGetSetVar(unittest.TestCase):
                               expected_result_u)
         assert np.array_equal(process._runtime.get_var(process.v.id),
                               expected_result_v)
-        self.assertEqual(process.runtime.global_time, 15)
         process.stop()
 
     def test_get_set_var_using_var_api(self):
@@ -129,7 +128,6 @@ class TestGetSetVar(unittest.TestCase):
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
         assert np.array_equal(process.u.get(), expected_result_u)
         assert np.array_equal(process.v.get(), expected_result_v)
-        self.assertEqual(process.runtime.global_time, 15)
         process.stop()
 
 

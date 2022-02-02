@@ -18,6 +18,10 @@ class CPU(AbstractComputeResource):
     pass
 
 
+class HostCPU(AbstractComputeResource):
+    pass
+
+
 class GPU(AbstractComputeResource):
     pass
 
