@@ -84,7 +84,6 @@ class PyDummyProc(PyLoihiProcessModel):
 
 
 class TestStateDataloader(unittest.TestCase):
-    @unittest.skip
     def test_state_loader(self) -> None:
         """Tests state dataloader"""
         num_steps = 30
@@ -180,7 +179,6 @@ class TestSpikeDataloader(unittest.TestCase):
                 gap_error = np.abs(out_data[..., i + steps:i + interval]).sum()
                 self.assertTrue(gap_error == 0)
 
-    @unittest.skip
     def test_spike_loader(self) -> None:
         """Tests spike dataloader"""
         shape = (5, 7)
@@ -190,7 +188,6 @@ class TestSpikeDataloader(unittest.TestCase):
         num_steps = 31 + offset
         self.run_test(shape, steps, interval, offset, num_steps)
 
-    @unittest.skip
     def test_spike_loader_less_steps(self) -> None:
         """Tests spike dataloader when data load interval is less than sample
         time steps"""
@@ -201,7 +198,6 @@ class TestSpikeDataloader(unittest.TestCase):
         num_steps = 31 + offset
         self.run_test(shape, steps, interval, offset, num_steps)
 
-    @unittest.skip
     def test_spike_loader_more_steps(self) -> None:
         """Tests spike dataloader when data load interval is less than sample
         time steps."""

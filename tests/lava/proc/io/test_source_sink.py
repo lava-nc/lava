@@ -32,7 +32,6 @@ class TestRunConfig(RunConfig):
 
 class TestSendReceive(unittest.TestCase):
     """Tests for all SendProces and ReceiveProcess."""
-    @unittest.skip
     def test_source_sink(self) -> None:
         """Test whatever is being sent form source is received at sink."""
         num_steps = 10
