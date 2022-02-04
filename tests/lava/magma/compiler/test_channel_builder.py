@@ -7,7 +7,7 @@ from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 
-from lava.magma.compiler.builder import ChannelBuilderMp
+from lava.magma.compiler.builders.builder import ChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.compiler.channels.pypychannel import (

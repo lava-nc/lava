@@ -4,6 +4,9 @@
 
 import typing as ty
 
+import numpy as np
+from dataclasses import dataclass
+
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
@@ -15,11 +18,8 @@ if ty.TYPE_CHECKING:
     from lava.magma.core.model.model import AbstractProcessModel
     from lava.magma.runtime.runtime import Runtime
 
-from abc import ABC, abstractmethod
-
-import numpy as np
-from dataclasses import dataclass
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder, AbstractRuntimeServiceBuilder
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
@@ -34,36 +34,8 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
 
 
-class AbstractProcessBuilder(ABC):
-    @abstractmethod
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        pass
-
-    @property
-    @abstractmethod
-    def proc_model(self) -> "AbstractProcessModel":
-        pass
-
-
-class AbstractRuntimeServiceBuilder(ABC):
-    def __init__(self, rs_class, sync_protocol):
-        self.rs_class = rs_class
-        self.sync_protocol = sync_protocol
-
-    @property
-    @abstractmethod
-    def runtime_service_id(self):
-        pass
-
-    def build(self):
-        raise NotImplementedError(
-            "build function for RuntimeServiceBuilder is not implemented"
-        )
-
-
 # ToDo: Some of this implementation may actually go to AbstractProcessBuilder
 #  because it might be generic for all types of builders.
-# ToDo: Should probably move into own module
 class PyProcessBuilder(AbstractProcessBuilder):
     """A PyProcessBuilder instantiates and initializes a PyProcessModel.
 

@@ -638,7 +638,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 5 channel builders (one for each arrow above)
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
 
         self.assertEqual(len(cbs), 5)
         for cb in cbs:
@@ -683,7 +683,7 @@ class TestCompiler(unittest.TestCase):
         # There should only be one ChannelBuilder from the internal proc1 to
         # proc2
         self.assertEqual(len(chb), 1)
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertIsInstance(chb[0], ChannelBuilderMp)
         self.assertEqual(chb[0].src_process, p.procs.proc1)
         self.assertEqual(chb[0].dst_process, p.procs.proc2)
@@ -712,7 +712,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 2 channel builder
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertEqual(len(cbs), 2)
         self.assertIsInstance(cbs[0], ChannelBuilderMp)
         self.assertEqual(cbs[0].src_process, src)
@@ -742,7 +742,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 2 channel builder
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertEqual(len(cbs), 2)
         self.assertIsInstance(cbs[0], ChannelBuilderMp)
         self.assertEqual(cbs[0].src_process, src)
