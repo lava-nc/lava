@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 from typing import List
 import unittest
 import numpy as np
@@ -31,7 +32,7 @@ class TestRunConfig(RunConfig):
 
 
 class TestSendReceive(unittest.TestCase):
-    """Tests for all SendProces and ReceiveProcess."""
+    """Tests for all SendProcess and ReceiveProcess."""
 
     def test_permute(self) -> None:
         """Test whatever is being sent form source is received at sink."""
@@ -43,7 +44,7 @@ class TestSendReceive(unittest.TestCase):
 
         source = SendProcess(data=input)
         sink = ReceiveProcess(shape=shape[::-1], buffer=num_steps)
-        source.out_ports.s_out.permute([2, 1, 0]).connect(sink.in_ports.a_in)
+        source.out_ports.s_out.transpose([2, 1, 0]).connect(sink.in_ports.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = TestRunConfig(select_tag='floating_pt')

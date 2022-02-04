@@ -34,16 +34,33 @@ class ConcatShapeError(Exception):
         super().__init__(self, msg)
 
 
-class PermuteError(Exception):
-    """Raised when permute order is incompatible with old shape dimension."""
+class TransposeShapeError(Exception):
+    """Raised when transpose axes is incompatible with old shape dimension."""
 
     def __init__(
-        self, old_shape: ty.Tuple, order: ty.Union[ty.Tuple, ty.List]
+        self, old_shape: ty.Tuple, axes: ty.Union[ty.Tuple, ty.List]
     ) -> None:
         msg = (
-            "Cannot permute 'old_shape'={} with permutation 'order={}. "
+            "Cannot transpose 'old_shape'={} with permutation 'axes={}. "
             "Total number of dimensions must not change during "
-            "reshaping.".format(old_shape, order)
+            "reshaping.".format(old_shape, axes)
+        )
+        super().__init__(msg)
+
+
+class TransposeIndexError(Exception):
+    """Raised when indices in transpose axes are out of bounds for the old
+    shape dimension."""
+
+    def __init__(
+        self,
+        old_shape: ty.Tuple,
+        axes: ty.Union[ty.Tuple, ty.List],
+        wrong_index
+    ) -> None:
+        msg = (
+            f"Cannot transpose 'old_shape'={old_shape} with permutation"
+            f"'axes'={axes}. The index {wrong_index} is out of bounds."
         )
         super().__init__(msg)
 

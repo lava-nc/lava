@@ -204,27 +204,40 @@ class AbstractPort(AbstractProcessMember):
         self._validate_ports(ports, port_type, assert_same_shape=False)
         return ConcatPort(ports, axis)
 
-    def permute(
+    def transpose(
         self,
-        order: ty.Union[ty.Tuple, ty.List]
-    ) -> "PermutePort":
-        """Permutes the tensor dimensio of this port by deriving and returning
-        a new virtual PermutePort the new permuted dimension. This implies that
-        the resulting PermutePort can only be forward connected to another port.
+        axes: ty.Optional[ty.Union[ty.Tuple, ty.List]] = None
+    ) -> "TransposePort":
+        """Permutes the tensor dimension of this port by deriving and returning
+        a new virtual TransposePort the new permuted dimension. This implies
+        that the resulting TransposePort can only be forward connected to
+        another port.
 
         Parameters
         ----------
-        :param order: Order of permutation. Number of total elements and number
+        :param axes: Order of permutation. Number of total elements and number
         of dimensions must not change.
         """
-        if len(self.shape) != len(order):
-            raise pe.PermuteError(self.shape, order)
+        if axes is None:
+            axes = tuple(reversed(range(len(self.shape))))
+        else:
+            if len(self.shape) != len(axes):
+                raise pe.TransposeShapeError(self.shape, axes)
 
-        permute_port = PermutePort(tuple([self.shape[i] for i in order]))
+            # Check that none of the given axes are out of bounds for the
+            # shape of the parent port.
+            for idx in axes:
+                # Compute the positive index irrespective of the sign of 'idx'
+                idx_positive = len(self.shape) + idx if idx < 0 else idx
+                # Make sure the positive index is not out of bounds
+                if idx_positive < 0 or idx_positive >= len(self.shape):
+                    raise pe.TransposeIndexError(self.shape, axes, idx)
+
+        transpose_port = TransposePort(tuple([self.shape[i] for i in axes]))
         self._connect_forward(
-            [permute_port], AbstractPort, assert_same_shape=False
+            [transpose_port], AbstractPort, assert_same_shape=False
         )
-        return permute_port
+        return transpose_port
 
 
 class AbstractIOPort(AbstractPort):
@@ -711,8 +724,8 @@ class ConcatPort(AbstractVirtualPort, AbstractPort):
 
 
 # ToDo: TBD...
-class PermutePort(AbstractVirtualPort, AbstractPort):
-    """A PermutePort is a virtual port that allows to permute the dimensions
+class TransposePort(AbstractVirtualPort, AbstractPort):
+    """A TransposePort is a virtual port that allows to permute the dimensions
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
     tensor-valued data array from the derived to the new shape.
@@ -720,10 +733,10 @@ class PermutePort(AbstractVirtualPort, AbstractPort):
     Example:
         out_port = OutPort((2, 4, 3))
         in_port = InPort((3, 2, 4))
-        out_port.permute([3, 1, 2]).connect(in_port)
+        out_port.transpose([3, 1, 2]).connect(in_port)
     """
 
-    def __init__(self, shape: ty.Tuple):
+    def __init__(self, shape: ty.Optional[ty.Tuple] = None):
         AbstractPort.__init__(self, shape)
 
     @property
