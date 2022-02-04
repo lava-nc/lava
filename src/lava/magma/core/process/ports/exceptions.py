@@ -34,6 +34,17 @@ class ConcatShapeError(Exception):
         super().__init__(self, msg)
 
 
+class ConcatIndexError(Exception):
+    """Raised when the axis over which ports should be concatenated is out of
+    bounds."""
+
+    def __init__(self, shape: ty.Tuple[int], axis: int):
+        msg = (
+            "Axis {} is out of bounds for given shape {}.".format(axis, shape)
+        )
+        super().__init__(self, msg)
+
+
 class TransposeShapeError(Exception):
     """Raised when transpose axes is incompatible with old shape dimension."""
 

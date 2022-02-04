@@ -678,6 +678,9 @@ class ConcatPort(AbstractVirtualPort, AbstractPort):
         shapes_ex_axis = []
         shapes_incompatible = False
         for shape in concat_shapes:
+            if axis >= len(shape):
+                raise pe.ConcatIndexError(shape, axis)
+
             # Compute total size along concatenation axis
             total_size += shape[axis]
             # Extract shape dimensions other than concatenation axis

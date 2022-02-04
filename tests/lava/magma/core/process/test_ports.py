@@ -15,6 +15,7 @@ from lava.magma.core.process.ports.exceptions import (
     ReshapeError,
     DuplicateConnectionError,
     ConcatShapeError,
+    ConcatIndexError,
     TransposeShapeError,
     TransposeIndexError,
     VarNotSharableError,
@@ -441,6 +442,24 @@ class TestVirtualPorts(unittest.TestCase):
         with self.assertRaises(ReshapeError):
             OutPort((1, 2, 3)).reshape((1, 2, 2))
 
+    def test_flatten(self):
+        """Checks flattening of a port."""
+
+        op = OutPort((1, 2, 3))
+        ip = InPort((6,))
+
+        # Flatten the shape of the port.
+        fp = op.flatten()
+        self.assertEqual(fp.shape, (6,))
+
+        # This enables connecting to an input port with a flattened shape.
+        fp.connect(ip)
+
+        # We can still find destination and source connection even with
+        # virtual ports in the chain
+        self.assertEqual(op.get_dst_ports(), [ip])
+        self.assertEqual(ip.get_src_ports(), [op])
+
     def test_concat(self):
         """Checks concatenation of ports."""
 
@@ -495,6 +514,15 @@ class TestVirtualPorts(unittest.TestCase):
         # This will fail because concatenated ports must be of same type
         with self.assertRaises(AssertionError):
             op.concat_with(ip, axis=0)
+
+    def test_concat_with_axis_out_of_bounds_raises_exception(self):
+        """Checks whether an exception is raised when the specified axis is
+        out of bounds."""
+
+        op1 = OutPort((2, 3, 1))
+        op2 = OutPort((2, 3, 1))
+        with self.assertRaises(ConcatIndexError):
+            op1.concat_with(op2, axis=3)
 
     def test_transpose(self):
         """Checks transposing of ports."""
