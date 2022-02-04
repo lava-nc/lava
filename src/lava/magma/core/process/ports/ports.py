@@ -601,7 +601,7 @@ class AbstractVirtualPort(ABC):
 
 # ToDo: (AW) ReshapePort.connect(..) could be consolidated with
 #  ConcatPort.connect(..)
-class ReshapePort(AbstractPort, AbstractVirtualPort):
+class ReshapePort(AbstractVirtualPort, AbstractPort):
     """A ReshapePort is a virtual port that allows to change the shape of a
     port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
@@ -641,7 +641,7 @@ class ReshapePort(AbstractPort, AbstractVirtualPort):
         self._connect_forward(to_list(ports), port_type)
 
 
-class ConcatPort(AbstractPort, AbstractVirtualPort):
+class ConcatPort(AbstractVirtualPort, AbstractPort):
     """A ConcatPort is a virtual port that allows to concatenate multiple
     ports along given axis into a new port before connecting to another port.
     The shape of all concatenated ports outside of the concatenation
@@ -711,7 +711,7 @@ class ConcatPort(AbstractPort, AbstractVirtualPort):
 
 
 # ToDo: TBD...
-class PermutePort(AbstractPort, AbstractVirtualPort):
+class PermutePort(AbstractVirtualPort, AbstractPort):
     """A PermutePort is a virtual port that allows to permute the dimensions
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
@@ -758,7 +758,7 @@ class PermutePort(AbstractPort, AbstractVirtualPort):
 
 
 # ToDo: TBD...
-class ReIndexPort(AbstractPort, AbstractVirtualPort):
+class ReIndexPort(AbstractVirtualPort, AbstractPort):
     """A ReIndexPort is a virtual port that allows to re-index the elements
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
