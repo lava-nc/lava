@@ -475,7 +475,7 @@ class TestVirtualPorts(unittest.TestCase):
         # (2, 3, 1) + (2, 3, 1) concatenated along axis 1 results in (2, 6, 1)
         self.assertEqual(ip2.in_connections[0].shape, (2, 6, 1))
 
-    def test_concat_with_incompatible_shapes_raises_excpetion(self):
+    def test_concat_with_incompatible_shapes_raises_exception(self):
         """Checks that incompatible ports cannot be concatenated."""
 
         # Create ports with incompatible shapes
