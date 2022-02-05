@@ -15,7 +15,7 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
-from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
+from lava.magma.runtime.mgmt_token_enums import enum_to_message, enum_equal, \
     MGMT_COMMAND, MGMT_RESPONSE
 from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
 
@@ -207,12 +207,12 @@ class Runtime:
             if isinstance(run_condition, RunSteps):
                 self.num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
-                    send_port.send(enum_to_np(self.num_steps))
+                    send_port.send(enum_to_message(self.num_steps))
                 if run_condition.blocking:
                     for recv_port in self.service_to_runtime:
-                        data = recv_port.recv()
-                        if not enum_equal(data, MGMT_RESPONSE.DONE):
-                            if enum_equal(data, MGMT_RESPONSE.ERROR):
+                        message = recv_port.recv()
+                        if not enum_equal(message.data, MGMT_RESPONSE.DONE):
+                            if enum_equal(message.data, MGMT_RESPONSE.ERROR):
                                 # Receive all errors from the ProcessModels
                                 error_cnt = 0
                                 for actors in \
@@ -227,7 +227,8 @@ class Runtime:
                                     f"{error_cnt} Exception(s) occurred. See "
                                     f"output above for details.")
                             else:
-                                raise RuntimeError(f"Runtime Received {data}")
+                                raise RuntimeError(
+                                    f"Runtime Received {message.data}")
                 if run_condition.blocking:
                     self._is_running = False
             elif isinstance(run_condition, RunContinuous):
@@ -241,9 +242,10 @@ class Runtime:
     def wait(self):
         if self._is_running:
             for recv_port in self.service_to_runtime:
-                data = recv_port.recv()
-                if not enum_equal(data, MGMT_RESPONSE.DONE):
-                    raise RuntimeError(f"Runtime Received {data}")
+                message = recv_port.recv()
+                if not enum_equal(message.data, MGMT_RESPONSE.DONE):
+                    raise RuntimeError(f"Runtime Received {message.data}")
+            self.current_ts += self.num_steps
             self._is_running = False
 
     def pause(self):
@@ -256,9 +258,9 @@ class Runtime:
                 for send_port in self.runtime_to_service:
                     send_port.send(MGMT_COMMAND.STOP)
                 for recv_port in self.service_to_runtime:
-                    data = recv_port.recv()
-                    if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
-                        raise RuntimeError(f"Runtime Received {data}")
+                    message = recv_port.recv()
+                    if not enum_equal(message.data, MGMT_RESPONSE.TERMINATED):
+                        raise RuntimeError(f"Runtime Received {message.data}")
                 self.join()
                 self._is_running = False
                 self._is_started = False
@@ -293,8 +295,8 @@ class Runtime:
             # 1. Send SET Command
             req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.SET_DATA)
-            req_port.send(enum_to_np(model_id))
-            req_port.send(enum_to_np(var_id))
+            req_port.send(enum_to_message(model_id))
+            req_port.send(enum_to_message(var_id))
 
             # 2. Reshape the data
             buffer: np.ndarray = value
@@ -306,9 +308,9 @@ class Runtime:
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
-            data_port.send(enum_to_np(num_items))
+            data_port.send(enum_to_message(num_items))
             for i in range(num_items):
-                data_port.send(enum_to_np(buffer[0, i], np.float64))
+                data_port.send(enum_to_message(buffer[0, i], np.float64))
         else:
             raise RuntimeError("Runtime has not started")
 
@@ -332,15 +334,15 @@ class Runtime:
             # 1. Send GET Command
             req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.GET_DATA)
-            req_port.send(enum_to_np(model_id))
-            req_port.send(enum_to_np(var_id))
+            req_port.send(enum_to_message(model_id))
+            req_port.send(enum_to_message(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
-            num_items: int = int(data_port.recv()[0].item())
+            num_items: int = int(data_port.recv().data[0].item())
             buffer: np.ndarray = np.empty((1, num_items))
             for i in range(num_items):
-                buffer[0, i] = data_port.recv()[0]
+                buffer[0, i] = data_port.recv().data[0]
 
             # 3. Reshape result and return
             buffer = buffer.reshape(ev.shape)

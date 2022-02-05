@@ -43,13 +43,17 @@ class AbstractCspPort(ABC):
 
 class AbstractCspSendPort(AbstractCspPort):
     @abstractmethod
-    def send(self, data: np.ndarray):
+    def send(self, message: 'AbstractPortMessage'):  # noqa: F821
         pass
 
 
 class AbstractCspRecvPort(AbstractCspPort):
     @abstractmethod
-    def recv(self) -> np.ndarray:
+    def recv(self) -> 'AbstractPortMessage':  # noqa: F821:
+        pass
+
+    @abstractmethod
+    def peek(self) -> 'AbstractPortMessage':  # noqa: F821
         pass
 
 

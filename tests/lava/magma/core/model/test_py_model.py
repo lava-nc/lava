@@ -23,12 +23,41 @@ from lava.magma.compiler.builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
 
-# A test Process with a variety of Ports and Vars of different shapes,
-# with and without initial values that may require broadcasting or not
 class Proc(AbstractProcess):
+    """A test Process with a variety of Ports and Vars of different shapes,
+    with and without initial values that may require broadcasting or not.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.in_port = InPort((2, 1))
+        self.v1_scalar = Var((1,))
+        self.v2_scalar_init = Var((1,), init=2)
+        self.v3_tensor_broadcast = Var((2, 3), init=10)
+        self.v4_tensor = Var((3, 2), init=[[1, 2], [3, 4], [5, 6]])
+        self.out_port = OutPort((3, 2))
+
+
+class ProcNoOutPorts(AbstractProcess):
+    """A test Process with no out-ports but a variety of Ports and
+    Vars of different shapes, with and without initial values that
+    may require broadcasting or not.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.in_port = InPort((2, 1))
+        self.v1_scalar = Var((1,))
+        self.v2_scalar_init = Var((1,), init=2)
+        self.v3_tensor_broadcast = Var((2, 3), init=10)
+        self.v4_tensor = Var((3, 2), init=[[1, 2], [3, 4], [5, 6]])
+
+
+class ProcNoInPorts(AbstractProcess):
+    """A test Process with no in-ports but a variety of Ports and
+    Vars of different shapes, with and without initial values that
+    may require broadcasting or not.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.v1_scalar = Var((1,))
         self.v2_scalar_init = Var((1,), init=2)
         self.v3_tensor_broadcast = Var((2, 3), init=10)
@@ -45,6 +74,38 @@ class Proc(AbstractProcess):
 @requires(CPU)
 class ProcModel(AbstractPyProcessModel):
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int, 8)
+    v1_scalar: int = LavaPyType(int, int, 27)
+    v2_scalar_init: int = LavaPyType(int, int, 27)
+    v3_tensor_broadcast: np.ndarray = LavaPyType(np.ndarray, np.int32, 6)
+    v4_tensor = LavaPyType(np.ndarray, np.int32, 6)
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int, 8)
+
+    def run(self):
+        """Every PyProcModel must implement a run(..) method. Here we perform
+        just some fake computation to demonstrate initialized Vars can be used.
+        """
+        return self.v1_scalar + 1
+
+
+@implements(proc=ProcNoOutPorts)
+@requires(CPU)
+class ProcModelNoOutPort(AbstractPyProcessModel):
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int, 8)
+    v1_scalar: int = LavaPyType(int, int, 27)
+    v2_scalar_init: int = LavaPyType(int, int, 27)
+    v3_tensor_broadcast: np.ndarray = LavaPyType(np.ndarray, np.int32, 6)
+    v4_tensor = LavaPyType(np.ndarray, np.int32, 6)
+
+    def run(self):
+        """Every PyProcModel must implement a run(..) method. Here we perform
+        just some fake computation to demonstrate initialized Vars can be used.
+        """
+        return self.v1_scalar + 1
+
+
+@implements(proc=ProcNoInPorts)
+@requires(CPU)
+class ProcModelNoInPort(AbstractPyProcessModel):
     v1_scalar: int = LavaPyType(int, int, 27)
     v2_scalar_init: int = LavaPyType(int, int, 27)
     v3_tensor_broadcast: np.ndarray = LavaPyType(np.ndarray, np.int32, 6)
@@ -372,54 +433,50 @@ class TestPyProcessBuilder(unittest.TestCase):
         left dangling."""
 
         # First create a process with no OutPorts
-        proc_with_no_out_ports = Proc()
+        proc_with_no_out_ports = ProcNoOutPorts()
         v = [VarInitializer(v.name, v.shape, v.init, v.id)
              for v in proc_with_no_out_ports.vars]
 
-        ports = \
-            list(proc_with_no_out_ports.in_ports) + \
-            list(proc_with_no_out_ports.out_ports)
+        ports = list(proc_with_no_out_ports.in_ports)
         py_ports = [
             PortInitializer(
-                pt.name, pt.shape, getattr(ProcModel, pt.name).d_type,
+                pt.name, pt.shape, getattr(ProcModelNoOutPort, pt.name).d_type,
                 pt.__class__.__name__, 32
             )
             for pt in ports
         ]
 
-        csp_ports = []
-        for py_port in list(proc_with_no_out_ports.in_ports):
-            csp_ports.append(FakeCspPort(py_port.name))
+        in_csp_ports = []
+        for py_port in py_ports:
+            in_csp_ports.append(FakeCspPort(py_port.name))
 
-        b_with_no_out_ports = PyProcessBuilder(ProcModel, 0)
+        b_with_no_out_ports = PyProcessBuilder(ProcModelNoOutPort, 0)
         b_with_no_out_ports.set_variables(v)
         b_with_no_out_ports.set_py_ports(py_ports)
-        b_with_no_out_ports.set_csp_ports(csp_ports)
+        b_with_no_out_ports.set_csp_ports(in_csp_ports)
 
         # Next create a process with no InPorts
-        proc_with_no_in_ports = Proc()
+        proc_with_no_in_ports = ProcNoInPorts()
         v = [VarInitializer(v.name, v.shape, v.init, v.id)
              for v in proc_with_no_in_ports.vars]
 
-        ports = \
-            list(proc_with_no_in_ports.in_ports) + \
-            list(proc_with_no_in_ports.out_ports)
+        ports = list(proc_with_no_in_ports.out_ports)
         py_ports = [
             PortInitializer(
-                pt.name, pt.shape, getattr(ProcModel, pt.name).d_type,
+                pt.name, pt.shape, getattr(ProcModelNoInPort, pt.name).d_type,
                 pt.__class__.__name__, 32
             )
             for pt in ports
         ]
 
-        csp_ports = []
-        for py_port in list(proc_with_no_in_ports.out_ports):
-            csp_ports.append(FakeCspPort(py_port.name))
+        out_csp_ports = []
+        for py_port in py_ports:
+            out_csp_ports.append(FakeCspPort(py_port.name))
 
-        b_with_no_in_ports = PyProcessBuilder(ProcModel, 0)
+        b_with_no_in_ports = PyProcessBuilder(ProcModelNoInPort, 0)
         b_with_no_in_ports.set_variables(v)
         b_with_no_in_ports.set_py_ports(py_ports)
-        b_with_no_in_ports.set_csp_ports(csp_ports)
+        b_with_no_in_ports.set_csp_ports(out_csp_ports)
 
         # Validate builders
         b_with_no_out_ports.check_all_vars_and_ports_set()
@@ -433,13 +490,13 @@ class TestPyProcessBuilder(unittest.TestCase):
         # CspPort
         self.assertIsInstance(
             pm_with_no_out_ports.in_port._csp_recv_ports[0], FakeCspPort)
-        self.assertEqual(pm_with_no_out_ports.out_port._csp_send_ports, [])
+        self.assertFalse(hasattr(pm_with_no_out_ports, "out_port"))
 
         # Validate that the Process with no InPorts indeed has no input
         # CspPort
-        self.assertEqual(pm_with_no_in_ports.in_port._csp_recv_ports, [])
         self.assertIsInstance(
             pm_with_no_in_ports.out_port._csp_send_ports[0], FakeCspPort)
+        self.assertFalse(hasattr(pm_with_no_in_ports, "in_port"))
 
     def test_set_ref_var_ports(self):
         """Check RefPorts and VarPorts can be set."""
