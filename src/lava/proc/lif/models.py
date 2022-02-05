@@ -72,8 +72,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
 
-    def __init__(self):
-        super(AbstractPyLifModelFixed, self).__init__()
+    def __init__(self, proc_params):
+        super(AbstractPyLifModelFixed, self).__init__(proc_params)
         # ds_offset and dm_offset are 1-bit registers in Loihi 1, which are
         # added to du and dv variables to compute effective decay constants
         # for current and voltage, respectively. They enable setting decay
@@ -266,8 +266,8 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     vth: int = LavaPyType(int, np.int32, precision=17)
 
-    def __init__(self):
-        super(PyLifModelBitAcc, self).__init__()
+    def __init__(self, proc_params):
+        super(PyLifModelBitAcc, self).__init__(proc_params)
         self.effective_vth = 0
 
     def scale_threshold(self):
@@ -300,8 +300,8 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
     vth_hi: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     vth_lo: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
-    def __init__(self):
-        super(PyTernLifModelFixed, self).__init__()
+    def __init__(self, proc_params):
+        super(PyTernLifModelFixed, self).__init__(proc_params)
         self.effective_vth_hi = 0
         self.effective_vth_lo = 0
 
