@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+
 import typing as ty
 from abc import ABC
 
@@ -58,24 +59,25 @@ class AbstractProcessModel(ABC):
         dev_names = " ".join([d.__qualname__ for d in self.required_resources])
         tags = ", ".join([t.__qualname__ for t in self.tags])
         return (
-            pm_name
-            + " implements "
-            + p_name
-            + "\n"
-            + " " * len(pm_name)
-            + " supports   "
-            + dev_names
-            + "\n"
-            + " " * len(pm_name)
-            + " has tags   "
-            + tags
+                pm_name
+                + " implements "
+                + p_name
+                + "\n"
+                + " " * len(pm_name)
+                + " supports   "
+                + dev_names
+                + "\n"
+                + " " * len(pm_name)
+                + " has tags   "
+                + tags
         )
 
-    # ToDo: (AW) Should AbstractProcessModel even have a run() method? What
-    #  if a sub class like AbstractCProcessModel for a LMT does not even need
-    #  a 'run'?
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
+
+    def add_ports_for_polling(self):
+        raise NotImplementedError(
+            "'add_ports_for_polling' method is not implemented.")
 
     # ToDo: What does this function do here? The AbstractProcModel can't
     #  depend on one specific Python implementation of ports/channels. It can
@@ -86,7 +88,3 @@ class AbstractProcessModel(ABC):
     def start(self):
         # Store the list of csp_ports. Start them here.
         raise NotImplementedError
-        # TODO: Iterate over all inports and outports of the process
-        # and start them
-
-        self.run()

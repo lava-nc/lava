@@ -40,6 +40,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.proc_params: ty.Dict[str, ty.Any] = {}
         self._selector: CspSelector = CspSelector()
         self._action: str = 'cmd'
+        self._stopped: bool = False
         self._channel_actions: ty.List[ty.Tuple[ty.Union[CspSendPort,
                                                          CspRecvPort],
                                                 ty.Callable]] = []
@@ -51,6 +52,15 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         }
 
     def __setattr__(self, key: str, value: ty.Any):
+        """
+        Sets attribute in the object
+        Parameters
+        ----------
+        key: Attribute being set
+        value: Value of the attribute
+        -------
+
+        """
         self.__dict__[key] = value
         if isinstance(value, AbstractPyPort):
             self.py_ports.append(value)
@@ -59,17 +69,28 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 self.var_ports.append(value)
 
     def start(self):
+        """
+        Starts the process model, by spinning up all the ports (mgmt and
+        py_ports) and calls the run function.
+        """
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
             p.start()
-        self._run()
+        self.run()
 
     def _stop(self):
+        """
+        Command handler for Stop command.
+        """
         self.process_to_service.send(MGMT_RESPONSE.TERMINATED)
+        self._stopped = True
         self.join()
 
     def _pause(self):
+        """
+        Command handler for Pause command.
+        """
         self.process_to_service.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_get_var(self):
@@ -129,15 +150,20 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """Handles read/write requests on the given VarPort."""
         var_port.service()
 
-    def _run(self):
+    def run(self):
+        """Retrieves commands from the runtime service and calls their
+        corresponding methods of the ProcessModels.
+        After calling the method of the ProcessModels, the runtime service
+        is informed about completion. The loop ends when the STOP command is
+        received."""
         while True:
             if self._action == 'cmd':
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
-                        if cmd == MGMT_COMMAND.STOP[0]:
-                            break
+                        if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
+                            return
                     else:
                         raise ValueError(
                             f"Illegal RuntimeService command! ProcessModels of "
@@ -152,11 +178,14 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # Handle VarPort requests from RefPorts
                 self._handle_var_port(self._action)
             self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
-            self.run()
+            self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
 
     @abstractmethod
-    def run(self):
+    def add_ports_for_polling(self):
+        """
+        Add various ports to poll for communication on ports
+        """
         pass
 
     def join(self):
@@ -167,6 +196,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
+    """
+    ProcessModel for processes that resembles process on Loihi.
+    """
     def __init__(self):
         super(PyLoihiProcessModel, self).__init__()
         self.current_ts = 0
@@ -179,9 +211,12 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             PyLoihiProcessModel.Phase.HOST[0]: self._host
         })
         self._req_pause: bool = False
-        self._req_stop:bool = False
+        self._req_stop: bool = False
 
     class Phase:
+        """
+        Different States of the State Machine of a Loihi Process
+        """
         SPK = enum_to_np(1)
         PRE_MGMT = enum_to_np(2)
         LRN = enum_to_np(3)
@@ -189,6 +224,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         HOST = enum_to_np(5)
 
     class Response:
+        """
+        Different types of response for a RuntimeService Request
+        """
         STATUS_DONE = enum_to_np(0)
         """Signfies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)
@@ -209,27 +247,54 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """Signifies Request of STOP"""
 
     def run_spk(self):
+        """
+        Function that runs in Spiking Phase
+        """
         pass
 
     def run_pre_mgmt(self):
+        """
+        Function that runs in Pre Lrn Mgmt Phase
+        """
         pass
 
     def run_lrn(self):
+        """
+        Function that runs in Learning Phase
+        """
         pass
 
     def run_post_mgmt(self):
+        """
+        Function that runs in Post Lrn Mgmt Phase
+        """
         pass
 
     def pre_guard(self):
+        """
+        Guard function that determines if pre lrn mgmt phase will get
+        executed or not for the current timestep.
+        """
         pass
 
     def lrn_guard(self):
+        """
+        Guard function that determines if lrn phase will get
+        executed or not for the current timestep.
+        """
         pass
 
     def post_guard(self):
+        """
+        Guard function that determines if post lrn mgmt phase will get
+        executed or not for the current timestep.
+        """
         pass
 
     def _spike(self):
+        """
+        Command handler for Spiking Phase
+        """
         self.current_ts += 1
         self.phase = PyLoihiProcessModel.Phase.SPK
         self.run_spk()
@@ -246,9 +311,13 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             self.process_to_service.send(
                 PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
         else:
-            self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _pre_mgmt(self):
+        """
+        Command handler for Pre Lrn Mgmt Phase
+        """
         self.phase = PyLoihiProcessModel.Phase.PRE_MGMT
         if self.pre_guard():
             self.run_pre_mgmt()
@@ -258,6 +327,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _post_mgmt(self):
+        """
+        Command handler for Post Lrn Mgmt Phase
+        """
         self.phase = PyLoihiProcessModel.Phase.POST_MGMT
         if self.post_guard():
             self.run_post_mgmt()
@@ -267,6 +339,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _lrn(self):
+        """
+        Command handler for Lrn Phase
+        """
         self.phase = PyLoihiProcessModel.Phase.LRN
         if self.lrn_guard():
             self.run_lrn()
@@ -275,41 +350,58 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             return
         if self.post_guard():
             self.process_to_service.send(
-            PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
             return
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
     def _host(self):
+        """
+        Command handler for Host Phase
+        """
         self.phase = PyLoihiProcessModel.Phase.HOST
 
     def _stop(self):
-        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_TERMINATED)
+        """
+        Command handler for Stop Command.
+        """
+        self.process_to_service.send(
+            PyLoihiProcessModel.Response.STATUS_TERMINATED)
         self.join()
 
     def _pause(self):
+        """
+        Command handler for Pause Command.
+        """
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
 
     def _handle_pause_or_stop(self):
+        """
+        Helper function that checks if stop or pause is being requested by the
+        user and handles it.
+        """
         if self._req_pause:
             self._req_rs_pause()
         elif self._req_stop:
             self._req_rs_stop()
 
     def _req_rs_pause(self):
+        """
+        Helper function that handles pause requested by the user.
+        """
         self._req_pause = False
         self.process_to_service.send(PyLoihiProcessModel.Response.REQ_PAUSE)
 
     def _req_rs_stop(self):
+        """
+        Helper function that handles stop requested by the user.
+        """
         self._req_stop = False
         self.process_to_service.send(PyLoihiProcessModel.Response.REQ_STOP)
 
-    def run(self):
-        """Retrieves commands from the runtime service to iterate through the
-        phases of Loihi and calls their corresponding methods of the
-        ProcessModels. The phase is retrieved from runtime service
-        (service_to_process). After calling the method of a phase of all
-        ProcessModels the runtime service is informed about completion. The
-        loop ends when the STOP command is received."""
+    def add_ports_for_polling(self):
+        """
+        Add various ports to poll for communication on ports
+        """
         if enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
                 enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
             for var_port in self.var_ports:
@@ -317,3 +409,76 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if isinstance(csp_port, CspRecvPort):
                         self._channel_actions.append((csp_port,
                                                       lambda: var_port))
+
+
+class PyAsyncProcessModel(AbstractPyProcessModel):
+    """
+    Process Model for Asynchronous Processes.
+    """
+    def __init__(self):
+        super(PyAsyncProcessModel, self).__init__()
+        self._cmd_handlers.update({
+            MGMT_COMMAND.RUN[0]: self._run_async
+        })
+
+    class Response:
+        """
+        Different types of response for a RuntimeService Request
+        """
+        STATUS_DONE = enum_to_np(0)
+        """Signfies Ack or Finished with the Command"""
+        STATUS_TERMINATED = enum_to_np(-1)
+        """Signifies Termination"""
+        STATUS_ERROR = enum_to_np(-2)
+        """Signifies Error raised"""
+        STATUS_PAUSED = enum_to_np(-3)
+        """Signifies Execution State to be Paused"""
+        REQ_PAUSE = enum_to_np(-4)
+        """Signifies Request of PAUSE"""
+        REQ_STOP = enum_to_np(-5)
+        """Signifies Request of STOP"""
+
+    def _pause(self):
+        """
+        Command handler for Pause Command.
+        """
+        pass
+
+    def check_for_stop_cmd(self) -> bool:
+        """
+        Checks if the RS has sent a STOP command.
+        """
+        if self.service_to_process.probe():
+            cmd = self.service_to_process.peek()
+            if enum_equal(cmd, MGMT_COMMAND.STOP):
+                self.service_to_process.recv()
+                self._stop()
+                return True
+        return False
+
+    def run_async(self):
+        """
+        User needs to define this function which will run asynchronously when
+        RUN command is received.
+        """
+        raise NotImplementedError("run_async has not been defined")
+
+    def _run_async(self):
+        """
+        Helper function to wrap run_async function
+        """
+        self.run_async()
+
+    def _handle_get_var(self):
+        """Handles the get Var command from runtime service."""
+        raise NotImplementedError
+
+    def _handle_set_var(self):
+        """Handles the set Var command from runtime service."""
+        raise NotImplementedError
+
+    def add_ports_for_polling(self):
+        """
+        Add various ports to poll for communication on ports
+        """
+        pass

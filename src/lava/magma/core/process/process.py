@@ -386,12 +386,6 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             :param run_cfg: RunConfig is used by compiler to select a
             ProcessModel for each compiled process.
         """
-
-        if not condition.blocking:
-            # Currently non-blocking execution is not implemented
-            raise NotImplementedError("Non-blocking Execution is currently not"
-                                      " supported. Please use blocking=True.")
-
         if not self._runtime:
             executable = self.compile(run_cfg)
             self._runtime = Runtime(executable,
@@ -403,12 +397,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     def wait(self):
         """Waits until end of process execution or for as long as
         RunCondition is met by blocking execution at command line level."""
-        if not self.runtime:
+        if self.runtime:
             self.runtime.wait()
 
     def pause(self):
         """Pauses process execution while running in non-blocking mode."""
-        if not self.runtime:
+        if self.runtime:
             self.runtime.pause()
 
     def stop(self):

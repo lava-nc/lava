@@ -41,6 +41,9 @@ class SimpleProcessModel(AbstractPyProcessModel):
     def run(self):
         pass
 
+    def add_ports_for_polling(self):
+        pass
+
 
 class SimplePyRuntimeService(PyRuntimeService):
     def run(self):
@@ -57,11 +60,7 @@ class TestRuntimeService(unittest.TestCase):
         self.assertEqual(rs.runtime_to_service, None)
         self.assertEqual(rs.process_to_service, [])
 
-    @unittest.skip
     def test_runtime_service_start_run(self):
-        # Will remove this test as start in pm now calls
-        # _run(), which waits for cmd from rs, so won't work
-        # in the future
         pm = SimpleProcessModel()
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
