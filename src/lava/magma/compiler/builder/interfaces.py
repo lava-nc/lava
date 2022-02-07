@@ -36,3 +36,9 @@ class AbstractRuntimeServiceBuilder(ABC):
         raise NotImplementedError(
             "build function for RuntimeServiceBuilder is not implemented"
         )
+
+
+class AbstractChannelBuilder(ABC):
+    """Abstract Channel Builder"""
+
+    pass

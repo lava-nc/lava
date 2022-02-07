@@ -8,7 +8,7 @@ from lava.magma.core.sync.domain import SyncDomain
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.builder import (
+    from lava.magma.compiler.builder.builder import (
         PyProcessBuilder,
         CProcessBuilder,
         NcProcessBuilder,

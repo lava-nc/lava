@@ -19,7 +19,11 @@ if ty.TYPE_CHECKING:
     from lava.magma.runtime.runtime import Runtime
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
-from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder, AbstractRuntimeServiceBuilder
+from lava.magma.compiler.builder.interfaces import (
+    AbstractProcessBuilder,
+    AbstractRuntimeServiceBuilder,
+    AbstractChannelBuilder
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
@@ -28,7 +32,8 @@ from lava.magma.core.model.py.ports import (
     AbstractPyPort,
     PyInPort,
     PyOutPort,
-    PyRefPort, PyVarPort,
+    PyRefPort,
+    PyVarPort
 )
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
@@ -512,12 +517,6 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         return rs
 
 
-class AbstractChannelBuilder(ABC):
-    """Abstract Channel Builder"""
-
-    pass
-
-
 @dataclass
 class ChannelBuilderMp(AbstractChannelBuilder):
     """A ChannelBuilder assuming Python multi-processing is used as messaging
@@ -565,8 +564,10 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     as messaging and multi processing backbone.
     """
     channel_type: ChannelType
-    src_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
-    dst_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
+    src_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
+    dst_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
     port_initializer: PortInitializer
 
     def build(self, messaging_infrastructure: MessageInfrastructureInterface) \

@@ -21,7 +21,7 @@ from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-from lava.magma.compiler.builders.builder import AbstractProcessBuilder, \
+from lava.magma.compiler.builder.builder import AbstractProcessBuilder, \
     RuntimeChannelBuilderMp, ServiceChannelBuilderMp, \
     RuntimeServiceBuilder
 from lava.magma.compiler.channels.interfaces import Channel
