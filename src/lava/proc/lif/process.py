@@ -47,12 +47,15 @@ class LIF(AbstractLIF):
               implementations. Ignored for floating point
               implementations.
     vth: Neuron threshold voltage, exceeding which, the neuron will spike.
+    use_graded_spike: Flag to indicate graded spike. Default is False
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         vth = kwargs.pop("vth", 10)
+        use_graded_spike = kwargs.pop("use_graded_spike", False)
 
         self.vth = Var(shape=(1,), init=vth)
+        self.use_graded_spike = Var(shape=(1,), init=use_graded_spike)
 
 
 class TernaryLIF(AbstractLIF):
@@ -70,6 +73,7 @@ class TernaryLIF(AbstractLIF):
     ----------
     vth_hi: Upper threshold voltage, exceeding which the neuron spikes +1
     vth_lo: Lower threshold voltage, below which the neuron spikes -1
+    use_graded_spike: Flag to indicate graded spike. Default is False
 
     See Also
     --------
@@ -81,9 +85,11 @@ class TernaryLIF(AbstractLIF):
         super().__init__(**kwargs)
         vth_hi = kwargs.pop("vth_hi", 10)
         vth_lo = kwargs.pop("vth_lo", -10)
+        use_graded_spike = kwargs.pop("use_graded_spike", True)
         if vth_lo > vth_hi:
             raise AssertionError(f"Lower threshold {vth_lo} is larger than the "
                                  f"upper threshold {vth_hi} for Ternary LIF "
                                  f"neurons. Consider switching the values.")
         self.vth_hi = Var(shape=(1,), init=vth_hi)
         self.vth_lo = Var(shape=(1,), init=vth_lo)
+        self.use_graded_spike = Var(shape=(1,), init=use_graded_spike)
