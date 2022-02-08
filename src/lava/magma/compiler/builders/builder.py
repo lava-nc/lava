@@ -443,7 +443,7 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
     def __init__(
         self,
         rs_class: ty.Type[AbstractRuntimeService],
-        protocol: AbstractSyncProtocol,
+        protocol: ty.Type[AbstractSyncProtocol],
         runtime_service_id: int,
         model_ids: ty.List[int],
     ):
