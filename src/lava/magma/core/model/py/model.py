@@ -29,7 +29,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
+    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None) -> None:
         super().__init__(proc_params)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
@@ -205,8 +205,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
     """
     ProcessModel for processes that resembles process on Loihi.
     """
-    def __init__(self):
-        super(PyLoihiProcessModel, self).__init__()
+    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
+        super(PyLoihiProcessModel, self).__init__(proc_params)
         self.time_step = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
         self._cmd_handlers.update({
@@ -421,7 +421,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     """
     Process Model for Asynchronous Processes.
     """
-    def __init__(self, proc_params):
+    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
         super(PyAsyncProcessModel, self).__init__(proc_params)
         self._cmd_handlers.update({
             MGMT_COMMAND.RUN[0]: self._run_async
