@@ -20,21 +20,6 @@ def enum_to_np(value: ty.Union[int, float],
 
     return np.array([value], dtype=d_type)
 
-def np_to_int(narray: np.array) -> int:
-    """
-    Given a numpy array, checks if its of length (1,) and returns integer
-    form of the element.
-
-    Parameters
-    ----------
-    narray: Array to be converted
-
-    Returns
-    -------
-    Integer form of the element of the array
-    """
-    assert narray.shape == (1,)
-    return int(narray[0])
 
 def enum_equal(a: np.array, b: np.array) -> bool:
     """

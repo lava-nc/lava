@@ -343,6 +343,7 @@ class LoihiCRuntimeService(AbstractRuntimeService):
     """RuntimeService that implements Loihi SyncProtocol in C."""
     pass
 
+
 class AsyncPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Async SyncProtocol in Py."""
 
@@ -422,7 +423,8 @@ class AsyncPyRuntimeService(PyRuntimeService):
                                   AsyncPyRuntimeService.PMResponse.REQ_STOP):
                         self.req_stop = True
                     if enum_equal(resp,
-                                  AsyncPyRuntimeService.PMResponse.STATUS_ERROR):
+                                  AsyncPyRuntimeService.PMResponse.STATUS_ERROR
+                                  ):
                         self._error = True
                 if self.req_stop:
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_STOP)

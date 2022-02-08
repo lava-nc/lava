@@ -12,10 +12,11 @@ import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.compiler.exec_var import AbstractExecVar
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
-    import MessageInfrastructureInterface
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
+from lava.magma.runtime.message_infrastructure \
+    .message_infrastructure_interface \
+    import MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
     MGMT_COMMAND, MGMT_RESPONSE
 from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
@@ -41,9 +42,11 @@ def target_fn(*args, **kwargs):
 
 
 class Runtime:
-    """Lava runtime which consumes an executable and add_ports_for_polling run_condition. Exposes
+    """Lava runtime which consumes an executable and add_ports_for_polling
+    run_condition. Exposes
     the APIs to start, pause, stop and wait on an execution. Execution could
-    be blocking and non-blocking as specified by the add_ports_for_polling run_condition."""
+    be blocking and non-blocking as specified by the add_ports_for_polling
+    run_condition."""
 
     def __init__(self,
                  exe: Executable,

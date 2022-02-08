@@ -1,26 +1,25 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
 import typing as ty
+import unittest
 
 import numpy as np
 
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
-    VarPort
-from lava.magma.core.decorator import implements, requires
-from lava.magma.core.resources import CPU
-from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
-    PyVarPort
-
+from lava.magma.compiler.builder import PyProcessBuilder
+from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
-from lava.magma.compiler.builders.builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import AbstractPyProcessModel
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
+    PyVarPort
+from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
+    VarPort
+from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
+from lava.magma.core.resources import CPU
 
 
 # A test Process with a variety of Ports and Vars of different shapes,
@@ -93,7 +92,7 @@ class FakeCspPort(AbstractCspPort):
 class ProcForLavaPyType(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.port = InPort((1, ))
+        self.port = InPort((1,))
 
 
 # A correct ProcessModel
@@ -152,6 +151,7 @@ class PyProcModelRefVar(AbstractPyProcessModel):
     ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     var: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var_port: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
+
     def add_ports_for_polling(self):
         pass
 
@@ -208,7 +208,7 @@ class TestPyProcessBuilder(unittest.TestCase):
         self.assertEqual(list(b.vars.values()), v)
         self.assertEqual(list(b.py_ports.values()), py_ports)
         self.assertEqual(list(v for vv in b.csp_ports.values()
-                         for v in vv), csp_ports)
+                              for v in vv), csp_ports)
         self.assertEqual(b.vars["v1_scalar"], v[0])
         self.assertEqual(b.py_ports["in_port"], py_ports[0])
         self.assertEqual(b.csp_ports["out_port"], [csp_ports[1]])

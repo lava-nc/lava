@@ -20,6 +20,7 @@ class SimpleProcess(AbstractProcess):
         self.u = Var(shape=shape, init=0)
         self.v = Var(shape=shape, init=0)
 
+
 @implements(proc=SimpleProcess, protocol=LoihiProtocol)
 @requires(CPU)
 class SimpleProcessModel(PyLoihiProcessModel):
@@ -29,10 +30,12 @@ class SimpleProcessModel(PyLoihiProcessModel):
     u = LavaPyType(int, int)
     v = LavaPyType(int, int)
 
+
 class SimpleRunConfig(RunConfig):
     """
     Defines a simple add_ports_for_polling config
     """
+
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
         super().__init__(custom_sync_domains=sync_domains)
@@ -46,6 +49,7 @@ class SimpleRunConfig(RunConfig):
                 return proc_models[1]
 
         return proc_models[0]
+
 
 class TestRunContinuous(unittest.TestCase):
     def test_run_continuous_sync(self):

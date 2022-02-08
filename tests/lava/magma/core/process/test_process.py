@@ -3,19 +3,18 @@
 # See: https://spdx.org/licenses/
 import unittest
 
-from lava.magma.core.process.process import (
-    AbstractProcess,
-    Collection,
-    ProcessServer,
-)
-from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import (
     InPort,
     OutPort,
     RefPort,
     VarPort,
 )
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
+from lava.magma.core.process.process import (
+    AbstractProcess,
+    Collection,
+    ProcessServer,
+)
+from lava.magma.core.process.variable import Var
 
 
 class MinimalProcess(AbstractProcess):
@@ -260,6 +259,7 @@ class TestProcessSetup(unittest.TestCase):
         # ... nor is any other random process a sub process of proc1
         yet_another_proc = Proc()
         self.assertFalse(yet_another_proc.is_sub_proc_of(proc1))
+
 
 if __name__ == "__main__":
     unittest.main()
