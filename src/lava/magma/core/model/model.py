@@ -73,7 +73,7 @@ class AbstractProcessModel(ABC):
             + " " * len(pm_name)
             + " has tags   "
             + tags
-                )
+        )
 
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
