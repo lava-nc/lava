@@ -19,7 +19,7 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
 
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
-from lava.magma.compiler.builder.builder import PyProcessBuilder
+from lava.magma.compiler.builders.builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
 

@@ -16,11 +16,11 @@ import numpy as np
 
 import lava.magma.compiler.exceptions as ex
 import lava.magma.compiler.exec_var as exec_var
-from lava.magma.compiler.builder.builder import ChannelBuilderMp
-from lava.magma.compiler.builder.builder import PyProcessBuilder, \
+from lava.magma.compiler.builders.builder import ChannelBuilderMp
+from lava.magma.compiler.builders.builder import PyProcessBuilder, \
     AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
     AbstractChannelBuilder, ServiceChannelBuilderMp
-from lava.magma.compiler.builder.builder import RuntimeChannelBuilderMp
+from lava.magma.compiler.builders.builder import RuntimeChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig, Node
