@@ -4,19 +4,17 @@
 
 import numpy as np
 
-from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
-
+from lava.magma.core.process.variable import Var
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.model.py.ports import PyOutPort
+from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyOutPort
 
 
-# Ring Buffer
 class RingBuffer(AbstractProcess):
     """Spike generator process from circular data buffer.
 
@@ -38,7 +36,7 @@ class AbstractPyRingBuffer(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         buffer = self.data.shape[-1]
-        self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
+        self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
 
 
 @implements(proc=RingBuffer, protocol=LoihiProtocol)

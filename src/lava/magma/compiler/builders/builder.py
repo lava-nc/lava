@@ -330,11 +330,14 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
 
         # Create the ProcessModel
+        pm = self.proc_model()
+        pm.model_id = self._model_id
+
         # Default value of pm.proc_params in ProcessModel is an empty dictionary
         # If a proc_params argument is provided in PyProcessBuilder,
         # this will be carried to ProcessModel
-        pm = self.proc_model(self.proc_params)
-        pm.model_id = self._model_id
+        if self.proc_params is not None:
+            pm.proc_params = self.proc_params
 
         # Initialize PyPorts
         for name, p in self.py_ports.items():

@@ -119,7 +119,7 @@ class TestConvProcessModels(unittest.TestCase):
         for t in range(output.shape[-1]):
             output_gt[..., t] = utils.conv(input[..., t], **params)
 
-        error = np.abs(output[..., 1:] - output_gt[..., :-1]).mean()
+        error = np.abs(output - output_gt).mean()
 
         if error >= 1e-6:
             print(f'{input.shape=}')
@@ -166,7 +166,7 @@ class TestConvProcessModels(unittest.TestCase):
             output_gt[..., t] = utils.conv(input[..., t], **params)
         output_gt = utils.signed_clamp(output_gt, bits=24)
 
-        error = np.abs(output[..., 1:] - output_gt[..., :-1]).mean()
+        error = np.abs(output - output_gt).mean()
 
         if error >= 1e-6:
             print(f'{input.shape=}')

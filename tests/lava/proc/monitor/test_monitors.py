@@ -39,13 +39,13 @@ class PyProcModel1(PyLoihiProcessModel):
     u: np.ndarray = LavaPyType(np.ndarray, np.int32)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
-    def pre_guard(self):
+    def post_guard(self):
         return True
 
-    def run_pre_mgmt(self):
-        if self.current_ts > 1:
-            self.s = np.array([self.current_ts])
-            self.u = 2 * np.array([self.current_ts])
+    def run_post_mgmt(self):
+        if self.time_step > 1:
+            self.s = np.array([self.time_step])
+            self.u = 2 * np.array([self.time_step])
             self.v = np.array([[1, 2], [3, 4]])
 
 

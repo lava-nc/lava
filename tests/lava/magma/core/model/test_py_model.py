@@ -51,6 +51,9 @@ class ProcModel(AbstractPyProcessModel):
     v4_tensor = LavaPyType(np.ndarray, np.int32, 6)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int, 8)
 
+    def add_ports_for_polling(self):
+        pass
+
     def run(self):
         """Every PyProcModel must implement a run(..) method. Here we perform
         just some fake computation to demonstrate initialized Vars can be used.
@@ -99,12 +102,18 @@ class ProcForLavaPyType(AbstractProcess):
 class ProcModelForLavaPyType0(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
+    def add_ports_for_polling(self):
+        pass
+
 
 # A wrong ProcessModel with completely wrong type
 @implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType1(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(123, int)  # type: ignore
+
+    def add_ports_for_polling(self):
+        pass
 
 
 # A wrong ProcessModel with wrong sub type
@@ -113,12 +122,18 @@ class ProcModelForLavaPyType1(AbstractPyProcessModel):
 class ProcModelForLavaPyType2(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyInPort, int)
 
+    def add_ports_for_polling(self):
+        pass
+
 
 # A wrong ProcessModel with wrong port type
 @implements(proc=ProcForLavaPyType)
 @requires(CPU)
 class ProcModelForLavaPyType3(AbstractPyProcessModel):
     port: PyInPort = LavaPyType(PyOutPort, int)
+
+    def add_ports_for_polling(self):
+        pass
 
 
 # A minimal process to test RefPorts and VarPorts
@@ -137,6 +152,8 @@ class PyProcModelRefVar(AbstractPyProcessModel):
     ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     var: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var_port: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
+    def add_ports_for_polling(self):
+        pass
 
 
 class TestPyProcessBuilder(unittest.TestCase):

@@ -41,6 +41,9 @@ class SimpleProcessModel(AbstractPyProcessModel):
     def run(self):
         pass
 
+    def add_ports_for_polling(self):
+        pass
+
 
 class SimplePyRuntimeService(PyRuntimeService):
     def run(self):
@@ -58,7 +61,7 @@ class TestRuntimeService(unittest.TestCase):
         self.assertEqual(rs.process_to_service, [])
 
     def test_runtime_service_start_run(self):
-        pm = SimpleProcessModel(proc_params={})
+        pm = SimpleProcessModel()
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
         smm = SharedMemoryManager()

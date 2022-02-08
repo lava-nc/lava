@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
+import sys
 import typing
 import typing as ty
 
@@ -40,9 +41,9 @@ def target_fn(*args, **kwargs):
 
 
 class Runtime:
-    """Lava runtime which consumes an executable and run run_condition. Exposes
+    """Lava runtime which consumes an executable and add_ports_for_polling run_condition. Exposes
     the APIs to start, pause, stop and wait on an execution. Execution could
-    be blocking and non-blocking as specified by the run run_condition."""
+    be blocking and non-blocking as specified by the add_ports_for_polling run_condition."""
 
     def __init__(self,
                  exe: Executable,
@@ -54,9 +55,12 @@ class Runtime:
             message_infrastructure_type
         self._messaging_infrastructure: \
             ty.Optional[MessageInfrastructureInterface] = None
-        self._is_initialized = False
-        self._is_running = False
-        self._is_started = False
+        self._is_initialized: bool = False
+        self._is_running: bool = False
+        self._is_started: bool = False
+        self._req_paused: bool = False
+        self._req_stop: bool = False
+        self._error: bool = False
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
 
@@ -201,7 +205,45 @@ class Runtime:
         else:
             print("Runtime not initialized yet.")
 
-    def _run(self, run_condition):
+    def _get_resp_for_run(self):
+        """
+        Gets response from RuntimeServices
+        """
+        if self._is_running:
+            for recv_port in self.service_to_runtime:
+                data = recv_port.recv()
+                if enum_equal(data, MGMT_RESPONSE.REQ_PAUSE):
+                    self._req_paused = True
+                elif enum_equal(data, MGMT_RESPONSE.REQ_STOP):
+                    self._req_stop = True
+                elif not enum_equal(data, MGMT_RESPONSE.DONE):
+                    if enum_equal(data, MGMT_RESPONSE.ERROR):
+                        # Receive all errors from the ProcessModels
+                        error_cnt = 0
+                        for actors in \
+                                self._messaging_infrastructure.actors:
+                            actors.join()
+                            if actors.exception:
+                                _, traceback = actors.exception
+                                print(traceback)
+                                error_cnt += 1
+                        self._error = True
+                    else:
+                        raise RuntimeError(f"Runtime Received {data}")
+            if self._req_paused:
+                self._req_paused = False
+                self.pause()
+            if self._req_stop:
+                self._req_stop = False
+                self.stop()
+            if self._error:
+                # self.stop()
+                raise RuntimeError(
+                    f"{error_cnt} Exception(s) occurred. See "
+                    f"output above for details.")
+            self._is_running = False
+
+    def _run(self, run_condition: AbstractRunCondition):
         if self._is_started:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
@@ -209,29 +251,11 @@ class Runtime:
                 for send_port in self.runtime_to_service:
                     send_port.send(enum_to_np(self.num_steps))
                 if run_condition.blocking:
-                    for recv_port in self.service_to_runtime:
-                        data = recv_port.recv()
-                        if not enum_equal(data, MGMT_RESPONSE.DONE):
-                            if enum_equal(data, MGMT_RESPONSE.ERROR):
-                                # Receive all errors from the ProcessModels
-                                error_cnt = 0
-                                for actors in \
-                                        self._messaging_infrastructure.actors:
-                                    actors.join()
-                                    if actors.exception:
-                                        _, traceback = actors.exception
-                                        print(traceback)
-                                        error_cnt += 1
-
-                                raise RuntimeError(
-                                    f"{error_cnt} Exception(s) occurred. See "
-                                    f"output above for details.")
-                            else:
-                                raise RuntimeError(f"Runtime Received {data}")
-                if run_condition.blocking:
-                    self._is_running = False
+                    self._get_resp_for_run()
             elif isinstance(run_condition, RunContinuous):
-                pass
+                self.num_steps = sys.maxsize
+                for send_port in self.runtime_to_service:
+                    send_port.send(enum_to_np(self.num_steps))
             else:
                 raise ValueError(f"Wrong type of run_condition : "
                                  f"{run_condition.__class__}")
@@ -239,18 +263,39 @@ class Runtime:
             print("Runtime not started yet.")
 
     def wait(self):
-        if self._is_running:
-            for recv_port in self.service_to_runtime:
-                data = recv_port.recv()
-                if not enum_equal(data, MGMT_RESPONSE.DONE):
-                    raise RuntimeError(f"Runtime Received {data}")
-            self._is_running = False
+        """
+        Waits for RuntimeServices to send Response
+        """
+        self._get_resp_for_run()
 
     def pause(self):
-        raise NotImplementedError
+        """
+        Pauses a add_ports_for_polling
+        """
+        if self._is_running:
+            for send_port in self.runtime_to_service:
+                send_port.send(MGMT_COMMAND.PAUSE)
+            for recv_port in self.service_to_runtime:
+                data = recv_port.recv()
+                if not enum_equal(data, MGMT_RESPONSE.PAUSED):
+                    if enum_equal(data, MGMT_RESPONSE.ERROR):
+                        # Receive all errors from the ProcessModels
+                        error_cnt = 0
+                        for actors in \
+                                self._messaging_infrastructure.actors:
+                            actors.join()
+                            if actors.exception:
+                                _, traceback = actors.exception
+                                print(traceback)
+                                error_cnt += 1
+                        self.stop()
+                        raise RuntimeError(
+                            f"{error_cnt} Exception(s) occurred. See "
+                            f"output above for details.")
+            self._is_running = False
 
     def stop(self):
-        """Stops an ongoing or paused run."""
+        """Stops an ongoing or paused add_ports_for_polling."""
         try:
             if self._is_started:
                 for send_port in self.runtime_to_service:

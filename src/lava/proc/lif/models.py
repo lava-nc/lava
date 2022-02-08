@@ -25,7 +25,6 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     du: float = LavaPyType(float, float)
     dv: float = LavaPyType(float, float)
-    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -72,10 +71,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     dv: int = LavaPyType(int, np.uint16, precision=12)
     bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
-    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
-    def __init__(self, proc_params):
-        super(AbstractPyLifModelFixed, self).__init__(proc_params)
+    def __init__(self):
+        super(AbstractPyLifModelFixed, self).__init__()
         # ds_offset and dm_offset are 1-bit registers in Loihi 1, which are
         # added to du and dv variables to compute effective decay constants
         # for current and voltage, respectively. They enable setting decay
@@ -211,14 +209,12 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     algorithmic prototyping, without engaging with the nuances of a fixed
     point implementation.
     """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     vth: float = LavaPyType(float, float)
 
     def spiking_activation(self):
         """Spiking activation function for LIF.
         """
-        if self.use_graded_spike.item():
-            return self.v * (self.v > self.effective_vth)
         return self.v > self.vth
 
 
@@ -267,11 +263,11 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
     vth: unsigned 17-bit integer (0 to 131071).
     """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     vth: int = LavaPyType(int, np.int32, precision=17)
 
-    def __init__(self, proc_params):
-        super(PyLifModelBitAcc, self).__init__(proc_params)
+    def __init__(self):
+        super(PyLifModelBitAcc, self).__init__()
         self.effective_vth = 0
 
     def scale_threshold(self):
@@ -285,8 +281,6 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     def spiking_activation(self):
         """Spike when voltage exceeds threshold.
         """
-        if self.use_graded_spike.item():
-            return self.v * (self.v > self.effective_vth)
         return self.v > self.effective_vth
 
 
@@ -306,8 +300,8 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
     vth_hi: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     vth_lo: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
-    def __init__(self, proc_params):
-        super(PyTernLifModelFixed, self).__init__(proc_params)
+    def __init__(self):
+        super(PyTernLifModelFixed, self).__init__()
         self.effective_vth_hi = 0
         self.effective_vth_lo = 0
 

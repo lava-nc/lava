@@ -38,9 +38,6 @@ class Dense(AbstractProcess):
     the fixed point weight used for inference is scaled by 2.
     Unnecessary for floating point implementations.
 
-    use_graded_spike: bool
-    flag to indicate graded spike. Default is False
-
     In the fixed point implementation, weights are scaled according to the
     following equations:
     weights = weights * (2 ** w_scale)
@@ -70,7 +67,6 @@ class Dense(AbstractProcess):
         weight_exp = kwargs.pop("weight_exp", 0)
         num_weight_bits = kwargs.pop("num_weight_bits", 8)
         sign_mode = kwargs.pop("sign_mode", 1)
-        use_graded_spike = kwargs.get('use_graded_spike', False)
 
         self.s_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
@@ -79,4 +75,3 @@ class Dense(AbstractProcess):
         self.num_weight_bits = Var(shape=(1,), init=num_weight_bits)
         self.sign_mode = Var(shape=(1,), init=sign_mode)
         self.a_buff = Var(shape=(shape[0],), init=0)
-        self.use_graded_spike = Var(shape=(1,), init=use_graded_spike)

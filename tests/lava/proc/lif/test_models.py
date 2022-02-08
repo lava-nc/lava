@@ -85,7 +85,7 @@ class PyVecSendModelFloat(PyLoihiProcessModel):
         """
         Send `spikes_to_send` if current time-step requires it
         """
-        if self.send_at_times[self.current_ts - 1]:
+        if self.send_at_times[self.time_step - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -104,7 +104,7 @@ class PyVecSendModelFixed(PyLoihiProcessModel):
         """
         Send `spikes_to_send` if current time-step requires it
         """
-        if self.send_at_times[self.current_ts - 1]:
+        if self.send_at_times[self.time_step - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -121,7 +121,7 @@ class PySpkRecvModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts - 1, :] = spk_in
+        self.spk_data[self.time_step - 1, :] = spk_in
 
 
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
@@ -135,7 +135,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts - 1, :] = spk_in
+        self.spk_data[self.time_step - 1, :] = spk_in
 
 
 class TestLIFProcessModelsFloat(unittest.TestCase):
@@ -267,7 +267,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
                              vec_to_send=np.zeros(shape, dtype=np.int16),
                              send_at_times=np.ones((num_steps,), dtype=bool))
         # Set up bias = 2 * 2**6 = 128 and threshold = 8<<6
-        # du and dv = 0 => bias driven neurons spike at every 5th time-step.
+        # du and dv = 0 => bias driven neurons spike at every 4th time-step.
         lif = LIF(shape=shape,
                   du=0, dv=0,
                   bias=2 * np.ones(shape, dtype=np.int32),
