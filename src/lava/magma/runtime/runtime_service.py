@@ -284,7 +284,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # ProcessModels respond with DONE if not HOST phase
                         if not enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST):
-                            rcv_msgs = self._get_pm_resp()
+                            self._get_pm_resp()
                             if self._error:
                                 # Forward error to runtime
                                 self.service_to_runtime.send(

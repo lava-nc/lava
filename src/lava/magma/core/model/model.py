@@ -62,18 +62,18 @@ class AbstractProcessModel(ABC):
         dev_names = " ".join([d.__qualname__ for d in self.required_resources])
         tags = ", ".join([t.__qualname__ for t in self.tags])
         return (
-                    pm_name
-                    + " implements "
-                    + p_name
-                    + "\n"
-                    + " " * len(pm_name)
-                    + " supports   "
-                    + dev_names
-                    + "\n"
-                    + " " * len(pm_name)
-                    + " has tags   "
-                    + tags
-               )
+            pm_name
+            + " implements "
+            + p_name
+            + "\n"
+            + " " * len(pm_name)
+            + " supports   "
+            + dev_names
+            + "\n"
+            + " " * len(pm_name)
+            + " has tags   "
+            + tags
+            )
 
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
