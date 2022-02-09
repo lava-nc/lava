@@ -4,7 +4,7 @@
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builder import PyProcessBuilder, \
+    from lava.magma.compiler.builders.builder import PyProcessBuilder, \
         AbstractRuntimeServiceBuilder
 
 import multiprocessing as mp
@@ -42,6 +42,7 @@ class SystemProcess(mp.Process):
 
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
+
     def __init__(self):
         self._smm: ty.Optional[SharedMemoryManager] = None
         self._actors: ty.List[SystemProcess] = []
