@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 import numpy as np
 import unittest
 
@@ -19,7 +20,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(loglevel=logging.WARNING, **kwargs)
         shape = kwargs["shape"]
         self.u = Var(shape=shape, init=np.array([[7, 8], [9, 10]],
                                                 dtype=np.int32))
@@ -30,7 +31,8 @@ class SimpleProcess(AbstractProcess):
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains)
+        super().__init__(custom_sync_domains=sync_domains,
+                         loglevel=logging.WARNING)
         self.model = None
         if "model" in kwargs:
             self.model = kwargs.pop("model")

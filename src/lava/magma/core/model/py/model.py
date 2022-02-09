@@ -4,6 +4,8 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
+import logging
+
 import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
@@ -29,8 +31,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
-        super().__init__(proc_params)
+    def __init__(self, proc_params: ty.Dict[str, ty.Any],
+                 loglevel=logging.WARNING) -> None:
+        super().__init__(proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
         self.process_to_service: ty.Optional[CspSendPort] = None
@@ -65,8 +68,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
-    def __init__(self, proc_params: ty.Dict[str, ty.Any]):
-        super(PyLoihiProcessModel, self).__init__(proc_params)
+    def __init__(self, proc_params: ty.Dict[str, ty.Any],
+                 loglevel=logging.WARNING):
+        super(PyLoihiProcessModel, self).__init__(proc_params,
+                                                  loglevel=loglevel)
         self.current_ts = 0
 
     class Phase:
@@ -162,7 +167,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                         raise ValueError(
                             f"Wrong Phase Info Received : {cmd}")
                 except Exception as inst:
-                    print("Exception happened")
+                    self.log.info(f"Exception {inst} occured while"
+                                  f" running command {cmd} in {self.__class__}")
                     # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()

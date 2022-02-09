@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 from typing import Dict, List, Tuple, Type, Union
 import unittest
 import numpy as np
@@ -24,7 +25,7 @@ class ConvRunConfig(RunConfig):
     """Run configuration selects appropriate Conv ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
     def __init__(self, select_tag: str = 'fixed_pt'):
-        super().__init__(custom_sync_domains=None)
+        super().__init__(custom_sync_domains=None, loglevel=logging.WARNING)
         self.select_tag = select_tag
 
     def select(

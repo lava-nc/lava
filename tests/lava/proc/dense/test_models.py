@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import unittest
 import numpy as np
 
@@ -23,7 +24,8 @@ class DenseRunConfig(RunConfig):
     floating point precision or Loihi bit-accurate fixed-point precision"""
 
     def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
-        super().__init__(custom_sync_domains=custom_sync_domains)
+        super().__init__(custom_sync_domains=custom_sync_domains,
+                         loglevel=logging.WARNING)
         self.select_tag = select_tag
 
     def select(self, proc, proc_models):
