@@ -14,17 +14,23 @@ from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 
 
 class AbstractPyPort(AbstractPortImplementation):
-    """Abstract class for ports implemented in python. A port must have one or
-    multiple csp ports."""
+    """Abstract class for Ports implemented in Python.
+
+    It provides an interface to send and receive messages sent via channels. The
+    Communicating Sequential Processes (CSP) paradigm is followed in this
+    implementation. PyPorts are the implementation of a Port in Python. A PyPort
+    may have one or multiple connection to other PyPorts. These connections are
+    represented by csp_ports, which is a list of connected PyPorts.
+    """
     @property
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """
-        Abstract property to get all csp ports of a port.
+        Abstract property to get all csp_ports of a PyPort.
 
         Returns
         -------
-        A list of all csp ports used by the port.
+        A list of all csp_ports used by the PyPort.
         """
         pass
 
@@ -40,10 +46,10 @@ class AbstractPyIOPort(AbstractPyPort):
     process_model : AbstractProcessModel
         The process model used by the process of the port.
 
-    shape : tuple, default=tuple()
+    shape : tuple
         The shape of the port.
 
-    d_type: type, default=int
+    d_type: type
         The data type of the port.
 
     Attributes
@@ -54,31 +60,30 @@ class AbstractPyIOPort(AbstractPyPort):
     def __init__(self,
                  csp_ports: ty.List[AbstractCspPort],
                  process_model: AbstractProcessModel,
-                 shape: ty.Tuple[int, ...] = tuple(),
-                 d_type: type = int):
+                 shape: ty.Tuple[int, ...],
+                 d_type: type):
 
         self._csp_ports = csp_ports
         super().__init__(process_model, shape, d_type)
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all csp ports used by the port.
+        """Property to get all csp_ports used by the Port.
 
         Returns
         -------
-        A list of all csp ports used by the port.
+        A list of all csp_ports used by the port.
         """
         return self._csp_ports
 
 
 class PyInPort(AbstractPyIOPort):
     """Python implementation of InPort used within AbstractPyProcessModel.
-    If buffer is empty, recv() will be blocking.
 
-    Attributes
+    Class attributes
     ----------
     VEC_DENSE : PyInPortVectorDense, default=None
-        Specifies that dense data vectors should be sent on this port.
+        Type of one of four different subtypes of PyInputPorts.
 
     VEC_SPARSE : PyInPortVectorSparse, default=None
         Specifies that sparse data vectors should be sent on this port.
@@ -98,7 +103,9 @@ class PyInPort(AbstractPyIOPort):
     @abstractmethod
     def recv(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
-        out ports (source ports). Removes the data from the channel.
+        out ports (source ports). Removes the retrieved data from the channel.
+        Expects data on the channel and will block if there is no data to
+        retrieve on the channel.
 
         Returns
         -------
@@ -137,7 +144,9 @@ class PyInPort(AbstractPyIOPort):
 class PyInPortVectorDense(PyInPort):
     def recv(self) -> np.ndarray:
         """Method to receive data (vectors/scalars) sent from connected
-        out ports (source ports). Removes the data from the channel.
+        out ports (source ports). Removes the retrieved data from the channel.
+        Expects data on the channel and will block if there is no data to
+        retrieve on the channel.
 
         Returns
         -------
