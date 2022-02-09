@@ -25,6 +25,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     du: float = LavaPyType(float, float)
     dv: float = LavaPyType(float, float)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -71,6 +72,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     dv: int = LavaPyType(int, np.uint16, precision=12)
     bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
+    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -209,12 +211,14 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     algorithmic prototyping, without engaging with the nuances of a fixed
     point implementation.
     """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
 
     def spiking_activation(self):
         """Spiking activation function for LIF.
         """
+        if self.use_graded_spike.item():
+            return self.v * (self.v > self.effective_vth)
         return self.v > self.vth
 
 
@@ -263,7 +267,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
     vth: unsigned 17-bit integer (0 to 131071).
     """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     vth: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
@@ -281,6 +285,8 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     def spiking_activation(self):
         """Spike when voltage exceeds threshold.
         """
+        if self.use_graded_spike.item():
+            return self.v * (self.v > self.effective_vth)
         return self.v > self.effective_vth
 
 

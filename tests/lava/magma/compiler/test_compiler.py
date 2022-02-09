@@ -156,6 +156,7 @@ class TestCompiler(unittest.TestCase):
     separately. Only in the end, do we perform a complete compilation from
     Process to Executable.
     """
+
     def setUp(self):
         VarServer().reset_server()
 
@@ -466,7 +467,8 @@ class TestCompiler(unittest.TestCase):
 
         # We can create a custom sync domain for each type with one or more
         # processes
-        sd_a = SyncDomain(name="sd_a", processes=[p1, p2], protocol=ProtocolA())
+        sd_a = SyncDomain(name="sd_a", processes=[
+                          p1, p2], protocol=ProtocolA())
         sd_b = SyncDomain(name="sd_b", processes=[p4], protocol=ProtocolB())
 
         # To compile, with custom sync domains, we pass them to the RunConfig
@@ -551,7 +553,8 @@ class TestCompiler(unittest.TestCase):
         p1, p2, p3 = ProcA(), ProcA(), ProcB()
 
         # ...but assign all of them to a domain with ProtocolA
-        sd = SyncDomain(name="sd", protocol=ProtocolA(), processes=[p1, p2, p3])
+        sd = SyncDomain(name="sd", protocol=ProtocolA(),
+                        processes=[p1, p2, p3])
         run_cfg = RunCfg(custom_sync_domains=[sd])
         proc_map = {p1: PyProcModelA, p2: PyProcModelA, p3: PyProcModelB}
 
@@ -638,7 +641,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 5 channel builders (one for each arrow above)
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
 
         self.assertEqual(len(cbs), 5)
         for cb in cbs:
@@ -683,7 +686,7 @@ class TestCompiler(unittest.TestCase):
         # There should only be one ChannelBuilder from the internal proc1 to
         # proc2
         self.assertEqual(len(chb), 1)
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertIsInstance(chb[0], ChannelBuilderMp)
         self.assertEqual(chb[0].src_process, p.procs.proc1)
         self.assertEqual(chb[0].dst_process, p.procs.proc2)
@@ -712,7 +715,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 2 channel builder
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertEqual(len(cbs), 2)
         self.assertIsInstance(cbs[0], ChannelBuilderMp)
         self.assertEqual(cbs[0].src_process, src)
@@ -742,7 +745,7 @@ class TestCompiler(unittest.TestCase):
         cbs = c._create_channel_builders(proc_map)
 
         # This should result in 2 channel builder
-        from lava.magma.compiler.builder import ChannelBuilderMp
+        from lava.magma.compiler.builders.builder import ChannelBuilderMp
         self.assertEqual(len(cbs), 2)
         self.assertIsInstance(cbs[0], ChannelBuilderMp)
         self.assertEqual(cbs[0].src_process, src)
@@ -769,7 +772,8 @@ class TestCompiler(unittest.TestCase):
         node_cfgs = c._create_node_cfgs(proc_map)
 
         # Creating exec_vars adds any ExecVars to each NodeConfig
-        c._create_exec_vars(node_cfgs, proc_map, {p1.id: 0, p2.id: 0, p3.id: 0})
+        c._create_exec_vars(node_cfgs, proc_map, {
+                            p1.id: 0, p2.id: 0, p3.id: 0})
         exec_vars = node_cfgs[0].exec_vars
 
         # Since only p1 and p2 have Vars, there will be 2 ExecVars
