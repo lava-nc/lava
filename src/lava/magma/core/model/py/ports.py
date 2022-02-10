@@ -16,21 +16,30 @@ from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 class AbstractPyPort(AbstractPortImplementation):
     """Abstract class for Ports implemented in Python.
 
-    It provides an interface to send and receive messages via channels. The
-    Communicating Sequential Processes (CSP) paradigm is the inspiration of this
-    implementation. PyPorts are the implementation of a Port in Python. A PyPort
-    may have one or multiple connection to other PyPorts. These connections are
-    represented by csp_ports, which is a list of connected PyPorts.
+    Ports at the Process level provide an interface to connect
+    Processes with each other. PyPorts provide an interface to send and
+    receive messages via channels implemented by a backend messaging
+    infrastructure. The Communicating Sequential Processes (CSP) paradigm is the
+    inspiration of the messaging infrastructure. Thus, a channel denotes a CSP
+    channel of the messaging infrastructure and CSP Ports denote the low level
+    ports also used in the messaging infrastructure. PyPorts are the
+    implementation for message exchange in Python, using the low level CSP Ports
+    of the backend messaging infrastructure. PyPorts provide interface for send
+    and receive of input and output Ports. A PyPort may have one or multiple
+    connection to other PyPorts. These connections are represented by csp_ports,
+    which is a list of CSP ports corresponding to the connected PyPorts.
     """
     @property
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """
-        Abstract property to get all connected PyPorts (csp_ports) of a PyPort.
+        Abstract property to get the corresponding CSP Ports of all connected
+        PyPorts (csp_ports). The CSP Port is the low level interface of the
+        backend messaging infrastructure which is used to send and receive data.
 
         Returns
         -------
-        A list of all csp_ports connected to the PyPort.
+        A list of all CSP Ports connected to the PyPort.
         """
         pass
 
@@ -40,7 +49,8 @@ class AbstractPyIOPort(AbstractPyPort):
 
     A PyIOPort can either be an input or an output Port and is the common
     abstraction of PyInPort/PyOutPort.
-    _csp_ports is a list of the connected PyIOPorts.
+    _csp_ports is a list of CSP Ports which are used to send/receive data by
+    connected PyIOPorts.
 
     Parameters
     ----------
@@ -59,7 +69,7 @@ class AbstractPyIOPort(AbstractPyPort):
     Attributes
     ----------
     _csp_ports : list
-        A list of csp Ports used by this IO Port.
+        A list of CSP Ports used by this IO Port.
     """
     def __init__(self,
                  csp_ports: ty.List[AbstractCspPort],
@@ -72,11 +82,13 @@ class AbstractPyIOPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all connected PyPorts (csp_ports) of a PyPort.
+        """Property to get the corresponding CSP Ports of all connected
+        PyPorts (csp_ports). The CSP Port is the low level interface of the
+        backend messaging infrastructure which is used to send and receive data.
 
         Returns
         -------
-        A list of all csp_ports connected to the PyPort.
+        A list of all CSP Ports connected to the PyPort.
         """
         return self._csp_ports
 
@@ -88,8 +100,9 @@ class PyInPort(AbstractPyIOPort):
     (PyOutPort) over a channel. PyInPort can receive (recv()) the data, which
     removes it from the channel, look at (peek()) at the data which keeps it on
     the channel or check (probe()) if there is data on the channel.
-    The different class attributes are used to select the type of InPorts via
-    LavaPyType declarations in PyProcModels.
+    The different class attributes are used to select the type of OutPorts via
+    LavaPyType declarations in PyProcModels, e.g., LavaPyType(
+    PyInPort.VEC_DENSE, np.int32, precision=24) creates a PyInPort.
     A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
 
     Class attributes
@@ -236,7 +249,8 @@ class PyOutPort(AbstractPyIOPort):
     adds it to the channel or clear (flush()) the channel to remove any data of
     the channel.
     The different class attributes are used to select the type of OutPorts via
-    LavaPyType declarations in PyProcModels.
+    LavaPyType declarations in PyProcModels, e.g., LavaPyType(
+    PyOutPort.VEC_DENSE, np.int32, precision=24) creates a PyOutPort.
     A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
 
     Class attributes
@@ -331,11 +345,11 @@ class PyRefPort(AbstractPyPort):
 
     A PyRefPort is a Port connected to a VarPort of a variable Var of another
     Process. It is used to get or set the value of the referenced Var across
-    Processes. A PyRefPort is connected via two channels to a PyVarPort. One
-    channel is used to send data from the PyRefPort to the PyVarPort and the
-    other is used to receive data from the PyVarPort. PyRefPorts can get the
-    value of a referenced Var (read()) or set the value of a referenced Var
-    (write()).
+    Processes. A PyRefPort is connected via two CSP channels and corresponding
+    CSP ports to a PyVarPort. One channel is used to send data from the
+    PyRefPort to the PyVarPort and the other channel is used to receive data
+    from the PyVarPort. PyRefPorts can get the value of a referenced Var
+    (read()) or set the value of a referenced Var (write()).
 
     Parameters
     ----------
@@ -394,11 +408,13 @@ class PyRefPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all connected PyPorts (csp_ports) of a PyPort.
+        """Property to get the corresponding CSP Ports of all connected
+        PyPorts (csp_ports). The CSP Port is the low level interface of the
+        backend messaging infrastructure which is used to send and receive data.
 
         Returns
         -------
-        A list of all csp_ports connected to the PyPort.
+        A list of all CSP Ports connected to the PyPort.
         """
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             return [self._csp_send_port, self._csp_recv_port]
@@ -588,11 +604,13 @@ class PyVarPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all connected PyPorts (csp_ports) of a PyPort.
+        """Property to get the corresponding CSP Ports of all connected
+        PyPorts (csp_ports). The CSP Port is the low level interface of the
+        backend messaging infrastructure which is used to send and receive data.
 
         Returns
         -------
-        A list of all csp_ports connected to the PyPort.
+        A list of all CSP Ports connected to the PyPort.
         """
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             return [self._csp_send_port, self._csp_recv_port]
