@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from _collections import OrderedDict
-
+import atexit
 from lava.magma.compiler.executable import Executable
 from lava.magma.core.process.interfaces import \
     AbstractProcessMember, IdGeneratorSingleton
@@ -394,6 +394,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             self._runtime = Runtime(executable,
                                     ActorType.MultiProcessing)
             self._runtime.initialize()
+            atexit.register(self.stop)
 
         self._runtime.start(condition)
 

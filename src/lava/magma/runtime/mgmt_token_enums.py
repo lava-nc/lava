@@ -68,3 +68,5 @@ class MGMT_RESPONSE:
     """Signifies Request of PAUSE"""
     REQ_STOP = enum_to_np(-5)
     """Signifies Request of STOP"""
+    SET_COMPLETE = enum_to_np(-6)
+    """Signifies Completion of Set Var"""

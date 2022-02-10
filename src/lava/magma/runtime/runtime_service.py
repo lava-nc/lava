@@ -184,19 +184,21 @@ class LoihiPyRuntimeService(PyRuntimeService):
             value = data_recv_port.recv()
             data_relay_port.send(value)
 
-    def _relay_to_pm_data_given_model_id(self, model_id: int):
+    def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
         """Relays data received from the runtime to the ProcessModel given by
         the model id."""
         process_idx = self.model_ids.index(model_id)
-
         data_recv_port = self.runtime_to_service
         data_relay_port = self.service_to_process[process_idx]
+        resp_port = self.process_to_service[process_idx]
         # Receive and relay number of items
         num_items = data_recv_port.recv()
         data_relay_port.send(num_items)
         # Receive and relay data1, data2, ...
         for i in range(int(num_items[0].item())):
             data_relay_port.send(data_recv_port.recv())
+        rsp = resp_port.recv()
+        return rsp
 
     def _relay_pm_ack_given_model_id(self, model_id: int):
         """Relays ack received from ProcessModel given by model id to the
@@ -334,7 +336,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 # recv var_id
                 requests.append(self.runtime_to_service.recv())
                 self._send_pm_req_given_model_id(model_id, *requests)
-                self._relay_to_pm_data_given_model_id(model_id)
+                rsp = self._relay_to_pm_data_given_model_id(model_id)
+                self.service_to_runtime.send(rsp)
             else:
                 raise RuntimeError(f"Unknown request {command}")
 

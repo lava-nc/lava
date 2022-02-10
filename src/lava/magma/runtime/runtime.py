@@ -42,10 +42,10 @@ def target_fn(*args, **kwargs):
 
 
 class Runtime:
-    """Lava runtime which consumes an executable and add_ports_for_polling
+    """Lava runtime which consumes an executable and run
     run_condition. Exposes
     the APIs to start, pause, stop and wait on an execution. Execution could
-    be blocking and non-blocking as specified by the add_ports_for_polling
+    be blocking and non-blocking as specified by the run
     run_condition."""
 
     def __init__(self,
@@ -63,7 +63,6 @@ class Runtime:
         self._is_started: bool = False
         self._req_paused: bool = False
         self._req_stop: bool = False
-        self._error: bool = False
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
 
@@ -230,7 +229,9 @@ class Runtime:
                                 _, traceback = actors.exception
                                 print(traceback)
                                 error_cnt += 1
-                        self._error = True
+                        raise RuntimeError(
+                            f"{error_cnt} Exception(s) occurred. See "
+                            f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
             if self._req_paused:
@@ -239,11 +240,6 @@ class Runtime:
             if self._req_stop:
                 self._req_stop = False
                 self.stop()
-            if self._error:
-                # self.stop()
-                raise RuntimeError(
-                    f"{error_cnt} Exception(s) occurred. See "
-                    f"output above for details.")
             self._is_running = False
 
     def _run(self, run_condition: AbstractRunCondition):
@@ -273,7 +269,7 @@ class Runtime:
 
     def pause(self):
         """
-        Pauses a add_ports_for_polling
+        Pauses a run
         """
         if self._is_running:
             for send_port in self.runtime_to_service:
@@ -298,7 +294,7 @@ class Runtime:
             self._is_running = False
 
     def stop(self):
-        """Stops an ongoing or paused add_ports_for_polling."""
+        """Stops an ongoing or paused run."""
         try:
             if self._is_started:
                 for send_port in self.runtime_to_service:
@@ -325,6 +321,9 @@ class Runtime:
 
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
+        if self._is_running:
+            print("WARNING: Cannot Set a Var when the execution is going on")
+            return
         node_config: NodeConfig = self._executable.node_configs[0]
         ev: AbstractExecVar = node_config.exec_vars[var_id]
         runtime_srv_id: int = ev.runtime_srv_id
@@ -344,6 +343,8 @@ class Runtime:
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
+            rsp_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
+
             # 2. Reshape the data
             buffer: np.ndarray = value
             if idx:
@@ -357,11 +358,18 @@ class Runtime:
             data_port.send(enum_to_np(num_items))
             for i in range(num_items):
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
+            rsp = rsp_port.recv()
+            if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
+                raise RuntimeError("Var Set couldn't get successfully "
+                                   "completed")
         else:
             raise RuntimeError("Runtime has not started")
 
     def get_var(self, var_id: int, idx: np.ndarray = None) -> np.ndarray:
         """Gets value of a variable with id 'var_id'."""
+        if self._is_running:
+            print("WARNING: Cannot Get a Var when the execution is going on")
+            return
         node_config: NodeConfig = self._executable.node_configs[0]
         ev: AbstractExecVar = node_config.exec_vars[var_id]
         runtime_srv_id: int = ev.runtime_srv_id

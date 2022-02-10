@@ -134,6 +134,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 setattr(self, var_name, buffer.item())
             else:
                 setattr(self, var_name, buffer.astype(var.dtype))
+            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         elif isinstance(var, np.ndarray):
             # First item is number of items
             num_items = data_port.recv()[0]
@@ -144,8 +145,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     break
                 num_items -= 1
                 i[...] = data_port.recv()[0]
+            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         else:
+            self.process_to_service.send(MGMT_RESPONSE.ERROR)
             raise RuntimeError("Unsupported type")
+
 
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""
