@@ -150,7 +150,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             self.process_to_service.send(MGMT_RESPONSE.ERROR)
             raise RuntimeError("Unsupported type")
 
-
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""
         var_port.service()
@@ -208,6 +207,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
     """
     ProcessModel for processes that resembles process on Loihi.
     """
+
     def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
         super(PyLoihiProcessModel, self).__init__(proc_params)
         self.time_step = 0
@@ -424,6 +424,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     """
     Process Model for Asynchronous Processes.
     """
+
     def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
         super(PyAsyncProcessModel, self).__init__(proc_params)
         self._cmd_handlers.update({

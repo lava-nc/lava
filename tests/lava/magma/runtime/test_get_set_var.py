@@ -144,5 +144,6 @@ class TestGetSetVar(unittest.TestCase):
         assert np.array_equal(process.u.get(), expected_result_u)
         process.stop()
 
+
 if __name__ == '__main__':
     unittest.main()
