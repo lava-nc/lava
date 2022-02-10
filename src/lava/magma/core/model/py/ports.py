@@ -16,8 +16,8 @@ from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
 class AbstractPyPort(AbstractPortImplementation):
     """Abstract class for Ports implemented in Python.
 
-    It provides an interface to send and receive messages sent via channels. The
-    Communicating Sequential Processes (CSP) paradigm is followed in this
+    It provides an interface to send and receive messages via channels. The
+    Communicating Sequential Processes (CSP) paradigm is the inspiration of this
     implementation. PyPorts are the implementation of a Port in Python. A PyPort
     may have one or multiple connection to other PyPorts. These connections are
     represented by csp_ports, which is a list of connected PyPorts.
@@ -26,36 +26,40 @@ class AbstractPyPort(AbstractPortImplementation):
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """
-        Abstract property to get all csp_ports of a PyPort.
+        Abstract property to get all connected PyPorts (csp_ports) of a PyPort.
 
         Returns
         -------
-        A list of all csp_ports used by the PyPort.
+        A list of all csp_ports connected to the PyPort.
         """
         pass
 
 
 class AbstractPyIOPort(AbstractPyPort):
-    """Abstract class of an input/output port implemented in python.
+    """Abstract class of an input/output Port implemented in python.
+
+    A PyIOPort can either be an input or an output Port and is the common
+    abstraction of PyInPort/PyOutPort.
+    _csp_ports is a list of the connected PyIOPorts.
 
     Parameters
     ----------
     csp_ports : list
-        A list of csp ports used by this IO port.
+        A list of csp Ports used by this IO Port.
 
     process_model : AbstractProcessModel
-        The process model used by the process of the port.
+        The process model used by the process of the Port.
 
     shape : tuple
-        The shape of the port.
+        The shape of the Port.
 
     d_type: type
-        The data type of the port.
+        The data type of the Port.
 
     Attributes
     ----------
     _csp_ports : list
-        A list of csp ports used by this IO port.
+        A list of csp Ports used by this IO Port.
     """
     def __init__(self,
                  csp_ports: ty.List[AbstractCspPort],
@@ -68,11 +72,11 @@ class AbstractPyIOPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all csp_ports used by the Port.
+        """Property to get all connected PyPorts (csp_ports) of a PyPort.
 
         Returns
         -------
-        A list of all csp_ports used by the port.
+        A list of all csp_ports connected to the PyPort.
         """
         return self._csp_ports
 
@@ -80,19 +84,27 @@ class AbstractPyIOPort(AbstractPyPort):
 class PyInPort(AbstractPyIOPort):
     """Python implementation of InPort used within AbstractPyProcessModel.
 
+    PyInPort is an input Port processing data sent from a connected output Port
+    (PyOutPort) over a channel. PyInPort can receive (recv()) the data, which
+    removes it from the channel, look at (peek()) at the data which keeps it on
+    the channel or check (probe()) if there is data on the channel.
+    The different class attributes are used to select the type of InPorts via
+    LavaPyType declarations in PyProcModels.
+    A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
+
     Class attributes
-    ----------
+    ----------------
     VEC_DENSE : PyInPortVectorDense, default=None
-        Type of one of four different subtypes of PyInputPorts.
+        Type of PyInPort.
 
     VEC_SPARSE : PyInPortVectorSparse, default=None
-        Specifies that sparse data vectors should be sent on this port.
+        Type of PyInPort.
 
     SCALAR_DENSE : PyInPortScalarDense, default=None
-        Specifies that dense scalars should be sent on this port.
+        Type of PyInPort.
 
     SCALAR_SPARSE : PyInPortScalarSparse, default=None
-        Specifies that sparse scalars should be sent on this port.
+        Type of PyInPort.
     """
 
     VEC_DENSE: ty.Type["PyInPortVectorDense"] = None
@@ -103,35 +115,36 @@ class PyInPort(AbstractPyIOPort):
     @abstractmethod
     def recv(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
-        out ports (source ports). Removes the retrieved data from the channel.
+        out Ports (source Ports). Removes the retrieved data from the channel.
         Expects data on the channel and will block if there is no data to
         retrieve on the channel.
 
         Returns
         -------
-        The point-wise added vectors or scalars received from connected ports.
+        The point-wise added vectors or scalars received from connected Ports.
         """
         pass
 
     @abstractmethod
     def peek(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
-        out ports (source ports). Keeps the data on the channel.
+        out Ports (source Ports). Keeps the data on the channel.
 
         Returns
         -------
-        The point-wise added vectors or scalars received from connected ports.
+        The point-wise added vectors or scalars received from connected Ports.
         """
         pass
 
     def probe(self) -> bool:
         """Method to check (probe) if there is data (vectors/scalars)
-        to receive from connected out ports (source ports).
+        to receive from connected out Ports (source Ports).
 
         Returns
         -------
         result : bool
-             Returns True only when probe returns True for all csp_ports.
+             Returns True only when probe returns True for all connected OutPort
+             channels.
 
         """
         return ft.reduce(
@@ -142,16 +155,17 @@ class PyInPort(AbstractPyIOPort):
 
 
 class PyInPortVectorDense(PyInPort):
+    """Python implementation of PyInPort for dense vector data."""
     def recv(self) -> np.ndarray:
         """Method to receive data (vectors/scalars) sent from connected
-        out ports (source ports). Removes the retrieved data from the channel.
+        out Ports (source Ports). Removes the retrieved data from the channel.
         Expects data on the channel and will block if there is no data to
         retrieve on the channel.
 
         Returns
         -------
         result : ndarray of shape _shape
-            The point-wise added vectors received from connected ports.
+            The point-wise added vectors received from connected Ports.
         """
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.recv(),
@@ -161,12 +175,12 @@ class PyInPortVectorDense(PyInPort):
 
     def peek(self) -> np.ndarray:
         """Method to receive data (vectors) sent from connected
-        out ports (source ports). Keeps the data on the channel.
+        out Ports (source Ports). Keeps the data on the channel.
 
         Returns
         -------
         result : ndarray of shape _shape
-        The point-wise added vectors received from connected ports.
+        The point-wise added vectors received from connected Ports.
         """
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.peek(),
@@ -176,26 +190,35 @@ class PyInPortVectorDense(PyInPort):
 
 
 class PyInPortVectorSparse(PyInPort):
+    """Python implementation of PyInPort for sparse vector data."""
     def recv(self) -> ty.Tuple[np.ndarray, np.ndarray]:
+        """TBD"""
         pass
 
     def peek(self) -> ty.Tuple[np.ndarray, np.ndarray]:
+        """TBD"""
         pass
 
 
 class PyInPortScalarDense(PyInPort):
+    """Python implementation of PyInPort for dense scalar data."""
     def recv(self) -> int:
+        """TBD"""
         pass
 
     def peek(self) -> int:
+        """TBD"""
         pass
 
 
 class PyInPortScalarSparse(PyInPort):
+    """Python implementation of PyInPort for sparse scalar data."""
     def recv(self) -> ty.Tuple[int, int]:
+        """TBD"""
         pass
 
     def peek(self) -> ty.Tuple[int, int]:
+        """TBD"""
         pass
 
 
@@ -208,19 +231,27 @@ PyInPort.SCALAR_SPARSE = PyInPortScalarSparse
 class PyOutPort(AbstractPyIOPort):
     """Python implementation of OutPort used within AbstractPyProcessModels.
 
-    Attributes
-    ----------
+    PyOutPort is an output Port processing data sent from a connected input Port
+    (PyInPort) over a channel. PyOutPort can send (send()) the data, which
+    adds it to the channel or clear (flush()) the channel to remove any data of
+    the channel.
+    The different class attributes are used to select the type of OutPorts via
+    LavaPyType declarations in PyProcModels.
+    A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
+
+    Class attributes
+    ----------------
     VEC_DENSE : PyOutPortVectorDense, default=None
-        Specifies that dense data vectors should be sent on this port.
+        Type of PyOutPort.
 
     VEC_SPARSE : PyOutPortVectorSparse, default=None
-        Specifies that sparse data vectors should be sent on this port.
+        Type of PyOutPort.
 
     SCALAR_DENSE : PyOutPortScalarDense, default=None
-        Specifies that dense scalars should be sent on this port.
+        Type of PyOutPort.
 
     SCALAR_SPARSE : PyOutPortScalarSparse, default=None
-        Specifies that sparse scalars should be sent on this port.
+        Type of PyOutPort.
     """
 
     VEC_DENSE: ty.Type["PyOutPortVectorDense"] = None
@@ -230,12 +261,12 @@ class PyOutPort(AbstractPyIOPort):
 
     @abstractmethod
     def send(self, data: ty.Union[np.ndarray, int]):
-        """Abstract method to send data to the connected in port (target).
+        """Abstract method to send data to the connected Port PyInPort (target).
 
         Parameters
         ----------
         data : ndarray or int
-            The data (vector or scalar) to be sent to the in port (target).
+            The data (vector or scalar) to be sent to the PyInPort (target).
         """
         pass
 
@@ -248,14 +279,14 @@ class PyOutPortVectorDense(PyOutPort):
     """Python implementation of PyOutPort for dense vector data."""
 
     def send(self, data: np.ndarray):
-        """Abstract method to send data to the connected in port (target).
+        """Abstract method to send data to the connected in Port (target).
 
-        Sends data only if port is not dangling.
+        Sends data only if Port is not dangling.
 
         Parameters
         ----------
         data : ndarray
-            The data vector to be sent to the in port (target).
+            The data vector to be sent to the in Port (target).
         """
         for csp_port in self.csp_ports:
             csp_port.send(data)
@@ -289,7 +320,8 @@ PyOutPort.SCALAR_SPARSE = PyOutPortScalarSparse
 
 
 class VarPortCmd:
-    """Helper class to specify constants."""
+    """Helper class to specify constants. Used for communication between
+    PyRefPorts and PyVarPorts."""
     GET = enum_to_np(0)
     SET = enum_to_np(1)
 
@@ -297,42 +329,52 @@ class VarPortCmd:
 class PyRefPort(AbstractPyPort):
     """Python implementation of RefPort used within AbstractPyProcessModels.
 
+    A PyRefPort is a Port connected to a VarPort of a variable Var of another
+    Process. It is used to get or set the value of the referenced Var across
+    Processes. A PyRefPort is connected via two channels to a PyVarPort. One
+    channel is used to send data from the PyRefPort to the PyVarPort and the
+    other is used to receive data from the PyVarPort. PyRefPorts can get the
+    value of a referenced Var (read()) or set the value of a referenced Var
+    (write()).
+
     Parameters
     ----------
     csp_send_port : CspSendPort or None
-        Csp port used to send data to the referenced in port (target).
+        Used to send data to the referenced Port PyVarPort (target).
 
     csp_recv_port: CspRecvPort or None
-        Csp port used to receive data from the referenced port (source).
+        Used to receive data from the referenced Port PyVarPort (source).
 
     process_model : AbstractProcessModel
-        The process model used by the process of the port.
+        The process model used by the process of the Port.
 
     shape : tuple, default=tuple()
-        The shape of the port.
+        The shape of the Port.
 
     d_type: type, default=int
-        The data type of the port.
+        The data type of the Port.
 
     Attributes
     ----------
-    VEC_DENSE : PyRefPortVectorDense, default=None
-        Specifies that dense data vectors should be sent on this port.
-
-    VEC_SPARSE : PyRefPortVectorSparse, default=None
-        Specifies that sparse data vectors should be sent on this port.
-
-    SCALAR_DENSE : PyRefPortScalarDense, default=None
-        Specifies that dense scalars should be sent on this port.
-
-    SCALAR_SPARSE : PyRefPortScalarSparse, default=None
-        Specifies that sparse scalars should be sent on this port.
-
     _csp_send_port : CspSendPort
-        Csp port used to send data to the referenced in port (target).
+        Used to send data to the referenced Port PyVarPort (target).
 
     _csp_recv_port : CspRecvPort
-        Csp port used to receive data from the referenced port (source).
+        Used to receive data from the referenced Port PyVarPort (source).
+
+    Class attributes
+    ----------------
+    VEC_DENSE : PyRefPortVectorDense, default=None
+        Type of PyRefPort.
+
+    VEC_SPARSE : PyRefPortVectorSparse, default=None
+        Type of PyRefPort.
+
+    SCALAR_DENSE : PyRefPortScalarDense, default=None
+        Type of PyRefPort.
+
+    SCALAR_SPARSE : PyRefPortScalarSparse, default=None
+        Type of PyRefPort.
     """
 
     VEC_DENSE: ty.Type["PyRefPortVectorDense"] = None
@@ -352,16 +394,16 @@ class PyRefPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all csp ports used by the port.
+        """Property to get all connected PyPorts (csp_ports) of a PyPort.
 
         Returns
         -------
-        A list of all csp ports used by the port.
+        A list of all csp_ports connected to the PyPort.
         """
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             return [self._csp_send_port, self._csp_recv_port]
         else:
-            # In this case the port was not connected
+            # In this case the Port was not connected
             return []
 
     @abstractmethod
@@ -400,12 +442,13 @@ class PyRefPort(AbstractPyPort):
 class PyRefPortVectorDense(PyRefPort):
     """Python implementation of RefPort for dense vector data."""
     def read(self) -> np.ndarray:
-        """Method to request and return data from a referenced Var.
+        """Method to request and return data from a referenced Var using a
+        PyVarPort.
 
         Returns
         -------
         result : ndarray of shape _shape
-            The value of the referenced var.
+            The value of the referenced Var.
         """
         if self._csp_send_port and self._csp_recv_port:
             header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
@@ -416,7 +459,8 @@ class PyRefPortVectorDense(PyRefPort):
         return np.zeros(self._shape, self._d_type)
 
     def write(self, data: np.ndarray):
-        """Abstract method to write data to a VarPort to set its Var.
+        """Abstract method to write data to a VarPort to set the value of the
+        referenced Var.
 
         Parameters
         ----------
@@ -471,48 +515,58 @@ PyRefPort.SCALAR_SPARSE = PyRefPortScalarSparse
 class PyVarPort(AbstractPyPort):
     """Python implementation of VarPort used within AbstractPyProcessModel.
 
+    A PyVarPort is a Port related to a variable Var of a Process and might be
+    connected to a RefPort of another process. It is used to get or set the
+    value of the referenced Var across Processes. A PyVarPort is connected via
+    two channels to a PyRefPort. One channel is used to send data from the
+    PyRefPort to the PyVarPort and the other is used to receive data from the
+    PyVarPort. PyVarPorts set or send the value of the related Var (service())
+    given the command VarPortCmd received by a connected PyRefPort.
+
     Parameters
     ----------
     var_name : str
         The name of the Var related to this VarPort.
 
     csp_send_port : CspSendPort or None
-        Csp port used to send data to the referenced in port (target).
+        Csp Port used to send data to the referenced in Port (target).
 
     csp_recv_port: CspRecvPort or None
-        Csp port used to receive data from the referenced port (source).
+        Csp Port used to receive data from the referenced Port (source).
 
     process_model : AbstractProcessModel
-        The process model used by the process of the port.
+        The process model used by the process of the Port.
 
     shape : tuple, default=tuple()
-        The shape of the port.
+        The shape of the Port.
 
     d_type: type, default=int
-        The data type of the port.
+        The data type of the Port.
 
     Attributes
     ----------
-    VEC_DENSE : PyRefPortVectorDense, default=None
-        Specifies that dense data vectors should be sent on this port.
-
-    VEC_SPARSE : PyRefPortVectorSparse, default=None
-        Specifies that sparse data vectors should be sent on this port.
-
-    SCALAR_DENSE : PyRefPortScalarDense, default=None
-        Specifies that dense scalars should be sent on this port.
-
-    SCALAR_SPARSE : PyRefPortScalarSparse, default=None
-        Specifies that sparse scalars should be sent on this port.
-
     var_name : str
         The name of the Var related to this VarPort.
 
     _csp_send_port : CspSendPort
-        Csp port used to send data to the referenced in port (target).
+        Used to send data to the referenced Port PyRefPort (target).
 
     _csp_recv_port : CspRecvPort
-        Csp port used to receive data from the referenced port (source).
+        Used to receive data from the referenced Port PyRefPort (source).
+
+    Class attributes
+    ----------------
+    VEC_DENSE : PyVarPortVectorDense, default=None
+       Type of PyVarPort.
+
+    VEC_SPARSE : PyVarPortVectorSparse, default=None
+        Type of PyVarPort.
+
+    SCALAR_DENSE : PyVarPortScalarDense, default=None
+        Type of PyVarPort.
+
+    SCALAR_SPARSE : PyVarPortScalarSparse, default=None
+        Type of PyVarPort.
     """
 
     VEC_DENSE: ty.Type["PyVarPortVectorDense"] = None
@@ -534,32 +588,36 @@ class PyVarPort(AbstractPyPort):
 
     @property
     def csp_ports(self) -> ty.List[AbstractCspPort]:
-        """Property to get all csp ports used by the port.
+        """Property to get all connected PyPorts (csp_ports) of a PyPort.
 
         Returns
         -------
-        A list of all csp ports used by the port.
+        A list of all csp_ports connected to the PyPort.
         """
         if self._csp_send_port is not None and self._csp_recv_port is not None:
             return [self._csp_send_port, self._csp_recv_port]
         else:
-            # In this case the port was not connected
+            # In this case the Port was not connected
             return []
 
     @abstractmethod
     def service(self):
-        """Abstract method to set the received value to the given Var or sends
-        the value of the Var to the _csp_send_port, depending on the received
-        header information of the _csp_recv_port."""
+        """Abstract method to set the value of the related Var of the VarPort,
+        received from the connected RefPort, or to send the value of the related
+        Var of the VarPort to the connected RefPort. The connected RefPort sends
+        a command VarPortCmd first to determine a read() or write() operation.
+        """
         pass
 
 
 class PyVarPortVectorDense(PyVarPort):
     """Python implementation of VarPort for dense vector data."""
     def service(self):
-        """Abstract method to set the received value to the given Var or sends
-        the value of the Var to the _csp_send_port, depending on the received
-        header information of the _csp_recv_port."""
+        """Method to set the value of the related Var of the VarPort,
+        received from the connected RefPort, or to send the value of the related
+        Var of the VarPort to the connected RefPort. The connected RefPort sends
+        a command VarPortCmd first to determine a read() or write() operation.
+        """
 
         # Inspect incoming data
         if self._csp_send_port is not None and self._csp_recv_port is not None:
@@ -589,6 +647,10 @@ class PyVarPortVectorSparse(PyVarPort):
         """TBD"""
         pass
 
+    def service(self):
+        """TBD"""
+        pass
+
 
 class PyVarPortScalarDense(PyVarPort):
     """Python implementation of VarPort for dense scalar data."""
@@ -597,6 +659,10 @@ class PyVarPortScalarDense(PyVarPort):
         pass
 
     def peek(self) -> int:
+        """TBD"""
+        pass
+
+    def service(self):
         """TBD"""
         pass
 
@@ -611,6 +677,10 @@ class PyVarPortScalarSparse(PyVarPort):
         """TBD"""
         pass
 
+    def service(self):
+        """TBD"""
+        pass
+
 
 PyVarPort.VEC_DENSE = PyVarPortVectorDense
 PyVarPort.VEC_SPARSE = PyVarPortVectorSparse
@@ -621,10 +691,16 @@ PyVarPort.SCALAR_SPARSE = PyVarPortScalarSparse
 class RefVarTypeMapping:
     """Class to get the mapping of PyRefPort types to PyVarPort types.
 
-    Attributes
-    ----------
+    PyRefPorts and PyVarPorts can be implemented as different subtypes, defining
+    the format of the data to process. To connect PyRefPorts and PyVarPorts they
+    need to have a compatible data format.
+    This class maps the fitting data format between PyRefPorts and PyVarPorts.
+
+    Class attributes
+    ----------------
     mapping : dict
-        Dictionary containing the mapping of PyRefPort types to PyVarPort types.
+        Dictionary containing the mapping of compatible PyRefPort types to
+        PyVarPort types.
 
     """
 
@@ -636,7 +712,8 @@ class RefVarTypeMapping:
 
     @classmethod
     def get(cls, ref_port: PyRefPort):
-        """Class method to return the PyVarPort type given the PyRefPort type.
+        """Class method to return the compatible PyVarPort type given the
+        PyRefPort type.
 
         Parameters
         ----------
@@ -646,7 +723,7 @@ class RefVarTypeMapping:
         Returns
         -------
         result : PyVarPort
-            PyVarPort type corresponding to PyRefPort type given by ref_port.
+            PyVarPort type compatible to given PyRefPort type.
 
         """
         return cls.mapping[ref_port]
