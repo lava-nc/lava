@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from lava.magma.compiler.builder import PyProcessBuilder
+from lava.magma.compiler.builders.builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
