@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import importlib
 import importlib.util as import_utils
 import inspect
@@ -47,7 +48,10 @@ PROC_MAP = ty.Dict[AbstractProcess, ty.Type[AbstractProcessModel]]
 
 # ToDo: (AW) Document all class methods and class
 class Compiler:
-    def __init__(self, compile_cfg: ty.Optional[ty.Dict[str, ty.Any]] = None):
+    def __init__(self, compile_cfg: ty.Optional[ty.Dict[str, ty.Any]] = None,
+                 loglevel=logging.WARNING):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self._compile_config = {"pypy_channel_size": 64}
         if compile_cfg:
             self._compile_config.update(compile_cfg)
@@ -195,12 +199,12 @@ class Compiler:
             run_cfg: RunConfig) -> ty.Type[AbstractProcessModel]:
         """Selects a ProcessModel from list of provided models given RunCfg."""
         selected_proc_model = run_cfg.select(proc, models)
-        err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select() must " \
-            f"return a sub-class of AbstractProcessModel. Got" \
-            f" {type(selected_proc_model)} instead."
-        if not isinstance(selected_proc_model, type):
-            raise AssertionError(err_msg)
-        if not issubclass(selected_proc_model, AbstractProcessModel):
+
+        if not isinstance(selected_proc_model, type) \
+                or not issubclass(selected_proc_model, AbstractProcessModel):
+            err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select()" \
+                      f" must return a sub-class of AbstractProcessModel. Got" \
+                      f" {type(selected_proc_model)} instead."
             raise AssertionError(err_msg)
 
         return selected_proc_model
