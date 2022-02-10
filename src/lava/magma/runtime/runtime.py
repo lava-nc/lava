@@ -226,7 +226,7 @@ class Runtime:
                                     actors.join()
                                     if actors.exception:
                                         _, traceback = actors.exception
-                                        self.log.debug(traceback)
+                                        self.log.error(traceback)
                                         error_cnt += 1
 
                                 raise RuntimeError(
