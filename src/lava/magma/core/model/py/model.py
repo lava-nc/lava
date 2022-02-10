@@ -29,7 +29,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None) -> None:
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
         super().__init__(proc_params)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
@@ -37,7 +37,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
-        self.proc_params: ty.Dict[str, ty.Any] = {}
         self._selector: CspSelector = CspSelector()
         self._action: str = 'cmd'
         self._stopped: bool = False

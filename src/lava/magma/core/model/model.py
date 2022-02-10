@@ -46,6 +46,10 @@ class AbstractProcessModel(ABC):
     although this leads to a bit of verbosity in the end. We could leave out
     the class type in the LavaType and infer it from
     ProcModel.__annotations__ if the user has not forgotten to specify it.
+    3. Process can communicate arbitrary objects using it's ``proc_params``
+    member. This should be used when such a need arises. A Process's
+    ``proc_prams`` (empty dictionary by default) should always be used to
+    initialize it's ProcessModel.
     """
 
     implements_process: ty.Optional[ty.Type[AbstractProcess]] = None
@@ -75,6 +79,9 @@ class AbstractProcessModel(ABC):
             + tags
         )
 
+    # ToDo: (AW) Should AbstractProcessModel even have a run() method? What
+    #  if a sub class like AbstractCProcessModel for a LMT does not even need
+    #  a 'run'?
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
 

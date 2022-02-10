@@ -144,7 +144,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     ProcessModels enable seamless cross-platform execution of processes. In
     particular they allow to build applications or algorithms using processes
-    agnostic of the ProcessModel chosen at compile time_step. There are two
+    agnostic of the ProcessModel chosen at compile time. There are two
     broad categories of ProcessModels:
     1. LeafProcessModels allow to implement the behavior of a process
     directly in different languages for a particular compute resource.
@@ -181,7 +181,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     ```
     Processes do only specify their states, ports and other public interface
     methods but they do not specify the behavior. Instead, ProcessModels
-    specify which Processes they implement.
+    specify which Processes they implement. Typically, Processes share their
+    states, ports and other public interface methods with their ProcessModels.
+    For special cases, one can use proc_params memeber of the process to
+    communicate arbitrary object between Processes and their PorcessModels.
     For more information on connecting process, see documentation of InPort,
     OutPort and RefPort.
 
@@ -197,7 +200,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     'compile(..)' or 'run(..)' on any of them compiles and runs all of them
     automatically.
 
-    At compile time_step, the user must provide the Lava compiler with a
+    At compile time, the user must provide the Lava compiler with a
     specific instance of a RunConfig class. A RunConfig class represents a set
     of rules that allows the compiler to select one and only one ProcessModel
     of a specific Process to be compiled for execution with specific compute
@@ -212,7 +215,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     the execution of a set of processes can either be paused or stopped by
     calling the corresponding 'pause()' or 'stop()' methods.
 
-    In order to save time_step setting up processes for future use, processes
+    In order to save time setting up processes for future use, processes
     can also be saved and reloaded from disk.
     """
 
