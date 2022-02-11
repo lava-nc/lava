@@ -8,6 +8,7 @@ if ty.TYPE_CHECKING:
         AbstractRuntimeServiceBuilder
 
 import multiprocessing as mp
+import os
 from multiprocessing.managers import SharedMemoryManager
 import traceback
 
@@ -76,7 +77,8 @@ class MultiProcessing(MessageInfrastructureInterface):
     def stop(self):
         """Stops the shared memory manager"""
         for actor in self._actors:
-            actor.join()
+            if actor._parent_pid == os.getpid():
+                actor.join()
 
         self._smm.shutdown()
 
