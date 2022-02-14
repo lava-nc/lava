@@ -41,7 +41,7 @@ class Sigma(AbstractProcess):
         self.shape = shape
 
         self.a_in = InPort(shape=shape)
-        self.a_out = OutPort(shape=shape)
+        self.s_out = OutPort(shape=shape)
 
         self.sigma = Var(shape=shape, init=0)
 
