@@ -114,7 +114,7 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
 class PySigmaModelFloat(AbstractSigmaModel):
     """ Floating point implementation of Sigma decoding"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
-    a_out = LavaPyType(PyOutPort.VEC_DENSE, float)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
@@ -124,7 +124,7 @@ class PySigmaModelFloat(AbstractSigmaModel):
     def run_spk(self) -> None:
         a_in_data = self.a_in.recv()
         self.sigma = self.sigma_dynamics(a_in_data)
-        self.a_out.send(self.sigma)
+        self.s_out.send(self.sigma)
 
 
 @implements(proc=Sigma, protocol=LoihiProtocol)
@@ -133,7 +133,7 @@ class PySigmaModelFloat(AbstractSigmaModel):
 class PySigmaModelFixed(AbstractSigmaModel):
     """ Fixed point implementation of Sigma decoding"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
-    a_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
 
     sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
@@ -143,7 +143,7 @@ class PySigmaModelFixed(AbstractSigmaModel):
     def run_spk(self) -> None:
         a_in_data = self.a_in.recv()
         self.sigma = self.sigma_dynamics(a_in_data)
-        self.a_out.send(self.sigma)
+        self.s_out.send(self.sigma)
 
 
 @implements(proc=Delta, protocol=LoihiProtocol)
@@ -168,6 +168,7 @@ class PyDeltaModelFloat(AbstractDeltaModel):
         # Receive synaptic input
         a_in_data = self.a_in.recv()
         s_out = self.delta_dynamics(a_in_data)
+        self.act = a_in_data
         self.s_out.send(s_out)
 
 
@@ -196,6 +197,7 @@ class PyDeltaModelFixed(AbstractDeltaModel):
         )
         s_out_scaled = self.delta_dynamics(a_in_data)
         s_out = np.right_shift(s_out_scaled, self.wgt_exp)
+        self.act = a_in_data
         self.s_out.send(s_out)
 
 
