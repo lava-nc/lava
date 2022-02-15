@@ -1,13 +1,11 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
-from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
-    CspSelector
+from lava.magma.compiler.channels.pypychannel import CspSelector
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
@@ -15,47 +13,18 @@ from lava.magma.runtime.mgmt_token_enums import (
     MGMT_RESPONSE,
     MGMT_COMMAND,
 )
+from lava.magma.runtime.runtime_services.enums import (
+    LoihiPhase,
+    LoihiVersion
+)
+from lava.magma.runtime.runtime_services.interfaces import \
+    AbstractRuntimeService
 
-
-class AbstractRuntimeService(ABC):
-    def __init__(self, protocol):
-        self.protocol: ty.Optional[AbstractSyncProtocol] = protocol
-
-        self.runtime_service_id: ty.Optional[int] = None
-
-        self.runtime_to_service: ty.Optional[CspRecvPort] = None
-        self.service_to_runtime: ty.Optional[CspSendPort] = None
-
-        self.model_ids: ty.List[int] = []
-
-        self.service_to_process: ty.Iterable[CspSendPort] = []
-        self.process_to_service: ty.Iterable[CspRecvPort] = []
-
-    def __repr__(self):
-        return f"Synchronizer : {self.__class__}, \
-                 RuntimeServiceId : {self.runtime_service_id}, \
-                 Protocol: {self.protocol}"
-
-    def start(self):
-        self.runtime_to_service.start()
-        self.service_to_runtime.start()
-        for i in range(len(self.service_to_process)):
-            self.service_to_process[i].start()
-            self.process_to_service[i].start()
-        self.run()
-
-    @abstractmethod
-    def run(self):
+try:
+    from nxsdk.arch.base.nxboard import NxBoard
+except(ImportError):
+    class NxBoard():
         pass
-
-    def join(self):
-        self.runtime_to_service.join()
-        self.service_to_runtime.join()
-
-        for i in range(len(self.service_to_process)):
-            self.service_to_process[i].join()
-            self.process_to_service[i].join()
-
 
 class PyRuntimeService(AbstractRuntimeService):
     pass
@@ -65,35 +34,32 @@ class CRuntimeService(AbstractRuntimeService):
     pass
 
 
+class NcRuntimeService(AbstractRuntimeService):
+    pass
+
+
 class LoihiPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Loihi SyncProtocol in Python."""
-
-    class Phase:
-        SPK = enum_to_np(1)
-        PRE_MGMT = enum_to_np(2)
-        LRN = enum_to_np(3)
-        POST_MGMT = enum_to_np(4)
-        HOST = enum_to_np(5)
 
     def _next_phase(self, curr_phase, is_last_time_step: bool):
         """Advances the current phase to the next phase.
         On the first time step it starts with HOST phase and advances to SPK.
         Afterwards it loops: SPK -> PRE_MGMT -> LRN -> POST_MGMT -> SPK
         On the last time step POST_MGMT advances to HOST phase."""
-        if curr_phase == LoihiPyRuntimeService.Phase.SPK:
-            return LoihiPyRuntimeService.Phase.PRE_MGMT
-        elif curr_phase == LoihiPyRuntimeService.Phase.PRE_MGMT:
-            return LoihiPyRuntimeService.Phase.LRN
-        elif curr_phase == LoihiPyRuntimeService.Phase.LRN:
-            return LoihiPyRuntimeService.Phase.POST_MGMT
-        elif curr_phase == LoihiPyRuntimeService.Phase.POST_MGMT and \
+        if curr_phase == LoihiPhase.SPK:
+            return LoihiPhase.PRE_MGMT
+        elif curr_phase == LoihiPhase.PRE_MGMT:
+            return LoihiPhase.LRN
+        elif curr_phase == LoihiPhase.LRN:
+            return LoihiPhase.POST_MGMT
+        elif curr_phase == LoihiPhase.POST_MGMT and \
                 is_last_time_step:
-            return LoihiPyRuntimeService.Phase.HOST
-        elif curr_phase == LoihiPyRuntimeService.Phase.POST_MGMT and not \
+            return LoihiPhase.HOST
+        elif curr_phase == LoihiPhase.POST_MGMT and not \
                 is_last_time_step:
-            return LoihiPyRuntimeService.Phase.SPK
-        elif curr_phase == LoihiPyRuntimeService.Phase.HOST:
-            return LoihiPyRuntimeService.Phase.SPK
+            return LoihiPhase.SPK
+        elif curr_phase == LoihiPhase.HOST:
+            return LoihiPhase.SPK
 
     def _send_pm_cmd(self, phase: MGMT_COMMAND):
         """Sends a command (phase information) to all ProcessModels."""
@@ -161,7 +127,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         last time step is reached. The runtime is informed after the last time
         step. The loop ends when receiving the STOP command from the runtime."""
         selector = CspSelector()
-        phase = LoihiPyRuntimeService.Phase.HOST
+        phase = LoihiPhase.HOST
 
         channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
 
@@ -199,7 +165,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     # The number of time steps was received ("command")
                     # Start iterating through Loihi phases
                     curr_time_step = 0
-                    phase = LoihiPyRuntimeService.Phase.HOST
+                    phase = LoihiPhase.HOST
                     while True:
                         # Check if it is the last time step
                         is_last_ts = enum_equal(enum_to_np(curr_time_step),
@@ -207,13 +173,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # Advance to the next phase
                         phase = self._next_phase(phase, is_last_ts)
                         # Increase time step if spiking phase
-                        if enum_equal(phase, LoihiPyRuntimeService.Phase.SPK):
+                        if enum_equal(phase, LoihiPhase.SPK):
                             curr_time_step += 1
                         # Inform ProcessModels about current phase
                         self._send_pm_cmd(phase)
                         # ProcessModels respond with DONE if not HOST phase
                         if not enum_equal(
-                                phase, LoihiPyRuntimeService.Phase.HOST):
+                                phase, LoihiPhase.HOST):
 
                             for rsp in self._get_pm_resp():
                                 if not enum_equal(rsp, MGMT_RESPONSE.DONE):
@@ -230,14 +196,14 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(
-                                phase, LoihiPyRuntimeService.Phase.HOST):
+                                phase, LoihiPhase.HOST):
                             break
 
                     # Inform the runtime that last time step was reached
                     self.service_to_runtime.send(MGMT_RESPONSE.DONE)
 
     def _handle_get_set(self, phase, command):
-        if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
+        if enum_equal(phase, LoihiPhase.HOST):
             if enum_equal(command, MGMT_COMMAND.GET_DATA):
                 requests: ty.List[np.ndarray] = [command]
                 # recv model_id
@@ -295,3 +261,103 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     if not enum_equal(rsp, MGMT_RESPONSE.DONE):
                         raise ValueError(f"Wrong Response Received : {rsp}")
                 self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+
+
+class NxSDKRuntimeService(NcRuntimeService):
+    """NxSDK RuntimeService that implements NxCore SyncProtocol.
+
+    The NxSDKRuntimeService is a wrapper around NxCore that allows
+    interaction with Loihi through NxCore API and GRPC communication
+    channels to Loihi.
+
+    Parameters
+    ----------
+    protocol: ty.Type[LoihiProtocol]
+              Communication protocol used by NxSDKRuntimeService
+    loihi_version: LoihiVersion
+                   Version of Loihi Chip to use, N2 or N3
+    """
+
+    def __init__(self,
+                 protocol: ty.Type[AbstractSyncProtocol],
+                 loihi_version: LoihiVersion = LoihiVersion.N3,):
+        super(NxSDKRuntimeService, self).__init__(
+            protocol=protocol
+        )
+        self.board: NxBoard = None
+        self.num_steps = 0
+
+        if loihi_version == LoihiVersion.N3:
+            from nxsdk.arch.n3b.n3board import N3Board
+            # # TODO: Need to find good way to set Board Init
+            self.board = N3Board(1, 1, [2], [[5, 5]])
+        elif loihi_version == LoihiVersion.N2:
+            from nxsdk.arch.n2a.n2board import N2Board # noqa F401
+            self.board = N2Board(1, 1, [2], [[5, 5]])
+        else:
+            raise ValueError('Unsupported Loihi version '
+                             + 'used in board selection')
+
+    def _send_pm_cmd(self, cmd: MGMT_COMMAND):
+        for stop_send_port in self.service_to_process:
+            stop_send_port.send(cmd)
+
+    def _send_pm_rn(self, run_number: int):
+        for stop_send_port in self.service_to_process:
+            stop_send_port.send(run_number)
+
+    def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
+        rcv_msgs = []
+        for ptos_recv_port in self.process_to_service:
+            rcv_msgs.append(ptos_recv_port.recv())
+        return rcv_msgs
+
+    def run(self):
+        self.num_steps = self.runtime_to_service.recv()
+        self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+
+        selector = CspSelector()
+        channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
+
+        while True:
+            action = selector.select(*channel_actions)
+            if action == 'cmd':
+                command = self.runtime_to_service.recv()
+                if enum_equal(command, MGMT_COMMAND.STOP):
+                    self._send_pm_cmd(command)
+                    rsps = self._get_pm_resp()
+                    for rsp in rsps:
+                        if not enum_equal(rsp, MGMT_RESPONSE.TERMINATED):
+                            raise ValueError(f"Wrong Response Received : {rsp}")
+                    self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
+                    self.join()
+                    return
+                elif enum_equal(command, MGMT_COMMAND.PAUSE):
+                    self._send_pm_cmd(command)
+                    rsps = self._get_pm_resp()
+                    for rsp in rsps:
+                        if not enum_equal(rsp, MGMT_RESPONSE.PAUSED):
+                            raise ValueError(f"Wrong Response Received : {rsp}")
+
+                    self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
+                    break
+                elif enum_equal(command, MGMT_COMMAND.RUN):
+                    self._send_pm_cmd(MGMT_COMMAND.RUN)
+                    rsps = self._get_pm_resp()
+                    self._send_pm_cmd(self.num_steps)
+                    rsps = rsps + self._get_pm_resp()
+                    for rsp in rsps:
+                        if not enum_equal(rsp, MGMT_RESPONSE.DONE):
+                            raise ValueError(f"Wrong Response Received : {rsp}")
+                    self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+                else:
+                    self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+
+                    self._send_pm_cmd(MGMT_COMMAND.STOP)
+                    return
+
+    def get_board(self) -> NxBoard:
+        if self.board is not None:
+            return self.board
+        else:
+            AssertionError("Cannot return board, self.board is None")

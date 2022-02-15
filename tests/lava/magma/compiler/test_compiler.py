@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import unittest
 
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -126,7 +127,8 @@ class SubProcModelA(AbstractSubProcessModel):
 # A minimal RunConfig that will select SubProcModel if there is one
 class RunCfg(RunConfig):
     def __init__(self, custom_sync_domains=None, select_sub_proc_model=False):
-        super().__init__(custom_sync_domains=custom_sync_domains)
+        super().__init__(custom_sync_domains=custom_sync_domains,
+                         loglevel=logging.WARNING)
         self.select_sub_proc_model = select_sub_proc_model
 
     def select(self, proc, proc_models):

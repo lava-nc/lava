@@ -4,6 +4,8 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
+import logging
+
 import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
@@ -15,6 +17,7 @@ from lava.magma.runtime.mgmt_token_enums import (
     enum_equal,
     MGMT_COMMAND,
     MGMT_RESPONSE, )
+from lava.magma.runtime.runtime_services.enums import LoihiPhase
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -29,8 +32,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
-        super().__init__(proc_params)
+    def __init__(self, proc_params: ty.Dict[str, ty.Any],
+                 loglevel=logging.WARNING) -> None:
+        super().__init__(proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
         self.process_to_service: ty.Optional[CspSendPort] = None
@@ -65,16 +69,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
-    def __init__(self, proc_params: ty.Dict[str, ty.Any]):
-        super(PyLoihiProcessModel, self).__init__(proc_params)
+    def __init__(self, proc_params: ty.Dict[str, ty.Any],
+                 loglevel=logging.WARNING):
+        super(PyLoihiProcessModel, self).__init__(proc_params,
+                                                  loglevel=loglevel)
         self.current_ts = 0
-
-    class Phase:
-        SPK = enum_to_np(1)
-        PRE_MGMT = enum_to_np(2)
-        LRN = enum_to_np(3)
-        POST_MGMT = enum_to_np(4)
-        HOST = enum_to_np(5)
 
     def run_spk(self):
         pass
@@ -107,7 +106,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         loop ends when the STOP command is received."""
         selector = CspSelector()
         action = 'cmd'
-        phase = PyLoihiProcessModel.Phase.SPK
+        phase = LoihiPhase.SPK
         while True:
             if action == 'cmd':
                 cmd = self.service_to_process.recv()
@@ -117,52 +116,53 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     return
                 try:
                     # Spiking phase - increase time step
-                    if enum_equal(cmd, PyLoihiProcessModel.Phase.SPK):
+                    if enum_equal(cmd, LoihiPhase.SPK):
                         self.current_ts += 1
-                        phase = PyLoihiProcessModel.Phase.SPK
+                        phase = LoihiPhase.SPK
                         self.run_spk()
                         self.process_to_service.send(MGMT_RESPONSE.DONE)
                     # Pre-management phase
                     elif enum_equal(cmd,
-                                    PyLoihiProcessModel.Phase.PRE_MGMT):
+                                    LoihiPhase.PRE_MGMT):
                         # Enable via guard method
-                        phase = PyLoihiProcessModel.Phase.PRE_MGMT
+                        phase = LoihiPhase.PRE_MGMT
                         if self.pre_guard():
                             self.run_pre_mgmt()
                         self.process_to_service.send(MGMT_RESPONSE.DONE)
                     # Learning phase
-                    elif enum_equal(cmd, PyLoihiProcessModel.Phase.LRN):
+                    elif enum_equal(cmd, LoihiPhase.LRN):
                         # Enable via guard method
-                        phase = PyLoihiProcessModel.Phase.LRN
+                        phase = LoihiPhase.LRN
                         if self.lrn_guard():
                             self.run_lrn()
                         self.process_to_service.send(MGMT_RESPONSE.DONE)
                     # Post-management phase
                     elif enum_equal(cmd,
-                                    PyLoihiProcessModel.Phase.POST_MGMT):
+                                    LoihiPhase.POST_MGMT):
                         # Enable via guard method
-                        phase = PyLoihiProcessModel.Phase.POST_MGMT
+                        phase = LoihiPhase.POST_MGMT
                         if self.post_guard():
                             self.run_post_mgmt()
                         self.process_to_service.send(MGMT_RESPONSE.DONE)
                     # Host phase - called at the last time step before STOP
-                    elif enum_equal(cmd, PyLoihiProcessModel.Phase.HOST):
-                        phase = PyLoihiProcessModel.Phase.HOST
+                    elif enum_equal(cmd, LoihiPhase.HOST):
+                        phase = LoihiPhase.HOST
                         pass
                     elif enum_equal(cmd, MGMT_COMMAND.GET_DATA) and \
-                            enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                            enum_equal(phase, LoihiPhase.HOST):
                         # Handle get/set Var requests from runtime service
                         self._handle_get_var()
                     elif enum_equal(cmd,
                                     MGMT_COMMAND.SET_DATA) and \
-                            enum_equal(phase, PyLoihiProcessModel.Phase.HOST):
+                            enum_equal(phase, LoihiPhase.HOST):
                         # Handle get/set Var requests from runtime service
                         self._handle_set_var()
                     else:
                         raise ValueError(
                             f"Wrong Phase Info Received : {cmd}")
                 except Exception as inst:
-                    print("Exception happened")
+                    self.log.info(f"Exception {inst} occured while"
+                                  f" running command {cmd} in {self.__class__}")
                     # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()
@@ -172,12 +172,13 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 self._handle_var_port(action)
 
             channel_actions = [(self.service_to_process, lambda: 'cmd')]
-            if enum_equal(phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
-                    enum_equal(phase, PyLoihiProcessModel.Phase.POST_MGMT):
+            if enum_equal(phase, LoihiPhase.PRE_MGMT) or \
+                    enum_equal(phase, LoihiPhase.POST_MGMT):
                 for var_port in self.var_ports:
                     for csp_port in var_port.csp_ports:
                         if isinstance(csp_port, CspRecvPort):
-                            channel_actions.append((csp_port, lambda: var_port))
+                            channel_actions.append(
+                                (csp_port, lambda: var_port))
             action = selector.select(*channel_actions)
 
     def _handle_get_var(self):

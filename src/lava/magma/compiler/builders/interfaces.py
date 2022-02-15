@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -9,7 +9,8 @@ import typing as ty
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.runtime_service import AbstractRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import \
+    AbstractRuntimeService
 
 
 class AbstractProcessBuilder(ABC):

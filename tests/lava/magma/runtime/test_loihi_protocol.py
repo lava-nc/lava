@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 from lava.magma.core.decorator import implements, requires
@@ -14,7 +15,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(loglevel=logging.WARNING, **kwargs)
         shape = kwargs["shape"]
         self.u = Var(shape=shape, init=0)
         self.v = Var(shape=shape, init=0)
@@ -23,7 +24,8 @@ class SimpleProcess(AbstractProcess):
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains)
+        super().__init__(custom_sync_domains=sync_domains,
+                         loglevel=logging.WARNING)
         self.model = None
         if "model" in kwargs:
             self.model = kwargs.pop("model")

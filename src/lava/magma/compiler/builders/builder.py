@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -10,8 +10,11 @@ from dataclasses import dataclass
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
-from lava.magma.runtime.runtime_service import PyRuntimeService, \
-    AbstractRuntimeService
+from lava.magma.runtime.runtime_services.enums import LoihiVersion
+from lava.magma.runtime.runtime_services.runtime_service import (
+    AbstractRuntimeService,
+    NxSDKRuntimeService
+)
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -487,14 +490,21 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
             if isinstance(port, CspRecvPort):
                 self.csp_proc_recv_port.update({port.name: port})
 
-    def build(self) -> PyRuntimeService:
-        """Build Runtime Service
+    def build(self,
+              loihi_version: LoihiVersion = LoihiVersion.N3
+              ) -> AbstractRuntimeService:
+        """Build the runtime service
 
         Returns
         -------
-        PyRuntimeService
+        A concreate instance of AbstractRuntimeService
+        [PyRuntimeService or NxSDKRuntimeService]
         """
-        rs = self.rs_class(protocol=self.sync_protocol)
+        if isinstance(self.rs_class, NxSDKRuntimeService):
+            rs = self.rs_class(protocol=self.sync_protocol,
+                               loihi_version=loihi_version)
+        else:
+            rs = self.rs_class(protocol=self.sync_protocol)
         rs.runtime_service_id = self._runtime_service_id
         rs.model_ids = self._model_ids
 

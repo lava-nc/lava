@@ -3,10 +3,13 @@
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
+import logging
+
+import numpy as np
+
 import typing
 import typing as ty
 
-import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.compiler.exec_var import AbstractExecVar
@@ -17,7 +20,8 @@ from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
     MGMT_COMMAND, MGMT_RESPONSE
-from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service \
+    import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -46,7 +50,10 @@ class Runtime:
 
     def __init__(self,
                  exe: Executable,
-                 message_infrastructure_type: ActorType):
+                 message_infrastructure_type: ActorType,
+                 loglevel=logging.WARNING):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self._run_cond: typing.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
@@ -199,7 +206,7 @@ class Runtime:
             self._is_started = True
             self._run(run_condition)
         else:
-            print("Runtime not initialized yet.")
+            self.log.info("Runtime not initialized yet.")
 
     def _run(self, run_condition):
         if self._is_started:
@@ -236,7 +243,7 @@ class Runtime:
                 raise ValueError(f"Wrong type of run_condition : "
                                  f"{run_condition.__class__}")
         else:
-            print("Runtime not started yet.")
+            self.log.info("Runtime not started yet.")
 
     def wait(self):
         if self._is_running:
@@ -264,7 +271,7 @@ class Runtime:
                 self._is_started = False
                 # Send messages to RuntimeServices to stop as soon as possible.
             else:
-                print("Runtime not started yet.")
+                self.log.info("Runtime not started yet.")
         finally:
             self._messaging_infrastructure.stop()
 

@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import typing as ty
 from _collections import OrderedDict
 
@@ -228,6 +229,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         self.name: str = kwargs.pop("name", f"Process_{self.id}")
 
+        self.loglevel: int = kwargs.pop("loglevel", logging.WARNING)
+
         # kwargs will be used for ProcessModel initialization later
         self.init_args: dict = kwargs
 
@@ -398,7 +401,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         if not self._runtime:
             executable = self.compile(run_cfg)
             self._runtime = Runtime(executable,
-                                    ActorType.MultiProcessing)
+                                    ActorType.MultiProcessing,
+                                    loglevel=self.loglevel)
             self._runtime.initialize()
 
         self._runtime.start(condition)

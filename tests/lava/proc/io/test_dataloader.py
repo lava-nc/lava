@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 from typing import List, Tuple
 import unittest
 import numpy as np
@@ -27,7 +28,8 @@ class TestRunConfig(RunConfig):
     """Run configuration selects appropriate ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
     def __init__(self, select_tag: str = 'fixed_pt') -> None:
-        super().__init__(custom_sync_domains=None)
+        super().__init__(custom_sync_domains=None,
+                         loglevel=logging.WARNING)
         self.select_tag = select_tag
 
     def select(

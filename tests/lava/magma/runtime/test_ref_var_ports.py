@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 import numpy as np
 import unittest
 
@@ -22,7 +23,7 @@ from lava.magma.core.run_conditions import RunSteps
 # A minimal process with a Var and a RefPort, VarPort
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(loglevel=logging.WARNING, **kwargs)
         self.ref1 = RefPort(shape=(3,))
         self.var1 = Var(shape=(2,), init=17)
         self.var_port_var1 = VarPort(self.var1)
@@ -31,7 +32,7 @@ class P1(AbstractProcess):
 # A minimal process with 2 Vars and a RefPort, VarPort
 class P2(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(loglevel=logging.WARNING, **kwargs)
         self.var2 = Var(shape=(3,), init=4)
         self.var_port_var2 = VarPort(self.var2)
         self.ref2 = RefPort(shape=(2,))
