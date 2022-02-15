@@ -155,7 +155,7 @@ class NcProcessModel(AbstractNcProcessModel):
                         self.process_to_service.send(MGMT_RESPONSE.DONE)
                         num_steps = self.service_to_process.recv()
                         if num_steps > 0:
-                            # self.board.run(numSteps=num_steps, aSync=False)
+                            self.board.run(numSteps=num_steps, aSync=False)
                             self.process_to_service.send(MGMT_RESPONSE.DONE)
                         else:
                             self.log.error(f"Exception: number of time steps "
