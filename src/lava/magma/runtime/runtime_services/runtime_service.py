@@ -298,7 +298,7 @@ class NxSDKRuntimeService(NcRuntimeService):
                 self.board = N2Board(1, 1, [2], [[5, 5]])
             else:
                 raise ValueError('Unsupported Loihi version '
-                                + 'used in board selection')
+                                 + 'used in board selection')
         except(ImportError):
             class NxBoard():
                 pass
