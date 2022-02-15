@@ -151,7 +151,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ptos_recv_port = self.process_to_service[counter]
             rcv_msgs.append(ptos_recv_port.recv())
             counter += 1
-        for recv_msg in rcv_msgs:
+        for idx, recv_msg in enumerate(rcv_msgs):
             if enum_equal(recv_msg,
                           LoihiPyRuntimeService.PMResponse.STATUS_ERROR):
                 self._error = True
@@ -166,9 +166,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 self.req_lrn = True
             if enum_equal(recv_msg,
                           LoihiPyRuntimeService.PMResponse.REQ_PAUSE):
+                # ToDo: Add some mechanism to get the exact process id
+                print(f"Process : {idx} has requested Pause")
                 self.req_pause = True
             if enum_equal(recv_msg,
                           LoihiPyRuntimeService.PMResponse.REQ_STOP):
+                # ToDo: Add some mechanism to get the exact process id
+                print(f"Process : {idx} has requested Stop")
                 self.req_stop = True
             return rcv_msgs
 
@@ -318,6 +322,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         continue
                     # Inform the runtime that last time step was reached
                     self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+            else:
+                self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+
 
     def _handle_get_set(self, phase, command):
         if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
@@ -435,4 +442,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_PAUSE)
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+            else:
+                self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: 'cmd'))

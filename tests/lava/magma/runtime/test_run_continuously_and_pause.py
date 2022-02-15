@@ -33,7 +33,7 @@ class SimpleProcessModel(PyLoihiProcessModel):
 
 class SimpleRunConfig(RunConfig):
     """
-    Defines a simple add_ports_for_polling config
+    Defines a simple run config
     """
 
     def __init__(self, **kwargs):
@@ -65,7 +65,7 @@ class TestRunContinuous(unittest.TestCase):
 
     def test_run_continuous_sync_pause(self):
         """Verifies working of pause with a Synchronous Process in a
-        add_ports_for_polling continuous mode."""
+        run continuous mode."""
         process = SimpleProcess(shape=(2, 2))
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
@@ -87,7 +87,7 @@ class TestRunContinuous(unittest.TestCase):
         process.stop()
 
     def test_wait_from_runtime(self):
-        """Checks non blocking mode add_ports_for_polling of a function"""
+        """Checks non blocking mode run of a function"""
 
         process = SimpleProcess(shape=(2, 2))
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])

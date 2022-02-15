@@ -308,7 +308,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.phase = PyLoihiProcessModel.Phase.SPK
         self.run_spk()
         if self._req_pause or self._req_stop:
-            self._handle_pause_or_stop()
+            self._handle_pause_or_stop_req()
             return
         if self.lrn_guard() and self.pre_guard():
             self.process_to_service.send(
@@ -331,9 +331,10 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         if self.pre_guard():
             self.run_pre_mgmt()
         if self._req_pause or self._req_stop:
-            self._handle_pause_or_stop()
+            self._handle_pause_or_stop_req()
             return
-        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
+        self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_LEARNING)
 
     def _post_mgmt(self):
         """
@@ -343,7 +344,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         if self.post_guard():
             self.run_post_mgmt()
         if self._req_pause or self._req_stop:
-            self._handle_pause_or_stop()
+            self._handle_pause_or_stop_req()
             return
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
@@ -355,7 +356,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         if self.lrn_guard():
             self.run_lrn()
         if self._req_pause or self._req_stop:
-            self._handle_pause_or_stop()
+            self._handle_pause_or_stop_req()
             return
         if self.post_guard():
             self.process_to_service.send(
@@ -383,7 +384,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
 
-    def _handle_pause_or_stop(self):
+    def _handle_pause_or_stop_req(self):
         """
         Helper function that checks if stop or pause is being requested by the
         user and handles it.
