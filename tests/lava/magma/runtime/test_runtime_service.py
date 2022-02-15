@@ -176,9 +176,9 @@ class TestNxSDKRuntimeService(unittest.TestCase):
     # RUN_LOIHI_UNIT_TESTS=1 python -m unittest
     # tests/lava/magma/runtime/test_runtime_service.py
 
-    env_loihi_tests = int(os.environ.get("RUN_LOIHI_UNIT_TESTS"))
+    env_loihi_tests = os.environ.get("RUN_LOIHI_UNIT_TESTS")
     run_loihi_tests = False
-    if env_loihi_tests == 1:
+    if env_loihi_tests == "1":
         run_loihi_tests = True
 
     def test_runtime_service_construction(self):

@@ -26,6 +26,7 @@ except(ImportError):
     class NxBoard():
         pass
 
+
 class PyRuntimeService(AbstractRuntimeService):
     pass
 

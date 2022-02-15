@@ -38,6 +38,7 @@ class NxSdkPhase:
     HOST_CONCURRENT_EXECUTION = 7
     """Concurrent Execution for Host Snip."""
     EMBEDDED_USER_CMD = 8
-    """Any User Command to execute during embedded execution. (Internal Use Only)"""
+    """Any User Command to execute during embedded execution.
+    (Internal Use Only)"""
     EMBEDDED_REMOTE_MGMT = 9
     """A management phase snip triggered remotely"""

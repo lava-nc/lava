@@ -7,7 +7,11 @@ import typing as ty
 
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.nc.ports import AbstractNcPort, NcVarPort
-from lava.magma.compiler.channels.pypychannel import CspSelector, CspSendPort, CspRecvPort
+from lava.magma.compiler.channels.pypychannel import (
+    CspSelector,
+    CspSendPort,
+    CspRecvPort
+)
 from lava.magma.runtime.mgmt_token_enums import (
     MGMT_COMMAND,
     MGMT_RESPONSE,
@@ -154,9 +158,10 @@ class NcProcessModel(AbstractNcProcessModel):
                             # self.board.run(numSteps=num_steps, aSync=False)
                             self.process_to_service.send(MGMT_RESPONSE.DONE)
                         else:
-                            self.log.error(f"Exception: number of time steps"
+                            self.log.error(f"Exception: number of time steps "
                                            f"not greater than 0, cannot invoke "
-                                           f"run(num_steps) in {self.__class__}")
+                                           f"run(num_steps) in "
+                                           f"{self.__class__}")
                             self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     elif enum_equal(cmd, MGMT_COMMAND.GET_DATA):
                         # Handle get/set Var requests from runtime service
@@ -168,8 +173,9 @@ class NcProcessModel(AbstractNcProcessModel):
                         raise ValueError(
                             f"Wrong Phase Info Received : {cmd}")
                 except Exception as inst:
-                    self.log.error(f"Exception {inst} occured while"
-                                   f" running command {cmd} in {self.__class__}")
+                    self.log.error(f"Exception {inst} occured while "
+                                   f"running command {cmd} in "
+                                   f"{self.__class__}")
                     # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()
