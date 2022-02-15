@@ -251,11 +251,4 @@ class PySigmaDeltaModelFixed(AbstractSigmaDeltaModel):
         a_in_data = self.a_in.recv()
         s_out_scaled = self.dynamics(a_in_data)
         s_out = np.right_shift(s_out_scaled, self.wgt_exp)
-        # if not np.array_equal(s_out_scaled, np.left_shift(s_out, self.wgt_exp)):
-        #     print(f'Possible quantization loss.')
-        #     print(
-        #         f's_out = {s_out_scaled.flatten()[:50] / (1 << self.wgt_exp)}'
-        #     )
-        #     print(f'{np.argwhere(np.left_shift(s_out, self.wgt_exp) != s_out_scaled)=}')
-
         self.s_out.send(s_out)
