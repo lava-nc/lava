@@ -17,24 +17,31 @@ class AbstractPyPort(AbstractPortImplementation):
     """Abstract class for Ports implemented in Python.
 
     Ports at the Process level provide an interface to connect
-    Processes with each other. PyPorts provide an interface to send and
-    receive messages via channels implemented by a backend messaging
-    infrastructure. The Communicating Sequential Processes (CSP) paradigm is the
-    inspiration of the messaging infrastructure. Thus, a channel denotes a CSP
-    channel of the messaging infrastructure and CSP Ports denote the low level
-    ports also used in the messaging infrastructure. PyPorts are the
-    implementation for message exchange in Python, using the low level CSP Ports
-    of the backend messaging infrastructure. PyPorts provide interface for send
-    and receive of input and output Ports. A PyPort may have one or multiple
-    connection to other PyPorts. These connections are represented by csp_ports,
-    which is a list of CSP ports corresponding to the connected PyPorts.
+    Processes with each other. Once two Processes have been connected by Ports,
+    they can exchange data.
+    Lava provides four types of Ports: InPorts, OutPorts, RefPorts and VarPorts.
+    An OutPort of a Process can be connected to one or multiple InPorts of other
+    Processes to transfer data from the OutPort to the InPorts. A RefPort of a
+    Process can be connected to a VarPort of another Process. The difference to
+    In-/OutPorts is that a VarPort is directly linked to a Var and via a
+    RefPort the Var can be directly modified from a different Process.
+    To exchange data, PyPorts provide an interface to send and receive messages
+    via channels implemented by a backend messaging infrastructure, which has
+    been inspired by the Communicating Sequential Processes (CSP) paradigm.
+    Thus, a channel denotes a CSP channel of the messaging infrastructure and
+    CSP Ports denote the low level ports also used in the messaging
+    infrastructure. PyPorts are the implementation for message exchange in
+    Python, using the low level CSP Ports of the backend messaging
+    infrastructure. A PyPort may have one or multiple connection to other
+    PyPorts. These connections are represented by csp_ports, which is a list of
+    CSP ports corresponding to the connected PyPorts.
     """
     @property
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """
-        Abstract property to get the corresponding CSP Ports of all connected
-        PyPorts (csp_ports). The CSP Port is the low level interface of the
+        Abstract property to get a list of the corresponding CSP Ports of all
+        connected PyPorts. The CSP Port is the low level interface of the
         backend messaging infrastructure which is used to send and receive data.
 
         Returns
@@ -55,7 +62,7 @@ class AbstractPyIOPort(AbstractPyPort):
     Parameters
     ----------
     csp_ports : list
-        A list of csp Ports used by this IO Port.
+        A list of CSP Ports used by this IO Port.
 
     process_model : AbstractProcessModel
         The process model used by the process of the Port.
@@ -96,28 +103,28 @@ class AbstractPyIOPort(AbstractPyPort):
 class PyInPort(AbstractPyIOPort):
     """Python implementation of InPort used within AbstractPyProcessModel.
 
-    PyInPort is an input Port processing data sent from a connected output Port
-    (PyOutPort) over a channel. PyInPort can receive (recv()) the data, which
-    removes it from the channel, look at (peek()) at the data which keeps it on
-    the channel or check (probe()) if there is data on the channel.
-    The different class attributes are used to select the type of OutPorts via
-    LavaPyType declarations in PyProcModels, e.g., LavaPyType(
-    PyInPort.VEC_DENSE, np.int32, precision=24) creates a PyInPort.
+    PyInPort is an input Port that can be used in a Process to receive data sent
+    from a connected PyOutPort of another Process over a channel. PyInPort can
+    receive (recv()) the data, which removes it from the channel, look (peek())
+    at the data which keeps it on the channel or check (probe()) if there is
+    data on the channel. The different class attributes are used to select the
+    type of OutPorts via LavaPyType declarations in PyProcModels, e.g.,
+    LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24) creates a PyInPort.
     A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
 
     Class attributes
     ----------------
     VEC_DENSE : PyInPortVectorDense, default=None
-        Type of PyInPort.
+        Type of PyInPort. Used for dense vector data.
 
     VEC_SPARSE : PyInPortVectorSparse, default=None
-        Type of PyInPort.
+        Type of PyInPort. Used for sparse vector data.
 
     SCALAR_DENSE : PyInPortScalarDense, default=None
-        Type of PyInPort.
+        Type of PyInPort. Used for dense scalar data.
 
     SCALAR_SPARSE : PyInPortScalarSparse, default=None
-        Type of PyInPort.
+        Type of PyInPort. Used for sparse scalar data.
     """
 
     VEC_DENSE: ty.Type["PyInPortVectorDense"] = None
@@ -128,36 +135,40 @@ class PyInPort(AbstractPyIOPort):
     @abstractmethod
     def recv(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
-        out Ports (source Ports). Removes the retrieved data from the channel.
-        Expects data on the channel and will block if there is no data to
-        retrieve on the channel.
+        OutPorts (source Ports). Removes the retrieved data from the channel.
+        Expects data on the channel and will block execution if there is no data
+        to retrieve on the channel.
 
         Returns
         -------
-        The point-wise added vectors or scalars received from connected Ports.
+        The scalar or vector received from a connected OutPort. If the InPort is
+        connected to several OutPorts, their input is added in a point-wise
+        fashion.
         """
         pass
 
     @abstractmethod
     def peek(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
-        out Ports (source Ports). Keeps the data on the channel.
+        OutPorts (source Ports). Keeps the data on the channel.
 
         Returns
         -------
-        The point-wise added vectors or scalars received from connected Ports.
+        The scalar or vector received from a connected OutPort. If the InPort is
+        connected to several OutPorts, their input is added in a point-wise
+        fashion.
         """
         pass
 
     def probe(self) -> bool:
         """Method to check (probe) if there is data (vectors/scalars)
-        to receive from connected out Ports (source Ports).
+        to receive from connected OutPorts (source Ports).
 
         Returns
         -------
         result : bool
-             Returns True only when probe returns True for all connected OutPort
-             channels.
+             Returns True only when there is data to receive from all connected
+             OutPort channels.
 
         """
         return ft.reduce(
@@ -171,14 +182,16 @@ class PyInPortVectorDense(PyInPort):
     """Python implementation of PyInPort for dense vector data."""
     def recv(self) -> np.ndarray:
         """Method to receive data (vectors/scalars) sent from connected
-        out Ports (source Ports). Removes the retrieved data from the channel.
-        Expects data on the channel and will block if there is no data to
-        retrieve on the channel.
+        OutPorts (source Ports). Removes the retrieved data from the channel.
+        Expects data on the channel and will block execution if there is no data
+        to retrieve on the channel.
 
         Returns
         -------
         result : ndarray of shape _shape
-            The point-wise added vectors received from connected Ports.
+            The vector received from a connected OutPort. If the InPort is
+            connected to several OutPorts, their input is added in a point-wise
+            fashion.
         """
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.recv(),
@@ -188,12 +201,14 @@ class PyInPortVectorDense(PyInPort):
 
     def peek(self) -> np.ndarray:
         """Method to receive data (vectors) sent from connected
-        out Ports (source Ports). Keeps the data on the channel.
+        OutPorts (source Ports). Keeps the data on the channel.
 
         Returns
         -------
         result : ndarray of shape _shape
-        The point-wise added vectors received from connected Ports.
+            The vector received from a connected OutPort. If the InPort is
+            connected to several OutPorts, their input is added in a point-wise
+            fashion.
         """
         return ft.reduce(
             lambda acc, csp_port: acc + csp_port.peek(),
@@ -244,28 +259,27 @@ PyInPort.SCALAR_SPARSE = PyInPortScalarSparse
 class PyOutPort(AbstractPyIOPort):
     """Python implementation of OutPort used within AbstractPyProcessModels.
 
-    PyOutPort is an output Port processing data sent from a connected input Port
-    (PyInPort) over a channel. PyOutPort can send (send()) the data, which
-    adds it to the channel or clear (flush()) the channel to remove any data of
-    the channel.
-    The different class attributes are used to select the type of OutPorts via
-    LavaPyType declarations in PyProcModels, e.g., LavaPyType(
+    PyOutPort is an output Port sending data to a connected input Port
+    (PyInPort) over a channel. PyOutPort can send (send()) the data by adding it
+    to the channel, or it can clear (flush()) the channel to remove any data
+    from it. The different class attributes are used to select the type of
+    OutPorts via LavaPyType declarations in PyProcModels, e.g., LavaPyType(
     PyOutPort.VEC_DENSE, np.int32, precision=24) creates a PyOutPort.
     A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
 
     Class attributes
     ----------------
     VEC_DENSE : PyOutPortVectorDense, default=None
-        Type of PyOutPort.
+        Type of PyOutPort. Used for dense vector data.
 
     VEC_SPARSE : PyOutPortVectorSparse, default=None
-        Type of PyOutPort.
+        Type of PyOutPort. Used for sparse vector data.
 
     SCALAR_DENSE : PyOutPortScalarDense, default=None
-        Type of PyOutPort.
+        Type of PyOutPort. Used for dense scalar data.
 
     SCALAR_SPARSE : PyOutPortScalarSparse, default=None
-        Type of PyOutPort.
+        Type of PyOutPort. Used for sparse scalar data.
     """
 
     VEC_DENSE: ty.Type["PyOutPortVectorDense"] = None
@@ -295,7 +309,7 @@ class PyOutPortVectorDense(PyOutPort):
     def send(self, data: np.ndarray):
         """Abstract method to send data to the connected in Port (target).
 
-        Sends data only if Port is not dangling.
+        Sends data only if the OutPort is connected to at least one InPort.
 
         Parameters
         ----------
@@ -379,16 +393,16 @@ class PyRefPort(AbstractPyPort):
     Class attributes
     ----------------
     VEC_DENSE : PyRefPortVectorDense, default=None
-        Type of PyRefPort.
+        Type of PyRefPort. Used for dense vector data.
 
     VEC_SPARSE : PyRefPortVectorSparse, default=None
-        Type of PyRefPort.
+        Type of PyRefPort. Used for sparse vector data.
 
     SCALAR_DENSE : PyRefPortScalarDense, default=None
-        Type of PyRefPort.
+        Type of PyRefPort. Used for dense scalar data.
 
     SCALAR_SPARSE : PyRefPortScalarSparse, default=None
-        Type of PyRefPort.
+        Type of PyRefPort. Used for sparse scalar data.
     """
 
     VEC_DENSE: ty.Type["PyRefPortVectorDense"] = None
@@ -531,18 +545,18 @@ PyRefPort.SCALAR_SPARSE = PyRefPortScalarSparse
 class PyVarPort(AbstractPyPort):
     """Python implementation of VarPort used within AbstractPyProcessModel.
 
-    A PyVarPort is a Port related to a variable Var of a Process and might be
+    A PyVarPort is a Port linked to a variable Var of a Process and might be
     connected to a RefPort of another process. It is used to get or set the
     value of the referenced Var across Processes. A PyVarPort is connected via
     two channels to a PyRefPort. One channel is used to send data from the
     PyRefPort to the PyVarPort and the other is used to receive data from the
-    PyVarPort. PyVarPorts set or send the value of the related Var (service())
+    PyVarPort. PyVarPorts set or send the value of the linked Var (service())
     given the command VarPortCmd received by a connected PyRefPort.
 
     Parameters
     ----------
     var_name : str
-        The name of the Var related to this VarPort.
+        The name of the Var linked to this VarPort.
 
     csp_send_port : CspSendPort or None
         Csp Port used to send data to the referenced in Port (target).
@@ -562,7 +576,7 @@ class PyVarPort(AbstractPyPort):
     Attributes
     ----------
     var_name : str
-        The name of the Var related to this VarPort.
+        The name of the Var linked to this VarPort.
 
     _csp_send_port : CspSendPort
         Used to send data to the referenced Port PyRefPort (target).
@@ -573,16 +587,16 @@ class PyVarPort(AbstractPyPort):
     Class attributes
     ----------------
     VEC_DENSE : PyVarPortVectorDense, default=None
-       Type of PyVarPort.
+       Type of PyVarPort. Used for dense vector data.
 
     VEC_SPARSE : PyVarPortVectorSparse, default=None
-        Type of PyVarPort.
+        Type of PyVarPort. Used for sparse vector data.
 
     SCALAR_DENSE : PyVarPortScalarDense, default=None
-        Type of PyVarPort.
+        Type of PyVarPort. Used for dense scalar data.
 
     SCALAR_SPARSE : PyVarPortScalarSparse, default=None
-        Type of PyVarPort.
+        Type of PyVarPort. Used for sparse scalar data.
     """
 
     VEC_DENSE: ty.Type["PyVarPortVectorDense"] = None
@@ -620,10 +634,11 @@ class PyVarPort(AbstractPyPort):
 
     @abstractmethod
     def service(self):
-        """Abstract method to set the value of the related Var of the VarPort,
-        received from the connected RefPort, or to send the value of the related
-        Var of the VarPort to the connected RefPort. The connected RefPort sends
-        a command VarPortCmd first to determine a read() or write() operation.
+        """Abstract method to set the value of the linked Var of the VarPort,
+        received from the connected RefPort, or to send the value of the linked
+        Var of the VarPort to the connected RefPort. The connected RefPort
+        determines whether it will perform a read() or write() operation by
+        sending a command VarPortCmd.
         """
         pass
 
@@ -631,10 +646,11 @@ class PyVarPort(AbstractPyPort):
 class PyVarPortVectorDense(PyVarPort):
     """Python implementation of VarPort for dense vector data."""
     def service(self):
-        """Method to set the value of the related Var of the VarPort,
-        received from the connected RefPort, or to send the value of the related
-        Var of the VarPort to the connected RefPort. The connected RefPort sends
-        a command VarPortCmd first to determine a read() or write() operation.
+        """Method to set the value of the linked Var of the VarPort,
+        received from the connected RefPort, or to send the value of the linked
+        Var of the VarPort to the connected RefPort. The connected RefPort
+        determines whether it will perform a read() or write() operation by
+        sending a command VarPortCmd.
         """
 
         # Inspect incoming data
