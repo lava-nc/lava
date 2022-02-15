@@ -47,7 +47,8 @@ class Sigma(AbstractProcess):
 
 
 class Delta(AbstractProcess):
-    """Delta process definition. Spike mechanism based on accumulated error is also supported.
+    """Delta process definition. Spike mechanism based on accumulated error
+    is also supported.
 
     Delta dynamics:
     delta   = act_new - act + residue           # delta encoding
@@ -72,11 +73,11 @@ class Delta(AbstractProcess):
     ) -> None:
         super().__init__(**kwargs)
         shape = kwargs.get('shape', (1,))
-        vth = kwargs.get('vth')
         cum_error = kwargs.get('cum_error', False)
-        wgt_exp = kwargs.pop('wgt_exp', 6)
+        wgt_exp = kwargs.pop('wgt_exp', 0)
         # scaling factor for fixed precision scaling
-        state_exp = kwargs.pop('state_exp', 6)
+        state_exp = kwargs.pop('state_exp', 0)
+        vth = kwargs.get('vth') * (1 << (wgt_exp + state_exp))
 
         self.shape = shape
 

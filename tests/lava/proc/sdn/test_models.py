@@ -4,11 +4,11 @@
 import sys
 import unittest
 import numpy as np
-from typing import Dict, List, Tuple, Type, Union
+from typing import Tuple
 
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
-from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ACTIVATION_MODE
+from lava.proc.sdn.process import Sigma, SigmaDelta, ACTIVATION_MODE
 from lava.proc import io
 
 
@@ -34,7 +34,7 @@ class TestSigmaModels(unittest.TestCase):
         sink = io.sink.RingBuffer(shape=sigma.shape, buffer=num_steps)
 
         source.s_out.connect(sigma.a_in)
-        sigma.a_out.connect(sink.a_in)
+        sigma.s_out.connect(sink.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = Loihi1SimCfg(select_tag=tag)
@@ -46,6 +46,7 @@ class TestSigmaModels(unittest.TestCase):
         return input, output
 
     def test_sigma_decoding_fixed(self) -> None:
+        """Test sigma decoding with cumulative sum."""
         num_steps = 100
 
         input, output = self.run_test(
@@ -60,6 +61,7 @@ class TestSigmaModels(unittest.TestCase):
         self.assertTrue(error == 0)
 
     def test_sigma_decoding_float(self) -> None:
+        """Test sigma decoding with cumulative sum."""
         num_steps = 100
 
         input, output = self.run_test(
@@ -260,29 +262,4 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    num_steps = 100
-    wgt_exp = 6
-    state_exp = 6
-    vth = 10 << (wgt_exp + state_exp)
-    act_mode = ACTIVATION_MODE.ReLU
-    cum_error = False,
-    input = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-    input *= (1 << wgt_exp + state_exp)
-    input[:, 1:] -= input[:, :-1]
-
-    source = io.source.RingBuffer(data=input.astype(int))
-    sigma = Sigma(shape=(1,))
-    sink = io.sink.RingBuffer(shape=sigma.shape, buffer=num_steps)
-
-    source.s_out.connect(sigma.a_in)
-    sigma.a_out.connect(sink.a_in)
-
-    run_condition = RunSteps(num_steps=num_steps)
-    run_config = Loihi1SimCfg(select_tag='fixed_pt')
-
-    sigma.run(condition=run_condition, run_cfg=run_config)
-    output = sink.data.get()
-    sigma.stop()
-
-    input = np.cumsum(input.astype(int), axis=1)
-    output
+    pass
