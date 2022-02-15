@@ -288,16 +288,21 @@ class NxSDKRuntimeService(NcRuntimeService):
         self.board: NxBoard = None
         self.num_steps = 0
 
-        if loihi_version == LoihiVersion.N3:
-            from nxsdk.arch.n3b.n3board import N3Board
-            # # TODO: Need to find good way to set Board Init
-            self.board = N3Board(1, 1, [2], [[5, 5]])
-        elif loihi_version == LoihiVersion.N2:
-            from nxsdk.arch.n2a.n2board import N2Board # noqa F401
-            self.board = N2Board(1, 1, [2], [[5, 5]])
-        else:
-            raise ValueError('Unsupported Loihi version '
-                             + 'used in board selection')
+        try:
+            if loihi_version == LoihiVersion.N3:
+                from nxsdk.arch.n3b.n3board import N3Board
+                # # TODO: Need to find good way to set Board Init
+                self.board = N3Board(1, 1, [2], [[5, 5]])
+            elif loihi_version == LoihiVersion.N2:
+                from nxsdk.arch.n2a.n2board import N2Board # noqa F401
+                self.board = N2Board(1, 1, [2], [[5, 5]])
+            else:
+                raise ValueError('Unsupported Loihi version '
+                                + 'used in board selection')
+        except(ImportError):
+            class NxBoard():
+                pass
+            self.board = NxBoard()
 
     def _send_pm_cmd(self, cmd: MGMT_COMMAND):
         for stop_send_port in self.service_to_process:
