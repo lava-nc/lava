@@ -85,7 +85,7 @@ class AbstractNcProcessModel(AbstractProcessModel, ABC):
         self.__dict__[key] = value
         if isinstance(value, AbstractNcPort):
             self.nc_ports.append(value)
-            # Store all VarPorts for efficient RefPort -> VarPort handling
+
             if isinstance(value, NcVarPort):
                 self.var_ports.append(value)
 
@@ -121,7 +121,7 @@ class NcProcessModel(AbstractNcProcessModel):
         self.process_to_service.start()
         for p in self.nc_ports:
             p.start()
-        # self.board.start()
+
         self.run()
 
     def allocate(self):
@@ -176,7 +176,7 @@ class NcProcessModel(AbstractNcProcessModel):
                     self.log.error(f"Exception {inst} occured while "
                                    f"running command {cmd} in "
                                    f"{self.__class__}")
-                    # Inform runtime service about termination
+
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()
                     raise inst
