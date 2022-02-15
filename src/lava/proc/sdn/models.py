@@ -37,6 +37,18 @@ class AbstractSigmaModel(PyLoihiProcessModel):
     sigma = None
 
     def sigma_dynamics(self, a_in_data: np.ndarray) -> np.ndarray:
+        """Sigma decoding dynamics method
+
+        Parameters
+        ----------
+        a_in_data : np.ndarray
+            Input data
+
+        Returns
+        -------
+        np.ndarray
+            decoded data
+        """
         return a_in_data + self.sigma
 
 
@@ -52,6 +64,18 @@ class AbstractDeltaModel(PyLoihiProcessModel):
     cum_error = None
 
     def delta_dynamics(self, act_data: np.ndarray) -> np.ndarray:
+        """Delta encodind dynamics method
+
+        Parameters
+        ----------
+        act_data : np.ndarray
+            data to be encoded
+
+        Returns
+        -------
+        np.ndarray
+            delta encoded data
+        """
         delta = act_data - self.act + self.residue
 
         if self.cum_error:
@@ -89,6 +113,24 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
         self.act_mode = self.proc_params['act_fn']
 
     def activation_dynamics(self, sigma_data: np.ndarray) -> np.ndarray:
+        """Sigma Delta activation dynamics. Unit and ReLU activations are
+        supported.
+
+        Parameters
+        ----------
+        sigma_data : np.ndarray
+            sigma decoded data
+
+        Returns
+        -------
+        np.ndarray
+            activation output
+
+        Raises
+        ------
+        NotImplementedError
+            if activation mode other than Unit or ReLU is encountered.
+        """
         if self.act_mode == ACTIVATION_MODE.Unit:
             act = sigma_data + self.bias
         elif self.act_mode == ACTIVATION_MODE.ReLU:
