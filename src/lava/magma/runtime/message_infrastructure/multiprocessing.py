@@ -4,10 +4,11 @@
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builder import PyProcessBuilder, \
+    from lava.magma.compiler.builders.builder import PyProcessBuilder, \
         AbstractRuntimeServiceBuilder
 
 import multiprocessing as mp
+import os
 from multiprocessing.managers import SharedMemoryManager
 import traceback
 
@@ -42,6 +43,7 @@ class SystemProcess(mp.Process):
 
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
+
     def __init__(self):
         self._smm: ty.Optional[SharedMemoryManager] = None
         self._actors: ty.List[SystemProcess] = []
@@ -75,7 +77,8 @@ class MultiProcessing(MessageInfrastructureInterface):
     def stop(self):
         """Stops the shared memory manager"""
         for actor in self._actors:
-            actor.join()
+            if actor._parent_pid == os.getpid():
+                actor.join()
 
         self._smm.shutdown()
 
