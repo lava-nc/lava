@@ -29,7 +29,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.model.py.ports import (
-    AbstractPyPort,
+    AbstractPyIOPort,
     PyInPort,
     PyOutPort,
     PyRefPort,
@@ -340,7 +340,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         for name, p in self.py_ports.items():
             # Build PyPort
             lt = self._get_lava_type(name)
-            port_cls = ty.cast(ty.Type[AbstractPyPort], lt.cls)
+            port_cls = ty.cast(ty.Type[AbstractPyIOPort], lt.cls)
             csp_ports = []
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]

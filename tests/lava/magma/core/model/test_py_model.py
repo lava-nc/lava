@@ -432,14 +432,14 @@ class TestPyProcessBuilder(unittest.TestCase):
         # Validate that the Process with no OutPorts indeed has no output
         # CspPort
         self.assertIsInstance(
-            pm_with_no_out_ports.in_port._csp_recv_ports[0], FakeCspPort)
-        self.assertEqual(pm_with_no_out_ports.out_port._csp_send_ports, [])
+            pm_with_no_out_ports.in_port.csp_ports[0], FakeCspPort)
+        self.assertEqual(pm_with_no_out_ports.out_port.csp_ports, [])
 
         # Validate that the Process with no InPorts indeed has no input
         # CspPort
-        self.assertEqual(pm_with_no_in_ports.in_port._csp_recv_ports, [])
+        self.assertEqual(pm_with_no_in_ports.in_port.csp_ports, [])
         self.assertIsInstance(
-            pm_with_no_in_ports.out_port._csp_send_ports[0], FakeCspPort)
+            pm_with_no_in_ports.out_port.csp_ports[0], FakeCspPort)
 
     def test_set_ref_var_ports(self):
         """Check RefPorts and VarPorts can be set."""
