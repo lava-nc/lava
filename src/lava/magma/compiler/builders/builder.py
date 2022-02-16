@@ -4,6 +4,9 @@
 
 import typing as ty
 
+import numpy as np
+from dataclasses import dataclass
+
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
@@ -15,11 +18,12 @@ if ty.TYPE_CHECKING:
     from lava.magma.core.model.model import AbstractProcessModel
     from lava.magma.runtime.runtime import Runtime
 
-from abc import ABC, abstractmethod
-
-import numpy as np
-from dataclasses import dataclass
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from lava.magma.compiler.builders.interfaces import (
+    AbstractProcessBuilder,
+    AbstractRuntimeServiceBuilder,
+    AbstractChannelBuilder
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
@@ -28,42 +32,13 @@ from lava.magma.core.model.py.ports import (
     AbstractPyPort,
     PyInPort,
     PyOutPort,
-    PyRefPort, PyVarPort,
+    PyRefPort,
+    PyVarPort
 )
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
 
 
-class AbstractProcessBuilder(ABC):
-    @abstractmethod
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        pass
-
-    @property
-    @abstractmethod
-    def proc_model(self) -> "AbstractProcessModel":
-        pass
-
-
-class AbstractRuntimeServiceBuilder(ABC):
-    def __init__(self, rs_class, sync_protocol):
-        self.rs_class = rs_class
-        self.sync_protocol = sync_protocol
-
-    @property
-    @abstractmethod
-    def runtime_service_id(self):
-        pass
-
-    def build(self):
-        raise NotImplementedError(
-            "build function for RuntimeServiceBuilder is not implemented"
-        )
-
-
-# ToDo: Some of this implementation may actually go to AbstractProcessBuilder
-#  because it might be generic for all types of builders.
-# ToDo: Should probably move into own module
 class PyProcessBuilder(AbstractProcessBuilder):
     """A PyProcessBuilder instantiates and initializes a PyProcessModel.
 
@@ -82,7 +57,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
     connect channels to ports and start the process.
 
     Note: For unit testing it should be possible to build processes locally
-    instead of on a remote node. For ture atomic unit testing a ProcessModel
+    instead of on a remote node. For pure atomic unit testing a ProcessModel
     locally, PyInPorts and PyOutPorts must be fed manually with data.
     """
 
@@ -90,10 +65,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
             self, proc_model: ty.Type[AbstractPyProcessModel],
             model_id: int,
             proc_params: ty.Dict[str, ty.Any] = None):
+        super(PyProcessBuilder, self).__init__(
+            proc_model=proc_model,
+            model_id=model_id
+        )
         if not issubclass(proc_model, AbstractPyProcessModel):
             raise AssertionError("Is not a subclass of AbstractPyProcessModel")
-        self._proc_model = proc_model
-        self._model_id = model_id
         self.vars: ty.Dict[str, VarInitializer] = {}
         self.py_ports: ty.Dict[str, PortInitializer] = {}
         self.ref_ports: ty.Dict[str, PortInitializer] = {}
@@ -466,7 +443,7 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
     def __init__(
         self,
         rs_class: ty.Type[AbstractRuntimeService],
-        protocol: AbstractSyncProtocol,
+        protocol: ty.Type[AbstractSyncProtocol],
         runtime_service_id: int,
         model_ids: ty.List[int],
     ):
@@ -540,12 +517,6 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         return rs
 
 
-class AbstractChannelBuilder(ABC):
-    """Abstract Channel Builder"""
-
-    pass
-
-
 @dataclass
 class ChannelBuilderMp(AbstractChannelBuilder):
     """A ChannelBuilder assuming Python multi-processing is used as messaging
@@ -593,8 +564,10 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     as messaging and multi processing backbone.
     """
     channel_type: ChannelType
-    src_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
-    dst_process: ty.Union[AbstractRuntimeServiceBuilder, "AbstractProcessModel"]
+    src_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
+    dst_process: ty.Union[AbstractRuntimeServiceBuilder,
+                          "AbstractProcessModel"]
     port_initializer: PortInitializer
 
     def build(self, messaging_infrastructure: MessageInfrastructureInterface) \
