@@ -115,16 +115,21 @@ class PyInPort(AbstractPyIOPort):
     Class attributes
     ----------------
     VEC_DENSE : PyInPortVectorDense, default=None
-        Type of PyInPort. Used for dense vector data.
+        Type of PyInPort. CSP Port sends data as dense vector.
 
     VEC_SPARSE : PyInPortVectorSparse, default=None
-        Type of PyInPort. Used for sparse vector data.
+        Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
+        so only entries which have changed in a vector need to be communicated.
 
     SCALAR_DENSE : PyInPortScalarDense, default=None
-        Type of PyInPort. Used for dense scalar data.
+        Type of PyInPort. CSP Port sends data element by element for the whole
+        data structure. So the CSP channel does need less memory to transfer
+        data.
 
     SCALAR_SPARSE : PyInPortScalarSparse, default=None
-        Type of PyInPort. Used for sparse scalar data.
+        Type of PyInPort. CSP Port sends data element by element, but after each
+        element the index of the data entry is also given. So only entries which
+        need to be changed need to be communicated.
     """
 
     VEC_DENSE: ty.Type["PyInPortVectorDense"] = None
@@ -270,16 +275,21 @@ class PyOutPort(AbstractPyIOPort):
     Class attributes
     ----------------
     VEC_DENSE : PyOutPortVectorDense, default=None
-        Type of PyOutPort. Used for dense vector data.
+        Type of PyInPort. CSP Port sends data as dense vector.
 
     VEC_SPARSE : PyOutPortVectorSparse, default=None
-        Type of PyOutPort. Used for sparse vector data.
+        Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
+        so only entries which have changed in a vector need to be communicated.
 
     SCALAR_DENSE : PyOutPortScalarDense, default=None
-        Type of PyOutPort. Used for dense scalar data.
+        Type of PyInPort. CSP Port sends data element by element for the whole
+        data structure. So the CSP channel does need less memory to transfer
+        data.
 
     SCALAR_SPARSE : PyOutPortScalarSparse, default=None
-        Type of PyOutPort. Used for sparse scalar data.
+        Type of PyInPort. CSP Port sends data element by element, but after each
+        element the index of the data entry is also given. So only entries which
+        need to be changed need to be communicated.
     """
 
     VEC_DENSE: ty.Type["PyOutPortVectorDense"] = None
@@ -393,16 +403,21 @@ class PyRefPort(AbstractPyPort):
     Class attributes
     ----------------
     VEC_DENSE : PyRefPortVectorDense, default=None
-        Type of PyRefPort. Used for dense vector data.
+        Type of PyInPort. CSP Port sends data as dense vector.
 
     VEC_SPARSE : PyRefPortVectorSparse, default=None
-        Type of PyRefPort. Used for sparse vector data.
+        Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
+        so only entries which have changed in a vector need to be communicated.
 
     SCALAR_DENSE : PyRefPortScalarDense, default=None
-        Type of PyRefPort. Used for dense scalar data.
+        Type of PyInPort. CSP Port sends data element by element for the whole
+        data structure. So the CSP channel does need less memory to transfer
+        data.
 
     SCALAR_SPARSE : PyRefPortScalarSparse, default=None
-        Type of PyRefPort. Used for sparse scalar data.
+        Type of PyInPort. CSP Port sends data element by element, but after each
+        element the index of the data entry is also given. So only entries which
+        need to be changed need to be communicated.
     """
 
     VEC_DENSE: ty.Type["PyRefPortVectorDense"] = None
@@ -587,16 +602,21 @@ class PyVarPort(AbstractPyPort):
     Class attributes
     ----------------
     VEC_DENSE : PyVarPortVectorDense, default=None
-       Type of PyVarPort. Used for dense vector data.
+       Type of PyInPort. CSP Port sends data as dense vector.
 
     VEC_SPARSE : PyVarPortVectorSparse, default=None
-        Type of PyVarPort. Used for sparse vector data.
+        Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
+        so only entries which have changed in a vector need to be communicated.
 
     SCALAR_DENSE : PyVarPortScalarDense, default=None
-        Type of PyVarPort. Used for dense scalar data.
+        Type of PyInPort. CSP Port sends data element by element for the whole
+        data structure. So the CSP channel does need less memory to transfer
+        data.
 
     SCALAR_SPARSE : PyVarPortScalarSparse, default=None
-        Type of PyVarPort. Used for sparse scalar data.
+        Type of PyInPort. CSP Port sends data element by element, but after each
+        element the index of the data entry is also given. So only entries which
+        need to be changed need to be communicated.
     """
 
     VEC_DENSE: ty.Type["PyVarPortVectorDense"] = None
