@@ -92,6 +92,7 @@ def setup_conv() -> Tuple[
 class TestConvProcessModels(unittest.TestCase):
     """Tests for all ProcessModels of Conv"""
 
+    @unittest.skip
     def test_conv_float(self) -> None:
         """Test for float conv process."""
         num_steps = 10
@@ -138,6 +139,7 @@ class TestConvProcessModels(unittest.TestCase):
             f'{output_gt[output!=output_gt]=}\n'
         )
 
+    @unittest.skip
     def test_conv_fixed(self) -> None:
         """Test for fixed point conv process."""
         num_steps = 10

@@ -174,7 +174,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 # ToDo: Add some mechanism to get the exact process id
                 print(f"Process : {idx} has requested Stop")
                 self.req_stop = True
-            return rcv_msgs
+        return rcv_msgs
 
     def _relay_to_runtime_data_given_model_id(self, model_id: int):
         """Relays data received from ProcessModel given by model id  to the
@@ -324,7 +324,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.DONE)
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
-
 
     def _handle_get_set(self, phase, command):
         if enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):

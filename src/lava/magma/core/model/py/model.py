@@ -334,7 +334,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             self._handle_pause_or_stop_req()
             return
         self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_LEARNING)
+            PyLoihiProcessModel.Response.REQ_LEARNING)
 
     def _post_mgmt(self):
         """
