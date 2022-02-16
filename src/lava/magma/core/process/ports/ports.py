@@ -46,11 +46,11 @@ class AbstractPort(AbstractProcessMember):
         self.out_connections: ty.List[AbstractPort] = []
 
     def _validate_ports(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = False,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = False,
     ):
         """Checks that each port in 'ports' is of type 'port_type' and that
         shapes of each port is identical to this port's shape."""
@@ -87,11 +87,11 @@ class AbstractPort(AbstractProcessMember):
         self.out_connections += outputs
 
     def _connect_forward(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = True,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = True,
     ):
         """Creates a forward connection from this AbstractPort to other
         ports by adding other ports to this AbstractPort's out_connection and
@@ -107,11 +107,11 @@ class AbstractPort(AbstractProcessMember):
             p._add_inputs([self])
 
     def _connect_backward(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = True,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = True,
     ):
         """Creates a backward connection from other ports to this
         AbstractPort by adding other ports to this AbstractPort's
@@ -181,9 +181,9 @@ class AbstractPort(AbstractProcessMember):
         return self.reshape((self.size,))
 
     def concat_with(
-        self,
-        ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
-        axis: int,
+            self,
+            ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
+            axis: int,
     ) -> "ConcatPort":
         """Concatenates this port with other ports in given order along given
         axis by deriving and returning a new virtual ConcatPort. This implies
@@ -254,7 +254,7 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
     """
 
     def connect(
-        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
     ):
         """Connects this OutPort to other InPort(s) of another process
         or to OutPort(s) of its parent process.
@@ -287,9 +287,9 @@ class InPort(AbstractIOPort, AbstractDstPort):
     """
 
     def __init__(
-        self,
-        shape: ty.Tuple,
-        reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
+            self,
+            shape: ty.Tuple,
+            reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
     ):
         super().__init__(shape)
         self._reduce_op = reduce_op
@@ -305,7 +305,7 @@ class InPort(AbstractIOPort, AbstractDstPort):
         self._connect_forward(to_list(ports), InPort)
 
     def connect_from(
-        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
     ):
         """Connects other OutPort(s) to this InPort or connects other
         InPort(s) of parent process to this InPort.
@@ -339,7 +339,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     RefPort to a Var via the connect_var(..) method."""
 
     def connect(
-        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
     ):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
@@ -440,19 +440,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if var_shape != v.shape:
                 raise AssertionError("All 'vars' must have same shape.")
             # Create a VarPort to wrap Var
-            vp = ImplicitVarPort(v)
-            # Propagate name and parent process of Var to VarPort
-            vp.name = "_" + v.name + "_implicit_port"
-            if v.process is not None:
-                # Only assign when parent process is already assigned
-                vp.process = v.process
-                # VarPort name could shadow existing attribute
-                if hasattr(v.process, vp.name):
-                    raise AssertionError(
-                        "Name of implicit VarPort might conflict"
-                        " with existing attribute.")
-                setattr(v.process, vp.name, vp)
-                v.process.var_ports.add_members({vp.name: vp})
+            vp = self.create_implicit_var_port(v)
             var_ports.append(vp)
         # Connect RefPort to VarPorts that wrap Vars
         self.connect(var_ports)
@@ -460,6 +448,26 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     def get_dst_vars(self) -> ty.List[Var]:
         """Returns destination Vars this RefPort is connected to."""
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
+
+    @staticmethod
+    def create_implicit_var_port(var: Var) -> "ImplicitVarPort":
+        """Creates and returns an ImplicitVarPort for the given Var."""
+        # Create a VarPort to wrap Var
+        vp = ImplicitVarPort(var)
+        # Propagate name and parent process of Var to VarPort
+        vp.name = "_" + var.name + "_implicit_port"
+        if var.process is not None:
+            # Only assign when parent process is already assigned
+            vp.process = var.process
+            # VarPort name could shadow existing attribute
+            if hasattr(var.process, vp.name):
+                raise AssertionError(
+                    "Name of implicit VarPort might conflict"
+                    " with existing attribute.")
+            setattr(var.process, vp.name, vp)
+            var.process.var_ports.add_members({vp.name: vp})
+
+        return vp
 
 
 # TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
@@ -521,7 +529,7 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         self._connect_forward(to_list(ports), VarPort)
 
     def connect_from(
-        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
     ):
         """Connects other RefPort(s) to this VarPort or connects other
         VarPort(s) of parent process to this VarPort.
