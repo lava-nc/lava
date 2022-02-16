@@ -24,6 +24,7 @@ class P1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ref1 = RefPort(shape=(3,))
+        self.ref3 = RefPort(shape=(2,))
         self.var1 = Var(shape=(2,), init=17)
         self.var_port_var1 = VarPort(self.var1)
 
@@ -36,6 +37,7 @@ class P2(AbstractProcess):
         self.var_port_var2 = VarPort(self.var2)
         self.ref2 = RefPort(shape=(2,))
         self.var3 = Var(shape=(2,), init=1)
+        self.var4 = Var(shape=(2,), init=1)
 
 
 # A minimal PyProcModel implementing P1
@@ -43,6 +45,7 @@ class P2(AbstractProcess):
 @requires(CPU)
 class PyProcModel1(PyLoihiProcessModel):
     ref1: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
+    ref3: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     var1: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var_port_var1: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
 
@@ -53,6 +56,7 @@ class PyProcModel1(PyLoihiProcessModel):
         if self.current_ts > 1:
             ref_data = np.array([5, 5, 5]) + self.current_ts
             self.ref1.write(ref_data)
+            self.ref3.write(ref_data[:2])
 
 
 # A minimal PyProcModel implementing P2
@@ -63,6 +67,7 @@ class PyProcModel2(PyLoihiProcessModel):
     var2: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var_port_var2: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
     var3: np.ndarray = LavaPyType(np.ndarray, np.int32)
+    var4: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
     def pre_guard(self):
         return True
@@ -218,6 +223,33 @@ class TestRefVarPorts(unittest.TestCase):
                  MyRunCfg(custom_sync_domains=[simple_sync_domain]))
         self.assertTrue(
             np.all(recv.var3.get() == np.array([17., 17.])))
+        recv.stop()
+
+    def test_multiple_var_ports(self):
+        """Tests connecting multiple RefPorts to different Vars of a target
+        Process. The RefPort sends data after the first time step to the
+        VarPort, starting with (5 + current time step) = 7). After 2 time steps
+        the value for var2 and var4 is expected to be 7."""
+
+        sender1 = P1()
+        sender2 = P1()
+
+        recv = P2()
+
+        sender1.ref1.connect_var(recv.var2)
+        sender2.ref3.connect_var(recv.var4)
+
+        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
+                                        [sender1, sender2, recv])
+
+        # First time step
+        recv.run(RunSteps(num_steps=2, blocking=True),
+                 MyRunCfg(custom_sync_domains=[simple_sync_domain]))
+
+        self.assertTrue(
+            np.all(recv.var2.get() == np.array([7., 7., 7.])))
+        self.assertTrue(
+            np.all(recv.var4.get() == np.array([7., 7.])))
         recv.stop()
 
 
