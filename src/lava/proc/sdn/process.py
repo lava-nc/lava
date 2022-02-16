@@ -12,7 +12,8 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 @unique
 class ACTIVATION_MODE(IntEnum):
-    """Enum for synapse sigma delta activation mode. Options are {``ReLU : 0``}.
+    """Enum for synapse sigma delta activation mode. Options are
+    {``Unit : 0``, ``ReLU : 1``}.
     """
     Unit = 0
     ReLU = 1

@@ -164,7 +164,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-    #     self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << wgt_exp))
 
     def test_reconstruction_cum_error_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction with cumulative error.
@@ -259,7 +259,3 @@ class TestSigmaDeltaModels(unittest.TestCase):
         if verbose:
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << wgt_exp))
-
-
-if __name__ == '__main__':
-    pass
