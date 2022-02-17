@@ -19,7 +19,7 @@ import lava.magma.compiler.exceptions as ex
 import lava.magma.compiler.exec_var as exec_var
 from lava.magma.compiler.builders.builder import ChannelBuilderMp
 from lava.magma.compiler.builders.builder import PyProcessBuilder, \
-    AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
+    NcProcessBuilder, AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
     AbstractChannelBuilder, ServiceChannelBuilderMp
 from lava.magma.compiler.builders.builder import RuntimeChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -379,8 +379,17 @@ class Compiler:
             elif issubclass(pm, AbstractCProcessModel):
                 raise NotImplementedError
             elif issubclass(pm, AbstractNcProcessModel):
-                # ToDo: This needs to call NeuroCoreCompiler
-                raise NotImplementedError
+                for p in procs:
+                    b = NcProcessBuilder(pm, p.id, p.proc_params)
+                    # Create Var- and PortInitializers from lava.process Vars
+                    # and Ports
+                    v = [VarInitializer(v.name, v.shape, v.init, v.id)
+                         for v in p.vars]
+
+                    # Assigns initializers to builder
+                    b.set_variables(v)
+                    b.check_all_vars_set()
+                    nc_builders[p] = b
             else:
                 raise TypeError("Non-supported ProcessModel type {}"
                                 .format(pm))
@@ -771,8 +780,12 @@ class Compiler:
                     elif issubclass(pm, AbstractCProcessModel):
                         ev = exec_var.CExecVar(v, node_id, run_srv_id)
                     elif issubclass(pm, AbstractNcProcessModel):
-                        raise NotImplementedError(
-                            "NcProcessModel not yet supported.")
+                        # ev = exec_var.NcExecVar(chip_id: int
+                        #                         core_id: int
+                        #                         register_base_addr: int
+                        #                         entry_id: int
+                        #                         field: str)
+                        ev = exec_var.PyExecVar(v, node_id, run_srv_id)
                     else:
                         raise NotImplementedError("Illegal ProcessModel type.")
                     exec_vars[v.id] = ev

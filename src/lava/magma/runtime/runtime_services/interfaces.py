@@ -4,7 +4,10 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from lava.magma.compiler.channels.pypychannel import (
+    CspRecvPort,
+    CspSendPort
+)
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
 
@@ -19,9 +22,6 @@ class AbstractRuntimeService(ABC):
 
         self.model_ids: ty.List[int] = []
 
-        self.service_to_process: ty.Iterable[CspSendPort] = []
-        self.process_to_service: ty.Iterable[CspRecvPort] = []
-
     def __repr__(self):
         return f"Synchronizer : {self.__class__}, \
                  RuntimeServiceId : {self.runtime_service_id}, \
@@ -30,9 +30,6 @@ class AbstractRuntimeService(ABC):
     def start(self):
         self.runtime_to_service.start()
         self.service_to_runtime.start()
-        for i in range(len(self.service_to_process)):
-            self.service_to_process[i].start()
-            self.process_to_service[i].start()
         self.run()
 
     @abstractmethod
@@ -42,7 +39,3 @@ class AbstractRuntimeService(ABC):
     def join(self):
         self.runtime_to_service.join()
         self.service_to_runtime.join()
-
-        for i in range(len(self.service_to_process)):
-            self.service_to_process[i].join()
-            self.process_to_service[i].join()

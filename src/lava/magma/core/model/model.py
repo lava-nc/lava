@@ -81,23 +81,3 @@ class AbstractProcessModel(ABC):
             + " has tags   "
             + tags
         )
-
-    # ToDo: (AW) Should AbstractProcessModel even have a run() method? What
-    #  if a sub class like AbstractCProcessModel for a LMT does not even need
-    #  a 'run'?
-    def run(self):
-        raise NotImplementedError("'run' method is not implemented.")
-
-    # ToDo: What does this function do here? The AbstractProcModel can't
-    #  depend on one specific Python implementation of ports/channels. It can
-    #  probably not even have a start function. Because for a CProcModel
-    #  running on LMT there might not even be Python start function to call.
-    #  Starting the ports is likely the RuntimeService's or Builder's job
-    #  which is what makes a process run on a certain compute resource.
-    def start(self):
-        # Store the list of csp_ports. Start them here.
-        raise NotImplementedError
-        # TODO: Iterate over all inports and outports of the process
-        # and start them
-
-        self.run()

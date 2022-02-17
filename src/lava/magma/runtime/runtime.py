@@ -27,7 +27,7 @@ if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.builders.builder import AbstractProcessBuilder, \
     RuntimeChannelBuilderMp, ServiceChannelBuilderMp, \
-    RuntimeServiceBuilder
+    RuntimeServiceBuilder, PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import Channel
 from lava.magma.core.resources import HeadNode
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
@@ -76,17 +76,8 @@ class Runtime:
 
     def initialize(self):
         """Initializes the runtime"""
-        # Right now assume there is only 1 node config
-        node_configs: ty.List[NodeConfig] = self._executable.node_configs
-        if len(node_configs) != 1:
-            raise AssertionError
+        node_config: NodeConfig = self.node_cfg[0]
 
-        node_config: NodeConfig = node_configs[0]
-
-        # Right now assume there is only 1 node in node_config with resource
-        # type CPU
-        if len(node_config) != 1:
-            raise AssertionError
         if node_config[0].node_type != HeadNode:
             raise AssertionError
 
@@ -104,11 +95,10 @@ class Runtime:
         for port in self.service_to_runtime:
             port.start()
 
-    # ToDo: (AW) Hack: This currently just returns the one and only NodeCfg
     @property
-    def node_cfg(self) -> NodeConfig:
+    def node_cfg(self) -> ty.List[NodeConfig]:
         """Returns the selected NodeCfg."""
-        return self._executable.node_configs[0]
+        return self._executable.node_configs
 
     def _build_message_infrastructure(self):
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
@@ -158,19 +148,25 @@ class Runtime:
                         self.service_to_runtime.append(channel.dst_port)
                 elif isinstance(sync_channel_builder, ServiceChannelBuilderMp):
                     if isinstance(sync_channel_builder.src_process,
-                                  RuntimeServiceBuilder):
+                                  RuntimeServiceBuilder) \
+                                      and isinstance(sync_channel_builder.
+                                                     dst_process,
+                                                     PyProcessBuilder):
                         sync_channel_builder.src_process.set_csp_proc_ports(
                             [channel.src_port])
                         self._get_process_builder_for_process(
-                            sync_channel_builder.dst_process).set_rs_csp_ports(
-                            [channel.dst_port])
-                    else:
+                            sync_channel_builder.dst_process) \
+                            .set_rs_csp_ports([channel.dst_port])
+                    elif isinstance(sync_channel_builder.
+                                    dst_process,
+                                    PyProcessBuilder):
                         sync_channel_builder.dst_process.set_csp_proc_ports(
                             [channel.dst_port])
                         self._get_process_builder_for_process(
-                            sync_channel_builder.src_process).set_rs_csp_ports(
-                            [channel.src_port])
+                            sync_channel_builder.src_process) \
+                            .set_rs_csp_ports([channel.src_port])
                 else:
+                    print(sync_channel_builder.dst_process.__class__.__name__)
                     raise ValueError("Unexpected type of Sync Channel Builder")
 
     # ToDo: (AW) Why not pass the builder as an argument to the mp.Process

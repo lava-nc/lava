@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 
 import typing as ty
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_services.runtime_service import \
@@ -31,10 +30,6 @@ class AbstractProcessBuilder(ABC):
             model_id: int):
         self._proc_model = proc_model
         self._model_id = model_id
-
-    @abstractmethod
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        pass
 
     @property
     @abstractmethod
