@@ -58,7 +58,7 @@ class TestPyPorts(unittest.TestCase):
                 PyOutPortVectorDense([send_csp_port_2], None)
             # Create PyInPort with current implementation
             recv_py_port: PyInPort = \
-                cls([recv_csp_port_1, recv_csp_port_2], None)
+                cls([recv_csp_port_1, recv_csp_port_2], None, None)
 
             recv_py_port.start()
             send_py_port_1.start()

@@ -69,6 +69,31 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    def test_transpose_chaining(self) -> None:
+        """Tests whether two virtual TransposePorts can be chained."""
+
+        source = OutPortProcess(data=self.input_data)
+        # transpose the shape once more
+        self.shape_transposed = tuple(self.shape_transposed[i] for i in
+                                      self.axes)
+        sink = InPortProcess(shape=self.shape_transposed)
+
+        source.out_port.transpose(axes=self.axes).transpose(
+            axes=self.axes).connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.transpose(self.axes).transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
     def test_transpose_inport_to_inport(self) -> None:
         """Tests a virtual TransposePort between an InPort and another InPort.
         In a real implementation, the source InPort would be in a
@@ -95,6 +120,7 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_transpose_refport_write_to_varport(self) -> None:
         """Tests a virtual TransposePort between a RefPort and a VarPort,
         where the RefPort writes to the VarPort."""
@@ -116,6 +142,7 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_transpose_refport_read_from_varport(self) -> None:
         """Tests a virtual TransposePort between a RefPort and a VarPort,
         where the RefPort reads from the VarPort."""
@@ -137,7 +164,7 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    @unittest.skip("RefPort to RefPort not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_transpose_refport_write_to_refport(self) -> None:
         """Tests a virtual TransposePort between a RefPort and another
         RefPort, where the first RefPort writes to the second. In a real
@@ -165,7 +192,7 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    @unittest.skip("RefPort to RefPort not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_transpose_refport_read_from_refport(self) -> None:
         """Tests a virtual TransposePort between a RefPort and another
         RefPort, where the first RefPort reads from the second. In a real
@@ -219,7 +246,7 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    @unittest.skip("VarPort to VarPort not yet implemented")
+    @unittest.skip("not yet implemented")
     def test_transpose_varport_read_from_varport(self) -> None:
         """Tests a virtual TransposePort between a VarPort and another
         VarPort, where the first VarPort reads from the second. In a real
@@ -277,6 +304,29 @@ class TestReshapePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    def test_reshape_chaining(self) -> None:
+        """Tests whether two virtual ReshapePorts can be chained."""
+
+        source = OutPortProcess(data=self.input_data)
+        shape_final = (int(np.prod(self.shape)),)
+        sink = InPortProcess(shape=shape_final)
+
+        source.out_port.reshape(self.shape_reshaped).reshape(
+            shape_final).connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.reshape(shape_final)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
     def test_reshape_inport_to_inport(self) -> None:
         """Tests a virtual ReshapePort between an InPort and another InPort.
         In a real implementation, the source InPort would be in a
@@ -304,6 +354,7 @@ class TestReshapePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_reshape_refport_write_to_varport(self) -> None:
         """Tests a virtual ReshapePort between a RefPort and a VarPort,
         where the RefPort writes to the VarPort."""
@@ -326,6 +377,7 @@ class TestReshapePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_reshape_refport_read_from_varport(self) -> None:
         """Tests a virtual ReshapePort between a RefPort and a VarPort,
         where the RefPort reads from the VarPort."""
@@ -350,7 +402,8 @@ class TestReshapePort(unittest.TestCase):
 
 
 class TestFlattenPort(unittest.TestCase):
-    """Tests virtual FlattenPorts on Processes that are executed."""
+    """Tests virtual ReshapePorts, created by the flatten() method,
+    on Processes that are executed."""
 
     def setUp(self) -> None:
         self.num_steps = 1
@@ -359,7 +412,8 @@ class TestFlattenPort(unittest.TestCase):
         self.input_data = np.random.randint(256, size=self.shape)
 
     def test_flatten_outport_to_inport(self) -> None:
-        """Tests a virtual FlattenPort between an OutPort and an InPort."""
+        """Tests a virtual ReshapePort with flatten() between an OutPort and an
+        InPort."""
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape_reshaped)
@@ -379,11 +433,33 @@ class TestFlattenPort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    def test_flatten_chaining(self) -> None:
+        """Tests whether two virtual ReshapePorts can be chained through the
+        flatten() method."""
+
+        source = OutPortProcess(data=self.input_data)
+        sink = InPortProcess(shape=self.shape_reshaped)
+
+        source.out_port.flatten().flatten().connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.ravel()
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
     def test_flatten_inport_to_inport(self) -> None:
-        """Tests a virtual FlattenPort between an InPort and another InPort.
-        In a real implementation, the source InPort would be in a
-        hierarchical Process and the sink InPort would be in a SubProcess of
-        that hierarchical Process."""
+        """Tests a virtual ReshapePort with flatten() between an InPort and
+        another InPort. In a real implementation, the source InPort would be
+        in a hierarchical Process and the sink InPort would be in a SubProcess
+        of that hierarchical Process."""
 
         out_port_process = OutPortProcess(data=self.input_data)
         source = InPortProcess(shape=self.shape)
@@ -405,9 +481,10 @@ class TestFlattenPort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_flatten_refport_write_to_varport(self) -> None:
-        """Tests a virtual FlattenPort between a RefPort and a VarPort,
-        where the RefPort writes to the VarPort."""
+        """Tests a virtual ReshapePort with flatten() between a RefPort and a
+        VarPort, where the RefPort writes to the VarPort."""
 
         source = RefPortWriteProcess(data=self.input_data)
         sink = VarPortProcess(data=np.zeros(self.shape_reshaped))
@@ -426,9 +503,10 @@ class TestFlattenPort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    @unittest.skip("not yet implemented")
     def test_flatten_refport_read_from_varport(self) -> None:
-        """Tests a virtual FlattenPort between a RefPort and a VarPort,
-        where the RefPort reads from the VarPort."""
+        """Tests a virtual ReshapePort with flatten() between a RefPort and a
+        VarPort, where the RefPort reads from the VarPort."""
 
         source = VarPortProcess(data=self.input_data)
         sink = RefPortReadProcess(data=np.zeros(self.shape_reshaped))
@@ -457,6 +535,7 @@ class TestConcatPort(unittest.TestCase):
         self.shape_concat = (3, 3, 4)
         self.input_data = np.random.randint(256, size=self.shape)
 
+    @unittest.skip("not yet implemented")
     def test_concat_outport_to_inport(self) -> None:
         """Tests a virtual ConcatPort between an OutPort and an InPort."""
 
@@ -483,7 +562,7 @@ class TestConcatPort(unittest.TestCase):
         )
 
 
-# minimal process with an OutPort
+# minimal Process with an OutPort
 class OutPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
         super().__init__(data=data)
@@ -491,7 +570,7 @@ class OutPortProcess(AbstractProcess):
         self.out_port = OutPort(shape=data.shape)
 
 
-# minimal process with an InPort
+# minimal Process with an InPort
 class InPortProcess(AbstractProcess):
     def __init__(self, shape: ty.Tuple[int, ...]) -> None:
         super().__init__(shape=shape)
@@ -499,7 +578,7 @@ class InPortProcess(AbstractProcess):
         self.in_port = InPort(shape=shape)
 
 
-# A minimal process with a RefPort that writes
+# A minimal Process with a RefPort that writes
 class RefPortWriteProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
         super().__init__(data=data)
@@ -507,7 +586,7 @@ class RefPortWriteProcess(AbstractProcess):
         self.ref_port = RefPort(shape=data.shape)
 
 
-# A minimal process with a RefPort that reads
+# A minimal Process with a RefPort that reads
 class RefPortReadProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
         super().__init__(data=data)
@@ -515,7 +594,7 @@ class RefPortReadProcess(AbstractProcess):
         self.ref_port = RefPort(shape=data.shape)
 
 
-# A minimal process with a Var and a VarPort
+# A minimal Process with a Var and a VarPort
 class VarPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
         super().__init__(data=data)

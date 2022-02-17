@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import importlib
 import importlib.util as import_utils
 import inspect
@@ -34,7 +35,7 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
-    ImplicitVarPort
+    ImplicitVarPort, InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.run_configs import RunConfig
@@ -344,12 +345,25 @@ class Compiler:
                     # and Ports
                     v = [VarInitializer(v.name, v.shape, v.init, v.id)
                          for v in p.vars]
-                    ports = (list(p.in_ports) + list(p.out_ports))
-                    ports = [PortInitializer(pt.name,
+
+                    ports = []
+                    for pt in (list(p.in_ports) + list(p.out_ports)):
+                        # For all InPorts that receive input from
+                        # virtual ports...
+                        transform_funcs = None
+                        if isinstance(pt, InPort):
+                            # ... extract a function pointer to the
+                            # transformation function of each virtual port.
+                            transform_funcs = \
+                                [vp.get_transform_func()
+                                 for vp in pt.get_incoming_virtual_ports()]
+                        pi = PortInitializer(pt.name,
                                              pt.shape,
                                              self._get_port_dtype(pt, pm),
                                              pt.__class__.__name__,
-                                             pp_ch_size) for pt in ports]
+                                             pp_ch_size,
+                                             transform_funcs)
+                        ports.append(pi)
                     # Create RefPort (also use PortInitializers)
                     ref_ports = list(p.ref_ports)
                     ref_ports = [

@@ -30,8 +30,13 @@ class PyInPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
-    def __init__(self, csp_recv_ports: ty.List[CspRecvPort], *args):
+    def __init__(self,
+                 csp_recv_ports: ty.List[CspRecvPort],
+                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None,
+                 *args):
         self._csp_recv_ports = csp_recv_ports
+        self._transform_funcs = transform_funcs
+
         super().__init__(*args)
 
     @property
@@ -61,18 +66,37 @@ class PyInPort(AbstractPyPort):
             True,
         )
 
+    def _transform(self, recv_data: np.array) -> np.array:
+        """Applies all transformation function pointers to the input data.
+
+        Parameters
+        ----------
+        recv_data : numpy.ndarray
+            data received on the port that shall be transformed
+
+        Returns
+        -------
+        recv_data : numpy.ndarray
+            received data, transformed by the incoming virtual ports
+        """
+        if self._transform_funcs is not None:
+            # apply all transformation functions to the received data
+            for f in self._transform_funcs:
+                recv_data = f(recv_data)
+        return recv_data
+
 
 class PyInPortVectorDense(PyInPort):
     def recv(self) -> np.ndarray:
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.recv(),
+            lambda acc, csp_port: acc + self._transform(csp_port.recv()),
             self._csp_recv_ports,
             np.zeros(self._shape, self._d_type),
         )
 
     def peek(self) -> np.ndarray:
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.peek(),
+            lambda acc, csp_port: acc + self._transform(csp_port.peek()),
             self._csp_recv_ports,
             np.zeros(self._shape, self._d_type),
         )
