@@ -139,13 +139,14 @@ class PyInPort(AbstractPyIOPort):
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
     def __init__(self,
-                 csp_recv_ports: ty.List[CspRecvPort],
-                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None,
-                 *args):
-        self._csp_recv_ports = csp_recv_ports
-        self._transform_funcs = transform_funcs
+                 csp_ports: ty.List[AbstractCspPort],
+                 process_model: AbstractProcessModel,
+                 shape: ty.Tuple[int, ...],
+                 d_type: type,
+                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
 
-        super().__init__(*args)
+        self._transform_funcs = transform_funcs
+        super().__init__(csp_ports, process_model, shape, d_type)
 
     @abstractmethod
     def recv(self):

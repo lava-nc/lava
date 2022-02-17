@@ -350,8 +350,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
             # TODO (MR): This is probably just a temporary hack until the
             #  interface of PyOutPorts has been adjusted.
             if issubclass(port_cls, PyInPort):
-                port = port_cls(csp_ports, p.transform_funcs, pm, p.shape,
-                                lt.d_type)
+                port = port_cls(csp_ports, pm, p.shape, lt.d_type,
+                                p.transform_funcs)
             elif issubclass(port_cls, PyOutPort):
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type)
             else:

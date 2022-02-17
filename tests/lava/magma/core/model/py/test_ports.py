@@ -60,8 +60,8 @@ class TestPyPorts(unittest.TestCase):
                                      data.dtype)
             # Create PyInPort with current implementation
             recv_py_port: PyInPort = \
-                cls([recv_csp_port_1, recv_csp_port_2], None, None, data.shape,
-                    data.dtype)
+                cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
+                    data.dtype, None)
 
             recv_py_port.start()
             send_py_port_1.start()
