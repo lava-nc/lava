@@ -13,7 +13,6 @@ class AsyncProtocol(AbstractSyncProtocol):
     phases = []
     proc_funcions = []
 
-    # TODO: AsyncProtocol needs to implement AsyncRuntimeService
     @property
     def runtime_service(self):
         return {CPU: AsyncPyRuntimeService}

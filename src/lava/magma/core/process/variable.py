@@ -18,7 +18,7 @@ class Var(AbstractProcessMember):
     values not just scalar objects with a shape.
     - Vars can be initialized with numeric objects with a dimensionality
     equal or less than specified by its shape. The initial value will be
-    broadcast to the shape of the Var at compile current_ts.
+    broadcast to the shape of the Var at compile time.
     - Vars have a name: The Variable name will be assigned by the parent
     process of a Var.
     - Vars are mutable at runtime.
@@ -49,7 +49,7 @@ class Var(AbstractProcessMember):
         Parameters:
             :param shape: Tuple specifying the shape of variable tensor.
             :param init: Initial value assigned to Var. Compiler will broadcast
-            'init' to 'shape' of Var at compile current_ts.
+            'init' to 'shape' of Var at compile time.
             :param shareable: Specifies whether Variable allows shared memory
             access by processes other than the Var's parent process.
         """
