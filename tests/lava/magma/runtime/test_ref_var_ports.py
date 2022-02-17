@@ -32,7 +32,6 @@ class HP2(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.h_var = Var(shape=(3, ))
-        # self.h_inp = InPort(shape=(2,))
 
 
 # A minimal process with a Var, 2 RefPorts and a VarPort
@@ -296,10 +295,10 @@ class TestRefVarPorts(unittest.TestCase):
     def test_hierarchical_ref_ports(self):
         """Tests if sending data via a RefPort of an instance of the
         hierarchical process HP1 to a Var of an instance of the hierarchical
-        process HP2 works. The RefPort of HP1 mirrors the RefPort ref1
+        process HP2 works. The RefPort of HP1 connects to the RefPort ref1
         of its nested process P1. HP2 has a Var h_var which aliases the Var var2
-        in order to receive the data sent from P1. The RefPort h_ref of HP1 is
-        connected to the Var h_var of HP2. The RefPort sends data after the
+        of its nested process P2. The RefPort ref1 sends data to h_ref which
+        sends the data further to h_var. The RefPort sends data after the
         first time step to the Var, starting with (5 + current time step) = 7).
         After 2 time steps the value for h_var is expected to be 7."""
 
