@@ -12,7 +12,7 @@ class AbstractRunCondition(ABC):
 
 
 class RunSteps(AbstractRunCondition):
-    """Runs a process for a specified number of current_ts steps with respect to a
+    """Runs a process for a specified number of time steps with respect to a
     SyncDomain assigned to any sub processes."""
 
     def __init__(self, num_steps: int, blocking: bool = True):
@@ -21,7 +21,7 @@ class RunSteps(AbstractRunCondition):
 
 
 class RunContinuous(AbstractRunCondition):
-    """Runs a Process continuously without a current_ts step limit."""
+    """Runs a Process continuously without a time step limit."""
 
     def __init__(self):
         super().__init__(blocking=False)

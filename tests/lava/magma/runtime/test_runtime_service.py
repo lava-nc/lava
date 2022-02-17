@@ -41,6 +41,9 @@ class SimpleProcessModel(AbstractPyProcessModel):
     def run(self):
         pass
 
+    def add_ports_for_polling(self):
+        pass
+
 
 class SimplePyRuntimeService(PyRuntimeService):
     def run(self):

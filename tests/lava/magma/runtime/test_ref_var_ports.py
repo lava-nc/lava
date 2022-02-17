@@ -89,12 +89,12 @@ class PyProcModel1(PyLoihiProcessModel):
     var1: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var_port_var1: PyVarPort = LavaPyType(PyVarPort.VEC_DENSE, int)
 
-    def pre_guard(self):
+    def post_guard(self):
         return True
 
-    def run_pre_mgmt(self):
-        if self.current_ts > 1:
-            ref_data = np.array([5, 5, 5]) + self.current_ts
+    def run_post_mgmt(self):
+        if self.time_step > 1:
+            ref_data = np.array([5, 5, 5]) + self.time_step
             self.ref1.write(ref_data)
             self.ref3.write(ref_data[:2])
 
@@ -109,11 +109,11 @@ class PyProcModel2(PyLoihiProcessModel):
     var3: np.ndarray = LavaPyType(np.ndarray, np.int32)
     var4: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
-    def pre_guard(self):
+    def post_guard(self):
         return True
 
-    def run_pre_mgmt(self):
-        if self.current_ts > 1:
+    def run_post_mgmt(self):
+        if self.time_step > 1:
             self.var3 = self.ref2.read()
 
 

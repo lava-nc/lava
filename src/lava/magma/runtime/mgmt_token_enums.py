@@ -66,3 +66,9 @@ class MGMT_RESPONSE:
     """Signifies Error raised"""
     PAUSED = enum_to_np(-3)
     """Signifies Execution State to be Paused"""
+    REQ_PAUSE = enum_to_np(-4)
+    """Signifies Request of PAUSE"""
+    REQ_STOP = enum_to_np(-5)
+    """Signifies Request of STOP"""
+    SET_COMPLETE = enum_to_np(-6)
+    """Signifies Completion of Set Var"""
