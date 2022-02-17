@@ -31,9 +31,55 @@ from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.run_conditions import AbstractRunCondition
 
+"""Defines a Runtime which takes a lava executable and a pluggable message
+passing infrastructure (for instance multiprocessing+shared memory or ray in
+future), builds the components of the executable populated by the compiler
+and starts the execution. Runtime is also responsible for auxiliary actions
+such as pause, stop, wait (non-blocking run) etc.
 
-# Function to build and attach a system process to
+Overall Runtime Architecture:
+                                                                    (c) InVar/
+                                                                        OutVar/
+                                                                        RefVar
+                                                                         _____
+        (c) runtime_to_service                (c) service_to_process     |   |
+        --------------------->                --------------------->     |   V
+(s) Runtime                 (*s) RuntimeService             (*s) Process Models
+        <---------------------                <---------------------
+        (c) service_to_runtime                (c) process_to_service
+
+(s) - Service
+(c) - Channel
+(*) - Multiple
+
+Runtime coordinates with multiple RuntimeServices depending on how many got
+created. The number of RuntimeServices is determined at compile time based
+on the RunConfiguration supplied to the compiler.
+
+Each RuntimeService is assigned a group of process models it is supposed to
+manage. Actions/Commands issued by the Runtime are relayed to the
+RuntimeService using the runtime_to_service channel and the response are
+returned back using the service_to_runtime channel.
+
+The RuntimeService further takes this forward for each process model in
+similar fashion. A RuntimeService is connected to the process model it is
+coordinating by two channels - service_to_process for sending
+actions/commands to process model and process_to_service to get response back
+from process model.
+
+Process Models communicate with each other via channels defined by
+InVar/OutVar/RefVar ports.
+"""
+
+
 def target_fn(*args, **kwargs):
+    """
+    Function to build and attach a system process to
+
+    :param args: List Parameters to be passed onto the process
+    :param kwargs: Dict Parameters to be passed onto the process
+    :return: None
+    """
     builder = kwargs.pop("builder")
     actor = builder.build()
     actor.start(*args, **kwargs)
@@ -92,6 +138,8 @@ class Runtime:
         self._is_initialized = True
 
     def _start_ports(self):
+        """Start the ports of the runtime to communicate with runtime
+        services"""
         for port in self.runtime_to_service:
             port.start()
         for port in self.service_to_runtime:
@@ -104,11 +152,19 @@ class Runtime:
         return self._executable.node_configs[0]
 
     def _build_message_infrastructure(self):
+        """Create the Messaging Infrastructure Backend given the
+        _messaging_infrastructure_type and Start it"""
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
             self._messaging_infrastructure_type)
         self._messaging_infrastructure.start()
 
     def _get_process_builder_for_process(self, process):
+        """
+        Given a process return its process builder
+
+        :param process: AbstractProcess
+        :return: AbstractProcessBuilder
+        """
         process_builders: ty.Dict[
             "AbstractProcess", "AbstractProcessBuilder"
         ] = {}
@@ -118,6 +174,8 @@ class Runtime:
         return process_builders[process]
 
     def _build_channels(self):
+        """Given the channel builders for an executable,
+        build these channels"""
         if self._executable.channel_builders:
             for channel_builder in self._executable.channel_builders:
                 channel = channel_builder.build(
@@ -131,6 +189,8 @@ class Runtime:
                     [channel.dst_port])
 
     def _build_sync_channels(self):
+        """Builds the channels needed for synchronization between runtime
+        components"""
         if self._executable.sync_channel_builders:
             for sync_channel_builder in self._executable.sync_channel_builders:
                 channel: Channel = sync_channel_builder.build(
@@ -169,6 +229,7 @@ class Runtime:
     # ToDo: (AW) Why not pass the builder as an argument to the mp.Process
     #  constructor which will then be passed to the target function?
     def _build_processes(self):
+        """Builds the process for all process builders within an executable"""
         process_builders_collection: ty.List[
             ty.Dict[AbstractProcess, AbstractProcessBuilder]] = [
             self._executable.py_builders,
@@ -186,6 +247,7 @@ class Runtime:
                         builder=proc_builder)
 
     def _build_runtime_services(self):
+        """Builds the runtime services"""
         runtime_service_builders = self._executable.rs_builders
         if self._executable.rs_builders:
             for sd, rs_builder in runtime_service_builders.items():
@@ -194,6 +256,12 @@ class Runtime:
                     builder=rs_builder)
 
     def start(self, run_condition: AbstractRunCondition):
+        """
+        Given a run condition, starts the runtime
+
+        :param run_condition: AbstractRunCondition
+        :return: None
+        """
         if self._is_initialized:
             # Start running
             self._is_started = True
@@ -201,7 +269,13 @@ class Runtime:
         else:
             print("Runtime not initialized yet.")
 
-    def _run(self, run_condition):
+    def _run(self, run_condition: AbstractRunCondition):
+        """
+        Helper method for starting the runtime
+
+        :param run_condition: AbstractRunCondition
+        :return: None
+        """
         if self._is_started:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
@@ -239,6 +313,8 @@ class Runtime:
             print("Runtime not started yet.")
 
     def wait(self):
+        """Waits for existing run to end. This is helpful if the execution
+        was started in non-blocking mode earlier."""
         if self._is_running:
             for recv_port in self.service_to_runtime:
                 data = recv_port.recv()
@@ -247,6 +323,7 @@ class Runtime:
             self._is_running = False
 
     def pause(self):
+        """Pauses the execution"""
         raise NotImplementedError
 
     def stop(self):
