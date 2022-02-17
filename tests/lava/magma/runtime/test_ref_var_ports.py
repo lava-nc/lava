@@ -9,17 +9,33 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyRefPort, PyVarPort
 from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import RefPort, VarPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.run_configs import RunConfig, Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
 
 
-# A minimal process with a Var and a RefPort, VarPort
+# A minimal hierarchical process with a RefPort
+class HP1(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.h_ref = RefPort(shape=(3,))
+
+
+# A minimal hierarchical process with a Var
+class HP2(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.h_var = Var(shape=(3, ))
+        # self.h_inp = InPort(shape=(2,))
+
+
+# A minimal process with a Var, 2 RefPorts and a VarPort
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -29,7 +45,7 @@ class P1(AbstractProcess):
         self.var_port_var1 = VarPort(self.var1)
 
 
-# A minimal process with 2 Vars and a RefPort, VarPort
+# A minimal process with 3 Vars and a RefPort, VarPort
 class P2(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -38,6 +54,31 @@ class P2(AbstractProcess):
         self.ref2 = RefPort(shape=(2,))
         self.var3 = Var(shape=(2,), init=1)
         self.var4 = Var(shape=(2,), init=1)
+
+
+# A minimal hierarchical PyProcModel implementing HP2
+@implements(proc=HP1)
+class PyProcModelHP1(AbstractSubProcessModel):
+
+    def __init__(self, proc):
+        """Builds sub Process structure of the Process."""
+
+        # Connect the RefPort of the hierarchical process with the RefPort of
+        # the nested process
+        self.p1 = P1()
+        self.p1.ref1.connect(proc.ref_ports.h_ref)
+
+
+# A minimal hierarchical PyProcModel implementing HP2
+@implements(proc=HP2)
+class PyProcModelHP2(AbstractSubProcessModel):
+
+    def __init__(self, proc):
+        """Builds sub Process structure of the Process."""
+
+        self.p2 = P2()
+        # Reference h_var with var of the nested process
+        proc.vars.h_var.alias(self.p2.var2)
 
 
 # A minimal PyProcModel implementing P1
@@ -242,7 +283,7 @@ class TestRefVarPorts(unittest.TestCase):
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
                                         [sender1, sender2, recv])
 
-        # First time step
+        # Run for two time steps
         recv.run(RunSteps(num_steps=2, blocking=True),
                  MyRunCfg(custom_sync_domains=[simple_sync_domain]))
 
@@ -250,6 +291,30 @@ class TestRefVarPorts(unittest.TestCase):
             np.all(recv.var2.get() == np.array([7., 7., 7.])))
         self.assertTrue(
             np.all(recv.var4.get() == np.array([7., 7.])))
+        recv.stop()
+
+    def test_hierarchical_ref_ports(self):
+        """Tests if sending data via a RefPort of an instance of the
+        hierarchical process HP1 to a Var of an instance of the hierarchical
+        process HP2 works. The RefPort of HP1 mirrors the RefPort ref1
+        of its nested process P1. HP2 has a Var h_var which aliases the Var var2
+        in order to receive the data sent from P1. The RefPort h_ref of HP1 is
+        connected to the Var h_var of HP2. The RefPort sends data after the
+        first time step to the Var, starting with (5 + current time step) = 7).
+        After 2 time steps the value for h_var is expected to be 7."""
+
+        sender = HP1()
+        recv = HP2()
+
+        sender.h_ref.connect_var(recv.h_var)
+
+        # Run for two time steps
+        recv.run(RunSteps(num_steps=2, blocking=True),
+                 run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
+
+        self.assertTrue(
+            np.all(recv.h_var.get() == np.array([7., 7., 7.])))
+
         recv.stop()
 
 
