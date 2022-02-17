@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+
 import typing as ty
 from abc import ABC
 
@@ -45,12 +46,19 @@ class AbstractProcessModel(ABC):
     although this leads to a bit of verbosity in the end. We could leave out
     the class type in the LavaType and infer it from
     ProcModel.__annotations__ if the user has not forgotten to specify it.
+    3. Process can communicate arbitrary objects using it's ``proc_params``
+    member. This should be used when such a need arises. A Process's
+    ``proc_prams`` (empty dictionary by default) should always be used to
+    initialize it's ProcessModel.
     """
 
     implements_process: ty.Optional[ty.Type[AbstractProcess]] = None
     implements_protocol: ty.Optional[ty.Type[AbstractSyncProtocol]] = None
     required_resources: ty.List[ty.Type[AbstractResource]] = []
     tags: ty.List[str] = []
+
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
+        self.proc_params: ty.Dict[str, ty.Any] = proc_params
 
     def __repr__(self):
         pm_name = self.__class__.__qualname__
@@ -77,6 +85,10 @@ class AbstractProcessModel(ABC):
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
 
+    def add_ports_for_polling(self):
+        raise NotImplementedError(
+            "'add_ports_for_polling' method is not implemented.")
+
     # ToDo: What does this function do here? The AbstractProcModel can't
     #  depend on one specific Python implementation of ports/channels. It can
     #  probably not even have a start function. Because for a CProcModel
@@ -86,7 +98,3 @@ class AbstractProcessModel(ABC):
     def start(self):
         # Store the list of csp_ports. Start them here.
         raise NotImplementedError
-        # TODO: Iterate over all inports and outports of the process
-        # and start them
-
-        self.run()

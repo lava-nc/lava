@@ -39,13 +39,13 @@ class PyProcModel1(PyLoihiProcessModel):
     u: np.ndarray = LavaPyType(np.ndarray, np.int32)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
-    def pre_guard(self):
+    def post_guard(self):
         return True
 
-    def run_pre_mgmt(self):
-        if self.current_ts > 1:
-            self.s = np.array([self.current_ts])
-            self.u = 2 * np.array([self.current_ts])
+    def run_post_mgmt(self):
+        if self.time_step > 1:
+            self.s = np.array([self.time_step])
+            self.u = 2 * np.array([self.time_step])
             self.v = np.array([[1, 2], [3, 4]])
 
 
@@ -229,8 +229,8 @@ class Monitors(unittest.TestCase):
         spike_data = data2[neuron.name][neuron.s_out.name]
 
         # Check if this data match the expected data
-        self.assertTrue(np.all(volt_data == np.array([[1, 2, 0, 1, 2, 0]]).T))
-        self.assertTrue(np.all(spike_data == np.array([[0, 0, 1, 0, 0, 1]]).T))
+        self.assertTrue(np.all(volt_data == np.array([[1, 2, 3, 0, 1, 2]]).T))
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 1, 0, 0]]).T))
 
     def test_monitor_collects_voltage_and_spike_data_from_population_lif(self):
         """Check if two different Monitor process can monitor voltage (Var) and
@@ -272,10 +272,10 @@ class Monitors(unittest.TestCase):
         spike_data = data2[neuron.name][neuron.s_out.name]
 
         # Check if this data match the expected data
-        self.assertTrue(np.all(volt_data == np.array([[1, 2, 0, 1, 2, 0],
-                                                      [1, 2, 0, 1, 2, 0]]).T))
-        self.assertTrue(np.all(spike_data == np.array([[0, 0, 1, 0, 0, 1],
-                                                       [0, 0, 1, 0, 0, 1]]).T))
+        self.assertTrue(np.all(volt_data == np.array([[1, 2, 3, 0, 1, 2],
+                                                      [1, 2, 3, 0, 1, 2]]).T))
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 1, 0, 0],
+                                                       [0, 0, 0, 1, 0, 0]]).T))
 
     def test_monitor_collects_data_from_2D_population_lif(self):
         """Check if two different Monitor process can monitor voltage (Var) and
@@ -318,9 +318,9 @@ class Monitors(unittest.TestCase):
 
         # Check if this data match the expected data
         expected_voltages = np.tile(
-            np.expand_dims(np.array([1, 2, 0, 1, 2, 0]), (1, 2)), (1,) + shape)
+            np.expand_dims(np.array([1, 2, 3, 0, 1, 2]), (1, 2)), (1,) + shape)
         expected_spikes = np.tile(
-            np.expand_dims(np.array([0, 0, 1, 0, 0, 1]), (1, 2)), (1,) + shape)
+            np.expand_dims(np.array([0, 0, 0, 1, 0, 0]), (1, 2)), (1,) + shape)
 
         self.assertTrue(np.all(volt_data == expected_voltages))
         self.assertTrue(np.all(spike_data == expected_spikes))

@@ -17,11 +17,11 @@ import numpy as np
 
 import lava.magma.compiler.exceptions as ex
 import lava.magma.compiler.exec_var as exec_var
-from lava.magma.compiler.builder import ChannelBuilderMp
-from lava.magma.compiler.builder import PyProcessBuilder, \
+from lava.magma.compiler.builders.builder import ChannelBuilderMp
+from lava.magma.compiler.builders.builder import PyProcessBuilder, \
     AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
     AbstractChannelBuilder, ServiceChannelBuilderMp
-from lava.magma.compiler.builder import RuntimeChannelBuilderMp
+from lava.magma.compiler.builders.builder import RuntimeChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig, Node
@@ -35,7 +35,7 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
-    ImplicitVarPort, InPort
+    ImplicitVarPort, InPort, RefPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU, NeuroCore
 from lava.magma.core.run_configs import RunConfig
@@ -218,21 +218,10 @@ class Compiler:
         for vp in proc.var_ports:
             v = vp.var.aliased_var
             if v is not None:
-                sub_proc = v.process
                 # Create an implicit Var port in the sub process
-                new_vp = ImplicitVarPort(v)
-                # Propagate name and parent process of Var to VarPort
-                new_vp.name = "_" + v.name + "_implicit_port"
-                new_vp.process = sub_proc
-                # VarPort name could shadow existing attribute
-                if hasattr(sub_proc, new_vp.name):
-                    raise AssertionError(
-                        "Name of implicit VarPort might conflict"
-                        " with existing attribute.")
-                setattr(sub_proc, new_vp.name, new_vp)
-                sub_proc.var_ports.add_members({new_vp.name: new_vp})
+                imp_vp = RefPort.create_implicit_var_port(v)
                 # Connect the VarPort to the new VarPort
-                vp.connect(new_vp)
+                vp.connect(imp_vp)
 
     def _expand_sub_proc_model(self,
                                model_cls: ty.Type[AbstractSubProcessModel],
