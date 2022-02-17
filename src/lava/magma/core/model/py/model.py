@@ -421,7 +421,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                             return lambda: fvar_port
                         self._channel_actions.append((csp_port, func(var_port)))
 
-
+      
 class PyAsyncProcessModel(AbstractPyProcessModel):
     """
     Process Model for Asynchronous Processes.
