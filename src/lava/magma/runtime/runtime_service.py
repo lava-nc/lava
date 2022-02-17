@@ -16,6 +16,33 @@ from lava.magma.runtime.mgmt_token_enums import (
     MGMT_COMMAND,
 )
 
+"""This file defines the interface for RuntimeService which is responsible for
+coordinating the execution of a group of process models belonging to a common
+synchronization domain. The domain might follow a SyncProtocol or could be
+asynchronous too. The processes and their corresponding process models are
+selected by the Runtime depending on the RunConfiguration assigned at the
+start of execution. For each group of processes which follow the same
+protocol and would execute on the same node, Runtime creates a RuntimeService
+which will coordinate all actions/commands from Runtime onto the processes as
+well as return any acknowledgement back to Runtime.
+
+Currently we envision few different kinds of RuntimeService:
+
+1. PyRuntimeService: (Abstract Class) Coordinates process models executing on
+   the CPU and written in Python.
+   Following are the Concrete Implementations:
+    a. LoihiPyRuntimeService: Coordinates process models executing on
+       the CPU and written in Python and following the LoihiProtocol.
+    b. AsyncPyRuntimeService: Coordinates process models executing on
+       the CPU and written in Python and following the AsyncProtocol.
+
+2. CRuntimeService: (Abstract Class) Coordinates/Manages process models
+   executing on the CPU/Embedded CPU and written in C
+   Following are the Concrete Implementations:
+    a. LoihiCRuntimeService: Coordinates process models executing on
+       the CPU/Embedded CPU and written in C and following the LoihiProtocol.
+"""
+
 
 class AbstractRuntimeService(ABC):
     def __init__(self, protocol):
@@ -37,6 +64,8 @@ class AbstractRuntimeService(ABC):
                  Protocol: {self.protocol}"
 
     def start(self):
+        """Start the necessary channels to coordinate with runtime and group
+        of processes this RuntimeService is managing"""
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
@@ -46,9 +75,14 @@ class AbstractRuntimeService(ABC):
 
     @abstractmethod
     def run(self):
+        """Override this method to implement the runtime service. The run
+        method is invoked upon start which called when the execution is
+        started by the runtime."""
         pass
 
     def join(self):
+        """Stop the necessary channels to coordinate with runtime and group
+        of processes this RuntimeService is managing"""
         self.runtime_to_service.join()
         self.service_to_runtime.join()
 
@@ -277,6 +311,8 @@ class AsyncPyRuntimeService(PyRuntimeService):
         return rcv_msgs
 
     def run(self):
+        """Retrieves commands from the runtime and relays them to the process
+        models. Also send the acknowledgement back to runtime."""
         while True:
             command = self.runtime_to_service.recv()
             if enum_equal(command, MGMT_COMMAND.STOP):
