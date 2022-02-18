@@ -38,7 +38,7 @@ class AbstractPyRingBuffer(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         buffer = self.data.shape[-1]
-        self.s_out.send(self.data[..., (self.current_ts - 1) % buffer])
+        self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
 
 
 @implements(proc=RingBuffer, protocol=LoihiProtocol)
