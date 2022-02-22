@@ -197,8 +197,8 @@ class AbstractPort(AbstractProcessMember):
         not change.
         """
         # TODO (MR): Implement for other types of Ports
-        if not (isinstance(self, OutPort) or
-                isinstance(self, AbstractVirtualPort)):
+        if not (isinstance(self, OutPort)
+                or isinstance(self, AbstractVirtualPort)):
             raise NotImplementedError("reshape/flatten are only implemented "
                                       "for OutPorts")
 
@@ -256,8 +256,8 @@ class AbstractPort(AbstractProcessMember):
         of dimensions must not change.
         """
         # TODO (MR): Implement for other types of Ports
-        if not (isinstance(self, OutPort) or
-                isinstance(self, AbstractVirtualPort)):
+        if not (isinstance(self, OutPort)
+                or isinstance(self, AbstractVirtualPort)):
             raise NotImplementedError("transpose is only implemented for "
                                       "OutPorts")
 
