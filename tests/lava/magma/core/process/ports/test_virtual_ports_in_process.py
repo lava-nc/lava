@@ -5,6 +5,7 @@
 import typing as ty
 import unittest
 import numpy as np
+import functools as ft
 
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -18,19 +19,120 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.model.py.ports import (
     PyInPort,
-    PyOutPort,
-    PyRefPort,
-    PyVarPort
+    PyOutPort
 )
 from lava.magma.core.process.ports.ports import (
+    AbstractPort,
+    AbstractVirtualPort,
     InPort,
-    OutPort,
-    RefPort,
-    VarPort
+    OutPort
 )
 
 
 np.random.seed(7739)
+
+
+class MockVirtualPort(AbstractVirtualPort, AbstractPort):
+    """A mock-up of a virtual port that reshapes the input."""
+    def __init__(self, new_shape: ty.Tuple):
+        AbstractPort.__init__(self, new_shape)
+
+    def get_transform_func(self) -> ft.partial:
+        return ft.partial(np.reshape, newshape=self.shape)
+
+
+class TestVirtualPortNetworkTopologies(unittest.TestCase):
+    """Tests different network topologies that include virtual ports using a
+    dummy virtual port as a stand-in for all types of virtual ports."""
+
+    def setUp(self) -> None:
+        self.num_steps = 1
+        self.shape = (4, 3, 2)
+        self.new_shape = (12, 2)
+        self.input_data = np.random.randint(256, size=self.shape)
+
+    def test_virtual_ports_between_hierarchical_processes(self) -> None:
+        """Tests a virtual port between an OutPort of a hierarchical Process
+        and an InPort of another hierarchical Process."""
+
+        source = HOutPortProcess(data=self.input_data)
+        sink = HInPortProcess(shape=self.new_shape)
+
+        virtual_port = MockVirtualPort(new_shape=self.new_shape)
+
+        source.out_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.reshape(self.new_shape)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_chaining_multiple_virtual_ports(self) -> None:
+        """Tests whether two virtual ReshapePorts can be chained through the
+        flatten() method."""
+
+        source = OutPortProcess(data=self.input_data)
+        shape_final = (int(np.prod(self.shape)),)
+        sink = InPortProcess(shape=shape_final)
+
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape)
+        virtual_port2 = MockVirtualPort(new_shape=shape_final)
+
+        source.out_port._connect_forward(
+            [virtual_port1], AbstractPort, assert_same_shape=False
+        )
+        virtual_port1._connect_forward(
+            [virtual_port2], AbstractPort, assert_same_shape=False
+        )
+        virtual_port2.connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.ravel()
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_joining_virtual_ports_throws_exception(self) -> None:
+        """Tests whether joining two virtual ports throws an exception."""
+
+        source1 = OutPortProcess(data=self.input_data)
+        source2 = OutPortProcess(data=self.input_data)
+        sink = InPortProcess(shape=self.new_shape)
+
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape)
+        virtual_port2 = MockVirtualPort(new_shape=self.new_shape)
+
+        source1.out_port._connect_forward(
+            [virtual_port1], AbstractPort, assert_same_shape=False
+        )
+        source2.out_port._connect_forward(
+            [virtual_port2], AbstractPort, assert_same_shape=False
+        )
+
+        virtual_port1.connect(sink.in_port)
+        virtual_port2.connect(sink.in_port)
+
+        with self.assertRaises(NotImplementedError):
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
 
 
 class TestTransposePort(unittest.TestCase):
@@ -70,232 +172,6 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    def test_transpose_outport_to_inport_hierarchical(self) -> None:
-        """Tests a virtual TransposePort between an OutPort
-        of a hierarchical Process and an InPort of another hierarchical
-        Process."""
-
-        source = HOutPortProcess(data=self.input_data)
-        sink = HInPortProcess(shape=self.shape_transposed)
-
-        source.out_port.transpose(axes=self.axes).connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_transpose_chaining(self) -> None:
-        """Tests whether two virtual TransposePorts can be chained."""
-
-        source = OutPortProcess(data=self.input_data)
-        # transpose the shape once more
-        self.shape_transposed = tuple(self.shape_transposed[i] for i in
-                                      self.axes)
-        sink = InPortProcess(shape=self.shape_transposed)
-
-        source.out_port.transpose(axes=self.axes).transpose(
-            axes=self.axes).connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes).transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_transpose_inport_to_inport(self) -> None:
-        """Tests a virtual TransposePort between an InPort and another InPort.
-        In a real implementation, the source InPort would be in a
-        hierarchical Process and the sink InPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        out_port_process = OutPortProcess(data=self.input_data)
-        source = InPortProcess(shape=self.shape)
-        sink = InPortProcess(shape=self.shape_transposed)
-
-        out_port_process.out_port.connect(source.in_port)
-        source.in_port.transpose(axes=self.axes).connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_transpose_refport_write_to_varport(self) -> None:
-        """Tests a virtual TransposePort between a RefPort and a VarPort,
-        where the RefPort writes to the VarPort."""
-
-        source = RefPortWriteProcess(data=self.input_data)
-        sink = VarPortProcess(data=np.zeros(self.shape_transposed))
-        source.ref_port.transpose(axes=self.axes).connect(sink.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_transpose_refport_read_from_varport(self) -> None:
-        """Tests a virtual TransposePort between a RefPort and a VarPort,
-        where the RefPort reads from the VarPort."""
-
-        source = VarPortProcess(data=self.input_data)
-        sink = RefPortReadProcess(data=np.zeros(self.shape_transposed_reverse))
-        sink.ref_port.transpose(axes=self.axes).connect(source.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes_reverse)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_transpose_refport_write_to_refport(self) -> None:
-        """Tests a virtual TransposePort between a RefPort and another
-        RefPort, where the first RefPort writes to the second. In a real
-        implementation, the source RefPort would be in a
-        hierarchical Process and the sink RefPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        source = RefPortWriteProcess(data=self.input_data)
-        sink = RefPortReadProcess(data=np.zeros(self.shape_transposed))
-        var_port_process = VarPortProcess(data=np.zeros(self.shape_transposed))
-
-        source.ref_port.transpose(axes=self.axes).connect(sink.ref_port)
-        sink.ref_port.connect(var_port_process.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = var_port_process.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_transpose_refport_read_from_refport(self) -> None:
-        """Tests a virtual TransposePort between a RefPort and another
-        RefPort, where the first RefPort reads from the second. In a real
-        implementation, the source RefPort would be in a
-        hierarchical Process and the sink RefPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        source = RefPortReadProcess(
-            data=np.zeros(self.shape_transposed_reverse)
-        )
-        sink = RefPortWriteProcess(data=self.input_data)
-
-        sink.ref_port.transpose(axes=self.axes).connect(source.ref_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes_reverse)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("VarPort to VarPort not yet implemented")
-    def test_transpose_varport_write_to_varport(self) -> None:
-        """Tests a virtual TransposePort between a VarPort and another
-        VarPort, where the first VarPort writes to the second. In a
-        real implementation, the source VarPort would be in a
-        hierarchical Process and the sink VarPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        source = VarPortProcess(data=self.input_data)
-        sink = VarPortProcess(data=np.zeros(self.shape_transposed))
-
-        source.var_port.transpose(axes=self.axes).connect(sink.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_transpose_varport_read_from_varport(self) -> None:
-        """Tests a virtual TransposePort between a VarPort and another
-        VarPort, where the first VarPort reads from the second. In a real
-        implementation, the source VarPort would be in a
-        hierarchical Process and the sink VarPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        sink = VarPortProcess(data=np.zeros(self.shape_transposed_reverse))
-        source = VarPortProcess(data=self.input_data)
-
-        sink.var_port.transpose(axes=self.axes).connect(source.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.transpose(self.axes_reverse)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
 
 class TestReshapePort(unittest.TestCase):
     """Tests virtual ReshapePorts on Processes that are executed."""
@@ -314,126 +190,6 @@ class TestReshapePort(unittest.TestCase):
 
         source.out_port.reshape(new_shape=self.shape_reshaped).connect(
             sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.reshape(self.shape_reshaped)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_reshape_outport_to_inport_hierarchical(self) -> None:
-        """Tests a virtual ReshapePort between an OutPort
-        of a hierarchical Process and an InPort of another hierarchical
-        Process."""
-
-        source = HOutPortProcess(data=self.input_data)
-        sink = HInPortProcess(shape=self.shape_reshaped)
-
-        source.out_port.reshape(new_shape=self.shape_reshaped).connect(
-            sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.reshape(self.shape_reshaped)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_reshape_chaining(self) -> None:
-        """Tests whether two virtual ReshapePorts can be chained."""
-
-        source = OutPortProcess(data=self.input_data)
-        shape_final = (int(np.prod(self.shape)),)
-        sink = InPortProcess(shape=shape_final)
-
-        source.out_port.reshape(self.shape_reshaped).reshape(
-            shape_final).connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.reshape(shape_final)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_reshape_inport_to_inport(self) -> None:
-        """Tests a virtual ReshapePort between an InPort and another InPort.
-        In a real implementation, the source InPort would be in a
-        hierarchical Process and the sink InPort would be in a SubProcess of
-        that hierarchical Process."""
-
-        out_port_process = OutPortProcess(data=self.input_data)
-        source = InPortProcess(shape=self.shape)
-        sink = InPortProcess(shape=self.shape_reshaped)
-
-        out_port_process.out_port.connect(source.in_port)
-        source.in_port.reshape(new_shape=self.shape_reshaped).connect(
-            sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.reshape(self.shape_reshaped)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_reshape_refport_write_to_varport(self) -> None:
-        """Tests a virtual ReshapePort between a RefPort and a VarPort,
-        where the RefPort writes to the VarPort."""
-
-        source = RefPortWriteProcess(data=self.input_data)
-        sink = VarPortProcess(data=np.zeros(self.shape_reshaped))
-        source.ref_port.reshape(new_shape=self.shape_reshaped).connect(
-            sink.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.reshape(self.shape_reshaped)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_reshape_refport_read_from_varport(self) -> None:
-        """Tests a virtual ReshapePort between a RefPort and a VarPort,
-        where the RefPort reads from the VarPort."""
-
-        source = VarPortProcess(data=self.input_data)
-        sink = RefPortReadProcess(data=np.zeros(self.shape_reshaped))
-        sink.ref_port.reshape(new_shape=self.shape_reshaped).connect(
-            source.var_port)
 
         sink.run(condition=RunSteps(num_steps=self.num_steps),
                  run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
@@ -481,157 +237,6 @@ class TestFlattenPort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    def test_flatten_outport_to_inport_hierarchical(self) -> None:
-        """Tests a virtual ReshapePort with flatten() between an OutPort
-        of a hierarchical Process and an InPort of another hierarchical
-        Process."""
-
-        source = HOutPortProcess(data=self.input_data)
-        sink = HInPortProcess(shape=self.shape_reshaped)
-
-        source.out_port.flatten().connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.ravel()
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_flatten_chaining(self) -> None:
-        """Tests whether two virtual ReshapePorts can be chained through the
-        flatten() method."""
-
-        source = OutPortProcess(data=self.input_data)
-        sink = InPortProcess(shape=self.shape_reshaped)
-
-        source.out_port.flatten().flatten().connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.ravel()
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_flatten_inport_to_inport(self) -> None:
-        """Tests a virtual ReshapePort with flatten() between an InPort and
-        another InPort. In a real implementation, the source InPort would be
-        in a hierarchical Process and the sink InPort would be in a SubProcess
-        of that hierarchical Process."""
-
-        out_port_process = OutPortProcess(data=self.input_data)
-        source = InPortProcess(shape=self.shape)
-        sink = InPortProcess(shape=self.shape_reshaped)
-
-        out_port_process.out_port.connect(source.in_port)
-        source.in_port.flatten().connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.ravel()
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_flatten_refport_write_to_varport(self) -> None:
-        """Tests a virtual ReshapePort with flatten() between a RefPort and a
-        VarPort, where the RefPort writes to the VarPort."""
-
-        source = RefPortWriteProcess(data=self.input_data)
-        sink = VarPortProcess(data=np.zeros(self.shape_reshaped))
-        source.ref_port.flatten().connect(sink.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.ravel()
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    @unittest.skip("not yet implemented")
-    def test_flatten_refport_read_from_varport(self) -> None:
-        """Tests a virtual ReshapePort with flatten() between a RefPort and a
-        VarPort, where the RefPort reads from the VarPort."""
-
-        source = VarPortProcess(data=self.input_data)
-        sink = RefPortReadProcess(data=np.zeros(self.shape_reshaped))
-        sink.ref_port.flatten().connect(source.var_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = self.input_data.ravel()
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-
-class TestConcatPort(unittest.TestCase):
-    """Tests virtual ConcatPorts on Processes that are executed."""
-
-    def setUp(self) -> None:
-        self.num_steps = 1
-        self.shape = (3, 1, 4)
-        self.shape_concat = (3, 3, 4)
-        self.input_data = np.random.randint(256, size=self.shape)
-
-    @unittest.skip("not yet implemented")
-    def test_concat_outport_to_inport(self) -> None:
-        """Tests a virtual ConcatPort between an OutPort and an InPort."""
-
-        source_1 = OutPortProcess(data=self.input_data)
-        source_2 = OutPortProcess(data=self.input_data)
-        source_3 = OutPortProcess(data=self.input_data)
-        sink = InPortProcess(shape=self.shape_concat)
-
-        source_1.out_port.concat_with([
-            source_2.out_port,
-            source_3.out_port], axis=1).connect(sink.in_port)
-
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
-
-        expected = np.concatenate([self.input_data] * 3, axis=1)
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
 
 # A minimal Process with an OutPort
 class OutPortProcess(AbstractProcess):
@@ -667,30 +272,6 @@ class HInPortProcess(AbstractProcess):
         self.proc_params['shape'] = shape
 
 
-# A minimal Process with a RefPort that writes
-class RefPortWriteProcess(AbstractProcess):
-    def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
-        self.data = Var(shape=data.shape, init=data)
-        self.ref_port = RefPort(shape=data.shape)
-
-
-# A minimal Process with a RefPort that reads
-class RefPortReadProcess(AbstractProcess):
-    def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
-        self.data = Var(shape=data.shape, init=data)
-        self.ref_port = RefPort(shape=data.shape)
-
-
-# A minimal Process with a Var and a VarPort
-class VarPortProcess(AbstractProcess):
-    def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
-        self.data = Var(shape=data.shape, init=data)
-        self.var_port = VarPort(self.data)
-
-
 # A minimal PyProcModel implementing OutPortProcess
 @implements(proc=OutPortProcess, protocol=LoihiProtocol)
 @requires(CPU)
@@ -715,47 +296,6 @@ class PyInPortProcessModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         self.data[:] = self.in_port.recv()
         print("Received input data for InPortProcess: ", str(self.data))
-
-
-# A minimal PyProcModel implementing RefPortWriteProcess
-@implements(proc=RefPortWriteProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PyRefPortWriteProcessModelFloat(PyLoihiProcessModel):
-    ref_port: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32)
-
-    def pre_guard(self):
-        return True
-
-    def run_pre_mgmt(self):
-        self.ref_port.write(self.data)
-        print("Sent output data of RefPortWriteProcess: ", str(self.data))
-
-
-# A minimal PyProcModel implementing RefPortReadProcess
-@implements(proc=RefPortReadProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PyRefPortReadProcessModelFloat(PyLoihiProcessModel):
-    ref_port: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32)
-
-    def pre_guard(self):
-        return True
-
-    def run_pre_mgmt(self):
-        self.data = self.ref_port.read()
-        print("Received input data for RefPortReadProcess: ", str(self.data))
-
-
-# A minimal PyProcModel implementing VarPortProcess
-@implements(proc=VarPortProcess, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PyVarPortProcessModelFloat(PyLoihiProcessModel):
-    var_port: PyInPort = LavaPyType(PyVarPort.VEC_DENSE, np.int32)
-    data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
 # A minimal hierarchical ProcModel with a nested OutPortProcess

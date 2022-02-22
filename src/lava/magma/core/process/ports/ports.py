@@ -159,10 +159,17 @@ class AbstractPort(AbstractProcessMember):
             return []
         else:
             virtual_ports = []
+            num_virtual_ports = 0
             for p in self.in_connections:
                 virtual_ports += p.get_incoming_virtual_ports()
                 if isinstance(p, AbstractVirtualPort):
                     virtual_ports.append(p)
+                    num_virtual_ports += 1
+
+            if num_virtual_ports > 1:
+                raise NotImplementedError("joining multiple virtual ports is "
+                                          "not yet supported")
+
             return virtual_ports
 
     def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
@@ -189,6 +196,12 @@ class AbstractPort(AbstractProcessMember):
         :param new_shape: New shape of port. Number of total elements must
         not change.
         """
+        # TODO (MR): Implement for other types of Ports
+        if not (isinstance(self, OutPort) or
+                isinstance(self, AbstractVirtualPort)):
+            raise NotImplementedError("reshape/flatten are only implemented "
+                                      "for OutPorts")
+
         if self.size != math.prod(new_shape):
             raise pe.ReshapeError(self.shape, new_shape)
 
@@ -242,6 +255,12 @@ class AbstractPort(AbstractProcessMember):
         :param axes: Order of permutation. Number of total elements and number
         of dimensions must not change.
         """
+        # TODO (MR): Implement for other types of Ports
+        if not (isinstance(self, OutPort) or
+                isinstance(self, AbstractVirtualPort)):
+            raise NotImplementedError("transpose is only implemented for "
+                                      "OutPorts")
+
         if axes is None:
             axes = tuple(reversed(range(len(self.shape))))
         else:
@@ -672,7 +691,7 @@ class AbstractVirtualPort(AbstractPort):
         pass
 
 
-class ReshapePort(AbstractVirtualPort, AbstractPort):
+class ReshapePort(AbstractVirtualPort):
     """A ReshapePort is a virtual port that allows to change the shape of a
     port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
@@ -685,7 +704,7 @@ class ReshapePort(AbstractVirtualPort, AbstractPort):
         return ft.partial(np.reshape, newshape=self.shape)
 
 
-class ConcatPort(AbstractVirtualPort, AbstractPort):
+class ConcatPort(AbstractVirtualPort):
     """A ConcatPort is a virtual port that allows to concatenate multiple
     ports along given axis into a new port before connecting to another port.
     The shape of all concatenated ports outside of the concatenation
@@ -731,7 +750,7 @@ class ConcatPort(AbstractVirtualPort, AbstractPort):
         raise NotImplementedError()
 
 
-class TransposePort(AbstractVirtualPort, AbstractPort):
+class TransposePort(AbstractVirtualPort):
     """A TransposePort is a virtual port that allows to permute the dimensions
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
@@ -754,7 +773,7 @@ class TransposePort(AbstractVirtualPort, AbstractPort):
 
 
 # ToDo: TBD...
-class ReIndexPort(AbstractVirtualPort, AbstractPort):
+class ReIndexPort(AbstractVirtualPort):
     """A ReIndexPort is a virtual port that allows to re-index the elements
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
