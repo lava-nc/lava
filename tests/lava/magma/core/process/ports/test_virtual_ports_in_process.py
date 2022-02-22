@@ -8,6 +8,7 @@ import numpy as np
 
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
@@ -53,6 +54,29 @@ class TestTransposePort(unittest.TestCase):
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape_transposed)
+
+        source.out_port.transpose(axes=self.axes).connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_transpose_outport_to_inport_hierarchical(self) -> None:
+        """Tests a virtual TransposePort between an OutPort
+        of a hierarchical Process and an InPort of another hierarchical
+        Process."""
+
+        source = HOutPortProcess(data=self.input_data)
+        sink = HInPortProcess(shape=self.shape_transposed)
 
         source.out_port.transpose(axes=self.axes).connect(sink.in_port)
 
@@ -304,6 +328,30 @@ class TestReshapePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    def test_reshape_outport_to_inport_hierarchical(self) -> None:
+        """Tests a virtual ReshapePort between an OutPort
+        of a hierarchical Process and an InPort of another hierarchical
+        Process."""
+
+        source = HOutPortProcess(data=self.input_data)
+        sink = HInPortProcess(shape=self.shape_reshaped)
+
+        source.out_port.reshape(new_shape=self.shape_reshaped).connect(
+            sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.reshape(self.shape_reshaped)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
     def test_reshape_chaining(self) -> None:
         """Tests whether two virtual ReshapePorts can be chained."""
 
@@ -417,6 +465,29 @@ class TestFlattenPort(unittest.TestCase):
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape_reshaped)
+
+        source.out_port.flatten().connect(sink.in_port)
+
+        sink.run(condition=RunSteps(num_steps=self.num_steps),
+                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = sink.data.get()
+        sink.stop()
+
+        expected = self.input_data.ravel()
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_flatten_outport_to_inport_hierarchical(self) -> None:
+        """Tests a virtual ReshapePort with flatten() between an OutPort
+        of a hierarchical Process and an InPort of another hierarchical
+        Process."""
+
+        source = HOutPortProcess(data=self.input_data)
+        sink = HInPortProcess(shape=self.shape_reshaped)
 
         source.out_port.flatten().connect(sink.in_port)
 
@@ -562,7 +633,7 @@ class TestConcatPort(unittest.TestCase):
         )
 
 
-# minimal Process with an OutPort
+# A minimal Process with an OutPort
 class OutPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
         super().__init__(data=data)
@@ -570,12 +641,30 @@ class OutPortProcess(AbstractProcess):
         self.out_port = OutPort(shape=data.shape)
 
 
-# minimal Process with an InPort
+# A minimal Process with an InPort
 class InPortProcess(AbstractProcess):
     def __init__(self, shape: ty.Tuple[int, ...]) -> None:
         super().__init__(shape=shape)
         self.data = Var(shape=shape, init=np.zeros(shape))
         self.in_port = InPort(shape=shape)
+
+
+# A minimal hierarchical Process with an OutPort
+class HOutPortProcess(AbstractProcess):
+    def __init__(self, data: np.ndarray) -> None:
+        super().__init__(data=data)
+        self.data = Var(shape=data.shape, init=data)
+        self.out_port = OutPort(shape=data.shape)
+        self.proc_params['data'] = data
+
+
+# A minimal hierarchical Process with an InPort and a Var
+class HInPortProcess(AbstractProcess):
+    def __init__(self, shape: ty.Tuple[int, ...]) -> None:
+        super().__init__(shape=shape)
+        self.data = Var(shape=shape, init=np.zeros(shape))
+        self.in_port = InPort(shape=shape)
+        self.proc_params['shape'] = shape
 
 
 # A minimal Process with a RefPort that writes
@@ -667,6 +756,24 @@ class PyRefPortReadProcessModelFloat(PyLoihiProcessModel):
 class PyVarPortProcessModelFloat(PyLoihiProcessModel):
     var_port: PyInPort = LavaPyType(PyVarPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
+
+
+# A minimal hierarchical ProcModel with a nested OutPortProcess
+@implements(proc=HOutPortProcess)
+class SubHOutPortProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.out_proc = OutPortProcess(data=proc.proc_params['data'])
+        self.out_proc.out_port.connect(proc.out_port)
+
+
+# A minimal hierarchical ProcModel with a nested InPortProcess and an aliased
+# Var
+@implements(proc=HInPortProcess)
+class SubHInPortProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.in_proc = InPortProcess(shape=proc.proc_params['shape'])
+        proc.in_port.connect(self.in_proc.in_port)
+        proc.data.alias(self.in_proc.data)
 
 
 if __name__ == '__main__':

@@ -206,7 +206,7 @@ class PyInPort(AbstractPyIOPort):
         recv_data : numpy.ndarray
             received data, transformed by the incoming virtual ports
         """
-        if self._transform_funcs is not None:
+        if self._transform_funcs:
             # apply all transformation functions to the received data
             for f in self._transform_funcs:
                 recv_data = f(recv_data)

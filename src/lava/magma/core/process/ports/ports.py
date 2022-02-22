@@ -160,8 +160,8 @@ class AbstractPort(AbstractProcessMember):
         else:
             virtual_ports = []
             for p in self.in_connections:
+                virtual_ports += p.get_incoming_virtual_ports()
                 if isinstance(p, AbstractVirtualPort):
-                    virtual_ports += p.get_incoming_virtual_ports()
                     virtual_ports.append(p)
             return virtual_ports
 
@@ -628,7 +628,7 @@ class ImplicitVarPort(VarPort):
 
 class AbstractVirtualPort(AbstractPort):
     """Abstract base class interface for any type of port that merely serves
-    to transforms the properties of a user-defined port."""
+    to transform the properties of a user-defined port."""
 
     @property
     def _parent_port(self):
