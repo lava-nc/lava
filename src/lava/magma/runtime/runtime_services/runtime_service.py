@@ -32,21 +32,22 @@ except(ImportError):
     class NxBoard():
         pass
 
-"""This file defines the interface for RuntimeService which is responsible for
+"""The RuntimeService interface is responsible for
 coordinating the execution of a group of process models belonging to a common
-synchronization domain. The domain might follow a SyncProtocol or could be
-asynchronous too. The processes and their corresponding process models are
-selected by the Runtime depending on the RunConfiguration assigned at the
+synchronization domain. The domain will follow a SyncProtocol or will be
+asynchronous. The processes and their corresponding process models are
+selected by the Runtime dependent on the RunConfiguration assigned at the
 start of execution. For each group of processes which follow the same
-protocol and would execute on the same node, Runtime creates a RuntimeService
-which will coordinate all actions/commands from Runtime onto the processes as
-well as return any acknowledgement back to Runtime.
+protocol and execute on the same node, the Runtime creates a RuntimeService.
+Each RuntimeService coordinates all actions and commands from the Runtime,
+ transmitting them to the the processes under it's managment and
+returning action and command responses back to Runtime.
 
-Currently we envision few different kinds of RuntimeService:
+RuntimeService Types:
 
 1. PyRuntimeService: (Abstract Class) Coordinates process models executing on
    the CPU and written in Python.
-   Following are the Concrete Implementations:
+   Concrete Implementations:
     a. LoihiPyRuntimeService: Coordinates process models executing on
        the CPU and written in Python and following the LoihiProtocol.
     b. AsyncPyRuntimeService: Coordinates process models executing on
@@ -54,13 +55,23 @@ Currently we envision few different kinds of RuntimeService:
 
 2. CRuntimeService: (Abstract Class) Coordinates/Manages process models
    executing on the CPU/Embedded CPU and written in C
-   Following are the Concrete Implementations:
+   Concrete Implementations:
     a. LoihiCRuntimeService: Coordinates process models executing on
        the CPU/Embedded CPU and written in C and following the LoihiProtocol.
+3. NcRuntimeService: (Abstract Class) Coordinates/Manages process models
+   executing on a Loihi NeuroCore.
+   Concrete Implementations:
+    a. NxSdkRuntimeService: Coordinates process models executing on a Loihi
+       NeuroCore and written in Python following the LoihiProtocol.
 """
 
 
 class PyRuntimeService(AbstractRuntimeService):
+    """Abstract RuntimeService for Python, it provides base methods
+    for start and run. It is not meant to instantiated directly
+    but used by inheritance
+    """
+
     def __init__(self,
                  protocol: ty.Type[AbstractSyncProtocol],
                  loglevel: int = logging.WARNING,):
@@ -503,6 +514,8 @@ class NxSdkRuntimeService(NcRuntimeService):
               Communication protocol used by NxSdkRuntimeService
     loihi_version: LoihiVersion
                    Version of Loihi Chip to use, N2 or N3
+    loglevel: int
+             Log level to use for logging
     """
 
     def __init__(self,
@@ -536,6 +549,12 @@ class NxSdkRuntimeService(NcRuntimeService):
         self.log.debug("NxSdkRuntimeService is initialized")
 
     def run(self):
+        """Retrieves commands from the runtime. STOP and PAUSE commands are
+        relayed to NxCore. Otherwise the number of time steps is received as
+        a RUN command. In this case RUN is relayed to NxCore with number of time
+        steps. The loop ends when receiving the STOP command from the runtime.
+        """
+
         self.log.debug("NxSdkRuntime is running")
         selector = CspSelector()
         channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
