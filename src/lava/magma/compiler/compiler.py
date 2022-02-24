@@ -832,11 +832,6 @@ class Compiler:
                     elif issubclass(pm, AbstractCProcessModel):
                         ev = exec_var.CExecVar(v, node_id, run_srv_id)
                     elif issubclass(pm, AbstractNcProcessModel):
-                        # ev = exec_var.NcExecVar(chip_id: int
-                        #                         core_id: int
-                        #                         register_base_addr: int
-                        #                         entry_id: int
-                        #                         field: str)
                         ev = exec_var.PyExecVar(v, node_id, run_srv_id)
                     else:
                         raise NotImplementedError("Illegal ProcessModel type.")
