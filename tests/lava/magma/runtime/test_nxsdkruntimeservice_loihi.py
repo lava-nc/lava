@@ -61,9 +61,7 @@ class TestProcessLoihi2(unittest.TestCase):
     @unittest.skipUnless(run_loihi_tests,
                          "runtime_to_runtimeservice_to_nxcore_to_loihi")
     def test_nxsdkruntimeservice_loihi(self):
-        process = SimpleProcess(shape=(2, 2),
-                                loglevel=logging.DEBUG,
-                                logenable=True)
+        process = SimpleProcess(shape=(2, 2))
         run_config = SimpleRunConfig(sync_domains=[])
         process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)

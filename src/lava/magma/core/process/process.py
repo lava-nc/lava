@@ -228,13 +228,30 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         self.name: str = kwargs.pop("name", f"Process_{self.id}")
 
+        # Setup Logging
         self.loglevel: int = kwargs.pop("loglevel", logging.WARNING)
+        self.loglevelconsole: int = kwargs.pop("loglevelconsole", logging.ERROR)
         self.logfile: str = kwargs.pop("logfile", "lava.log")
-        self.logenable: bool = bool(kwargs.pop("logenable", False))
-        if self.logenable:
-            logging.basicConfig(filename=self.logfile)
-        self.log = logging.getLogger(__name__)
-        self.log.setLevel(self.loglevel)
+        self.logfileenable: bool = bool(kwargs.pop("logfileenable", False))
+        self.log = logging.getLogger()
+
+        formatter = logging.Formatter(
+            '%(asctime)s:%(levelname)s: %(name)s - %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S%p')
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(self.loglevelconsole)
+        console_handler.setFormatter(formatter)
+
+        if self.logfileenable:
+            logging.basicConfig(
+                filename=self.logfile,
+                level=self.loglevel,
+                format='%(asctime)s:%(levelname)s: %(name)s - %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S%p'
+            )
+
+        self.log.addHandler(console_handler)
 
         # kwargs will be used for ProcessModel initialization later
         self.init_args: dict = kwargs
