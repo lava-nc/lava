@@ -390,8 +390,7 @@ class Compiler:
             elif issubclass(pm, AbstractNcProcessModel):
                 for p in procs:
                     b = NcProcessBuilder(pm, p.id, p.proc_params)
-                    # Create Var- and PortInitializers from lava.process Vars
-                    # and Ports
+                    # Create VarInitializers from lava.process Vars
                     v = [VarInitializer(v.name, v.shape, v.init, v.id)
                          for v in p.vars]
 
@@ -485,6 +484,7 @@ class Compiler:
             # Auto-assign AsyncProtocol if none was assigned
             if not pm.implements_protocol:
                 proto = AsyncProtocol
+                log.debug("Protocol: AsyncProtocol")
             else:
                 proto = pm.implements_protocol
                 log.debug("Protocol: " + proto.__name__)
@@ -602,8 +602,8 @@ class Compiler:
         ncfg = NodeConfig()
         ncfg.append(n)
 
-        # Until NodeConfig generation algorithm present
-        # check if NcProcessModel is present in proc_map
+        # Until NodeConfig generation algorithm is present
+        # check if NcProcessModel is present in proc_map,
         # if so add hardcoded Node for OheoGulch
         for proc_model in proc_map.items():
             if issubclass(proc_model[1], NcProcessModel):

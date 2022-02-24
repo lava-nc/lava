@@ -39,9 +39,7 @@ class Net(ABC):
 class AbstractNcProcessModel(AbstractProcessModel, ABC):
     """Abstract interface for NeuroCore ProcessModels
 
-    Example for how variables and ports might be initialized:
-        a_in: NcInPort =   LavaNcType(NcInPort.VEC_DENSE, float)
-        s_out: NcInPort =  LavaNcType(NcOutPort.VEC_DENSE, bool, precision=1)
+    Example for how variables might be initialized:
         u: np.ndarray =    LavaNcType(np.ndarray, np.int32, precision=24)
         v: np.ndarray =    LavaNcType(np.ndarray, np.int32, precision=24)
         bias: np.ndarray = LavaNcType(np.ndarray, np.int16, precision=12)
