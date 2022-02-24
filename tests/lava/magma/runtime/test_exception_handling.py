@@ -46,7 +46,7 @@ class PyProcModel1(PyLoihiProcessModel):
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise AssertionError("All the error info")
 
@@ -59,7 +59,7 @@ class PyProcModel2(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise TypeError("All the error info")
 

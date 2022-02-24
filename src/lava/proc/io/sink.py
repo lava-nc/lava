@@ -48,7 +48,7 @@ class AbstractPyReceiveModel(PyLoihiProcessModel):
         """Receive spikes and store in an internal variable"""
         data = self.a_in.recv()
         buffer = self.data.shape[-1]
-        self.data[..., (self.current_ts - 1) % buffer] = data
+        self.data[..., (self.time_step - 1) % buffer] = data
 
 
 @implements(proc=RingBuffer, protocol=LoihiProtocol)
@@ -117,7 +117,7 @@ class AbstractPyRead(PyLoihiProcessModel):
         self.counter = 0
 
     def post_guard(self) -> None:
-        return (self.current_ts - 1) % self.interval == self.offset
+        return (self.time_step - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
         data = self.state.read()
