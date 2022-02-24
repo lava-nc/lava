@@ -52,16 +52,15 @@ class SimpleProcessModel(NcProcessModel):
 class TestProcessLoihi2(unittest.TestCase):
     # Run Loihi Tests using command below:
     #
-    # SLURM=1 LOIHI_GEN=N3B3 BOARD=ncl-og-05 PARTITION=oheogulch
+    # "SLURM=1 LOIHI_GEN=N3B3 BOARD=ncl-og-05 PARTITION=oheogulch
     # RUN_LOIHI_TESTS=1 python -m unittest
-    # tests/lava/magma/runtime/test_nxsdkruntimeservice_loihi_.py
-    # TestProcessLoihi2.test_nxsdkruntimeservice_run_loihi
+    # tests/lava/magma/runtime/test_nxsdkruntimeservice_loihi.py"
 
     run_loihi_tests: bool = Utils.get_bool_env_setting("RUN_LOIHI_TESTS")
 
     @unittest.skipUnless(run_loihi_tests,
                          "runtime_to_runtimeservice_to_nxcore_to_loihi")
-    def test_nxsdkruntimeservice_run_loihi(self):
+    def test_nxsdkruntimeservice_loihi(self):
         process = SimpleProcess(shape=(2, 2),
                                 loglevel=logging.DEBUG,
                                 logenable=True)

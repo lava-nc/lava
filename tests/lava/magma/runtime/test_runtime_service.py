@@ -160,11 +160,11 @@ class NxSdkTestRuntimeService(NxSdkRuntimeService):
 
 
 class TestNxSdkRuntimeService(unittest.TestCase):
-    # Run Loihi Tests using example command below:
+    # Run Loihi Tests using example below:
     #
-    # SLURM=1 LOIHI_GEN=N3B3 BOARD=ncl-og-05 PARTITION=oheogulch
+    # "SLURM=1 LOIHI_GEN=N3B3 BOARD=ncl-og-05 PARTITION=oheogulch
     # RUN_LOIHI_TESTS=1 python -m unittest
-    # tests/lava/magma/runtime/test_runtime_service.py
+    # tests/lava/magma/runtime/test_runtime_service.py"
 
     run_loihi_tests: bool = Utils.get_bool_env_setting("RUN_LOIHI_TESTS")
 
