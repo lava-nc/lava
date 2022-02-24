@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+
 import typing as ty
 from abc import ABC
 
@@ -84,6 +85,10 @@ class AbstractProcessModel(ABC):
     def run(self):
         raise NotImplementedError("'run' method is not implemented.")
 
+    def add_ports_for_polling(self):
+        raise NotImplementedError(
+            "'add_ports_for_polling' method is not implemented.")
+
     # ToDo: What does this function do here? The AbstractProcModel can't
     #  depend on one specific Python implementation of ports/channels. It can
     #  probably not even have a start function. Because for a CProcModel
@@ -93,7 +98,3 @@ class AbstractProcessModel(ABC):
     def start(self):
         # Store the list of csp_ports. Start them here.
         raise NotImplementedError
-        # TODO: Iterate over all inports and outports of the process
-        # and start them
-
-        self.run()
