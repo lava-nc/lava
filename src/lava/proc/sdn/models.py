@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -51,12 +51,18 @@ class AbstractSigmaModel(PyLoihiProcessModel):
         """
         return a_in_data + self.sigma
 
+    def run_spk(self) -> None:
+        a_in_data = self.a_in.recv()
+        self.sigma = self.sigma_dynamics(a_in_data)
+        self.s_out.send(self.sigma)
+
 
 class AbstractDeltaModel(PyLoihiProcessModel):
     a_in = None
     s_out = None
 
     vth = None
+    act = None
     residue = None
     error = None
     wgt_exp = None
@@ -157,16 +163,7 @@ class PySigmaModelFloat(AbstractSigmaModel):
     """ Floating point implementation of Sigma decoding"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
-
-    sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-
-    def __init__(self, proc_params: Dict[str, Any]) -> None:
-        super().__init__(proc_params)
-
-    def run_spk(self) -> None:
-        a_in_data = self.a_in.recv()
-        self.sigma = self.sigma_dynamics(a_in_data)
-        self.s_out.send(self.sigma)
+    sigma: np.ndarray = LavaPyType(np.ndarray, float)
 
 
 @implements(proc=Sigma, protocol=LoihiProtocol)
@@ -176,16 +173,7 @@ class PySigmaModelFixed(AbstractSigmaModel):
     """ Fixed point implementation of Sigma decoding"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-
     sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-
-    def __init__(self, proc_params: Dict[str, Any]) -> None:
-        super().__init__(proc_params)
-
-    def run_spk(self) -> None:
-        a_in_data = self.a_in.recv()
-        self.sigma = self.sigma_dynamics(a_in_data)
-        self.s_out.send(self.sigma)
 
 
 @implements(proc=Delta, protocol=LoihiProtocol)
