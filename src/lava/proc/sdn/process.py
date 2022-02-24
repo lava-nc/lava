@@ -67,6 +67,18 @@ class Delta(AbstractProcess):
 
     Parameters
     ----------
+    shape: Tuple
+        shape of the sigma process. Default is (1,).
+    vth: int or float
+        threshold of the delta encoder.
+    cum_error: Bool
+        flag to enable/disable cumulative error accumulation. Default is False.
+    wgt_exp: int
+        weight scaling exponent. Note: this has effect only on fixed point
+        models. Default is 0.
+    state_exp: int
+        state variables scaling exponent. Note: this has effect only on fixed
+        point modles. Default is 0.
     """
     def __init__(
         self,
@@ -119,6 +131,23 @@ class SigmaDelta(AbstractProcess):
 
     Parameters
     ----------
+    shape: Tuple
+        shape of the sigma process. Default is (1,).
+    vth: int or float
+        threshold of the delta encoder.
+    bias: int or float
+        bias to the neuron activation.
+    act_mode: enum
+        activation mode describing the non-linear activation function. Options
+        are described by ``ACTIVATION_MODE`` enum.
+    cum_error: Bool
+        flag to enable/disable cumulative error accumulation. Default is False.
+    wgt_exp: int
+        weight scaling exponent. Note: this has effect only on fixed point
+        models. Default is 0.
+    state_exp: int
+        state variables scaling exponent. Note: this has effect only on fixed
+        point modles. Default is 0.
     """
     def __init__(
         self,
