@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+
 import typing as ty
 import logging
 from abc import ABC
@@ -57,8 +58,9 @@ class AbstractProcessModel(ABC):
     required_resources: ty.List[ty.Type[AbstractResource]] = []
     tags: ty.List[str] = []
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any],
-                 loglevel=logging.WARNING) -> None:
+    def __init__(self,
+                 proc_params: ty.Dict[str, ty.Any],
+                 loglevel: int = logging.WARNING) -> None:
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
         self.proc_params: ty.Dict[str, ty.Any] = proc_params

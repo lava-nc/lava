@@ -1,7 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import logging
 import unittest
 import numpy as np
 
@@ -24,8 +23,7 @@ class DenseRunConfig(RunConfig):
     floating point precision or Loihi bit-accurate fixed-point precision"""
 
     def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
-        super().__init__(custom_sync_domains=custom_sync_domains,
-                         loglevel=logging.WARNING)
+        super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
 
     def select(self, proc, proc_models):
@@ -98,7 +96,7 @@ class PyVecSendModelFloat(PyLoihiProcessModel):
         """
         self.a_in.recv()
 
-        if self.send_at_times[self.current_ts - 1]:
+        if self.send_at_times[self.time_step - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -120,7 +118,7 @@ class PyVecSendModelFixed(PyLoihiProcessModel):
         """
         self.a_in.recv()
 
-        if self.send_at_times[self.current_ts - 1]:
+        if self.send_at_times[self.time_step - 1]:
             self.s_out.send(self.vec_to_send)
         else:
             self.s_out.send(np.zeros_like(self.vec_to_send))
@@ -137,7 +135,7 @@ class PySpkRecvModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts - 1, :] = spk_in
+        self.spk_data[self.time_step - 1, :] = spk_in
 
 
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
@@ -151,7 +149,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         spk_in = self.s_in.recv()
-        self.spk_data[self.current_ts - 1, :] = spk_in
+        self.spk_data[self.time_step - 1, :] = spk_in
 
 
 class TestDenseProcessModelFloat(unittest.TestCase):

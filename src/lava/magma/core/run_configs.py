@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
-
 import logging
-
 import typing as ty
 from abc import ABC
 
@@ -46,7 +44,7 @@ class RunConfig(ABC):
 
     def __init__(self,
                  custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
-                 loglevel=logging.WARNING):
+                 loglevel: int = logging.WARNING):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
         self.custom_sync_domains = []
@@ -129,7 +127,7 @@ class Loihi1SimCfg(RunConfig):
                  exception_proc_model_map: ty.Optional[ty.Dict[
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
-                 loglevel=logging.WARNING):
+                 loglevel: int = logging.WARNING):
         super().__init__(custom_sync_domains=custom_sync_domains,
                          loglevel=loglevel)
         self.select_tag = select_tag

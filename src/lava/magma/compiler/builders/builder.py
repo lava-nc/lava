@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 import typing as ty
 
 import numpy as np
@@ -228,7 +229,7 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                     raise AssertionError(
                         f"LavaPyType for '{name}' must be a strict sub-type of "
                         f"PyRefPort in '{self.proc_model.__name__}'."
-                    )    
+                    )
 
     def set_py_ports(self, py_ports: ty.List[PortInitializer], check=True):
         """Appends the given list of PyPorts to the ProcessModel. Used by the
@@ -448,7 +449,7 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         return pm
 
 
-class CProcessBuilder(AbstractProcessBuilder):
+class CProcessBuilder(_AbstractProcessBuilder):
     """C Process Builder"""
 
     pass
@@ -501,6 +502,9 @@ class NcProcessBuilder(_AbstractProcessBuilder):
                         f"No LavaNcType '{attr_name}' found in ProcModel "
                         f"'{self.proc_model.__name__}'."
                     )
+
+    def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
+        pass
 
     def build(self):
         """Builds a NcProcessModel at runtime within Runtime.
@@ -557,14 +561,19 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         protocol: ty.Type[AbstractSyncProtocol],
         runtime_service_id: int,
         model_ids: ty.List[int],
+        loihi_version: ty.Type[LoihiVersion],
+        loglevel: int = logging.WARNING
     ):
         super(RuntimeServiceBuilder, self).__init__(rs_class, protocol)
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self._runtime_service_id = runtime_service_id
         self._model_ids: ty.List[int] = model_ids
         self.csp_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_recv_port: ty.Dict[str, CspRecvPort] = {}
         self.csp_proc_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_proc_recv_port: ty.Dict[str, CspRecvPort] = {}
+        self.loihi_version: ty.Type[LoihiVersion] = loihi_version
 
     @property
     def runtime_service_id(self):
@@ -608,21 +617,30 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         A concreate instance of AbstractRuntimeService
         [PyRuntimeService or NxSdkRuntimeService]
         """
-        if isinstance(self.rs_class, NxSdkRuntimeService):
+
+        self.log.debug("RuntimeService Class: " + str(self.rs_class))
+        nxsdk_rts = False
+        if self.rs_class == NxSdkRuntimeService:
             rs = self.rs_class(protocol=self.sync_protocol,
                                loihi_version=loihi_version)
+            nxsdk_rts = True
+            self.log.debug("Initilized NxSdkRuntimeService")
         else:
             rs = self.rs_class(protocol=self.sync_protocol)
+            self.log.debug("Initilized PyRuntimeService")
         rs.runtime_service_id = self._runtime_service_id
         rs.model_ids = self._model_ids
 
-        for port in self.csp_proc_send_port.values():
-            if "service_to_process" in port.name:
-                rs.service_to_process.append(port)
+        if not nxsdk_rts:
+            for port in self.csp_proc_send_port.values():
+                if "service_to_process" in port.name:
+                    rs.service_to_process.append(port)
 
-        for port in self.csp_proc_recv_port.values():
-            if "process_to_service" in port.name:
-                rs.process_to_service.append(port)
+            for port in self.csp_proc_recv_port.values():
+                if "process_to_service" in port.name:
+                    rs.process_to_service.append(port)
+
+            self.log.debug("Setup 'RuntimeService <--> Rrocess; ports")
 
         for port in self.csp_send_port.values():
             if "service_to_runtime" in port.name:
@@ -631,6 +649,8 @@ class RuntimeServiceBuilder(AbstractRuntimeServiceBuilder):
         for port in self.csp_recv_port.values():
             if "runtime_to_service" in port.name:
                 rs.runtime_to_service = port
+
+        self.log.debug("Setup 'Runtime <--> RuntimeService' ports")
 
         return rs
 

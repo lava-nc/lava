@@ -20,21 +20,24 @@ from lava.magma.core.run_conditions import RunSteps
 # A minimal process with an OutPort
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(loglevel=logging.CRITICAL, **kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.out = OutPort(shape=(2,))
 
 
 # A minimal process with an InPort
 class P2(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(loglevel=logging.CRITICAL, **kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.inp = InPort(shape=(2,))
 
 
 # A minimal process with an InPort
 class P3(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(loglevel=logging.CRITICAL, **kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.inp = InPort(shape=(2,))
 
 
@@ -46,7 +49,7 @@ class PyProcModel1(PyLoihiProcessModel):
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise AssertionError("All the error info")
 
@@ -59,7 +62,7 @@ class PyProcModel2(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise TypeError("All the error info")
 
@@ -84,7 +87,8 @@ class TestExceptionHandling(unittest.TestCase):
         proc = P1()
 
         run_steps = RunSteps(num_steps=1)
-        run_cfg = Loihi1SimCfg(loglevel=logging.CRITICAL)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
 
         # Run the network for 1 time step -> no exception
         proc.run(condition=run_steps, run_cfg=run_cfg)
@@ -107,7 +111,8 @@ class TestExceptionHandling(unittest.TestCase):
         recv = P2()
 
         run_steps = RunSteps(num_steps=1)
-        run_cfg = Loihi1SimCfg(loglevel=logging.CRITICAL)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
 
         # Connect sender with receiver
         sender.out.connect(recv.inp)
@@ -134,7 +139,8 @@ class TestExceptionHandling(unittest.TestCase):
         recv2 = P3()
 
         run_steps = RunSteps(num_steps=1)
-        run_cfg = Loihi1SimCfg(loglevel=logging.CRITICAL)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
 
         # Connect sender with receiver
         sender.out.connect([recv1.inp, recv2.inp])

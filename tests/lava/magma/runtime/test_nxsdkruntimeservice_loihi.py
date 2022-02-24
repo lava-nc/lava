@@ -1,15 +1,17 @@
+import logging
 import unittest
 
+from tests.lava.test_utils.utils import Utils
+
 from lava.magma.core.decorator import implements, requires
-from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.model.nc.type import LavaNcType
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
-from lava.magma.core.resources import CPU
+from lava.magma.core.resources import Loihi2NeuroCore
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import RunConfig
-from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.nc.model import NcProcessModel
 
 
 class SimpleProcess(AbstractProcess):
@@ -22,25 +24,20 @@ class SimpleProcess(AbstractProcess):
 
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
-        sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains)
+        super().__init__()
         self.model = None
         if "model" in kwargs:
             self.model = kwargs.pop("model")
 
     def select(self, process, proc_models):
-        if self.model is not None:
-            if self.model == "sub" and isinstance(process, SimpleProcess):
-                return proc_models[1]
-
         return proc_models[0]
 
 
 @implements(proc=SimpleProcess, protocol=LoihiProtocol)
-@requires(CPU)
-class SimpleProcessModel(PyLoihiProcessModel):
-    u = LavaPyType(int, int)
-    v = LavaPyType(int, int)
+@requires(Loihi2NeuroCore)
+class SimpleProcessModel(NcProcessModel):
+    u = LavaNcType(int, int)
+    v = LavaNcType(int, int)
 
     def post_guard(self):
         return False
@@ -52,11 +49,23 @@ class SimpleProcessModel(PyLoihiProcessModel):
         return False
 
 
-class TestProcess(unittest.TestCase):
-    def test_synchronization_single_process_model(self):
-        process = SimpleProcess(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])
-        run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
+class TestProcessLoihi2(unittest.TestCase):
+    # Run Loihi Tests using command below:
+    #
+    # SLURM=1 LOIHI_GEN=N3B3 BOARD=ncl-og-05 PARTITION=oheogulch
+    # RUN_LOIHI_TESTS=1 python -m unittest
+    # tests/lava/magma/runtime/test_nxsdkruntimeservice_loihi_.py
+    # TestProcessLoihi2.test_nxsdkruntimeservice_run_loihi
+
+    run_loihi_tests: bool = Utils.get_env_test_setting("RUN_LOIHI_TESTS")
+
+    @unittest.skipUnless(run_loihi_tests,
+                         "runtime_to_runtimeservice_to_nxcore_to_loihi")
+    def test_nxsdkruntimeservice_run_loihi(self):
+        process = SimpleProcess(shape=(2, 2),
+                                loglevel=logging.DEBUG,
+                                logenable=True)
+        run_config = SimpleRunConfig(sync_domains=[])
         process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
         process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
         process.stop()

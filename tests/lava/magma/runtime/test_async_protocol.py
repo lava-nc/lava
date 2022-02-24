@@ -1,15 +1,15 @@
 import unittest
 
 from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import PyAsyncProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_conditions import RunContinuous
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.domain import SyncDomain
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
 class SimpleProcess(AbstractProcess):
@@ -36,29 +36,41 @@ class SimpleRunConfig(RunConfig):
         return proc_models[0]
 
 
-@implements(proc=SimpleProcess, protocol=LoihiProtocol)
+@implements(proc=SimpleProcess, protocol=AsyncProtocol)
 @requires(CPU)
-class SimpleProcessModel(PyLoihiProcessModel):
+class SimpleProcessModel(PyAsyncProcessModel):
     u = LavaPyType(int, int)
     v = LavaPyType(int, int)
 
-    def post_guard(self):
-        return False
-
-    def pre_guard(self):
-        return False
-
-    def lrn_guard(self):
-        return False
+    def run_async(self):
+        while True:
+            self.u = self.u + 10
+            self.v = self.v + 1000
+            if self.check_for_stop_cmd():
+                return
 
 
 class TestProcess(unittest.TestCase):
-    def test_synchronization_single_process_model(self):
+    def test_async_process_model(self):
+        """
+        Verifies the working of Asynchronous Process
+        """
         process = SimpleProcess(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", LoihiProtocol(), [process])
+        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
-        process.run(condition=RunSteps(num_steps=10), run_cfg=run_config)
-        process.run(condition=RunSteps(num_steps=5), run_cfg=run_config)
+        process.run(condition=RunContinuous(), run_cfg=run_config)
+        process.stop()
+
+    def test_async_process_model_pause(self):
+        """
+        Verifies the working of Asynchronous Process, pause should have no
+        effect
+        """
+        process = SimpleProcess(shape=(2, 2))
+        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
+        run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
+        process.run(condition=RunContinuous(), run_cfg=run_config)
+        process.pause()
         process.stop()
 
 

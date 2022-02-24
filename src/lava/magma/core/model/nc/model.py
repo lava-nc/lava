@@ -47,8 +47,10 @@ class AbstractNcProcessModel(AbstractProcessModel, ABC):
         bias: np.ndarray = LavaNcType(np.ndarray, np.int16, precision=12)
         du: int =          LavaNcType(int, np.uint16, precision=12)
     """
-    def __init__(self, proc_params: ty.Dict[str, ty.Any],
-                 loglevel=logging.WARNING) -> None:
+    def __init__(self,
+                 log: logging.getLoggerClass,
+                 proc_params: ty.Dict[str, ty.Any],
+                 loglevel: int = logging.WARNING) -> None:
         super().__init__(proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
 
@@ -61,8 +63,9 @@ class AbstractNcProcessModel(AbstractProcessModel, ABC):
 
 
 class NcProcessModel(AbstractNcProcessModel):
-    def __init__(self, proc_params: ty.Dict[str, ty.Any],
-                 loglevel=logging.WARNING):
+    def __init__(self,
+                 proc_params: ty.Dict[str, ty.Any],
+                 loglevel: int = logging.WARNING):
         super(AbstractNcProcessModel, self).__init__(proc_params,
                                                      loglevel=loglevel)
 

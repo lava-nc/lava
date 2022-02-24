@@ -1,7 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import logging
 import unittest
 
 from lava.magma.core.process.process import AbstractProcess
@@ -14,9 +13,8 @@ from lava.proc.lif.process import LIF
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains,
-                         loglevel=logging.WARNING)
         self.model = None
+        super().__init__(custom_sync_domains=sync_domains)
         if "model" in kwargs:
             self.model = kwargs.pop("model")
 

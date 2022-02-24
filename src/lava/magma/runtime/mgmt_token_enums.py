@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
-
 import numpy as np
+
+"""Defines message tokens for Actions (Commands) and Responses. Also defines
+helper functions to convert scalar values to these message tokens"""
 
 
 def enum_to_np(value: ty.Union[int, float],
@@ -64,3 +66,9 @@ class MGMT_RESPONSE:
     """Signifies Error raised"""
     PAUSED = enum_to_np(-3)
     """Signifies Execution State to be Paused"""
+    REQ_PAUSE = enum_to_np(-4)
+    """Signifies Request of PAUSE"""
+    REQ_STOP = enum_to_np(-5)
+    """Signifies Request of STOP"""
+    SET_COMPLETE = enum_to_np(-6)
+    """Signifies Completion of Set Var"""
