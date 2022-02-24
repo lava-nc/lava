@@ -1,4 +1,3 @@
-import logging
 import unittest
 
 from tests.lava.test_utils.utils import Utils
