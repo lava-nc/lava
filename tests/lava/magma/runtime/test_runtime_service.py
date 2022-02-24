@@ -166,7 +166,7 @@ class TestNxSdkRuntimeService(unittest.TestCase):
     # RUN_LOIHI_TESTS=1 python -m unittest
     # tests/lava/magma/runtime/test_runtime_service.py
 
-    run_loihi_tests: bool = Utils.get_env_test_setting("RUN_LOIHI_TESTS")
+    run_loihi_tests: bool = Utils.get_bool_env_setting("RUN_LOIHI_TESTS")
 
     def test_runtime_service_construction(self):
         p = LoihiProtocol()

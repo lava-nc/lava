@@ -57,7 +57,7 @@ class TestProcessLoihi2(unittest.TestCase):
     # tests/lava/magma/runtime/test_nxsdkruntimeservice_loihi_.py
     # TestProcessLoihi2.test_nxsdkruntimeservice_run_loihi
 
-    run_loihi_tests: bool = Utils.get_env_test_setting("RUN_LOIHI_TESTS")
+    run_loihi_tests: bool = Utils.get_bool_env_setting("RUN_LOIHI_TESTS")
 
     @unittest.skipUnless(run_loihi_tests,
                          "runtime_to_runtimeservice_to_nxcore_to_loihi")
