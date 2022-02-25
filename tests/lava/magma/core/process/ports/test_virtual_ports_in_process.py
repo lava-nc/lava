@@ -282,7 +282,7 @@ class PyOutPortProcessModelFloat(PyLoihiProcessModel):
 
     def run_spk(self):
         self.out_port.send(self.data)
-        print("Sent output data of OutPortProcess: ", str(self.data))
+        self.log.info("Sent output data of OutPortProcess: ", str(self.data))
 
 
 # A minimal PyProcModel implementing InPortProcess
@@ -295,7 +295,7 @@ class PyInPortProcessModelFloat(PyLoihiProcessModel):
 
     def run_spk(self):
         self.data[:] = self.in_port.recv()
-        print("Received input data for InPortProcess: ", str(self.data))
+        self.log.info("Received input data for InPortProcess: ", str(self.data))
 
 
 # A minimal hierarchical ProcModel with a nested OutPortProcess
