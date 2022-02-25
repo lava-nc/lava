@@ -370,7 +370,17 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                 csp_ports = self.csp_ports[name]
                 if not isinstance(csp_ports, list):
                     csp_ports = [csp_ports]
-            port = port_cls(csp_ports, pm, p.shape, lt.d_type)
+
+            # TODO (MR): This is probably just a temporary hack until the
+            #  interface of PyOutPorts has been adjusted.
+            if issubclass(port_cls, PyInPort):
+                port = port_cls(csp_ports, pm, p.shape, lt.d_type,
+                                p.transform_funcs)
+            elif issubclass(port_cls, PyOutPort):
+                port = port_cls(csp_ports, pm, p.shape, lt.d_type)
+            else:
+                raise AssertionError("port_cls must be of type PyInPort or "
+                                     "PyOutPort")
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)

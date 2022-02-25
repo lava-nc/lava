@@ -423,7 +423,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if isinstance(csp_port, CspRecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
-                        self._channel_actions.append((csp_port, func(var_port)))
+                        self._channel_actions.insert(0,
+                                                     (csp_port, func(var_port)))
 
 
 class PyAsyncProcessModel(AbstractPyProcessModel):
