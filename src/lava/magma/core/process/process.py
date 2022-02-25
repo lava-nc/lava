@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import typing as ty
 from _collections import OrderedDict
 from lava.magma.compiler.executable import Executable
@@ -227,6 +228,31 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         self.name: str = kwargs.pop("name", f"Process_{self.id}")
 
+        # Setup Logging
+        self.loglevel: int = kwargs.pop("loglevel", logging.WARNING)
+        self.loglevelconsole: int = kwargs.pop("loglevelconsole", logging.ERROR)
+        self.logfile: str = kwargs.pop("logfile", "lava.log")
+        self.logfileenable: bool = bool(kwargs.pop("logfileenable", False))
+        self.log = logging.getLogger()
+
+        formatter = logging.Formatter(
+            '%(asctime)s:%(levelname)s: %(name)s - %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S%p')
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(self.loglevelconsole)
+        console_handler.setFormatter(formatter)
+
+        if self.logfileenable:
+            logging.basicConfig(
+                filename=self.logfile,
+                level=self.loglevel,
+                format='%(asctime)s:%(levelname)s: %(name)s - %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S%p'
+            )
+
+        self.log.addHandler(console_handler)
+
         # kwargs will be used for ProcessModel initialization later
         self.init_args: dict = kwargs
 
@@ -343,7 +369,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             ProcessModel for each compiled process.
         """
         from lava.magma.compiler.compiler import Compiler
-        compiler = Compiler()
+        compiler = Compiler(loglevel=self.loglevel)
         return compiler.compile(self, run_cfg)
 
     def save(self, path: str):
@@ -391,7 +417,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         if not self._runtime:
             executable = self.compile(run_cfg)
             self._runtime = Runtime(executable,
-                                    ActorType.MultiProcessing)
+                                    ActorType.MultiProcessing,
+                                    loglevel=self.loglevel)
             self._runtime.initialize()
 
         self._runtime.start(condition)
