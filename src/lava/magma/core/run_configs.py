@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+import logging
 import typing as ty
 from abc import ABC
 
@@ -42,7 +43,10 @@ class RunConfig(ABC):
     """
 
     def __init__(self,
-                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None):
+                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+                 loglevel: int = logging.WARNING):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self.custom_sync_domains = []
         if custom_sync_domains:
             if not isinstance(custom_sync_domains, list):
@@ -122,8 +126,10 @@ class Loihi1SimCfg(RunConfig):
                  select_sub_proc_model: ty.Optional[bool] = False,
                  exception_proc_model_map: ty.Optional[ty.Dict[
                      ty.Type[AbstractProcess], ty.Type[
-                         AbstractProcessModel]]] = None):
-        super().__init__(custom_sync_domains=custom_sync_domains)
+                         AbstractProcessModel]]] = None,
+                 loglevel: int = logging.WARNING):
+        super().__init__(custom_sync_domains=custom_sync_domains,
+                         loglevel=loglevel)
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
         self.exception_proc_model_map = exception_proc_model_map
@@ -240,11 +246,11 @@ class Loihi1SimCfg(RunConfig):
             # Assumption: User doesn't care about tags. We return the first
             # SubProcessModel found
             if self.select_tag is None:
-                print(f"[{self.__class__.__qualname__}]: Using the first "
-                      f"SubProcessModel "
-                      f"{proc_models[sub_pm_idxs[0]].__qualname__} "
-                      f"available for Process "
-                      f"{proc.name}::{proc.__class__.__qualname__}.")
+                self.log.info(f"[{self.__class__.__qualname__}]: Using the"
+                              f" first SubProcessModel "
+                              f"{proc_models[sub_pm_idxs[0]].__qualname__} "
+                              f"available for Process "
+                              f"{proc.name}::{proc.__class__.__qualname__}.")
                 return proc_models[sub_pm_idxs[0]]
             # Case 3a(iii): User asked for a specific tag:
             # -------------------------------------------
@@ -276,11 +282,11 @@ class Loihi1SimCfg(RunConfig):
         # Assumption: User doesn't care about tags. We return the first
         # PyProcessModel found
         if self.select_tag is None:
-            print(f"[{self.__class__.__qualname__}]: Using the first "
-                  f"PyProcessModel "
-                  f"{proc_models[py_pm_idxs[0]].__qualname__} "
-                  f"available for Process "
-                  f"{proc.name}::{proc.__class__.__qualname__}.")
+            self.log.info(f"[{self.__class__.__qualname__}]: Using the first "
+                          f"PyProcessModel "
+                          f"{proc_models[py_pm_idxs[0]].__qualname__} "
+                          f"available for Process "
+                          f"{proc.name}::{proc.__class__.__qualname__}.")
             return proc_models[py_pm_idxs[0]]
         # Case 3b(ii): User asked for a specific tag:
         # ------------------------------------------

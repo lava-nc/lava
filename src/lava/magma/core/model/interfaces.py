@@ -32,3 +32,8 @@ class AbstractPortImplementation(ABC):
         """Join all csp ports"""
         for csp_port in self.csp_ports:
             csp_port.join()
+
+
+class AbstractNodeGroup:
+    def alloc(self, *args, **kwargs):
+        pass
