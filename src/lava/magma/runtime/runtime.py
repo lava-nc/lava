@@ -3,11 +3,14 @@
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
+import logging
+
+import numpy as np
+
 import sys
 import typing
 import typing as ty
 
-import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 from lava.magma.compiler.exec_var import AbstractExecVar
@@ -19,7 +22,8 @@ from lava.magma.runtime.message_infrastructure \
     import MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
     MGMT_COMMAND, MGMT_RESPONSE
-from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service \
+    import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -96,7 +100,10 @@ class Runtime:
 
     def __init__(self,
                  exe: Executable,
-                 message_infrastructure_type: ActorType):
+                 message_infrastructure_type: ActorType,
+                 loglevel: int = logging.WARNING):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self._run_cond: typing.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
@@ -119,19 +126,10 @@ class Runtime:
         if self._is_started:
             self.stop()
 
-    def initialize(self):
+    def initialize(self, node_cfg_idx: int = 0):
         """Initializes the runtime"""
-        # Right now assume there is only 1 node config
-        node_configs: ty.List[NodeConfig] = self._executable.node_configs
-        if len(node_configs) != 1:
-            raise AssertionError
+        node_config: NodeConfig = self.node_cfg[node_cfg_idx]
 
-        node_config: NodeConfig = node_configs[0]
-
-        # Right now assume there is only 1 node in node_config with resource
-        # type CPU
-        if len(node_config) != 1:
-            raise AssertionError
         if node_config[0].node_type != HeadNode:
             raise AssertionError
 
@@ -151,11 +149,10 @@ class Runtime:
         for port in self.service_to_runtime:
             port.start()
 
-    # ToDo: (AW) Hack: This currently just returns the one and only NodeCfg
     @property
-    def node_cfg(self) -> NodeConfig:
+    def node_cfg(self) -> ty.List[NodeConfig]:
         """Returns the selected NodeCfg."""
-        return self._executable.node_configs[0]
+        return self._executable.node_configs
 
     def _build_message_infrastructure(self):
         """Create the Messaging Infrastructure Backend given the
@@ -221,15 +218,17 @@ class Runtime:
                         sync_channel_builder.src_process.set_csp_proc_ports(
                             [channel.src_port])
                         self._get_process_builder_for_process(
-                            sync_channel_builder.dst_process).set_rs_csp_ports(
-                            [channel.dst_port])
+                            sync_channel_builder.dst_process) \
+                            .set_rs_csp_ports([channel.dst_port])
                     else:
                         sync_channel_builder.dst_process.set_csp_proc_ports(
                             [channel.dst_port])
                         self._get_process_builder_for_process(
-                            sync_channel_builder.src_process).set_rs_csp_ports(
-                            [channel.src_port])
+                            sync_channel_builder.src_process) \
+                            .set_rs_csp_ports([channel.src_port])
                 else:
+                    self.log.info(
+                        sync_channel_builder.dst_process.__class__.__name__)
                     raise ValueError("Unexpected type of Sync Channel Builder")
 
     # ToDo: (AW) Why not pass the builder as an argument to the mp.Process
@@ -281,7 +280,7 @@ class Runtime:
                             actors.join()
                             if actors.exception:
                                 _, traceback = actors.exception
-                                print(traceback)
+                                self.log.info(traceback)
                                 error_cnt += 1
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
@@ -308,7 +307,7 @@ class Runtime:
             self._is_started = True
             self._run(run_condition)
         else:
-            print("Runtime not initialized yet.")
+            self.log.info("Runtime not initialized yet.")
 
     def _run(self, run_condition: AbstractRunCondition):
         """
@@ -333,7 +332,7 @@ class Runtime:
                 raise ValueError(f"Wrong type of run_condition : "
                                  f"{run_condition.__class__}")
         else:
-            print("Runtime not started yet.")
+            self.log.info("Runtime not started yet.")
 
     def wait(self):
         """Waits for existing run to end. This is helpful if the execution
@@ -356,7 +355,7 @@ class Runtime:
                             actors.join()
                             if actors.exception:
                                 _, traceback = actors.exception
-                                print(traceback)
+                                self.log.info(traceback)
                                 error_cnt += 1
                         self.stop()
                         raise RuntimeError(
@@ -379,7 +378,7 @@ class Runtime:
                 self._is_started = False
                 # Send messages to RuntimeServices to stop as soon as possible.
             else:
-                print("Runtime not started yet.")
+                self.log.info("Runtime not started yet.")
         finally:
             self._messaging_infrastructure.stop()
 
@@ -393,7 +392,8 @@ class Runtime:
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
         if self._is_running:
-            print("WARNING: Cannot Set a Var when the execution is going on")
+            self.log.info(
+                "WARNING: Cannot Set a Var when the execution is going on")
             return
         node_config: NodeConfig = self._executable.node_configs[0]
         ev: AbstractExecVar = node_config.exec_vars[var_id]
@@ -439,7 +439,8 @@ class Runtime:
     def get_var(self, var_id: int, idx: np.ndarray = None) -> np.ndarray:
         """Gets value of a variable with id 'var_id'."""
         if self._is_running:
-            print("WARNING: Cannot Get a Var when the execution is going on")
+            self.log.info(
+                "WARNING: Cannot Get a Var when the execution is going on")
             return
         node_config: NodeConfig = self._executable.node_configs[0]
         ev: AbstractExecVar = node_config.exec_vars[var_id]
