@@ -163,12 +163,18 @@ class AbstractPort(AbstractProcessMember):
             for p in self.in_connections:
                 virtual_ports += p.get_incoming_virtual_ports()
                 if isinstance(p, AbstractVirtualPort):
+                    # TODO (MR): ConcatPorts are not yet supported by the
+                    #  compiler - until then, an exception is raised.
+                    if isinstance(p, ConcatPort):
+                        raise NotImplementedError("ConcatPorts are not yet "
+                                                  "supported.")
+
                     virtual_ports.append(p)
                     num_virtual_ports += 1
 
             if num_virtual_ports > 1:
-                raise NotImplementedError("joining multiple virtual ports is "
-                                          "not yet supported")
+                raise NotImplementedError("Joining multiple virtual ports is "
+                                          "not yet supported.")
 
             return virtual_ports
 
