@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import typing as ty
 from abc import abstractmethod
 import functools as ft
@@ -137,6 +138,16 @@ class PyInPort(AbstractPyIOPort):
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
+    def __init__(self,
+                 csp_ports: ty.List[AbstractCspPort],
+                 process_model: AbstractProcessModel,
+                 shape: ty.Tuple[int, ...],
+                 d_type: type,
+                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
+
+        self._transform_funcs = transform_funcs
+        super().__init__(csp_ports, process_model, shape, d_type)
+
     @abstractmethod
     def recv(self):
         """Abstract method to receive data (vectors/scalars) sent from connected
@@ -182,6 +193,25 @@ class PyInPort(AbstractPyIOPort):
             True,
         )
 
+    def _transform(self, recv_data: np.array) -> np.array:
+        """Applies all transformation function pointers to the input data.
+
+        Parameters
+        ----------
+        recv_data : numpy.ndarray
+            data received on the port that shall be transformed
+
+        Returns
+        -------
+        recv_data : numpy.ndarray
+            received data, transformed by the incoming virtual ports
+        """
+        if self._transform_funcs:
+            # apply all transformation functions to the received data
+            for f in self._transform_funcs:
+                recv_data = f(recv_data)
+        return recv_data
+
 
 class PyInPortVectorDense(PyInPort):
     """Python implementation of PyInPort for dense vector data."""
@@ -199,7 +229,7 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.recv(),
+            lambda acc, csp_port: acc + self._transform(csp_port.recv()),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
