@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import unittest
 
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -55,6 +56,7 @@ class ProcC(AbstractProcess):
 
 
 class MockRuntimeService:
+    __name__ = "MockRuntimeService"
     pass
 
 
@@ -125,8 +127,12 @@ class SubProcModelA(AbstractSubProcessModel):
 
 # A minimal RunConfig that will select SubProcModel if there is one
 class RunCfg(RunConfig):
-    def __init__(self, custom_sync_domains=None, select_sub_proc_model=False):
-        super().__init__(custom_sync_domains=custom_sync_domains)
+    def __init__(self,
+                 loglevel: int = logging.WARNING,
+                 custom_sync_domains=None,
+                 select_sub_proc_model=False):
+        super().__init__(custom_sync_domains=custom_sync_domains,
+                         loglevel=loglevel)
         self.select_sub_proc_model = select_sub_proc_model
 
     def select(self, proc, proc_models):
@@ -489,7 +495,10 @@ class TestCompiler(unittest.TestCase):
         # Processes not assigned to a custom sync domain will get assigned
         # automatically to a default sync domain created for each unique sync
         # protocol
-        sd = Compiler._create_sync_domains(proc_map, run_cfg, [])
+        c = Compiler()
+        sd = c._create_sync_domains(proc_map, run_cfg,
+                                    [],
+                                    log=c.log)
 
         # We expect 5 sync domains: The 2 custom ones and 2 default ones
         # created for p3 and p5 and 1 AsyncDomain for processes not
@@ -522,7 +531,10 @@ class TestCompiler(unittest.TestCase):
         # In this case, only default SyncDomains will be chosen based on the
         # implemented SyncProtocols of each ProcessModel
         c = Compiler()
-        sd = c._create_sync_domains(proc_map, run_cfg, [])
+        sd = c._create_sync_domains(proc_map,
+                                    run_cfg,
+                                    [],
+                                    log=c.log)
 
         self.assertEqual(len(sd[0]), 2)
         self.assertEqual(sd[0][0].protocol.__class__, ProtocolA)
@@ -542,7 +554,10 @@ class TestCompiler(unittest.TestCase):
 
         c = Compiler()
         with self.assertRaises(AssertionError):
-            c._create_sync_domains(proc_map, run_cfg, [])
+            c._create_sync_domains(proc_map,
+                                   run_cfg,
+                                   [],
+                                   log=c.log)
 
     def test_create_sync_domains_proc_assigned_to_incompatible_domain(self):
         """Checks that a process can only be assigned to a sync domain with a
@@ -561,7 +576,10 @@ class TestCompiler(unittest.TestCase):
         # In this case, sync domain creation will fail
         c = Compiler()
         with self.assertRaises(AssertionError):
-            c._create_sync_domains(proc_map, run_cfg, [])
+            c._create_sync_domains(proc_map,
+                                   run_cfg,
+                                   [],
+                                   log=c.log)
 
     def test_create_sync_domain_non_unique_domain_names(self):
         """Checks that sync domain names must be unique."""
@@ -579,7 +597,10 @@ class TestCompiler(unittest.TestCase):
         # This does not compile because domain names must be unique
         c = Compiler()
         with self.assertRaises(AssertionError):
-            c._create_sync_domains(proc_map, run_cfg, [])
+            c._create_sync_domains(proc_map,
+                                   run_cfg,
+                                   [],
+                                   log=c.log)
 
     def test_create_node_cfgs(self):
         """Checks creation of NodeConfigs.
@@ -595,7 +616,7 @@ class TestCompiler(unittest.TestCase):
 
         # This creates the naive NodeConfig for now:
         c = Compiler()
-        ncfgs = c._create_node_cfgs(proc_map)
+        ncfgs = c._create_node_cfgs(proc_map, log=c.log)
 
         # It will be a single NodeCfg of type HeadNode containing all processes
         from lava.magma.core.resources import HeadNode
@@ -769,7 +790,7 @@ class TestCompiler(unittest.TestCase):
 
         # First we need to compile a NodeConfig
         c = Compiler()
-        node_cfgs = c._create_node_cfgs(proc_map)
+        node_cfgs = c._create_node_cfgs(proc_map, log=c.log)
 
         # Creating exec_vars adds any ExecVars to each NodeConfig
         c._create_exec_vars(node_cfgs, proc_map, {

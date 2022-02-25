@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import importlib
 import importlib.util as import_utils
 import inspect
@@ -18,7 +19,7 @@ import lava.magma.compiler.exceptions as ex
 import lava.magma.compiler.exec_var as exec_var
 from lava.magma.compiler.builders.builder import ChannelBuilderMp
 from lava.magma.compiler.builders.builder import PyProcessBuilder, \
-    AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
+    NcProcessBuilder, AbstractRuntimeServiceBuilder, RuntimeServiceBuilder, \
     AbstractChannelBuilder, ServiceChannelBuilderMp
 from lava.magma.compiler.builders.builder import RuntimeChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -29,25 +30,37 @@ from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
 from lava.magma.core import resources
 from lava.magma.core.model.c.model import AbstractCProcessModel
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.core.model.nc.model import AbstractNcProcessModel
+from lava.magma.core.model.nc.model import (
+    AbstractNcProcessModel,
+    NcProcessModel
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import AbstractPort, VarPort, \
     ImplicitVarPort, RefPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.resources import CPU, NeuroCore
+from lava.magma.core.resources import (
+    CPU,
+    Loihi1NeuroCore,
+    Loihi2NeuroCore,
+    NeuroCore
+)
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
+from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
 PROC_MAP = ty.Dict[AbstractProcess, ty.Type[AbstractProcessModel]]
 
 
 # ToDo: (AW) Document all class methods and class
 class Compiler:
-    def __init__(self, compile_cfg: ty.Optional[ty.Dict[str, ty.Any]] = None):
+    def __init__(self, loglevel: int = logging.WARNING,
+                 compile_cfg: ty.Optional[ty.Dict[str, ty.Any]] = None):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(loglevel)
         self._compile_config = {"pypy_channel_size": 64}
         if compile_cfg:
             self._compile_config.update(compile_cfg)
@@ -195,12 +208,12 @@ class Compiler:
             run_cfg: RunConfig) -> ty.Type[AbstractProcessModel]:
         """Selects a ProcessModel from list of provided models given RunCfg."""
         selected_proc_model = run_cfg.select(proc, models)
-        err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select() must " \
-            f"return a sub-class of AbstractProcessModel. Got" \
-            f" {type(selected_proc_model)} instead."
-        if not isinstance(selected_proc_model, type):
-            raise AssertionError(err_msg)
-        if not issubclass(selected_proc_model, AbstractProcessModel):
+
+        if not isinstance(selected_proc_model, type) \
+                or not issubclass(selected_proc_model, AbstractProcessModel):
+            err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select()" \
+                      f" must return a sub-class of AbstractProcessModel. Got" \
+                      f" {type(selected_proc_model)} instead."
             raise AssertionError(err_msg)
 
         return selected_proc_model
@@ -375,8 +388,16 @@ class Compiler:
             elif issubclass(pm, AbstractCProcessModel):
                 raise NotImplementedError
             elif issubclass(pm, AbstractNcProcessModel):
-                # ToDo: This needs to call NeuroCoreCompiler
-                raise NotImplementedError
+                for p in procs:
+                    b = NcProcessBuilder(pm, p.id, p.proc_params)
+                    # Create VarInitializers from lava.process Vars
+                    v = [VarInitializer(v.name, v.shape, v.init, v.id)
+                         for v in p.vars]
+
+                    # Assigns initializers to builder
+                    b.set_variables(v)
+                    b.check_all_vars_set()
+                    nc_builders[p] = b
             else:
                 raise TypeError("Non-supported ProcessModel type {}"
                                 .format(pm))
@@ -391,7 +412,8 @@ class Compiler:
 
     @staticmethod
     def _create_sync_domains(
-            proc_map: PROC_MAP, run_cfg: RunConfig, node_cfgs
+            proc_map: PROC_MAP, run_cfg: RunConfig, node_cfgs,
+            log: logging.getLoggerClass()
     ) -> ty.Tuple[ty.List[SyncDomain], ty.Dict[Node, ty.List[SyncDomain]]]:
         """Validates custom sync domains provided by run_cfg and otherwise
         creates default sync domains.
@@ -406,7 +428,6 @@ class Compiler:
         unassigned processes to those default sync domains based on the sync
         protocol that the chosen process model implements.
         """
-
         proc_to_domain_map = OrderedDict()
         sync_domains = OrderedDict()
 
@@ -422,13 +443,16 @@ class Compiler:
 
             # Validate and map all processes in sync domain
             for p in sd.processes:
+                log.debug("Process: " + str(p))
                 pm = proc_map[p]
 
                 # Auto-assign AsyncProtocol if none was assigned
                 if not pm.implements_protocol:
                     proto = AsyncProtocol
+                    log.debug("Protocol: AsyncProtocol")
                 else:
                     proto = pm.implements_protocol
+                    log.debug("Protocol: " + proto.__name__)
 
                 # Check that SyncProtocols of process model and sync domain
                 # are compatible
@@ -460,8 +484,10 @@ class Compiler:
             # Auto-assign AsyncProtocol if none was assigned
             if not pm.implements_protocol:
                 proto = AsyncProtocol
+                log.debug("Protocol: AsyncProtocol")
             else:
                 proto = pm.implements_protocol
+                log.debug("Protocol: " + proto.__name__)
 
             # Add process to existing or new default sync domain if not part
             # of custom sync domain
@@ -481,13 +507,16 @@ class Compiler:
             defaultdict(list)
         for node_cfg in node_cfgs:
             for node in node_cfg:
+                log.debug("Node: " + str(node.node_type.__name__))
                 node_to_sync_domain_dict[node].extend(
                     [proc_to_domain_map[proc] for proc in node.processes])
         return list(sync_domains.values()), node_to_sync_domain_dict
 
     # ToDo: (AW) Implement the general NodeConfig generation algorithm
     @staticmethod
-    def _create_node_cfgs(proc_map: PROC_MAP) -> ty.List[NodeConfig]:
+    def _create_node_cfgs(proc_map: PROC_MAP,
+                          log: logging.getLoggerClass()
+                          ) -> ty.List[NodeConfig]:
         """Creates and returns a list of NodeConfigs from the
         AbstractResource requirements of all process's ProcessModels where
         each NodeConfig is a set of Nodes that satisfies the resource
@@ -562,9 +591,26 @@ class Compiler:
          Finally, we are left with a list of (the best) legal NodeCfgs.
         """
         procs = list(proc_map.keys())
+        if log.level == logging.DEBUG:
+            for proc in procs:
+                log.debug("Proc Name: " + proc.name + " Proc: " + str(proc))
+            proc_models = list(proc_map.items())
+            for procm in proc_models:
+                log.debug("ProcModels: " + str(procm[1]))
+
         n = Node(node_type=resources.HeadNode, processes=procs)
         ncfg = NodeConfig()
         ncfg.append(n)
+
+        # Until NodeConfig generation algorithm is present
+        # check if NcProcessModel is present in proc_map,
+        # if so add hardcoded Node for OheoGulch
+        for proc_model in proc_map.items():
+            if issubclass(proc_model[1], NcProcessModel):
+                n1 = Node(node_type=resources.OheoGulch, processes=procs)
+                ncfg.append(n1)
+                log.debug("OheoGulch Node Added to NodeConfig: "
+                          + str(n1.node_type))
 
         return [ncfg]
 
@@ -671,26 +717,45 @@ class Compiler:
     # ToDo: (AW) Fix type resolution issues
     @staticmethod
     def _create_runtime_service_as_py_process_model(
-            node_to_sync_domain_dict: ty.Dict[Node, ty.List[SyncDomain]]) \
+            node_to_sync_domain_dict: ty.Dict[Node, ty.List[SyncDomain]],
+            log: logging.getLoggerClass() = logging.getLogger()) \
             -> ty.Tuple[
                 ty.Dict[SyncDomain, AbstractRuntimeServiceBuilder],
                 ty.Dict[int, int]]:
         rs_builders: ty.Dict[SyncDomain, AbstractRuntimeServiceBuilder] = {}
         proc_id_to_runtime_service_id_map: ty.Dict[int, int] = {}
         rs_id: int = 0
+        loihi_version: LoihiVersion = LoihiVersion.N3
         for node, sync_domains in node_to_sync_domain_dict.items():
             sync_domain_set = set(sync_domains)
             for sync_domain in sync_domain_set:
+                if log.level == logging.DEBUG:
+                    for resource in node.node_type.resources:
+                        log.debug("node.node_type.resources: "
+                                  + resource.__name__)
                 if NeuroCore in node.node_type.resources:
                     rs_class = sync_domain.protocol.runtime_service[NeuroCore]
+                elif Loihi1NeuroCore in node.node_type.resources:
+                    log.debug("sync_domain.protocol. "
+                              + "runtime_service[Loihi1NeuroCore]")
+                    rs_class = sync_domain.protocol. \
+                        runtime_service[Loihi1NeuroCore]
+                    loihi_version: LoihiVersion = LoihiVersion.N2
+                elif Loihi2NeuroCore in node.node_type.resources:
+                    log.debug("sync_domain.protocol. "
+                              + "runtime_service[Loihi2NeuroCore]")
+                    rs_class = sync_domain.protocol. \
+                        runtime_service[Loihi2NeuroCore]
                 else:
                     rs_class = sync_domain.protocol.runtime_service[CPU]
+                log.debug("RuntimeService Class: " + str(rs_class.__name__))
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
                 rs_builder = \
                     RuntimeServiceBuilder(rs_class=rs_class,
                                           protocol=sync_domain.protocol,
                                           runtime_service_id=rs_id,
-                                          model_ids=model_ids)
+                                          model_ids=model_ids,
+                                          loihi_version=loihi_version)
                 rs_builders[sync_domain] = rs_builder
                 for p in sync_domain.processes:
                     proc_id_to_runtime_service_id_map[p.id] = rs_id
@@ -767,8 +832,7 @@ class Compiler:
                     elif issubclass(pm, AbstractCProcessModel):
                         ev = exec_var.CExecVar(v, node_id, run_srv_id)
                     elif issubclass(pm, AbstractNcProcessModel):
-                        raise NotImplementedError(
-                            "NcProcessModel not yet supported.")
+                        ev = exec_var.PyExecVar(v, node_id, run_srv_id)
                     else:
                         raise NotImplementedError("Illegal ProcessModel type.")
                     exec_vars[v.id] = ev
@@ -992,11 +1056,11 @@ class Compiler:
         exe = self._compile_proc_models(proc_groups)
 
         # 4. Create NodeConfigs (just pick one manually for now):
-        node_cfgs = self._create_node_cfgs(proc_map)
+        node_cfgs = self._create_node_cfgs(proc_map, self.log)
 
         # 5. Create SyncDomains
         sync_domains, node_to_sync_domain_dict = self._create_sync_domains(
-            proc_map, run_cfg, node_cfgs)
+            proc_map, run_cfg, node_cfgs, self.log)
 
         # 6. Create Channel builders
         channel_builders = self._create_channel_builders(proc_map)
@@ -1004,7 +1068,7 @@ class Compiler:
         # 7. Create Runtime Service builders
         runtime_service_builders, proc_id_to_runtime_service_id_map = \
             self._create_runtime_service_as_py_process_model(
-                node_to_sync_domain_dict)
+                node_to_sync_domain_dict, self.log)
 
         # 8. Create ExecVars
         self._create_exec_vars(node_cfgs,
