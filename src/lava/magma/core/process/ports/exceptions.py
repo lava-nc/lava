@@ -34,6 +34,48 @@ class ConcatShapeError(Exception):
         super().__init__(self, msg)
 
 
+class ConcatIndexError(Exception):
+    """Raised when the axis over which ports should be concatenated is out of
+    bounds."""
+
+    def __init__(self, shape: ty.Tuple[int], axis: int):
+        msg = (
+            "Axis {} is out of bounds for given shape {}.".format(axis, shape)
+        )
+        super().__init__(self, msg)
+
+
+class TransposeShapeError(Exception):
+    """Raised when transpose axes is incompatible with old shape dimension."""
+
+    def __init__(
+        self, old_shape: ty.Tuple, axes: ty.Union[ty.Tuple, ty.List]
+    ) -> None:
+        msg = (
+            "Cannot transpose 'old_shape'={} with permutation 'axes={}. "
+            "Total number of dimensions must not change during "
+            "reshaping.".format(old_shape, axes)
+        )
+        super().__init__(msg)
+
+
+class TransposeIndexError(Exception):
+    """Raised when indices in transpose axes are out of bounds for the old
+    shape dimension."""
+
+    def __init__(
+        self,
+        old_shape: ty.Tuple,
+        axes: ty.Union[ty.Tuple, ty.List],
+        wrong_index
+    ) -> None:
+        msg = (
+            f"Cannot transpose 'old_shape'={old_shape} with permutation"
+            f"'axes'={axes}. The index {wrong_index} is out of bounds."
+        )
+        super().__init__(msg)
+
+
 class VarNotSharableError(Exception):
     """Raised when an attempt is made to connect a RefPort or VarPort to a
     non-sharable Var."""
