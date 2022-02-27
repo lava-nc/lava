@@ -51,7 +51,7 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         self.new_shape = (12, 2)
         self.input_data = np.random.randint(256, size=self.shape)
 
-    def test_virtual_ports_between_hierarchical_processes(self) -> None:
+    def test_outport_to_inport_in_hierarchical_processes(self) -> None:
         """Tests a virtual port between an OutPort of a hierarchical Process
         and an InPort of another hierarchical Process."""
 
@@ -69,6 +69,63 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
                  run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
         output = sink.data.get()
         sink.stop()
+
+        expected = self.input_data.reshape(self.new_shape)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_inport_to_inport_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between an InPort of a hierarchical Process
+        and an InPort in a nested Process.
+
+        The data comes from an OutPortProcess and enters the hierarchical
+        Process (HVPInPortProcess) via its InPort. That InPort is connected
+        via a virtual port to the InPort of the nested Process. The data is
+        from there written into a Var 'data' of the nested Process, for which
+        the Var 's_data' of the hierarchical Process is an alias.
+        """
+
+        out_port_process = OutPortProcess(data=self.input_data)
+        h_proc = HVPInPortProcess(h_shape=self.shape, s_shape=self.new_shape)
+
+        out_port_process.out_port.connect(h_proc.in_port)
+
+        h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                   run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = h_proc.s_data.get()
+        h_proc.stop()
+
+        expected = self.input_data.reshape(self.new_shape)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_outport_to_outport_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between an OutPort of a child Process and an
+        OutPort of the corresponding hierarchical parent Process.
+
+        The data comes from the child Process, is passed from its OutPort
+        through a virtual port (where it is reshaped) to the OutPort of the
+        hierarchical Process (HVPOutPortProcess). From there it is passed to
+        the InPort of the InPortProcess and written into a Var 'data'.
+        """
+
+        h_proc = HVPOutPortProcess(h_shape=self.new_shape, data=self.input_data)
+        in_port_process = InPortProcess(shape=self.new_shape)
+
+        h_proc.out_port.connect(in_port_process.in_port)
+
+        h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                   run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+        output = in_port_process.data.get()
+        h_proc.stop()
 
         expected = self.input_data.reshape(self.new_shape)
         self.assertTrue(
@@ -246,32 +303,6 @@ class OutPortProcess(AbstractProcess):
         self.out_port = OutPort(shape=data.shape)
 
 
-# A minimal Process with an InPort
-class InPortProcess(AbstractProcess):
-    def __init__(self, shape: ty.Tuple[int, ...]) -> None:
-        super().__init__(shape=shape)
-        self.data = Var(shape=shape, init=np.zeros(shape))
-        self.in_port = InPort(shape=shape)
-
-
-# A minimal hierarchical Process with an OutPort
-class HOutPortProcess(AbstractProcess):
-    def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
-        self.data = Var(shape=data.shape, init=data)
-        self.out_port = OutPort(shape=data.shape)
-        self.proc_params['data'] = data
-
-
-# A minimal hierarchical Process with an InPort and a Var
-class HInPortProcess(AbstractProcess):
-    def __init__(self, shape: ty.Tuple[int, ...]) -> None:
-        super().__init__(shape=shape)
-        self.data = Var(shape=shape, init=np.zeros(shape))
-        self.in_port = InPort(shape=shape)
-        self.proc_params['shape'] = shape
-
-
 # A minimal PyProcModel implementing OutPortProcess
 @implements(proc=OutPortProcess, protocol=LoihiProtocol)
 @requires(CPU)
@@ -283,6 +314,14 @@ class PyOutPortProcessModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         self.out_port.send(self.data)
         self.log.info("Sent output data of OutPortProcess: ", str(self.data))
+
+
+# A minimal Process with an InPort
+class InPortProcess(AbstractProcess):
+    def __init__(self, shape: ty.Tuple[int, ...]) -> None:
+        super().__init__(shape=shape)
+        self.data = Var(shape=shape, init=np.zeros(shape))
+        self.in_port = InPort(shape=shape)
 
 
 # A minimal PyProcModel implementing InPortProcess
@@ -298,12 +337,29 @@ class PyInPortProcessModelFloat(PyLoihiProcessModel):
         self.log.info("Received input data for InPortProcess: ", str(self.data))
 
 
+# A minimal hierarchical Process with an OutPort
+class HOutPortProcess(AbstractProcess):
+    def __init__(self, data: np.ndarray) -> None:
+        super().__init__(data=data)
+        self.out_port = OutPort(shape=data.shape)
+        self.proc_params['data'] = data
+
+
 # A minimal hierarchical ProcModel with a nested OutPortProcess
 @implements(proc=HOutPortProcess)
 class SubHOutPortProcModel(AbstractSubProcessModel):
     def __init__(self, proc):
         self.out_proc = OutPortProcess(data=proc.proc_params['data'])
         self.out_proc.out_port.connect(proc.out_port)
+
+
+# A minimal hierarchical Process with an InPort and a Var
+class HInPortProcess(AbstractProcess):
+    def __init__(self, shape: ty.Tuple[int, ...]) -> None:
+        super().__init__(shape=shape)
+        self.data = Var(shape=shape, init=np.zeros(shape))
+        self.in_port = InPort(shape=shape)
+        self.proc_params['shape'] = shape
 
 
 # A minimal hierarchical ProcModel with a nested InPortProcess and an aliased
@@ -314,6 +370,62 @@ class SubHInPortProcModel(AbstractSubProcessModel):
         self.in_proc = InPortProcess(shape=proc.proc_params['shape'])
         proc.in_port.connect(self.in_proc.in_port)
         proc.data.alias(self.in_proc.data)
+
+
+# A minimal hierarchical Process with an InPort, where the SubProcessModel
+# connects the InPort to another InPort via a virtual port. The data that
+# comes in through the InPort will eventually be accessible through the
+# 's_data' Var.
+class HVPInPortProcess(AbstractProcess):
+    def __init__(self,
+                 h_shape: ty.Tuple[int, ...],
+                 s_shape: ty.Tuple[int, ...]) -> None:
+        super().__init__()
+        self.s_data = Var(shape=s_shape, init=np.zeros(s_shape))
+        self.in_port = InPort(shape=h_shape)
+        self.proc_params['s_shape'] = s_shape
+
+
+# A minimal hierarchical ProcModel with a nested InPortProcess and an aliased
+# Var
+@implements(proc=HVPInPortProcess)
+class SubHVPInPortProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.in_proc = InPortProcess(shape=proc.proc_params['s_shape'])
+
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['s_shape'])
+        proc.in_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(self.in_proc.in_port)
+
+        proc.s_data.alias(self.in_proc.data)
+
+
+# A minimal hierarchical Process with an OutPort, where the data that is
+# given as an argument may have a different shape than the OutPort of the
+# Process.
+class HVPOutPortProcess(AbstractProcess):
+    def __init__(self,
+                 h_shape: ty.Tuple[int, ...],
+                 data: np.ndarray) -> None:
+        super().__init__(h_shape=h_shape, data=data)
+        self.out_port = OutPort(shape=h_shape)
+        self.proc_params['data'] = data
+        self.proc_params['h_shape'] = h_shape
+
+
+# A minimal hierarchical ProcModel with a nested OutPortProcess
+@implements(proc=HVPOutPortProcess)
+class SubHVPOutPortProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.out_proc = OutPortProcess(data=proc.proc_params['data'])
+
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'])
+        self.out_proc.out_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(proc.out_port)
 
 
 if __name__ == '__main__':
