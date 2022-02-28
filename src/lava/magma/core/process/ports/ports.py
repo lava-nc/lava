@@ -178,6 +178,39 @@ class AbstractPort(AbstractProcessMember):
 
             return virtual_ports
 
+    def get_outgoing_virtual_ports(self) -> ty.List["AbstractVirtualPort"]:
+        """Returns the list of all outgoing virtual ports in order from
+        the current port to the destination port.
+
+        Returns
+        -------
+        virtual_ports : list(AbstractVirtualPorts)
+            the list of all outgoing virtual ports, sorted from source to
+            destination port
+        """
+        if len(self.out_connections) == 0:
+            return []
+        else:
+            virtual_ports = []
+            num_virtual_ports = 0
+            for p in self.out_connections:
+                virtual_ports += p.get_outgoing_virtual_ports()
+                if isinstance(p, AbstractVirtualPort):
+                    # TODO (MR): ConcatPorts are not yet supported by the
+                    #  compiler - until then, an exception is raised.
+                    if isinstance(p, ConcatPort):
+                        raise NotImplementedError("ConcatPorts are not yet "
+                                                  "supported.")
+
+                    virtual_ports.append(p)
+                    num_virtual_ports += 1
+
+            if num_virtual_ports > 1:
+                raise NotImplementedError("Forking a virtual port is "
+                                          "not yet supported.")
+
+            return virtual_ports
+
     def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
         """Returns the list of all destination ports that this port connects to
         either directly or indirectly (through other ports)."""
@@ -192,7 +225,7 @@ class AbstractPort(AbstractProcessMember):
                 ports += p.get_dst_ports(True)
             return ports
 
-    def reshape(self, new_shape: ty.Tuple) -> "ReshapePort":
+    def reshape(self, new_shape: ty.Tuple[int, ...]) -> "ReshapePort":
         """Reshapes this port by deriving and returning a new virtual
         ReshapePort with the new shape. This implies that the resulting
         ReshapePort can only be forward connected to another port.
@@ -202,16 +235,10 @@ class AbstractPort(AbstractProcessMember):
         :param new_shape: New shape of port. Number of total elements must
         not change.
         """
-        # TODO (MR): Implement for other types of Ports
-        if not (isinstance(self, OutPort)
-                or isinstance(self, AbstractVirtualPort)):
-            raise NotImplementedError("reshape/flatten are only implemented "
-                                      "for OutPorts")
-
         if self.size != math.prod(new_shape):
             raise pe.ReshapeError(self.shape, new_shape)
 
-        reshape_port = ReshapePort(new_shape)
+        reshape_port = ReshapePort(new_shape, old_shape=self.shape)
         self._connect_forward(
             [reshape_port], AbstractPort, assert_same_shape=False
         )
@@ -249,7 +276,8 @@ class AbstractPort(AbstractProcessMember):
 
     def transpose(
         self,
-        axes: ty.Optional[ty.Union[ty.Tuple, ty.List]] = None
+        axes: ty.Optional[ty.Union[ty.Tuple[int, ...],
+                                   ty.List]] = None
     ) -> "TransposePort":
         """Permutes the tensor dimension of this port by deriving and returning
         a new virtual TransposePort the new permuted dimension. This implies
@@ -261,12 +289,6 @@ class AbstractPort(AbstractProcessMember):
         :param axes: Order of permutation. Number of total elements and number
         of dimensions must not change.
         """
-        # TODO (MR): Implement for other types of Ports
-        if not (isinstance(self, OutPort)
-                or isinstance(self, AbstractVirtualPort)):
-            raise NotImplementedError("transpose is only implemented for "
-                                      "OutPorts")
-
         if axes is None:
             axes = tuple(reversed(range(len(self.shape))))
         else:
@@ -693,7 +715,11 @@ class AbstractVirtualPort(AbstractPort):
         self._connect_forward(to_list(ports), port_type)
 
     @abstractmethod
-    def get_transform_func(self) -> ft.partial:
+    def get_transform_func_fwd(self) -> ft.partial:
+        pass
+
+    @abstractmethod
+    def get_transform_func_bwd(self) -> ft.partial:
         pass
 
 
@@ -703,11 +729,17 @@ class ReshapePort(AbstractVirtualPort):
     It is used by the compiler to map the indices of the underlying
     tensor-valued data array from the derived to the new shape."""
 
-    def __init__(self, new_shape: ty.Tuple):
+    def __init__(self,
+                 new_shape: ty.Tuple[int, ...],
+                 old_shape: ty.Tuple[int, ...]):
         AbstractPort.__init__(self, new_shape)
+        self.old_shape = old_shape
 
-    def get_transform_func(self) -> ft.partial:
+    def get_transform_func_fwd(self) -> ft.partial:
         return ft.partial(np.reshape, newshape=self.shape)
+
+    def get_transform_func_bwd(self) -> ft.partial:
+        return ft.partial(np.reshape, newshape=self.old_shape)
 
 
 class ConcatPort(AbstractVirtualPort):
@@ -751,7 +783,11 @@ class ConcatPort(AbstractVirtualPort):
         new_shape = shapes_ex_axis[0]
         return new_shape[:axis] + (total_size,) + new_shape[axis:]
 
-    def get_transform_func(self) -> ft.partial:
+    def get_transform_func_fwd(self) -> ft.partial:
+        # TODO (MR): not yet implemented
+        raise NotImplementedError()
+
+    def get_transform_func_bwd(self) -> ft.partial:
         # TODO (MR): not yet implemented
         raise NotImplementedError()
 
@@ -771,11 +807,14 @@ class TransposePort(AbstractVirtualPort):
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]):
-        self._axes = axes
+        self.axes = axes
         AbstractPort.__init__(self, new_shape)
 
-    def get_transform_func(self) -> ft.partial:
-        return ft.partial(np.transpose, axes=self._axes)
+    def get_transform_func_fwd(self) -> ft.partial:
+        return ft.partial(np.transpose, axes=self.axes)
+
+    def get_transform_func_bwd(self) -> ft.partial:
+        return ft.partial(np.transpose, axes=np.argsort(self.axes))
 
 
 # ToDo: TBD...

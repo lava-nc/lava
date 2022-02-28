@@ -401,7 +401,8 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                 csp_send = csp_ports[0] if isinstance(
                     csp_ports[0], CspSendPort) else csp_ports[1]
 
-            port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type)
+            port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type,
+                            p.transform_funcs)
 
             # Create dynamic RefPort attribute on ProcModel
             setattr(pm, name, port)

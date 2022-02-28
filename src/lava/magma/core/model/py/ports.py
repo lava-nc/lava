@@ -460,7 +460,10 @@ class PyRefPort(AbstractPyPort):
                  csp_recv_port: ty.Optional[CspRecvPort],
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...] = tuple(),
-                 d_type: type = int):
+                 d_type: type = int,
+                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
+
+        self._transform_funcs = transform_funcs
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         super().__init__(process_model, shape, d_type)
@@ -513,6 +516,25 @@ class PyRefPort(AbstractPyPort):
         """
         pass
 
+    def _transform(self, recv_data: np.array) -> np.array:
+        """Applies all transformation function pointers to the input data.
+
+        Parameters
+        ----------
+        recv_data : numpy.ndarray
+            data received on the port that shall be transformed
+
+        Returns
+        -------
+        recv_data : numpy.ndarray
+            received data, transformed by the incoming virtual ports
+        """
+        if self._transform_funcs:
+            # apply all transformation functions to the received data
+            for f in reversed(self._transform_funcs):
+                recv_data = f(recv_data)
+        return recv_data
+
 
 class PyRefPortVectorDense(PyRefPort):
     """Python implementation of RefPort for dense vector data."""
@@ -529,8 +551,10 @@ class PyRefPortVectorDense(PyRefPort):
             header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
             self._csp_send_port.send(header)
 
-            return self._csp_recv_port.recv()
+            return self._transform(self._csp_recv_port.recv())
 
+        # TODO (MR): self._shape must be set to the correct shape when
+        #  instantiating the Port
         return np.zeros(self._shape, self._d_type)
 
     def write(self, data: np.ndarray):
@@ -695,24 +719,24 @@ class PyVarPort(AbstractPyPort):
         """
         pass
 
-    def _transform(self, data: np.array) -> np.array:
+    def _transform(self, recv_data: np.array) -> np.array:
         """Applies all transformation function pointers to the input data.
 
         Parameters
         ----------
-        data : numpy.ndarray
-            data sent on the port that shall be transformed
+        recv_data : numpy.ndarray
+            data received on the port that shall be transformed
 
         Returns
         -------
-        data : numpy.ndarray
-            data, transformed by the outgoing virtual ports
+        recv_data : numpy.ndarray
+            received data, transformed by the incoming virtual ports
         """
         if self._transform_funcs:
-            # apply all transformation functions to the outgoing data
+            # apply all transformation functions to the received data
             for f in self._transform_funcs:
-                data = f(data)
-        return data
+                recv_data = f(recv_data)
+        return recv_data
 
 
 class PyVarPortVectorDense(PyVarPort):
