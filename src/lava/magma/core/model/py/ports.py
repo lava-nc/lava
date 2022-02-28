@@ -660,7 +660,10 @@ class PyVarPort(AbstractPyPort):
                  csp_recv_port: ty.Optional[CspRecvPort],
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...] = tuple(),
-                 d_type: type = int):
+                 d_type: type = int,
+                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
+
+        self._transform_funcs = transform_funcs
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         self.var_name = var_name
@@ -692,6 +695,25 @@ class PyVarPort(AbstractPyPort):
         """
         pass
 
+    def _transform(self, data: np.array) -> np.array:
+        """Applies all transformation function pointers to the input data.
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+            data sent on the port that shall be transformed
+
+        Returns
+        -------
+        data : numpy.ndarray
+            data, transformed by the outgoing virtual ports
+        """
+        if self._transform_funcs:
+            # apply all transformation functions to the outgoing data
+            for f in self._transform_funcs:
+                data = f(data)
+        return data
+
 
 class PyVarPortVectorDense(PyVarPort):
     """Python implementation of VarPort for dense vector data."""
@@ -712,7 +734,7 @@ class PyVarPortVectorDense(PyVarPort):
 
                 # Set the value of the Var with the given data
                 if enum_equal(cmd, VarPortCmd.SET):
-                    data = self._csp_recv_port.recv()
+                    data = self._transform(self._csp_recv_port.recv())
                     setattr(self._process_model, self.var_name, data)
                 elif enum_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)

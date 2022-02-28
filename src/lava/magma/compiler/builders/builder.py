@@ -422,7 +422,8 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                 csp_send = csp_ports[0] if isinstance(
                     csp_ports[0], CspSendPort) else csp_ports[1]
             port = port_cls(
-                p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type)
+                p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type,
+                p.transform_funcs)
 
             # Create dynamic VarPort attribute on ProcModel
             setattr(pm, name, port)

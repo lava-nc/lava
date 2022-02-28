@@ -19,13 +19,17 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.model.py.ports import (
     PyInPort,
-    PyOutPort
+    PyOutPort,
+    PyRefPort,
+    PyVarPort
 )
 from lava.magma.core.process.ports.ports import (
     AbstractPort,
     AbstractVirtualPort,
     InPort,
-    OutPort
+    OutPort,
+    RefPort,
+    VarPort
 )
 
 
@@ -126,6 +130,35 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
                    run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
         output = in_port_process.data.get()
         h_proc.stop()
+
+        expected = self.input_data.reshape(self.new_shape)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_refport_write_to_varport(self) -> None:
+        """Tests a virtual port between a RefPort and a VarPort,
+        where the RefPort writes to the VarPort."""
+
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.new_shape))
+
+        virtual_port = MockVirtualPort(new_shape=self.new_shape)
+
+        source.ref_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(sink.var_port)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
         expected = self.input_data.reshape(self.new_shape)
         self.assertTrue(
@@ -426,6 +459,48 @@ class SubHVPOutPortProcModel(AbstractSubProcessModel):
             [virtual_port], AbstractPort, assert_same_shape=False
         )
         virtual_port.connect(proc.out_port)
+
+
+# A minimal Process with a RefPort that writes
+class RefPortWriteProcess(AbstractProcess):
+    def __init__(self, data: np.ndarray) -> None:
+        super().__init__(data=data)
+        self.data = Var(shape=data.shape, init=data)
+        self.ref_port = RefPort(shape=data.shape)
+
+
+# A minimal PyProcModel implementing RefPortWriteProcess
+@implements(proc=RefPortWriteProcess, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class PyRefPortWriteProcessModelFloat(PyLoihiProcessModel):
+    ref_port: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
+    data: np.ndarray = LavaPyType(np.ndarray, np.int32)
+
+    def post_guard(self):
+        return True
+
+    def run_post_mgmt(self):
+        self.ref_port.write(self.data)
+        self.log.info("Sent output data of RefPortWriteProcess: ",
+                      str(self.data))
+
+
+# A minimal Process with a Var and a VarPort
+class VarPortProcess(AbstractProcess):
+    def __init__(self, data: np.ndarray) -> None:
+        super().__init__(data=data)
+        self.data = Var(shape=data.shape, init=data)
+        self.var_port = VarPort(self.data)
+
+
+# A minimal PyProcModel implementing VarPortProcess
+@implements(proc=VarPortProcess, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class PyVarPortProcessModelFloat(PyLoihiProcessModel):
+    var_port: PyInPort = LavaPyType(PyVarPort.VEC_DENSE, np.int32)
+    data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
 if __name__ == '__main__':

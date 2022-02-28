@@ -377,6 +377,9 @@ class Compiler:
                     # Create VarPortInitializers (contain also the Var name)
                     var_ports = []
                     for pt in list(p.var_ports):
+                        transform_funcs = \
+                            [vp.get_transform_func()
+                             for vp in pt.get_incoming_virtual_ports()]
                         var_ports.append(
                             VarPortInitializer(
                                 pt.name,
@@ -385,7 +388,8 @@ class Compiler:
                                 self._get_port_dtype(pt, pm),
                                 pt.__class__.__name__,
                                 pp_ch_size,
-                                self._map_var_port_class(pt, proc_groups)))
+                                self._map_var_port_class(pt, proc_groups),
+                                transform_funcs))
 
                         # Set implicit VarPorts (created by connecting a RefPort
                         # directly to a Var) as attribute to ProcessModel

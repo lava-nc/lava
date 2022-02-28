@@ -31,3 +31,4 @@ class VarPortInitializer:
     port_type: str
     size: int
     port_cls: type
+    transform_funcs: ty.List[ft.partial] = None
