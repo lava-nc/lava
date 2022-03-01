@@ -40,15 +40,15 @@ class MockVirtualPort(AbstractVirtualPort, AbstractPort):
     """A mock-up of a virtual port that reshapes the input."""
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
-                 old_shape: ty.Optional[ty.Tuple[int, ...]] = None):
+                 axes: ty.Tuple[int, ...]):
         AbstractPort.__init__(self, new_shape)
-        self.old_shape = old_shape
+        self.axes = axes
 
     def get_transform_func_fwd(self) -> ft.partial:
-        return ft.partial(np.reshape, newshape=self.shape)
+        return ft.partial(np.transpose, axes=self.axes)
 
     def get_transform_func_bwd(self) -> ft.partial:
-        return ft.partial(np.reshape, newshape=self.old_shape)
+        return ft.partial(np.transpose, axes=np.argsort(self.axes))
 
 
 class TestVirtualPortNetworkTopologies(unittest.TestCase):
@@ -58,7 +58,8 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
     def setUp(self) -> None:
         self.num_steps = 1
         self.shape = (4, 3, 2)
-        self.new_shape = (12, 2)
+        self.new_shape = (2, 4, 3)
+        self.axes = (2, 0, 1)
         self.input_data = np.random.randint(256, size=self.shape)
 
     def test_outport_to_inport_in_hierarchical_processes(self) -> None:
@@ -68,19 +69,22 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         source = HOutPortProcess(data=self.input_data)
         sink = HInPortProcess(shape=self.new_shape)
 
-        virtual_port = MockVirtualPort(new_shape=self.new_shape)
+        virtual_port = MockVirtualPort(new_shape=self.new_shape,
+                                       axes=self.axes)
 
         source.out_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
         virtual_port.connect(sink.in_port)
 
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
-        expected = self.input_data.reshape(self.new_shape)
+        expected = self.input_data.transpose(self.axes)
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -100,16 +104,20 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         """
 
         out_port_process = OutPortProcess(data=self.input_data)
-        h_proc = HVPInPortProcess(h_shape=self.shape, s_shape=self.new_shape)
+        h_proc = HVPInPortProcess(h_shape=self.shape,
+                                  s_shape=self.new_shape,
+                                  axes=self.axes)
 
         out_port_process.out_port.connect(h_proc.in_port)
 
-        h_proc.run(condition=RunSteps(num_steps=self.num_steps),
-                   run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = h_proc.s_data.get()
-        h_proc.stop()
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = h_proc.s_data.get()
+        finally:
+            h_proc.stop()
 
-        expected = self.input_data.reshape(self.new_shape)
+        expected = self.input_data.transpose(self.axes)
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -127,17 +135,161 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         the InPort of the InPortProcess and written into a Var 'data'.
         """
 
-        h_proc = HVPOutPortProcess(h_shape=self.new_shape, data=self.input_data)
+        h_proc = HVPOutPortProcess(h_shape=self.new_shape,
+                                   data=self.input_data,
+                                   axes=self.axes)
         in_port_process = InPortProcess(shape=self.new_shape)
 
         h_proc.out_port.connect(in_port_process.in_port)
 
-        h_proc.run(condition=RunSteps(num_steps=self.num_steps),
-                   run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = in_port_process.data.get()
-        h_proc.stop()
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = in_port_process.data.get()
+        finally:
+            h_proc.stop()
 
-        expected = self.input_data.reshape(self.new_shape)
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_refport_to_refport_write_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between a RefPort of a child Process
+        and a RefPort of the corresponding hierarchical parent Process.
+        For this test, the nested RefPortWriteProcess writes data into the
+        VarPort.
+
+        The data comes from the child Process, is passed from its RefPort
+        through a virtual port (where it is reshaped) to the RefPort of the
+        hierarchical Process (HVPRefPortWriteProcess). From there it is
+        passed to the VarPort of the VarPortProcess and written into a
+        Var 'data'.
+        """
+
+        h_proc = HVPRefPortWriteProcess(h_shape=self.new_shape,
+                                        data=self.input_data,
+                                        axes=self.axes)
+        var_port_process = VarPortProcess(data=np.zeros(self.new_shape))
+
+        h_proc.ref_port.connect(var_port_process.var_port)
+
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = var_port_process.data.get()
+        finally:
+            h_proc.stop()
+
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_refport_to_refport_read_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between a RefPort of a child Process
+        and a RefPort of the corresponding hierarchical parent Process.
+        For this test, the nested RefPortReadProcess reads data from the
+        VarPort.
+
+        The data comes from a Var 'data' in the VarPortProcess. From there it
+        passes through the RefPort of the hierarchical Process
+        (HVPRefPortReadProcess), then through a virtual port (where it is
+        reshaped) to the RefPort of the child Process (RefPortReadProcess),
+        where it is written into a Var. That Var is again an alias for the
+        Var of the parent Process.
+        """
+
+        h_proc = HVPRefPortReadProcess(h_shape=self.new_shape,
+                                       s_shape=self.shape,
+                                       axes=self.axes)
+        var_port_process = \
+            VarPortProcess(data=self.input_data.transpose(self.axes))
+
+        h_proc.ref_port.connect(var_port_process.var_port)
+
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = h_proc.s_data.get()
+        finally:
+            h_proc.stop()
+
+        expected = self.input_data
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_varport_to_varport_write_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between a VarPort of a child Process
+        and a VarPort of the corresponding hierarchical parent Process.
+        For this test, data is written into the hierarchical Process.
+
+        The data comes from a RefPortWriteProcess, is passed
+        to the VarPort of a hierarchical Process (HVPVarPortProcess),
+        from there through a virtual port (where it is reshaped) to the
+        VarPort of the child Process (VarPortProcess). From there it is
+        written into a Var 'data', which is an alias for a Var 's_data' in
+        the parent Process.
+        """
+
+        ref_proc = RefPortWriteProcess(data=self.input_data)
+        h_proc = HVPVarPortProcess(h_shape=self.shape,
+                                   s_data=np.zeros(self.new_shape),
+                                   axes=self.axes)
+
+        ref_proc.ref_port.connect(h_proc.var_port)
+
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = h_proc.s_data.get()
+        finally:
+            h_proc.stop()
+
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_varport_to_varport_read_in_a_hierarchical_process(self) -> None:
+        """Tests a virtual port between a VarPort of a child Process
+        and a VarPort of the corresponding hierarchical parent Process.
+        For this test, data is read from the hierarchical Process.
+
+        The data comes from the child VarPortProcess, from there it passes
+        through its VarPort, through a virtual port (where it is reshaped),
+        to the VarPort of the parent Process (HVPVarPortProcess),
+        to a RefPortReadProcess, and from there written into a Var.
+        """
+
+        ref_proc = RefPortReadProcess(data=np.zeros(self.shape))
+        h_proc = HVPVarPortProcess(h_shape=self.shape,
+                                   s_data=self.input_data.transpose(self.axes),
+                                   axes=self.axes)
+
+        ref_proc.ref_port.connect(h_proc.var_port)
+
+        try:
+            h_proc.run(condition=RunSteps(num_steps=self.num_steps),
+                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = ref_proc.data.get()
+        finally:
+            h_proc.stop()
+
+        expected = self.input_data
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -150,11 +302,12 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         flatten() method."""
 
         source = OutPortProcess(data=self.input_data)
-        shape_final = (int(np.prod(self.shape)),)
-        sink = InPortProcess(shape=shape_final)
+        sink = InPortProcess(shape=self.shape)
 
-        virtual_port1 = MockVirtualPort(new_shape=self.new_shape)
-        virtual_port2 = MockVirtualPort(new_shape=shape_final)
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
+                                        axes=self.axes)
+        virtual_port2 = MockVirtualPort(new_shape=self.shape,
+                                        axes=tuple(np.argsort(self.axes)))
 
         source.out_port._connect_forward(
             [virtual_port1], AbstractPort, assert_same_shape=False
@@ -164,12 +317,14 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         )
         virtual_port2.connect(sink.in_port)
 
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
-        expected = self.input_data.ravel()
+        expected = self.input_data
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -184,8 +339,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         source2 = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.new_shape)
 
-        virtual_port1 = MockVirtualPort(new_shape=self.new_shape)
-        virtual_port2 = MockVirtualPort(new_shape=self.new_shape)
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
+                                        axes=self.axes)
+        virtual_port2 = MockVirtualPort(new_shape=self.new_shape,
+                                        axes=self.axes)
 
         source1.out_port._connect_forward(
             [virtual_port1], AbstractPort, assert_same_shape=False
@@ -223,10 +380,12 @@ class TestTransposePort(unittest.TestCase):
 
         source.out_port.transpose(axes=self.axes).connect(sink.in_port)
 
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
         expected = self.input_data.transpose(self.axes)
         self.assertTrue(
@@ -265,16 +424,9 @@ class TestTransposePort(unittest.TestCase):
         where the RefPort reads from the VarPort."""
 
         source = RefPortReadProcess(data=np.zeros(self.shape))
-        sink = VarPortProcess(
-            data=self.input_data.reshape(self.shape_transposed))
+        sink = VarPortProcess(data=self.input_data.transpose(self.axes))
 
-        virtual_port = MockVirtualPort(new_shape=self.shape_transposed,
-                                       old_shape=self.shape)
-
-        source.ref_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
-        )
-        virtual_port.connect(sink.var_port)
+        source.ref_port.transpose(self.axes).connect(sink.var_port)
 
         try:
             sink.run(condition=RunSteps(num_steps=self.num_steps),
@@ -310,10 +462,12 @@ class TestReshapePort(unittest.TestCase):
         source.out_port.reshape(new_shape=self.shape_reshaped).connect(
             sink.in_port)
 
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
         expected = self.input_data.reshape(self.shape_reshaped)
         self.assertTrue(
@@ -354,13 +508,7 @@ class TestReshapePort(unittest.TestCase):
         source = RefPortReadProcess(data=np.zeros(self.shape))
         sink = VarPortProcess(data=self.input_data.reshape(self.shape_reshaped))
 
-        virtual_port = MockVirtualPort(new_shape=self.shape_reshaped,
-                                       old_shape=self.shape)
-
-        source.ref_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
-        )
-        virtual_port.connect(sink.var_port)
+        source.ref_port.reshape(self.shape_reshaped).connect(sink.var_port)
 
         try:
             sink.run(condition=RunSteps(num_steps=self.num_steps),
@@ -397,10 +545,12 @@ class TestFlattenPort(unittest.TestCase):
 
         source.out_port.flatten().connect(sink.in_port)
 
-        sink.run(condition=RunSteps(num_steps=self.num_steps),
-                 run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-        output = sink.data.get()
-        sink.stop()
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
 
         expected = self.input_data.ravel()
         self.assertTrue(
@@ -543,11 +693,13 @@ class SubHInPortProcModel(AbstractSubProcessModel):
 class HVPInPortProcess(AbstractProcess):
     def __init__(self,
                  h_shape: ty.Tuple[int, ...],
-                 s_shape: ty.Tuple[int, ...]) -> None:
+                 s_shape: ty.Tuple[int, ...],
+                 axes: ty.Tuple[int, ...]) -> None:
         super().__init__()
         self.s_data = Var(shape=s_shape, init=np.zeros(s_shape))
         self.in_port = InPort(shape=h_shape)
         self.proc_params['s_shape'] = s_shape
+        self.proc_params['axes'] = axes
 
 
 # A minimal hierarchical ProcModel with a nested InPortProcess and an aliased
@@ -557,7 +709,8 @@ class SubHVPInPortProcModel(AbstractSubProcessModel):
     def __init__(self, proc):
         self.in_proc = InPortProcess(shape=proc.proc_params['s_shape'])
 
-        virtual_port = MockVirtualPort(new_shape=proc.proc_params['s_shape'])
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['s_shape'],
+                                       axes=proc.proc_params['axes'])
         proc.in_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -572,11 +725,13 @@ class SubHVPInPortProcModel(AbstractSubProcessModel):
 class HVPOutPortProcess(AbstractProcess):
     def __init__(self,
                  h_shape: ty.Tuple[int, ...],
-                 data: np.ndarray) -> None:
+                 data: np.ndarray,
+                 axes: ty.Tuple[int, ...]) -> None:
         super().__init__(h_shape=h_shape, data=data)
         self.out_port = OutPort(shape=h_shape)
         self.proc_params['data'] = data
         self.proc_params['h_shape'] = h_shape
+        self.proc_params['axes'] = axes
 
 
 # A minimal hierarchical ProcModel with a nested OutPortProcess
@@ -585,7 +740,8 @@ class SubHVPOutPortProcModel(AbstractSubProcessModel):
     def __init__(self, proc):
         self.out_proc = OutPortProcess(data=proc.proc_params['data'])
 
-        virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'])
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
+                                       axes=proc.proc_params['axes'])
         self.out_proc.out_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -657,6 +813,104 @@ class VarPortProcess(AbstractProcess):
 class PyVarPortProcessModelFloat(PyLoihiProcessModel):
     var_port: PyInPort = LavaPyType(PyVarPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
+
+
+# A minimal hierarchical Process with a RefPort, where the data that is
+# given as an argument may have a different shape than the RefPort of the
+# Process.
+class HVPRefPortWriteProcess(AbstractProcess):
+    def __init__(self,
+                 h_shape: ty.Tuple[int, ...],
+                 data: np.ndarray,
+                 axes: ty.Tuple[int, ...]) -> None:
+        super().__init__(h_shape=h_shape, data=data)
+        self.ref_port = RefPort(shape=h_shape)
+        self.proc_params['data'] = data
+        self.proc_params['h_shape'] = h_shape
+        self.proc_params['axes'] = axes
+
+
+# A minimal hierarchical ProcModel with a nested RefPortWriteProcess
+@implements(proc=HVPRefPortWriteProcess)
+class SubHVPRefPortWriteProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.ref_write_proc = RefPortWriteProcess(data=proc.proc_params['data'])
+
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
+                                       axes=proc.proc_params['axes'])
+        self.ref_write_proc.ref_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(proc.ref_port)
+
+
+# A minimal hierarchical Process with a RefPort, where the data that is
+# given as an argument may have a different shape than the RefPort of the
+# Process.
+class HVPRefPortReadProcess(AbstractProcess):
+    def __init__(self,
+                 h_shape: ty.Tuple[int, ...],
+                 s_shape: ty.Tuple[int, ...],
+                 axes: ty.Tuple[int, ...]) -> None:
+        super().__init__(h_shape=h_shape, s_shape=s_shape)
+        self.ref_port = RefPort(shape=h_shape)
+        self.s_data = Var(s_shape)
+        self.proc_params['s_shape'] = s_shape
+        self.proc_params['h_shape'] = h_shape
+        self.proc_params['axes'] = axes
+
+
+# A minimal hierarchical ProcModel with a nested RefPortReadProcess
+@implements(proc=HVPRefPortReadProcess)
+class SubHVPRefPortReadProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        self.ref_read_proc = \
+            RefPortReadProcess(data=np.zeros(proc.proc_params['s_shape']))
+
+        virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
+                                       axes=proc.proc_params['axes'])
+        self.ref_read_proc.ref_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(proc.ref_port)
+
+        proc.s_data.alias(self.ref_read_proc.data)
+
+
+# A minimal hierarchical Process with a VarPort, where the data that is
+# given as an argument may have a different shape than the VarPort of the
+# Process.
+class HVPVarPortProcess(AbstractProcess):
+    def __init__(self,
+                 h_shape: ty.Tuple[int, ...],
+                 s_data: np.ndarray,
+                 axes: ty.Tuple[int, ...]) -> None:
+        super().__init__(h_shape=h_shape, s_data=s_data)
+        self.h_data = Var(h_shape)
+        self.s_data = Var(s_data.shape)
+        self.var_port = VarPort(self.h_data)
+
+        self.proc_params['s_data'] = s_data
+        self.proc_params['h_shape'] = h_shape
+        self.proc_params['axes'] = axes
+
+
+# A minimal hierarchical ProcModel with a nested RefPortReadProcess
+@implements(proc=HVPVarPortProcess)
+class SubHVPVarPortProcModel(AbstractSubProcessModel):
+    def __init__(self, proc):
+        s_data = proc.proc_params['s_data']
+        self.var_proc = \
+            VarPortProcess(data=s_data)
+
+        virtual_port = MockVirtualPort(new_shape=s_data.shape,
+                                       axes=proc.proc_params['axes'])
+        proc.var_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect(self.var_proc.var_port)
+
+        proc.s_data.alias(self.var_proc.data)
 
 
 if __name__ == '__main__':
