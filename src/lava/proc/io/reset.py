@@ -59,6 +59,7 @@ class AbstractPyReset(PyLoihiProcessModel):
 
     def run_post_mgmt(self) -> None:
         self.state.write(0 * self.state.read() + self.reset_value)
+        self.state.wait()
 
 
 @implements(proc=Reset, protocol=LoihiProtocol)

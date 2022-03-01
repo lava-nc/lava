@@ -513,6 +513,14 @@ class PyRefPort(AbstractPyPort):
         """
         pass
 
+    # TODO: (PP) This should be optimized by a proper CSPSendPort wait
+    def wait(self):
+        """Method which block execution until (all) previous write requests have
+         been placed at the receiver. Currently, achieved by a simple read(),
+         which ensures the writes have been finished. """
+
+        self.read()
+
 
 class PyRefPortVectorDense(PyRefPort):
     """Python implementation of RefPort for dense vector data."""
