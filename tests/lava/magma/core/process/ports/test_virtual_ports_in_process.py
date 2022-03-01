@@ -37,7 +37,7 @@ np.random.seed(7739)
 
 
 class MockVirtualPort(AbstractVirtualPort, AbstractPort):
-    """A mock-up of a virtual port that reshapes the input."""
+    """A mock-up of a virtual port that permutes the axes of the input."""
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]):
