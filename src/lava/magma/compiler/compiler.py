@@ -390,14 +390,14 @@ class Compiler:
                             [vp.get_transform_func_fwd()
                              for vp in pt.get_incoming_virtual_ports()]
                         pi = VarPortInitializer(
-                                pt.name,
-                                pt.shape,
-                                pt.var.name,
-                                self._get_port_dtype(pt, pm),
-                                pt.__class__.__name__,
-                                pp_ch_size,
-                                self._map_var_port_class(pt, proc_groups),
-                                transform_funcs)
+                            pt.name,
+                            pt.shape,
+                            pt.var.name,
+                            self._get_port_dtype(pt, pm),
+                            pt.__class__.__name__,
+                            pp_ch_size,
+                            self._map_var_port_class(pt, proc_groups),
+                            transform_funcs)
                         var_ports.append(pi)
 
                         # Set implicit VarPorts (created by connecting a RefPort
