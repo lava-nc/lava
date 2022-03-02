@@ -114,7 +114,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port.send(enum_to_np(var))
         elif isinstance(var, np.ndarray):
             # FIXME: send a whole vector (also runtime_service.py)
-            var_iter = np.nditer(var)
+            var_iter = np.nditer(var, order='C')
             num_items: np.integer = np.prod(var.shape)
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
