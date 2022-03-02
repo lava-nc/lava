@@ -716,10 +716,24 @@ class AbstractVirtualPort(AbstractPort):
 
     @abstractmethod
     def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the virtual port.
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         pass
 
     @abstractmethod
     def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the virtual port.
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         pass
 
 
@@ -736,9 +750,25 @@ class ReshapePort(AbstractVirtualPort):
         self.old_shape = old_shape
 
     def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the ReshapePort, which reshapes incoming data to
+        a new shape (the shape of the destination Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         return ft.partial(np.reshape, newshape=self.shape)
 
     def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the ReshapePort, which reshapes incoming data to
+        a new shape (the shape of the source Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         return ft.partial(np.reshape, newshape=self.old_shape)
 
 
@@ -811,9 +841,27 @@ class TransposePort(AbstractVirtualPort):
         AbstractPort.__init__(self, new_shape)
 
     def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the TransposePort, which transposes (permutes)
+        incoming data according to a specific order of axes (to match the
+        destination Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         return ft.partial(np.transpose, axes=self.axes)
 
     def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the TransposePort, which transposes (permutes)
+        incoming data according to a specific order of axes (to match the
+        source Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
         return ft.partial(np.transpose, axes=np.argsort(self.axes))
 
 
