@@ -352,13 +352,14 @@ class Compiler:
                     for pt in (list(p.in_ports) + list(p.out_ports)):
                         # For all InPorts that receive input from
                         # virtual ports...
-                        transform_funcs = None
+                        transform_funcs = []
                         if isinstance(pt, InPort):
                             # ... extract a function pointer to the
                             # transformation function of each virtual port.
                             transform_funcs = \
-                                [vp.get_transform_func()
+                                [vp.get_transform_func_fwd()
                                  for vp in pt.get_incoming_virtual_ports()]
+
                         pi = PortInitializer(pt.name,
                                              pt.shape,
                                              self._get_port_dtype(pt, pm),
@@ -366,26 +367,38 @@ class Compiler:
                                              pp_ch_size,
                                              transform_funcs)
                         ports.append(pi)
+
                     # Create RefPort (also use PortInitializers)
-                    ref_ports = list(p.ref_ports)
-                    ref_ports = [
-                        PortInitializer(pt.name,
-                                        pt.shape,
-                                        self._get_port_dtype(pt, pm),
-                                        pt.__class__.__name__,
-                                        pp_ch_size) for pt in ref_ports]
+                    ref_ports = []
+                    for pt in list(p.ref_ports):
+                        transform_funcs = \
+                            [vp.get_transform_func_bwd()
+                             for vp in pt.get_outgoing_virtual_ports()]
+
+                        pi = PortInitializer(pt.name,
+                                             pt.shape,
+                                             self._get_port_dtype(pt, pm),
+                                             pt.__class__.__name__,
+                                             pp_ch_size,
+                                             transform_funcs)
+                        ref_ports.append(pi)
+
                     # Create VarPortInitializers (contain also the Var name)
                     var_ports = []
                     for pt in list(p.var_ports):
-                        var_ports.append(
-                            VarPortInitializer(
-                                pt.name,
-                                pt.shape,
-                                pt.var.name,
-                                self._get_port_dtype(pt, pm),
-                                pt.__class__.__name__,
-                                pp_ch_size,
-                                self._map_var_port_class(pt, proc_groups)))
+                        transform_funcs = \
+                            [vp.get_transform_func_fwd()
+                             for vp in pt.get_incoming_virtual_ports()]
+                        pi = VarPortInitializer(
+                            pt.name,
+                            pt.shape,
+                            pt.var.name,
+                            self._get_port_dtype(pt, pm),
+                            pt.__class__.__name__,
+                            pp_ch_size,
+                            self._map_var_port_class(pt, proc_groups),
+                            transform_funcs)
+                        var_ports.append(pi)
 
                         # Set implicit VarPorts (created by connecting a RefPort
                         # directly to a Var) as attribute to ProcessModel
