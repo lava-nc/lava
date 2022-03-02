@@ -516,9 +516,19 @@ class PyRefPort(AbstractPyPort):
     # TODO: (PP) This should be optimized by a proper CSPSendPort wait
     def wait(self):
         """Method which block execution until (all) previous write requests have
-         been placed at the receiver. Currently, achieved by a simple read(),
-         which ensures the writes have been finished. """
+         been placed at the receiver. Calling wait() ensures that the value
+         written by the RefPort can be received (and set) by the VarPort at the
+         same time step. If wait() is not called, it is possible that the value
+         is received only at the next time step (non-deterministic).
 
+         >>> port = PyRefPort()
+         >>> port.write(5)
+         >>> # potentially do other stuff
+         >>> port.wait()  # waits until (all) previous writes have finished
+
+         Preliminary implementation. Currently, a simple read() ensures the
+         writes have been acknowledged. This is inefficient and will be
+         optimized later at the CspChannel level"""
         self.read()
 
 

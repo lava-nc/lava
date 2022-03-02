@@ -58,8 +58,9 @@ class AbstractPyReset(PyLoihiProcessModel):
         return self.time_step % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        self.state.write(0 * self.state.read() + self.reset_value)
-        self.state.wait()
+        self.state.write(np.zeros(self.state._shape,
+                                  self.state._d_type) + self.reset_value)
+        self.state.wait()  # ensures write() has finished before moving on
 
 
 @implements(proc=Reset, protocol=LoihiProtocol)
