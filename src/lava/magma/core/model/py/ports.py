@@ -403,7 +403,9 @@ class PyRefPort(AbstractPyPort):
     CSP ports to a PyVarPort. One channel is used to send data from the
     PyRefPort to the PyVarPort and the other channel is used to receive data
     from the PyVarPort. PyRefPorts can get the value of a referenced Var
-    (read()) or set the value of a referenced Var (write()).
+    (read()), set the value of a referenced Var (write()) and block execution
+    until receipt of prior 'write' commands (sent from PyRefPort to PyVarPort)
+    have been acknowledged (wait()).
 
     Parameters
     ----------
@@ -518,11 +520,12 @@ class PyRefPort(AbstractPyPort):
 
     # TODO: (PP) This should be optimized by a proper CSPSendPort wait
     def wait(self):
-        """Method which block execution until (all) previous write requests have
-         been placed at the receiver. Calling wait() ensures that the value
-         written by the RefPort can be received (and set) by the VarPort at the
-         same time step. If wait() is not called, it is possible that the value
-         is received only at the next time step (non-deterministic).
+        """Blocks execution until receipt of prior 'write' commands (sent from
+         RefPort to VarPort) have been acknowledged. Calling wait() ensures that
+         the value written by the RefPort can be received (and set) by the
+         VarPort at the same time step. If wait() is not called, it is possible
+         that the value is received only at the next time step
+         (non-deterministic).
 
          >>> port = PyRefPort()
          >>> port.write(5)
