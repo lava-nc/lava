@@ -1,12 +1,15 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import numpy as np
 import typing as ty
+import numpy as np
+
+"""Defines message tokens for Actions (Commands) and Responses. Also defines
+helper functions to convert scalar values to these message tokens"""
 
 
 def enum_to_np(value: ty.Union[int, float],
-               d_type: type = np.int32) -> np.array:
+               d_type: type = np.float64) -> np.array:
     """
     Helper function to convert an int (or EnumInt) or a float to a single value
     np array so as to pass it via the message passing framework. The dtype of
@@ -45,16 +48,10 @@ class MGMT_COMMAND:
     """Signifies a STOP command from one actor to another"""
     PAUSE = enum_to_np(-2)
     """Signifies a PAUSE command from one actor to another"""
-
-
-class REQ_TYPE:
-    """
-    Signifies type of request
-    """
-    GET = enum_to_np(0)
-    """Read a variable"""
-    SET = enum_to_np(1)
-    """Write to a variable"""
+    GET_DATA = enum_to_np(-3)
+    """Signifies Read a variable"""
+    SET_DATA = enum_to_np(-4)
+    """Signifies Write a variable"""
 
 
 class MGMT_RESPONSE:
@@ -69,3 +66,9 @@ class MGMT_RESPONSE:
     """Signifies Error raised"""
     PAUSED = enum_to_np(-3)
     """Signifies Execution State to be Paused"""
+    REQ_PAUSE = enum_to_np(-4)
+    """Signifies Request of PAUSE"""
+    REQ_STOP = enum_to_np(-5)
+    """Signifies Request of STOP"""
+    SET_COMPLETE = enum_to_np(-6)
+    """Signifies Completion of Set Var"""

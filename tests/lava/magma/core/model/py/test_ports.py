@@ -53,12 +53,15 @@ class TestPyPorts(unittest.TestCase):
 
             # Create two different PyOutPort
             send_py_port_1: PyOutPort = \
-                PyOutPortVectorDense([send_csp_port_1], None)
+                PyOutPortVectorDense([send_csp_port_1], None, data.shape,
+                                     data.dtype)
             send_py_port_2: PyOutPort = \
-                PyOutPortVectorDense([send_csp_port_2], None)
+                PyOutPortVectorDense([send_csp_port_2], None, data.shape,
+                                     data.dtype)
             # Create PyInPort with current implementation
             recv_py_port: PyInPort = \
-                cls([recv_csp_port_1, recv_csp_port_2], None)
+                cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
+                    data.dtype, None)
 
             recv_py_port.start()
             send_py_port_1.start()

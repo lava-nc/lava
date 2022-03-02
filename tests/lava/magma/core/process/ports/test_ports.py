@@ -1,22 +1,27 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import unittest
 from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import (
     InPort,
     OutPort,
     RefPort,
     VarPort,
     ConcatPort,
+    TransposePort,
 )
 from lava.magma.core.process.ports.exceptions import (
     ReshapeError,
     DuplicateConnectionError,
     ConcatShapeError,
+    ConcatIndexError,
+    TransposeShapeError,
+    TransposeIndexError,
     VarNotSharableError,
 )
-from lava.magma.core.process.variable import Var
 
 
 class TestPortInitialization(unittest.TestCase):
@@ -410,30 +415,51 @@ class TestRVPorts(unittest.TestCase):
 
 class TestVirtualPorts(unittest.TestCase):
     """Contains unit tests around virtual ports. Virtual ports are derived
-    ports that are not directly created by developer as part of process
+    ports that are not directly created by the developer as part of process
     definition but which serve to somehow transform the properties of a
-    deverloper-defined port."""
+    developer-defined port."""
 
     def test_reshape(self):
         """Checks reshaping of a port."""
 
         # Create some ports
         op = OutPort((1, 2, 3))
-        ip1 = InPort((3, 2, 1))
-        ip2 = InPort((3, 2, 10))
+        ip = InPort((3, 2, 1))
 
         # Using reshape(..), ports with different shape can be connected as
         # long as total number of elements does not change
-        op.reshape((3, 2, 1)).connect(ip1)
+        op.reshape((3, 2, 1)).connect(ip)
 
         # We can still find destination and source connection even with
         # virtual ports in the chain
-        self.assertEqual(op.get_dst_ports(), [ip1])
-        self.assertEqual(ip1.get_src_ports(), [op])
+        self.assertEqual(op.get_dst_ports(), [ip])
+        self.assertEqual(ip.get_src_ports(), [op])
 
-        # However, ports with a different number of elements cannot be connected
+    def test_reshape_with_wrong_number_of_elements_raises_exception(self):
+        """Checks whether an exception is raised when the number of elements
+        in the specified shape is different from the number of elements in
+        the source shape."""
+
         with self.assertRaises(ReshapeError):
-            op.reshape((3, 2, 10)).connect(ip2)
+            OutPort((1, 2, 3)).reshape((1, 2, 2))
+
+    def test_flatten(self):
+        """Checks flattening of a port."""
+
+        op = OutPort((1, 2, 3))
+        ip = InPort((6,))
+
+        # Flatten the shape of the port.
+        fp = op.flatten()
+        self.assertEqual(fp.shape, (6,))
+
+        # This enables connecting to an input port with a flattened shape.
+        fp.connect(ip)
+
+        # We can still find destination and source connection even with
+        # virtual ports in the chain
+        self.assertEqual(op.get_dst_ports(), [ip])
+        self.assertEqual(ip.get_src_ports(), [op])
 
     def test_concat(self):
         """Checks concatenation of ports."""
@@ -469,7 +495,7 @@ class TestVirtualPorts(unittest.TestCase):
         # (2, 3, 1) + (2, 3, 1) concatenated along axis 1 results in (2, 6, 1)
         self.assertEqual(ip2.in_connections[0].shape, (2, 6, 1))
 
-    def test_concat_with_incompatible_ports(self):
+    def test_concat_with_incompatible_shapes_raises_exception(self):
         """Checks that incompatible ports cannot be concatenated."""
 
         # Create ports with incompatible shapes
@@ -481,11 +507,69 @@ class TestVirtualPorts(unittest.TestCase):
         with self.assertRaises(ConcatShapeError):
             op1.concat_with(op2, axis=0)
 
-        # Create another port with incompatible type
+    def test_concat_with_incompatible_type_raises_exception(self):
+        """Checks that incompatible port types raise an exception."""
+
+        op = OutPort((2, 3, 1))
         ip = InPort((2, 3, 1))
         # This will fail because concatenated ports must be of same type
         with self.assertRaises(AssertionError):
-            op1.concat_with(ip, axis=0)
+            op.concat_with(ip, axis=0)
+
+    def test_concat_with_axis_out_of_bounds_raises_exception(self):
+        """Checks whether an exception is raised when the specified axis is
+        out of bounds."""
+
+        op1 = OutPort((2, 3, 1))
+        op2 = OutPort((2, 3, 1))
+        with self.assertRaises(ConcatIndexError):
+            op1.concat_with(op2, axis=3)
+
+    def test_transpose(self):
+        """Checks transposing of ports."""
+
+        op = OutPort((1, 2, 3))
+        ip = InPort((2, 1, 3))
+
+        tp = op.transpose(axes=(1, 0, 2))
+        # The return value is a virtual TransposePort ...
+        self.assertIsInstance(tp, TransposePort)
+        # ... which needs to have the same dimensions ...
+        self.assertEqual(tp.shape, (2, 1, 3))
+        # ... as the port we want to connect to.
+        tp.connect(ip)
+        # Finally, the virtual TransposePort is the input connection of the ip
+        self.assertEqual(tp, ip.in_connections[0])
+
+        # Again, we can still find destination and source ports through a
+        # chain of ports containing virtual ports
+        self.assertEqual(op.get_dst_ports(), [ip])
+        self.assertEqual(ip.get_src_ports(), [op])
+
+    def test_transpose_without_specified_axes(self):
+        """Checks whether transpose reverses the shape-elements when no
+        'axes' argument is given."""
+
+        op = OutPort((1, 2, 3))
+        tp = op.transpose()
+        self.assertEqual(tp.shape, (3, 2, 1))
+
+    def test_transpose_incompatible_axes_length_raises_exception(self):
+        """Checks whether an exception is raised when the number of elements
+        in the specified 'axes' argument differs from the number of elements
+        of the parent port."""
+
+        op = OutPort((1, 2, 3))
+        with self.assertRaises(TransposeShapeError):
+            op.transpose(axes=(0, 0, 1, 2))
+
+    def test_transpose_incompatible_axes_indices_raises_exception(self):
+        """Checks whether an exception is raised when the indices specified
+        in the 'axes' argument are out of bounds for the parent port."""
+
+        op = OutPort((1, 2, 3))
+        with self.assertRaises(TransposeIndexError):
+            op.transpose(axes=(0, 1, 3))
 
 
 if __name__ == "__main__":

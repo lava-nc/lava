@@ -17,6 +17,10 @@ class CPU(AbstractComputeResource):
     pass
 
 
+class HostCPU(AbstractComputeResource):
+    pass
+
+
 class GPU(AbstractComputeResource):
     pass
 
@@ -110,3 +114,7 @@ class KapohoPoint(Loihi2System):
 
 class Unalaska(Loihi2System):
     resources = [CPU, Loihi2NeuroCore, LMT, PB]
+
+
+class OheoGulch(Loihi2System):
+    resources = [Loihi2NeuroCore, LMT, PB]

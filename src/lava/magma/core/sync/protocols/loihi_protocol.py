@@ -1,12 +1,21 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 from collections import namedtuple
 from dataclasses import dataclass
 
-from lava.magma.core.resources import CPU, NeuroCore
+from lava.magma.core.resources import (
+    CPU,
+    NeuroCore,
+    Loihi1NeuroCore,
+    Loihi2NeuroCore
+)
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
-from lava.magma.runtime.runtime_service import (
+from lava.magma.runtime.runtime_services.runtime_service import (
     LoihiPyRuntimeService,
     LoihiCRuntimeService,
+    NxSdkRuntimeService
 )
 
 Proc_Function_With_Guard = namedtuple("Proc_Function_With_Guard", "guard func")
@@ -23,7 +32,8 @@ class Phase:
 @dataclass
 class LoihiProtocol(AbstractSyncProtocol):
     # The phases of Loihi protocol
-    phases = [Phase.SPK, Phase.PRE_MGMT, Phase.LRN, Phase.POST_MGMT, Phase.HOST]
+    phases = [Phase.SPK, Phase.PRE_MGMT,
+              Phase.LRN, Phase.POST_MGMT, Phase.HOST]
     # Methods that processes implementing protocol may provide
     proc_functions = [
         Proc_Function_With_Guard("pre_guard", "run_pre_mgmt"),
@@ -39,4 +49,7 @@ class LoihiProtocol(AbstractSyncProtocol):
 
     @property
     def runtime_service(self):
-        return {CPU: LoihiPyRuntimeService, NeuroCore: LoihiCRuntimeService}
+        return {CPU: LoihiPyRuntimeService,
+                NeuroCore: LoihiCRuntimeService,
+                Loihi1NeuroCore: NxSdkRuntimeService,
+                Loihi2NeuroCore: NxSdkRuntimeService}

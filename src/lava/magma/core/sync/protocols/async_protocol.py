@@ -5,7 +5,8 @@ from dataclasses import dataclass
 
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.runtime_service import AsyncPyRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import \
+    AsyncPyRuntimeService
 
 
 @dataclass
@@ -13,7 +14,6 @@ class AsyncProtocol(AbstractSyncProtocol):
     phases = []
     proc_funcions = []
 
-    # TODO: AsyncProtocol needs to implement AsyncRuntimeService
     @property
     def runtime_service(self):
         return {CPU: AsyncPyRuntimeService}

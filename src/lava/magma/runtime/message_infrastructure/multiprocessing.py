@@ -4,10 +4,11 @@
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builder import PyProcessBuilder, \
+    from lava.magma.compiler.builders.builder import PyProcessBuilder, \
         AbstractRuntimeServiceBuilder
 
 import multiprocessing as mp
+import os
 from multiprocessing.managers import SharedMemoryManager
 import traceback
 
@@ -19,7 +20,15 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 
 
+"""Implements the Message Infrastructure Interface using Python
+MultiProcessing Library. The MultiProcessing API is used to create actors
+which will participate in exchanging messages. The Channel Infrastructure
+further uses the SharedMemoryManager from MultiProcessing Library to
+implement the communication backend in this implementation."""
+
+
 class SystemProcess(mp.Process):
+    """Wraps a process so that the exceptions can be collected if present"""
     def __init__(self, *args, **kwargs):
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
@@ -42,6 +51,7 @@ class SystemProcess(mp.Process):
 
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
+
     def __init__(self):
         self._smm: ty.Optional[SharedMemoryManager] = None
         self._actors: ty.List[SystemProcess] = []
@@ -75,11 +85,14 @@ class MultiProcessing(MessageInfrastructureInterface):
     def stop(self):
         """Stops the shared memory manager"""
         for actor in self._actors:
-            actor.join()
+            if actor._parent_pid == os.getpid():
+                actor.join()
 
         self._smm.shutdown()
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
+        """Given a channel type, returns the shared memory based class
+        implementation for the same"""
         if channel_type == ChannelType.PyPy:
             return PyPyChannel
         else:

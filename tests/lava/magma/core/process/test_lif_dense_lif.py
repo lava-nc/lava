@@ -13,8 +13,8 @@ from lava.proc.lif.process import LIF
 class SimpleRunConfig(RunConfig):
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
-        super().__init__(custom_sync_domains=sync_domains)
         self.model = None
+        super().__init__(custom_sync_domains=sync_domains)
         if "model" in kwargs:
             self.model = kwargs.pop("model")
 
