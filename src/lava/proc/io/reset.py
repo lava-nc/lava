@@ -55,7 +55,7 @@ class AbstractPyReset(PyLoihiProcessModel):
     offset: np.ndarray = LavaPyType(np.ndarray, int)
 
     def post_guard(self) -> None:
-        return self.time_step % self.interval == self.offset
+        return (self.time_step - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
         self.state.write(np.zeros(self.state._shape,
