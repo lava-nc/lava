@@ -87,16 +87,16 @@ class Compiler:
 
         # add processes connecting to the main process
         for in_port in proc.in_ports.members + proc.var_ports.members:
-            for con in in_port.in_connections:
+            for con in in_port.get_src_ports():
                 new_list.append(con.process)
-            for con in in_port.out_connections:
+            for con in in_port.get_dst_ports():
                 new_list.append(con.process)
 
         # add processes connecting from the main process
         for out_port in proc.out_ports.members + proc.ref_ports.members:
-            for con in out_port.in_connections:
+            for con in out_port.get_src_ports():
                 new_list.append(con.process)
-            for con in out_port.out_connections:
+            for con in out_port.get_dst_ports():
                 new_list.append(con.process)
 
         for proc in set(new_list):
