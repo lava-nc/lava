@@ -331,8 +331,7 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         self.assertCountEqual(found_procs, expected_procs)
 
     def test_chaining_multiple_virtual_ports(self) -> None:
-        """Tests whether two virtual ReshapePorts can be chained through the
-        flatten() method."""
+        """Tests whether virtual ports can be chained."""
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape)
