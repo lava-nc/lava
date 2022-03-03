@@ -81,7 +81,7 @@ $ cd lava
 $ pip install -r build-requirements.txt
 $ pip install -r requirements.txt
 $ pip install -e .
-$ pyb -E unit
+$ python -m unittest
 ```
 Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
@@ -89,14 +89,14 @@ Note that you should install the core Lava repository (lava) before installing o
 ```cmd
 cd %HOMEPATH%
 python -m venv python3_venv
-source python3_venv\Scripts\activate.bat
+python3_venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 git clone git@github.com:lava-nc/lava.git
 cd lava
 pip install -r build-requirements.txt
 pip install -r requirements.txt
 pip install -e .
-pyb -E unit
+python -m unittest
 ```
 Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
@@ -127,7 +127,7 @@ Open a python terminal and run:
 ```bash
 $ python3 -m venv python3_venv
 $ pip install -U pip
-$ pip install lava-nc-0.1.0.tar.gz
+$ pip install lava-nc-0.3.0.tar.gz
 ```
 
 ### Linting, Testing, Documentation and Packaging
@@ -140,7 +140,9 @@ $  pip install -r build-requirements.txt
 $  pyb analyze
 
 # Run unit tests
-$  pyb -E unit
+$  pyb -E unit 
+# Alternate unit test run
+$  python -m unittest
 
 # Generate documentation
 $  pyb sphinx_generate_documentation
