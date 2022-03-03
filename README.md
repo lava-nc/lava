@@ -127,7 +127,7 @@ Open a python terminal and run:
 ```bash
 $ python3 -m venv python3_venv
 $ pip install -U pip
-$ pip install lava-nc-0.2.0.tar.gz
+$ pip install lava-nc-0.3.0.tar.gz
 ```
 
 ### Linting, Testing, Documentation and Packaging
@@ -140,7 +140,9 @@ $  pip install -r build-requirements.txt
 $  pyb analyze
 
 # Run unit tests
-$  pyb -E unit
+$  pyb -E unit 
+# Alternate unit test run
+$  python -m unittest
 
 # Generate documentation
 $  pyb sphinx_generate_documentation
