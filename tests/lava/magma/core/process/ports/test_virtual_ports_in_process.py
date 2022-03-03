@@ -7,6 +7,7 @@ import unittest
 import numpy as np
 import functools as ft
 
+from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -296,6 +297,38 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
             f'{output[output!=expected]=}\n'
             f'{expected[output!=expected] =}\n'
         )
+
+    def test_compiler_finds_all_processes(self) -> None:
+        """Tests whether in Process graphs with virtual ports, all Processes
+        are found, no matter from which Process the search is started."""
+
+        source = OutPortProcess(data=self.input_data)
+        sink = InPortProcess(shape=self.shape)
+
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
+                                        axes=self.axes)
+        virtual_port2 = MockVirtualPort(new_shape=self.shape,
+                                        axes=tuple(np.argsort(self.axes)))
+
+        source.out_port._connect_forward(
+            [virtual_port1], AbstractPort, assert_same_shape=False
+        )
+        virtual_port1._connect_forward(
+            [virtual_port2], AbstractPort, assert_same_shape=False
+        )
+        virtual_port2.connect(sink.in_port)
+
+        compiler = Compiler()
+        # Test whether all Processes are found when starting the search from
+        # the source Process
+        found_procs = compiler._find_processes(source)
+        expected_procs = [sink, source]
+        self.assertEqual(found_procs, expected_procs)
+
+        # Test whether all Processes are found when starting the search from
+        # the destination Process
+        found_procs = compiler._find_processes(sink)
+        self.assertEqual(found_procs, expected_procs)
 
     def test_chaining_multiple_virtual_ports(self) -> None:
         """Tests whether two virtual ReshapePorts can be chained through the
