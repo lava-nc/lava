@@ -323,12 +323,12 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         # the source Process
         found_procs = compiler._find_processes(source)
         expected_procs = [sink, source]
-        self.assertEqual(found_procs, expected_procs)
+        self.assertCountEqual(found_procs, expected_procs)
 
         # Test whether all Processes are found when starting the search from
         # the destination Process
         found_procs = compiler._find_processes(sink)
-        self.assertEqual(found_procs, expected_procs)
+        self.assertCountEqual(found_procs, expected_procs)
 
     def test_chaining_multiple_virtual_ports(self) -> None:
         """Tests whether two virtual ReshapePorts can be chained through the
