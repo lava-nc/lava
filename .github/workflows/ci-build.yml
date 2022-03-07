@@ -35,8 +35,15 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Run flakeheaven (flake8)
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         source $VENV
+        flakeheaven lint src/lava tests/
+
+    - name: Run flakeheaven (flake8)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate.ps1
         flakeheaven lint src/lava tests/
 
   security-lint:
@@ -114,6 +121,13 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Run unit tests
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         source $VENV
+        pytest
+        
+    - name: Run unit tests
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate.ps1
         pytest
