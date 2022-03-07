@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    name: Lint with flake8
+    name: Lint Code
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
         [ $status -eq 0 ] && echo "Linting was successful" || $(echo "Linting failed" && exit 1)
 
   security-lint:
-    name: Security Lint with bandit
+    name: Security Lint Code
     runs-on: ubuntu-latest
 
     steps:
@@ -50,7 +50,7 @@ jobs:
         options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
 
   unit-tests:
-    name: Run unit tests
+    name: Unit Test Code + Coverage
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
