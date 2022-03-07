@@ -20,15 +20,14 @@ jobs:
         pip install poetry>=1.1.13
         poetry config virtualenvs.path .venv
         poetry install
-        cd .venv
-        pwd
 
     - name: Activate venv
       run: |        
          if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
-              source .venv/bin/activate
+              source /home/runner/work/lava/lava/.venv/bin/activate
          elif [ "$RUNNER_OS" == "Windows" ]; then
-              .venv\Scripts\activate.ps1
+              pwd
+              \home\runner\work\lava\lava\.venv\Scripts\activate.ps1
          else
               echo "$RUNNER_OS not supported"
               exit 1
