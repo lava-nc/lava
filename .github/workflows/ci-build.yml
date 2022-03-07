@@ -21,6 +21,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         source .venv/bin/activate
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Linux' || runner.os == 'macOS'
 
     - name: Install dependencies
@@ -30,6 +31,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         .venv\Scripts\activate.ps1
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Windows'
 
     - name: Run flakeheaven (flake8)
@@ -55,6 +57,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         source .venv/bin/activate
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Linux' || runner.os == 'macOS'
 
     - name: Install dependencies
@@ -64,6 +67,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         .venv\Scripts\activate.ps1
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Windows'
 
     - name: Run bandit    
@@ -95,6 +99,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         source .venv/bin/activate
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Linux' || runner.os == 'macOS'
 
     - name: Install dependencies
@@ -104,6 +109,7 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry install
         .venv\Scripts\activate.ps1
+        echo "VIRTUAL ENV:" $VIRTUAL_ENV
       if: runner.os == 'Windows'
 
     - name: Run unit tests
