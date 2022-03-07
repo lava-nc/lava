@@ -5,6 +5,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "lava-nc"
+packages = [
+    {include = "lava"}
+]
 version = "0.3.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
