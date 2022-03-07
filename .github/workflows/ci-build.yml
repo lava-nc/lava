@@ -36,6 +36,7 @@ jobs:
 
     - name: Run flakeheaven (flake8)
       run: |
+        source $VENV
         flakeheaven lint src/lava tests/
 
   security-lint:
@@ -114,4 +115,5 @@ jobs:
 
     - name: Run unit tests
       run: |
+        source $VENV
         pytest
