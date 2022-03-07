@@ -22,9 +22,6 @@ jobs:
     - name: Run flakeheaven (flake8)
       run: |
         flakeheaven lint src/lava tests/
-        status=$?
-        [ $? -eq 0 ] && echo "Linting was successful" || echo "Linting failed"
-        $?=status
 
   security-lint:
     name: Security Lint Code
