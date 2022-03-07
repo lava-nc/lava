@@ -20,6 +20,8 @@ jobs:
         pip install poetry>=1.1.13
         poetry config virtualenvs.path .venv
         poetry install
+        cd .venv
+        pwd
 
     - name: Activate venv
       run: |        
