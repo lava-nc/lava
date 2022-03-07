@@ -19,19 +19,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry>=1.1.13
         poetry config virtualenvs.path .venv
-        poetry install
-
-    - name: Activate venv
-      run: |        
-         if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
-              source /home/runner/work/lava/lava/.venv/bin/activate
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              pwd
-              \home\runner\work\lava\lava\.venv\Scripts\activate.ps1
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+        poetry install    
+        if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
+            source .venv/bin/activate
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+            .venv\Scripts\activate.ps1
+        else
+            echo "$RUNNER_OS not supported"
+            exit 1
+        fi
 
     - name: Run flakeheaven (flake8)
       run: |
@@ -55,17 +51,14 @@ jobs:
         pip install poetry>=1.1.13
         poetry config virtualenvs.path .venv
         poetry install
-    
-    - name: Activate venv
-      run: |        
-         if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
-              source .venv/bin/activate
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              .venv\Scripts\activate.ps1
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+        if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
+            source .venv/bin/activate
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+            .venv\Scripts\activate.ps1
+        else
+            echo "$RUNNER_OS not supported"
+            exit 1
+        fi
 
     - name: Run bandit    
       uses: tj-actions/bandit@v5.1
@@ -95,17 +88,14 @@ jobs:
         pip install poetry>=1.1.13
         poetry config virtualenvs.path .venv
         poetry install
-
-    - name: Activate venv
-      run: |        
-         if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
-              source .venv/bin/activate
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              .venv\Scripts\activate.ps1
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+        if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
+            source .venv/bin/activate
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+            .venv\Scripts\activate.ps1
+        else
+            echo "$RUNNER_OS not supported"
+            exit 1
+        fi
 
     - name: Run unit tests
       run: |
