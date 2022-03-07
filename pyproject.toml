@@ -1,6 +1,36 @@
 [build-system]
-requires = ["pybuilder>=0.12.0", "setuptools"]
-build-backend = "pybuilder.pep517"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 80
+
+[tool.flakeheaven]
+extended_default_ignore=[]  # fix bug with newer flake8 ver.
+format = "grouped"
+max_line_length = 80
+show_source = true
+exclude = ["*.ipynb,./docs/,./test/,W503,E203"]
+ignore="W503,E203"
+
+
+[tool.flakeheaven.plugins]
+flake8-bandit = ["+*", "-S322,-B101"]
+flake8-bugbear = ["+*"]
+flake8-builtins = ["+*"]
+flake8-comprehensions = ["+*"]
+flake8-darglint = ["+*"]
+flake8-docstrings = ["+*"]
+flake8-eradicate = ["+*"]
+flake8-isort = ["+*"]
+flake8-mutable = ["+*"]
+flake8-pytest-style = ["+*"]
+flake8-spellcheck = ["-*"]
+mccabe = ["+*"]
+pep8-naming = ["+*"]
+pycodestyle = ["+*", "-W503,-E203"]
+pyflakes = ["+*", "-W503,-E203"]
+pylint = ["+*", "-W503,-E203"]
+
+[tool.flakeheaven.exceptions."tests/"]
+pycodestyle = ["-F401"]
