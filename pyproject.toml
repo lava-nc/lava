@@ -43,7 +43,7 @@ classifiers = [
 "Discussions" = "https://github.com/lava-nc/lava/discussions"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8, <3.11"
 
 matplotlib = "^3.5.1"
 numpy = "^1.22.2"
@@ -52,8 +52,6 @@ scipy = "^1.8.0"
 unittest2 = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
-python = "^3.8"
-
 bandit = "^1.7.2"
 coverage = { extras = ["toml"], version = "^6.3.2" }
 darglint = "^1.8.1"
@@ -70,6 +68,7 @@ flake8-pytest-style = "^1.6.0"
 flake8-spellcheck = "^0.25.0"
 flakeheaven = "^0.11.1"
 pep8-naming = "^0.11.1"
+poetry = "^1.1.13"
 pytest = "^7.0.1"
 pytest-cov = { extras = ["toml"], version = "^3.0.0" }
 sphinx = { extras = ["toml"], version = "^4.4.0" }
@@ -131,7 +130,7 @@ exclude = ["./docs/"]
 [tool.flakeheaven.plugins]
 flake8-bandit = ["+*", "-S322", "-B101"]       # Enable a plugin, disable specific checks
 
-# Disable below temporarily until lint fix is pushed
+# Disable below plugins temporarily until lint fix is pushed
 flake8-bugbear = ["-*"]
 flake8-builtins = ["-*"]
 flake8-comprehensions = ["-*"]
