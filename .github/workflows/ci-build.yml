@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry>=1.1.13
         poetry install
-        poetry env 3.9
+        poetry shell
 
     - name: Run flakeheaven (flake8)
       run: |
@@ -42,7 +42,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry>=1.1.13
         poetry install
-        poetry env 3.9
+        poetry shell
 
     - name: Run bandit    
       uses: tj-actions/bandit@v5.1
@@ -71,7 +71,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry>=1.1.13
         poetry install
-        poetry env 3.9
+        poetry shell
 
     - name: Run unit tests
       run: |
