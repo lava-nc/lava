@@ -17,11 +17,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pybuilder
+        pip install -r build-requirements.txt
 
-    - name: Run pybuilder w/o unit tests
+    - name: Run flakeheaven (flake8)
       run: |
-        pyb analyze
+        flakeheaven lint src/lava tests/
+        status=$?
+        [ $status -eq 0 ] && echo "Linting was successful" || $(echo "Linting failed" && exit 1)
 
   security-lint:
     name: Security Lint with bandit
@@ -38,11 +40,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pybuilder
+        pip install -r build-requirements.txt
 
-    - name: Run pybuilder to lint security w/ bandit
-      run: |
-        pyb bandit
+    - name: Run bandit    
+      uses: tj-actions/bandit@v5.1
+      with:
+        targets: |
+          src/lava/.      
+        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
 
   unit-tests:
     name: Run unit tests
