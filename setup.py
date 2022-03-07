@@ -1,96 +1,124 @@
 #!/usr/bin/env python
 #   -*- coding: utf-8 -*-
-#
-#   This file is part of PyBuilder
-#
-#   Copyright 2011-2020 PyBuilder Team
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
 
-#
-# This script allows to support installation via:
-#   pip install git+git://<project>@<branch>
-#
-# This script is designed to be used in combination with `pip install` ONLY
-#
-# DO NOT RUN MANUALLY
-#
+from setuptools import setup
+from setuptools.command.install import install as _install
 
-import os
-import subprocess
-import sys
-import glob
-import shutil
+class install(_install):
+    def pre_install_script(self):
+        pass
 
-from sys import version_info
+    def post_install_script(self):
+        pass
 
-py3 = version_info[0] == 3
-py2 = not py3
-if py2:
-    FileNotFoundError = OSError
+    def run(self):
+        self.pre_install_script()
 
+        _install.run(self)
 
-def install_pyb():
-    try:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "pybuilder"]
-        )
-    except subprocess.CalledProcessError as e:
-        sys.exit(e.returncode)
+        self.post_install_script()
 
+if __name__ == '__main__':
+    setup(
+        name = 'lava-nc',
+        version = '0.2.0',
+        description = 'A Software Framework for Neuromorphic Computing',
+        long_description = '',
+        long_description_content_type = None,
+        classifiers = [
+            'Development Status :: 3 - Alpha',
+            'Programming Language :: Python'
+        ],
+        keywords = '',
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
-exit_code = 0
+        author = '',
+        author_email = '',
+        maintainer = '',
+        maintainer_email = '',
 
-try:
-    subprocess.check_call(["pyb", "--version"])
-except FileNotFoundError as e:
-    if py3 or py2 and e.errno == 2:
-        install_pyb()
-    else:
-        raise
-except subprocess.CalledProcessError as e:
-    if e.returncode == 127:
-        install_pyb()
-    else:
-        sys.exit(e.returncode)
+        license = "['BSD-3-Clause', 'LGPL-2.1']",
 
-try:
-    from pybuilder.cli import main
+        url = 'https://lava-nc.org',
+        project_urls = {},
 
-    # verbose, debug, skip all optional...
-    if main("-v", "-X", "-o", "--reset-plugins", "clean", "package"):
-        raise RuntimeError("PyBuilder build failed")
-
-    from pybuilder.reactor import Reactor
-
-    reactor = Reactor.current_instance()
-    project = reactor.project
-    dist_dir = project.expand_path("$dir_dist")
-
-    for src_file in glob.glob(os.path.join(dist_dir, "*")):
-        file_name = os.path.basename(src_file)
-        target_file_name = os.path.join(script_dir, file_name)
-        if os.path.exists(target_file_name):
-            if os.path.isdir(target_file_name):
-                shutil.rmtree(target_file_name)
-            else:
-                os.remove(target_file_name)
-        shutil.move(src_file, script_dir)
-    setup_args = sys.argv[1:]
-    subprocess.check_call(
-        [sys.executable, "setup.py"] + setup_args, cwd=script_dir
+        scripts = [],
+        packages = ['lava-nc'],
+        namespace_packages = ['lava'],
+        py_modules = [
+            'lava.magma.compiler.builders.builder',
+            'lava.magma.compiler.builders.interfaces',
+            'lava.magma.compiler.channels.interfaces',
+            'lava.magma.compiler.channels.pypychannel',
+            'lava.magma.compiler.compiler',
+            'lava.magma.compiler.exceptions',
+            'lava.magma.compiler.exec_var',
+            'lava.magma.compiler.executable',
+            'lava.magma.compiler.node',
+            'lava.magma.compiler.utils',
+            'lava.magma.core.decorator',
+            'lava.magma.core.model.c.model',
+            'lava.magma.core.model.c.type',
+            'lava.magma.core.model.interfaces',
+            'lava.magma.core.model.model',
+            'lava.magma.core.model.nc.model',
+            'lava.magma.core.model.nc.type',
+            'lava.magma.core.model.py.model',
+            'lava.magma.core.model.py.ports',
+            'lava.magma.core.model.py.type',
+            'lava.magma.core.model.sub.model',
+            'lava.magma.core.process.interfaces',
+            'lava.magma.core.process.message_interface_enum',
+            'lava.magma.core.process.ports.exceptions',
+            'lava.magma.core.process.ports.ports',
+            'lava.magma.core.process.ports.reduce_ops',
+            'lava.magma.core.process.process',
+            'lava.magma.core.process.variable',
+            'lava.magma.core.resources',
+            'lava.magma.core.run_conditions',
+            'lava.magma.core.run_configs',
+            'lava.magma.core.sync.domain',
+            'lava.magma.core.sync.protocol',
+            'lava.magma.core.sync.protocols.async_protocol',
+            'lava.magma.core.sync.protocols.loihi_protocol',
+            'lava.magma.runtime.message_infrastructure.factory',
+            'lava.magma.runtime.message_infrastructure.message_infrastructure_interface',
+            'lava.magma.runtime.message_infrastructure.multiprocessing',
+            'lava.magma.runtime.mgmt_token_enums',
+            'lava.magma.runtime.runtime',
+            'lava.magma.runtime.runtime_services.enums',
+            'lava.magma.runtime.runtime_services.interfaces',
+            'lava.magma.runtime.runtime_services.runtime_service',
+            'lava.proc.conv.models',
+            'lava.proc.conv.process',
+            'lava.proc.conv.utils',
+            'lava.proc.dense.models',
+            'lava.proc.dense.process',
+            'lava.proc.io',
+            'lava.proc.lif.models',
+            'lava.proc.lif.process',
+            'lava.proc.monitor.models',
+            'lava.proc.monitor.process',
+            'lava.proc.sdn.models',
+            'lava.proc.sdn.process',
+            'lava.utils.dataloader.mnist',
+            'lava.utils.float2fixed',
+            'lava.utils.profiler',
+            'lava.utils.validator',
+            'lava.utils.visualizer'
+        ],
+        entry_points = {},
+        data_files = [],
+        package_data = {},
+        install_requires = [
+            'pytest',
+            'unittest2',
+            'numpy',
+            'matplotlib',
+            'scipy'
+        ],
+        dependency_links = [],
+        zip_safe = True,
+        cmdclass = {'install': install},
+        python_requires = '',
+        obsoletes = [],
     )
-except subprocess.CalledProcessError as e:
-    exit_code = e.returncode
-sys.exit(exit_code)
