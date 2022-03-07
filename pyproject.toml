@@ -9,10 +9,13 @@ version = "0.3.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
-authors = [
-    {name = "Intel's Neuromorphic Computing Lab and the open source community", email = "lava@intel.com"},
+authors = [ 
+    "Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"
 ]
-license = ["BSD-3-Clause", "LGPL-2.1-or-later"]
+license = [ 
+    "BSD-3-Clause",
+    "LGPL-2.1-or-later"
+]
 keywords = [
     "neuromorphic",
     "ai",
@@ -164,4 +167,5 @@ pylint = ["-*"]                             # Disable temporarily until lint fix
 
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check
+flake8-bandit = ["-S101"]                   # Ignore asserts for tests
 pyflakes = ["-*"]                           # Disable a plugin
