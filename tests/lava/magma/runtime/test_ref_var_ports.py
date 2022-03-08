@@ -96,6 +96,9 @@ class PyProcModel1(PyLoihiProcessModel):
             ref_data = np.array([5, 5, 5]) + self.time_step
             self.ref1.write(ref_data)
             self.ref3.write(ref_data[:2])
+            # ensure write() has finished before moving on
+            self.ref1.wait()
+            self.ref3.wait()
 
 
 # A minimal PyProcModel implementing P2

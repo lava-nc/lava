@@ -49,9 +49,9 @@ class MnistDataset:
                 try:
                     url = f"{mirror}{file}"
                     if url.lower().startswith("http"):
-                        # Disabling security linter and using hardcoded
+                        # Disabling security lint because we are using hardcoded
                         # URLs specified above
-                        res = urllib.request.urlopen(url)  # nosec
+                        res = urllib.request.urlopen(url)  # nosec # noqa
                         with open(os.path.join(path, file), "wb") as f:
                             f.write(res.read())
                         break

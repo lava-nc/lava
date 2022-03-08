@@ -65,53 +65,76 @@ All of Lava's core APIs and higher-level components are released, by default, wi
 
 ### Cloning Lava and Running from Source
 
-We highly recommend cloning the repository and using pybuilder to setup lava.
- You will need to install pybuilder for the same.
+We highly recommend cloning the repository and using poetry to setup lava.
+ You will need to install poetry.
 
-Open a python terminal and run based on the OS you are on:
+Open a **python 3** terminal and run based on the OS you are on:
 
 #### [Linux/MacOS]
 ```bash
-$ cd ~
-$ python3 -m venv python3_venv
-$ source python3_venv/bin/activate
-$ pip install -U pip
-$ git clone git@github.com:lava-nc/lava.git
-$ cd lava
-$ pip install -r build-requirements.txt
-$ pip install -r requirements.txt
-$ pip install -e .
-$ python -m unittest
+cd $HOME
+pip install -U pip
+pip install "poetry>=1.1.13"
+git clone git@github.com:lava-nc/lava.git
+cd lava
+poetry config virtualenvs.in-project true
+poetry install
+source .venv/bin/activate
+pytest
+
+## When running tests if you see 'OSError: [Errno 24] Too many open files'
+## consider setting ulimit using `ulimit -n 4096`
+## See FAQ for more info: https://github.com/lava-nc/lava/wiki/Frequently-Asked-Questions-(FAQ)#install
 ```
 Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
 #### [Windows]
-```cmd
-cd %HOMEPATH%
-python -m venv python3_venv
-python3_venv\Scripts\activate.bat
-python -m pip install --upgrade pip
+```powershell
+# Commands using PowerShell
+cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-pip install -r build-requirements.txt
-pip install -r requirements.txt
-pip install -e .
-python -m unittest
+python3 -m venv .venv
+.venv\Scripts\activate
+pip install -U pip
+pip install "poetry>=1.1.13"
+poetry config virtualenvs.in-project true
+poetry install
+pytest
 ```
-Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
-
 You should expect the following output after running the unit tests:
 ```
-PyBuilder version 0.13.3
-Build started at 2021-10-25 13:32:02
-------------------------------------------------------------
-[INFO]  Activated environments: unit
-[INFO]  Building Lava version 0.1.0
-......  PyBuilder Logs ...
-[INFO]  Running unit tests
-[INFO]  Executing unit tests from Python modules in /home/user/lava/lava/tests
-[INFO]  Executed 72 unit tests
-[INFO]  All unit tests passed.
+$ pytest
+============================================== test session starts ==============================================
+platform linux -- Python 3.8.10, pytest-7.0.1, pluggy-1.0.0
+rootdir: /home/user/lava, configfile: pyproject.toml, testpaths: tests
+plugins: cov-3.0.0
+collected 205 items
+
+tests/lava/magma/compiler/test_channel_builder.py .                                                       [  0%]
+tests/lava/magma/compiler/test_compiler.py ........................                                       [ 12%]
+tests/lava/magma/compiler/test_node.py ..                                                                 [ 13%]
+tests/lava/magma/compiler/builder/test_channel_builder.py .                                               [ 13%]
+
+...... pytest output ...
+
+tests/lava/proc/sdn/test_models.py ........                                                               [ 98%]
+tests/lava/proc/sdn/test_process.py ...                                                                   [100%]
+=============================================== warnings summary ================================================
+
+...... pytest output ...
+
+src/lava/proc/lif/process.py                                                           38      0   100%
+src/lava/proc/monitor/models.py                                                        27      0   100%
+src/lava/proc/monitor/process.py                                                       79      0   100%
+src/lava/proc/sdn/models.py                                                           159      9    94%   199-202, 225-231
+src/lava/proc/sdn/process.py                                                           59      0   100%
+-----------------------------------------------------------------------------------------------------------------TOTAL
+                                                                                     4048    453    89%
+
+Required test coverage of 85.0% reached. Total coverage: 88.81%
+============================ 199 passed, 6 skipped, 2 warnings in 118.17s (0:01:58) =============================
+
 ```
 
 ### [Alternative] Installing Lava from Binaries
@@ -125,37 +148,37 @@ Open a python terminal and run:
 
 #### [Windows/MacOS/Linux]
 ```bash
-$ python3 -m venv python3_venv
-$ pip install -U pip
-$ pip install lava-nc-0.3.0.tar.gz
+python -m venv .venv
+source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
+pip install -U pip
+pip install lava-nc-0.3.0.tar.gz
 ```
 
 ### Linting, Testing, Documentation and Packaging
 
 ```bash
-# Install pybuilder
-$  pip install -r build-requirements.txt
+# Install poetry
+pip install "poetry>=1.1.13"
+poetry config virtualenvs.in-project true
+poetry install
+poetry shell
 
 # Run linting
-$  pyb analyze
+flakeheaven lint src/lava tests
 
 # Run unit tests
-$  pyb -E unit 
-# Alternate unit test run
-$  python -m unittest
-
-# Generate documentation
-$  pyb sphinx_generate_documentation
+pytest
 
 # Create distribution
-$  pyb publish
-#### Find dists at target/dist/Lava-<version>/dist/
+poetry build
+#### Find builds at dist/
 
 # Run Secuity Linting
-$  pyb bandit
+bandit -r src/lava/.
+
 #### If security linting fails run bandit directly
 #### and format failures
-S  bandit -r lava/ --format custom --msg-template     "{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}"
+bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'
 ```
 
 ## Running Lava on Intel Loihi
@@ -175,8 +198,8 @@ instructions, email: nrc_support@intel-research.net
 
 - Login to INRC VM with your credentials
 - Follow the instructions to Install or Clone Lava
-- cd /nfs/ncl/releases/lava/0.1.0
-- pip install lava-nc-0.1.0.tar.gz
+- cd /nfs/ncl/releases/lava/0.3.0
+- pip install lava-nc-0.3.0.tar.gz
 
 ## Coding example
 ### Building a simple feed-forward network
