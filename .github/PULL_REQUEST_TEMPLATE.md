@@ -17,8 +17,8 @@ Your PR fulfills the following requirements:
 - [ ] [Docs](https://github.com/lava-nc/docs) reviewed and added / updated if needed (for bug fixes / features)
 - [ ] PR conforms to [Coding Conventions](https://lava-nc.org/developer_guide.html#coding-conventions)
 - [ ] [PR applys BSD 3-clause or LGPL2.1+ Licenses](https://lava-nc.org/developer_guide.html#add-a-license) to all code files
-- [ ] Lint (`pyb`) passes locally
-- [ ] Build tests (`pyb -E unit`) or (`python -m unittest`) passes locally
+- [ ] Lint (`flakeheaven lint src/lava tests/`) and (`bandit -r src/lava/.`) pass locally
+- [ ] Build tests (`pytest`) passes locally
 
 
 ## Pull request type

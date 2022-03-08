@@ -1,6 +1,0 @@
-pytest
-unittest2
-
-numpy
-matplotlib
-scipy
