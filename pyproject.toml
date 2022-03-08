@@ -53,7 +53,7 @@ unittest2 = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.2"
-coverage = "^6.3.2"
+coverage = { extras = ["toml"], version = "^6.3.2" }
 darglint = "^1.8.1"
 flake8 = "^4.0.1"
 flake8-bandit = "^2.1.2"
@@ -70,7 +70,7 @@ flakeheaven = "^0.11.1"
 pep8-naming = "^0.11.1"
 poetry = "^1.1.13"
 pytest = "^7.0.1"
-pytest-cov = "^3.0.0"
+pytest-cov = { extras = ["toml"], version = "^3.0.0" }
 sphinx = { extras = ["toml"], version = "^4.4.0" }
 sphinx-tabs = { extras = ["toml"], version = "^3.2.0" }
 sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
