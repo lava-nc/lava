@@ -81,6 +81,10 @@ poetry config virtualenvs.in-project true
 poetry install
 source .venv/bin/activate
 pytest
+
+## When running tests if you see 'OSError: [Errno 24] Too many open files'
+## consider setting ulimit using `ulimit -n 4096`
+## See FAQ for more info: https://github.com/lava-nc/lava/wiki/Frequently-Asked-Questions-(FAQ)#install
 ```
 Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
