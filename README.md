@@ -68,32 +68,34 @@ All of Lava's core APIs and higher-level components are released, by default, wi
 We highly recommend cloning the repository and using poetry to setup lava.
  You will need to install poetry.
 
-Open a python terminal and run based on the OS you are on:
+Open a **python 3** terminal and run based on the OS you are on:
 
 #### [Linux/MacOS]
 ```bash
-$ cd ~
-$ pip install -U pip
-$ pip install poetry>=1.1.13
-$ git clone git@github.com:lava-nc/lava.git
-$ cd lava
-$ poetry config virtualenvs.in-project = true
-$ poetry install
-$ source .venv/bin/activate
-$ pytest
+cd $HOME
+pip install -U pip
+pip install "poetry>=1.1.13"
+git clone git@github.com:lava-nc/lava.git
+cd lava
+poetry config virtualenvs.in-project true
+poetry install
+source .venv/bin/activate
+pytest
 ```
 Note that you should install the core Lava repository (lava) before installing other Lava libraries such as lava-optimization or lava-dl.
 
 #### [Windows]
-```cmd
-cd %HOMEPATH%
-python -m pip install --upgrade pip
-pip install poetry>=1.1.13
+```powershell
+# Commands using PowerShell
+cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-poetry config virtualenvs.in-project = true
-poetry install
+python -m venv .venv
 .venv\Scripts\activate
+pip install -U pip
+pip install "poetry>=1.1.13"
+poetry config virtualenvs.in-project true
+poetry install
 pytest
 ```
 You should expect the following output after running the unit tests:
@@ -113,7 +115,8 @@ tests/lava/magma/compiler/builder/test_channel_builder.py .                     
 ...... pytest output ...
 
 tests/lava/proc/sdn/test_models.py ........                                                               [ 98%]
-tests/lava/proc/sdn/test_process.py ...                                                                   [100%]                                                                 =============================================== warnings summary ================================================
+tests/lava/proc/sdn/test_process.py ...                                                                   [100%]
+=============================================== warnings summary ================================================
 
 ...... pytest output ...
 
@@ -122,7 +125,8 @@ src/lava/proc/monitor/models.py                                                 
 src/lava/proc/monitor/process.py                                                       79      0   100%
 src/lava/proc/sdn/models.py                                                           159      9    94%   199-202, 225-231
 src/lava/proc/sdn/process.py                                                           59      0   100%
------------------------------------------------------------------------------------------------------------------TOTAL                                                                                                                                                4048    453    89%
+-----------------------------------------------------------------------------------------------------------------TOTAL
+                                                                                     4048    453    89%
 
 Required test coverage of 85.0% reached. Total coverage: 88.81%
 ============================ 199 passed, 6 skipped, 2 warnings in 118.17s (0:01:58) =============================
@@ -140,37 +144,37 @@ Open a python terminal and run:
 
 #### [Windows/MacOS/Linux]
 ```bash
-$ python3 -m venv .venv
-$ source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
-$ pip install -U pip
-$ pip install lava-nc-0.3.0.tar.gz
+python -m venv .venv
+source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
+pip install -U pip
+pip install lava-nc-0.3.0.tar.gz
 ```
 
 ### Linting, Testing, Documentation and Packaging
 
 ```bash
 # Install poetry
-$  pip install poetry
-$  poetry config virtualenvs.in-project = true
-$  poetry install
-$  poetry shell
+pip install "poetry>=1.1.13"
+poetry config virtualenvs.in-project true
+poetry install
+poetry shell
 
 # Run linting
-$  flakeheaven lint src/lava tests
-
+flakeheaven lint src/lava tests
 
 # Run unit tests
-$  pytest
+pytest
 
 # Create distribution
-$  poetry build
+poetry build
 #### Find builds at dist/
 
 # Run Secuity Linting
-$  bandit -r src/lava/.
+bandit -r src/lava/.
+
 #### If security linting fails run bandit directly
 #### and format failures
-$  bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'
+bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'
 ```
 
 ## Running Lava on Intel Loihi
