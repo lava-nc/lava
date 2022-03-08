@@ -94,7 +94,7 @@ Note that you should install the core Lava repository (lava) before installing o
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-python -m venv .venv
+python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
 pip install "poetry>=1.1.13"
