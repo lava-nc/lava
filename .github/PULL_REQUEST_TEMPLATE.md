@@ -10,7 +10,7 @@ Issue Number:
 Objective of pull request:
 
 ## Pull request checklist
-
+<!--  (Mark with "x") -->
 Your PR fulfills the following requirements:
 - [ ] [Issue](https://github.com/lava-nc/lava/issues) created that explains the change and why it's needed
 - [ ] Tests are part of the PR (for bug fixes / features)
@@ -28,6 +28,8 @@ Your PR fulfills the following requirements:
 <!-- Please limit your pull request to one type, submit multiple pull requests if needed. --> 
 
 Please check your PR type:
+<!--  (Mark one with "x") remove not chosen below -->
+
 - [ ] Bugfix
 - [ ] Feature
 - [ ] Code style update (formatting, renaming)
@@ -46,6 +48,7 @@ Please check your PR type:
 -
 
 ## Does this introduce a breaking change?
+<!--  (Mark one with "x") remove not chosen below -->
 
 - [ ] Yes
 - [ ] No

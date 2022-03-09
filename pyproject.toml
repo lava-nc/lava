@@ -15,7 +15,7 @@ repository = "https://github.com/lava-nc/lava"
 authors = [ 
     "Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"
 ]
-license = "Lava uses multiple licenses is licensed under BSD-3-Clause or LGPL-2.1-or-later"
+license = "Lava uses multiple licenses and is licensed under BSD-3-Clause or LGPL-2.1-or-later"
 keywords = [
     "neuromorphic",
     "ai",
@@ -67,7 +67,7 @@ flake8-mutable = "^1.2.0"
 flake8-pytest-style = "^1.6.0"
 flake8-spellcheck = "^0.25.0"
 flakeheaven = "^0.11.1"
-pep8-naming = "^0.11.1"
+pep8-naming = "^0.12.1"
 poetry = "^1.1.13"
 pytest = "^7.0.1"
 pytest-cov = "^3.0.0"
