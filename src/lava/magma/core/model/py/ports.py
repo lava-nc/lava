@@ -101,6 +101,75 @@ class AbstractPyIOPort(AbstractPyPort):
         return self._csp_ports
 
 
+class Transformer(ty.Protocol):
+    def transform(self,
+                  data: np.ndarray,
+                  csp_port: AbstractCspPort) -> np.ndarray:
+        ...
+
+
+class IdentityTransformer:
+    def transform(self,
+                  data: np.ndarray,
+                  _: AbstractCspPort) -> np.ndarray:
+        return data
+
+
+class VirtualPortTransformer:
+    def __init__(self,
+                 csp_ports: ty.Dict[str, AbstractCspPort],
+                 transform_funcs: ty.Dict[str, ty.List[ft.partial]]):
+        self._csp_port_to_fp = {}
+
+        for port_id, csp_port in csp_ports.items():
+            if port_id not in transform_funcs:
+                raise AssertionError(
+                    f"no transformation functions found for port "
+                    f"id {port_id}")
+            self._csp_port_to_fp[csp_port] = transform_funcs[port_id]
+
+    def transform(self,
+                  data: np.ndarray,
+                  csp_port: AbstractCspPort) -> np.ndarray:
+        return self._get_transform(csp_port)(data)
+
+    def _get_transform(self,
+                       csp_port: AbstractCspPort) -> ty.Callable[[np.ndarray],
+                                                                 np.ndarray]:
+        """For a given CSP port, returns a function that applies, in sequence,
+        all the function pointers associated with the incoming virtual
+        ports.
+
+        Example:
+        Let the current PyPort be called C. It receives input from
+        PyPorts A and B, and the connection from A to C goes through a
+        sequence of virtual ports V1, V2, V3. Within PyPort C, there is a CSP
+        port 'csp_port_a', that receives data from a CSP port in PyPort A.
+        Then, the following call
+        >>> csp_port_a : AbstractCspPort
+        >>> data : np.ndarray
+        >>> self._get_transform(csp_port_a)(data)
+        takes the data 'data' and applies the function pointers associated
+        with V1, V2, and V3.
+
+        Parameters
+        ----------
+        csp_port : AbstractCspPort
+            the CSP port on which the data is received, which is supposed
+            to be transformed
+
+        Returns
+        -------
+        transformation_function : ty.Callable
+            function that transforms a given numpy array, e.g. by calling the
+            returned function f(data)
+        """
+        return ft.reduce(
+            lambda f, g: lambda data: g(f(data)),
+            self._csp_port_to_fp[csp_port]
+        )
+
+
 class PyInPort(AbstractPyIOPort):
     """Python implementation of InPort used within AbstractPyProcessModel.
 
@@ -143,9 +212,9 @@ class PyInPort(AbstractPyIOPort):
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...],
                  d_type: type,
-                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
+                 transformer: Transformer = IdentityTransformer()):
 
-        self._transform_funcs = transform_funcs
+        self._transformer = transformer
         super().__init__(csp_ports, process_model, shape, d_type)
 
     @abstractmethod
@@ -193,25 +262,6 @@ class PyInPort(AbstractPyIOPort):
             True,
         )
 
-    def _transform(self, recv_data: np.array) -> np.array:
-        """Applies all transformation function pointers to the input data.
-
-        Parameters
-        ----------
-        recv_data : numpy.ndarray
-            data received on the port that shall be transformed
-
-        Returns
-        -------
-        recv_data : numpy.ndarray
-            received data, transformed by the incoming virtual ports
-        """
-        if self._transform_funcs:
-            # apply all transformation functions to the received data
-            for f in self._transform_funcs:
-                recv_data = f(recv_data)
-        return recv_data
-
 
 class PyInPortVectorDense(PyInPort):
     """Python implementation of PyInPort for dense vector data."""
@@ -229,9 +279,10 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, csp_port: acc + self._transform(csp_port.recv()),
+            lambda acc, port: acc + self._transformer.transform(port.recv(),
+                                                                port),
             self.csp_ports,
-            np.zeros(self._shape, self._d_type),
+            np.zeros(self._shape, self._d_type)
         )
 
     def peek(self) -> np.ndarray:
@@ -246,7 +297,8 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, csp_port: acc + csp_port.peek(),
+            lambda acc, port: acc + self._transformer.transform(port.recv(),
+                                                                port),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )

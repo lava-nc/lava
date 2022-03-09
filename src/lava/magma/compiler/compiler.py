@@ -352,13 +352,11 @@ class Compiler:
                     for pt in (list(p.in_ports) + list(p.out_ports)):
                         # For all InPorts that receive input from
                         # virtual ports...
-                        transform_funcs = []
+                        transform_funcs = None
                         if isinstance(pt, InPort):
                             # ... extract a function pointer to the
                             # transformation function of each virtual port.
-                            transform_funcs = \
-                                [vp.get_transform_func_fwd()
-                                 for vp in pt.get_incoming_virtual_ports()]
+                            transform_funcs = pt.get_incoming_transform_funcs()
 
                         pi = PortInitializer(pt.name,
                                              pt.shape,

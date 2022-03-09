@@ -35,6 +35,7 @@ from lava.magma.core.resources import HeadNode
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
+from lava.magma.core.process.ports.ports import create_port_id
 from lava.magma.core.run_conditions import AbstractRunCondition
 
 """Defines a Runtime which takes a lava executable and a pluggable message
@@ -184,12 +185,21 @@ class Runtime:
                 channel = channel_builder.build(
                     self._messaging_infrastructure
                 )
+
+                src_port_id = create_port_id(
+                    channel_builder.src_process.name,
+                    channel_builder.src_port_initializer.name)
+
+                dst_port_id = create_port_id(
+                    channel_builder.dst_process.name,
+                    channel_builder.dst_port_initializer.name)
+
                 self._get_process_builder_for_process(
                     channel_builder.src_process).set_csp_ports(
-                    [channel.src_port])
+                    {dst_port_id: channel.src_port})
                 self._get_process_builder_for_process(
                     channel_builder.dst_process).set_csp_ports(
-                    [channel.dst_port])
+                    {src_port_id: channel.dst_port})
 
     def _build_sync_channels(self):
         """Builds the channels needed for synchronization between runtime

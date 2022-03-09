@@ -18,7 +18,7 @@ class PortInitializer:
     d_type: type
     port_type: str
     size: int
-    transform_funcs: ty.List[ft.partial] = None
+    transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
 
 
 # check if can be a subclass of PortInitializer

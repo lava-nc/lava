@@ -39,7 +39,8 @@ from lava.magma.core.model.py.ports import (
     PyInPort,
     PyOutPort,
     PyRefPort,
-    PyVarPort
+    PyVarPort,
+    VirtualPortTransformer
 )
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
@@ -168,7 +169,8 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         self.py_ports: ty.Dict[str, PortInitializer] = {}
         self.ref_ports: ty.Dict[str, PortInitializer] = {}
         self.var_ports: ty.Dict[str, VarPortInitializer] = {}
-        self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
+        self.csp_ports: ty.Dict[str,
+                                ty.Dict[str, AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
         self.proc_params = proc_params
@@ -276,24 +278,30 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         self._check_not_assigned_yet(self.var_ports, new_ports.keys(), "ports")
         self.var_ports.update(new_ports)
 
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
-        """Appends the given list of CspPorts to the ProcessModel. Used by the
-        runtime to configure csp ports during initialization (_build_channels).
+    def set_csp_ports(self, csp_ports: ty.Dict[str, AbstractCspPort]):
+        """Appends the given dictionary of CspPorts to the ProcessModel.
+        Used by the runtime to configure csp ports during initialization
+        (_build_channels).
 
         Parameters
         ----------
-        csp_ports : ty.List[AbstractCspPort]
-
+        csp_ports : ty.Dict[str, AbstractCspPort]
+            dictionary that associates an ID of the source/destination Port
+            (constructed from the name of the Process and the name of the Port)
+            with a CspPort
 
         Raises
         ------
         AssertionError
             PyProcessModel has no port of that name
         """
+        # Create a new dict that maps the name of the port to another dict.
+        # This in turn maps a string-based ID of the PyPort on the other end
+        # of the channel to the CSP port: {connected_port_id: csp_port}.
         new_ports = {}
-        for p in csp_ports:
-            new_ports.setdefault(p.name, []).extend(
-                p if isinstance(p, list) else [p]
+        for connected_port_id, port in csp_ports.items():
+            new_ports.setdefault(port.name, {}).update(
+                {connected_port_id: port}
             )
 
         # Check that there's a PyPort for each new CspPort
@@ -304,7 +312,7 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                     no port named '{}'.".format(proc_name, port_name))
 
             if port_name in self.csp_ports:
-                self.csp_ports[port_name].extend(new_ports[port_name])
+                self.csp_ports[port_name].update(new_ports[port_name])
             else:
                 self.csp_ports[port_name] = new_ports[port_name]
 
@@ -365,17 +373,17 @@ class PyProcessBuilder(_AbstractProcessBuilder):
             # Build PyPort
             lt = self._get_lava_type(name)
             port_cls = ty.cast(ty.Type[AbstractPyIOPort], lt.cls)
+
             csp_ports = []
             if name in self.csp_ports:
-                csp_ports = self.csp_ports[name]
-                if not isinstance(csp_ports, list):
-                    csp_ports = [csp_ports]
+                csp_ports = list(self.csp_ports[name].values())
 
-            # TODO (MR): This is probably just a temporary hack until the
-            #  interface of PyOutPorts has been adjusted.
             if issubclass(port_cls, PyInPort):
-                port = port_cls(csp_ports, pm, p.shape, lt.d_type,
-                                p.transform_funcs)
+                transformer = VirtualPortTransformer(
+                    self.csp_ports[name],
+                    p.transform_funcs)
+                port_cls = ty.cast(ty.Type[PyInPort], lt.cls)
+                port = port_cls(csp_ports, pm, p.shape, lt.d_type, transformer)
             elif issubclass(port_cls, PyOutPort):
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type)
             else:

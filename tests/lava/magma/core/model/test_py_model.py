@@ -192,9 +192,12 @@ class TestPyProcessBuilder(unittest.TestCase):
         # Later, the Runtime, would normally create CspPorts that implements
         # the actual message passing via channels between PyPorts. Here we
         # just create some fake CspPorts for each PyPort.
-        csp_ports = []
-        for py_port in py_ports:
-            csp_ports.append(FakeCspPort(py_port.name))
+        csp_ports = {}
+        for idx, py_port in enumerate(py_ports):
+            # The ID would normally describe the PyPort on the other end of
+            # the CSP channel and be composed of the Process name and the
+            # PyPort name.
+            csp_ports["fake_id_" + str(idx)] = FakeCspPort(py_port.name)
 
         # During compilation, the Compiler creates and then sets
         # VarInitializers and PyPortInitializers
@@ -207,11 +210,12 @@ class TestPyProcessBuilder(unittest.TestCase):
         # name
         self.assertEqual(list(b.vars.values()), v)
         self.assertEqual(list(b.py_ports.values()), py_ports)
-        self.assertEqual(list(v for vv in b.csp_ports.values()
-                              for v in vv), csp_ports)
+        self.assertEqual({key: value for d in b.csp_ports.values()
+                         for key, value in d.items()}, csp_ports)
         self.assertEqual(b.vars["v1_scalar"], v[0])
         self.assertEqual(b.py_ports["in_port"], py_ports[0])
-        self.assertEqual(b.csp_ports["out_port"], [csp_ports[1]])
+        self.assertEqual(b.csp_ports["out_port"]["fake_id_1"],
+                         csp_ports["fake_id_1"])
 
     def test_setting_non_existing_var(self):
         """Checks that setting Var not defined in ProcModel fails. Same will
