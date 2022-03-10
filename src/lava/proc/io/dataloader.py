@@ -122,6 +122,7 @@ class AbstractPyStateDataloaderModel(AbstractPyDataloaderModel):
         self.sample_id += 1
         if self.sample_id == len(self.dataset):
             self.sample_id = 0
+        self.state.wait()  # ensures write() has finished before moving on
 
 
 @implements(proc=StateDataloader, protocol=LoihiProtocol)

@@ -55,10 +55,12 @@ class AbstractPyReset(PyLoihiProcessModel):
     offset: np.ndarray = LavaPyType(np.ndarray, int)
 
     def post_guard(self) -> None:
-        return self.time_step % self.interval == self.offset
+        return (self.time_step - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        self.state.write(0 * self.state.read() + self.reset_value)
+        self.state.write(np.zeros(self.state._shape,
+                                  self.state._d_type) + self.reset_value)
+        self.state.wait()  # ensures write() has finished before moving on
 
 
 @implements(proc=Reset, protocol=LoihiProtocol)
