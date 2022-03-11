@@ -298,9 +298,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    def _create_process_graph_with_two_virtual_ports(self) -> ty.Tuple[
-            "OutPortProcess", "InPortProcess"]:
-        """Creates a Process graph that contains two virtual ports."""
+    def test_chaining_multiple_virtual_ports(self) -> None:
+        """Tests whether virtual ports can be chained. This also checks
+        whether the Process graph can be executed by calling run() on a
+        Process 'downstream' of virtual ports."""
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape)
@@ -317,50 +318,6 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
             [virtual_port2], AbstractPort, assert_same_shape=False
         )
         virtual_port2.connect(sink.in_port)
-
-        return source, sink
-
-    def test_compiler_finds_all_processes(self) -> None:
-        """Tests whether in Process graphs with virtual ports, all Processes
-        are found, no matter from which Process the search is started. Also
-        tests, whether a Process graph can be executed by calling run() on a
-        Process 'upstream' of virtual ports."""
-
-        source, sink = self._create_process_graph_with_two_virtual_ports()
-
-        compiler = Compiler()
-        # Test whether all Processes are found when starting the search from
-        # the source Process
-        expected_procs = [sink, source]
-        found_procs = compiler._find_processes(source)
-        self.assertCountEqual(found_procs, expected_procs)
-
-        # Test whether all Processes are found when starting the search from
-        # the destination Process
-        found_procs = compiler._find_processes(sink)
-        self.assertCountEqual(found_procs, expected_procs)
-
-        try:
-            source.run(condition=RunSteps(num_steps=self.num_steps),
-                       run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
-            output = sink.data.get()
-        finally:
-            sink.stop()
-
-        expected = self.input_data
-        self.assertTrue(
-            np.all(output == expected),
-            f'Input and output do not match.\n'
-            f'{output[output!=expected]=}\n'
-            f'{expected[output!=expected] =}\n'
-        )
-
-    def test_chaining_multiple_virtual_ports(self) -> None:
-        """Tests whether virtual ports can be chained. This also checks
-        whether the Process graph can be executed by calling run() on a
-        Process 'downstream' of virtual ports."""
-
-        source, sink = self._create_process_graph_with_two_virtual_ports()
 
         try:
             sink.run(condition=RunSteps(num_steps=self.num_steps),

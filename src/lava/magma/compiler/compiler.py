@@ -369,9 +369,7 @@ class Compiler:
                     # Create RefPort (also use PortInitializers)
                     ref_ports = []
                     for pt in list(p.ref_ports):
-                        transform_funcs = \
-                            [vp.get_transform_func_bwd()
-                             for vp in pt.get_outgoing_virtual_ports()]
+                        transform_funcs = pt.get_outgoing_transform_funcs()
 
                         pi = PortInitializer(pt.name,
                                              pt.shape,
@@ -384,9 +382,8 @@ class Compiler:
                     # Create VarPortInitializers (contain also the Var name)
                     var_ports = []
                     for pt in list(p.var_ports):
-                        transform_funcs = \
-                            [vp.get_transform_func_fwd()
-                             for vp in pt.get_incoming_virtual_ports()]
+                        transform_funcs = pt.get_incoming_transform_funcs()
+
                         pi = VarPortInitializer(
                             pt.name,
                             pt.shape,

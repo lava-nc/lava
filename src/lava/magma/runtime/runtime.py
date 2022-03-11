@@ -186,20 +186,20 @@ class Runtime:
                     self._messaging_infrastructure
                 )
 
-                src_port_id = create_port_id(
-                    channel_builder.src_process.name,
-                    channel_builder.src_port_initializer.name)
-
-                dst_port_id = create_port_id(
-                    channel_builder.dst_process.name,
-                    channel_builder.dst_port_initializer.name)
-
                 self._get_process_builder_for_process(
                     channel_builder.src_process).set_csp_ports(
-                    {dst_port_id: channel.src_port})
-                self._get_process_builder_for_process(
-                    channel_builder.dst_process).set_csp_ports(
-                    {src_port_id: channel.dst_port})
+                    [channel.src_port])
+
+                dst_pb = self._get_process_builder_for_process(
+                    channel_builder.dst_process)
+                dst_pb.set_csp_ports([channel.dst_port])
+
+                # Add a mapping from the ID of the source PyPort
+                # to the CSP port
+                src_port_id = create_port_id(
+                    channel_builder.src_process.id,
+                    channel_builder.src_port_initializer.name)
+                dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
 
     def _build_sync_channels(self):
         """Builds the channels needed for synchronization between runtime

@@ -1,13 +1,21 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
+from multiprocessing.managers import SharedMemoryManager
 import typing as ty
 import unittest
-
 import numpy as np
 
-from lava.magma.compiler.builders.builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from lava.magma.compiler.builders.builder import ChannelBuilderMp, \
+    PyProcessBuilder
+from lava.magma.compiler.channels.interfaces import Channel, ChannelType, \
+    AbstractCspPort
+from lava.magma.compiler.channels.pypychannel import (
+    PyPyChannel,
+    CspSendPort,
+    CspRecvPort,
+)
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
@@ -20,6 +28,54 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
+
+
+class MockMessageInterface:
+    def __init__(self, smm):
+        self.smm = smm
+
+    def channel_class(self, channel_type: ChannelType) -> ty.Type:
+        return PyPyChannel
+
+
+# ToDo: (AW) This test does not work for me. Something broken with d_type.
+#  SMM does not seem to support numpy types.
+class TestChannelBuilder(unittest.TestCase):
+    def test_channel_builder(self):
+        """Tests Channel Builder creation"""
+        smm: SharedMemoryManager = SharedMemoryManager()
+        try:
+            port_initializer: PortInitializer = PortInitializer(
+                name="mock", shape=(1, 2), d_type=np.int32,
+                port_type='DOESNOTMATTER', size=64)
+            channel_builder: ChannelBuilderMp = ChannelBuilderMp(
+                channel_type=ChannelType.PyPy,
+                src_port_initializer=port_initializer,
+                dst_port_initializer=port_initializer,
+                src_process=None,
+                dst_process=None,
+            )
+
+            smm.start()
+            mock = MockMessageInterface(smm)
+            channel: Channel = channel_builder.build(mock)
+            assert isinstance(channel, PyPyChannel)
+            assert isinstance(channel.src_port, CspSendPort)
+            assert isinstance(channel.dst_port, CspRecvPort)
+
+            channel.src_port.start()
+            channel.dst_port.start()
+
+            expected_data = np.array([[1, 2]])
+            channel.src_port.send(data=expected_data)
+            data = channel.dst_port.recv()
+            assert np.array_equal(data, expected_data)
+
+            channel.src_port.join()
+            channel.dst_port.join()
+
+        finally:
+            smm.shutdown()
 
 
 # A test Process with a variety of Ports and Vars of different shapes,
@@ -192,12 +248,11 @@ class TestPyProcessBuilder(unittest.TestCase):
         # Later, the Runtime, would normally create CspPorts that implements
         # the actual message passing via channels between PyPorts. Here we
         # just create some fake CspPorts for each PyPort.
-        csp_ports = {}
-        for idx, py_port in enumerate(py_ports):
-            # The ID would normally describe the PyPort on the other end of
-            # the CSP channel and be composed of the Process name and the
-            # PyPort name.
-            csp_ports["fake_id_" + str(idx)] = FakeCspPort(py_port.name)
+        csp_ports = []
+        for i, py_port in enumerate(py_ports):
+            csp_port = FakeCspPort(py_port.name)
+            csp_ports.append(csp_port)
+            b.add_csp_port_mapping(f"id{i}", csp_port)
 
         # During compilation, the Compiler creates and then sets
         # VarInitializers and PyPortInitializers
@@ -210,12 +265,13 @@ class TestPyProcessBuilder(unittest.TestCase):
         # name
         self.assertEqual(list(b.vars.values()), v)
         self.assertEqual(list(b.py_ports.values()), py_ports)
-        self.assertEqual({key: value for d in b.csp_ports.values()
-                         for key, value in d.items()}, csp_ports)
+        self.assertEqual(list(v for vv in b.csp_ports.values()
+                              for v in vv), csp_ports)
         self.assertEqual(b.vars["v1_scalar"], v[0])
         self.assertEqual(b.py_ports["in_port"], py_ports[0])
-        self.assertEqual(b.csp_ports["out_port"]["fake_id_1"],
-                         csp_ports["fake_id_1"])
+        self.assertEqual(b.csp_ports["out_port"], [csp_ports[1]])
+        self.assertEqual(b._csp_port_map["in_port"], {"id0": csp_ports[0]})
+        self.assertEqual(b._csp_port_map["out_port"], {"id1": csp_ports[1]})
 
     def test_setting_non_existing_var(self):
         """Checks that setting Var not defined in ProcModel fails. Same will

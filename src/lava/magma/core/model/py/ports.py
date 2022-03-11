@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import functools as ft
 import numpy as np
 
@@ -101,32 +101,64 @@ class AbstractPyIOPort(AbstractPyPort):
         return self._csp_ports
 
 
-class Transformer(ty.Protocol):
+class AbstractTransformer(ABC):
+    """Interface for Transformers that are used in receiving PyPorts to
+    transform data."""
+    @abstractmethod
     def transform(self,
                   data: np.ndarray,
                   csp_port: AbstractCspPort) -> np.ndarray:
-        ...
+        """Transforms incoming data in way that is determined by which CSP
+        port the data is received.
+
+        Parameters
+        ----------
+        data : numpy.ndarray
+            data that will be transformed
+        csp_port : AbstractCspPort
+            CSP port that the data was received on
+
+        Returns
+        -------
+        transformed_data : numpy.ndarray
+            the transformed data
+        """
 
 
-class IdentityTransformer:
+class IdentityTransformer(AbstractTransformer):
+    """Transformer that does not transform the data but returns it unchanged."""
     def transform(self,
                   data: np.ndarray,
                   _: AbstractCspPort) -> np.ndarray:
         return data
 
 
-class VirtualPortTransformer:
+class VirtualPortTransformer(AbstractTransformer):
     def __init__(self,
                  csp_ports: ty.Dict[str, AbstractCspPort],
                  transform_funcs: ty.Dict[str, ty.List[ft.partial]]):
+        """Transformer that implements the virtual ports on the path to the
+        receiving PyPort.
+
+        Parameters
+        ----------
+        csp_ports : ty.Dict[str, AbstractCspPort]
+            mapping from a port ID to a CSP port
+        transform_funcs : ty.Dict[str, ty.List[functools.partial]]
+            mapping from a port ID to a list of function pointers that
+            implement the behavior of the virtual pots on the path to the
+            receiving PyPort.
+        """
         self._csp_port_to_fp = {}
 
+        if not csp_ports:
+            raise AssertionError("'csp_ports' should not be empty.")
+
+        # Associate CSP ports with the list of function pointers that must be
+        # applied for the transformation.
         for port_id, csp_port in csp_ports.items():
-            if port_id not in transform_funcs:
-                raise AssertionError(
-                    f"no transformation functions found for port "
-                    f"id {port_id}")
-            self._csp_port_to_fp[csp_port] = transform_funcs[port_id]
+            self._csp_port_to_fp[csp_port] = transform_funcs[port_id] \
+                if port_id in transform_funcs else [lambda x: x]
 
     def transform(self,
                   data: np.ndarray,
@@ -164,9 +196,14 @@ class VirtualPortTransformer:
             function that transforms a given numpy array, e.g. by calling the
             returned function f(data)
         """
+        if csp_port not in self._csp_port_to_fp:
+            raise AssertionError(f"The CSP port '{csp_port.name}' is not "
+                                 f"registered with a transformation function.")
+
         return ft.reduce(
             lambda f, g: lambda data: g(f(data)),
-            self._csp_port_to_fp[csp_port]
+            self._csp_port_to_fp[csp_port],
+            lambda h: h
         )
 
 
@@ -181,6 +218,30 @@ class PyInPort(AbstractPyIOPort):
     type of OutPorts via LavaPyType declarations in PyProcModels, e.g.,
     LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24) creates a PyInPort.
     A PyOutPort (source) can be connected to one or multiple PyInPorts (target).
+
+    Parameters
+    ----------
+    csp_ports : ty.List[AbstractCspPort]
+        Used to receive data from the referenced PyOutPort.
+
+    process_model : AbstractProcessModel
+        The process model used by the process of the Port.
+
+    shape : tuple, default=tuple()
+        The shape of the Port.
+
+    d_type : type, default=int
+        The data type of the Port.
+
+    transformer : AbstractTransformer, default: identity function
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyInPort.
+
+    Attributes
+    ----------
+    _transformer : AbstractTransformer
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyVarPort.
 
     Class attributes
     ----------------
@@ -207,13 +268,14 @@ class PyInPort(AbstractPyIOPort):
     SCALAR_DENSE: ty.Type["PyInPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
-    def __init__(self,
-                 csp_ports: ty.List[AbstractCspPort],
-                 process_model: AbstractProcessModel,
-                 shape: ty.Tuple[int, ...],
-                 d_type: type,
-                 transformer: Transformer = IdentityTransformer()):
-
+    def __init__(
+        self,
+        csp_ports: ty.List[AbstractCspPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...],
+        d_type: type,
+        transformer: ty.Optional[AbstractTransformer] = IdentityTransformer()
+    ):
         self._transformer = transformer
         super().__init__(csp_ports, process_model, shape, d_type)
 
@@ -473,8 +535,12 @@ class PyRefPort(AbstractPyPort):
     shape : tuple, default=tuple()
         The shape of the Port.
 
-    d_type: type, default=int
+    d_type : type, default=int
         The data type of the Port.
+
+    transformer : AbstractTransformer, default: identity function
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyRefPort.
 
     Attributes
     ----------
@@ -483,6 +549,10 @@ class PyRefPort(AbstractPyPort):
 
     _csp_recv_port : CspRecvPort
         Used to receive data from the referenced Port PyVarPort (source).
+
+    _transformer : AbstractTransformer
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyRefPort.
 
     Class attributes
     ----------------
@@ -509,15 +579,16 @@ class PyRefPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyRefPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyRefPortScalarSparse"] = None
 
-    def __init__(self,
-                 csp_send_port: ty.Optional[CspSendPort],
-                 csp_recv_port: ty.Optional[CspRecvPort],
-                 process_model: AbstractProcessModel,
-                 shape: ty.Tuple[int, ...] = tuple(),
-                 d_type: type = int,
-                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
-
-        self._transform_funcs = transform_funcs
+    def __init__(
+        self,
+        csp_send_port: ty.Optional[CspSendPort],
+        csp_recv_port: ty.Optional[CspRecvPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...] = tuple(),
+        d_type: type = int,
+        transformer: ty.Optional[AbstractTransformer] = IdentityTransformer()
+    ):
+        self._transformer = transformer
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         super().__init__(process_model, shape, d_type)
@@ -589,25 +660,6 @@ class PyRefPort(AbstractPyPort):
          optimized later at the CspChannel level"""
         self.read()
 
-    def _transform(self, recv_data: np.array) -> np.array:
-        """Applies all transformation function pointers to the input data.
-
-        Parameters
-        ----------
-        recv_data : numpy.ndarray
-            data received on the port that shall be transformed
-
-        Returns
-        -------
-        recv_data : numpy.ndarray
-            received data, transformed by the incoming virtual ports
-        """
-        if self._transform_funcs:
-            # apply all transformation functions to the received data
-            for f in reversed(self._transform_funcs):
-                recv_data = f(recv_data)
-        return recv_data
-
 
 class PyRefPortVectorDense(PyRefPort):
     """Python implementation of RefPort for dense vector data."""
@@ -624,7 +676,8 @@ class PyRefPortVectorDense(PyRefPort):
             header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
             self._csp_send_port.send(header)
 
-            return self._transform(self._csp_recv_port.recv())
+            return self._transformer.transform(self._csp_recv_port.recv(),
+                                               self._csp_recv_port)
 
         # TODO (MR): self._shape must be set to the correct shape when
         #  instantiating the Port
@@ -715,6 +768,10 @@ class PyVarPort(AbstractPyPort):
     d_type: type, default=int
         The data type of the Port.
 
+    transformer : AbstractTransformer, default: identity function
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyVarPort.
+
     Attributes
     ----------
     var_name : str
@@ -725,6 +782,10 @@ class PyVarPort(AbstractPyPort):
 
     _csp_recv_port : CspRecvPort
         Used to receive data from the referenced Port PyRefPort (source).
+
+    _transformer : AbstractTransformer
+        Enables transforming the received data in accordance with the
+        virtual ports on the path to the PyVarPort.
 
     Class attributes
     ----------------
@@ -758,9 +819,9 @@ class PyVarPort(AbstractPyPort):
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...] = tuple(),
                  d_type: type = int,
-                 transform_funcs: ty.Optional[ty.List[ft.partial]] = None):
+                 transformer: AbstractTransformer = IdentityTransformer()):
 
-        self._transform_funcs = transform_funcs
+        self._transformer = transformer
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         self.var_name = var_name
@@ -792,25 +853,6 @@ class PyVarPort(AbstractPyPort):
         """
         pass
 
-    def _transform(self, recv_data: np.array) -> np.array:
-        """Applies all transformation function pointers to the input data.
-
-        Parameters
-        ----------
-        recv_data : numpy.ndarray
-            data received on the port that shall be transformed
-
-        Returns
-        -------
-        recv_data : numpy.ndarray
-            received data, transformed by the incoming virtual ports
-        """
-        if self._transform_funcs:
-            # apply all transformation functions to the received data
-            for f in self._transform_funcs:
-                recv_data = f(recv_data)
-        return recv_data
-
 
 class PyVarPortVectorDense(PyVarPort):
     """Python implementation of VarPort for dense vector data."""
@@ -831,7 +873,9 @@ class PyVarPortVectorDense(PyVarPort):
 
                 # Set the value of the Var with the given data
                 if enum_equal(cmd, VarPortCmd.SET):
-                    data = self._transform(self._csp_recv_port.recv())
+                    data = self._transformer.transform(
+                        self._csp_recv_port.recv(),
+                        self._csp_recv_port)
                     setattr(self._process_model, self.var_name, data)
                 elif enum_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)
