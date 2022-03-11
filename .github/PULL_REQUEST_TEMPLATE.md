@@ -10,15 +10,15 @@ Issue Number:
 Objective of pull request:
 
 ## Pull request checklist
-
+<!--  (Mark with "x") -->
 Your PR fulfills the following requirements:
 - [ ] [Issue](https://github.com/lava-nc/lava/issues) created that explains the change and why it's needed
 - [ ] Tests are part of the PR (for bug fixes / features)
 - [ ] [Docs](https://github.com/lava-nc/docs) reviewed and added / updated if needed (for bug fixes / features)
 - [ ] PR conforms to [Coding Conventions](https://lava-nc.org/developer_guide.html#coding-conventions)
 - [ ] [PR applys BSD 3-clause or LGPL2.1+ Licenses](https://lava-nc.org/developer_guide.html#add-a-license) to all code files
-- [ ] Lint (`pyb`) passes locally
-- [ ] Build tests (`pyb -E unit`) or (`python -m unittest`) passes locally
+- [ ] Lint (`flakeheaven lint src/lava tests/`) and (`bandit -r src/lava/.`) pass locally
+- [ ] Build tests (`pytest`) passes locally
 
 
 ## Pull request type
@@ -28,6 +28,8 @@ Your PR fulfills the following requirements:
 <!-- Please limit your pull request to one type, submit multiple pull requests if needed. --> 
 
 Please check your PR type:
+<!--  (Mark one with "x") remove not chosen below -->
+
 - [ ] Bugfix
 - [ ] Feature
 - [ ] Code style update (formatting, renaming)
@@ -46,6 +48,7 @@ Please check your PR type:
 -
 
 ## Does this introduce a breaking change?
+<!--  (Mark one with "x") remove not chosen below -->
 
 - [ ] Yes
 - [ ] No
