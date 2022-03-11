@@ -39,7 +39,9 @@ from lava.magma.core.model.py.ports import (
     PyInPort,
     PyOutPort,
     PyRefPort,
-    PyVarPort
+    PyVarPort,
+    VirtualPortTransformer,
+    IdentityTransformer
 )
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
@@ -169,6 +171,7 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         self.ref_ports: ty.Dict[str, PortInitializer] = {}
         self.var_ports: ty.Dict[str, VarPortInitializer] = {}
         self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
+        self._csp_port_map: ty.Dict[str, ty.Dict[str, AbstractCspPort]] = {}
         self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
         self.proc_params = proc_params
@@ -308,6 +311,24 @@ class PyProcessBuilder(_AbstractProcessBuilder):
             else:
                 self.csp_ports[port_name] = new_ports[port_name]
 
+    def add_csp_port_mapping(self, py_port_id: str, csp_port: AbstractCspPort):
+        """Appends a mapping from a PyPort ID to a CSP port. This is used
+        to associate a CSP port in a PyPort with transformation functions
+        that implement the behavior of virtual ports.
+
+        Parameters
+        ----------
+        py_port_id : str
+            ID of the PyPort that contains the CSP on the other side of the
+            channel of 'csp_port'
+        csp_port : AbstractCspPort
+            a CSP port
+        """
+        # Add or update the mapping
+        self._csp_port_map.setdefault(
+            csp_port.name, {}
+        ).update({py_port_id: csp_port})
+
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """Set RS CSP Ports
 
@@ -371,11 +392,13 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                 if not isinstance(csp_ports, list):
                     csp_ports = [csp_ports]
 
-            # TODO (MR): This is probably just a temporary hack until the
-            #  interface of PyOutPorts has been adjusted.
             if issubclass(port_cls, PyInPort):
-                port = port_cls(csp_ports, pm, p.shape, lt.d_type,
-                                p.transform_funcs)
+                transformer = VirtualPortTransformer(
+                    self._csp_port_map[name],
+                    p.transform_funcs
+                ) if p.transform_funcs else IdentityTransformer()
+                port_cls = ty.cast(ty.Type[PyInPort], lt.cls)
+                port = port_cls(csp_ports, pm, p.shape, lt.d_type, transformer)
             elif issubclass(port_cls, PyOutPort):
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type)
             else:
@@ -401,8 +424,13 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                 csp_send = csp_ports[0] if isinstance(
                     csp_ports[0], CspSendPort) else csp_ports[1]
 
+            transformer = VirtualPortTransformer(
+                self._csp_port_map[name],
+                p.transform_funcs
+            ) if p.transform_funcs else IdentityTransformer()
+
             port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type,
-                            p.transform_funcs)
+                            transformer)
 
             # Create dynamic RefPort attribute on ProcModel
             setattr(pm, name, port)
@@ -422,9 +450,15 @@ class PyProcessBuilder(_AbstractProcessBuilder):
                     csp_ports[0], CspRecvPort) else csp_ports[1]
                 csp_send = csp_ports[0] if isinstance(
                     csp_ports[0], CspSendPort) else csp_ports[1]
+
+            transformer = VirtualPortTransformer(
+                self._csp_port_map[name],
+                p.transform_funcs
+            ) if p.transform_funcs else IdentityTransformer()
+
             port = port_cls(
                 p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type,
-                p.transform_funcs)
+                transformer)
 
             # Create dynamic VarPort attribute on ProcModel
             setattr(pm, name, port)

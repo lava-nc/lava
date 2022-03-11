@@ -23,6 +23,7 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.variable import Var, VarServer
 from lava.magma.core.resources import CPU
+from lava.magma.core.process.ports.ports import create_port_id
 
 
 # A minimal process (A) with an InPort, OutPort and RefPort
@@ -299,6 +300,26 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(set(procs2), all_procs)
         self.assertEqual(set(procs3), all_procs)
 
+    def test_find_processes_across_virtual_ports(self):
+        """Tests whether in Process graphs with virtual ports, all Processes
+        are found, no matter from which Process the search is started."""
+
+        source = ProcC()
+        sink = ProcC()
+        source.out.reshape((1,)).reshape((1,)).connect(sink.inp)
+
+        compiler = Compiler()
+        # Test whether all Processes are found when starting the search from
+        # the source Process
+        expected_procs = [sink, source]
+        found_procs = compiler._find_processes(source)
+        self.assertCountEqual(found_procs, expected_procs)
+
+        # Test whether all Processes are found when starting the search from
+        # the destination Process
+        found_procs = compiler._find_processes(sink)
+        self.assertCountEqual(found_procs, expected_procs)
+
     def test_find_proc_models(self):
         """Check finding of ProcModels that implement a Process."""
 
@@ -455,6 +476,36 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(b3.vars["some_var"].name, "some_var")
         self.assertEqual(b3.vars["some_var"].value, 10)
         self.assertEqual(b3.py_ports["inp"].name, "inp")
+
+    def test_compile_py_proc_models_with_virtual_ports(self):
+        """Checks compilation of ProcessModels when Processes are connected
+        via virtual ports."""
+
+        # Normally, the compiler would generate proc_groups which maps a
+        # ProcessModel type to a list of processes implemented by it
+        p1, p2, p3 = ProcA(), ProcA(), ProcB()
+        p1.out.flatten().connect(p3.inp)
+        p2.ref.flatten().connect(p3.var_port)
+        proc_groups = {PyProcModelA: [p1, p2], PyProcModelB: [p3]}
+
+        # Compiling these proc_groups will return an Executable initialized
+        # with PyProcBuilders
+        c = Compiler()
+        exe = c._compile_proc_models(proc_groups)
+
+        # Get the PyProcBuilder for Processes that have PyPorts that may
+        # receive data
+        b2 = exe.py_builders[p2]
+        b3 = exe.py_builders[p3]
+
+        # Check whether the transformation functions are registered in the
+        # PortInitializers
+        self.assertEqual(list(b3.py_ports["inp"].transform_funcs.keys()),
+                         [create_port_id(p1.id, p1.out.name)])
+        self.assertEqual(list(b3.var_ports["var_port"].transform_funcs.keys()),
+                         [create_port_id(p2.id, p2.ref.name)])
+        self.assertEqual(list(b2.ref_ports["ref"].transform_funcs.keys()),
+                         [create_port_id(p3.id, p3.var_port.name)])
 
     def test_create_sync_domain(self):
         """Check creation of custom and default sync domains.
