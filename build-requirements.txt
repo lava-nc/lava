@@ -1,9 +1,0 @@
-pybuilder
-sphinx
-flake8
-pytest
-unittest2
-bandit
-sphinx-tabs
-sphinx_rtd_theme
-coverage
