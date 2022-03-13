@@ -1,8 +1,12 @@
 # Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier:  BSD-3-Clause
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import typing as ty
 from abc import ABC, abstractmethod
 import math
+import numpy as np
+import functools as ft
 
 from lava.magma.core.process.interfaces import AbstractProcessMember
 import lava.magma.core.process.ports.exceptions as pe
@@ -46,11 +50,11 @@ class AbstractPort(AbstractProcessMember):
         self.out_connections: ty.List[AbstractPort] = []
 
     def _validate_ports(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = False,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = False,
     ):
         """Checks that each port in 'ports' is of type 'port_type' and that
         shapes of each port is identical to this port's shape."""
@@ -87,11 +91,11 @@ class AbstractPort(AbstractProcessMember):
         self.out_connections += outputs
 
     def _connect_forward(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = True,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = True,
     ):
         """Creates a forward connection from this AbstractPort to other
         ports by adding other ports to this AbstractPort's out_connection and
@@ -107,11 +111,11 @@ class AbstractPort(AbstractProcessMember):
             p._add_inputs([self])
 
     def _connect_backward(
-        self,
-        ports: ty.List["AbstractPort"],
-        port_type: ty.Type["AbstractPort"],
-        assert_same_shape: bool = True,
-        assert_same_type: bool = True,
+            self,
+            ports: ty.List["AbstractPort"],
+            port_type: ty.Type["AbstractPort"],
+            assert_same_shape: bool = True,
+            assert_same_type: bool = True,
     ):
         """Creates a backward connection from other ports to this
         AbstractPort by adding other ports to this AbstractPort's
@@ -141,6 +145,72 @@ class AbstractPort(AbstractProcessMember):
                 ports += p.get_src_ports(True)
             return ports
 
+    def get_incoming_virtual_ports(self) -> ty.List["AbstractVirtualPort"]:
+        """Returns the list of all incoming virtual ports in order from
+        source to the current port.
+
+        Returns
+        -------
+        virtual_ports : list(AbstractVirtualPorts)
+            the list of all incoming virtual ports, sorted from source to
+            destination port
+        """
+        if len(self.in_connections) == 0:
+            return []
+        else:
+            virtual_ports = []
+            num_virtual_ports = 0
+            for p in self.in_connections:
+                virtual_ports += p.get_incoming_virtual_ports()
+                if isinstance(p, AbstractVirtualPort):
+                    # TODO (MR): ConcatPorts are not yet supported by the
+                    #  compiler - until then, an exception is raised.
+                    if isinstance(p, ConcatPort):
+                        raise NotImplementedError("ConcatPorts are not yet "
+                                                  "supported.")
+
+                    virtual_ports.append(p)
+                    num_virtual_ports += 1
+
+            if num_virtual_ports > 1:
+                raise NotImplementedError("Joining multiple virtual ports is "
+                                          "not yet supported.")
+
+            return virtual_ports
+
+    def get_outgoing_virtual_ports(self) -> ty.List["AbstractVirtualPort"]:
+        """Returns the list of all outgoing virtual ports in order from
+        the current port to the destination port.
+
+        Returns
+        -------
+        virtual_ports : list(AbstractVirtualPorts)
+            the list of all outgoing virtual ports, sorted from source to
+            destination port
+        """
+        if len(self.out_connections) == 0:
+            return []
+        else:
+            virtual_ports = []
+            num_virtual_ports = 0
+            for p in self.out_connections:
+                virtual_ports += p.get_outgoing_virtual_ports()
+                if isinstance(p, AbstractVirtualPort):
+                    # TODO (MR): ConcatPorts are not yet supported by the
+                    #  compiler - until then, an exception is raised.
+                    if isinstance(p, ConcatPort):
+                        raise NotImplementedError("ConcatPorts are not yet "
+                                                  "supported.")
+
+                    virtual_ports.append(p)
+                    num_virtual_ports += 1
+
+            if num_virtual_ports > 1:
+                raise NotImplementedError("Forking a virtual port is "
+                                          "not yet supported.")
+
+            return virtual_ports
+
     def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
         """Returns the list of all destination ports that this port connects to
         either directly or indirectly (through other ports)."""
@@ -155,7 +225,7 @@ class AbstractPort(AbstractProcessMember):
                 ports += p.get_dst_ports(True)
             return ports
 
-    def reshape(self, new_shape: ty.Tuple) -> "ReshapePort":
+    def reshape(self, new_shape: ty.Tuple[int, ...]) -> "ReshapePort":
         """Reshapes this port by deriving and returning a new virtual
         ReshapePort with the new shape. This implies that the resulting
         ReshapePort can only be forward connected to another port.
@@ -168,7 +238,7 @@ class AbstractPort(AbstractProcessMember):
         if self.size != math.prod(new_shape):
             raise pe.ReshapeError(self.shape, new_shape)
 
-        reshape_port = ReshapePort(new_shape)
+        reshape_port = ReshapePort(new_shape, old_shape=self.shape)
         self._connect_forward(
             [reshape_port], AbstractPort, assert_same_shape=False
         )
@@ -181,9 +251,9 @@ class AbstractPort(AbstractProcessMember):
         return self.reshape((self.size,))
 
     def concat_with(
-        self,
-        ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
-        axis: int,
+            self,
+            ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
+            axis: int,
     ) -> "ConcatPort":
         """Concatenates this port with other ports in given order along given
         axis by deriving and returning a new virtual ConcatPort. This implies
@@ -203,6 +273,43 @@ class AbstractPort(AbstractProcessMember):
             port_type = AbstractRVPort
         self._validate_ports(ports, port_type, assert_same_shape=False)
         return ConcatPort(ports, axis)
+
+    def transpose(
+        self,
+        axes: ty.Optional[ty.Union[ty.Tuple[int, ...],
+                                   ty.List]] = None
+    ) -> "TransposePort":
+        """Permutes the tensor dimension of this port by deriving and returning
+        a new virtual TransposePort the new permuted dimension. This implies
+        that the resulting TransposePort can only be forward connected to
+        another port.
+
+        Parameters
+        ----------
+        :param axes: Order of permutation. Number of total elements and number
+        of dimensions must not change.
+        """
+        if axes is None:
+            axes = tuple(reversed(range(len(self.shape))))
+        else:
+            if len(self.shape) != len(axes):
+                raise pe.TransposeShapeError(self.shape, axes)
+
+            # Check that none of the given axes are out of bounds for the
+            # shape of the parent port.
+            for idx in axes:
+                # Compute the positive index irrespective of the sign of 'idx'
+                idx_positive = len(self.shape) + idx if idx < 0 else idx
+                # Make sure the positive index is not out of bounds
+                if idx_positive < 0 or idx_positive >= len(self.shape):
+                    raise pe.TransposeIndexError(self.shape, axes, idx)
+
+        new_shape = tuple([self.shape[i] for i in axes])
+        transpose_port = TransposePort(new_shape, axes)
+        self._connect_forward(
+            [transpose_port], AbstractPort, assert_same_shape=False
+        )
+        return transpose_port
 
 
 class AbstractIOPort(AbstractPort):
@@ -254,7 +361,7 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
     """
 
     def connect(
-        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
     ):
         """Connects this OutPort to other InPort(s) of another process
         or to OutPort(s) of its parent process.
@@ -287,9 +394,9 @@ class InPort(AbstractIOPort, AbstractDstPort):
     """
 
     def __init__(
-        self,
-        shape: ty.Tuple,
-        reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
+            self,
+            shape: ty.Tuple,
+            reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
     ):
         super().__init__(shape)
         self._reduce_op = reduce_op
@@ -305,7 +412,7 @@ class InPort(AbstractIOPort, AbstractDstPort):
         self._connect_forward(to_list(ports), InPort)
 
     def connect_from(
-        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
     ):
         """Connects other OutPort(s) to this InPort or connects other
         InPort(s) of parent process to this InPort.
@@ -339,7 +446,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     RefPort to a Var via the connect_var(..) method."""
 
     def connect(
-        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
     ):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
@@ -440,19 +547,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if var_shape != v.shape:
                 raise AssertionError("All 'vars' must have same shape.")
             # Create a VarPort to wrap Var
-            vp = ImplicitVarPort(v)
-            # Propagate name and parent process of Var to VarPort
-            vp.name = "_" + v.name + "_implicit_port"
-            if v.process is not None:
-                # Only assign when parent process is already assigned
-                vp.process = v.process
-                # VarPort name could shadow existing attribute
-                if hasattr(v.process, vp.name):
-                    raise AssertionError(
-                        "Name of implicit VarPort might conflict"
-                        " with existing attribute.")
-                setattr(v.process, vp.name, vp)
-                v.process.var_ports.add_members({vp.name: vp})
+            vp = self.create_implicit_var_port(v)
             var_ports.append(vp)
         # Connect RefPort to VarPorts that wrap Vars
         self.connect(var_ports)
@@ -460,6 +555,26 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     def get_dst_vars(self) -> ty.List[Var]:
         """Returns destination Vars this RefPort is connected to."""
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
+
+    @staticmethod
+    def create_implicit_var_port(var: Var) -> "ImplicitVarPort":
+        """Creates and returns an ImplicitVarPort for the given Var."""
+        # Create a VarPort to wrap Var
+        vp = ImplicitVarPort(var)
+        # Propagate name and parent process of Var to VarPort
+        vp.name = "_" + var.name + "_implicit_port"
+        if var.process is not None:
+            # Only assign when parent process is already assigned
+            vp.process = var.process
+            # VarPort name could shadow existing attribute
+            if hasattr(var.process, vp.name):
+                raise AssertionError(
+                    "Name of implicit VarPort might conflict"
+                    " with existing attribute.")
+            setattr(var.process, vp.name, vp)
+            var.process.var_ports.add_members({vp.name: vp})
+
+        return vp
 
 
 # TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
@@ -521,7 +636,7 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         self._connect_forward(to_list(ports), VarPort)
 
     def connect_from(
-        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
     ):
         """Connects other RefPort(s) to this VarPort or connects other
         VarPort(s) of parent process to this VarPort.
@@ -558,17 +673,14 @@ class ImplicitVarPort(VarPort):
     pass
 
 
-class AbstractVirtualPort(ABC):
+class AbstractVirtualPort(AbstractPort):
     """Abstract base class interface for any type of port that merely serves
-    to transforms the properties of a user-defined port.
-    Needs no implementation because this class purely serves as a
-    type-identifier."""
+    to transform the properties of a user-defined port."""
 
     @property
-    @abstractmethod
     def _parent_port(self):
         """Must return parent port that this VirtualPort was derived from."""
-        pass
+        return self.get_src_ports()[0]
 
     @property
     def process(self):
@@ -576,24 +688,8 @@ class AbstractVirtualPort(ABC):
         derived from."""
         return self._parent_port.process
 
-
-# ToDo: (AW) ReshapePort.connect(..) could be consolidated with
-#  ConcatPort.connect(..)
-class ReshapePort(AbstractPort, AbstractVirtualPort):
-    """A ReshapePort is a virtual port that allows to change the shape of a
-    port before connecting to another port.
-    It is used by the compiler to map the indices of the underlying
-    tensor-valued data array from the derived to the new shape."""
-
-    def __init__(self, shape: ty.Tuple):
-        AbstractPort.__init__(self, shape)
-
-    @property
-    def _parent_port(self) -> AbstractPort:
-        return self.in_connections[0]
-
     def connect(self, ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]):
-        """Connects this ReshapePort to other port(s).
+        """Connects this virtual port to other port(s).
 
         Parameters
         ----------
@@ -618,8 +714,65 @@ class ReshapePort(AbstractPort, AbstractVirtualPort):
         # Connect to ports
         self._connect_forward(to_list(ports), port_type)
 
+    @abstractmethod
+    def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the virtual port.
 
-class ConcatPort(AbstractPort, AbstractVirtualPort):
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        pass
+
+    @abstractmethod
+    def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the virtual port.
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        pass
+
+
+class ReshapePort(AbstractVirtualPort):
+    """A ReshapePort is a virtual port that allows to change the shape of a
+    port before connecting to another port.
+    It is used by the compiler to map the indices of the underlying
+    tensor-valued data array from the derived to the new shape."""
+
+    def __init__(self,
+                 new_shape: ty.Tuple[int, ...],
+                 old_shape: ty.Tuple[int, ...]):
+        AbstractPort.__init__(self, new_shape)
+        self.old_shape = old_shape
+
+    def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the ReshapePort, which reshapes incoming data to
+        a new shape (the shape of the destination Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        return ft.partial(np.reshape, newshape=self.shape)
+
+    def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the ReshapePort, which reshapes incoming data to
+        a new shape (the shape of the source Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        return ft.partial(np.reshape, newshape=self.old_shape)
+
+
+class ConcatPort(AbstractVirtualPort):
     """A ConcatPort is a virtual port that allows to concatenate multiple
     ports along given axis into a new port before connecting to another port.
     The shape of all concatenated ports outside of the concatenation
@@ -643,6 +796,9 @@ class ConcatPort(AbstractPort, AbstractVirtualPort):
         shapes_ex_axis = []
         shapes_incompatible = False
         for shape in concat_shapes:
+            if axis >= len(shape):
+                raise pe.ConcatIndexError(shape, axis)
+
             # Compute total size along concatenation axis
             total_size += shape[axis]
             # Extract shape dimensions other than concatenation axis
@@ -657,40 +813,17 @@ class ConcatPort(AbstractPort, AbstractVirtualPort):
         new_shape = shapes_ex_axis[0]
         return new_shape[:axis] + (total_size,) + new_shape[axis:]
 
-    @property
-    def _parent_port(self) -> AbstractPort:
-        return self.in_connections[0]
+    def get_transform_func_fwd(self) -> ft.partial:
+        # TODO (MR): not yet implemented
+        raise NotImplementedError()
 
-    def connect(self, ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]):
-        """Connects this ConcatPort to other port(s)
-
-        Parameters
-        ----------
-        :param ports: The port(s) to connect to. Connections from an IOPort
-        to a RVPort and vice versa are not allowed.
-        """
-        # Determine allows port_type
-        if isinstance(self._parent_port, OutPort):
-            # If OutPort, only allow other IO ports
-            port_type = AbstractIOPort
-        elif isinstance(self._parent_port, InPort):
-            # If InPort, only allow other InPorts
-            port_type = InPort
-        elif isinstance(self._parent_port, RefPort):
-            # If RefPort, only allow other Ref- or VarPorts
-            port_type = AbstractRVPort
-        elif isinstance(self._parent_port, VarPort):
-            # If VarPort, only allow other VarPorts
-            port_type = VarPort
-        else:
-            raise TypeError("Illegal parent port.")
-        # Connect to ports
-        self._connect_forward(to_list(ports), port_type)
+    def get_transform_func_bwd(self) -> ft.partial:
+        # TODO (MR): not yet implemented
+        raise NotImplementedError()
 
 
-# ToDo: TBD...
-class PermutePort(AbstractPort, AbstractVirtualPort):
-    """A PermutePort is a virtual port that allows to permute the dimensions
+class TransposePort(AbstractVirtualPort):
+    """A TransposePort is a virtual port that allows to permute the dimensions
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying
     tensor-valued data array from the derived to the new shape.
@@ -698,14 +831,42 @@ class PermutePort(AbstractPort, AbstractVirtualPort):
     Example:
         out_port = OutPort((2, 4, 3))
         in_port = InPort((3, 2, 4))
-        out_port.permute([3, 1, 2]).connect(in_port)
+        out_port.transpose([3, 1, 2]).connect(in_port)
     """
 
-    pass
+    def __init__(self,
+                 new_shape: ty.Tuple[int, ...],
+                 axes: ty.Tuple[int, ...]):
+        self.axes = axes
+        AbstractPort.__init__(self, new_shape)
+
+    def get_transform_func_fwd(self) -> ft.partial:
+        """Returns a function pointer that implements the forward (fwd)
+        transformation of the TransposePort, which transposes (permutes)
+        incoming data according to a specific order of axes (to match the
+        destination Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        return ft.partial(np.transpose, axes=self.axes)
+
+    def get_transform_func_bwd(self) -> ft.partial:
+        """Returns a function pointer that implements the backward (bwd)
+        transformation of the TransposePort, which transposes (permutes)
+        incoming data according to a specific order of axes (to match the
+        source Process).
+
+        Returns
+        -------
+        function_pointer : functools.partial
+            a function pointer that can be applied to incoming data"""
+        return ft.partial(np.transpose, axes=np.argsort(self.axes))
 
 
 # ToDo: TBD...
-class ReIndexPort(AbstractPort, AbstractVirtualPort):
+class ReIndexPort(AbstractVirtualPort):
     """A ReIndexPort is a virtual port that allows to re-index the elements
     of a port before connecting to another port.
     It is used by the compiler to map the indices of the underlying

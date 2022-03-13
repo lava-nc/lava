@@ -1,4 +1,5 @@
 import typing as ty
+import functools as ft
 from dataclasses import dataclass
 
 
@@ -17,6 +18,7 @@ class PortInitializer:
     d_type: type
     port_type: str
     size: int
+    transform_funcs: ty.List[ft.partial] = None
 
 
 # check if can be a subclass of PortInitializer
@@ -29,3 +31,4 @@ class VarPortInitializer:
     port_type: str
     size: int
     port_cls: type
+    transform_funcs: ty.List[ft.partial] = None

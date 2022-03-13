@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 import unittest
 
 from lava.magma.core.decorator import implements, requires, tag
@@ -19,21 +20,24 @@ from lava.magma.core.run_conditions import RunSteps
 # A minimal process with an OutPort
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.out = OutPort(shape=(2,))
 
 
 # A minimal process with an InPort
 class P2(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.inp = InPort(shape=(2,))
 
 
 # A minimal process with an InPort
 class P3(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(
+            loglevel=logging.CRITICAL, **kwargs)
         self.inp = InPort(shape=(2,))
 
 
@@ -45,7 +49,7 @@ class PyProcModel1(PyLoihiProcessModel):
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise AssertionError("All the error info")
 
@@ -58,7 +62,7 @@ class PyProcModel2(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_spk(self):
-        if self.current_ts > 1:
+        if self.time_step > 1:
             # Raise exception
             raise TypeError("All the error info")
 
@@ -82,12 +86,16 @@ class TestExceptionHandling(unittest.TestCase):
         # Create an instance of P1
         proc = P1()
 
+        run_steps = RunSteps(num_steps=1)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
+
         # Run the network for 1 time step -> no exception
-        proc.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+        proc.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
         with self.assertRaises(RuntimeError) as context:
-            proc.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+            proc.run(condition=run_steps, run_cfg=run_cfg)
 
         exception = context.exception
         self.assertEqual(RuntimeError, type(exception))
@@ -102,15 +110,19 @@ class TestExceptionHandling(unittest.TestCase):
         sender = P1()
         recv = P2()
 
+        run_steps = RunSteps(num_steps=1)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
+
         # Connect sender with receiver
         sender.out.connect(recv.inp)
 
         # Run the network for 1 time step -> no exception
-        sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+        sender.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
         with self.assertRaises(RuntimeError) as context:
-            sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+            sender.run(condition=run_steps, run_cfg=run_cfg)
 
         exception = context.exception
         self.assertEqual(RuntimeError, type(exception))
@@ -126,15 +138,19 @@ class TestExceptionHandling(unittest.TestCase):
         recv1 = P2()
         recv2 = P3()
 
+        run_steps = RunSteps(num_steps=1)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
+
         # Connect sender with receiver
         sender.out.connect([recv1.inp, recv2.inp])
 
         # Run the network for 1 time step -> no exception
-        sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+        sender.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
         with self.assertRaises(RuntimeError) as context:
-            sender.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+            sender.run(condition=run_steps, run_cfg=run_cfg)
 
         exception = context.exception
         self.assertEqual(RuntimeError, type(exception))
