@@ -298,40 +298,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    def test_compiler_finds_all_processes(self) -> None:
-        """Tests whether in Process graphs with virtual ports, all Processes
-        are found, no matter from which Process the search is started."""
-
-        source = OutPortProcess(data=self.input_data)
-        sink = InPortProcess(shape=self.shape)
-
-        virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
-                                        axes=self.axes)
-        virtual_port2 = MockVirtualPort(new_shape=self.shape,
-                                        axes=tuple(np.argsort(self.axes)))
-
-        source.out_port._connect_forward(
-            [virtual_port1], AbstractPort, assert_same_shape=False
-        )
-        virtual_port1._connect_forward(
-            [virtual_port2], AbstractPort, assert_same_shape=False
-        )
-        virtual_port2.connect(sink.in_port)
-
-        compiler = Compiler()
-        # Test whether all Processes are found when starting the search from
-        # the source Process
-        found_procs = compiler._find_processes(source)
-        expected_procs = [sink, source]
-        self.assertCountEqual(found_procs, expected_procs)
-
-        # Test whether all Processes are found when starting the search from
-        # the destination Process
-        found_procs = compiler._find_processes(sink)
-        self.assertCountEqual(found_procs, expected_procs)
-
     def test_chaining_multiple_virtual_ports(self) -> None:
-        """Tests whether virtual ports can be chained."""
+        """Tests whether virtual ports can be chained. This also checks
+        whether the Process graph can be executed by calling run() on a
+        Process 'downstream' of virtual ports."""
 
         source = OutPortProcess(data=self.input_data)
         sink = InPortProcess(shape=self.shape)
@@ -364,17 +334,18 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
-    def test_joining_virtual_ports_throws_exception(self) -> None:
-        """Tests whether joining two virtual ports throws an exception."""
+    def test_multiple_virtual_ports_connected_to_an_inport(self) -> None:
+        """Tests a network topology in which two virtual points are connected
+        to the same InPort."""
 
         source1 = OutPortProcess(data=self.input_data)
-        source2 = OutPortProcess(data=self.input_data)
+        source2 = OutPortProcess(data=self.input_data.transpose())
         sink = InPortProcess(shape=self.new_shape)
 
         virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
                                         axes=self.axes)
         virtual_port2 = MockVirtualPort(new_shape=self.new_shape,
-                                        axes=self.axes)
+                                        axes=(0, 2, 1))
 
         source1.out_port._connect_forward(
             [virtual_port1], AbstractPort, assert_same_shape=False
@@ -386,9 +357,21 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
         virtual_port1.connect(sink.in_port)
         virtual_port2.connect(sink.in_port)
 
-        with self.assertRaises(NotImplementedError):
+        try:
             sink.run(condition=RunSteps(num_steps=self.num_steps),
                      run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = (self.input_data.transpose(self.axes)
+                    + self.input_data.transpose().transpose((0, 2, 1)))
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
 
 
 class TestTransposePort(unittest.TestCase):
