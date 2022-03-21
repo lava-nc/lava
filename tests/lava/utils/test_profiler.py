@@ -1,7 +1,6 @@
 # Copyright (C) 2021 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import numpy as np
 import unittest
 
 from lava.magma.core.decorator import implements, requires
@@ -40,10 +39,18 @@ class MyRunCfg(RunConfig):
 class TestLavaProfiler(unittest.TestCase):
     def test_init(self):
         """TBD"""
-        proc = P()
-        profiler = LavaProfiler()
+        start = 1
+        end = 5
+        buffer_size = 1000
+        bin_size = 1
+        profiler = LavaProfiler(start=start, end=end, buffer_size=buffer_size,
+                                bin_size=bin_size)
 
         self.assertTrue(isinstance(profiler, LavaProfiler))
+        self.assertTrue(profiler.start == start)
+        self.assertTrue(profiler.end == end)
+        self.assertTrue(profiler.buffer_size == buffer_size)
+        self.assertTrue(profiler.bin_size == bin_size)
 
     def test_get_energy(self):
         """TBD"""

@@ -22,7 +22,8 @@ from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.compiler.compiler import Compiler
-from lava.magma.core.resources import Loihi1NeuroCore, Loihi2NeuroCore
+from lava.magma.core.resources import (
+    AbstractComputeResource, Loihi1NeuroCore, Loihi2NeuroCore)
 
 
 class LavaProfiler(ABC):
@@ -34,7 +35,7 @@ class LavaProfiler(ABC):
         self.end = end
         self.bin_size = bin_size
         self.buffer_size = buffer_size
-        self.loihi_flag = False  # Exchange with list of resources
+        self.used_resources: ty.List[AbstractComputeResource] = []
 
     def profile(self, proc: AbstractProcess):
         proc.run = types.MethodType(self.run, proc)
@@ -120,14 +121,16 @@ class LavaProfiler(ABC):
         Recognize if ProcModels execute on Hardware."""
         for proc_model, proc in proc_map.items():
             if Loihi1NeuroCore in proc.required_resources:
-                self.loihi_flag = True
+                self.used_resources.append(Loihi1NeuroCore)
             else:
-                # 1. add operation coutner Vars to the Process
+                # 1. add operation counter Vars to the Process
                 # 2. set up Monitors to operation counter Vars
                 ...
 
     def _set_profiler_sync_channel_builders(self, executable):
         """Create and append sync_channel builders if Loihi compute node is
         going to execute a profileable ProcModel."""
-        if self.loihi_flag:
+        if Loihi1NeuroCore in self.used_resources or \
+                Loihi2NeuroCore in self.used_resources:
             executable.sync_channel_builders.append(...)
+        ...

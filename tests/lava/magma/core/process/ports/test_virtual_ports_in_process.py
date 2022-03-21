@@ -7,7 +7,6 @@ import unittest
 import numpy as np
 import functools as ft
 
-from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
