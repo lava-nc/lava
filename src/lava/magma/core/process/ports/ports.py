@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from __future__ import annotations
+
 import typing as ty
 from abc import ABC, abstractmethod
 import math
 import numpy as np
 import functools as ft
+import wrapt
 
 from lava.magma.core.process.interfaces import AbstractProcessMember
 import lava.magma.core.process.ports.exceptions as pe
@@ -70,8 +73,8 @@ class AbstractPort(AbstractProcessMember):
 
     def _validate_ports(
             self,
-            ports: ty.List["AbstractPort"],
-            port_type: ty.Type["AbstractPort"],
+            ports: ty.List[AbstractPort],
+            port_type: ty.Type[AbstractPort],
             assert_same_shape: bool = True,
             assert_same_type: bool = False,
     ):
@@ -95,14 +98,14 @@ class AbstractPort(AbstractProcessMember):
                                          "are incompatible."
                                          .format(self.shape, p.shape))
 
-    def _add_inputs(self, inputs: ty.List["AbstractPort"]):
+    def _add_inputs(self, inputs: ty.List[AbstractPort]):
         """Adds new input connections to port. Does not allow that same
         inputs get connected more than once to port."""
         if not is_disjoint(self.in_connections, inputs):
             raise pe.DuplicateConnectionError()
         self.in_connections += inputs
 
-    def _add_outputs(self, outputs: ty.List["AbstractPort"]):
+    def _add_outputs(self, outputs: ty.List[AbstractPort]):
         """Adds new output connections to port. Does not allow that same
         outputs get connected more than once to port."""
         if not is_disjoint(self.out_connections, outputs):
@@ -111,8 +114,8 @@ class AbstractPort(AbstractProcessMember):
 
     def _connect_forward(
             self,
-            ports: ty.List["AbstractPort"],
-            port_type: ty.Type["AbstractPort"],
+            ports: ty.List[AbstractPort],
+            port_type: ty.Type[AbstractPort],
             assert_same_shape: bool = True,
             assert_same_type: bool = True,
     ):
@@ -131,8 +134,8 @@ class AbstractPort(AbstractProcessMember):
 
     def _connect_backward(
             self,
-            ports: ty.List["AbstractPort"],
-            port_type: ty.Type["AbstractPort"],
+            ports: ty.List[AbstractPort],
+            port_type: ty.Type[AbstractPort],
             assert_same_shape: bool = True,
             assert_same_type: bool = True,
     ):
@@ -150,7 +153,7 @@ class AbstractPort(AbstractProcessMember):
         for p in ports:
             p._add_outputs([self])
 
-    def get_src_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
+    def get_src_ports(self, _include_self=False) -> ty.List[AbstractPort]:
         """Returns the list of all source ports that connect either directly
         or indirectly (through other ports) to this port."""
         if len(self.in_connections) == 0:
@@ -182,7 +185,7 @@ class AbstractPort(AbstractProcessMember):
         return transform_funcs
 
     def get_incoming_virtual_ports(self) \
-            -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
+            -> ty.Tuple[str, ty.List[AbstractVirtualPort]]:
         """Returns the list of all incoming virtual ports in order from
         source to the current port.
 
@@ -232,7 +235,7 @@ class AbstractPort(AbstractProcessMember):
         return transform_funcs
 
     def get_outgoing_virtual_ports(self) \
-            -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
+            -> ty.Tuple[str, ty.List[AbstractVirtualPort]]:
         """Returns the list of all outgoing virtual ports in order from
         the current port to the destination port.
 
@@ -264,7 +267,7 @@ class AbstractPort(AbstractProcessMember):
 
             return dst_port_id, virtual_ports
 
-    def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
+    def get_dst_ports(self, _include_self=False) -> ty.List[AbstractPort]:
         """Returns the list of all destination ports that this port connects to
         either directly or indirectly (through other ports)."""
         if len(self.out_connections) == 0:
@@ -278,7 +281,11 @@ class AbstractPort(AbstractProcessMember):
                 ports += p.get_dst_ports(True)
             return ports
 
-    def reshape(self, new_shape: ty.Tuple[int, ...]) -> "ReshapePort":
+    def reshape(
+        self,
+        new_shape: ty.Tuple[int, ...]
+    ) -> ty.Union[RefPortInterface, OutPortInterface, InPortInterface,
+                  VarPortInterface, ReshapePort]:
         """Reshapes this port by deriving and returning a new virtual
         ReshapePort with the new shape. This implies that the resulting
         ReshapePort can only be forward connected to another port.
@@ -291,23 +298,31 @@ class AbstractPort(AbstractProcessMember):
         if self.size != math.prod(new_shape):
             raise pe.ReshapeError(self.shape, new_shape)
 
-        reshape_port = ReshapePort(new_shape, old_shape=self.shape)
+        # create a virtual ReshapePort and decorate it with the interface of
+        # the current (parent) port
+        reshape_port = self._decorate_virtual_port(
+            ReshapePort(new_shape, old_shape=self.shape))
+
         self._connect_forward(
             [reshape_port], AbstractPort, assert_same_shape=False
         )
         return reshape_port
 
-    def flatten(self) -> "ReshapePort":
+    def flatten(
+        self
+    ) -> ty.Union[RefPortInterface, OutPortInterface, InPortInterface,
+                  VarPortInterface, ReshapePort]:
         """Flattens this port to a (N,)-shaped port by deriving and returning
         a new virtual ReshapePort with a N equal to the total number of
         elements of this port."""
         return self.reshape((self.size,))
 
     def concat_with(
-            self,
-            ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
-            axis: int,
-    ) -> "ConcatPort":
+        self,
+        ports: ty.Union[AbstractPort, ty.List[AbstractPort]],
+        axis: int,
+    ) -> ty.Union[RefPortInterface, OutPortInterface, InPortInterface,
+                  VarPortInterface, ConcatPort]:
         """Concatenates this port with other ports in given order along given
         axis by deriving and returning a new virtual ConcatPort. This implies
         resulting ConcatPort can only be forward connected to another port.
@@ -325,13 +340,17 @@ class AbstractPort(AbstractProcessMember):
         else:
             port_type = AbstractRVPort
         self._validate_ports(ports, port_type, assert_same_shape=False)
-        return ConcatPort(ports, axis)
+
+        # create a virtual ConcatPort and decorate it with the interface of
+        # the current (parent) port
+        return self._decorate_virtual_port(ConcatPort(ports, axis))
 
     def transpose(
         self,
         axes: ty.Optional[ty.Union[ty.Tuple[int, ...],
                                    ty.List]] = None
-    ) -> "TransposePort":
+    ) -> ty.Union[RefPortInterface, OutPortInterface, InPortInterface,
+                  VarPortInterface, TransposePort]:
         """Permutes the tensor dimension of this port by deriving and returning
         a new virtual TransposePort the new permuted dimension. This implies
         that the resulting TransposePort can only be forward connected to
@@ -358,11 +377,53 @@ class AbstractPort(AbstractProcessMember):
                     raise pe.TransposeIndexError(self.shape, axes, idx)
 
         new_shape = tuple([self.shape[i] for i in axes])
-        transpose_port = TransposePort(new_shape, axes)
+
+        # create a virtual TransposePort and decorate it with the interface of
+        # the current (parent) port
+        transpose_port = self._decorate_virtual_port(
+            TransposePort(new_shape, axes))
+
         self._connect_forward(
             [transpose_port], AbstractPort, assert_same_shape=False
         )
         return transpose_port
+
+    def _decorate_virtual_port(
+        self,
+        virtual_port: AbstractVirtualPort
+    ) -> ty.Union[RefPortInterface, OutPortInterface, InPortInterface,
+                  VarPortInterface, AbstractVirtualPort]:
+        """Wraps the given virtual port into a decorator class that has the
+        same interface as the current port. This is used in the creation of
+        virtual ports, which need to 'inherit' the same kind of interface and
+        capabilities as their parent port. If a virtual port is,
+        for instance, created based on a RefPort, maybe by calling
+        >>> rp = RefPort(shape=(1, 2, 3)
+        >>> virtual_port = rp.reshape(new_shape=(6,))
+        then the user must be able to call any method on the virtual port
+        that is also available on a RefPort (and makes sense in that
+        context).
+
+        Parameters
+        ----------
+        virtual_port : AbstractVirtualPort
+            the virtual port that should be decorated
+
+        Returns
+        -------
+        virtual_port : AbstractVirtualPort
+            the decorated virtual port
+        """
+        if isinstance(self, RefPortInterface):
+            return RefPortDecorator(virtual_port)
+        elif isinstance(self, OutPortInterface):
+            return OutPortDecorator(virtual_port)
+        elif isinstance(self, InPortInterface):
+            return InPortDecorator(virtual_port)
+        elif isinstance(self, VarPortInterface):
+            return VarPortDecorator(virtual_port)
+        else:
+            return virtual_port
 
 
 class AbstractIOPort(AbstractPort):
@@ -403,18 +464,11 @@ class AbstractDstPort(ABC):
     pass
 
 
-class OutPort(AbstractIOPort, AbstractSrcPort):
-    """Output ports are members of a Lava Process and can be connected to
-    other ports to facilitate sending of messages via channels.
-
-    OutPorts connect to other InPorts of peer processes or to other OutPorts of
-    processes that contain this OutPort's parent process as a sub process.
-    Similarly, OutPorts can receive connections from other OutPorts of nested
-    sub processes.
-    """
-
+class OutPortInterface(AbstractPort):
+    """Interface of the OutPort that can be decorated on a virtual port using
+    the OutPortDecorator class."""
     def connect(
-            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union[AbstractIOPort, ty.List[AbstractIOPort]]
     ):
         """Connects this OutPort to other InPort(s) of another process
         or to OutPort(s) of its parent process.
@@ -425,7 +479,18 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
         """
         self._connect_forward(to_list(ports), AbstractIOPort)
 
-    def connect_from(self, ports: ty.Union["OutPort", ty.List["OutPort"]]):
+
+class OutPort(OutPortInterface, AbstractIOPort, AbstractSrcPort):
+    """Output ports are members of a Lava Process and can be connected to
+    other ports to facilitate sending of messages via channels.
+
+    OutPorts connect to other InPorts of peer processes or to other OutPorts of
+    processes that contain this OutPort's parent process as a sub process.
+    Similarly, OutPorts can receive connections from other OutPorts of nested
+    sub processes.
+    """
+
+    def connect_from(self, ports: ty.Union[OutPort, ty.List[OutPort]]):
         """Connects other OutPort(s) of a nested process to this OutPort.
         OutPorts cannot receive connections from other InPorts.
 
@@ -436,7 +501,27 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
         self._connect_backward(to_list(ports), OutPort)
 
 
-class InPort(AbstractIOPort, AbstractDstPort):
+class OutPortDecorator(wrapt.ObjectProxy, OutPortInterface):
+    """Enables decorating a virtual port with the interface of an OutPort."""
+    def __init__(self, wrapped: AbstractVirtualPort):
+        super().__init__(wrapped)
+
+
+class InPortInterface(AbstractPort):
+    """Interface of the InPort that can be decorated on a virtual port using
+    the InPortDecorator class."""
+    def connect(self, ports: ty.Union[InPort, ty.List[InPort]]):
+        """Connects this InPort to other InPort(s) of a nested process. InPorts
+        cannot connect to other OutPorts.
+
+        Parameters
+        ----------
+        :param ports: The InPort(s) to connect to.
+        """
+        self._connect_forward(to_list(ports), InPort)
+
+
+class InPort(InPortInterface, AbstractIOPort, AbstractDstPort):
     """Input ports are members of a Lava Process and can be connected to
     other ports to facilitate receiving of messages via channels.
 
@@ -454,18 +539,8 @@ class InPort(AbstractIOPort, AbstractDstPort):
         super().__init__(shape)
         self._reduce_op = reduce_op
 
-    def connect(self, ports: ty.Union["InPort", ty.List["InPort"]]):
-        """Connects this InPort to other InPort(s) of a nested process. InPorts
-        cannot connect to other OutPorts.
-
-        Parameters
-        ----------
-        :param ports: The InPort(s) to connect to.
-        """
-        self._connect_forward(to_list(ports), InPort)
-
     def connect_from(
-            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            self, ports: ty.Union[AbstractIOPort, ty.List[AbstractIOPort]]
     ):
         """Connects other OutPort(s) to this InPort or connects other
         InPort(s) of parent process to this InPort.
@@ -477,29 +552,18 @@ class InPort(AbstractIOPort, AbstractDstPort):
         self._connect_backward(to_list(ports), AbstractIOPort)
 
 
+class InPortDecorator(wrapt.ObjectProxy, InPortInterface):
+    """Enables decorating a virtual port with the interface of an InPort."""
+    def __init__(self, wrapped: AbstractVirtualPort):
+        super().__init__(wrapped)
+
+
 # TODO: (PP) enable connecting multiple Vars/VarPorts/RefPort to a RefPort
-class RefPort(AbstractRVPort, AbstractSrcPort):
-    """RefPorts are members of a Lava Process and can be connected to
-    internal Lava Vars of other processes to facilitate direct shared memory
-    access to those processes.
-
-    Shared-memory-based communication can have side-effects and should
-    therefore be used with caution.
-
-    RefPorts connect to other VarPorts of peer processes or to other RefPorts
-    of processes that contain this RefPort's parent process as a sub process
-    via the connect(..) method..
-    Similarly, RefPorts can receive connections from other RefPorts of nested
-    sub processes via the connect_from(..) method.
-
-    Here, VarPorts only serve as a wrapper for Vars. VarPorts can be created
-    statically during process definition to explicitly expose a Var for
-    remote memory access (which might be safer).
-    Alternatively, VarPorts can be created dynamically by connecting a
-    RefPort to a Var via the connect_var(..) method."""
-
+class RefPortInterface(AbstractPort):
+    """Interface of the RefPort that can be decorated on a virtual port using
+    the RefPortDecorator class."""
     def connect(
-            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union[AbstractRVPort, ty.List[AbstractRVPort]]
     ):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
@@ -509,12 +573,13 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         :param ports: The AbstractRVPort(s) to connect to.
         """
 
+        if isinstance(ports, list) and len(ports) == 1:
+            ports = ports[0]
+
         # Check if multiple ports should be connected (currently not supported)
         if len(to_list(ports)) > 1 \
-                or (len(self.get_dst_ports()) > 0
-                    and not isinstance(ports, AbstractSrcPort)) \
-                or (len(self.get_src_ports()) > 0
-                    and not isinstance(ports, AbstractDstPort)):
+                or len(self.get_dst_ports()) > 0 \
+                or len(ports.get_src_ports()) > 0:
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
                 " {!r}: {!r}".format(
@@ -530,35 +595,6 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
                         p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), AbstractRVPort)
 
-    def connect_from(self, ports: ty.Union["RefPort", ty.List["RefPort"]]):
-        """Connects other RefPort(s) of a nested process to this RefPort.
-        RefPorts cannot receive connections from other VarPorts.
-
-        Parameters
-        ----------
-        :param ports: The RefPort(s) that connect to this RefPort.
-        """
-
-        # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(ports)) > 1 \
-                or (len(self.get_dst_ports()) > 0
-                    and not isinstance(ports, AbstractSrcPort)) \
-                or (len(self.get_src_ports()) > 0
-                    and not isinstance(ports, AbstractDstPort)):
-            raise AssertionError(
-                "Currently only 1:1 connections are supported for RefPorts:"
-                " {!r}: {!r}".format(
-                    self.process.__class__.__name__, self.name))
-
-        for p in to_list(ports):
-            if not isinstance(p, RefPort):
-                raise TypeError(
-                    "RefPorts can only receive connections from RefPorts: "
-                    "{!r}: {!r} -> {!r}: {!r}".format(
-                        self.process.__class__.__name__, self.name,
-                        p.process.__class__.__name__, p.name))
-        self._connect_backward(to_list(ports), RefPort)
-
     def connect_var(self, variables: ty.Union[Var, ty.List[Var]]):
         """Connects this RefPort to Lava Process Var(s) to facilitate shared
         memory access.
@@ -569,11 +605,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """
 
         # Check if multiple ports should be connected (currently not supported)
-        if len(to_list(variables)) > 1 \
-                or (len(self.get_dst_ports()) > 0
-                    and not isinstance(variables, AbstractSrcPort)) \
-                or (len(self.get_src_ports()) > 0
-                    and not isinstance(variables, AbstractDstPort)):
+        if len(to_list(variables)) > 1:
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
                 " {!r}: {!r}".format(
@@ -610,7 +642,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
 
     @staticmethod
-    def create_implicit_var_port(var: Var) -> "ImplicitVarPort":
+    def create_implicit_var_port(var: Var) -> ImplicitVarPort:
         """Creates and returns an ImplicitVarPort for the given Var."""
         # Create a VarPort to wrap Var
         vp = ImplicitVarPort(var)
@@ -630,36 +662,69 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return vp
 
 
-# TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
-class VarPort(AbstractRVPort, AbstractDstPort):
-    """VarPorts are members of a Lava Process and act as a wrapper for
-    internal Lava Vars to facilitate connections between RefPorts and Vars
-    for shared memory access from the parent process of the RefPort to
-    the parent process of the Var.
+# TODO: (PP) enable connecting multiple Vars/VarPorts/RefPort to a RefPort
+class RefPort(RefPortInterface, AbstractRVPort, AbstractSrcPort):
+    """RefPorts are members of a Lava Process and can be connected to
+    internal Lava Vars of other processes to facilitate direct shared memory
+    access to those processes.
 
     Shared-memory-based communication can have side-effects and should
     therefore be used with caution.
 
-    VarPorts can receive connections from other RefPorts of peer processes
-    or from other VarPorts of processes that contain this VarPort's parent
-    process as a sub process via the connect(..) method. Similarly, VarPorts
-    can connect to other VarPorts of nested sub processes via the
-    connect_from(..) method.
+    RefPorts connect to other VarPorts of peer processes or to other RefPorts
+    of processes that contain this RefPort's parent process as a sub process
+    via the connect(..) method..
+    Similarly, RefPorts can receive connections from other RefPorts of nested
+    sub processes via the connect_from(..) method.
 
-    VarPorts can either be created in the constructor of a Process to
-    explicitly expose a Var for shared memory access (which might be safer).
+    Here, VarPorts only serve as a wrapper for Vars. VarPorts can be created
+    statically during process definition to explicitly expose a Var for
+    remote memory access (which might be safer).
     Alternatively, VarPorts can be created dynamically by connecting a
-    RefPort to a Var via the RefPort.connect_var(..) method."""
+    RefPort to a Var via the connect_var(..) method."""
 
-    def __init__(self, var: Var):
-        if not isinstance(var, Var):
-            raise AssertionError("'var' must be of type Var.")
-        if not var.shareable:
-            raise pe.VarNotSharableError(var.name)
-        AbstractRVPort.__init__(self, var.shape)
-        self.var = var
+    def connect_from(self, ports: ty.Union[RefPort, ty.List[RefPort]]):
+        """Connects other RefPort(s) of a nested process to this RefPort.
+        RefPorts cannot receive connections from other VarPorts.
 
-    def connect(self, ports: ty.Union["VarPort", ty.List["VarPort"]]):
+        Parameters
+        ----------
+        :param ports: The RefPort(s) that connect to this RefPort.
+        """
+
+        # Check if multiple ports should be connected (currently not supported)
+        if len(to_list(ports)) > 1 \
+                or (len(self.get_dst_ports()) > 0
+                    and not isinstance(ports, AbstractSrcPort)) \
+                or (len(self.get_src_ports()) > 0
+                    and not isinstance(ports, AbstractDstPort)):
+            raise AssertionError(
+                "Currently only 1:1 connections are supported for RefPorts:"
+                " {!r}: {!r}".format(
+                    self.process.__class__.__name__, self.name))
+
+        for p in to_list(ports):
+            if not isinstance(p, RefPort):
+                raise TypeError(
+                    "RefPorts can only receive connections from RefPorts: "
+                    "{!r}: {!r} -> {!r}: {!r}".format(
+                        self.process.__class__.__name__, self.name,
+                        p.process.__class__.__name__, p.name))
+        self._connect_backward(to_list(ports), RefPort)
+
+
+class RefPortDecorator(wrapt.ObjectProxy, RefPortInterface):
+    """Enables decorating a virtual port with the interface of a RefPort."""
+    def __init__(self, wrapped: AbstractVirtualPort):
+        super().__init__(wrapped)
+
+
+# TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
+class VarPortInterface(AbstractPort):
+    """Interface of the VarPort that can be decorated on a virtual port using
+    the VarPortDecorator class."""
+
+    def connect(self, ports: ty.Union[VarPort, ty.List[VarPort]]):
         """Connects this VarPort to other VarPort(s) of a nested process.
         VarPorts cannot connect to other RefPorts.
 
@@ -688,8 +753,38 @@ class VarPort(AbstractRVPort, AbstractDstPort):
                         p.process.__class__.__name__, p.name))
         self._connect_forward(to_list(ports), VarPort)
 
+
+# TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
+class VarPort(VarPortInterface, AbstractRVPort, AbstractDstPort):
+    """VarPorts are members of a Lava Process and act as a wrapper for
+    internal Lava Vars to facilitate connections between RefPorts and Vars
+    for shared memory access from the parent process of the RefPort to
+    the parent process of the Var.
+
+    Shared-memory-based communication can have side-effects and should
+    therefore be used with caution.
+
+    VarPorts can receive connections from other RefPorts of peer processes
+    or from other VarPorts of processes that contain this VarPort's parent
+    process as a sub process via the connect(..) method. Similarly, VarPorts
+    can connect to other VarPorts of nested sub processes via the
+    connect_from(..) method.
+
+    VarPorts can either be created in the constructor of a Process to
+    explicitly expose a Var for shared memory access (which might be safer).
+    Alternatively, VarPorts can be created dynamically by connecting a
+    RefPort to a Var via the RefPort.connect_var(..) method."""
+
+    def __init__(self, var: Var):
+        if not isinstance(var, Var):
+            raise AssertionError("'var' must be of type Var.")
+        if not var.shareable:
+            raise pe.VarNotSharableError(var.name)
+        AbstractRVPort.__init__(self, var.shape)
+        self.var = var
+
     def connect_from(
-            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            self, ports: ty.Union[AbstractRVPort, ty.List[AbstractRVPort]]
     ):
         """Connects other RefPort(s) to this VarPort or connects other
         VarPort(s) of parent process to this VarPort.
@@ -720,6 +815,12 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         self._connect_backward(to_list(ports), AbstractRVPort)
 
 
+class VarPortDecorator(wrapt.ObjectProxy, VarPortInterface):
+    """Enables decorating a virtual port with the interface of a VarPort."""
+    def __init__(self, wrapped: AbstractVirtualPort):
+        super().__init__(wrapped)
+
+
 class ImplicitVarPort(VarPort):
     """Sub class for VarPort to identify implicitly created VarPorts when
     a RefPort connects directly to a Var."""
@@ -740,32 +841,6 @@ class AbstractVirtualPort(AbstractPort):
         """Returns parent process of parent port that this VirtualPort was
         derived from."""
         return self._parent_port.process
-
-    def connect(self, ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]):
-        """Connects this virtual port to other port(s).
-
-        Parameters
-        ----------
-        :param ports: The port(s) to connect to. Connections from an IOPort
-        to a RVPort and vice versa are not allowed.
-        """
-        # Determine allows port_type
-        if isinstance(self._parent_port, OutPort):
-            # If OutPort, only allow other IO ports
-            port_type = AbstractIOPort
-        elif isinstance(self._parent_port, InPort):
-            # If InPort, only allow other InPorts
-            port_type = InPort
-        elif isinstance(self._parent_port, RefPort):
-            # If RefPort, only allow other Ref- or VarPorts
-            port_type = AbstractRVPort
-        elif isinstance(self._parent_port, VarPort):
-            # If VarPort, only allow other VarPorts
-            port_type = VarPort
-        else:
-            raise TypeError("Illegal parent port.")
-        # Connect to ports
-        self._connect_forward(to_list(ports), port_type)
 
     @abstractmethod
     def get_transform_func_fwd(self) -> ft.partial:

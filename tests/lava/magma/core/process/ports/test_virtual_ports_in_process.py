@@ -7,7 +7,6 @@ import unittest
 import numpy as np
 import functools as ft
 
-from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -30,7 +29,11 @@ from lava.magma.core.process.ports.ports import (
     InPort,
     OutPort,
     RefPort,
-    VarPort
+    VarPort,
+    RefPortDecorator,
+    OutPortDecorator,
+    InPortDecorator,
+    VarPortDecorator
 )
 
 
@@ -72,6 +75,7 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
 
         virtual_port = MockVirtualPort(new_shape=self.new_shape,
                                        axes=self.axes)
+        virtual_port = OutPortDecorator(virtual_port)
 
         source.out_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
@@ -308,8 +312,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
 
         virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
                                         axes=self.axes)
+        virtual_port1 = OutPortDecorator(virtual_port1)
         virtual_port2 = MockVirtualPort(new_shape=self.shape,
                                         axes=tuple(np.argsort(self.axes)))
+        virtual_port2 = OutPortDecorator(virtual_port2)
 
         source.out_port._connect_forward(
             [virtual_port1], AbstractPort, assert_same_shape=False
@@ -344,8 +350,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
 
         virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
                                         axes=self.axes)
+        virtual_port1 = OutPortDecorator(virtual_port1)
         virtual_port2 = MockVirtualPort(new_shape=self.new_shape,
                                         axes=(0, 2, 1))
+        virtual_port2 = OutPortDecorator(virtual_port2)
 
         source1.out_port._connect_forward(
             [virtual_port1], AbstractPort, assert_same_shape=False
@@ -366,6 +374,101 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
 
         expected = (self.input_data.transpose(self.axes)
                     + self.input_data.transpose().transpose((0, 2, 1)))
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_refport_writing_to_var(self) -> None:
+        """Tests connecting a (writing) RefPort to a Var via a virtual port."""
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.new_shape))
+
+        virtual_port = MockVirtualPort(new_shape=self.new_shape,
+                                       axes=self.axes)
+        virtual_port = RefPortDecorator(virtual_port)
+
+        source.ref_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect_var(sink.data)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_chaining_virtual_ports_from_refport_writing_to_var(self) -> None:
+        """Tests connecting a (writing) RefPort to a Var via a virtual port."""
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.shape))
+
+        virtual_port1 = MockVirtualPort(new_shape=self.new_shape,
+                                        axes=self.axes)
+        virtual_port2 = MockVirtualPort(new_shape=self.shape,
+                                        axes=tuple(np.argsort(self.axes)))
+
+        virtual_port1 = RefPortDecorator(virtual_port1)
+        virtual_port2 = RefPortDecorator(virtual_port2)
+
+        source.ref_port._connect_forward(
+            [virtual_port1], AbstractPort, assert_same_shape=False
+        )
+        virtual_port1._connect_forward(
+            [virtual_port2], AbstractPort, assert_same_shape=False
+        )
+
+        virtual_port2.connect_var(sink.data)
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_refport_reading_from_var(self) -> None:
+        """Tests connecting a (reading) RefPort to a Var via a virtual port."""
+        source = RefPortReadProcess(data=np.zeros(self.shape))
+        sink = VarPortProcess(data=self.input_data.transpose(self.axes))
+
+        virtual_port = MockVirtualPort(new_shape=self.new_shape,
+                                       axes=self.axes)
+
+        virtual_port = RefPortDecorator(virtual_port)
+
+        source.ref_port._connect_forward(
+            [virtual_port], AbstractPort, assert_same_shape=False
+        )
+        virtual_port.connect_var(sink.data)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = source.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -458,6 +561,30 @@ class TestTransposePort(unittest.TestCase):
             f'{expected[output!=expected] =}\n'
         )
 
+    def test_transpose_refport_write_to_var(self) -> None:
+        """Tests a virtual TransposePort between a RefPort and a Var (via an
+        ImplicitVarPort), where the RefPort writes to the Var."""
+
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.shape_transposed))
+
+        source.ref_port.transpose(axes=self.axes).connect_var(sink.data)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data.transpose(self.axes)
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
 
 class TestReshapePort(unittest.TestCase):
     """Tests virtual ReshapePorts on Processes that are executed."""
@@ -533,6 +660,30 @@ class TestReshapePort(unittest.TestCase):
             sink.stop()
 
         expected = self.input_data
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_reshape_refport_write_to_var(self) -> None:
+        """Tests a virtual ReshapePort between a RefPort and a Var,
+        where the RefPort writes to the Var."""
+
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.shape_reshaped))
+
+        source.ref_port.reshape(self.shape_reshaped).connect_var(sink.data)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data.reshape(self.shape_reshaped)
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -616,6 +767,30 @@ class TestFlattenPort(unittest.TestCase):
             sink.stop()
 
         expected = self.input_data
+        self.assertTrue(
+            np.all(output == expected),
+            f'Input and output do not match.\n'
+            f'{output[output!=expected]=}\n'
+            f'{expected[output!=expected] =}\n'
+        )
+
+    def test_flatten_refport_write_to_var(self) -> None:
+        """Tests a virtual ReshapePort with flatten() between a RefPort and a
+        Var, where the RefPort writes to the Var."""
+
+        source = RefPortWriteProcess(data=self.input_data)
+        sink = VarPortProcess(data=np.zeros(self.shape_reshaped))
+
+        source.ref_port.flatten().connect_var(sink.data)
+
+        try:
+            sink.run(condition=RunSteps(num_steps=self.num_steps),
+                     run_cfg=Loihi1SimCfg(select_tag='floating_pt'))
+            output = sink.data.get()
+        finally:
+            sink.stop()
+
+        expected = self.input_data.ravel()
         self.assertTrue(
             np.all(output == expected),
             f'Input and output do not match.\n'
@@ -726,6 +901,7 @@ class SubHVPInPortProcModel(AbstractSubProcessModel):
 
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['s_shape'],
                                        axes=proc.proc_params['axes'])
+        virtual_port = InPortDecorator(virtual_port)
         proc.in_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -757,6 +933,7 @@ class SubHVPOutPortProcModel(AbstractSubProcessModel):
 
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
+        virtual_port = OutPortDecorator(virtual_port)
         self.out_proc.out_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -853,6 +1030,7 @@ class SubHVPRefPortWriteProcModel(AbstractSubProcessModel):
 
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
+        virtual_port = RefPortDecorator(virtual_port)
         self.ref_write_proc.ref_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -884,6 +1062,7 @@ class SubHVPRefPortReadProcModel(AbstractSubProcessModel):
 
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
+        virtual_port = RefPortDecorator(virtual_port)
         self.ref_read_proc.ref_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )
@@ -920,6 +1099,7 @@ class SubHVPVarPortProcModel(AbstractSubProcessModel):
 
         virtual_port = MockVirtualPort(new_shape=s_data.shape,
                                        axes=proc.proc_params['axes'])
+        virtual_port = VarPortDecorator(virtual_port)
         proc.var_port._connect_forward(
             [virtual_port], AbstractPort, assert_same_shape=False
         )

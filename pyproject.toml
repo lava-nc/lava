@@ -50,6 +50,7 @@ numpy = "^1.22.2"
 pytest = "^7.0.1"
 scipy = "^1.8.0"
 unittest2 = "^1.1.0"
+wrapt = "^1.14.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.2"

@@ -330,6 +330,53 @@ class TestRVPorts(unittest.TestCase):
         self.assertIsInstance(vps[1], VarPort)
         self.assertNotEqual(vps[0], vps[1])
 
+    # TODO (MR): Remove this unit test as soon as 1:many connections are
+    #  implemented.
+    def test_connect_RefPort_to_many_Vars_raises_exception(self):
+        """Checks that a RefPort cannot be connected to many Vars."""
+
+        # We can have multiple Vars...
+        v1 = Var((1, 2, 3))
+        v2 = Var((1, 2, 3))
+        # ...and connect a RefPort to them
+        rp = RefPort((1, 2, 3))
+        with self.assertRaises(AssertionError):
+            rp.connect_var([v1, v2])
+
+    # TODO (MR): Remove this unit test as soon as 1:many connections are
+    #  implemented.
+    def test_connect_RefPort_to_connected_RefPort_raises_exception(self):
+        """Checks that a RefPort cannot be connected to another RefPort that
+        alread has an incoming connection."""
+
+        rp1 = RefPort((1, 2, 3))
+        rp2 = RefPort((1, 2, 3))
+        rp3 = RefPort((1, 2, 3))
+
+        # We can connect two RefPorts...
+        rp1.connect(rp3)
+
+        # ...but we cannot connect another RefPort to one that has already
+        # been connected.
+        with self.assertRaises(AssertionError):
+            rp2.connect(rp3)
+
+    # TODO (MR): Remove this unit test as soon as 1:many connections are
+    #  implemented.
+    def test_connect_RefPort_to_multiple_RefPorts_raises_exception(self):
+        """Checks that a RefPort cannot be connected multiple RefPorts."""
+
+        rp1 = RefPort((1, 2, 3))
+        rp2 = RefPort((1, 2, 3))
+        rp3 = RefPort((1, 2, 3))
+
+        # We can connect two RefPorts...
+        rp1.connect(rp3)
+
+        # ...but we cannot connect the first RefPort to another RefPort.
+        with self.assertRaises(AssertionError):
+            rp1.connect(rp2)
+
     def test_connect_RefPort_to_Var_with_incompatible_shape(self):
         """Checks that shapes must be compatible when connecting ports."""
 
