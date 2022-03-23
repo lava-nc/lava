@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import unittest
@@ -14,7 +14,7 @@ from lava.magma.core.run_configs import RunConfig
 
 
 # A minimal process
-from lava.utils.profiler import LavaProfiler
+from lava.utils.profiler import Profiler
 
 
 class P(AbstractProcess):
@@ -43,10 +43,10 @@ class TestLavaProfiler(unittest.TestCase):
         end = 5
         buffer_size = 1000
         bin_size = 1
-        profiler = LavaProfiler(start=start, end=end, buffer_size=buffer_size,
-                                bin_size=bin_size)
+        profiler = Profiler(start=start, end=end, buffer_size=buffer_size,
+                            bin_size=bin_size)
 
-        self.assertTrue(isinstance(profiler, LavaProfiler))
+        self.assertTrue(isinstance(profiler, Profiler))
         self.assertTrue(profiler.start == start)
         self.assertTrue(profiler.end == end)
         self.assertTrue(profiler.buffer_size == buffer_size)
@@ -56,7 +56,7 @@ class TestLavaProfiler(unittest.TestCase):
         """TBD"""
 
         proc = P()
-        profiler = LavaProfiler()
+        profiler = Profiler()
 
         # The process proc and connected processes should be profiled
         profiler.profile(proc)

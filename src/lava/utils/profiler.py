@@ -2,18 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-"""
-This module will contain a tool to determine power and performance of workloads
-for Loihi 1 or Loihi 2 based on software simulations or hardware measurements.
-
-The execution time and energy of a workload will be either measured on hardware
-during execution or estimated in simulation. The estimation is based on
-elementary hardware operations which are counted during the simulation. Each
-elementary operation has a defined execution time and energy cost, which is
-used in a performance model to calculate execution time and energy.
-"""
 import typing as ty
-from abc import ABC
 import types
 import numpy as np
 from lava.magma.core.process.process import AbstractProcess
@@ -26,8 +15,17 @@ from lava.magma.core.resources import (
     AbstractComputeResource, Loihi1NeuroCore, Loihi2NeuroCore)
 
 
-class LavaProfiler(ABC):
-    """TBD"""
+class Profiler:
+    """The Profiler is a tool to determine power and performance of workloads
+    for Loihi 1 or Loihi 2 based on software simulations or hardware
+    measurements.
+
+    The execution time and energy of a workload is either measured on hardware
+    during execution or estimated in simulation. The estimation is based on
+    elementary hardware operations which are counted during the simulation.
+    Each elementary operation has a defined execution time and energy cost,
+    which is used in a performance model to calculate execution time and energy.
+    """
 
     def __init__(self, start: int = 0, end: int = 0,
                  bin_size: int = 1, buffer_size: int = 1000):
@@ -61,9 +59,9 @@ class LavaProfiler(ABC):
 
         Functionally, this method does the same as run(..) of AbstractProcess,
         but modifies the chosen ProcModels and executables to be able to use the
-        LavaProfiler. From the user perspective, it should not be noticeable as
+        Profiler. From the user perspective, it should not be noticeable as
         the API does not change. This method will be used to override the method
-        run(..) of an instance of AbstractProcess, when the LavaProfiler is
+        run(..) of an instance of AbstractProcess, when the Profiler is
         created.
 
         Parameters
@@ -90,8 +88,8 @@ class LavaProfiler(ABC):
             # 2. modify proc_map
             proc_map = self._modify_proc_map(proc_map)
 
-            # 3. set up profiler
-            self._set_profiler(proc_map)
+            # 3.  prepare ProcModels for profiling
+            self._prepare_proc_models(proc_map)
 
             # 4. create executable
             executable = compiler.compile(proc, run_cfg)
@@ -115,8 +113,8 @@ class LavaProfiler(ABC):
         ...
         return proc_map
 
-    def _set_profiler(self, proc_map):
-        """Set up the profiler for each ProcModel.
+    def _prepare_proc_models(self, proc_map):
+        """Prepare each ProcModel for profiling.
         Configure Monitors for ProcModels executing in simulation.
         Recognize if ProcModels execute on Hardware."""
         for proc_model, proc in proc_map.items():
