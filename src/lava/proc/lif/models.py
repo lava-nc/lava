@@ -349,5 +349,3 @@ class PyLifModelFloatProf(PyLifModelFloat):
         self.updates[:] = 0  # inactive
         self.updates[:] = np.where(self.v == 0, self.v, 1)  # active
         self.updates[:] = self.spiking_activation() + 1  # spiking
-
-
