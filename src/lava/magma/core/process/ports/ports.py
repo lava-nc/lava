@@ -44,10 +44,12 @@ class AbstractPort(AbstractProcessMember):
     compiler to infer connections between processes.
     """
 
-    def __init__(self, shape: ty.Tuple):
+    def __init__(self, shape: ty.Tuple,
+                 parent_list_name: ty.Optional[ty.AnyStr] = None):
         super().__init__(shape)
         self.in_connections: ty.List[AbstractPort] = []
         self.out_connections: ty.List[AbstractPort] = []
+        self.parent_list_name = parent_list_name
 
     def _validate_ports(
             self,
@@ -397,8 +399,9 @@ class InPort(AbstractIOPort, AbstractDstPort):
             self,
             shape: ty.Tuple,
             reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
+            parent_list_name: ty.Optional[ty.AnyStr] = None
     ):
-        super().__init__(shape)
+        super().__init__(shape, parent_list_name = parent_list_name)
         self._reduce_op = reduce_op
 
     def connect(self, ports: ty.Union["InPort", ty.List["InPort"]]):

@@ -76,7 +76,8 @@ class Monitors(unittest.TestCase):
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # Check if a new RefPort created
-        self.assertIsInstance(monitor.ref_ports.members[0], RefPort)
+        self.assertTrue(hasattr(monitor, "ref_port_0"))
+        self.assertIsInstance(getattr(monitor, "ref_port_0"), RefPort)
 
     def test_probing_input_port_raise_error(self):
         """Check if trying to monitor an InPort raise an error"""
@@ -110,6 +111,20 @@ class Monitors(unittest.TestCase):
         all_procs = {some_proc, monitor}
         self.assertEqual(set(procs1), all_procs)
         self.assertEqual(set(procs2), all_procs)
+
+    def test_monitor_probe_and_compile_without_error(self):
+        """Check if probe(..) method of Monitor Proc creates a new RefPort
+        to facilitate the monitoring"""
+        num_steps = 4
+        # Create a Monitor Process and a dummy process to be probed
+        monitor = Monitor()
+        some_proc = P1()
+
+        # Probing a Var with Monitor Process
+        monitor.probe(target=some_proc.s, num_steps=num_steps)
+
+        c = Compiler()
+        c.compile(monitor, Loihi1SimCfg())
 
     def test_monitor_and_proc_run_without_error(self):
         """Check if the procs run after being probed by Monitor proc"""
@@ -147,7 +162,7 @@ class Monitors(unittest.TestCase):
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # Run all connected processes
-        some_proc.run(condition=RunSteps(num_steps=num_steps),
+        monitor.run(condition=RunSteps(num_steps=num_steps),
                       run_cfg=Loihi1SimCfg())
 
         # Fetch and construct the monitored data with get_data(..) method
@@ -231,6 +246,100 @@ class Monitors(unittest.TestCase):
         # Check if this data match the expected data
         self.assertTrue(np.all(volt_data == np.array([[1, 2, 3, 0, 1, 2]]).T))
         self.assertTrue(np.all(spike_data == np.array([[0, 0, 0, 1, 0, 0]]).T))
+
+    def test_multi_var_probing_with_two_lif_neurons(self):
+        """Check if two different Monitor process can monitor voltage (Var) and
+        s_out (OutPort) of a LIF neuron. Check the collected data with
+        expected data.
+        Note: The LIF neuron integrate the given bias, voltage accumulates
+        and once pass the threshold, there will be a spike outputted and
+        voltage will be reset to zero.
+        """
+
+        # Setup two Monitor Processes and LIF Process (a single neuron) that
+        # will be monitored
+        monitor = Monitor()
+        shape = (1,)
+        num_steps = 6
+        neuron1 = LIF(shape=shape,
+                      vth=3,
+                      bias=1)
+
+        neuron2 = LIF(shape=shape,
+                      vth=4,
+                      bias=2)
+
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi1SimCfg()
+
+        # Probe voltage of LIF with the first monitor
+        monitor.probe(target=neuron1.v, num_steps=num_steps)
+
+        # Probe spike output of LIF with the second monitor
+        monitor.probe(target=neuron2.v, num_steps=num_steps)
+
+        # Run all connected processes
+        neuron1.run(condition=rcnd, run_cfg=rcfg)
+
+        # Get data from both monitor
+        data = monitor.get_data()
+
+        neuron1.stop()
+
+        # Access the relevant data in the corresponding data dicts
+        volt_data1 = data[neuron1.name][neuron1.v.name]
+        volt_data2 = data[neuron2.name][neuron2.v.name]
+
+        # Check if this data match the expected data
+        self.assertTrue(np.all(volt_data1 == np.array([[1, 2, 3, 0, 1, 2]]).T))
+        self.assertTrue(np.all(volt_data2 == np.array([[2, 4, 0, 2, 4, 0]]).T))
+
+    def test_multi_out_port_probing_with_two_lif_neurons(self):
+        """Check if two different Monitor process can monitor voltage (Var) and
+        s_out (OutPort) of a LIF neuron. Check the collected data with
+        expected data.
+        Note: The LIF neuron integrate the given bias, voltage accumulates
+        and once pass the threshold, there will be a spike outputted and
+        voltage will be reset to zero.
+        """
+
+        # Setup two Monitor Processes and LIF Process (a single neuron) that
+        # will be monitored
+        monitor = Monitor()
+        shape = (1,)
+        num_steps = 6
+        neuron1 = LIF(shape=shape,
+                      vth=3,
+                      bias=1)
+
+        neuron2 = LIF(shape=shape,
+                      vth=4,
+                      bias=1)
+
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi1SimCfg()
+
+        # Probe voltage of LIF with the first monitor
+        monitor.probe(target=neuron1.s_out, num_steps=num_steps)
+
+        # Probe spike output of LIF with the second monitor
+        monitor.probe(target=neuron2.s_out, num_steps=num_steps)
+
+        # Run all connected processes
+        neuron1.run(condition=rcnd, run_cfg=rcfg)
+
+        # Get data from both monitor
+        data = monitor.get_data()
+
+        neuron1.stop()
+
+        # Access the relevant data in the corresponding data dicts
+        spike_data1 = data[neuron1.name][neuron1.s_out.name]
+        spike_data2 = data[neuron2.name][neuron2.s_out.name]
+
+        # Check if this data match the expected data
+        self.assertTrue(np.all(spike_data1 == np.array([[0, 0, 0, 1, 0, 0]]).T))
+        self.assertTrue(np.all(spike_data2 == np.array([[0, 0, 0, 0, 1, 0]]).T))
 
     def test_monitor_collects_voltage_and_spike_data_from_population_lif(self):
         """Check if two different Monitor process can monitor voltage (Var) and
@@ -344,4 +453,5 @@ class Monitors(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    unittest.freeze_support()
     unittest.main()

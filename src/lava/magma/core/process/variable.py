@@ -43,7 +43,8 @@ class Var(AbstractProcessMember):
             self,
             shape: ty.Tuple[int, ...],
             init: ty.Union[bool, int, list, np.ndarray] = 0,
-            shareable: bool = True):
+            shareable: bool = True,
+            parent_list_name: str = None):
         """Initializes a new Lava variable.
 
         Parameters:
@@ -59,6 +60,7 @@ class Var(AbstractProcessMember):
         self.id: int = VarServer().register(self)
         self.name: str = "Unnamed variable"
         self.aliased_var: ty.Optional[Var] = None
+        self.parent_list_name: ty.AnyStr = parent_list_name
 
     def alias(self, other_var: 'Var'):
         """Establishes an 'alias' relationship between this and 'other_var'.

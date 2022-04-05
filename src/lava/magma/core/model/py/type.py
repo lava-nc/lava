@@ -14,3 +14,4 @@ class LavaPyType:
     ]
     d_type: type
     precision: int = None  # If None, infinite precision is assumed
+    is_list: bool = False
