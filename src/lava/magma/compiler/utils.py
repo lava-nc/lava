@@ -20,7 +20,7 @@ class PortInitializer:
     port_type: str
     size: int
     parent_list_name: ty.Optional[ty.AnyStr] = None
-    transform_funcs: ty.List[ft.partial] = None
+    transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
 
 
 # check if can be a subclass of PortInitializer
@@ -34,4 +34,4 @@ class VarPortInitializer:
     size: int
     port_cls: type
     parent_list_name: ty.Optional[ty.AnyStr] = None
-    transform_funcs: ty.List[ft.partial] = None
+    transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
