@@ -454,7 +454,7 @@ class InPort(AbstractIOPort, AbstractDstPort):
             reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
             parent_list_name: ty.Optional[ty.AnyStr] = None
     ):
-        super().__init__(shape, parent_list_name = parent_list_name)
+        super().__init__(shape, parent_list_name=parent_list_name)
         self._reduce_op = reduce_op
 
     def connect(self, ports: ty.Union["InPort", ty.List["InPort"]]):

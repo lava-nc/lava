@@ -93,11 +93,9 @@ class _AbstractProcessBuilder(AbstractProcessBuilder):
                     continue
 
             raise AssertionError(
-                    "Both Process '{}' and ProcessModel '{}' are "
-                    "expected to have {} named '{}'.".format(
-                            proc_name, proc_model_name, m_type,
-                            m.name
-                    )
+                "Both Process '{}' and ProcessModel '{}' are expected to "
+                "have {} named '{}'.".format(proc_name, proc_model_name,
+                                             m_type, m.name)
             )
 
     @staticmethod
@@ -205,10 +203,11 @@ class PyProcessBuilder(_AbstractProcessBuilder):
             # attr_name is in his list, in addition to checking it in port
             # and var dicts
             all_parent_list_names = [value.parent_list_name for value in
-                                     list(self.vars.values()) +
-                                     list(self.var_ports.values()) +
-                                     list(self.py_ports.values()) +
-                                     list(self.ref_ports.values())]
+                                     list(self.vars.values()) + list(
+                                         self.var_ports.values()) + list(
+                                         self.py_ports.values()) + list(
+                                         self.ref_ports.values())]
+
             if isinstance(attr, LavaPyType):
                 if (
                     attr_name not in self.vars
