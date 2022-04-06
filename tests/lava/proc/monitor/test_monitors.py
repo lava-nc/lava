@@ -163,7 +163,7 @@ class Monitors(unittest.TestCase):
 
         # Run all connected processes
         monitor.run(condition=RunSteps(num_steps=num_steps),
-                      run_cfg=Loihi1SimCfg())
+                    run_cfg=Loihi1SimCfg())
 
         # Fetch and construct the monitored data with get_data(..) method
         data = monitor.get_data()
@@ -453,5 +453,4 @@ class Monitors(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.freeze_support()
     unittest.main()

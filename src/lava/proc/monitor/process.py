@@ -9,14 +9,17 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort
 
 class Monitor(AbstractProcess):
     """
-    Monitor process to probe/monitor a given variable of a process
+    Monitor process to probe/monitor target variables (Vars) or OutPorts of
+    the other processes
 
-    Monitor process is initialized without any Ports and Vars. The InPorts,
-    RefPorts and Vars are created dynamically, as the Monitor process is
-    used to probe OutPorts and Vars of other processes. For this purpose,
-    Monitor process has probe(..) function, which as arguments takes the
-    target Var or OutPorts and number of time steps we want to monitor given
-    process.
+    Monitor process uses RefPorts and InPorts to monitor the Vars and
+    OutPorts of other processes, respectively. It also uses (memory) Vars to
+    store the collected data during monitoring. The InPorts, RefPorts and
+    Vars are created dynamically, as user calls probe(..) function. This
+    function takes the target Var or OutPorts and number of time steps we
+    want to monitor given process, as arguments. Subsequently user can
+    extract the collected data from memory Vars of Monitor process using
+    get_data(..) function.
 
     Attributes
     ----------
@@ -32,10 +35,11 @@ class Monitor(AbstractProcess):
         ProcessModel. It is populated with the names of dynamically
         created port and var names of Monitor process, to be carried to its
         ProcessModel. It is a dictionary of the following structure:
-          "RefPorts": names of RefPorts created to monitor target Vars
-          "VarsData1": names of Vars created to store data from target Vars
-          "InPorts": names of InPorts created to monitor target OutPorts
-          "VarsData2": names of Vars created to store data from target OutPorts
+          "ref_ports": names of RefPorts created to monitor target Vars
+          "mem_vars_rp": names of Vars created to store data from target Vars
+          "in_ports": names of InPorts created to monitor target OutPorts
+          "mem_vars_ip": names of Vars created to store data from target
+          OutPorts
           "n_ref_ports": number of created RefPorts, also monitored Vars
           "n_in_ports": number of created InPorts, also monitored OutPorts
 
@@ -49,16 +53,14 @@ class Monitor(AbstractProcess):
 
     Methods
     -------
-    post_init()
-        Create one prototypical RefPort, InPort and two Vars. This ensure
-        coherence and one-to-one correspondence between Monitor process and
-        ProcessModel in terms LavaPyTypes and Ports/Vars. These prototypical
-        ports can later be updated inside probe(..) method.
 
     probe(target, num_steps)
         Probe the given target for num_step time steps, where target can be
         a Var or OutPort of some process.
-
+    create_ref_port_and_mem_var(shape, num_steps)
+        Create a new RefPort and (memory) Var inside the process
+    create_in_port_and_mem_var(shape, num_steps)
+        Create a new InPort and (memory) Var inside the process
     get_data()
         Fetch the monitoring data from the Vars of Monitor process that
         collected it during the run from probed process, puts into dict form
@@ -107,7 +109,7 @@ class Monitor(AbstractProcess):
         ----------
         shape : tuple
             The shape of RefPort will be created. This is used to
-            determine the shape of Var requried to store probed data
+            determine the shape of Var required to store probed data
 
         num_steps : int
             Number of steps the (memory) Var will record the target,
@@ -152,7 +154,27 @@ class Monitor(AbstractProcess):
         self.vars.add_members(attrs)
 
     def create_in_port_and_mem_var(self, shape, num_steps):
+        """
+        Create a new InPort and (memory) Var inside the process. It assigns
+        corresponding container names from the Monitor instance.
+        Note: The number of InPorts (proc_params["n_in_ports"]) is not
+        updated here, but rather inside the probe function, because in some
+        cases it might be desirable to create the port and later override them.
 
+        Parameters
+        ----------
+        shape : tuple
+            The shape of InPort will be created. This is used to
+            determine the shape of Var required to store probed data
+
+        num_steps : int
+            Number of steps the (memory) Var will record the target,
+            this is used as last dimension of the shape of Var
+
+        Returns
+        -------
+
+        """
         # Create names for InPorts and Vars to be created in Monitor process
         # for OutPort probing purposes. Names are given incrementally each time
         # probe(..) method is called, as n_in_ports is changed.
@@ -263,7 +285,7 @@ class Monitor(AbstractProcess):
             Data dictionary collected by Monitor Process
         """
 
-        # Fetch data-storing Vars for Var monitoring
+        # Fetch data from memory Vars of Monitor process for monitored Vars
         for i in range(self.proc_params["n_ref_ports"]):
             data_var_name = self.proc_params["mem_vars_rp"][i]
             data_var = getattr(self, data_var_name)
@@ -271,7 +293,7 @@ class Monitor(AbstractProcess):
 
             self.data[target_name[0]][target_name[1]] = data_var.get()
 
-        # Fetch data-storing Vars for OutPort monitoring
+        # Fetch data from memory Vars of Monitor process for monitored OutPorts
         for i in range(self.proc_params["n_in_ports"]):
             data_var_name = self.proc_params["mem_vars_ip"][i]
             data_var = getattr(self, data_var_name)

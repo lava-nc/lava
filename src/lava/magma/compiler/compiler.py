@@ -321,6 +321,8 @@ class Compiler:
                 r_pm = pm
 
         # Get the LavaType of the RefPort from its ProcessModel
+        # If parent_list_name is not None, i.e. port has a parent container,
+        # then get LavaType of that container
         if rp.parent_list_name is not None:
             lt = getattr(r_pm, rp.parent_list_name)
         else:

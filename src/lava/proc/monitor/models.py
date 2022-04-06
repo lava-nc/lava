@@ -16,8 +16,8 @@ from lava.magma.core.resources import CPU
 @requires(CPU)
 class PyMonitorModel(PyLoihiProcessModel):
     """
-    This process model contains prototypical Ports and Vars to have
-    one-to-one correspondes with Monitor process.
+    This process model contains one LavaPyType for each of dynamically
+    extended container of RefPorts, InPorts and their corresponding memory Vars.
     """
 
     ref_ports_list: list = LavaPyType(PyRefPort.VEC_DENSE, int, is_list=True)
