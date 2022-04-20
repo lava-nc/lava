@@ -137,6 +137,13 @@ Required test coverage of 85.0% reached. Total coverage: 88.81%
 
 ```
 
+### [Alternative] Installing Lava via Conda
+
+If you use the conda package manager, you can simply install the lava package via:
+```bash
+conda install lava -c conda-forge
+```
+
 ### [Alternative] Installing Lava from Binaries
 
 If you only need the lava package in your python environment, we will publish
