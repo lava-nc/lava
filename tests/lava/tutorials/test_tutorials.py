@@ -6,7 +6,7 @@
 
 import glob
 import os
-import subprocess
+import subprocess  # noqa: S404
 import tempfile
 import unittest
 from test import support
@@ -53,7 +53,7 @@ class TestTutorials(unittest.TestCase):
                 args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
                         "--ExecutePreprocessor.timeout=-1",
                         "--output", fout.name, notebook]
-                subprocess.check_call(args, env=env)
+                subprocess.check_call(args, env=env)  # noqa: S603
 
                 fout.seek(0)
                 nb = nbformat.read(fout, nbformat.current_nbformat)
@@ -119,7 +119,8 @@ class TestTutorials(unittest.TestCase):
                     errors_record[notebook_name] = (errors_joined, nb)
 
             self.assertFalse(errors_record,
-                             "Failed to execute Jupyter Notebooks with errors: \n {}".format(errors_record))
+                             "Failed to execute Jupyter Notebooks \
+                                 with errors: \n {}".format(errors_record))
         finally:
             os.chdir(cwd)
 
