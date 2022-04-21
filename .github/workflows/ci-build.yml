@@ -121,10 +121,12 @@ jobs:
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         source $VENV
+        python3 -m pip install ipykernel
         pytest
         
     - name: Run unit tests
       if: runner.os == 'Windows'
       run: |
         .venv\Scripts\activate.ps1
+        python3 -m pip install ipykernel
         pytest
