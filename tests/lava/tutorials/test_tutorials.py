@@ -18,15 +18,22 @@ import tutorials
 
 
 class TestTutorials(unittest.TestCase):
-    """Export notebooks in the parent directory, execute to check for errors"""
+    """Export notebook, execute to check for errors"""
 
-    def _notebook_run(self, base_dir, path):
-        """
-        Execute a notebook via nbconvert and collect output.
+    def _execute_notebook(self, base_dir, path):
+        """Execute a notebook via nbconvert and collect output.
 
-        :param basedir: Base directory of the IPython directory
-        :param path: Path of this notebook relative to the IPython directory
-        :return: (parsed nb object, execution errors)
+        Parameters
+        ----------
+        base_dir : str
+            notebook search directory
+        path : str
+            path to notebook
+
+        Returns
+        -------
+        Tuple
+            (parsed nb object, execution errors)
         """
 
         cwd = os.getcwd()
@@ -66,8 +73,16 @@ class TestTutorials(unittest.TestCase):
 
         return nb, errors
 
-    def _execute_tutorial(self, notebook, e2e_tutorial=False):
-        """Run a specific notebook"""
+    def _run_notebook(self, notebook, e2e_tutorial=False):
+        """Run a specific notebook
+
+        Parameters
+        ----------
+        notebook : str
+            name of notebook to run
+        e2e_tutorial : bool, optional
+            end to end tutorial, by default False
+        """
         cwd = os.getcwd()
         tutorials_directory = ""
 
@@ -94,7 +109,7 @@ class TestTutorials(unittest.TestCase):
                             .format(notebook))
 
             for notebook_name in discovered_notebooks:
-                nb, errors = self._notebook_run(
+                nb, errors = self._execute_notebook(
                     str(tutorials_directory),
                     notebook_name
                 )
@@ -110,51 +125,53 @@ class TestTutorials(unittest.TestCase):
 
     def test_end_to_end_01_mnist(self):
         """Test tutorial end to end 01 mnist."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial01_mnist_digit_classification.ipynb",
             e2e_tutorial=True
         )
 
-    @unittest.skip
+    @unittest.skip("Tutorial is text only and does not contain code")
     def test_in_depth_01_install_lava(self):
         """Test tutorial in depth install lava."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial01_installing_lava.ipynb"
         )
 
     def test_in_depth_02_processes(self):
         """Test tutorial in depth processes"""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial02_processes.ipynb"
         )
 
     def test_in_depth_03_process_models(self):
         """Test tutorial in depth process models."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial03_process_models.ipynb"
         )
 
     def test_in_depth_04__execution(self):
         """Test tutorial in depth execution."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial04_execution.ipynb"
         )
 
     def test_in_depth_05__connect_processes(self):
         """Test tutorial in depth connect processes."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial05_connect_processes.ipynb"
         )
 
+    @unittest.skip("Skip until \
+        https://github.com/lava-nc/lava/issues/242 is fixed")
     def test_in_depth_06_hierarchical_processes(self):
         """Test tutorial in depth hierarchical processes."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial06_hierarchical_processes.ipynb"
         )
 
     def test_in_depth_07_remote_memory_access(self):
         """Test tutorial in depth remote memory access."""
-        self._execute_tutorial(
+        self._run_notebook(
             "tutorial07_remote_memory_access.ipynb"
         )
 
