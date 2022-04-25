@@ -20,6 +20,8 @@ import tutorials
 
 class TestTutorials(unittest.TestCase):
     """Export notebook, execute to check for errors"""
+    def __init__(self):
+        self.system_name = platform.system().lower()
 
     def _execute_notebook(self, base_dir, path):
         """Execute a notebook via nbconvert and collect output.
@@ -125,7 +127,7 @@ class TestTutorials(unittest.TestCase):
         finally:
             os.chdir(cwd)
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_end_to_end_01_mnist(self):
         """Test tutorial end to end 01 mnist."""
         self._run_notebook(
@@ -140,28 +142,28 @@ class TestTutorials(unittest.TestCase):
             "tutorial01_installing_lava.ipynb"
         )
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_in_depth_02_processes(self):
         """Test tutorial in depth processes"""
         self._run_notebook(
             "tutorial02_processes.ipynb"
         )
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_in_depth_03_process_models(self):
         """Test tutorial in depth process models."""
         self._run_notebook(
             "tutorial03_process_models.ipynb"
         )
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_in_depth_04__execution(self):
         """Test tutorial in depth execution."""
         self._run_notebook(
             "tutorial04_execution.ipynb"
         )
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_in_depth_05__connect_processes(self):
         """Test tutorial in depth connect processes."""
         self._run_notebook(
@@ -176,7 +178,7 @@ class TestTutorials(unittest.TestCase):
             "tutorial06_hierarchical_processes.ipynb"
         )
 
-    @unittest.skipIf(platform.system().lower() != "linux")
+    @unittest.skipIf(self.system_name != "linux")
     def test_in_depth_07_remote_memory_access(self):
         """Test tutorial in depth remote memory access."""
         self._run_notebook(
