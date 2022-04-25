@@ -120,6 +120,8 @@ jobs:
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
+        git lfs fetch
+        git lfs pull
         source $VENV
         python3 -m pip install ipykernel
         pytest
