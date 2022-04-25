@@ -6,6 +6,7 @@
 
 import glob
 import os
+from platform import platform
 import subprocess  # noqa: S404
 import tempfile
 import unittest
