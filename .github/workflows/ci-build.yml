@@ -8,6 +8,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        lfs: true
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -52,6 +54,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        lfs: true
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -94,6 +98,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        lfs: true
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -123,11 +129,15 @@ jobs:
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
+        git lfs fetch
+        git lfs pull
         source $VENV
+        python3 -m pip install ipykernel
         pytest
         
     - name: Run unit tests
       if: runner.os == 'Windows'
       run: |
         .venv\Scripts\activate.ps1
+        python3 -m pip install ipykernel
         pytest

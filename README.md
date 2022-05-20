@@ -190,6 +190,8 @@ bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}
 
 ## Running Lava on Intel Loihi
 
+> :warning: **The current version of Lava does not support Loihi**: v0.4.0, the next release, will be the first version of Lava to support Loihi
+
 Intel's neuromorphic Loihi 1 or 2 research systems are currently not available
 commercially. Developers interested in using Lava with Loihi systems, need to
 join the Intel Neuromorphic Research Community (INRC). Once a member of the
@@ -199,14 +201,7 @@ provide further proprietary components of the magma library which enable
 compiling processes for Loihi systems that need to be installed into the
 same Lava namespace.
 
-Login to Intel External vLab Machines. Instructions were sent to you during
-your INRC Account Setup. If you do not know/remember the login
-instructions, email: nrc_support@intel-research.net
-
-- Login to INRC VM with your credentials
-- Follow the instructions to Install or Clone Lava
-- cd /nfs/ncl/releases/lava/0.3.0
-- pip install lava-nc-0.3.0.tar.gz
+Installation instructions for vlab will be included with release v0.4.0
 
 ## Coding example
 ### Building a simple feed-forward network
