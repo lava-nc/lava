@@ -65,7 +65,7 @@ class Delay(AbstractProcess):
         # self.weight_exp = Var(shape=(1,), init=weight_exp)
         # self.num_weight_bits = Var(shape=(1,), init=num_weight_bits)
         # self.sign_mode = Var(shape=(1,), init=sign_mode)
-        self.s_buff = Var(shape=(shape[0],max_delay+1), init=False)
+        self.s_buff = Var(shape=(shape[1],max_delay+1), init=False)
         self.use_graded_spike = Var(shape=(1,), init=use_graded_spike)
         self.delays = Var(shape=shape, init=delays)
         self.max_delay = Var(shape=(1,), init=max_delay)
