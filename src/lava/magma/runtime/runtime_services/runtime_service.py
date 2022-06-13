@@ -356,6 +356,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # Check if pause or stop received from Runtime
                         # TODO: Do we actualy need to wait for PMs to be in
                         # HOST or MGMT phase to stop or pause them?
+                        # PP: For pausing yes, otherwise get/set will not work
                         if self.runtime_to_service.probe():
                             cmd = self.runtime_to_service.peek()
                             if enum_equal(cmd, MGMT_COMMAND.STOP):
@@ -366,6 +367,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 self.runtime_to_service.recv()
                                 self._handle_pause()
                                 self.paused = True
+                                # For get/set to work, we must be in the Host
+                                # phase
+                                phase = LoihiPhase.HOST
                                 break
 
                         # If HOST phase (last time step ended) break the loop
