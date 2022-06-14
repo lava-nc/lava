@@ -131,6 +131,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self.req_pause = False
         self.paused = False
         self._error = False
+        self.pausing = False
+        self.stopping = False
 
     class Phase:
         SPK = enum_to_np(1)
@@ -323,6 +325,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     # Start iterating through Loihi phases
                     curr_time_step = 0
                     phase = LoihiPhase.HOST
+                    is_last_ts = False
                     while True:
                         # Check if it is the last time step
                         is_last_ts = enum_equal(enum_to_np(curr_time_step),
@@ -330,12 +333,17 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # Advance to the next phase
                         phase = self._next_phase(is_last_ts)
                         if enum_equal(phase, MGMT_COMMAND.STOP):
-                            self.service_to_runtime.send(
-                                MGMT_RESPONSE.REQ_STOP)
+                            if not self.stopping:
+                                self.service_to_runtime.send(
+                                    MGMT_RESPONSE.REQ_STOP)
+                            phase = LoihiPhase.HOST
                             break
                         if enum_equal(phase, MGMT_COMMAND.PAUSE):
-                            self.service_to_runtime.send(
-                                MGMT_RESPONSE.REQ_PAUSE)
+                            if not self.pausing:
+                                self.service_to_runtime.send(
+                                    MGMT_RESPONSE.REQ_PAUSE)
+                            # Move to Host phase (get/set Var needs it)
+                            phase = LoihiPhase.HOST
                             break
                         # Increase time step if spiking phase
                         if enum_equal(phase, LoihiPhase.SPK):
@@ -354,33 +362,29 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 self._send_pm_cmd(MGMT_COMMAND.STOP)
                                 return
                         # Check if pause or stop received from Runtime
-                        # TODO: Do we actualy need to wait for PMs to be in
-                        # HOST or MGMT phase to stop or pause them?
-                        # PP: For pausing yes, otherwise get/set will not work
                         if self.runtime_to_service.probe():
                             cmd = self.runtime_to_service.peek()
                             if enum_equal(cmd, MGMT_COMMAND.STOP):
-                                self.runtime_to_service.recv()
-                                self._handle_stop()
-                                return
+                                # self.runtime_to_service.recv()
+                                # self._handle_stop()
+                                # return
+                                self.stopping = True
+                                self.req_stop = True
                             if enum_equal(cmd, MGMT_COMMAND.PAUSE):
-                                self.runtime_to_service.recv()
-                                self._handle_pause()
-                                self.paused = True
-                                # For get/set to work, we must be in the Host
-                                # phase
-                                phase = LoihiPhase.HOST
-                                break
+                                self.pausing = True
+                                self.req_pause = True
 
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(
                                 phase, LoihiPhase.HOST):
                             break
-                    if self.paused or enum_equal(phase, MGMT_COMMAND.STOP) or \
-                            enum_equal(phase, MGMT_COMMAND.PAUSE):
+                    if self.pausing or self.stopping or enum_equal(
+                            phase, MGMT_COMMAND.STOP) or enum_equal(
+                            phase, MGMT_COMMAND.PAUSE):
                         continue
                     # Inform the runtime that last time step was reached
-                    self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+                    if is_last_ts:
+                        self.service_to_runtime.send(MGMT_RESPONSE.DONE)
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
 
