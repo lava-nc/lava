@@ -365,9 +365,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         if self.runtime_to_service.probe():
                             cmd = self.runtime_to_service.peek()
                             if enum_equal(cmd, MGMT_COMMAND.STOP):
-                                # self.runtime_to_service.recv()
-                                # self._handle_stop()
-                                # return
                                 self.stopping = True
                                 self.req_stop = True
                             if enum_equal(cmd, MGMT_COMMAND.PAUSE):
