@@ -6,7 +6,7 @@ from sys import platform
 import os
 
 
-def enable_win(nb_name: str):
+def export_notebook(nb_name: str):
     """Enables execution of Lava tutorials on Windows systems. Processes
     defined within the tutorial jupyter notebook need to be written to a python
     script and imported in the notebook again."""
@@ -31,6 +31,8 @@ def cleanup(nb_name: str):
     Windows systems."""
     if platform == "win32" or platform == "cygwin":
         os.system("del " + nb_name + ".py")
+    else:
+        os.remove(nb_name + ".py")
 
 
 if __name__ == "__main__":
