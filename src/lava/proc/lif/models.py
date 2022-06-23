@@ -327,3 +327,25 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
         """Reset voltage of all spiking neurons to 0.
         """
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
+
+
+@implements(proc=LIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt', 'profileable')
+class PyLifModelFloatProf(PyLifModelFloat):
+    """Profileable implementation of Leaky-Integrate-and-Fire neural process in
+    floating point precision. This class implements additional operations
+    counters used by the Profiler to calculate power and performance.
+    """
+    updates: float = LavaPyType(float, float)
+    num_passes: int = LavaPyType(int, int)
+
+    def run_spk(self):
+        """Spiking activation function for LIF.
+        """
+        super().run_spk()
+
+        # Update operation counters (Loihi 1)
+        self.updates[:] = 0  # inactive
+        self.updates[:] = np.where(self.v == 0, self.v, 1)  # active
+        self.updates[:] = self.spiking_activation() + 1  # spiking

@@ -383,8 +383,6 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """Loads and de-serializes Process from disk."""
         pass
 
-    # TODO: (PP) Remove  if condition on blocking as soon as non-blocking
-    #  execution is completely implemented
     def run(self,
             condition: AbstractRunCondition = None,
             run_cfg: RunConfig = None):
