@@ -81,14 +81,22 @@ class _AbstractProcessBuilder(AbstractProcessBuilder):
         """
         proc_name = self.proc_model.implements_process.__name__
         proc_model_name = self.proc_model.__name__
+        # If proc_model have the member with the same name continue;
+        # Otherwise check if parent_list_name is not None and proc_model has
+        # a member with this parent_list_name, if so continue; otherwise
+        # raise the error
         for m in members:
-            if not hasattr(self.proc_model, m.name):
-                raise AssertionError(
-                    "Both Process '{}' and ProcessModel '{}' are expected to "
-                    "have {} named '{}'.".format(
-                        proc_name, proc_model_name, m_type, m.name
-                    )
-                )
+            if hasattr(self.proc_model, m.name):
+                continue
+            if m.parent_list_name is not None:
+                if hasattr(self.proc_model, m.parent_list_name):
+                    continue
+
+            raise AssertionError(
+                "Both Process '{}' and ProcessModel '{}' are expected to "
+                "have {} named '{}'.".format(proc_name, proc_model_name,
+                                             m_type, m.name)
+            )
 
     @staticmethod
     def _check_not_assigned_yet(
@@ -191,12 +199,22 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         """
         for attr_name in dir(self.proc_model):
             attr = getattr(self.proc_model, attr_name)
+            # Add all the parent_list names into one list and later check if
+            # attr_name is in his list, in addition to checking it in port
+            # and var dicts
+            all_parent_list_names = [value.parent_list_name for value in
+                                     list(self.vars.values()) + list(
+                                         self.var_ports.values()) + list(
+                                         self.py_ports.values()) + list(
+                                         self.ref_ports.values())]
+
             if isinstance(attr, LavaPyType):
                 if (
                     attr_name not in self.vars
                     and attr_name not in self.py_ports
                     and attr_name not in self.ref_ports
                     and attr_name not in self.var_ports
+                    and attr_name not in all_parent_list_names
                 ):
                     raise AssertionError(
                         f"No LavaPyType '{attr_name}' found in ProcModel "
@@ -208,8 +226,14 @@ class PyProcessBuilder(_AbstractProcessBuilder):
 
         Any Py{In/Out/Ref}Ports must be strict sub-types of Py{In/Out/Ref}Ports.
         """
+        # If parent_list_name is not None, i.e. port has a parent container,
+        # then get LavaType of that container
         for name, port_init in self.py_ports.items():
-            lt = self._get_lava_type(name)
+            if port_init.parent_list_name is not None:
+                lt = self._get_lava_type(port_init.parent_list_name)
+            else:
+                lt = self._get_lava_type(name)
+
             if not isinstance(lt.cls, type):
                 raise AssertionError(
                     f"LavaPyType.cls for '{name}' is not a type in '"
@@ -300,9 +324,12 @@ class PyProcessBuilder(_AbstractProcessBuilder):
             )
 
         # Check that there's a PyPort for each new CspPort
+        # Check also parent_list_names of all ports
         proc_name = self.proc_model.implements_process.__name__
+        all_ports = {**self.ref_ports, **self.py_ports, **self.var_ports}
         for port_name in new_ports:
-            if not hasattr(self.proc_model, port_name):
+            if not hasattr(self.proc_model, port_name) and not hasattr(
+                    self.proc_model, all_ports[port_name].parent_list_name):
                 raise AssertionError("PyProcessModel '{}' has \
                     no port named '{}'.".format(proc_name, port_name))
 
@@ -384,7 +411,12 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         # Initialize PyPorts
         for name, p in self.py_ports.items():
             # Build PyPort
-            lt = self._get_lava_type(name)
+            # If parent_list_name is not None, i.e. port has a parent container,
+            # then get LavaType of that container
+            if p.parent_list_name is not None:
+                lt = self._get_lava_type(p.parent_list_name)
+            else:
+                lt = self._get_lava_type(name)
             port_cls = ty.cast(ty.Type[AbstractPyIOPort], lt.cls)
             csp_ports = []
             if name in self.csp_ports:
@@ -413,7 +445,13 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         # Initialize RefPorts
         for name, p in self.ref_ports.items():
             # Build RefPort
-            lt = self._get_lava_type(name)
+            # If parent_list_name is not None, i.e. port has a parent container,
+            # then get LavaType of that container
+            if p.parent_list_name is not None:
+                lt = self._get_lava_type(p.parent_list_name)
+            else:
+                lt = self._get_lava_type(name)
+
             port_cls = ty.cast(ty.Type[PyRefPort], lt.cls)
             csp_recv = None
             csp_send = None
@@ -476,7 +514,13 @@ class PyProcessBuilder(_AbstractProcessBuilder):
         # Initialize Vars
         for name, v in self.vars.items():
             # Build variable
-            lt = self._get_lava_type(name)
+            # If parent_list_name is not None, i.e. Var has a parent container,
+            # then get LavaType of that container
+            if v.parent_list_name is not None:
+                lt = self._get_lava_type(v.parent_list_name)
+            else:
+                lt = self._get_lava_type(name)
+
             if issubclass(lt.cls, np.ndarray):
                 var = lt.cls(v.shape, lt.d_type)
                 var[:] = v.value

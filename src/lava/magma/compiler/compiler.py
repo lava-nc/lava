@@ -321,7 +321,12 @@ class Compiler:
                 r_pm = pm
 
         # Get the LavaType of the RefPort from its ProcessModel
-        lt = getattr(r_pm, rp.name)
+        # If parent_list_name is not None, i.e. port has a parent container,
+        # then get LavaType of that container
+        if rp.parent_list_name is not None:
+            lt = getattr(r_pm, rp.parent_list_name)
+        else:
+            lt = getattr(r_pm, rp.name)
 
         # Return mapping of the RefPort class to VarPort class
         return RefVarTypeMapping.get(lt.cls)
@@ -345,7 +350,8 @@ class Compiler:
                     b = PyProcessBuilder(pm, p.id, p.proc_params)
                     # Create Var- and PortInitializers from lava.process Vars
                     # and Ports
-                    v = [VarInitializer(v.name, v.shape, v.init, v.id)
+                    v = [VarInitializer(v.name, v.shape, v.init, v.id,
+                                        v.parent_list_name)
                          for v in p.vars]
 
                     ports = []
@@ -363,6 +369,7 @@ class Compiler:
                                              self._get_port_dtype(pt, pm),
                                              pt.__class__.__name__,
                                              pp_ch_size,
+                                             pt.parent_list_name,
                                              transform_funcs)
                         ports.append(pi)
 
@@ -376,6 +383,7 @@ class Compiler:
                                              self._get_port_dtype(pt, pm),
                                              pt.__class__.__name__,
                                              pp_ch_size,
+                                             pt.parent_list_name,
                                              transform_funcs)
                         ref_ports.append(pi)
 
@@ -392,6 +400,7 @@ class Compiler:
                             pt.__class__.__name__,
                             pp_ch_size,
                             self._map_var_port_class(pt, proc_groups),
+                            pt.parent_list_name,
                             transform_funcs)
                         var_ports.append(pi)
 
@@ -669,6 +678,9 @@ class Compiler:
         # Implicitly created VarPorts
         elif isinstance(port, ImplicitVarPort):
             return getattr(proc_model, port.var.name).d_type
+        # Handle list of ports
+        elif port.parent_list_name is not None:
+            return getattr(proc_model, port.parent_list_name).d_type
         # Port has different name in Process and ProcessModel
         else:
             raise AssertionError("Port {!r} not found in "
