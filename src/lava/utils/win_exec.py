@@ -3,12 +3,11 @@
 # See: https://spdx.org/licenses/
 
 from sys import platform
-
-
 try:
     from IPython import get_ipython
 except ModuleNotFoundError:
     pass
+
 
 def export(filename, cell):
     '''Exports the cell to the given file name if system is windows.'''
@@ -27,6 +26,7 @@ def load_ipython_extension(shell):
 def unload_ipython_extension(shell):
     '''Unregisters the magic function when the extension unloads.'''
     del shell.magics_manager.magics['cell']['export']
+
 
 if __name__ == "__main__":
     pass
