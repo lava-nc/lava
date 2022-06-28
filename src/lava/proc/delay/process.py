@@ -30,6 +30,9 @@ class Delay(AbstractProcess):
     use_graded_spike: bool
     flag to indicated graded spike. Default is False
 
+    Other Variables
+    ---------------
+
     s_buff (Sb):
     2D matrix of form (num_flat_input_neurons, max_delay_length) 
     which stores the input spikes for the max_delay_length previous
