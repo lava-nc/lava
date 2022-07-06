@@ -251,7 +251,6 @@ class GetBuilders:
         self._count += 1
         return return_value, channel_map
 
-
         # Regardless where we start searching...
         c = Compiler()
         procs1 = c._find_processes(p1)
