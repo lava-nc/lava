@@ -11,6 +11,7 @@ import lava.magma.compiler.var_model as var_model
 import numpy as np
 from lava.magma.compiler.builders.interfaces import (AbstractChannelBuilder,
                                                      AbstractProcessBuilder)
+from lava.magma.core.process.ports.ports import VarPort
 
 try:
     from lava.magma.compiler.builders.c_builder import CProcessBuilder
