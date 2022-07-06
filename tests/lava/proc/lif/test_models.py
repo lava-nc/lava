@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import unittest
@@ -44,7 +44,7 @@ class VecSendProcess(AbstractProcess):
     when there is a True
     """
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs.pop("shape", (1,))
         vec_to_send = kwargs.pop("vec_to_send")
         send_at_times = kwargs.pop("send_at_times")
@@ -65,7 +65,7 @@ class VecRecvProcess(AbstractProcess):
     shape: tuple, shape of the process
     """
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs.get("shape", (1,))
         self.shape = shape
         self.s_in = InPort(shape=(shape[1],))
@@ -156,7 +156,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         lif = LIF(shape=shape,
                   du=0.,
                   dv=0.,
-                  bias=np.ones(shape, dtype=float),
+                  bias_mant=np.ones(shape, dtype=float),
                   bias_exp=np.ones(shape, dtype=float),
                   vth=4.)
         # Receive neuron spikes
@@ -193,7 +193,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         lif = LIF(shape=shape,
                   du=0.5, dv=0,
-                  bias=np.zeros(shape, dtype=float),
+                  bias_mant=np.zeros(shape, dtype=float),
                   bias_exp=np.ones(shape, dtype=float),
                   vth=256.)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -231,7 +231,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         lif = LIF(shape=shape,
                   du=0, dv=0.5,
-                  bias=np.zeros(shape, dtype=float),
+                  bias_mant=np.zeros(shape, dtype=float),
                   bias_exp=np.ones(shape, dtype=float),
                   vth=256.)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -270,7 +270,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         # du and dv = 0 => bias driven neurons spike at every 4th time-step.
         lif = LIF(shape=shape,
                   du=0, dv=0,
-                  bias=2 * np.ones(shape, dtype=np.int32),
+                  bias_mant=2 * np.ones(shape, dtype=np.int32),
                   bias_exp=6 * np.ones(shape, dtype=np.int32),
                   vth=8)
         # Receive neuron spikes
@@ -311,7 +311,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         # default the threshold value here is left-shifted by 6.
         lif = LIF(shape=shape,
                   du=2047, dv=0,
-                  bias=np.zeros(shape, dtype=np.int16),
+                  bias_mant=np.zeros(shape, dtype=np.int16),
                   bias_exp=np.ones(shape, dtype=np.int16),
                   vth=256 * np.ones(shape, dtype=np.int32))
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -356,7 +356,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         # Threshold provided here is left-shifted by 6-bits.
         lif = LIF(shape=shape,
                   du=0, dv=2048,
-                  bias=np.zeros(shape, dtype=np.int16),
+                  bias_mant=np.zeros(shape, dtype=np.int16),
                   bias_exp=np.ones(shape, dtype=np.int16),
                   vth=256 * np.ones(shape, dtype=np.int32))
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -401,7 +401,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         # Set up bias = 1 * 2**1 = 2. and threshold = 4.
         # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
         tlif = TernaryLIF(shape=shape, du=0., dv=0.,
-                          bias=(-1) * np.ones(shape, dtype=float),
+                          bias_mant=(-1) * np.ones(shape, dtype=float),
                           bias_exp=np.ones(shape, dtype=float),
                           vth_lo=-7., vth_hi=5.)
         # Receive neuron spikes
@@ -440,7 +440,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         # Set up bias = 1 * 2**1 = 2. and threshold = 4.
         # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
         tlif = TernaryLIF(shape=shape, du=0., dv=0.,
-                          bias=np.zeros(shape, dtype=float),
+                          bias_mant=np.zeros(shape, dtype=float),
                           bias_exp=np.ones(shape, dtype=float),
                           vth_lo=-3., vth_hi=5.)
         # Receive neuron spikes
@@ -477,7 +477,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         tlif = TernaryLIF(shape=shape,
                           du=0.5, dv=0,
-                          bias=np.zeros(shape, dtype=float),
+                          bias_mant=np.zeros(shape, dtype=float),
                           bias_exp=np.ones(shape, dtype=float),
                           vth_lo=-256., vth_hi=2)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -513,7 +513,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
         # Set up threshold high, such that there are no output spikes
         tlif = TernaryLIF(shape=shape,
                           du=0, dv=0.5,
-                          bias=np.zeros(shape, dtype=float),
+                          bias_mant=np.zeros(shape, dtype=float),
                           bias_exp=np.ones(shape, dtype=float),
                           vth_lo=-256., vth_hi=2.)
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
@@ -550,7 +550,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         # du and dv = 0 => bias driven neurons spike at every 4th time-step.
         tlif = TernaryLIF(shape=shape,
                           du=0, dv=0,
-                          bias=(-2) * np.ones(shape, dtype=np.int32),
+                          bias_mant=(-2) * np.ones(shape, dtype=np.int32),
                           bias_exp=6 * np.ones(shape, dtype=np.int32),
                           vth_lo=(-8), vth_hi=2)
         # Receive neuron spikes
@@ -590,7 +590,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         # Set up bias = 1 * 2**1 = 2. and threshold = 4.
         # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
         tlif = TernaryLIF(shape=shape, du=0, dv=0,
-                          bias=np.zeros(shape, dtype=np.int32),
+                          bias_mant=np.zeros(shape, dtype=np.int32),
                           bias_exp=np.ones(shape, dtype=np.int32),
                           vth_lo=-3, vth_hi=5)
         # Receive neuron spikes
@@ -632,7 +632,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         # default the threshold value here is left-shifted by 6.
         tlif = TernaryLIF(shape=shape,
                           du=2047, dv=0,
-                          bias=np.zeros(shape, dtype=np.int16),
+                          bias_mant=np.zeros(shape, dtype=np.int16),
                           bias_exp=np.ones(shape, dtype=np.int16),
                           vth_lo=(-256) * np.ones(shape, dtype=np.int32),
                           vth_hi=2 * np.ones(shape, dtype=np.int32))
@@ -677,7 +677,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         # Threshold provided here is left-shifted by 6-bits.
         tlif = TernaryLIF(shape=shape,
                           du=0, dv=2048,
-                          bias=np.zeros(shape, dtype=np.int16),
+                          bias_mant=np.zeros(shape, dtype=np.int16),
                           bias_exp=np.ones(shape, dtype=np.int16),
                           vth_lo=(-256) * np.ones(shape, dtype=np.int32),
                           vth_hi=2 * np.ones(shape, dtype=np.int32))

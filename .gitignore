@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Lava PreDefs
+predefs_*.h
+
 # C extensions
 *.so
 

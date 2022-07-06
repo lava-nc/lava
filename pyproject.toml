@@ -8,7 +8,7 @@ name = "lava-nc"
 packages = [
     {include = "lava", from = "src"}
 ]
-version = "0.3.0"
+version = "0.4.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
@@ -77,6 +77,8 @@ sphinx = { extras = ["toml"], version = "^4.4.0" }
 sphinx-tabs = { extras = ["toml"], version = "^3.2.0" }
 sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
 unittest2 = "^1.1.0"
+autopep8 = "^1.6.0"
+ipykernel = "^6.15.0"
 
 [tool.black]
 line-length = 80
@@ -103,6 +105,10 @@ addopts = "--strict-markers --cov=src/lava"
 testpaths = [
     "tests"
 ]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "serial",
+]
 
 [tool.coverage.run]
 relative_files = true
@@ -119,7 +125,8 @@ exclude_lines = [
     "parser\\..",
     "argparse\\..",
 ]
-fail_under = 85
+
+fail_under = 65
 show_missing = true
 
 [tool.flakeheaven]
@@ -130,7 +137,7 @@ show_source = true
 exclude = ["./docs/"]
 
 [tool.flakeheaven.plugins]
-flake8-bandit = ["+*", "-S322", "-B101"]       # Enable a plugin, disable specific checks
+flake8-bandit = ["+*", "-S322", "-B101", "-S404", "-S602"]       # Enable a plugin, disable specific checks
 
 # Disable below plugins temporarily until lint fix is pushed
 flake8-bugbear = ["-*"]

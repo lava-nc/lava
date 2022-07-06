@@ -1,38 +1,38 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
 import logging
-
-import numpy as np
-
 import sys
+import traceback
 import typing
 import typing as ty
 
-
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
-from lava.magma.compiler.exec_var import AbstractExecVar
+import numpy as np
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from lava.magma.compiler.var_model import AbstractVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
-from lava.magma.runtime.message_infrastructure \
-    .message_infrastructure_interface \
-    import MessageInfrastructureInterface
-from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal, \
-    MGMT_COMMAND, MGMT_RESPONSE
-from lava.magma.runtime.runtime_services.runtime_service \
-    import AsyncPyRuntimeService
+from lava.magma.runtime.message_infrastructure. \
+    message_infrastructure_interface import \
+    MessageInfrastructureInterface
+from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
+                                                 enum_equal, enum_to_np)
+from lava.magma.runtime.runtime_services.runtime_service import \
+    AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-from lava.magma.compiler.builders.builder import AbstractProcessBuilder, \
-    RuntimeChannelBuilderMp, ServiceChannelBuilderMp, \
+
+from lava.magma.compiler.builders.channel_builder import (
+    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
+from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
+from lava.magma.compiler.builders.py_builder import PyProcessBuilder
+from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
 from lava.magma.compiler.channels.interfaces import Channel
-from lava.magma.core.resources import HeadNode
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
@@ -87,9 +87,15 @@ def target_fn(*args, **kwargs):
     :param kwargs: Dict Parameters to be passed onto the process
     :return: None
     """
-    builder = kwargs.pop("builder")
-    actor = builder.build()
-    actor.start(*args, **kwargs)
+    try:
+        builder = kwargs.pop("builder")
+        actor = builder.build()
+        actor.start(*args, **kwargs)
+    except Exception as e:
+        print("Encountered Fatal Exception: " + str(e))
+        print("Traceback: ")
+        print(traceback.format_exc())
+        raise e
 
 
 class Runtime:
@@ -129,17 +135,13 @@ class Runtime:
 
     def initialize(self, node_cfg_idx: int = 0):
         """Initializes the runtime"""
-        node_config: NodeConfig = self.node_cfg[node_cfg_idx]
-
-        if node_config[0].node_type != HeadNode:
-            raise AssertionError
-
         self._build_message_infrastructure()
         self._build_channels()
         self._build_sync_channels()
         self._build_processes()
         self._build_runtime_services()
         self._start_ports()
+        self.log.debug("Runtime Initialization Complete")
         self._is_initialized = True
 
     def _start_ports(self):
@@ -162,20 +164,10 @@ class Runtime:
             self._messaging_infrastructure_type)
         self._messaging_infrastructure.start()
 
-    def _get_process_builder_for_process(self, process):
-        """
-        Given a process return its process builder
-
-        :param process: AbstractProcess
-        :return: AbstractProcessBuilder
-        """
-        process_builders: ty.Dict[
-            "AbstractProcess", "AbstractProcessBuilder"
-        ] = {}
-        process_builders.update(self._executable.c_builders)
-        process_builders.update(self._executable.py_builders)
-        process_builders.update(self._executable.nc_builders)
-        return process_builders[process]
+    def _get_process_builder_for_process(self, process: AbstractProcess) -> \
+            AbstractProcessBuilder:
+        """Given a process return its process builder."""
+        return self._executable.proc_builders[process]
 
     def _build_channels(self):
         """Given the channel builders for an executable,
@@ -217,7 +209,6 @@ class Runtime:
                     else:
                         sync_channel_builder.dst_process.set_csp_ports(
                             [channel.dst_port])
-                    # TODO: Get rid of if/else ladder
                     if "runtime_to_service" in channel.src_port.name:
                         self.runtime_to_service.append(channel.src_port)
                     elif "service_to_runtime" in channel.src_port.name:
@@ -241,34 +232,26 @@ class Runtime:
                         sync_channel_builder.dst_process.__class__.__name__)
                     raise ValueError("Unexpected type of Sync Channel Builder")
 
-    # ToDo: (AW) Why not pass the builder as an argument to the mp.Process
-    #  constructor which will then be passed to the target function?
     def _build_processes(self):
         """Builds the process for all process builders within an executable"""
-        process_builders_collection: ty.List[
-            ty.Dict[AbstractProcess, AbstractProcessBuilder]] = [
-            self._executable.py_builders,
-            self._executable.c_builders,
-            self._executable.nc_builders,
-        ]
-
-        for process_builders in process_builders_collection:
-            if process_builders:
-                for proc, proc_builder in process_builders.items():
+        process_builders: ty.Dict[AbstractProcess, AbstractProcessBuilder] = \
+            self._executable.proc_builders
+        if process_builders:
+            for proc, proc_builder in process_builders.items():
+                if isinstance(proc_builder, PyProcessBuilder):
                     # Assign current Runtime to process
                     proc._runtime = self
-                    self._messaging_infrastructure.build_actor(
-                        target_fn=target_fn,
-                        builder=proc_builder)
+                    self._messaging_infrastructure.build_actor(target_fn,
+                                                               proc_builder)
 
     def _build_runtime_services(self):
         """Builds the runtime services"""
-        runtime_service_builders = self._executable.rs_builders
-        if self._executable.rs_builders:
-            for sd, rs_builder in runtime_service_builders.items():
-                self._messaging_infrastructure.build_actor(
-                    target_fn=target_fn,
-                    builder=rs_builder)
+        runtime_service_builders = self._executable.runtime_service_builders
+        if self._executable.runtime_service_builders:
+            for _, rs_builder in runtime_service_builders.items():
+                self._messaging_infrastructure. \
+                    build_actor(target_fn,
+                                rs_builder)
 
     def _get_resp_for_run(self):
         """
@@ -406,11 +389,19 @@ class Runtime:
                 "WARNING: Cannot Set a Var when the execution is going on")
             return
         node_config: NodeConfig = self._executable.node_configs[0]
-        ev: AbstractExecVar = node_config.exec_vars[var_id]
-        runtime_srv_id: int = ev.runtime_srv_id
-        model_id: int = ev.process.id
 
-        if issubclass(list(self._executable.rs_builders.values())
+        if var_id not in node_config.var_models:
+            self.stop()
+            raise AssertionError(
+                f"The Var with id <{var_id}> was not associated in the "
+                f"ProcModel, thus the current value cannot be "
+                f"set.")
+
+        ev: AbstractVarModel = node_config.var_models[var_id]
+        runtime_srv_id: int = ev.runtime_srv_id
+        model_id: int = ev.proc_id
+
+        if issubclass(list(self._executable.runtime_service_builders.values())
                       [runtime_srv_id].rs_class, AsyncPyRuntimeService):
             raise RuntimeError("Set is not supported in AsyncPyRuntimeService")
 
@@ -453,15 +444,17 @@ class Runtime:
                 "WARNING: Cannot Get a Var when the execution is going on")
             return
         node_config: NodeConfig = self._executable.node_configs[0]
-        ev: AbstractExecVar = node_config.exec_vars[var_id]
-        runtime_srv_id: int = ev.runtime_srv_id
-        model_id: int = ev.process.id
 
-        rs_builders = list(self._executable.rs_builders.values())
-        rs_class = [rs for rs in rs_builders
-                    if rs.runtime_service_id == runtime_srv_id][0].rs_class
-        if issubclass(rs_class, AsyncPyRuntimeService):
-            raise RuntimeError("Get is not supported in AsyncPyRuntimeService")
+        if var_id not in node_config.var_models:
+            self.stop()
+            raise AssertionError(
+                f"The Var with id <{var_id}> was not associated in the "
+                f"ProcModel, thus the current value cannot be "
+                f"received.")
+
+        ev: AbstractVarModel = node_config.var_models[var_id]
+        runtime_srv_id: int = ev.runtime_srv_id
+        model_id: int = ev.proc_id
 
         if self._is_started:
             # Send a msg to runtime service given the rs_id that you need value

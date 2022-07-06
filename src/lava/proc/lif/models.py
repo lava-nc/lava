@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
@@ -21,11 +21,10 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     s_out = None  # This will be an OutPort of different LavaPyTypes
     u: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
-    bias: np.ndarray = LavaPyType(np.ndarray, float)
+    bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     du: float = LavaPyType(float, float)
     dv: float = LavaPyType(float, float)
-    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -40,7 +39,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """
         self.u[:] = self.u * (1 - self.du)
         self.u[:] += activation_in
-        self.v[:] = self.v * (1 - self.dv) + self.u + self.bias
+        self.v[:] = self.v * (1 - self.dv) + self.u + self.bias_mant
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
@@ -70,9 +69,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     du: int = LavaPyType(int, np.uint16, precision=12)
     dv: int = LavaPyType(int, np.uint16, precision=12)
-    bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
+    bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
-    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -81,10 +79,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # for current and voltage, respectively. They enable setting decay
         # constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned du and dv is 0 to 4095.
-        # ToDo: Currently, these instance variables cannot be set from
-        #  outside. From experience, there have been hardly any applications
-        #  which have needed to change the defaults. It is straight-forward
-        #  to change in the future.
         self.ds_offset = 1
         self.dm_offset = 0
         self.isbiasscaled = False
@@ -105,9 +99,11 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Scale bias with bias exponent by taking into account sign of the
         exponent.
         """
-        self.effective_bias = np.where(self.bias_exp >= 0, np.left_shift(
-            self.bias, self.bias_exp), np.right_shift(self.bias,
-                                                      -self.bias_exp))
+        self.effective_bias = np.where(
+            self.bias_exp >= 0,
+            np.left_shift(self.bias_mant, self.bias_exp),
+            np.right_shift(self.bias_mant, -self.bias_exp)
+        )
         self.isbiasscaled = True
 
     def scale_threshold(self):
@@ -154,8 +150,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Update voltage
         # --------------
         decay_const_v = self.dv + self.dm_offset
-        # ToDo: make the exponent 23 configurable (see comment above current
-        #  limits)
         neg_voltage_limit = -np.int32(self.max_uv_val) + 1
         pos_voltage_limit = np.int32(self.max_uv_val) - 1
         # Decaying voltage similar to current. See the comment above to
@@ -181,14 +175,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
-        # ToDo: If bias is set through Var.set() API, the Boolean flag
-        #  isbiasscaled does not get reset. This needs to change through
-        #  Var.set() API. Until that change, we will scale bias at every
-        #  time-step.
         self.scale_bias()
-        # # Compute effective bias and threshold only once, not every time-step
-        # if not self.isbiasscaled:
-        #     self.scale_bias()
 
         if not self.isthrscaled:
             self.scale_threshold()
@@ -217,9 +204,49 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     def spiking_activation(self):
         """Spiking activation function for LIF.
         """
-        if self.use_graded_spike.item():
-            return self.v * (self.v > self.effective_vth)
         return self.v > self.vth
+
+
+@implements(proc=LIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('bit_accurate_loihi', 'fixed_pt')
+class PyLifModelBitAcc(AbstractPyLifModelFixed):
+    """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
+    with Loihi's hardware LIF dynamics, which means, it mimics Loihi
+    behaviour bit-by-bit.
+
+    Currently missing features (compared to Loihi 1 hardware):
+        - refractory period after spiking
+        - axonal delays
+
+    Precisions of state variables
+    -----------------------------
+    du: unsigned 12-bit integer (0 to 4095)
+    dv: unsigned 12-bit integer (0 to 4095)
+    bias_mant: signed 13-bit integer (-4096 to 4095).
+        Mantissa part of neuron bias.
+    bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
+    vth: unsigned 17-bit integer (0 to 131071).
+    """
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: int = LavaPyType(int, np.int32, precision=17)
+
+    def __init__(self, proc_params):
+        super(PyLifModelBitAcc, self).__init__(proc_params)
+        self.effective_vth = 0
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.isthrscaled = True
+
+    def spiking_activation(self):
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
 
 
 @implements(proc=TernaryLIF, protocol=LoihiProtocol)
@@ -245,49 +272,6 @@ class PyTernLifModelFloat(AbstractPyLifModelFloat):
         """Reset voltage of all spiking neurons to 0.
         """
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
-
-
-@implements(proc=LIF, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
-class PyLifModelBitAcc(AbstractPyLifModelFixed):
-    """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
-    with Loihi's hardware LIF dynamics, which means, it mimics Loihi
-    behaviour bit-by-bit.
-
-    Currently missing features (compared to Loihi 1 hardware):
-        - refractory period after spiking
-        - axonal delays
-
-    Precisions of state variables
-    -----------------------------
-    du: unsigned 12-bit integer (0 to 4095)
-    dv: unsigned 12-bit integer (0 to 4095)
-    bias: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron bias.
-    bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    vth: unsigned 17-bit integer (0 to 131071).
-    """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
-
-    def __init__(self, proc_params):
-        super(PyLifModelBitAcc, self).__init__(proc_params)
-        self.effective_vth = 0
-
-    def scale_threshold(self):
-        """Scale threshold according to the way Loihi hardware scales it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
-        with other state variables of higher precision.
-        """
-        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
-        self.isthrscaled = True
-
-    def spiking_activation(self):
-        """Spike when voltage exceeds threshold.
-        """
-        if self.use_graded_spike.item():
-            return self.v * (self.v > self.effective_vth)
-        return self.v > self.effective_vth
 
 
 @implements(proc=TernaryLIF, protocol=LoihiProtocol)

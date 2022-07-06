@@ -1,0 +1,60 @@
+name: Run PilotNet Integraton Tests
+on:
+  # schedule:
+  #   - cron:  '0 20 * * *'
+  workflow_dispatch:
+
+jobs:
+  integration-tests:
+    name: PilotNet Integration Tests
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [linux-X64-ubuntu]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+#    - name: Load cached venv
+#      id: cached-poetry-dependencies
+#      uses: actions/cache@v2
+#      with:
+#        path: ~/.cache
+#        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-02-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+#      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install Lava
+      run: poetry install --no-interaction
+
+    - name: Run unit tests
+      if: runner.os == 'Linux' || runner.os == 'macOS'
+      run: |
+        git lfs fetch
+        git lfs pull
+        source $VENV
+        python3 -m pip install ipykernel
+        python3 -m pip install ../frameworks.ai.nx.nxsdk/
+        cd ../
+        git clone https://github.com/lava-nc/lava-dl.git || true
+        cd lava-dl
+        git checkout integration_test_pilotnet; git pull
+        python3 -m pip install .
+        # Run both IT tests but fail on either
+        SLURM=1 LOIHI_GEN=N3B3 PARTITION=oheogulch RUN_LOIHI_TESTS=1 RUN_IT_TESTS=1 PILOTNET_DATASET_PATH="/nfs/ncl/datasets/PilotNet/data" python -m unittest tests/lava/lib/dl/netx/integration/test_integration_pilotnet_snn.py && status=$? || true; \
+        SLURM=1 LOIHI_GEN=N3B3 PARTITION=oheogulch RUN_LOIHI_TESTS=1 RUN_IT_TESTS=1 PILOTNET_DATASET_PATH="/nfs/ncl/datasets/PilotNet/data" python -m unittest tests/lava/lib/dl/netx/integration/test_integration_pilotnet_sdnn.py && $?=status

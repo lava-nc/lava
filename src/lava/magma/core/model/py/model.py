@@ -1,11 +1,10 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import typing as ty
 from abc import ABC, abstractmethod
-
 import logging
-
 import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
@@ -32,8 +31,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
     """
 
     def __init__(self,
-                 proc_params: ty.Dict[str, ty.Any],
-                 loglevel: int = logging.WARNING) -> None:
+                 proc_params: ty.Type["ProcessParameters"],
+                 loglevel: ty.Optional[int] = logging.WARNING) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
@@ -209,11 +208,31 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
     """
-    ProcessModel for processes that resembles process on Loihi.
+    ProcessModel to simulate a Process on Loihi using CPU.
+
+    The PyLoihiProcessModel implements the same phases of execution as the
+    Loihi 1/2 processor but is executed on CPU. See the LoihiProtocol for a
+    description of the different phases.
+
+    Example
+    =======
+
+        @implements(proc=RingBuffer, protocol=LoihiProtocol)
+        @requires(CPU)
+        @tag('floating_pt')
+        class PySendModel(AbstractPyRingBuffer):
+            # Ring buffer send process model.
+            s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+            data: np.ndarray = LavaPyType(np.ndarray, float)
+
+            def run_spk(self) -> None:
+                buffer = self.data.shape[-1]
+                self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
+
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
-        super(PyLoihiProcessModel, self).__init__(proc_params)
+    def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
+        super().__init__(proc_params=proc_params)
         self.time_step = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
         self._cmd_handlers.update({
@@ -429,11 +448,35 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
 
 class PyAsyncProcessModel(AbstractPyProcessModel):
     """
-    Process Model for Asynchronous Processes.
+    Process Model for Asynchronous Processes executed on CPU.
+
+    This ProcessModel is used in combination with the AsyncProtocol to
+    implement asynchronous execution. This means that the processes could run
+    with a varying speed and message passing is possible at any time.
+
+    In order to use the PyAsyncProcessModel, the `run_async()` function
+    must be implemented which defines the behavior of the underlying Process.
+
+    Example
+    =======
+
+        @implements(proc=SimpleProcess, protocol=AsyncProtocol)
+        @requires(CPU)
+        class SimpleProcessModel(PyAsyncProcessModel):
+            u = LavaPyType(int, int)
+            v = LavaPyType(int, int)
+
+            def run_async(self):
+                while True:
+                    self.u = self.u + 10
+                    self.v = self.v + 1000
+                    if self.check_for_stop_cmd():
+                        return
+
     """
 
-    def __init__(self, proc_params: ty.Dict[str, ty.Any] = None):
-        super(PyAsyncProcessModel, self).__init__(proc_params)
+    def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
+        super().__init__(proc_params=proc_params)
         self._cmd_handlers.update({
             MGMT_COMMAND.RUN[0]: self._run_async
         })
@@ -443,7 +486,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         Different types of response for a RuntimeService Request
         """
         STATUS_DONE = enum_to_np(0)
-        """Signfies Ack or Finished with the Command"""
+        """Signifies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)
         """Signifies Termination"""
         STATUS_ERROR = enum_to_np(-2)
@@ -485,14 +528,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         Helper function to wrap run_async function
         """
         self.run_async()
-
-    def _get_var(self):
-        """Handles the get Var command from runtime service."""
-        raise NotImplementedError
-
-    def _set_var(self):
-        """Handles the set Var command from runtime service."""
-        raise NotImplementedError
+        self.process_to_service.send(PyAsyncProcessModel.Response.STATUS_DONE)
 
     def add_ports_for_polling(self):
         """

@@ -1,9 +1,10 @@
 # Copyright (C) 2022 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
-from abc import abstractmethod
 import logging
 import typing as ty
+from abc import abstractmethod
+
 
 import numpy as np
 
@@ -19,18 +20,11 @@ from lava.magma.runtime.mgmt_token_enums import (
     MGMT_RESPONSE,
     MGMT_COMMAND,
 )
-from lava.magma.runtime.runtime_services.enums import (
-    LoihiPhase,
-    LoihiVersion
-)
+
+from lava.magma.runtime.runtime_services.enums import LoihiPhase
 from lava.magma.runtime.runtime_services.interfaces import \
     AbstractRuntimeService
 
-try:
-    from nxsdk.arch.base.nxboard import NxBoard
-except(ImportError):
-    class NxBoard():
-        pass
 
 """The RuntimeService interface is responsible for
 coordinating the execution of a group of process models belonging to a common
@@ -45,24 +39,13 @@ returning action and command responses back to Runtime.
 
 RuntimeService Types:
 
-1. PyRuntimeService: (Abstract Class) Coordinates process models executing on
+PyRuntimeService: (Abstract Class) Coordinates process models executing on
    the CPU and written in Python.
    Concrete Implementations:
     a. LoihiPyRuntimeService: Coordinates process models executing on
        the CPU and written in Python and following the LoihiProtocol.
     b. AsyncPyRuntimeService: Coordinates process models executing on
        the CPU and written in Python and following the AsyncProtocol.
-
-2. CRuntimeService: (Abstract Class) Coordinates/Manages process models
-   executing on the CPU/Embedded CPU and written in C
-   Concrete Implementations:
-    a. LoihiCRuntimeService: Coordinates process models executing on
-       the CPU/Embedded CPU and written in C and following the LoihiProtocol.
-3. NcRuntimeService: (Abstract Class) Coordinates/Manages process models
-   executing on a Loihi NeuroCore.
-   Concrete Implementations:
-    a. NxSdkRuntimeService: Coordinates process models executing on a Loihi
-       NeuroCore and written in Python following the LoihiProtocol.
 """
 
 
@@ -72,14 +55,12 @@ class PyRuntimeService(AbstractRuntimeService):
     but used by inheritance
     """
 
-    def __init__(self,
-                 protocol: ty.Type[AbstractSyncProtocol],
-                 loglevel: int = logging.WARNING,):
+    def __init__(
+            self, protocol: ty.Type[AbstractSyncProtocol], *args, **kwargs
+    ):
         self.log = logging.getLogger(__name__)
-        self.log.setLevel(loglevel)
-        super(PyRuntimeService, self).__init__(
-            protocol=protocol
-        )
+        self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
+        super(PyRuntimeService, self).__init__(protocol=protocol)
         self.service_to_process: ty.Iterable[CspSendPort] = []
         self.process_to_service: ty.Iterable[CspRecvPort] = []
 
@@ -111,19 +92,11 @@ class PyRuntimeService(AbstractRuntimeService):
             self.process_to_service[i].join()
 
 
-class CRuntimeService(AbstractRuntimeService):
-    pass
-
-
-class NcRuntimeService(AbstractRuntimeService):
-    pass
-
-
 class LoihiPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Loihi SyncProtocol in Python."""
 
-    def __init__(self, protocol):
-        super().__init__(protocol)
+    def __init__(self, protocol, *args, **kwargs):
+        super().__init__(protocol, *args, **kwargs)
         self.req_pre_lrn_mgmt = False
         self.req_post_lrn_mgmt = False
         self.req_lrn = False
@@ -208,26 +181,28 @@ class LoihiPyRuntimeService(PyRuntimeService):
             rcv_msgs.append(ptos_recv_port.recv())
             counter += 1
         for idx, recv_msg in enumerate(rcv_msgs):
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.STATUS_ERROR):
+            if enum_equal(
+                    recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_ERROR
+            ):
                 self._error = True
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.REQ_PRE_LRN_MGMT):
+            if enum_equal(
+                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PRE_LRN_MGMT
+            ):
                 self.req_pre_lrn_mgmt = True
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.REQ_POST_LRN_MGMT):
+            if enum_equal(
+                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_POST_LRN_MGMT
+            ):
                 self.req_post_lrn_mgmt = True
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.REQ_LEARNING):
+            if enum_equal(
+                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_LEARNING
+            ):
                 self.req_lrn = True
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.REQ_PAUSE):
-                # ToDo: Add some mechanism to get the exact process id
+            if enum_equal(
+                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PAUSE
+            ):
                 self.log.info(f"Process : {idx} has requested Pause")
                 self.req_pause = True
-            if enum_equal(recv_msg,
-                          LoihiPyRuntimeService.PMResponse.REQ_STOP):
-                # ToDo: Add some mechanism to get the exact process id
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_STOP):
                 self.log.info(f"Process : {idx} has requested Stop")
                 self.req_stop = True
         return rcv_msgs
@@ -274,8 +249,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.PAUSE)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(rsp,
-                              LoihiPyRuntimeService.PMResponse.STATUS_PAUSED):
+            if not enum_equal(
+                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED
+            ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
@@ -285,9 +261,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(rsp,
-                              LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-                              ):
+            if not enum_equal(
+                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
+            ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
         self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
@@ -303,12 +279,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
         selector = CspSelector()
         phase = LoihiPhase.HOST
 
-        channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
+        channel_actions = [(self.runtime_to_service, lambda: "cmd")]
 
         while True:
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
-            if action == 'cmd':
+            if action == "cmd":
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
@@ -316,8 +292,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                     self.paused = True
-                elif enum_equal(command, MGMT_COMMAND.GET_DATA) or \
-                        enum_equal(command, MGMT_COMMAND.SET_DATA):
+                elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
+                        command, MGMT_COMMAND.SET_DATA
+                ):
                     self._handle_get_set(phase, command)
                 else:
                     self.paused = False
@@ -328,8 +305,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     is_last_ts = False
                     while True:
                         # Check if it is the last time step
-                        is_last_ts = enum_equal(enum_to_np(curr_time_step),
-                                                command)
+                        is_last_ts = enum_equal(
+                            enum_to_np(curr_time_step), command
+                        )
                         # Advance to the next phase
                         phase = self._next_phase(is_last_ts)
                         if enum_equal(phase, MGMT_COMMAND.STOP):
@@ -352,12 +330,14 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         self._send_pm_cmd(phase)
                         # ProcessModels respond with DONE if not HOST phase
                         if not enum_equal(
-                                phase, LoihiPyRuntimeService.Phase.HOST):
+                                phase, LoihiPyRuntimeService.Phase.HOST
+                        ):
                             self._get_pm_resp()
                             if self._error:
                                 # Forward error to runtime
                                 self.service_to_runtime.send(
-                                    MGMT_RESPONSE.ERROR)
+                                    MGMT_RESPONSE.ERROR
+                                )
                                 # stop all other pm
                                 self._send_pm_cmd(MGMT_COMMAND.STOP)
                                 return
@@ -372,8 +352,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 self.req_pause = True
 
                         # If HOST phase (last time step ended) break the loop
-                        if enum_equal(
-                                phase, LoihiPhase.HOST):
+                        if enum_equal(phase, LoihiPhase.HOST):
                             break
                     if self.pausing or self.stopping or enum_equal(
                             phase, MGMT_COMMAND.STOP) or enum_equal(
@@ -408,16 +387,11 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 raise RuntimeError(f"Unknown request {command}")
 
 
-class LoihiCRuntimeService(AbstractRuntimeService):
-    """RuntimeService that implements Loihi SyncProtocol in C."""
-    pass
-
-
 class AsyncPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Async SyncProtocol in Py."""
 
-    def __init__(self, protocol):
-        super().__init__(protocol)
+    def __init__(self, protocol, *args, **kwargs):
+        super().__init__(protocol, args, kwargs)
         self.req_stop = False
         self.req_pause = False
         self._error = False
@@ -454,9 +428,9 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(rsp,
-                              LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-                              ):
+            if not enum_equal(
+                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
+            ):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
@@ -467,12 +441,12 @@ class AsyncPyRuntimeService(PyRuntimeService):
         """Retrieves commands from the runtime and relays them to the process
         models. Also send the acknowledgement back to runtime."""
         selector = CspSelector()
-        channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
+        channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             channel_actions = []
-            if action == 'cmd':
+            if action == "cmd":
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
@@ -482,21 +456,31 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 else:
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
                     for ptos_recv_port in self.process_to_service:
-                        channel_actions.append((ptos_recv_port,
-                                                lambda: 'resp'))
-            elif action == 'resp':
+                        channel_actions.append(
+                            (ptos_recv_port, lambda: "resp")
+                        )
+            elif action == "resp":
                 resps = self._get_pm_resp()
+                done: bool = True
                 for resp in resps:
-                    if enum_equal(resp,
-                                  AsyncPyRuntimeService.PMResponse.REQ_PAUSE):
+                    if enum_equal(
+                            resp, AsyncPyRuntimeService.PMResponse.REQ_PAUSE
+                    ):
                         self.req_pause = True
-                    if enum_equal(resp,
-                                  AsyncPyRuntimeService.PMResponse.REQ_STOP):
+                    if enum_equal(
+                            resp, AsyncPyRuntimeService.PMResponse.REQ_STOP
+                    ):
                         self.req_stop = True
-                    if enum_equal(resp,
-                                  AsyncPyRuntimeService.PMResponse.STATUS_ERROR
-                                  ):
+                    if enum_equal(
+                            resp, AsyncPyRuntimeService.PMResponse.STATUS_ERROR
+                    ):
                         self._error = True
+                    if not enum_equal(resp,
+                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE  # noqa: E501
+                                      ):
+                        done = False
+                if done:
+                    self.service_to_runtime.send(MGMT_RESPONSE.DONE)
                 if self.req_stop:
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_STOP)
                 if self.req_pause:
@@ -506,90 +490,4 @@ class AsyncPyRuntimeService(PyRuntimeService):
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong type of channel action : {action}")
-            channel_actions.append((self.runtime_to_service, lambda: 'cmd'))
-
-
-class NxSdkRuntimeService(NcRuntimeService):
-    """The NxSdkRuntimeService uses NxCore to coordinate
-    communication and executinon on Loihi within a SyncDomain.
-
-    Parameters
-    ----------
-    protocol: ty.Type[AbstractSyncProtocol]
-              Communication protocol used by NxSdkRuntimeService
-    loihi_version: LoihiVersion
-                   Version of Loihi Chip to use, N2 or N3
-    loglevel: int
-             Log level to use for logging
-    """
-
-    def __init__(self,
-                 protocol: ty.Type[AbstractSyncProtocol],
-                 loihi_version: LoihiVersion = LoihiVersion.N3,
-                 loglevel: int = logging.WARNING):
-        self.log = logging.getLogger(__name__)
-        self.log.setLevel(loglevel)
-        super(NxSdkRuntimeService, self).__init__(
-            protocol=protocol
-        )
-        self.board: NxBoard = None
-        self.num_steps = 0
-
-        try:
-            if loihi_version == LoihiVersion.N3:
-                from nxsdk.arch.n3b.n3board import N3Board
-                # # TODO: Use dynamic set Board Init
-                self.board = N3Board(1, 1, [2], [[5, 5]])
-            elif loihi_version == LoihiVersion.N2:
-                from nxsdk.arch.n2a.n2board import N2Board  # noqa F401
-                self.board = N2Board(1, 1, [2], [[5, 5]])
-            else:
-                raise ValueError('Unsupported Loihi version '
-                                 + 'used in board selection')
-        except(ImportError):
-            class NxBoard():
-                pass
-            self.board = NxBoard()
-
-        self.log.debug("NxSdkRuntimeService is initialized")
-
-    def run(self):
-        """Retrieves commands from the runtime. STOP and PAUSE commands are
-        relayed to NxCore. Otherwise the number of time steps is received as
-        a RUN command. In this case RUN is relayed to NxCore with number of time
-        steps. The loop ends when receiving the STOP command from the runtime.
-        """
-
-        self.log.debug("NxSdkRuntime is running")
-        selector = CspSelector()
-        channel_actions = [(self.runtime_to_service, lambda: 'cmd')]
-
-        while True:
-            action = selector.select(*channel_actions)
-            if action == 'cmd':
-                command = self.runtime_to_service.recv()
-                self.log.debug("Recieved command: " + str(command[0]))
-                if enum_equal(command, MGMT_COMMAND.STOP):
-                    self.board.stop()
-
-                    self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
-                    self.join()
-                    return
-                elif enum_equal(command, MGMT_COMMAND.PAUSE):
-                    self.board.pause()
-
-                    self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
-                    break
-                # If message recieved from Runtime is greater than zero
-                # it is the num_steps for a run, use num_steps to start
-                # a run
-                elif command[0] > 0:
-                    self.log.debug("Command: " + str(command[0])
-                                   + " > 0, setting num_steps and running")
-                    self.num_steps = command
-                    self.board.run(numSteps=self.num_steps, aSync=False)
-
-                    self.service_to_runtime.send(MGMT_RESPONSE.DONE)
-                else:
-                    self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
-                    return
+            channel_actions.append((self.runtime_to_service, lambda: "cmd"))

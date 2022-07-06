@@ -14,7 +14,7 @@ from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs["shape"]
         self.u = Var(shape=shape, init=0)
         self.v = Var(shape=shape, init=0)

@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -25,7 +25,9 @@ class RingBuffer(AbstractProcess):
     data: np array
         data to generate spike from. Last dimension is assumed as time.
     """
-    def __init__(self, data: np.ndarray) -> None:
+    def __init__(self,
+                 *,
+                 data: np.ndarray) -> None:
         super().__init__(data=data)
         self.data = Var(shape=data.shape, init=data)
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time

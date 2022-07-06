@@ -77,6 +77,7 @@ pip install -U pip
 pip install "poetry>=1.1.13"
 git clone git@github.com:lava-nc/lava.git
 cd lava
+./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
 source .venv/bin/activate
@@ -300,6 +301,7 @@ class PyLifModel(PyLoihiProcessModel):
 ```
 
 In contrast this process model also implements the LIF process but by structurally allocating neural network resources on a virtual Loihi 1 neuro core.
+
 ```python
 from lava.proc.lif.process import LIF
 from lava.magma.core.decorator import implements, requires
@@ -308,42 +310,44 @@ from lava.magma.core.model.nc.model import NcLoihiProcessModel
 from lava.magma.core.model.nc.ports import NcInPort, NcOutPort
 from lava.magma.core.model.nc.type import LavaNcType, NcVar
 
-@implements(proc=LIF) #Note that the NcLoihiProcessModel class implies the useage of the Loihi SyncProtcol
+
+@implements(
+ proc=LIF)  # Note that the NcLoihiProcessModel class implies the useage of the Loihi SyncProtcol
 @requires(Loihi1NeuroCore)
 class NcLifModel(NcLoihiProcessModel):
-   # Declare port implementation
-   a_in: InPort =   LavaNcType(NcInPort, precision=16)
-   s_out: OutPort = LavaNcType(NcOutPort, precision=1)
-   # Declare variable implementation
-   u: NcVar =         LavaNcType(NcVar, precision=24)
-   v: NcVar =         LavaNcType(NcVar, precision=24)
-   b: NcVar =         LavaNcType(NcVar, precision=12)
-   du: NcVar =        LavaNcType(NcVar, precision=12)
-   dv: NcVar =        LavaNcType(NcVar, precision=12)
-   vth: NcVar =       LavaNcType(NcVar, precision=8)
+ # Declare port implementation
+ a_in: InPort = LavaNcType(NcInPort, precision=16)
+ s_out: OutPort = LavaNcType(NcOutPort, precision=1)
+ # Declare variable implementation
+ u: NcVar = LavaNcType(NcVar, precision=24)
+ v: NcVar = LavaNcType(NcVar, precision=24)
+ b: NcVar = LavaNcType(NcVar, precision=12)
+ du: NcVar = LavaNcType(NcVar, precision=12)
+ dv: NcVar = LavaNcType(NcVar, precision=12)
+ vth: NcVar = LavaNcType(NcVar, precision=8)
 
-   def allocate(self, net: mg.Net):
-	   """Allocates neural resources in 'virtual' neuro core."""
-	   num_neurons = self.in_args['shape'][0]
-	   # Allocate output axons
-	   out_ax = net.out_ax.alloc(size=num_neurons)
-	   net.connect(self.s_out, out_ax)
-	   # Allocate compartments
-	   cx_cfg = net.cx_cfg.alloc(size=1,
-                                     du=self.du,
-                                     dv=self.dv,
-                                     vth=self.vth)
-	   cx = net.cx.alloc(size=num_neurons,
-                             u=self.u,
-                             v=self.v,
-                             b_mant=self.b,
-                             cfg=cx_cfg)
-	   cx.connect(out_ax)
-	   # Allocate dendritic accumulators
-	   da = net.da.alloc(size=num_neurons)
-	   da.connect(cx)
-	   net.connect(self.a_in, da)
-     
+ def allocate(self, net: Net):
+  """Allocates neural resources in 'virtual' neuro core."""
+  num_neurons = self.in_args['shape'][0]
+  # Allocate output axons
+  out_ax = net.out_ax.alloc(size=num_neurons)
+  net.connect(self.s_out, out_ax)
+  # Allocate compartments
+  cx_cfg = net.cxCfg.alloc(size=1,
+                           du=self.du,
+                           dv=self.dv,
+                           vth=self.vth)
+  cx = net.cx.alloc(size=num_neurons,
+                    u=self.u,
+                    v=self.v,
+                    b_mant=self.b,
+                    cfg=cx_cfg)
+  cx.connect(out_ax)
+  # Allocate dendritic accumulators
+  da = net.da.alloc(size=num_neurons)
+  da.connect(cx)
+  net.connect(self.a_in, da)
+
 ```
 
 # Stay in touch

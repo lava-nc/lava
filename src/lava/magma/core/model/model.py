@@ -1,6 +1,7 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 from __future__ import annotations
 
 import typing as ty
@@ -15,6 +16,24 @@ from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
 class AbstractProcessModel(ABC):
     """Represents a model that implements the behavior of a Process.
+
+    ProcessModels enable seamless cross-platform execution of Processes. In
+    particular, they enable building applications or algorithms using Processes
+    agnostic of the ProcessModel chosen at compile time. There are two
+    broad categories of ProcessModels:
+    1. LeafProcessModels allow to implement the behavior of a Process
+    directly in different languages for a particular compute resource.
+    ProcessModels specify what Process they implement and what
+    SynchronizationProtocol they implement (if necessary for the operation of
+    the Process). In addition, they specify which compute resource they require
+    to function. All this information allows the compiler to map a Process
+    and its ProcessModel to the appropriate hardware platform.
+    2. SubProcessModels allow to implement and compose the behavior of a
+    Process in terms of other Processes. This enables the creation of
+    hierarchical Processes and reuse of more primitive ProcessModels to
+    realize more complex ProcessModels. SubProcessModels inherit all compute
+    resource requirements from the Processes they instantiate. See
+    documentation of AbstractProcessModel for more details.
 
     ProcessModels are usually not instantiated by the user directly but by
     the compiler. ProcessModels are expected to have the same variables and
@@ -59,17 +78,17 @@ class AbstractProcessModel(ABC):
     tags: ty.List[str] = []
 
     def __init__(self,
-                 proc_params: ty.Dict[str, ty.Any],
-                 loglevel: int = logging.WARNING) -> None:
+                 proc_params: ty.Type["ProcessParameters"],
+                 loglevel: ty.Optional[int] = logging.WARNING) -> None:
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
-        self.proc_params: ty.Dict[str, ty.Any] = proc_params
+        self.proc_params: ty.Type["ProcessParameters"] = proc_params
 
     def __repr__(self):
         pm_name = self.__class__.__qualname__
         p_name = self.implements_process.__qualname__
         dev_names = " ".join([d.__qualname__ for d in self.required_resources])
-        tags = ", ".join([t.__qualname__ for t in self.tags])
+        tags = ", ".join([t for t in self.tags])
         return (
             pm_name
             + " implements "
