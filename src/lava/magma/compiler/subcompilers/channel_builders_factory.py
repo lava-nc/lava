@@ -10,7 +10,7 @@ from lava.magma.compiler.builders.channel_builder import (
 )
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
 from lava.magma.compiler.channels.interfaces import ChannelType
-from lava.magma.compiler.utils import PortInitializer, LoihiConnectedPortType
+from lava.magma.compiler.utils import PortInitializer
 from lava.magma.compiler.var_model import LoihiAddress
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -18,11 +18,15 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 try:
     from lava.magma.core.model.c.model import AbstractCProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
+    from lava.magma.compiler.utils_loihi import LoihiConnectedPortType
 except ImportError:
     class AbstractCProcessModel:
         pass
 
     class AbstractNcProcessModel:
+        pass
+
+    class LoihiConnectedPortType:
         pass
 
 from lava.magma.core.process.ports.ports import AbstractPort, InPort
