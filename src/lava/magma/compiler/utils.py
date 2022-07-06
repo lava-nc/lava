@@ -1,13 +1,10 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
+# See: https://spdx.org/licenses/
+
 import functools as ft
 import typing as ty
 from dataclasses import dataclass
-from enum import IntEnum
-
-from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
-    NcVirtualAddress
-from lava.magma.compiler.var_model import LoihiVarModel
-from lava.magma.core.model.spike_type import SpikeType
 
 
 @dataclass
