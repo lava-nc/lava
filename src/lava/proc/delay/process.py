@@ -13,7 +13,8 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 class Delay(AbstractProcess):
     """Modified version of Dense connections to include synaptic delays.
-    Stores the input spikes in a buffer Sb of size (num_input_neurons, maximum_delay_length)
+    Stores the input spikes in a buffer Sb of size
+        (num_input_neurons, maximum_delay_length)
     The output for each timestep is calculated as:
         a_out[j] = sum( W[j, i] * Sb[i, D[j, i]] ), 
     where the sum is over the inputs i and j are the output indices.
@@ -44,8 +45,8 @@ class Delay(AbstractProcess):
     
     """
 
-    # ToDo: (KS) Implement the parameters weight_exp, num_weight_bits, and sign_mode
-    # from the Dense process
+    # ToDo: (KS) Implement the parameters weight_exp, num_weight_bits,
+    #  and sign_mode from the Dense process
     
     # ToDo: (KS) Implement a process model that is bit-accurate to Loihi
 

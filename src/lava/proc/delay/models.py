@@ -20,7 +20,8 @@ from lava.proc.delay.process import Delay
 @tag('floating_pt')
 class PyDelayModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with dense synaptic connections in
-    floating point precision. Modified from the Dense process to support synaptic delays.
+    floating point precision.
+    Modified from the Dense process to support synaptic delays.
     This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
@@ -42,7 +43,10 @@ class PyDelayModelFloat(PyLoihiProcessModel):
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
-        a_out = np.sum( np.take_along_axis(self.s_buff.T, self.delays, axis=0)*self.weights, axis=1)
+        a_out = np.sum(
+            np.take_along_axis(self.s_buff.T, self.delays, axis=0)*self.weights,
+            axis=1
+        )
         self.a_out.send(a_out)
         self.s_buff = np.roll(self.s_buff, 1, axis=1)
         if self.use_graded_spike.item():
