@@ -1,3 +1,7 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 # Modified from src/lava/proc/dense/process.py: PyDenseModelFloat
 # Modified by Kevin Sargent, Pennsylvania State University 
 
