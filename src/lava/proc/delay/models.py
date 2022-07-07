@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 # Modified from src/lava/proc/dense/process.py: PyDenseModelFloat
-# Modified by Kevin Sargent, Pennsylvania State University 
+# Modified by Kevin Sargent, Pennsylvania State University
 
 import numpy as np
 
@@ -14,6 +14,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.delay.process import Delay
+
 
 @implements(proc=Delay, protocol=LoihiProtocol)
 @requires(CPU)
@@ -44,12 +45,12 @@ class PyDelayModelFloat(PyLoihiProcessModel):
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         a_out = np.sum(
-            np.take_along_axis(self.s_buff.T, self.delays, axis=0)*self.weights,
+            np.take_along_axis(self.s_buff.T, self.delays, axis=0) * self.weights,
             axis=1
         )
         self.a_out.send(a_out)
         self.s_buff = np.roll(self.s_buff, 1, axis=1)
         if self.use_graded_spike.item():
-            self.s_buff[:,0] = self.s_in.recv()
+            self.s_buff[:, 0] = self.s_in.recv()
         else:
-            self.s_buff[:,0] = self.s_in.recv().astype(bool)
+            self.s_buff[:, 0] = self.s_in.recv().astype(bool)
