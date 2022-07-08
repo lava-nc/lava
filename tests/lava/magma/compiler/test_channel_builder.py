@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
@@ -7,7 +7,7 @@ from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 
-from lava.magma.compiler.builders.builder import ChannelBuilderMp
+from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.compiler.channels.pypychannel import (

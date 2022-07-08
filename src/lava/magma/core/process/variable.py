@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
@@ -42,7 +42,7 @@ class Var(AbstractProcessMember):
     def __init__(
             self,
             shape: ty.Tuple[int, ...],
-            init: ty.Union[bool, int, list, np.ndarray] = 0,
+            init: ty.Union[bool, float, list, tuple, np.ndarray] = 0,
             shareable: bool = True):
         """Initializes a new Lava variable.
 
@@ -59,6 +59,16 @@ class Var(AbstractProcessMember):
         self.id: int = VarServer().register(self)
         self.name: str = "Unnamed variable"
         self.aliased_var: ty.Optional[Var] = None
+        # VarModel generated during compilation
+        self._model: ty.Optional["AbstractVarModel"] = None
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, val: 'AbstractVarModel'):
+        self._model = val
 
     def alias(self, other_var: 'Var'):
         """Establishes an 'alias' relationship between this and 'other_var'.

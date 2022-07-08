@@ -1,9 +1,9 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from typing import Any, Dict, Tuple, Union
+import typing as ty
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
@@ -29,10 +29,11 @@ class RingBuffer(AbstractProcess):
     buffer: int
         size of data sink buffer
     """
-    def __init__(self, **kwargs: Union[int, Tuple[int, ...]]) -> None:
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (1,))
-        buffer = kwargs.get('buffer')
+    def __init__(self,
+                 *,
+                 shape: ty.Tuple[int, ...],
+                 buffer: int) -> None:
+        super().__init__(shape=shape, buffer=buffer)
         self.shape = shape
         self.a_in = InPort(shape=shape)
         buffer_shape = shape + (buffer,)
@@ -85,11 +86,12 @@ class Read(AbstractProcess):
     """
     def __init__(
         self,
+        *,
         buffer: int,
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(buffer=buffer, interval=interval, offset=offset)
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
         self.buffer = buffer
@@ -107,12 +109,14 @@ class Read(AbstractProcess):
 
 class AbstractPyRead(PyLoihiProcessModel):
     """Abstract Read Var process implementation."""
-    state: Union[PyRefPort, None] = None
+    # Setting 'state' to None because the actual type and initialization can
+    # only be done in child classes.
+    state: ty.Union[PyRefPort, None] = None
     data = None
     interval: np.ndarray = LavaPyType(np.ndarray, int)
     offset: np.ndarray = LavaPyType(np.ndarray, int)
 
-    def __init__(self, proc_params: Dict[str, Any]) -> None:
+    def __init__(self, proc_params: ty.Dict[str, ty.Any]) -> None:
         super().__init__(proc_params)
         self.counter = 0
 

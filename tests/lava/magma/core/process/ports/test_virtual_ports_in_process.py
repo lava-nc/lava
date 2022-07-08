@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -7,7 +7,6 @@ import unittest
 import numpy as np
 import functools as ft
 
-from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.decorator import requires, tag, implements
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -39,6 +38,7 @@ np.random.seed(7739)
 
 class MockVirtualPort(AbstractVirtualPort, AbstractPort):
     """A mock-up of a virtual port that permutes the axes of the input."""
+
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]):
@@ -521,7 +521,8 @@ class TestReshapePort(unittest.TestCase):
         where the RefPort reads from the VarPort."""
 
         source = RefPortReadProcess(data=np.zeros(self.shape))
-        sink = VarPortProcess(data=self.input_data.reshape(self.shape_reshaped))
+        sink = VarPortProcess(
+            data=self.input_data.reshape(self.shape_reshaped))
 
         source.ref_port.reshape(self.shape_reshaped).connect(sink.var_port)
 
@@ -604,7 +605,8 @@ class TestFlattenPort(unittest.TestCase):
         where the RefPort reads from the VarPort."""
 
         source = RefPortReadProcess(data=np.zeros(self.shape))
-        sink = VarPortProcess(data=self.input_data.reshape(self.shape_reshaped))
+        sink = VarPortProcess(
+            data=self.input_data.reshape(self.shape_reshaped))
 
         source.ref_port.flatten().connect(sink.var_port)
 
@@ -627,7 +629,7 @@ class TestFlattenPort(unittest.TestCase):
 # A minimal Process with an OutPort
 class OutPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
+        super().__init__()
         self.data = Var(shape=data.shape, init=data)
         self.out_port = OutPort(shape=data.shape)
 
@@ -648,7 +650,7 @@ class PyOutPortProcessModelFloat(PyLoihiProcessModel):
 # A minimal Process with an InPort
 class InPortProcess(AbstractProcess):
     def __init__(self, shape: ty.Tuple[int, ...]) -> None:
-        super().__init__(shape=shape)
+        super().__init__()
         self.data = Var(shape=shape, init=np.zeros(shape))
         self.in_port = InPort(shape=shape)
 
@@ -663,13 +665,14 @@ class PyInPortProcessModelFloat(PyLoihiProcessModel):
 
     def run_spk(self):
         self.data[:] = self.in_port.recv()
-        self.log.info("Received input data for InPortProcess: ", str(self.data))
+        self.log.info("Received input data for InPortProcess: ",
+                      str(self.data))
 
 
 # A minimal hierarchical Process with an OutPort
 class HOutPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
+        super().__init__()
         self.out_port = OutPort(shape=data.shape)
         self.proc_params['data'] = data
 
@@ -685,7 +688,7 @@ class SubHOutPortProcModel(AbstractSubProcessModel):
 # A minimal hierarchical Process with an InPort and a Var
 class HInPortProcess(AbstractProcess):
     def __init__(self, shape: ty.Tuple[int, ...]) -> None:
-        super().__init__(shape=shape)
+        super().__init__()
         self.data = Var(shape=shape, init=np.zeros(shape))
         self.in_port = InPort(shape=shape)
         self.proc_params['shape'] = shape
@@ -742,7 +745,7 @@ class HVPOutPortProcess(AbstractProcess):
                  h_shape: ty.Tuple[int, ...],
                  data: np.ndarray,
                  axes: ty.Tuple[int, ...]) -> None:
-        super().__init__(h_shape=h_shape, data=data)
+        super().__init__()
         self.out_port = OutPort(shape=h_shape)
         self.proc_params['data'] = data
         self.proc_params['h_shape'] = h_shape
@@ -766,7 +769,7 @@ class SubHVPOutPortProcModel(AbstractSubProcessModel):
 # A minimal Process with a RefPort that writes
 class RefPortWriteProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
+        super().__init__()
         self.data = Var(shape=data.shape, init=data)
         self.ref_port = RefPort(shape=data.shape)
 
@@ -791,7 +794,7 @@ class PyRefPortWriteProcessModelFloat(PyLoihiProcessModel):
 # A minimal Process with a RefPort that reads
 class RefPortReadProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
+        super().__init__()
         self.data = Var(shape=data.shape, init=data)
         self.ref_port = RefPort(shape=data.shape)
 
@@ -816,7 +819,7 @@ class PyRefPortReadProcessModelFloat(PyLoihiProcessModel):
 # A minimal Process with a Var and a VarPort
 class VarPortProcess(AbstractProcess):
     def __init__(self, data: np.ndarray) -> None:
-        super().__init__(data=data)
+        super().__init__()
         self.data = Var(shape=data.shape, init=data)
         self.var_port = VarPort(self.data)
 
@@ -838,7 +841,7 @@ class HVPRefPortWriteProcess(AbstractProcess):
                  h_shape: ty.Tuple[int, ...],
                  data: np.ndarray,
                  axes: ty.Tuple[int, ...]) -> None:
-        super().__init__(h_shape=h_shape, data=data)
+        super().__init__()
         self.ref_port = RefPort(shape=h_shape)
         self.proc_params['data'] = data
         self.proc_params['h_shape'] = h_shape
@@ -849,7 +852,8 @@ class HVPRefPortWriteProcess(AbstractProcess):
 @implements(proc=HVPRefPortWriteProcess)
 class SubHVPRefPortWriteProcModel(AbstractSubProcessModel):
     def __init__(self, proc):
-        self.ref_write_proc = RefPortWriteProcess(data=proc.proc_params['data'])
+        self.ref_write_proc = RefPortWriteProcess(
+            data=proc.proc_params['data'])
 
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
@@ -867,7 +871,7 @@ class HVPRefPortReadProcess(AbstractProcess):
                  h_shape: ty.Tuple[int, ...],
                  s_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]) -> None:
-        super().__init__(h_shape=h_shape, s_shape=s_shape)
+        super().__init__()
         self.ref_port = RefPort(shape=h_shape)
         self.s_data = Var(s_shape)
         self.proc_params['s_shape'] = s_shape
@@ -900,7 +904,7 @@ class HVPVarPortProcess(AbstractProcess):
                  h_shape: ty.Tuple[int, ...],
                  s_data: np.ndarray,
                  axes: ty.Tuple[int, ...]) -> None:
-        super().__init__(h_shape=h_shape, s_data=s_data)
+        super().__init__()
         self.h_data = Var(h_shape)
         self.s_data = Var(s_data.shape)
         self.var_port = VarPort(self.h_data)

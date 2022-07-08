@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -61,9 +61,14 @@ class AbstractPort(AbstractProcessMember):
     effectively means to associate them with each other as inputs or outputs.
     These connections, imply an a-cyclic graph structure that allows the
     compiler to infer connections between processes.
+
+    Parameters
+    ----------
+    shape: tuple[int, ...]
+        Determines the number of connections created by this port
     """
 
-    def __init__(self, shape: ty.Tuple):
+    def __init__(self, shape: ty.Tuple[int, ...]):
         super().__init__(shape)
         self.in_connections: ty.List[AbstractPort] = []
         self.out_connections: ty.List[AbstractPort] = []
@@ -150,12 +155,12 @@ class AbstractPort(AbstractProcessMember):
         for p in ports:
             p._add_outputs([self])
 
-    def get_src_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
+    def get_src_ports(self, _include_self=False) -> ty.List["AbstractSrcPort"]:
         """Returns the list of all source ports that connect either directly
         or indirectly (through other ports) to this port."""
         if len(self.in_connections) == 0:
             if _include_self:
-                return [self]
+                return [ty.cast(AbstractSrcPort, self)]
             else:
                 return []
         else:
@@ -165,21 +170,25 @@ class AbstractPort(AbstractProcessMember):
             return ports
 
     def get_incoming_transform_funcs(self) -> ty.Dict[str, ty.List[ft.partial]]:
-        """Returns the list of all incoming transformation functions for the
-        list of all incoming connections.
+        """Returns the incoming transformation functions for all incoming
+        connections.
 
         Returns
         -------
-        transform_funcs : list(list(functools.partial))
-            the list of all incoming transformation functions, sorted from
-            source to destination port, for all incoming connections
+        dict(list(functools.partial))
+            A dictionary that maps from the ID of an incoming source port to
+            the list of transformation functions implementing the virtual
+            ports on the way to the current port. The transformation
+            functions in the list are sorted from source to destination port.
         """
-        transform_funcs = {}
-        for p in self.in_connections:
-            src_port_id, vps = p.get_incoming_virtual_ports()
-            transform_funcs[src_port_id] = \
-                [vp.get_transform_func_fwd() for vp in vps]
-        return transform_funcs
+        transform_func_map = {}
+        for port in self.in_connections:
+            src_port_id, vps = port.get_incoming_virtual_ports()
+            transform_func_list = [vp.get_transform_func_fwd() for vp in vps]
+            if transform_func_list:
+                transform_func_map[src_port_id] = transform_func_list
+
+        return transform_func_map
 
     def get_incoming_virtual_ports(self) \
             -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
@@ -188,9 +197,10 @@ class AbstractPort(AbstractProcessMember):
 
         Returns
         -------
-        virtual_ports : list(AbstractVirtualPorts)
-            the list of all incoming virtual ports, sorted from source to
-            destination port
+        tuple(str, list(AbstractVirtualPorts))
+            The string of the tuple is the ID of the source port, the list
+            is the list of all incoming virtual ports, sorted from source to
+            destination port.
         """
         if len(self.in_connections) == 0:
             src_port_id = create_port_id(self.process.id, self.name)
@@ -215,19 +225,21 @@ class AbstractPort(AbstractProcessMember):
             return src_port_id, virtual_ports
 
     def get_outgoing_transform_funcs(self) -> ty.Dict[str, ty.List[ft.partial]]:
-        """Returns the list of all outgoing transformation functions for the
-        list of all outgoing connections.
+        """Returns the outgoing transformation functions for all outgoing
+        connections.
 
         Returns
         -------
-        transform_funcs : list(list(functools.partial))
-            the list of all outgoing transformation functions, sorted from
-            source to destination port, for all outgoing connections
+        dict(list(functools.partial))
+            A dictionary that maps from the ID of a destination port to
+            the list of transformation functions implementing the virtual
+            ports on the way from the current port. The transformation
+            functions in the list are sorted from source to destination port.
         """
         transform_funcs = {}
         for p in self.out_connections:
-            src_port_id, vps = p.get_outgoing_virtual_ports()
-            transform_funcs[src_port_id] = \
+            dst_port_id, vps = p.get_outgoing_virtual_ports()
+            transform_funcs[dst_port_id] = \
                 [vp.get_transform_func_bwd() for vp in vps]
         return transform_funcs
 
@@ -238,9 +250,10 @@ class AbstractPort(AbstractProcessMember):
 
         Returns
         -------
-        virtual_ports : list(AbstractVirtualPorts)
-            the list of all outgoing virtual ports, sorted from source to
-            destination port
+        tuple(str, list(AbstractVirtualPorts))
+            The string of the tuple is the ID of the destination port, the list
+            is the list of all outgoing virtual ports, sorted from source to
+            destination port.
         """
         if len(self.out_connections) == 0:
             dst_port_id = create_port_id(self.process.id, self.name)
@@ -264,12 +277,12 @@ class AbstractPort(AbstractProcessMember):
 
             return dst_port_id, virtual_ports
 
-    def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
+    def get_dst_ports(self, _include_self=False) -> ty.List["AbstractDstPort"]:
         """Returns the list of all destination ports that this port connects to
         either directly or indirectly (through other ports)."""
         if len(self.out_connections) == 0:
             if _include_self:
-                return [self]
+                return [ty.cast(AbstractDstPort, self)]
             else:
                 return []
         else:
@@ -285,8 +298,8 @@ class AbstractPort(AbstractProcessMember):
 
         Parameters
         ----------
-        :param new_shape: New shape of port. Number of total elements must
-        not change.
+        new_shape: tuple[int, ...]
+            New shape of port. Number of total elements must not change.
         """
         if self.size != math.prod(new_shape):
             raise pe.ReshapeError(self.shape, new_shape)
@@ -316,8 +329,10 @@ class AbstractPort(AbstractProcessMember):
 
         Parameters
         ----------
-        :param ports: Port(s) that will be concatenated after this port.
-        :param axis: Axis/dimension along which ports are concatenated.
+        ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]
+            Port(s) that will be concatenated after this port.
+        axis: int
+            Axis/dimension along which ports are concatenated.
         """
         ports = [self] + to_list(ports)
         if isinstance(self, AbstractIOPort):
@@ -339,8 +354,9 @@ class AbstractPort(AbstractProcessMember):
 
         Parameters
         ----------
-        :param axes: Order of permutation. Number of total elements and number
-        of dimensions must not change.
+        axes: ty.Optional[ty.Union[ty.Tuple[int, ...], ty.List]]
+            Order of permutation. Number of total elements and number of
+            dimensions must not change.
         """
         if axes is None:
             axes = tuple(reversed(range(len(self.shape))))
@@ -421,7 +437,8 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
 
         Parameters
         ----------
-        :param ports: The AbstractIOPort(s) to connect to.
+        ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            The AbstractIOPort(s) to connect to.
         """
         self._connect_forward(to_list(ports), AbstractIOPort)
 
@@ -431,7 +448,8 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
 
         Parameters
         ----------
-        :param ports: The OutPorts(s) that connect to this OutPort.
+        ports: ty.Union["OutPort", ty.List["OutPort"]]
+            The OutPorts(s) that connect to this OutPort.
         """
         self._connect_backward(to_list(ports), OutPort)
 
@@ -444,11 +462,18 @@ class InPort(AbstractIOPort, AbstractDstPort):
     or from other InPorts of processes that contain this InPort's parent
     process as a sub process. Similarly, InPorts can connect to other InPorts
     of nested sub processes.
+
+    Parameters
+    ----------
+    shape: tuple[int, ...]
+        Determines the number of connections created by this port.
+    reduce_op: ty.Optional[ty.Type[AbstractReduceOp]]
+        Operation to be applied on incoming data, default: None.
     """
 
     def __init__(
             self,
-            shape: ty.Tuple,
+            shape: ty.Tuple[int, ...],
             reduce_op: ty.Optional[ty.Type[AbstractReduceOp]] = None,
     ):
         super().__init__(shape)
@@ -460,7 +485,8 @@ class InPort(AbstractIOPort, AbstractDstPort):
 
         Parameters
         ----------
-        :param ports: The InPort(s) to connect to.
+        ports: ty.Union["InPort", ty.List["InPort"]]
+            The InPort(s) to connect to.
         """
         self._connect_forward(to_list(ports), InPort)
 
@@ -472,7 +498,8 @@ class InPort(AbstractIOPort, AbstractDstPort):
 
         Parameters
         ----------
-        :param ports: The AbstractIOPort(s) that connect to this InPort.
+        ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+            The AbstractIOPort(s) that connect to this InPort.
         """
         self._connect_backward(to_list(ports), AbstractIOPort)
 
@@ -506,7 +533,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
 
         Parameters:
         -----------
-        :param ports: The AbstractRVPort(s) to connect to.
+        ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            The AbstractRVPort(s) to connect to.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -536,7 +564,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
 
         Parameters
         ----------
-        :param ports: The RefPort(s) that connect to this RefPort.
+        ports: ty.Union["RefPort", ty.List["RefPort"]]
+            The RefPort(s) that connect to this RefPort.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -565,7 +594,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
 
         Parameters:
         -----------
-        :param variables: Var or list of Vars to connect to.
+        variables: ty.Union[Var, ty.List[Var]]
+            Var or list of Vars to connect to.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -665,7 +695,8 @@ class VarPort(AbstractRVPort, AbstractDstPort):
 
         Parameters
         ----------
-        :param ports: The VarPort(s) to connect to.
+        ports: ty.Union["VarPort", ty.List["VarPort"]]
+            The VarPort(s) to connect to.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -696,7 +727,8 @@ class VarPort(AbstractRVPort, AbstractDstPort):
 
         Parameters
         ----------
-        :param ports: The AbstractRVPort(s) that connect to this VarPort.
+        ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+            The AbstractRVPort(s) that connect to this VarPort.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -746,8 +778,9 @@ class AbstractVirtualPort(AbstractPort):
 
         Parameters
         ----------
-        :param ports: The port(s) to connect to. Connections from an IOPort
-        to a RVPort and vice versa are not allowed.
+        ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]
+            The port(s) to connect to. Connections from an IOPort to a RVPort
+            and vice versa are not allowed.
         """
         # Determine allows port_type
         if isinstance(self._parent_port, OutPort):
