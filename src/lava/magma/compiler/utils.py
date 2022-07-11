@@ -110,6 +110,7 @@ class LoihiIOPortInitializer(LoihiPortInitializer):
     connected_port_type: ty.Optional[LoihiConnectedPortType] = None
     connected_port_encoding_type: ty.Optional[LoihiConnectedPortEncodingType] \
         = None
+    spike_type: ty.Optional[SpikeType] = None
 
 
 @dataclass
@@ -127,7 +128,7 @@ class LoihiCInPortInitializer(LoihiIOPortInitializer):
 @dataclass
 class LoihiOutPortInitializer(LoihiIOPortInitializer):
     """Port Initializer for a OutPort for C/NC Models"""
-    spike_type: ty.Optional[SpikeType] = None
+    pass
 
 
 @dataclass

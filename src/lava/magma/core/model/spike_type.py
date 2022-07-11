@@ -9,8 +9,8 @@ class SpikeType(IntEnum):
     """Types of Spike Encoding"""
     BINARY_SPIKE = 1
     LONG_SPIKE = 2
-    POP16_SPIKE = 3
-    POP32_SPIKE = 4
-    GRADED8_SPIKE = 5
-    GRADED16_SPIKE = 6
-    GRADED24_SPIKE = 7
+    GRADED8_SPIKE = 3
+    GRADED16_SPIKE = 4
+    GRADED24_SPIKE = 5
+    POP16_SPIKE = 6
+    POP32_SPIKE = 7
