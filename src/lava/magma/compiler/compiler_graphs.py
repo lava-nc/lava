@@ -8,7 +8,6 @@ import inspect
 import itertools
 import os
 import pkgutil
-import platform
 import re
 import sys
 import types
@@ -16,7 +15,7 @@ import typing as ty
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum, auto
-from warnings import warn
+import warnings
 
 import lava.magma.compiler.exceptions as ex
 import networkx as ntx
@@ -816,9 +815,32 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
             file = inspect.getfile(proc.__class__)
 
         # Find all ProcModel classes that implement 'proc' in the same
-        # directory as well as in analogous directories of other Lava
-        # repositories listed in the PYTHONPATH.
-        dir_names = ProcGroupDiGraphs._get_proc_model_dir_names(file)
+        # directory and namespace module.
+
+        dir_names = [os.path.dirname(file)]
+
+        if not proc_module.__name__ == "__main__":
+            # Get the parent module.
+            module_spec = importlib.util.find_spec(proc_module.__name__)
+            parent_module = importlib.import_module(module_spec.parent)
+
+            # Get all the modules inside the parent (namespace) module. This
+            # is required here, because the namespace module can span multiple
+            # repositories.
+            namespace_module_infos = list(
+                pkgutil.iter_modules(
+                    parent_module.__path__,
+                    parent_module.__name__ + "."
+                )
+            )
+
+            # Extract the directory name of each module.
+            for _, name, _ in namespace_module_infos:
+                module = importlib.import_module(name)
+                module_dir_name = os.path.dirname(inspect.getfile(module))
+                dir_names.append(module_dir_name)
+
+        # Go through all directories and extract all the ProcModels.
         for dir_name in dir_names:
             for _, name, _ in pkgutil.iter_modules([dir_name]):
                 import_path = os.path.join(dir_name, name)
@@ -844,40 +866,15 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                                                  proc_model.__name__)
                                 proc_models.append(class_)
                     except Exception:
-                        warn(f"Cannot import module '{module}' when searching "
-                             f"ProcessModels for Process "
-                             f"'{proc.__class__.__name__}'.")
+                        warnings.warn(
+                            f"Cannot import module '{module}' when searching "
+                            f"ProcessModels for Process "
+                            f"'{proc.__class__.__name__}'."
+                        )
 
         if not proc_models:
             raise ex.NoProcessModelFound(proc)
         return proc_models
-
-    @staticmethod
-    def _get_proc_model_dir_names(file: str) -> ty.List[str]:
-        """Based on the file name of the module, in which a Process is defined,
-        creates a list of directory names in which to search for
-        ProcessModels."""
-
-        initial_dir_name = os.path.dirname(file)
-        # os_ver = platform.system()
-
-        # dir_names: ty.List[str] = []
-
-        return [initial_dir_name]
-        # for python_path in sys.path:
-        #     if os_ver in ["Linux", "Darwin"]:
-        #         new_dir_name = re.sub(r'.+(src/lava/proc.*$)',
-        #                               python_path + r'/\g<1>',
-        #                               initial_dir_name)
-        #         dir_names.append(new_dir_name)
-        #     elif os_ver == "Windows":
-        #         esc_python_path = re.escape(python_path)
-        #         new_dir_name = re.sub(r'.+(src\\lava\\proc.*$)',
-        #                               esc_python_path + r'\\\g<1>',
-        #                               initial_dir_name)
-        #         dir_names.append(new_dir_name)
-
-        # return dir_names
 
     @staticmethod
     def _select_proc_models(
