@@ -342,6 +342,141 @@ class Monitors(unittest.TestCase):
         self.assertEqual(next(iter(exe.py_builders)).proc_params,
                          monitor.proc_params)
 
+    # New API unittests
+    def test_single_recorder_with_single_targer(self):
+        """Check if a single Recorder can monitor the spike output of a
+        neuron"""
+        shape = (1,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     bias=1)
+
+        recorder = Recorder()
+        recorder.probe(neuron.s_out)
+
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=Loihi1SimCfg())
+
+        spike_data = recorder.get_data(neuron.s_out)
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 1, 0, 0, 1]]).T))
+
+    def test_single_recorder_with_multiple_targets_from_single_proc(self):
+        """Check if a single Recorder can monitor multiples targets,
+        here the spike output and voltage of a neuron"""
+        shape = (1,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     bias=1)
+
+        recorder = Recorder()
+        recorder.probe([neuron.s_out, neuron.v])
+
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=Loihi1SimCfg())
+
+        spike_data = recorder.get_data(neuron.s_out)
+        voltage_data = recorder.get_data(neuron.v)
+        self.assertTrue(np.all(spike_data == np.array([[0, 0, 1, 0, 0, 1]]).T))
+        self.assertTrue(
+            np.all(voltage_data == np.array([[1, 2, 0, 1, 2, 0]]).T))
+
+    def test_single_recorder_with_targets_from_multiple_procs(self):
+        """Check if a single Recorder can monitor multiples targets,
+        here the spike output and voltage of a neuron"""
+        shape = (1,)
+        num_steps = 6
+        neuron1 = LIF(shape=shape,
+                      vth=3,
+                      bias=1)
+
+        neuron2 = LIF(shape=shape,
+                      vth=3,
+                      bias=2)
+
+        recorder = Recorder()
+        recorder.probe([neuron1.v, neuron2.v])
+
+        neuron1.run(condition=RunSteps(num_steps=num_steps),
+                    run_cfg=Loihi1SimCfg())
+
+        voltage_data1 = recorder.get_data(neuron1.v)
+        voltage_data2 = recorder.get_data(neuron2.v)
+
+        self.assertTrue(
+            np.all(voltage_data1 == np.array([[1, 2, 0, 1, 2, 0]]).T))
+        self.assertTrue(
+            np.all(voltage_data2 == np.array([[2, 0, 2, 0, 2, 0]]).T))
+
+    def test_single_recorder_for_interval(self):
+        """Check if a single Recorder can monitor a target (voltage of a LIF
+        neuron) with some interval and zero offset in Loihi sync domain.
+        Note: Interval default is 1, offset default is 0"""
+        shape = (1,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     bias=1)
+
+        recorder = Recorder()
+        recorder.probe(neuron.v, interval=2, offset=0)
+
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=Loihi1SimCfg())
+
+        voltage_data = recorder.get_data(neuron.v)
+        self.assertTrue(
+            np.all(voltage_data == np.array([[1, 0, 2]]).T))
+
+    def test_single_recorder_with_interval_and_offset(self):
+        """Check if a single Recorder can monitor a target (voltage of a LIF
+        neuron) with some interval and nonzero offset in Loihi sync domain,"""
+        shape = (1,)
+        num_steps = 6
+        neuron = LIF(shape=shape,
+                     vth=3,
+                     bias=1)
+
+        recorder = Recorder()
+        recorder.probe(neuron.v, interval=2, offset=1)
+
+        neuron.run(condition=RunSteps(num_steps=num_steps),
+                   run_cfg=Loihi1SimCfg())
+
+        voltage_data = recorder.get_data(neuron.v)
+        self.assertTrue(
+            np.all(voltage_data == np.array([[2, 1, 0]]).T))
+
+    def test_recorder_with_targets_from_multiple_procs_with_interval(self):
+        """Check if a single Recorder can monitor targets from multiple procs (
+        voltages of two LIF neurons) with different interval and offset in
+        Loihi sync domain,"""
+        shape = (1,)
+        num_steps = 6
+        neuron1 = LIF(shape=shape,
+                      vth=3,
+                      bias=1)
+
+        neuron2 = LIF(shape=shape,
+                      vth=3,
+                      bias=2)
+
+        recorder = Recorder()
+        recorder.probe(src=neuron1.v, interval=2, offset=1)
+        recorder.probe(src=neuron2.v, interval=1, offset=3)
+
+        neuron1.run(condition=RunSteps(num_steps=num_steps),
+                    run_cfg=Loihi1SimCfg())
+
+        voltage_data1 = recorder.get_data(neuron1.v)
+        voltage_data2 = recorder.get_data(neuron2.v)
+
+        self.assertTrue(
+                np.all(voltage_data1 == np.array([[2, 1, 0]]).T))
+        self.assertTrue(
+                np.all(voltage_data2 == np.array([[0, 2, 0]]).T))
+
 
 if __name__ == '__main__':
     unittest.main()
