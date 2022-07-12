@@ -859,24 +859,25 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         ProcessModels."""
 
         initial_dir_name = os.path.dirname(file)
-        os_ver = platform.system()
+        # os_ver = platform.system()
 
-        dir_names: ty.List[str] = []
+        # dir_names: ty.List[str] = []
 
-        for python_path in sys.path:
-            if os_ver in ["Linux", "Darwin"]:
-                new_dir_name = re.sub(r'.+(src/lava/proc.*$)',
-                                      python_path + r'/\g<1>',
-                                      initial_dir_name)
-                dir_names.append(new_dir_name)
-            elif os_ver == "Windows":
-                esc_python_path = re.escape(python_path)
-                new_dir_name = re.sub(r'.+(src\\lava\\proc.*$)',
-                                      esc_python_path + r'\\\g<1>',
-                                      initial_dir_name)
-                dir_names.append(new_dir_name)
+        return [initial_dir_name]
+        # for python_path in sys.path:
+        #     if os_ver in ["Linux", "Darwin"]:
+        #         new_dir_name = re.sub(r'.+(src/lava/proc.*$)',
+        #                               python_path + r'/\g<1>',
+        #                               initial_dir_name)
+        #         dir_names.append(new_dir_name)
+        #     elif os_ver == "Windows":
+        #         esc_python_path = re.escape(python_path)
+        #         new_dir_name = re.sub(r'.+(src\\lava\\proc.*$)',
+        #                               esc_python_path + r'\\\g<1>',
+        #                               initial_dir_name)
+        #         dir_names.append(new_dir_name)
 
-        return dir_names
+        # return dir_names
 
     @staticmethod
     def _select_proc_models(
