@@ -26,6 +26,25 @@ def is_disjoint(a: ty.List, b: ty.List):
     return set(a).isdisjoint(set(b))
 
 
+def create_port_id(proc_id: int, port_name: str) -> str:
+    """Generates a string-based ID for a port that makes it identifiable
+    within a network of Processes.
+
+    Parameters
+    ----------
+    proc_id : int
+        ID of the Process that the Port is associated with
+    port_name : str
+        name of the Port
+
+    Returns
+    -------
+    port_id : str
+        ID of a port
+    """
+    return str(proc_id) + "_" + port_name
+
+
 class AbstractPort(AbstractProcessMember):
     """Abstract base class for any type of port of a Lava Process.
 
@@ -145,7 +164,25 @@ class AbstractPort(AbstractProcessMember):
                 ports += p.get_src_ports(True)
             return ports
 
-    def get_incoming_virtual_ports(self) -> ty.List["AbstractVirtualPort"]:
+    def get_incoming_transform_funcs(self) -> ty.Dict[str, ty.List[ft.partial]]:
+        """Returns the list of all incoming transformation functions for the
+        list of all incoming connections.
+
+        Returns
+        -------
+        transform_funcs : list(list(functools.partial))
+            the list of all incoming transformation functions, sorted from
+            source to destination port, for all incoming connections
+        """
+        transform_funcs = {}
+        for p in self.in_connections:
+            src_port_id, vps = p.get_incoming_virtual_ports()
+            transform_funcs[src_port_id] = \
+                [vp.get_transform_func_fwd() for vp in vps]
+        return transform_funcs
+
+    def get_incoming_virtual_ports(self) \
+            -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
         """Returns the list of all incoming virtual ports in order from
         source to the current port.
 
@@ -156,29 +193,46 @@ class AbstractPort(AbstractProcessMember):
             destination port
         """
         if len(self.in_connections) == 0:
-            return []
+            src_port_id = create_port_id(self.process.id, self.name)
+            return src_port_id, []
         else:
             virtual_ports = []
-            num_virtual_ports = 0
+            src_port_id = None
             for p in self.in_connections:
-                virtual_ports += p.get_incoming_virtual_ports()
-                if isinstance(p, AbstractVirtualPort):
-                    # TODO (MR): ConcatPorts are not yet supported by the
-                    #  compiler - until then, an exception is raised.
-                    if isinstance(p, ConcatPort):
-                        raise NotImplementedError("ConcatPorts are not yet "
-                                                  "supported.")
+                p_id, vps = p.get_incoming_virtual_ports()
+                virtual_ports += vps
+                if p_id:
+                    src_port_id = p_id
 
-                    virtual_ports.append(p)
-                    num_virtual_ports += 1
+            if isinstance(self, AbstractVirtualPort):
+                # TODO (MR): ConcatPorts are not yet supported by the
+                #  compiler - until then, an exception is raised.
+                if isinstance(self, ConcatPort):
+                    raise NotImplementedError("ConcatPorts are not yet "
+                                              "supported.")
+                virtual_ports.append(self)
 
-            if num_virtual_ports > 1:
-                raise NotImplementedError("Joining multiple virtual ports is "
-                                          "not yet supported.")
+            return src_port_id, virtual_ports
 
-            return virtual_ports
+    def get_outgoing_transform_funcs(self) -> ty.Dict[str, ty.List[ft.partial]]:
+        """Returns the list of all outgoing transformation functions for the
+        list of all outgoing connections.
 
-    def get_outgoing_virtual_ports(self) -> ty.List["AbstractVirtualPort"]:
+        Returns
+        -------
+        transform_funcs : list(list(functools.partial))
+            the list of all outgoing transformation functions, sorted from
+            source to destination port, for all outgoing connections
+        """
+        transform_funcs = {}
+        for p in self.out_connections:
+            src_port_id, vps = p.get_outgoing_virtual_ports()
+            transform_funcs[src_port_id] = \
+                [vp.get_transform_func_bwd() for vp in vps]
+        return transform_funcs
+
+    def get_outgoing_virtual_ports(self) \
+            -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
         """Returns the list of all outgoing virtual ports in order from
         the current port to the destination port.
 
@@ -189,27 +243,26 @@ class AbstractPort(AbstractProcessMember):
             destination port
         """
         if len(self.out_connections) == 0:
-            return []
+            dst_port_id = create_port_id(self.process.id, self.name)
+            return dst_port_id, []
         else:
             virtual_ports = []
-            num_virtual_ports = 0
+            dst_port_id = None
             for p in self.out_connections:
-                virtual_ports += p.get_outgoing_virtual_ports()
-                if isinstance(p, AbstractVirtualPort):
-                    # TODO (MR): ConcatPorts are not yet supported by the
-                    #  compiler - until then, an exception is raised.
-                    if isinstance(p, ConcatPort):
-                        raise NotImplementedError("ConcatPorts are not yet "
-                                                  "supported.")
+                p_id, vps = p.get_outgoing_virtual_ports()
+                virtual_ports += vps
+                if p_id:
+                    dst_port_id = p_id
 
-                    virtual_ports.append(p)
-                    num_virtual_ports += 1
+            if isinstance(self, AbstractVirtualPort):
+                # TODO (MR): ConcatPorts are not yet supported by the
+                #  compiler - until then, an exception is raised.
+                if isinstance(self, ConcatPort):
+                    raise NotImplementedError("ConcatPorts are not yet "
+                                              "supported.")
+                virtual_ports.append(self)
 
-            if num_virtual_ports > 1:
-                raise NotImplementedError("Forking a virtual port is "
-                                          "not yet supported.")
-
-            return virtual_ports
+            return dst_port_id, virtual_ports
 
     def get_dst_ports(self, _include_self=False) -> ty.List["AbstractPort"]:
         """Returns the list of all destination ports that this port connects to
