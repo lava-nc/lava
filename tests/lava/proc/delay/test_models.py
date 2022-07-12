@@ -18,7 +18,7 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.delay.process import Delay
 
-from lava.tests.lava.proc.dense.test_models import (
+from tests.lava.proc.dense.test_models import (
     VecSendandRecvProcess,
     VecRecvProcess
 )
