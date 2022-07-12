@@ -3,82 +3,70 @@
   A Software Framework for Neuromorphic Computing
 </b></p>
 
-##
->**Detailed Lava documentation:** http://lava-nc.org/
+# Overview
 
-# Overview: What is Lava?
+Lava is an open source SW framework to develop applications for
+neuromorphic hardware architectures. It provides developers with the abstractions
+and tools to develop distributed and massively parallel applications. These
+applications can be deployed to heterogeneous system architectures containing
+conventional processors as well as neuromorphic chips that exploit event-based
+message passing for communication. The Lava framework comprises high-level
+libraries for deep learning, constrained optimization, and others for productive
+algorithm development. It also includes tools to map those algorithms to
+different types of hardware architectures.
 
-Lava is an open-source software framework for developing neuro-inspired
-applications and mapping them to neuromorphic hardware. Lava provides developers
-with the tools and abstractions to develop applications that fully exploit the
-principles of neural computation. Constrained in this way, like the brain, Lava
-applications allow neuromorphic platforms to intelligently process, learn from,
-and respond to real-world data with great gains in energy efficiency and speed
-compared to conventional computer architectures.
 
-Lava is platform-agnostic so that applications can be prototyped on conventional
-CPUs/GPUs and deployed to heterogeneous system architectures spanning both
-conventional processors as well as a range of neuromorphic chips such as Intel's
-Loihi. To compile and execute processes for different backends, Lava builds on a
-low-level interface called _Magma_ with a powerful compiler and runtime library.
-Over time, the Lava developer community may enhance Magma to target additional
-neuromorphic platforms beyond its initial support for Intel's Loihi chips.
+<p align="center">
+<img src="https://user-images.githubusercontent.com/68661711/135412508-4a93e20a-8b64-4723-a69b-de8f4b5902f7.png" alt="Lava organization" width="500"/>
+</p>
 
-The Lava framework supports:
+Today Lava supports conventional CPUs and Intel's Loihi architecture, but
+its compiler and runtime are open to extension for other architectures.
 
-- Channel-based message passing between asynchronous processes (the
-  Communicating Sequential Processes paradigm)
-- Hyper-granular parallelism where computation emerges as the collective result
-  of inter-process interactions
-- Heterogeneous execution platforms with both conventional and neuromorphic
-  components
-- Measurement (and cross-platform modeling) of performance and energy
-  consumption
-- Offline backprop-based training of a wide range of neuron models and network
-  topologies
-- Online real-time learning using plasticity rules constrained to access only
-  locally available process information
-- Tools for generating complex spiking neural networks such as _dynamic neural
-  fields_ and networks that solve well-defined optimization problems
-- Integration with third-party frameworks
+To learn more about the Lava Software Framework, please refer to the
+detailed documentation at http://lava-nc.org/.
 
-Lava blends a simple Python Interface with accelerated performance using 
-underlying C/C++/CUDA/OpenCL code, which maximizes developer productivity. 
+The Lava framework is licensed with permissive open source
+BSD 3 licensing to highly encourage community contributions.
+Lower level components in Lava, that map algorithms to different
+hardware backends, are licensed with the LGPL-2.1 license to discourage
+commercial proprietary forks. Specific sensitive components
+supporting architectures like Intel Loihi may remain proprietary
+to Intel and will be shared as extensions to eligible users.
 
-For detailed documentation on how Lava is organized, see http://lava-nc.org.
+>### Lava extension for Intel's Loihi
+>The Lava extension for Loihi is available for members of the Intel
+Neuromorphic Research Community (INRC). The extension enables execution of
+Lava on Intel's Loihi hardware platform.
+>
+>Developers interested in using Lava with Loihi systems need to join the
+INRC. Loihi 1 and 2 research systems are currently not available
+commercially. Once a member of the INRC, developers will gain access to
+cloud-hosted Loihi systems or may be able to obtain physical Loihi systems on a
+loan basis.
+>
+>To join the INRC, visit [http://neuromorphic.intel.com](http://neuromorphic.intel.com)
+or email at [inrc_interest@intel.com](mailto:inrc_interest@intel.com).
+>
+> If you are already a member of the INRC, please read how to [get
+  started with the Lava extension for Loihi.](https://intel-ncl.atlassian.net/wiki/spaces/NAP/pages/1785856001/Get+started+with+the+Lava+extension+for+Loihi)
+> This page is **only** accessible to members of the INRC.
 
-# Layers of Lava
 
-## Magma
-Magma is the bottom-most layer of the Lava framework, which consists of a 
-cross-platform compiler and runtime that support execution on neuromorphic 
-and conventional von-Neumann hardware platforms.
+# Getting started
+The open-source Lava Software framework and its complementary algorithm
+libraries are hosted at [http://github.com/lava-nc](http://github.com/lava-nc) and
+the framework supports at minimimum CPU backends.
 
-## Lava Processes
-_Lava Processes_ are stateful objects with internal variables, input and output 
-ports for message-based communication via channels and multiple behavioral 
-models.
+Note that you should install the core Lava repository [lava](http://github.com/lava-nc/lava)
+before installing other Lava libraries such as [lava-optimization](http://github.com/lava-nc/lava-optimization)
+or [lava-dl](http://github.com/lava-nc/lava-dl).
 
-## Lava Process Libraries
-At a higher level, the process library contains a growing set of generic
-Lava processes that implement various kinds of neuron models, neural network
-connection topologies, IO processes, etc. These execute on either CPU, GPU or
-neuromorphic HW such as Intel's Loihi architecture.
+## Installing Lava from source
 
-Various algorithm and application libraries build on these these generic
-processes to create specialized processes and provide tools to train or
-configure processes for more advanced applications. A deep learning library,
-constrained optimization library, and dynamic neural field library are among the
-first to be released in Lava, with more libraries to come in future releases.
-
-![image](https://user-images.githubusercontent.com/68661711/135412508-4a93e20a-8b64-4723-a69b-de8f4b5902f7.png)
-
-# Getting Started
-
-## Cloning Lava and Running from Source
-
-We highly recommend cloning the repository and using poetry to setup lava.
-You will need to install poetry.
+If you are interested in developing in Lava and modifying Lava source code,
+we recommend cloning the repository and using `poetry` to setup Lava. You
+will need to install the `poetry` Python package.
 
 Open a **python 3** terminal and run based on the OS you are on:
 
@@ -101,9 +89,6 @@ pytest
 ## consider setting ulimit using `ulimit -n 4096`
 ## See FAQ for more info: https://github.com/lava-nc/lava/wiki/Frequently-Asked-Questions-(FAQ)#install
 ```
-
-Note that you should install the core Lava repository (lava) before installing
-other Lava libraries such as lava-optimization or lava-dl.
 
 ### [Windows]
 
@@ -160,21 +145,21 @@ Required test coverage of 85.0% reached. Total coverage: 88.81%
 
 ## [Alternative] Installing Lava via Conda
 
-If you use the conda package manager, you can simply install the lava package
+If you use the Conda package manager, you can simply install the Lava package
 via:
 
 ```bash
 conda install lava -c conda-forge
 ```
 
-## [Alternative] Installing Lava from Binaries
+## [Alternative] Installing Lava from binaries
 
-If you only need the lava package in your python environment, we will publish
-Lava releases via
+If you only need to install Lava as a user in your python environment, we will
+publish Lava releases via
 [GitHub Releases](https://github.com/lava-nc/lava/releases). Please download
 the package and install it.
 
-Open a python terminal and run:
+Open a Python terminal and run:
 
 ### [Windows/MacOS/Linux]
 
@@ -182,10 +167,10 @@ Open a python terminal and run:
 python -m venv .venv
 source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
 pip install -U pip
-pip install lava-nc-0.3.0.tar.gz
+pip install lava-nc-0.4.0.tar.gz
 ```
 
-## Linting, Testing, Documentation and Packaging
+## Linting, testing, documentation and packaging
 
 ```bash
 # Install poetry
@@ -212,41 +197,7 @@ bandit -r src/lava/.
 bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'
 ```
 ##
-> Refer to the tutorials directory for in-depth as well as end-to-end 
-> tutorials on how to write Lava Processes, connect them, and execute the code.
-
-# Running Lava on Intel Loihi
-
-> Lava code that enables execution on Intel Loihi is available only to the 
-> engaged INRC members.
-
-Developers interested in using Lava with Loihi systems, need to
-join the Intel Neuromorphic Research Community (INRC), as the Loihi 1 or 2 
-research systems are currently not available commercially. Once a member of the
-INRC, developers will gain access to cloud-hosted Loihi systems or are able
-to obtain physical Loihi systems on a loan basis. Intel will also provide 
-the additional proprietary components of the Magma library that need to be 
-installed into the same Lava namespace, which enable compiling Lava 
-Processes for Loihi systems.
-
-# Licensing and reuse
-
-Lava is open to modification and extension to third-party libraries like Nengo,
-ROS, YARP and others. Additional utilities also allow users to profile power and
-performance of workloads, visualize complex networks, or help with the float to
-fixed point conversions required for many low-precision devices such as
-neuromorphic HW.
-
-All of Lava's core APIs and higher-level components are released, by default,
-with permissive BSD 3 licenses in order to encourage the broadest possible
-community contribution. Lower-level Magma components needed for mapping
-processes to neuromorphic backends are generally released with more restrictive
-LGPL-2.1 licensing to discourage commercial proprietary forks of these
-technologies. The specific components of Magma needed to compile processes
-specifically to Intel Loihi chips remains proprietary to Intel and is not
-provided through this GitHub site (see below). Similar Magma-layer code for
-other future commercial neuromorphic platforms likely will also remain
-proprietary.
+> Refer to the tutorials directory for in-depth as well as end-to-end tutorials on how to write Lava Processes, connect them, and execute the code.
 
 # Stay in touch
 
