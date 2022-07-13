@@ -1,8 +1,8 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import typing
+import typing as ty
 from enum import IntEnum, unique
 
 from lava.magma.core.process.process import AbstractProcess
@@ -11,88 +11,90 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 @unique
-class ACTIVATION_MODE(IntEnum):
+class ActivationMode(IntEnum):
     """Enum for synapse sigma delta activation mode. Options are
-    {``Unit : 0``, ``ReLU : 1``}.
+    {``UNIT : 0``, ``RELU : 1``}.
     """
-    Unit = 0
-    ReLU = 1
+    UNIT = 0
+    RELU = 1
 
 
 class Sigma(AbstractProcess):
-    """Sigma integration unit process definition. A sigma process is simply
-    a cumulative accumulator over time.
 
-    Sigma dynamics:
-    sigma = a_in + sigma                      # sigma dendrite
-    a_out = sigma
-
-    Parameters
-    ----------
-    shape: Tuple
-        shape of the sigma process. Default is (1,).
-    """
     def __init__(
-        self,
-        **kwargs: typing.Union[int, typing.Tuple[int, ...]]
-    ) -> None:
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (1,))
+            self,
+            *,
+            shape: ty.Tuple[int, ...]) -> None:
+        """Sigma integration unit process definition. A sigma process is simply
+        a cumulative accumulator over time.
 
-        self.shape = shape
+        Sigma dynamics:
+        sigma = a_in + sigma                      # sigma dendrite
+        a_out = sigma
+        Parameters
+        ----------
+        shape: Tuple
+            shape of the sigma process. Default is (1,).
+        """
+        super().__init__(shape=shape)
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
 
         self.sigma = Var(shape=shape, init=0)
 
+    @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        return self.proc_params['shape']
+
 
 class Delta(AbstractProcess):
-    """Delta process definition. Spike mechanism based on accumulated error
-    is also supported.
+    def __init__(self,
+                 *,
+                 shape: ty.Tuple[int, ...],
+                 vth: ty.Union[int, float],
+                 cum_error: ty.Optional[bool] = False,
+                 spike_exp: ty.Optional[int] = 0,
+                 state_exp: ty.Optional[int] = 0) -> None:
+        """Delta process definition. Spike mechanism based on accumulated error
+        is also supported.
 
-    Delta dynamics:
-    delta   = act_new - act + residue           # delta encoding
-    s_out   = delta if abs(delta) > vth else 0  # spike mechanism
-    resiude = delta - s_out                     # residue accumulation
-    act     = act_new
+        Delta dynamics:
+        delta   = act_new - act + residue           # delta encoding
+        s_out   = delta if abs(delta) > vth else 0  # spike mechanism
+        residue = delta - s_out                     # residue accumulation
+        act     = act_new
 
-    Delta dynamics (with cumulative error):
-    delta   = act_new - act + residue           # delta encoding
-    error   = error + delta                     # error accumulation
-    s_out   = delta if abs(error) > vth else 0  # spike mechanism
-    error   = error * (1 - H(s_out))            # error reset
-    resiude = delta - s_out                     # residue accumulation
-    act = act
+        Delta dynamics (with cumulative error):
+        delta   = act_new - act + residue           # delta encoding
+        error   = error + delta                     # error accumulation
+        s_out   = delta if abs(error) > vth else 0  # spike mechanism
+        error   = error * (1 - H(s_out))            # error reset
+        residue = delta - s_out                     # residue accumulation
+        act = act
 
-    Parameters
-    ----------
-    shape: Tuple
-        shape of the sigma process. Default is (1,).
-    vth: int or float
-        threshold of the delta encoder.
-    cum_error: Bool
-        flag to enable/disable cumulative error accumulation. Default is False.
-    wgt_exp: int
-        weight scaling exponent. Note: this has effect only on fixed point
-        models. Default is 0.
-    state_exp: int
-        state variables scaling exponent. Note: this has effect only on fixed
-        point modles. Default is 0.
-    """
-    def __init__(
-        self,
-        **kwargs: typing.Union[int, typing.Tuple[int, ...]]
-    ) -> None:
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (1,))
-        cum_error = kwargs.get('cum_error', False)
-        wgt_exp = kwargs.pop('wgt_exp', 0)
-        # scaling factor for fixed precision scaling
-        state_exp = kwargs.pop('state_exp', 0)
-        vth = kwargs.get('vth') * (1 << (wgt_exp + state_exp))
+        Parameters
+        ----------
+        shape: Tuple
+            Shape of the sigma process.
+        vth: int or float
+            Threshold of the delta encoder.
+        cum_error: Bool
+            Flag to enable/disable cumulative error accumulation.
+            Default is False.
+        spike_exp: int
+            Scaling exponent with base 2 for the spike message.
+            Note: This should only be used for fixed point models.
+            Default is 0.
+        state_exp: int
+            Scaling exponent with base 2 for the state variables.
+            Note: This should only be used for fixed point models.
+            Default is 0.
+        """
+        super().__init__(shape=shape, vth=vth, cum_error=cum_error,
+                         spike_exp=spike_exp, state_exp=state_exp)
 
-        self.shape = shape
+        vth = vth * (1 << (spike_exp + state_exp))
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
@@ -102,69 +104,76 @@ class Delta(AbstractProcess):
         self.act = Var(shape=shape, init=0)
         self.residue = Var(shape=shape, init=0)
         self.error = Var(shape=shape, init=0)
-        self.wgt_exp = Var(shape=(1,), init=wgt_exp)
+        self.spike_exp = Var(shape=(1,), init=spike_exp)
         self.state_exp = Var(shape=(1,), init=state_exp)
         self.cum_error = Var(shape=(1,), init=cum_error)
 
+    @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        return self.proc_params['shape']
+
 
 class SigmaDelta(AbstractProcess):
-    """Sigma delta neuron process. At the moment only ReLu activation is
-    supported. Spike mechanism based on accumulated error is also supported.
-
-    Sigma Delta dynamics:
-    sigma   = a_in + sigma                      # sigma dendrite
-    act_new = act_fx(sigma + bias)              # activation
-    delta   = act_new - act + residue           # delta encoding
-    s_out   = delta if abs(delta) > vth else 0  # spike mechanism
-    resiude = delta - s_out                     # residue accumulation
-    act     = act_new
-
-    Sigma Delta dynamics (with cumulative error):
-    sigma   = a_in + sigma                      # sigma dendrite
-    act_new = act_fx(sigma + bias)              # activation
-    delta   = act_new - act + residue           # delta encoding
-    error   = error + delta                     # error accumulation
-    s_out   = delta if abs(error) > vth else 0  # spike mechanism
-    error   = error * (1 - H(s_out))            # error reset
-    resiude = delta - s_out                     # residue accumulation
-    act = act
-
-    Parameters
-    ----------
-    shape: Tuple
-        shape of the sigma process. Default is (1,).
-    vth: int or float
-        threshold of the delta encoder.
-    bias: int or float
-        bias to the neuron activation.
-    act_mode: enum
-        activation mode describing the non-linear activation function. Options
-        are described by ``ACTIVATION_MODE`` enum.
-    cum_error: Bool
-        flag to enable/disable cumulative error accumulation. Default is False.
-    wgt_exp: int
-        weight scaling exponent. Note: this has effect only on fixed point
-        models. Default is 0.
-    state_exp: int
-        state variables scaling exponent. Note: this has effect only on fixed
-        point modles. Default is 0.
-    """
     def __init__(
-        self,
-        **kwargs: typing.Union[int, typing.Tuple[int, ...]]
-    ) -> None:
-        super().__init__(**kwargs)
-        shape = kwargs.get('shape', (1,))
-        act_mode = kwargs.get('act_mode', ACTIVATION_MODE.ReLU)
-        cum_error = kwargs.get('cum_error', False)
-        wgt_exp = kwargs.pop('wgt_exp', 0)
-        # scaling factor for fixed precision scaling
-        state_exp = kwargs.pop('state_exp', 0)
-        vth = kwargs.get('vth') * (1 << (wgt_exp + state_exp))
-        bias = kwargs.pop('bias', 0) * (1 << (wgt_exp + state_exp))
-        self.proc_params['act_fn'] = act_mode
+            self,
+            *,
+            shape: ty.Tuple[int, ...],
+            vth: float,
+            bias: ty.Optional[float] = 0,
+            act_mode: ty.Optional[ActivationMode] = ActivationMode.RELU,
+            cum_error: ty.Optional[bool] = False,
+            spike_exp: ty.Optional[int] = 0,
+            state_exp: ty.Optional[int] = 0) -> None:
+        """Sigma delta neuron process. At the moment only ReLu activation is
+        supported. Spike mechanism based on accumulated error is also supported.
 
-        self.shape = shape
+        Sigma Delta dynamics:
+        sigma   = a_in + sigma                      # sigma dendrite
+        act_new = act_fx(sigma + bias)              # activation
+        delta   = act_new - act + residue           # delta encoding
+        s_out   = delta if abs(delta) > vth else 0  # spike mechanism
+        residue = delta - s_out                     # residue accumulation
+        act     = act_new
+
+        Sigma Delta dynamics (with cumulative error):
+        sigma   = a_in + sigma                      # sigma dendrite
+        act_new = act_fx(sigma + bias)              # activation
+        delta   = act_new - act + residue           # delta encoding
+        error   = error + delta                     # error accumulation
+        s_out   = delta if abs(error) > vth else 0  # spike mechanism
+        error   = error * (1 - H(s_out))            # error reset
+        residue = delta - s_out                     # residue accumulation
+        act = act
+
+        Parameters
+        ----------
+        shape: Tuple
+            shape of the sigma process. Default is (1,).
+        vth: int or float
+            threshold of the delta encoder.
+        bias: int or float
+            bias to the neuron activation.
+        act_mode: enum
+            activation mode describing the non-linear activation function.
+            Options are described by ``ActivationMode`` enum.
+        cum_error: Bool
+            flag to enable/disable cumulative error accumulation.
+            Default is False.
+        spike_exp: int
+            Scaling exponent with base 2 for the spike message.
+            Note: This should only be used for fixed point models.
+            Default is 0.
+        state_exp: int
+            Scaling exponent with base 2 for the state variables.
+            Note: This should only be used for fixed point models.
+            Default is 0.
+        """
+        super().__init__(shape=shape, vth=vth, bias=bias,
+                         act_mode=act_mode, cum_error=cum_error,
+                         spike_exp=spike_exp, state_exp=state_exp)
+        # scaling factor for fixed precision scaling
+        vth = vth * (1 << (spike_exp + state_exp))
+        bias = bias * (1 << (spike_exp + state_exp))
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
@@ -175,6 +184,10 @@ class SigmaDelta(AbstractProcess):
         self.residue = Var(shape=shape, init=0)
         self.error = Var(shape=shape, init=0)
         self.bias = Var(shape=shape, init=bias)
-        self.wgt_exp = Var(shape=(1,), init=wgt_exp)
+        self.spike_exp = Var(shape=(1,), init=spike_exp)
         self.state_exp = Var(shape=(1,), init=state_exp)
         self.cum_error = Var(shape=(1,), init=cum_error)
+
+    @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        return self.proc_params['shape']

@@ -14,7 +14,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 class SimpleProcess(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs["shape"]
         self.u = Var(shape=shape, init=0)
         self.v = Var(shape=shape, init=0)

@@ -1,14 +1,13 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
+from abc import ABC, abstractmethod
 from enum import IntEnum
 
 import numpy as np
-from abc import ABC, abstractmethod
 
 
-# ToDo: (AW) probe and peek methods are missing
 class AbstractCspPort(ABC):
     """Abstract base class for CSP channel."""
 
@@ -67,6 +66,13 @@ class Channel(ABC):
 
 class ChannelType(IntEnum):
     """Type of a channel given the two process models"""
+
     PyPy = 0
     CPy = 1
     PyC = 2
+    CNc = 3
+    NcC = 4
+    CC = 3
+    NcNc = 5
+    NcPy = 6
+    PyNc = 7

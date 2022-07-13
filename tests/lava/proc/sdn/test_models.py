@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import sys
@@ -8,7 +8,7 @@ from typing import Tuple
 
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
-from lava.proc.sdn.process import Sigma, SigmaDelta, ACTIVATION_MODE
+from lava.proc.sdn.process import Sigma, SigmaDelta, ActivationMode
 from lava.proc import io
 
 
@@ -83,14 +83,14 @@ class TestSigmaDeltaModels(unittest.TestCase):
         self,
         num_steps: int,
         vth: int,
-        act_mode: ACTIVATION_MODE,
-        wgt_exp: int,
+        act_mode: ActivationMode,
+        spike_exp: int,
         state_exp: int,
         cum_error: bool,
         tag: str = 'fixed_pt',
     ) -> Tuple[np.ndarray, np.ndarray]:
         input = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        input *= (1 << wgt_exp + state_exp)
+        input *= (1 << spike_exp + state_exp)
         input[:, 1:] -= input[:, :-1]
 
         source = io.source.RingBuffer(data=input.astype(int) * (1 << 6))
@@ -98,7 +98,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             shape=(1,),
             vth=vth,
             act_mode=act_mode,
-            wgt_exp=wgt_exp,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=cum_error
         )
@@ -124,14 +124,14 @@ class TestSigmaDeltaModels(unittest.TestCase):
         error must be smaller than threshold.
         """
         num_steps = 100
-        wgt_exp = 6
+        spike_exp = 6
         state_exp = 6
-        vth = 10 << (wgt_exp + state_exp)
+        vth = 10 << (spike_exp + state_exp)
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.Unit,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.UNIT,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
         )
@@ -140,21 +140,21 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))
 
     def test_reconstruction_float(self) -> None:
         """Tests floating point sigma delta reconstruction. The max absolute
         error must be smaller than threshold.
         """
         num_steps = 100
-        wgt_exp = 0
+        spike_exp = 0
         state_exp = 0
         vth = 10
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.Unit,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.UNIT,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
             tag='floating_pt'
@@ -164,21 +164,21 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))
 
     def test_reconstruction_cum_error_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction with cumulative error.
         The max absolute error must be smaller than threshold.
         """
         num_steps = 100
-        wgt_exp = 6
+        spike_exp = 6
         state_exp = 6
-        vth = 10 << (wgt_exp + state_exp)
+        vth = 10 << (spike_exp + state_exp)
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.Unit,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.UNIT,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=True,
         )
@@ -187,21 +187,21 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))
 
     def test_reconstruction_cum_error_float(self) -> None:
         """Tests floating point sigma delta reconstruction with cumulative
         error. The max absolute error must be smaller than threshold.
         """
         num_steps = 100
-        wgt_exp = 0
+        spike_exp = 0
         state_exp = 0
         vth = 10
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.Unit,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.UNIT,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=True,
             tag='floating_pt'
@@ -211,21 +211,21 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))
 
     def test_reconstruction_relu_fixed(self) -> None:
-        """Tests fixed point sigma delta reconstruction with ReLU.
+        """Tests fixed point sigma delta reconstruction with RELU.
         The max absolute error must be smaller than threshold.
         """
         num_steps = 100
-        wgt_exp = 0
+        spike_exp = 0
         state_exp = 0
-        vth = 10 << (wgt_exp + state_exp)
+        vth = 10 << (spike_exp + state_exp)
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.ReLU,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.RELU,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
         )
@@ -234,21 +234,21 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))
 
     def test_reconstruction_relu_float(self) -> None:
-        """Tests floating point sigma delta reconstruction with ReLU.
+        """Tests floating point sigma delta reconstruction with RELU.
         The max absolute error must be smaller than threshold.
         """
         num_steps = 100
         vth = 10
-        wgt_exp = 0
+        spike_exp = 0
         state_exp = 0
         input, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
-            act_mode=ACTIVATION_MODE.ReLU,
-            wgt_exp=wgt_exp,
+            act_mode=ActivationMode.RELU,
+            spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
             tag='floating_pt',
@@ -258,4 +258,4 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         if verbose:
             print(f'Max abs error = {error}')
-        self.assertTrue(error < vth * (1 << wgt_exp))
+        self.assertTrue(error < vth * (1 << spike_exp))

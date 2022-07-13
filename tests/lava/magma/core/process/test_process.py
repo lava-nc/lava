@@ -1,7 +1,10 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import logging
 import unittest
+from unittest.mock import Mock, seal
+import typing as ty
 
 from lava.magma.core.process.ports.ports import (
     InPort,
@@ -12,16 +15,18 @@ from lava.magma.core.process.ports.ports import (
 from lava.magma.core.process.process import (
     AbstractProcess,
     Collection,
-    ProcessServer,
+    ProcessServer, LogConfig, ProcessParameters,
 )
+from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.process.variable import Var
+from lava.magma.core.run_conditions import RunSteps
 
 
 class MinimalProcess(AbstractProcess):
     """The most minimal process has no Vars or Ports."""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name: ty.Optional[str] = None):
+        super().__init__(name=name)
 
 
 class TestCollection(unittest.TestCase):
@@ -78,7 +83,7 @@ class TestProcessSetup(unittest.TestCase):
         self.assertTrue(p1, AbstractProcess)
 
         # At this point, a process has no assigned ProcModel or Runtime yet
-        self.assertIsNone(p1._model)
+        self.assertIsNone(p1.model_class)
         self.assertIsNone(p1.runtime)
 
         # A process gets a globally unique id from a global ProcessServer
@@ -110,18 +115,6 @@ class TestProcessSetup(unittest.TestCase):
         ps.reset_server()
         self.assertEqual(ps._next_id, 0)
         self.assertEqual(len(ps.processes), 0)
-
-    def test_constructor_with_arguments(self):
-        """Checks passing of arguments to constructor."""
-
-        # Call process constructor with arguments
-        p = MinimalProcess(a=1, b=2)
-
-        # Constructor arguments can be used for initializing variables and
-        # ports and will be stored for later usage as _init_args
-        self.assertIsInstance(p.init_args, dict)
-        self.assertEqual(p.init_args["a"], 1)
-        self.assertEqual(p.init_args["b"], 2)
 
     def test_process_without_vars_or_ports(self):
         """Checks that Collections get initialized."""
@@ -259,6 +252,82 @@ class TestProcessSetup(unittest.TestCase):
         # ... nor is any other random process a sub process of proc1
         yet_another_proc = Proc()
         self.assertFalse(yet_another_proc.is_sub_proc_of(proc1))
+
+
+class TestProcess(unittest.TestCase):
+    def test_model_property(self) -> None:
+        """Tests whether the ProcessModel of a Process can be obtained
+        through a property method."""
+
+        p = MinimalProcess()
+        p._model_class = Mock(spec_set=AbstractProcessModel)
+        seal(p._model_class)
+
+        self.assertIsInstance(p.model_class, AbstractProcessModel)
+
+    def test_run_without_run_config_raises_error(self) -> None:
+        """Tests whether an error is raised when run() is called on
+        uncompiled Processes without specifying a RunConfig."""
+        p = MinimalProcess()
+        condition = RunSteps(200)
+        with self.assertRaises(ValueError):
+            p.run(condition=condition)
+
+
+class TestProcessParameters(unittest.TestCase):
+    def setUp(self) -> None:
+        initial_params = {"shape": (3, 4), "du": 5}
+        self.proc_params = ProcessParameters(initial_parameters=initial_params)
+
+    def test_init(self) -> None:
+        """Tests initialization of a ProcessParameters instance with a given
+        dictionary."""
+
+        self.assertIsInstance(self.proc_params, ProcessParameters)
+        self.assertEqual(self.proc_params._parameters["shape"], (3, 4))
+        self.assertEqual(self.proc_params._parameters["du"], 5)
+
+    def test_get_item(self) -> None:
+        """Tests the get-item method."""
+        self.assertEqual(self.proc_params["shape"], (3, 4))
+        with self.assertRaises(KeyError):
+            _ = self.proc_params["wrong_key"]
+
+    def test_set_new_item(self) -> None:
+        """Tests the set-item method with a new item."""
+        self.proc_params["new_key"] = 10
+        self.assertEqual(self.proc_params["new_key"], 10)
+
+    def test_set_item_with_known_key_raises_error(self) -> None:
+        """Tests the set-item method with a known key, which should raise an
+        error."""
+        with self.assertRaises(KeyError):
+            self.proc_params["shape"] = (5, 10)
+
+    def test_overwrite_item_with_known_key(self) -> None:
+        """Tests whether a known key can be overwritten."""
+        self.proc_params.overwrite("shape", (5, 10))
+        self.assertEqual(self.proc_params["shape"], (5, 10))
+
+
+class TestLogConfig(unittest.TestCase):
+    def test_init(self) -> None:
+        """Tests initialization of a LogConfig object."""
+        log_config = LogConfig(file="test_file.txt",
+                               level=logging.ERROR,
+                               level_console=logging.CRITICAL,
+                               logs_to_file=True)
+        self.assertIsInstance(log_config, LogConfig)
+        self.assertEqual(log_config.file, "test_file.txt")
+        self.assertEqual(log_config.level, logging.ERROR)
+        self.assertEqual(log_config.level_console, logging.CRITICAL)
+        self.assertEqual(log_config.logs_to_file, True)
+
+    def test_empty_file_name_raises_error(self) -> None:
+        """Tests whether an exception is raised when logging is configured to
+        write to file but an empty file name is provided."""
+        with self.assertRaises(ValueError):
+            LogConfig(file="", logs_to_file=True)
 
 
 if __name__ == "__main__":

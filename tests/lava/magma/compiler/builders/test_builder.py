@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -7,8 +7,8 @@ import typing as ty
 import unittest
 import numpy as np
 
-from lava.magma.compiler.builders.builder import ChannelBuilderMp, \
-    PyProcessBuilder
+from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
+from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.channels.interfaces import Channel, ChannelType, \
     AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import (
@@ -38,8 +38,6 @@ class MockMessageInterface:
         return PyPyChannel
 
 
-# ToDo: (AW) This test does not work for me. Something broken with d_type.
-#  SMM does not seem to support numpy types.
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
