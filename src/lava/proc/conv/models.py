@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -27,10 +27,10 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     padding: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
-    use_graded_spike: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+    num_message_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
     def run_spk(self) -> None:
-        if self.use_graded_spike.item():
+        if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
         else:
             s_in = self.s_in.recv().astype(bool)
@@ -58,7 +58,7 @@ class PyConvModelFloat(AbstractPyConvModel):
     """Conv with float synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    a_buf: PyOutPort = LavaPyType(np.ndarray, float)
+    a_buf: np.ndarray = LavaPyType(np.ndarray, float)
     weight: np.ndarray = LavaPyType(np.ndarray, float)
 
 
@@ -69,8 +69,10 @@ class PyConvModelFixed(AbstractPyConvModel):
     """Conv with fixed point synapse implementation."""
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    a_buf: PyOutPort = LavaPyType(np.ndarray, np.int32, precision=24)
+    a_buf: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
     def clamp_precision(self, x: np.ndarray) -> np.ndarray:
         return utils.signed_clamp(x, bits=24)

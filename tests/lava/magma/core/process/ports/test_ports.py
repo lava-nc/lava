@@ -1,18 +1,9 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import unittest
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import (
-    InPort,
-    OutPort,
-    RefPort,
-    VarPort,
-    ConcatPort,
-    TransposePort,
-)
+
 from lava.magma.core.process.ports.exceptions import (
     ReshapeError,
     DuplicateConnectionError,
@@ -22,6 +13,16 @@ from lava.magma.core.process.ports.exceptions import (
     TransposeIndexError,
     VarNotSharableError,
 )
+from lava.magma.core.process.ports.ports import (
+    InPort,
+    OutPort,
+    RefPort,
+    VarPort,
+    ConcatPort,
+    TransposePort,
+)
+from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
 
 
 class TestPortInitialization(unittest.TestCase):
@@ -310,7 +311,6 @@ class TestRVPorts(unittest.TestCase):
         with self.assertRaises(AssertionError):
             rp.connect_var(v)
 
-    # TODO: (PP) enable unit test as soon as 1:many connections are implemented
     @unittest.skip("Currently not supported")
     def test_connect_RefPort_to_many_Vars(self):
         """Checks that RefPort can be connected to many Vars."""

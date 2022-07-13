@@ -1,11 +1,12 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.builder import PyProcessBuilder, \
-        AbstractRuntimeServiceBuilder
+    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import \
+        RuntimeServiceBuilder
 
 import multiprocessing as mp
 import os
@@ -14,6 +15,15 @@ import traceback
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+try:
+    from lava.magma.compiler.channels.cpychannel import \
+        CPyChannel, PyCChannel
+except ImportError:
+    class CPyChannel:
+        pass
+
+    class PyCChannel:
+        pass
 
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
@@ -29,6 +39,7 @@ implement the communication backend in this implementation."""
 
 class SystemProcess(mp.Process):
     """Wraps a process so that the exceptions can be collected if present"""
+
     def __init__(self, *args, **kwargs):
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
@@ -73,7 +84,7 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'AbstractRuntimeServiceBuilder']]) -> ty.Any:
+            SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
         system_process = SystemProcess(target=target_fn,
                                        args=(),
@@ -87,7 +98,6 @@ class MultiProcessing(MessageInfrastructureInterface):
         for actor in self._actors:
             if actor._parent_pid == os.getpid():
                 actor.join()
-
         self._smm.shutdown()
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
@@ -95,5 +105,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         implementation for the same"""
         if channel_type == ChannelType.PyPy:
             return PyPyChannel
+        elif channel_type == ChannelType.PyC:
+            return PyCChannel
+        elif channel_type == ChannelType.CPy:
+            return CPyChannel
         else:
             raise Exception(f"Unsupported channel type {channel_type}")

@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
@@ -18,6 +18,11 @@ class AbstractPortImplementation(ABC):
         self._d_type = d_type
 
     @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        """Returns the shape of the port"""
+        return self._shape
+
+    @property
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """Returns all csp ports of the port."""
@@ -32,8 +37,3 @@ class AbstractPortImplementation(ABC):
         """Join all csp ports"""
         for csp_port in self.csp_ports:
             csp_port.join()
-
-
-class AbstractNodeGroup:
-    def alloc(self, *args, **kwargs):
-        pass

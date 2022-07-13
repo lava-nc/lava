@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -19,7 +19,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 class DemoProcess(AbstractProcess):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         nb_runs = kwargs.pop("nb_runs")
         self.changed = Var(shape=(1,), init=np.array([True]))
         self.changed_history = Var(shape=(nb_runs,), init=np.nan)

@@ -1,5 +1,5 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 from enum import IntEnum
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
@@ -21,7 +21,7 @@ class LoihiPhase:
 
 
 class NxSdkPhase:
-    """Enumerator phases in which snip can run in NxSDK."""
+    """Enumerator phases in which snip can run in nxcore."""
 
     EMBEDDED_INIT = 1
     """INIT Phase of Embedded Snip. This executes only once."""

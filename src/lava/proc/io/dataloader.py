@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -37,7 +37,8 @@ class AbstractDataloader(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(gt_shape=gt_shape, dataset=dataset,
+                         interval=interval, offset=offset)
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
 
@@ -80,6 +81,7 @@ class StateDataloader(AbstractDataloader):
     """
     def __init__(
         self,
+        *,
         dataset: Iterable,
         interval: int = 1,
         offset: int = 0,
@@ -154,6 +156,7 @@ class SpikeDataloader(AbstractDataloader):
     """
     def __init__(
         self,
+        *,
         dataset: Iterable,
         interval: int = 1,
         offset: int = 0,

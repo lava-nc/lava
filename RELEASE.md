@@ -1,69 +1,82 @@
-# Release 0.3.0
+_Lava_ v0.4.0 brings initial support to compile and run models on Loihi 2 via Intel’s cloud hosted Loihi systems through participation in the Intel Neuromorphic Research Community (INRC). In addition, new tutorials and documentation explain how to build Lava Processes written in Python or C for CPU and Loihi backends (C and Loihi tutorials available via the INRC). 
 
-Lava 0.3.0 includes bug fixes, updated documentation, improved error handling, refactoring of the Lava Runtime and support for sigma delta neuron enconding and decoding.
+While this release offers few high-level application examples, Lava v0.4.0 provides major enhancements to the overall Lava architecture. It forms the basis for the open-source community to enable the full Loihi feature set, such as on-chip learning, convolutional connectivity, or accelerated spike IO. The Lava Compiler and Runtime architecture has also been generalized allowing extension to other backends or neuromorphic processors. 
 
-## Features and Improvements
+## New Features and Improvements
+Features marked with * are available as part of the Loihi 2 extension.
+- *Extended Process library including new ProcessModels and additional improvements:
+  - LIF, Sigma-Delta, and Dense Processes execute on Loihi NeuroCores.
+  - Prototype Convolutional Process added.
+  - Sending and receiving spikes to NeuroCores via embedded processes that can be programmed in C with examples included. 
+  - All Lava Processes now list all constructor arguments explicitly with type annotations. 
+- *Added high-level API to develop custom ProcessModels that use Loihi 2 features:
+  - Loihi NeuroCores can be programmed in Python by allocating neural network resources like Axons, Synapses or Neurons. In particular, Loihi 2 NeuroCore Neurons can be configured by writing highly flexible assembly programs.
+  - Loihi embedded processors can be programmed in C. But unlike the prior NxSDK, no knowledge of low-level registers details is required anymore. Instead, the C API mirrors the high-level Python API to interact with other processes via channels.
+- Compiler and Runtime support for Loihi 2:
+  - General redesign of Compiler and Runtime architecture to support compilation of Processes that execute across a heterogenous backend of different compute resources. CPU and Loihi are supported via separate sub compilers.
+  - *The Loihi NeuroCore sub compiler automatically distributes neural network resources across multiple cores.
+  - *The Runtime supports direct channel-based communication between Processes running on Loihi NeuroCores, embedded CPUs or host CPUs written in Python or C. Of all combinations, only Python<->C and C<->NeuroCore are currently supported.
+  - *Added support to access Process Variables on Loihi NeuroCores at runtime via Var.set and Var.get().
+- New tutorials and improved class and method docstrings explain how new Lava features can be used such as *NeuroCore and *embedded processor programming.
+- An extended suite of unit tests and new *integration tests validate the correctness of the Lava framework.
 
-* Added sigma delta neuron enconding and decoding support ([PR #180](https://github.com/lava-nc/lava/pull/180), [Issue #179](https://github.com/lava-nc/lava/issues/179))
-* Implementation of ReadVar and ResetVar IO process ([PR #156](https://github.com/lava-nc/lava/pull/156), [Issue #155](https://github.com/lava-nc/lava/issues/155))
-* Added Runtime handling of exceptions occuring in ProcessModels and the Runtime now returns exeception stack traces ([PR #135](https://github.com/lava-nc/lava/pull/135), [Issue #83](https://github.com/lava-nc/lava/issues/83))
-* Virtual ports for reshaping and transposing (permuting) are now supported. ([PR #187](https://github.com/lava-nc/lava/pull/187), [Issue #185](https://github.com/lava-nc/lava/issues/185), [PR #195](https://github.com/lava-nc/lava/pull/195), [Issue #194](https://github.com/lava-nc/lava/issues/194))
-* A Ternary-LIF neuron model was added to the process library. This new variant supports both positive and negative threshold for processing of signed signals ([PR #151](https://github.com/lava-nc/lava/pull/151), [Issue #150](https://github.com/lava-nc/lava/issues/150))
-* Refactored runtime to reduce the number of channels used for communication([PR #157](https://github.com/lava-nc/lava/pull/157), [Issue #86](https://github.com/lava-nc/lava/issues/86))
-* Refactored Runtime to follow a state machine model and refactored ProcessModels to use command design pattern, implemented PAUSE and RUN CONTINOUS ([PR #180](https://github.com/lava-nc/lava/pull/171), [Issue #86](https://github.com/lava-nc/lava/issues/86), [Issue #52](https://github.com/lava-nc/lava/issues/53))
-* Refactored builder to its own package ([PR #170](https://github.com/lava-nc/lava/pull/170), [Issue #169](https://github.com/lava-nc/lava/issues/169))
-* Refactored PyPorts implementation to fix incomplete PyPort hierarchy ([PR #131](https://github.com/lava-nc/lava/pull/131), [Issue #84](https://github.com/lava-nc/lava/issues/84))
-* Added improvements to the MNIST tutorial ([PR #147](https://github.com/lava-nc/lava/pull/147), [Issue #146](https://github.com/lava-nc/lava/issues/146))
-* A standardized template is now in use on new Pull Requests and Issues ([PR #140](https://github.com/lava-nc/lava/pull/140))
-* Support added for editable install ([PR #93](https://github.com/lava-nc/lava/pull/93), [Issue #19](https://github.com/lava-nc/lava/issues/19))
-* Improved runtime documentation ([PR #167](https://github.com/lava-nc/lava/pull/167))
 
 ## Bug Fixes and Other Changes
-* Fixed multiple Monitor related issues ([PR #128](https://github.com/lava-nc/lava/pull/128), [Issue #103](https://github.com/lava-nc/lava/issues/103), [Issue #104](https://github.com/lava-nc/lava/issues/104), [Issue #116](https://github.com/lava-nc/lava/issues/116), [Issue #127](https://github.com/lava-nc/lava/issues/127))
-* Fixed packaging issue regarding the dataloader for MNIST ([PR #133](https://github.com/lava-nc/lava/pull/133))
-* Fixed multiprocessing bug by checking process lineage before join ([PR #177](https://github.com/lava-nc/lava/pull/177), [Issue #176](https://github.com/lava-nc/lava/issues/176))
-* Fixed priority of channel commands in model ([PR #190](https://github.com/lava-nc/lava/pull/190), [Issue #186](https://github.com/lava-nc/lava/issues/186))
-* Fixed RefPort time step handling ([PR #205](https://github.com/lava-nc/lava/pull/205), [Issue #204](https://github.com/lava-nc/lava/issues/204))
+
+- Support for virtual ports on multiple incoming connections (Python Processes only) (Issue [#223](https://github.com/lava-nc/lava/issues/223), PR [#224](https://github.com/lava-nc/lava/pull/224))
+- Added conda install instructions (PR [#225](https://github.com/lava-nc/lava/pull/225))
+- Var.set/get() works when RunContinuous RunMode is used (Issue [#255](https://github.com/lava-nc/lava/issues/255), PR [#256](https://github.com/lava-nc/lava/pull/256)) 
+- Successful execution of tutorials now covered by unit tests (Issue [#243](https://github.com/lava-nc/lava/issues/243), PR [#244](https://github.com/lava-nc/lava/pull/244))
+- Fixed PYTHONPATH in tutorial_01 (Issue [#45](https://github.com/lava-nc/lava/issues/45), PR [#239](https://github.com/lava-nc/lava/pull/239))
+- Fixed output of tutorial_07 (Issue [#249](https://github.com/lava-nc/lava/issues/249), PR [#253](https://github.com/lava-nc/lava/pull/253))
+
+## Breaking Changes
+
+- Process constructors for standard library processes now require explicit keyword/value pairs and do not accept arbitrary input arguments via **kwargs anymore. This might break some workloads.
+- use_graded_spike kwarg has been changed to num_message_bits for all the built-in processes.
+- shape kwarg has been removed from Dense process. It is automatically inferred from the weight parameter’s shape.
+- Conv Process has additional arguments weight_exp and num_weight_bits that are relevant for fixed-point implementations.
+- The sign_mode argument in the Dense Process is now an enum rather than an integer.
+- New parameters u and v in the LIF Process enable setting initial values for current and voltage.
+- The bias parameter in the LIF Process has been renamed to bias_mant.
+
 
 ## Known Issues
-* No support for Intel Loihi
-* CSP channels process communication, implemented with Python multiprocessing, needs improvement to reduce the overhead from inter-process communication to approach native execution speeds of similar implementations without CSP channel overhead
-* Virtual ports for concatenation are not supported
-* Joining and forking of virtual ports is not supported
-* A Monitor process cannot monitor more than one Var/InPort of a process, as a result multi-var probing with a singular Monitor process is not supported
-* Limited API documentation
+
+- Lava does currently not support on-chip learning, Loihi 1 and a variety of connectivity compression features such as convolutional encoding.
+- All Processes in a network must currently be connected via channels. Running unconnected Processes using NcProcessModels in parallel currently gives incorrect results.
+- Only one instance of a Process targeting an embedded processor (using CProcessModel) can currently be created. Creating multiple instances in a network, results in an error. As a workaround, the behavior of multiple Processes can be fused into a single CProcessModel.
+- Direct channel connections between Processes using a PyProcessModel and NcProcessModel are not supported.
+- In the scenario that InputAxons are duplicated across multiple cores and users expect to inject spikes based on the declared port size, then the current implementation leads to buffer overflows and memory corruption.
+- Channel communication between PyProcessModels is slow.
+- The Lava Compiler is still inefficient and in need of improvement to performance and memory utilization.
+- Virtual ports are only supported between Processes using PyProcModels, but not between Processes when CProcModels or NcProcModels are involved. In addition, VirtualPorts do not support concatenation yet.
+- Joining and forking of virtual ports is not supported.
+- The Monitor Process does currently only support probing of a single Var per Process implemented via a PyProcessModel. The Monitor Process does currently not support probing of Vars mapped to NeuroCores.
+- Despite new docstrings, type annotations, and parameter descriptions to most of the public user-facing API, some parts of the code still have limited documentation and are missing type annotations.
+
 
 ## What's Changed
-* Fixing multiple small issues of the Monitor proc by @elvinhajizada in https://github.com/lava-nc/lava/pull/128
-* GitHub Issue/Pull request template by @mgkwill in https://github.com/lava-nc/lava/pull/140
-* Fixing MNIST dataloader by @tihbe in https://github.com/lava-nc/lava/pull/133
-* Runtime error handling by @PhilippPlank in https://github.com/lava-nc/lava/pull/135
-* Reduced the number of channels between service and process (#1) by @ysingh7 in https://github.com/lava-nc/lava/pull/157
-* TernaryLIF and refactoring of LIF to inherit from AbstractLIF by @srrisbud in https://github.com/lava-nc/lava/pull/151
-* Proc_params for communicating arbitrary object between process and process model by @bamsumit in https://github.com/lava-nc/lava/pull/162
-* Support editable install by @matham in https://github.com/lava-nc/lava/pull/93
-* Implementation of ReadVar and ResetVar IO process and bugfixes for LIF, Dense and Conv processes by @bamsumit in https://github.com/lava-nc/lava/pull/156
-* Refactor builder to module by @mgkwill in https://github.com/lava-nc/lava/pull/170
-* Use unittest ci by @mgkwill in https://github.com/lava-nc/lava/pull/173
-* Improve mnist tutorial by @srrisbud in https://github.com/lava-nc/lava/pull/147
-* Multiproc bug by @mgkwill in https://github.com/lava-nc/lava/pull/177
-* Refactoring py/ports by @PhilippPlank in https://github.com/lava-nc/lava/pull/131
-* Adds runtime documentation by @joyeshmishra in https://github.com/lava-nc/lava/pull/167
-* Implementation of Pause and Run Continuous with refactoring of Runtime by @ysingh7 in https://github.com/lava-nc/lava/pull/171
-* Ref port debug by @PhilippPlank in https://github.com/lava-nc/lava/pull/183
-* Sigma delta neuron, encoding and decoding support by @bamsumit in https://github.com/lava-nc/lava/pull/180
-* Add NxSDKRuntimeService by @mgkwill in https://github.com/lava-nc/lava/pull/182
-* Partial implementation of virtual ports for PyProcModels by @mathisrichter in https://github.com/lava-nc/lava/pull/187
-* Remove old runtime_service.py by @mgkwill in https://github.com/lava-nc/lava/pull/192
-* Fixing priority of channel commands in model by @PhilippPlank in https://github.com/lava-nc/lava/pull/190
-* Virtual ports between RefPorts and VarPorts by @mathisrichter in https://github.com/lava-nc/lava/pull/195
-* RefPort's sometimes handled a time step late by @PhilippPlank in https://github.com/lava-nc/lava/pull/205
-* Fixed reset timing offset by @bamsumit in https://github.com/lava-nc/lava/pull/207
-* Update README.md by @mgkwill in https://github.com/lava-nc/lava/pull/202
+* Virtual ports on multiple incoming connections by @mathisrichter in https://github.com/lava-nc/lava/pull/224
+* Add conda install to README by @Tobias-Fischer in https://github.com/lava-nc/lava/pull/225
+* PYTHONPATH fix in tutorial by @jlubo in https://github.com/lava-nc/lava/pull/239
+* Fix tutorial04_execution.ipynb by @mgkwill in https://github.com/lava-nc/lava/pull/241
+* Tutorial tests by @mgkwill in https://github.com/lava-nc/lava/pull/244
+* Update README.md remove vlab instructions by @mgkwill in https://github.com/lava-nc/lava/pull/248
+* Tutorial bug fix by @PhilippPlank in https://github.com/lava-nc/lava/pull/253
+* Fix get set var by @PhilippPlank in https://github.com/lava-nc/lava/pull/256
+* Update runtime_service.py by @PhilippPlank in https://github.com/lava-nc/lava/pull/258
+* Release/v0.4.0 by @mgkwill in https://github.com/lava-nc/lava/pull/265
+
+## Thanks to our Contributors
+
+- Intel Corporation: All contributing members of the Intel Neuromorphic Computing Lab
+
+### Open-source community: 
+- [Tobias-Fischer](https://github.com/Tobias-Fischer), Tobias Fischer 
+- [jlubo](https://github.com/jlubo), Jannik Luboeinski
 
 ## New Contributors
-* @tihbe made their first contribution in https://github.com/lava-nc/lava/pull/133
-* @ysingh7 made their first contribution in https://github.com/lava-nc/lava/pull/157
-* @matham made their first contribution in https://github.com/lava-nc/lava/pull/93
+* @jlubo made their first contribution in https://github.com/lava-nc/lava/pull/239
 
-**Full Changelog**: https://github.com/lava-nc/lava/compare/v0.2.0...v0.3.0
+**Full Changelog**: https://github.com/lava-nc/lava/compare/v0.3.0...v0.4.0

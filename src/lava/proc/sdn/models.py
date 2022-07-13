@@ -11,7 +11,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ACTIVATION_MODE
+from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ActivationMode
 
 
 def ReLU(x: np.ndarray) -> np.ndarray:
@@ -65,7 +65,7 @@ class AbstractDeltaModel(PyLoihiProcessModel):
     act = None
     residue = None
     error = None
-    wgt_exp = None
+    spike_exp = None
     state_exp = None
     cum_error = None
 
@@ -110,16 +110,16 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
     residue = None
     error = None
     bias = None
-    wgt_exp = None
+    spike_exp = None
     state_exp = None
     cum_error = None
 
     def __init__(self, proc_params: Dict[str, Any]) -> None:
         super().__init__(proc_params)
-        self.act_mode = self.proc_params['act_fn']
+        self.act_mode = self.proc_params['act_mode']
 
     def activation_dynamics(self, sigma_data: np.ndarray) -> np.ndarray:
-        """Sigma Delta activation dynamics. Unit and ReLU activations are
+        """Sigma Delta activation dynamics. UNIT and RELU activations are
         supported.
 
         Parameters
@@ -135,11 +135,11 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
         Raises
         ------
         NotImplementedError
-            if activation mode other than Unit or ReLU is encountered.
+            if activation mode other than UNIT or RELU is encountered.
         """
-        if self.act_mode == ACTIVATION_MODE.Unit:
+        if self.act_mode == ActivationMode.UNIT:
             act = sigma_data + self.bias
-        elif self.act_mode == ACTIVATION_MODE.ReLU:
+        elif self.act_mode == ActivationMode.RELU:
             act = ReLU(sigma_data + self.bias)
         else:
             raise NotImplementedError(
@@ -190,7 +190,7 @@ class PyDeltaModelFloat(AbstractDeltaModel):
     residue: np.ndarray = LavaPyType(np.ndarray, float)
     error: np.ndarray = LavaPyType(np.ndarray, float)
 
-    wgt_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     cum_error: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
@@ -216,17 +216,17 @@ class PyDeltaModelFixed(AbstractDeltaModel):
     residue: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     error: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
-    wgt_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     cum_error: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
     def run_spk(self) -> None:
         # Receive synaptic input
         a_in_data = np.left_shift(
-            self.a_in.recv(), self.wgt_exp + self.state_exp
+            self.a_in.recv(), self.spike_exp + self.state_exp
         )
         s_out_scaled = self.delta_dynamics(a_in_data)
-        s_out = np.right_shift(s_out_scaled, self.wgt_exp)
+        s_out = np.right_shift(s_out_scaled, self.state_exp)
         self.act = a_in_data
         self.s_out.send(s_out)
 
@@ -246,7 +246,7 @@ class PySigmaDeltaModelFloat(AbstractSigmaDeltaModel):
     error: np.ndarray = LavaPyType(np.ndarray, float)
     bias: np.ndarray = LavaPyType(np.ndarray, float)
 
-    wgt_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     cum_error: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
@@ -272,7 +272,7 @@ class PySigmaDeltaModelFixed(AbstractSigmaDeltaModel):
     error: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     bias: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
 
-    wgt_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
     cum_error: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
 
@@ -280,5 +280,5 @@ class PySigmaDeltaModelFixed(AbstractSigmaDeltaModel):
         # Receive synaptic input
         a_in_data = self.a_in.recv()
         s_out_scaled = self.dynamics(a_in_data)
-        s_out = np.right_shift(s_out_scaled, self.wgt_exp)
+        s_out = np.right_shift(s_out_scaled, self.state_exp)
         self.s_out.send(s_out)

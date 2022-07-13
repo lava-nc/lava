@@ -1,5 +1,5 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from collections import UserList, OrderedDict
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import AbstractNode
-from lava.magma.compiler.exec_var import AbstractExecVar
+from lava.magma.compiler.var_model import AbstractVarModel
 
 
 class Node:
@@ -21,12 +21,19 @@ class Node:
     to a node."""
 
     def __init__(
-            self,
-            node_type: ty.Type[AbstractNode],
-            processes: ty.List[AbstractProcess]):
+        self,
+        node_type: ty.Type[AbstractNode],
+        processes: ty.List[AbstractProcess],
+    ):
         self.id: int = -1
         self.node_type: typing.Type[AbstractNode] = node_type
         self.processes = processes
+
+    def add_process(self, process: AbstractProcess):
+        self.processes.append(process)
+
+    def __str__(self):
+        return f"{self.id=} {self.node_type=} {self.processes=}"
 
 
 class NodeConfig(UserList):
@@ -41,7 +48,13 @@ class NodeConfig(UserList):
         super().__init__(init_list)
         self._node_ctr = 0
         self.node_map: ty.Dict[AbstractProcess, Node] = OrderedDict()
-        self.exec_vars: ty.Dict[int, AbstractExecVar] = OrderedDict()
+        self.var_models: ty.Dict[int, AbstractVarModel] = OrderedDict()
+
+    def __str__(self):
+        result = []
+        result.append(f"{self._node_ctr=}")
+        result.append(str(self.node_map))
+        return "\n".join(result)
 
     def append(self, node: Node):
         """Appends a new node to the NodeConfig."""
@@ -56,5 +69,5 @@ class NodeConfig(UserList):
         """Returns list of all nodes of the NodeConfig."""
         return self.data
 
-    def set_exec_vars(self, exec_vars: ty.Dict[int, AbstractExecVar]):
-        self.exec_vars = exec_vars
+    def set_var_models(self, var_models: ty.Dict[int, AbstractVarModel]):
+        self.var_models = var_models
