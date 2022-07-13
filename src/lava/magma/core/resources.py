@@ -106,7 +106,6 @@ class GenericNode(AbstractNode):
 class HeadNode(GenericNode):
     """The node on which user executes code, perhaps because processes
     require access to specific disk location.
-    TODO Should probably be solved in a different way in the future.
     """
     resources = [CPU, HeadNodeHardDrive]
 

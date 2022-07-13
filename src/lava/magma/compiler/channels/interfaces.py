@@ -8,7 +8,6 @@ from enum import IntEnum
 import numpy as np
 
 
-# ToDo: (AW) probe and peek methods are missing
 class AbstractCspPort(ABC):
     """Abstract base class for CSP channel."""
 

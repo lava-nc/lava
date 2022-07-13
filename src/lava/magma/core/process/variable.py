@@ -8,7 +8,6 @@ from lava.magma.core.process.interfaces import \
     AbstractProcessMember, IdGeneratorSingleton
 
 
-# ToDo: (AW) Clean up class docstring
 class Var(AbstractProcessMember):
     """Represents a Lava variable. A Var implements the state of a Process and
     is part of its public user interface. Vars have the following properties:

@@ -76,7 +76,6 @@ class AbstractProcessBuilder(AbstractBuilder):
     def proc_model(self) -> ty.Type[AbstractProcessModel]:
         return self._proc_model
 
-    # ToDo: Perhaps this should even be done in Compiler?
     def _check_members_exist(self, members: ty.Iterable, m_type: str):
         """Checks that ProcessModel has same members as Process.
 
@@ -129,7 +128,6 @@ class AbstractProcessBuilder(AbstractBuilder):
                     f"Member '{key}' already found in {m_type}."
                 )
 
-    # ToDo: Also check that Vars are initializable with var.value provided
     def set_variables(self, variables: ty.List["VarInitializer"]):
         """Appends the given list of variables to the ProcessModel. Used by the
          compiler to create a ProcessBuilder during the compilation of

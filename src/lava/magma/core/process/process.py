@@ -35,8 +35,6 @@ class ProcessPostInitCaller(type):
         return obj
 
 
-# ToDo: AbstractProcess should inherit from ABC but that throws an error when
-#  metaclass is assigned!
 class AbstractProcess(metaclass=ProcessPostInitCaller):
     """The notion of a Process is inspired by the Communicating Sequential
     Process paradigm for distributed, parallel, and asynchronous programming.

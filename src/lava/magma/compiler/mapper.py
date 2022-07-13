@@ -87,7 +87,6 @@ class Mapper:
             ncb.map_to_virtual(p_addrs)
 
             for port_initializer in ncb.io_ports.values():
-                # TODO: Joyesh Remove this
                 if port_initializer.var_model is None:
                     continue
                 self._set_virtual_address_nc(port_initializer, num_cores)
@@ -136,7 +135,6 @@ class Mapper:
                         chips = [addr.physical_chip_id for addr in src_addr]
                         address.update(chips)
                         break
-            # TODO: Remove this check when, we support port splitting
             if len(address) > 1:
                 raise ValueError("Lava Compiler doesn't support port"
                                  "splitting currently. MultiChip "

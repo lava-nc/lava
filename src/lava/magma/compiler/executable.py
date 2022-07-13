@@ -43,7 +43,5 @@ class Executable:
         ty.Iterable[AbstractChannelBuilder]] = None
 
     def assign_runtime_to_all_processes(self, runtime):
-        # TODO: Sumedh In Nc Compiler,
-        # TODO: add Connection Processes to proc_builder as well
         for p in self.proc_builders.keys():
             p.runtime = runtime

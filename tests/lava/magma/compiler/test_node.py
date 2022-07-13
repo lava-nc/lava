@@ -8,14 +8,12 @@ from lava.magma.core.resources import HeadNode, Loihi1System, Loihi2System
 from lava.magma.compiler.node import Node, NodeConfig
 
 
-# ToDo: (AW) What is this for?
 class MockProcess(AbstractProcess):
     """A mock process"""
 
     pass
 
 
-# ToDo: (AW) Use self.assert*...?
 class TestNode(unittest.TestCase):
     def test_node_creation(self):
         """Tests Node creation"""

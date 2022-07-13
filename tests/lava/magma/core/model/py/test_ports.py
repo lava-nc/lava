@@ -99,7 +99,6 @@ class TestPyPorts(unittest.TestCase):
 
     def test_py_in_port_probe(self):
         """Tests PyInPort probe method on all implementations of PyInPorts."""
-        # TODO: (GK) Add other classes when we support them
         classes = [PyInPortVectorDense]
 
         for cls in classes:

@@ -78,8 +78,6 @@ class ChannelBroker(AbstractChannelBroker):
         super().__init__(*args, **kwargs)
         self.board = board
         self.has_started: bool = False
-        # TODO: Assumes ports are not split. Others each CPort will have
-        # TODO: multiple grpc channels
         # Need to poll for CInPorts
         self.c_inports_to_poll: ty.Dict[CInPort, Channel] = {}
 

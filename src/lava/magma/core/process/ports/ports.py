@@ -215,8 +215,6 @@ class AbstractPort(AbstractProcessMember):
                     src_port_id = p_id
 
             if isinstance(self, AbstractVirtualPort):
-                # TODO (MR): ConcatPorts are not yet supported by the
-                #  compiler - until then, an exception is raised.
                 if isinstance(self, ConcatPort):
                     raise NotImplementedError("ConcatPorts are not yet "
                                               "supported.")
@@ -268,8 +266,6 @@ class AbstractPort(AbstractProcessMember):
                     dst_port_id = p_id
 
             if isinstance(self, AbstractVirtualPort):
-                # TODO (MR): ConcatPorts are not yet supported by the
-                #  compiler - until then, an exception is raised.
                 if isinstance(self, ConcatPort):
                     raise NotImplementedError("ConcatPorts are not yet "
                                               "supported.")
@@ -504,7 +500,6 @@ class InPort(AbstractIOPort, AbstractDstPort):
         self._connect_backward(to_list(ports), AbstractIOPort)
 
 
-# TODO: (PP) enable connecting multiple Vars/VarPorts/RefPort to a RefPort
 class RefPort(AbstractRVPort, AbstractSrcPort):
     """RefPorts are members of a Lava Process and can be connected to
     internal Lava Vars of other processes to facilitate direct shared memory
@@ -660,7 +655,6 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return vp
 
 
-# TODO: (PP) enable connecting multiple VarPorts/RefPorts to a VarPort
 class VarPort(AbstractRVPort, AbstractDstPort):
     """VarPorts are members of a Lava Process and act as a wrapper for
     internal Lava Vars to facilitate connections between RefPorts and Vars
@@ -900,11 +894,9 @@ class ConcatPort(AbstractVirtualPort):
         return new_shape[:axis] + (total_size,) + new_shape[axis:]
 
     def get_transform_func_fwd(self) -> ft.partial:
-        # TODO (MR): not yet implemented
         raise NotImplementedError()
 
     def get_transform_func_bwd(self) -> ft.partial:
-        # TODO (MR): not yet implemented
         raise NotImplementedError()
 
 
@@ -951,7 +943,6 @@ class TransposePort(AbstractVirtualPort):
         return ft.partial(np.transpose, axes=np.argsort(self.axes))
 
 
-# ToDo: TBD...
 class ReIndexPort(AbstractVirtualPort):
     """A ReIndexPort is a virtual port that allows to re-index the elements
     of a port before connecting to another port.

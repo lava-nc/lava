@@ -317,9 +317,6 @@ class TestChannelBuildersFactory(unittest.TestCase):
 
 
 class TestChannelBuildersMp(unittest.TestCase):
-    # TODO (MR): These are the unit tests from the old Compiler that have to
-    #  do with the creation of channel builders. They need to be rewritten to
-    #  test the ChannelCompiler.
     def setUp(self) -> None:
         self.cfg = {"pypy_channel_size": 64}
         self.factory = ChannelBuildersFactory()

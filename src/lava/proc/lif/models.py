@@ -79,10 +79,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # for current and voltage, respectively. They enable setting decay
         # constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned du and dv is 0 to 4095.
-        # ToDo: Currently, these instance variables cannot be set from
-        #  outside. From experience, there have been hardly any applications
-        #  which have needed to change the defaults. It is straight-forward
-        #  to change in the future.
         self.ds_offset = 1
         self.dm_offset = 0
         self.isbiasscaled = False
@@ -154,8 +150,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Update voltage
         # --------------
         decay_const_v = self.dv + self.dm_offset
-        # ToDo: make the exponent 23 configurable (see comment above current
-        #  limits)
+
         neg_voltage_limit = -np.int32(self.max_uv_val) + 1
         pos_voltage_limit = np.int32(self.max_uv_val) - 1
         # Decaying voltage similar to current. See the comment above to
@@ -181,10 +176,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
-        # ToDo: If bias is set through Var.set() API, the Boolean flag
-        #  isbiasscaled does not get reset. This needs to change through
-        #  Var.set() API. Until that change, we will scale bias at every
-        #  time-step.
         self.scale_bias()
         # # Compute effective bias and threshold only once, not every time-step
         # if not self.isbiasscaled:

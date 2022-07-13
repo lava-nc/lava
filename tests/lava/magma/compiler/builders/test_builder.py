@@ -38,8 +38,6 @@ class MockMessageInterface:
         return PyPyChannel
 
 
-# ToDo: (AW) This test does not work for me. Something broken with d_type.
-#  SMM does not seem to support numpy types.
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""

@@ -14,8 +14,6 @@ try:
 except ModuleNotFoundError:
     TORCH_IS_AVAILABLE = False
 
-# TODO: add tensorflow support
-
 
 @unique
 class TensorOrder(IntEnum):

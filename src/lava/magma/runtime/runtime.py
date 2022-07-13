@@ -211,7 +211,6 @@ class Runtime:
                     else:
                         sync_channel_builder.dst_process.set_csp_ports(
                             [channel.dst_port])
-                    # TODO: Get rid of if/else ladder
                     if "runtime_to_service" in channel.src_port.name:
                         self.runtime_to_service.append(channel.src_port)
                     elif "service_to_runtime" in channel.src_port.name:
@@ -235,8 +234,6 @@ class Runtime:
                         sync_channel_builder.dst_process.__class__.__name__)
                     raise ValueError("Unexpected type of Sync Channel Builder")
 
-    # ToDo: (AW) Why not pass the builder as an argument to the mp.Process
-    #  constructor which will then be passed to the target function?
     def _build_processes(self):
         """Builds the process for all process builders within an executable"""
         process_builders: ty.Dict[AbstractProcess, AbstractProcessBuilder] = \

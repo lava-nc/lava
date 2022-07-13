@@ -232,10 +232,6 @@ class PyProcessBuilder(AbstractProcessBuilder):
     def _get_lava_type(self, name: str) -> LavaPyType:
         return getattr(self.proc_model, name)
 
-    # ToDo: Need to differentiate signed and unsigned variable precisions
-    # TODO: (PP) Combine PyPort/RefPort/VarPort initialization
-    # TODO: (PP) Find a cleaner way to find/address csp_send/csp_recv ports (in
-    #  Ref/VarPort initialization)
     def build(self):
         """Builds a PyProcModel at runtime within Runtime.
 

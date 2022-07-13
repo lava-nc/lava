@@ -683,7 +683,6 @@ class PyRefPort(AbstractPyPort):
         """
         pass
 
-    # TODO: (PP) This should be optimized by a proper CSPSendPort wait
     def wait(self):
         """Blocks execution until receipt of prior 'write' commands (sent from
          RefPort to VarPort) have been acknowledged. Calling wait() ensures that
@@ -722,8 +721,6 @@ class PyRefPortVectorDense(PyRefPort):
             return self._transformer.transform(self._csp_recv_port.recv(),
                                                self._csp_recv_port)
 
-        # TODO (MR): self._shape must be set to the correct shape when
-        #  instantiating the Port
         return np.zeros(self._shape, self._d_type)
 
     def write(self, data: np.ndarray):

@@ -261,7 +261,6 @@ class Compiler:
         for proc in proc_group:
             model_cls = proc.model_class
 
-            # TODO (MR): Refactor to enable extension of SubCompilers.
             if issubclass(model_cls, AbstractPyProcessModel):
                 comp_to_procs.setdefault(PyProcCompiler, []).append(proc)
             elif issubclass(model_cls, AbstractCProcessModel):
@@ -370,8 +369,6 @@ class Compiler:
                 proc_builders.update(builders)
         return proc_builders, channel_map
 
-    # ToDo: (AW) Implement the general NodeConfig generation algorithm
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def _create_node_cfgs(
         self, proc_groups: ty.List[ProcGroup]
     ) -> ty.List[NodeConfig]:
@@ -504,7 +501,6 @@ class Compiler:
 
         return [ncfg]
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     @staticmethod
     def _create_sync_domains(
         proc_groups: ty.List[ProcGroup],
@@ -613,8 +609,6 @@ class Compiler:
 
         return list(sync_domains.values()), node_to_sync_domain_dict
 
-    # ToDo: (AW) Fix type resolution issues
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     @staticmethod
     def _create_runtime_service_as_py_process_model(
         node_to_sync_domain_dict: ty.Dict[Node, ty.Set[SyncDomain]],
@@ -672,9 +666,6 @@ class Compiler:
                 log.debug("RuntimeService Class: " + str(rs_class.__name__))
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
-                # TODO: Remove unnecessary kwargs
-                # TODO; like for PyRutimeServiceBuilder, certain args are
-                # TODO: unnecessary
                 rs_builder = RuntimeServiceBuilder(
                     rs_class,
                     sync_domain.protocol,
@@ -691,7 +682,6 @@ class Compiler:
                 rs_id += 1
         return rs_builders, proc_id_to_runtime_service_id_map
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def _create_mgmt_port_initializer(self, name: str) -> PortInitializer:
         return PortInitializer(
             name,
@@ -701,7 +691,6 @@ class Compiler:
             self._compile_config["pypy_channel_size"],
         )
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def _create_sync_channel_builders(
         self, rsb: ty.Dict[SyncDomain, RuntimeServiceBuilder]
     ) -> ty.Iterable[AbstractChannelBuilder]:
@@ -750,7 +739,6 @@ class Compiler:
                     sync_channel_builders.append(process_to_service)
         return sync_channel_builders
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def _assign_nodecfg_rtservice_to_var_models(
         self,
         node_cfgs: ty.List[NodeConfig],

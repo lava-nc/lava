@@ -229,9 +229,6 @@ class AbstractLoihiRunCfg(RunConfig):
                 # Assumption: User found it unnecessary to tag the PM for this
                 # particular process.
                 if len(proc_models[0].tags) == 0:
-                    # ToDo: Currently we are silently returning an untagged PM
-                    #  here. This might become a root-cause for errors in the
-                    #  future.
                     return proc_models[0]
                 # Case 2b(ii): PM is tagged:
                 # -------------------------
@@ -285,8 +282,6 @@ class AbstractLoihiRunCfg(RunConfig):
                                          f"{self.select_tag} for Process "
                                          f"{proc.name}::"
                                          f"{proc.__class__.__qualname__}.")
-                # ToDo: Currently we check for only 1 tag. So we return the
-                #  first SubPM with select_tag.
                 return proc_models[valid_sub_pm_idxs[0]]
         # Case 3b: User didn't ask for SubProcessModel:
         # --------------------------------------------
@@ -321,8 +316,6 @@ class AbstractLoihiRunCfg(RunConfig):
                                      f"'{self.select_tag}' for Process "
                                      f"{proc.name}::"
                                      f"{proc.__class__.__qualname__}.")
-            # ToDo: Currently we check for only 1 tag. So we return the
-            #  first HW-specific PM with select_tag.
             return proc_models[valid_leaf_pm_idxs[0]]
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:

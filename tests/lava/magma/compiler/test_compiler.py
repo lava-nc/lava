@@ -525,9 +525,6 @@ class TestCompiler(unittest.TestCase):
 
     def test_compile(self) -> None:
         """Tests the method compile() with a connected network of Processes.
-        TODO (MR): At the moment, all ProcModels are PyProcModels. Once all
-            SubCompilers work, this test should use a network of Processes
-            that have different types of ProcModels.
         """
 
         # Create some Processes and connect them.
@@ -551,7 +548,6 @@ class TestCompiler(unittest.TestCase):
         for channel_builder in executable.channel_builders:
             self.assertIsInstance(channel_builder, ChannelBuilderMp)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_sync_domain(self):
         """Check creation of custom and default sync domains.
 
@@ -615,7 +611,6 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(sd[0][4].name, "AsyncProtocol_SyncDomain")
         self.assertEqual(sd[0][4].protocol.__class__, AsyncProtocol)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_sync_domains_run_config_without_sync_domain(self):
         """Checks that if RunConfig has no SyncDomain, all defaults are
         chosen."""
@@ -637,7 +632,6 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(sd[0][0].protocol.__class__, ProtocolA)
         self.assertEqual(sd[0][1].protocol.__class__, ProtocolB)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_sync_domains_proc_assigned_to_multiple_domains(self):
         """Checks that processes cannot be assigned to multiple sync domains."""
 
@@ -654,7 +648,6 @@ class TestCompiler(unittest.TestCase):
         with self.assertRaises(AssertionError):
             c._create_sync_domains([proc_group], run_cfg, [], log=c.log)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_sync_domains_proc_assigned_to_incompatible_domain(self):
         """Checks that a process can only be assigned to a sync domain with a
         protocol compatible with the sync domain that the chosen process
@@ -676,7 +669,6 @@ class TestCompiler(unittest.TestCase):
         with self.assertRaises(AssertionError):
             c._create_sync_domains([proc_group], run_cfg, [], log=c.log)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_sync_domain_non_unique_domain_names(self):
         """Checks that sync domain names must be unique."""
 
@@ -697,7 +689,6 @@ class TestCompiler(unittest.TestCase):
         with self.assertRaises(AssertionError):
             c._create_sync_domains([proc_group], run_cfg, [], log=c.log)
 
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_create_node_cfgs(self):
         """Checks creation of NodeConfigs.
 
@@ -778,7 +769,6 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(ev2.runtime_srv_id, 0)
 
     @unittest.skip("MR: Skipping for merge.")
-    # TODO (MR): Adapted from old compiler code, may need review/refactoring.
     def test_compile_fail_on_multiple_compilation(self):
         """Checks that a process can only be compiled once."""
 

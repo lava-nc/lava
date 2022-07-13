@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 
 
-# ToDo: Add __post_init__() method to validate input arguments
 @dataclass
 class LavaPyType:
     cls: ty.Union[

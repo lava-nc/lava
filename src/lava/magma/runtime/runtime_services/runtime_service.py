@@ -200,11 +200,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
             if enum_equal(
                     recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PAUSE
             ):
-                # ToDo: Add some mechanism to get the exact process id
                 self.log.info(f"Process : {idx} has requested Pause")
                 self.req_pause = True
             if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_STOP):
-                # ToDo: Add some mechanism to get the exact process id
                 self.log.info(f"Process : {idx} has requested Stop")
                 self.req_stop = True
         return rcv_msgs

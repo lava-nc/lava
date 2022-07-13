@@ -46,11 +46,6 @@ ProcGroup = ty.List[AbstractProcess]
 class ProcessModelTypes(Enum):
     """Enumeration of different types of ProcessModels: Py, C, Nc, etc.
     """
-    # ToDo: Is this the right place for this Enum class?
-    # ToDo: A new ProcessModel type should be first registered with this Enum.
-    # ToDo: Confirm if assigning class objects is a valid thing to do with
-    #  enums. Using an Enum is convenient here over a Dict, because the
-    #  latter would require using a string key
     PY = AbstractPyProcessModel
     C = AbstractCProcessModel
     NC = AbstractNcProcessModel
@@ -320,8 +315,6 @@ class DiGraphBase(ntx.DiGraph):
         out_graph : DiGraphBase
             A copy of `self` with node-replacement surgery complete.
         """
-        # ToDo: Currently, only detects and collapses simple cycles in the
-        #  graph, using networkx.simple_cycles(). Can this be generalised?
 
         # Create a working copy of the graph
         out_graph = self.copy()
@@ -364,9 +357,6 @@ class ProcDiGraph(DiGraphBase):
         super(ProcDiGraph, self).__init__(*args, **kwargs)
 
         if proc_list:
-            # ToDo: Validate ProcList as list of AbstractProcesses
-            # The following nodes are added to whatever was created by
-            # super().__init__()
             self.add_nodes_from(proc_list)
             node_name_dict = dict(
                 zip(proc_list, [proc.name for proc in proc_list]))
@@ -598,7 +588,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
     def __init__(self, proc: AbstractProcess, run_cfg: RunConfig):
 
-        # ToDo: Add a check that proc is indeed a valid Lava Process
         self._base_proc = proc  # Process on which compile/run was called
         self._run_cfg = run_cfg
         # 1. Find all Processes
@@ -607,7 +596,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         for p in proc_list:
             if p.is_compiled:
                 raise ex.ProcessAlreadyCompiled(p)
-            # Todo: Is it correct to set "is compiled?" flag here?
             p._is_compiled = True
         # Number of Processes before resolving HierarchicalProcesses
         self._num_procs_pre_pm_discovery = len(proc_list)
@@ -759,7 +747,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
         return proc_models
 
-    # ToDo: (AW) This is a mess and should be cleaned up
     @staticmethod
     def _find_proc_models(proc: AbstractProcess) \
             -> ty.List[ty.Type[AbstractProcessModel]]:
@@ -787,11 +774,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
             ProcGroupDiGraphs._find_proc_models_in_module(proc, proc_module)
 
         # Search for the file of the module.
-        # ToDo: (AW) I think this could be simplified by using checking if
-        #  get_ipython exists and then use it to get get_ipython(
-        #  ).user_global_ns. This will return globally known classes,
-        #  including those in the jupyter namespace and therefore allow
-        #  using any ProcModels defined there.
         file = None
         if inspect.isclass(proc.__class__):
             if hasattr(proc.__class__, '__module__'):
@@ -854,8 +836,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                         if module != proc_module:
                             pm = ProcGroupDiGraphs._find_proc_models_in_module(
                                 proc, module)
-                            # TODO: Remove this hack of getting the qualified
-                            #  name path of the class in this manner
                             for proc_model in pm:
                                 proc_cls_mod = \
                                     inspect.getmodule(proc).__package__ + \

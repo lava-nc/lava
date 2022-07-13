@@ -31,8 +31,6 @@ from lava.magma.core.process.ports.ports import (
 from lava.magma.core.process.process import AbstractProcess
 
 
-# TODO (MR): Remove code duplication within this class and with
-#  CProcCompiler (creation of port initializers).
 class PyProcCompiler(SubCompiler):
     def __init__(
         self,
@@ -175,8 +173,6 @@ class PyProcCompiler(SubCompiler):
             self._tmp_channel_map.set_port_initializer(var_port, pi)
         return port_initializers
 
-    # TODO: (PP) This currently only works for PyPorts - needs general solution
-    # TODO: (PP) Currently does not support 1:many/many:1 connections
     @staticmethod
     def _map_var_port_class(port: VarPort) -> ty.Type[PyVarPort]:
         """Maps the port class of a given VarPort from its source RefPort. This
