@@ -1,5 +1,5 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
 
@@ -11,6 +11,8 @@ class NoProcessModelFound(Exception):
 
 class ProcessAlreadyCompiled(Exception):
     def __init__(self, proc):
-        msg = f"Process '{proc.name}::{proc.__class__.__name__}' has been " \
-              f"compiled already. Processes can't be compiled more than once."
+        msg = (
+            f"Process '{proc.name}::{proc.__class__.__name__}' has been "
+            f"compiled already. Processes can't be compiled more than once."
+        )
         super().__init__(msg)

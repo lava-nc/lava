@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -17,6 +17,7 @@ from lava.magma.core.decorator import implements, requires
 from lava.proc.monitor.process import Monitor
 from lava.proc.lif.process import LIF
 from lava.magma.compiler.compiler import Compiler
+from lava.magma.compiler import compiler_graphs
 from lava.magma.core.run_configs import Loihi1SimCfg
 
 
@@ -84,7 +85,7 @@ class Monitors(unittest.TestCase):
         # Create a LIF neuron which has an InPort called a_in
         neuron = LIF(shape=(1,),
                      vth=200,
-                     b=5)
+                     bias_mant=5)
 
         # Check if the type error is raised
         with self.assertRaises(TypeError):
@@ -102,9 +103,8 @@ class Monitors(unittest.TestCase):
         monitor.probe(target=some_proc.s, num_steps=num_steps)
 
         # Regardless where we start searching...
-        c = Compiler()
-        procs1 = c._find_processes(some_proc)
-        procs2 = c._find_processes(monitor)
+        procs1 = compiler_graphs.find_processes(some_proc)
+        procs2 = compiler_graphs.find_processes(monitor)
 
         # ...we will find all of the processes
         all_procs = {some_proc, monitor}
@@ -204,7 +204,7 @@ class Monitors(unittest.TestCase):
         num_steps = 6
         neuron = LIF(shape=shape,
                      vth=3,
-                     bias=1)
+                     bias_mant=1)
 
         rcnd = RunSteps(num_steps=num_steps)
         rcfg = Loihi1SimCfg()
@@ -249,7 +249,7 @@ class Monitors(unittest.TestCase):
         num_steps = 6
         neuron = LIF(shape=shape,
                      vth=3,
-                     bias=1)
+                     bias_mant=1)
 
         # Probe voltage of LIF neurons with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -294,7 +294,7 @@ class Monitors(unittest.TestCase):
         num_steps = 6
         neuron = LIF(shape=shape,
                      vth=3,
-                     bias=1)
+                     bias_mant=1)
 
         # Probe voltage of LIF neurons with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -339,7 +339,7 @@ class Monitors(unittest.TestCase):
         exe = c.compile(monitor, Loihi1SimCfg())
 
         # Check if built model has these proc_params
-        self.assertEqual(next(iter(exe.py_builders)).proc_params,
+        self.assertEqual(next(iter(exe.proc_builders)).proc_params,
                          monitor.proc_params)
 
 

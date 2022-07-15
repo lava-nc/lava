@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -197,9 +197,6 @@ class TestPauseRequestedFromModel(unittest.TestCase):
         self.assertFalse(process.runtime._is_running)
 
     @unittest.skip
-    # TODO: Right now we only discover connected processes from a process
-    # We need to discuss if it makes sense to also discover other unconnected
-    # processes.
     def test_pause_request_from_hierarchical_model(self):
         """Test 2 models - one sync and another aynsc - able to pause and
         stop"""

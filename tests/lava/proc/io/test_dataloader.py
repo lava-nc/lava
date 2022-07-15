@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from typing import List, Tuple
@@ -66,7 +66,7 @@ class SpikeDataset(DummyDataset):
 
 class DummyProc(AbstractProcess):
     def __init__(self, shape: tuple) -> None:
-        super().__init__(shape=shape)
+        super().__init__()
         self.state = Var(shape=shape, init=np.zeros(shape))
         self.s_out = OutPort(shape=shape)
 
@@ -91,7 +91,9 @@ class TestStateDataloader(unittest.TestCase):
         offset = 2
 
         proc = DummyProc(shape)
-        dataloader = StateDataloader(DummyDataset(shape), interval, offset)
+        dataloader = StateDataloader(dataset=DummyDataset(shape),
+                                     interval=interval,
+                                     offset=offset)
 
         ground_truth = ReceiveProcess(
             shape=dataloader.ground_truth.shape, buffer=num_steps
@@ -133,7 +135,9 @@ class TestSpikeDataloader(unittest.TestCase):
         num_steps: int,
     ) -> None:
         dataloader = SpikeDataloader(
-            SpikeDataset(shape + (steps,)), interval, offset
+            dataset=SpikeDataset(shape + (steps,)),
+            interval=interval,
+            offset=offset
         )
 
         ground_truth = ReceiveProcess(

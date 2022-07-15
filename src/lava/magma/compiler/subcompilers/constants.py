@@ -1,0 +1,11 @@
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
+# See: https://spdx.org/licenses/
+
+COUNTERS_PER_EMBEDDED_CORE = 900
+EMBEDDED_CORE_COUNTER_START_INDEX = 33
+
+NUM_VIRTUAL_CORES_L2 = 128
+NUM_VIRTUAL_CORES_L3 = 120
+
+MAX_EMBEDDED_CORES_PER_CHIP = 3

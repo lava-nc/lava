@@ -1,13 +1,12 @@
-# Copyright (C) 2021 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.builder import (
-        AbstractRuntimeServiceBuilder,
-        PyProcessBuilder
-    )
+    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import \
+        RuntimeServiceBuilder
 from abc import ABC, abstractmethod
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
@@ -35,7 +34,7 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'AbstractRuntimeServiceBuilder']]):
+            SyncDomain, 'RuntimeServiceBuilder']]):
         """Given a target_fn starts a system process"""
         pass
 

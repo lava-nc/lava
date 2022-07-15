@@ -1,8 +1,8 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import unittest
-from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ACTIVATION_MODE
+from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ActivationMode
 
 
 class TestSigmaProcess(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestDeltaProcess(unittest.TestCase):
         self.assertEqual(sdn.shape, (2, 3, 4))
         self.assertEqual(sdn.vth.init, 10)
         self.assertEqual(sdn.cum_error.init, False)
-        self.assertEqual(sdn.wgt_exp.init, 0)
+        self.assertEqual(sdn.spike_exp.init, 0)
         self.assertEqual(sdn.state_exp.init, 0)
 
 
@@ -36,6 +36,6 @@ class TestSigmaDeltaProcess(unittest.TestCase):
         self.assertEqual(sdn.vth.init, 10)
         self.assertEqual(sdn.cum_error.init, False)
         self.assertEqual(sdn.bias.init, 0)
-        self.assertEqual(sdn.wgt_exp.init, 0)
+        self.assertEqual(sdn.spike_exp.init, 0)
         self.assertEqual(sdn.state_exp.init, 0)
-        self.assertEqual(sdn.proc_params['act_fn'], ACTIVATION_MODE.ReLU)
+        self.assertEqual(sdn.proc_params['act_mode'], ActivationMode.RELU)

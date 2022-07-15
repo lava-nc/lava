@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -31,11 +31,13 @@ class Reset(AbstractProcess):
     """
     def __init__(
         self,
+        *,
         reset_value: Union[int, float] = 0,
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(reset_value=reset_value, interval=interval,
+                         offset=offset)
         self.reset_value = Var((1,), init=reset_value)
         self.interval = Var((1,), init=interval)
         self.offset = Var((1,), init=offset % interval)

@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import unittest
@@ -15,7 +15,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.dense.process import Dense
+from lava.proc.dense.process import Dense, SignMode
 
 
 class DenseRunConfig(RunConfig):
@@ -50,7 +50,7 @@ class VecSendandRecvProcess(AbstractProcess):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs.pop("shape", (1,))
         vec_to_send = kwargs.pop("vec_to_send")
         send_at_times = kwargs.pop("send_at_times")
@@ -73,7 +73,7 @@ class VecRecvProcess(AbstractProcess):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         shape = kwargs.get("shape", (1,))
         self.shape = shape
         self.s_in = InPort(shape=(shape[1],))
@@ -177,7 +177,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
         # entry [2,2] of the connectivity mat.
         weights = np.zeros(shape, dtype=float)
         weights[2, 2] = 1
-        dense = Dense(shape=shape, weights=weights)
+        dense = Dense(weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -215,7 +215,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
         # single output layer neuron.
         weights = np.zeros(shape, dtype=float)
         weights[2, :] = [2, -3, 4, -5]
-        dense = Dense(shape=shape, weights=weights)
+        dense = Dense(weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -253,7 +253,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
         # all output layer neurons.
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [3, 4, 5]
-        dense = Dense(shape=shape, weights=weights)
+        dense = Dense(weights=weights)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -289,7 +289,7 @@ class TestDenseProcessModelFloat(unittest.TestCase):
         # Set up Dense Process with fully connected recurrent connectivity
         # architecture
         weights = np.ones(shape, dtype=float)
-        dense = Dense(shape=shape, weights=weights)
+        dense = Dense(weights=weights)
         # Receive neuron spikes
         sps.s_out.connect(dense.s_in)
         dense.a_out.connect(sps.a_in)
@@ -324,7 +324,8 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         #  output neurons.
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [0.5, 300, 40]
-        dense = Dense(shape=shape, weights=weights, sign_mode=2)
+        dense = Dense(weights=weights,
+                      sign_mode=SignMode.EXCITATORY)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -367,7 +368,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         # output neurons with both excitatory and inhibitory weights.
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [300, -300, 39]
-        dense = Dense(shape=shape, weights=weights, sign_mode=1)
+        dense = Dense(weights=weights, sign_mode=SignMode.MIXED)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -415,7 +416,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [300, -300, 39]
         # Set weight_exp = 1. This affects weight scaling.
-        dense = Dense(shape=shape, weights=weights, weight_exp=1)
+        dense = Dense(weights=weights, weight_exp=1)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -461,7 +462,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [300, -300, 39]
         # Set num_weight_bits = 7. This affects weight scaling.
-        dense = Dense(shape=shape, weights=weights, num_weight_bits=7)
+        dense = Dense(weights=weights, num_weight_bits=7)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -505,7 +506,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         # weights.
         weights = np.zeros(shape, dtype=float)
         weights[2, :] = [300, -300, 39, -0.4]
-        dense = Dense(shape=shape, weights=weights, sign_mode=1)
+        dense = Dense(weights=weights, sign_mode=SignMode.MIXED)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(dense.s_in)
@@ -542,7 +543,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         # Set up Dense Process with fully connected recurrent connectivity
         # architecture.
         weights = np.ones(shape, dtype=float)
-        dense = Dense(shape=shape, weights=weights)
+        dense = Dense(weights=weights)
         # Receive neuron spikes
         sps.s_out.connect(dense.s_in)
         dense.a_out.connect(sps.a_in)
