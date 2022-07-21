@@ -172,9 +172,9 @@ class DiGraphBase(ntx.DiGraph):
 
     def __init__(self, *args, **kwargs):
         super(DiGraphBase, self).__init__(*args, **kwargs)
-        self._annotate_proc_graph_by_degree()
+        self.annotate_digraph_by_degree()
 
-    def _annotate_proc_graph_by_degree(self):
+    def annotate_digraph_by_degree(self):
         """Annotate the graph's nodes according to their degree.
 
         More specifically, the annotations are based on the degree deficit
@@ -227,7 +227,7 @@ class DiGraphBase(ntx.DiGraph):
         if graph is None:
             graph = self.copy()
 
-        graph._annotate_proc_graph_by_degree()
+        graph.annotate_digraph_by_degree()
 
         leaves = [node for node, nodeattr in graph.nodes.items() if
                   nodeattr['degdef'] == NodeAnnotation.PUREOUT or nodeattr[
@@ -270,17 +270,24 @@ class DiGraphBase(ntx.DiGraph):
                                  "proper subset of nodes of the graph.")
 
         out_graph = self.copy()
-        # If the subgraph contains 0 or 1 node, there is nothing to
+        # If the subgraph contains 0 nodes, there is nothing to
         # collapse/condense. Just return the original graph.
-        if len(list(subgraph.nodes)) <= 1:
+        if len(list(subgraph.nodes)) < 1:
+            return out_graph
+        # If the subgraph contains onlt 1 node AND it has degree 0, there is
+        # nothing to collapse/condense. Just return the original graph.
+        if len(list(subgraph.nodes)) == 1 and \
+                list(subgraph.nodes.values())[0]['degdef'] == \
+                NodeAnnotation.ISOLATED:
             return out_graph
         # If the subgraph is the same as the main graph, remove
         # everything from out_graph, add just 1 node corresponding to the
-        # entire graph, and return.
+        # entire graph, annotate the new graph, and return.
         if list(subgraph.edges) == list(self.edges) and set(subgraph.nodes) \
                 == set(self.nodes):
             out_graph.remove_nodes_from(list(out_graph.nodes))
             out_graph.add_node(self)
+            out_graph.annotate_digraph_by_degree()
             return out_graph
 
         # The following algorithm is based on:
@@ -302,10 +309,10 @@ class DiGraphBase(ntx.DiGraph):
                     out_graph.add_edge(neighbour, subgraph)
             out_graph.remove_node(node)
 
-        out_graph._annotate_proc_graph_by_degree()
+        out_graph.annotate_digraph_by_degree()
         return out_graph
 
-    def collapse_cycles_to_nodes(self):
+    def collapse_cycles_to_nodes(self) -> 'DiGraphBase':
         """Find simple cycles and collapse them on a single node iteratively,
         until no simple cycles can be found or the entire graph reduces to a
         single simple cycle.
@@ -375,7 +382,7 @@ class ProcDiGraph(DiGraphBase):
                     zip([proc] * len(out_proc_list), out_proc_list))
                 self.add_edges_from(out_edge_list)
 
-            self._annotate_proc_graph_by_degree()
+            self.annotate_digraph_by_degree()
 
     @staticmethod
     def _get_port_direction(port: AbstractPort) -> str:
