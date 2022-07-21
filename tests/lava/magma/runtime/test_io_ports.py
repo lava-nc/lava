@@ -272,7 +272,7 @@ class TestIOPorts(unittest.TestCase):
         output not conected at all."""
         sender = HP1()
         sender.run(condition=RunSteps(num_steps=2),
-                     run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
+                   run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
         self.assertTrue(np.all(sender.h_var.get() == np.array([3, 4])))
         sender.stop()
 
