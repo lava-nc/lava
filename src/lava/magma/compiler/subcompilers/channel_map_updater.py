@@ -36,7 +36,9 @@ class ChannelMapUpdater:
 
     def add_src_port(self, src_port: AbstractSrcPort) -> None:
         for dst_port in src_port.get_dst_ports():
-            self.add_port_pair(src_port, dst_port)
+            if len(dst_port.get_dst_ports()) > 0:
+                # Only add port pair if it is not a dangling output port
+                self.add_port_pair(src_port, dst_port)
 
     def add_dst_ports(self, dst_ports: ty.List[AbstractDstPort]) -> None:
         for dst_port in dst_ports:
@@ -44,7 +46,9 @@ class ChannelMapUpdater:
 
     def add_dst_port(self, dst_port: AbstractDstPort) -> None:
         for src_port in dst_port.get_src_ports():
-            self.add_port_pair(src_port, dst_port)
+            if len(src_port.get_src_ports()) > 0:
+                # Only add port pair if it is not a dangling input port
+                self.add_port_pair(src_port, dst_port)
 
     def add_port_pair(self,
                       src_port: AbstractSrcPort,
