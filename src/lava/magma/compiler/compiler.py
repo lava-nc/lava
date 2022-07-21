@@ -327,9 +327,10 @@ class Compiler:
                                  "subcompiler detected.")
         # 2. If the index of C subcompiler is larger (appears later in the
         # list), then swap it with Nc subcompiler.
-        if c_idx[0] > nc_idx[0]:
-            subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = subcompilers[
-                nc_idx[0]], subcompilers[c_idx[0]]
+        if len(c_idx) > 0 and len(nc_idx) > 0:
+            if c_idx[0] > nc_idx[0]:
+                subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = subcompilers[
+                    nc_idx[0]], subcompilers[c_idx[0]]
         # We have ensured that C subcompiler appears before Nc subcompiler in
         # the list we return. As compile() is called serially on each
         # subcompiler, C Processes will be compiled before Nc Processes
