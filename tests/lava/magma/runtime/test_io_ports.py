@@ -23,6 +23,7 @@ from lava.magma.core.run_conditions import RunSteps
 class HP1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.h_var = Var(shape=(2,))
         self.h_out = OutPort(shape=(2,))
 
 
@@ -38,6 +39,7 @@ class HP2(AbstractProcess):
 class P1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.var = Var(shape=(2,), init=4)
         self.out = OutPort(shape=(2,))
 
 
@@ -60,6 +62,8 @@ class PyProcModelHP1(AbstractSubProcessModel):
         # the nested process
         self.p1 = P1()
         self.p1.out.connect(proc.out_ports.h_out)
+        # Reference h_var with var of the nested process
+        proc.vars.h_var.alias(self.p1.var)
 
 
 # A minimal hierarchical PyProcModel implementing HP2
@@ -82,11 +86,13 @@ class PyProcModelHP2(AbstractSubProcessModel):
 @requires(CPU)
 @tag('floating_pt')
 class PyProcModel1(PyLoihiProcessModel):
+    var: np.ndarray = LavaPyType(np.ndarray, np.int32)
     out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_spk(self):
         # Send data
         data = np.array([1, 2])
+        self.var = data + 2
         self.out.send(data)
 
 
@@ -250,6 +256,24 @@ class TestIOPorts(unittest.TestCase):
         self.assertTrue(np.all(recv1.h_var.get() == np.array([1, 2])))
         self.assertTrue(np.all(recv2.h_var.get() == np.array([1, 2])))
         self.assertTrue(np.all(recv3.h_var.get() == np.array([1, 2])))
+        sender.stop()
+
+    def test_dangling_input(self):
+        """Checks if the hierarchical process works with dangling input i.e.
+        input not connected at all."""
+        receiver = HP2()
+        receiver.run(condition=RunSteps(num_steps=2),
+                     run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
+        self.assertTrue(np.all(receiver.h_var.get() == np.array([0, 0])))
+        receiver.stop()
+
+    def test_dangling_output(self):
+        """Checks if the hierarchical process works with dangling output i.e.
+        output not connected at all."""
+        sender = HP1()
+        sender.run(condition=RunSteps(num_steps=2),
+                   run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
+        self.assertTrue(np.all(sender.h_var.get() == np.array([3, 4])))
         sender.stop()
 
 
