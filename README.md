@@ -78,7 +78,7 @@ pip install -U pip
 pip install "poetry>=1.1.13"
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git switch release/v0.4.0
 ./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
@@ -97,7 +97,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git switch release/v0.4.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
