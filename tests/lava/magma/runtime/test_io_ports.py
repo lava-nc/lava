@@ -269,7 +269,7 @@ class TestIOPorts(unittest.TestCase):
 
     def test_dangling_output(self):
         """Checks if the hierarchical process works with dangling output i.e.
-        output not conected at all."""
+        output not connected at all."""
         sender = HP1()
         sender.run(condition=RunSteps(num_steps=2),
                    run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
