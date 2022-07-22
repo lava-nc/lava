@@ -179,8 +179,6 @@ class AbstractLoihiRunCfg(RunConfig):
         -------
         Selected ProcessModel class
         """
-        # filter repeated proc_models
-        proc_models = list(set(proc_models))
         num_pm = len(proc_models)
         # Case 0: No ProcessModels exist:
         # ------------------------------

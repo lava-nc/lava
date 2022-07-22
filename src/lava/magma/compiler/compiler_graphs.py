@@ -851,7 +851,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                                     import_module(proc_cls_mod)
                                 class_ = getattr(proc_cls_mod,
                                                  proc_model.__name__)
-                                proc_models.append(class_)
+                                if class_ not in proc_models:
+                                    proc_models.append(class_)
                     except Exception:
                         warnings.warn(
                             f"Cannot import module '{module}' when searching "
