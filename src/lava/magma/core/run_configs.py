@@ -179,7 +179,6 @@ class AbstractLoihiRunCfg(RunConfig):
         -------
         Selected ProcessModel class
         """
-
         num_pm = len(proc_models)
         # Case 0: No ProcessModels exist:
         # ------------------------------
