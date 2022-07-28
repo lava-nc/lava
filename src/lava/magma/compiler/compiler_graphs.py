@@ -811,23 +811,24 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         if not proc_module.__name__ == "__main__":
             # Get the parent module.
             module_spec = importlib.util.find_spec(proc_module.__name__)
-            parent_module = importlib.import_module(module_spec.parent)
+            if module_spec.parent:
+                parent_module = importlib.import_module(module_spec.parent)
 
-            # Get all the modules inside the parent (namespace) module. This
-            # is required here, because the namespace module can span multiple
-            # repositories.
-            namespace_module_infos = list(
-                pkgutil.iter_modules(
-                    parent_module.__path__,
-                    parent_module.__name__ + "."
+                # Get all the modules inside the parent (namespace) module.
+                # This is required here, because the namespace module can span
+                # multiple repositories.
+                namespace_module_infos = list(
+                    pkgutil.iter_modules(
+                        parent_module.__path__,
+                        parent_module.__name__ + "."
+                    )
                 )
-            )
 
-            # Extract the directory name of each module.
-            for _, name, _ in namespace_module_infos:
-                module = importlib.import_module(name)
-                module_dir_name = os.path.dirname(inspect.getfile(module))
-                dir_names.append(module_dir_name)
+                # Extract the directory name of each module.
+                for _, name, _ in namespace_module_infos:
+                    module = importlib.import_module(name)
+                    module_dir_name = os.path.dirname(inspect.getfile(module))
+                    dir_names.append(module_dir_name)
 
         # Go through all directories and extract all the ProcModels.
         for dir_name in dir_names:
