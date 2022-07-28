@@ -614,8 +614,15 @@ class Compiler:
 
             # Add process to existing or new default sync domain if not part
             # of custom sync domain
+            #  TODO: This will only work if c and ncc process end up on same sync domain and python in different
+            #  TODO: In future if we have CProcess running with Python on  same node, this will fail.
+            default_py_sd_name = proto.__name__ + "_PY" + "_SyncDomain"
+            default_c_nc_sd_name = proto.__name__ + "_NC" + "_SyncDomain"
             if p not in proc_to_domain_map:
-                default_sd_name = proto.__name__ + "_SyncDomain"
+                if issubclass(pm, AbstractPyProcessModel):
+                    default_sd_name = default_py_sd_name
+                else:
+                    default_sd_name = default_c_nc_sd_name
                 if default_sd_name in sync_domains:
                     # Default sync domain for current protocol already exists
                     sd = sync_domains[default_sd_name]
