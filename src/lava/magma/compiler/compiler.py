@@ -616,6 +616,8 @@ class Compiler:
             # of custom sync domain
             if p not in proc_to_domain_map:
                 default_sd_name = proto.__name__ + "_SyncDomain"
+                if not issubclass(pm, AbstractPyProcessModel):
+                    default_sd_name = proto.__name__ + "_Nc_C" + "_SyncDomain"
                 if default_sd_name in sync_domains:
                     # Default sync domain for current protocol already exists
                     sd = sync_domains[default_sd_name]
