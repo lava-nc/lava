@@ -46,7 +46,7 @@ classifiers = [
 python = ">=3.8, <3.11"
 
 matplotlib = "^3.5.1"
-numpy = "^1.22.2"
+intel-numpy = "^1.21.4"
 pytest = "^7.0.1"
 scipy = "^1.8.0"
 unittest2 = "^1.1.0"

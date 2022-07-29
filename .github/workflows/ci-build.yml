@@ -32,7 +32,9 @@ jobs:
 
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
+      run: |
+        poetry update --no-interaction
+        poetry install --no-interaction --no-root
 
     - name: Install Lava
       run: poetry install --no-interaction
@@ -79,7 +81,9 @@ jobs:
 
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
+      run: |
+        poetry update --no-interaction
+        poetry install --no-interaction --no-root
 
     - name: Install Lava
       run: poetry install --no-interaction
@@ -124,7 +128,9 @@ jobs:
 
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
+      run: |
+        poetry update --no-interaction
+        poetry install --no-interaction --no-root
 
     - name: Install Lava
       run: poetry install --no-interaction
