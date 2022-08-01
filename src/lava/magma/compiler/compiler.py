@@ -309,18 +309,18 @@ class Compiler:
             # ...and add it to the list.
             subcompilers.append(compiler)
             # Remember the index for C and Nc subcompilers:
-            if isinstance(compiler, CProcCompiler):
+            if isinstance(compiler, type(CProcCompiler)):
                 c_idx.append(idx)
-            if isinstance(compiler, NcProcCompiler):
+            if isinstance(compiler, type(NcProcCompiler)):
                 nc_idx.append(idx)
 
         # Implement the heuristic "C-first Nc-second" whenever C and Nc
         # compilers are in the list. The subcompiler.compile is called in
         # their order of appearance in this list.
-        # ToDo: In the implementation below, we assume that there is only one
-        #  instance of each subcompiler (Py/C/Nc) per ProcGroup. This should
-        #  be true as long as the `compiler_type_to_procs` mapping comes from
-        #  `self._map_subcompiler_type_to_procs`.
+        # In the implementation below, we assume that there is only one
+        # instance of each subcompiler (Py/C/Nc) per ProcGroup. This should
+        # be true as long as the `compiler_type_to_procs` mapping comes from
+        # `self._map_subcompiler_type_to_procs`.
         # 1. Confirm that there is only one instance of C and Nc subcompilers
         if len(c_idx) > 1 or len(nc_idx) > 1:
             raise AssertionError("More than one instance of C or Nc "
@@ -616,6 +616,8 @@ class Compiler:
             # of custom sync domain
             if p not in proc_to_domain_map:
                 default_sd_name = proto.__name__ + "_SyncDomain"
+                if not issubclass(pm, AbstractPyProcessModel):
+                    default_sd_name = proto.__name__ + "_Nc_C" + "_SyncDomain"
                 if default_sd_name in sync_domains:
                     # Default sync domain for current protocol already exists
                     sd = sync_domains[default_sd_name]
