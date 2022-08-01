@@ -34,6 +34,9 @@ class Mapper:
     Assigns virtual addresses to different processes, mappable by mapping
     logical addresses to virtual addresses.
     """
+    def __init__(self):
+        self.mapper_core_offset: LogicalCoreId = 0
+        self.mapper_core_dict: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
 
     def _set_virtual_address_nc(self, mappable: Mappable, num_cores: int) \
             -> None:
@@ -50,6 +53,12 @@ class Mapper:
         l_addrs: ty.List[NcLogicalAddress] = mappable.get_logical()
         p_addrs: ty.List[NcVirtualAddress] = []
         for l_addr in l_addrs:
+            if l_addr.core_id not in self.mapper_core_dict:
+                self.mapper_core_dict[l_addr.core_id] = self.mapper_core_offset
+                l_addr.core_id = self.mapper_core_offset
+                self.mapper_core_offset += 1
+            else:
+                l_addr.core_id = self.mapper_core_dict[l_addr.core_id]
             chip_idx = l_addr.core_id // num_cores
             core_idx = l_addr.core_id % num_cores
             p_addrs.append(
@@ -80,6 +89,12 @@ class Mapper:
             p_addrs: ty.List[ResourceAddress] = []
             for resource in ncb.compiled_resources:
                 l_addr: ResourceAddress = resource.l_address
+                if l_addr.core_id not in self.mapper_core_dict:
+                    self.mapper_core_dict[l_addr.core_id] = self.mapper_core_offset
+                    l_addr.core_id = self.mapper_core_offset
+                    self.mapper_core_offset += 1
+                else:
+                    l_addr.core_id = self.mapper_core_dict[l_addr.core_id]
                 chip_idx = l_addr.core_id // num_cores
                 core_idx = l_addr.core_id % num_cores
                 p_addrs.append(
@@ -96,6 +111,10 @@ class Mapper:
 
             for var_port_initializer in ncb.var_ports.values():
                 self._set_virtual_address_nc(var_port_initializer, num_cores)
+
+            # TODO: Yash - Please update Output Axons correctly to reflect
+            # TODO: core conflict (dstCoreIds)
+            self.mapper_core_dict.clear()
 
         # Iterate over all the cbuilder and map them
         for cb in c_builders.values():
