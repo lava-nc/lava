@@ -265,7 +265,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 self.req_stop = True
         return rcv_msgs
 
-
     def _handle_pause(self):
         # Inform all ProcessModels about the PAUSE command
         self._send_pm_cmd(MGMT_COMMAND.PAUSE)
@@ -493,6 +492,3 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))
-
-
-
