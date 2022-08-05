@@ -6,7 +6,7 @@ include_directories(include)
 
 file (GLOB MULTI_PROC_SRCS "src/multiprocessing.cc")
 
-file (GLOB PY_WRAPPER "src/py_wrapper.cc")
+file (GLOB PY_WRAPPER "src/message_infrastructure_py_wrapper.cc")
 
 add_subdirectory(pybind11)
 
