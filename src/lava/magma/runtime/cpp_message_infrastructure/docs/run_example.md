@@ -1,4 +1,4 @@
-# An Example for PYWrapper
+# An Example for MessageInfrastructurePywrapper
 
 *Welcome to the messaging refactory project, and this will show how an example run*
 

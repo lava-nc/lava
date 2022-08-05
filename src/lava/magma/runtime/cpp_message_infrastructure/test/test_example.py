@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from PyWrapper import MultiProcessing
+from MessageInfrastructurePywrapper import MultiProcessing
 import time
 
 

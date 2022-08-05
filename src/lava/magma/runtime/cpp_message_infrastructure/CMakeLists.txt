@@ -12,5 +12,5 @@ add_subdirectory(pybind11)
 
 add_library(multi_processing SHARED ${MULTI_PROC_SRCS})
 
-pybind11_add_module(PyWrapper ${PY_WRAPPER})
-target_link_libraries(PyWrapper PRIVATE multi_processing)
+pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER})
+target_link_libraries(MessageInfrastructurePywrapper PRIVATE multi_processing)
