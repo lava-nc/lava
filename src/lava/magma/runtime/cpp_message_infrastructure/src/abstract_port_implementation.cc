@@ -6,13 +6,13 @@
 
 int AbstractPortImplementation::Start() {
   for (auto port : this->ports_){
-    port.Start();
+    port->Start();
   }
 }
 
 int AbstractPortImplementation::Join() {
   for (auto port : this->ports_){
-    port.Join();
+    port->Join();
   }
 }
 
@@ -20,6 +20,6 @@ std::vector<int> AbstractPortImplementation::GetShape() {
   return this->shape_;
 }
 
-std::vector<AbstractPort> AbstractPortImplementation::GetPorts() {
+std::vector<PortPtr> AbstractPortImplementation::GetPorts() {
   return this->ports_;
 }

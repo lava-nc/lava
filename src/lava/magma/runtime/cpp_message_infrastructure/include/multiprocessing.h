@@ -18,7 +18,7 @@ class MultiProcessing {
   void BuildActor(std::function<void()>);
   void CheckActor();
  private:
-  std::vector<AbstractActor*> actors_;
+  std::vector<ActorPtr> actors_;
   //SharedMemManager shmm_;
 };
 

@@ -30,4 +30,7 @@ class PosixActor : public AbstractActor {
   };
 };
 
+using ActorPtr = AbstractActor *;
+using PosixActorPtr = PosixActor *;
+
 #endif

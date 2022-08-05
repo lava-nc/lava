@@ -32,4 +32,8 @@ class AbstractRecvPort : public AbstractPort {
   virtual int Recv() = 0;
 };
 
+using PortPtr = AbstractPort *;
+using SendPortPtr = AbstractSendPort *;
+using RecvPortPtr = AbstractRecvPort *;
+
 #endif

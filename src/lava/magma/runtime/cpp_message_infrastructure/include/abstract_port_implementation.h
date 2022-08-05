@@ -15,13 +15,13 @@ class AbstractPortImplementation {
   int Start();
   int Join();
   std::vector<int> GetShape();
-  std::vector<AbstractPort> GetPorts();
+  std::vector<PortPtr> GetPorts();
 
   DataType dtype_;
   std::vector<int> shape_;
   size_t size_;
   ProcessModel process_model_;
-  std::vector<AbstractPort> ports_;
+  std::vector<PortPtr> ports_;
 };
 
 #endif

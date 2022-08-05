@@ -7,11 +7,12 @@
 
 #include "abstract_port.h"
 #include "utils.h"
+#include <memory>
 
 class AbstractChannel {
  public:
-  AbstractSendPort *src_port_ = NULL;
-  AbstractSendPort *dst_port_ = NULL;
+  std::shared_ptr<AbstractSendPort> src_port_;
+  std::shared_ptr<AbstractRecvPort> dst_port_;
 };
 
 #endif
