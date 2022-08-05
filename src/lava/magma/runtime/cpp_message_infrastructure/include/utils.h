@@ -5,6 +5,8 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+namespace message_infrastrature{
+
 enum ChannelType {
   ShmemChannel = 0,
   RpcChannel = 1,
@@ -14,5 +16,7 @@ enum ChannelType {
 enum DataType {
   // dtype
 };
+
+} // namespace message_infrastrature
 
 #endif

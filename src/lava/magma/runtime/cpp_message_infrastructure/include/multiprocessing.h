@@ -11,6 +11,8 @@
 #include "abstract_actor.h"
 #include "shm.h"
 
+namespace message_infrastrature{
+
 class MultiProcessing {
  public:
   // stop each actor in vector actors;
@@ -21,5 +23,7 @@ class MultiProcessing {
   std::vector<ActorPtr> actors_;
   //SharedMemManager shmm_;
 };
+
+} // namespace message_infrastrature
 
 #endif

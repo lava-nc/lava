@@ -5,6 +5,8 @@
 #ifndef ABSTACT_ACTOR_H_
 #define ABSTACT_ACTOR_H_
 
+namespace message_infrastrature{
+
 class AbstractActor {
  public:
   virtual int GetPid() = 0;
@@ -32,5 +34,7 @@ class PosixActor : public AbstractActor {
 
 using ActorPtr = AbstractActor *;
 using PosixActorPtr = PosixActor *;
+
+} // namespace message_infrastrature
 
 #endif

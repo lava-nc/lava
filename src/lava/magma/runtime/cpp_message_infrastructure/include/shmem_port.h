@@ -7,6 +7,8 @@
 
 #include "abstract_port.h"
 
+namespace message_infrastrature{
+
 class ShmemSendPort : public AbstractSendPort {
 
 };
@@ -14,5 +16,7 @@ class ShmemSendPort : public AbstractSendPort {
 class ShmemRecvPort : public AbstractRecvPort {
 
 };
+
+} // namespace message_infrastrature
 
 #endif

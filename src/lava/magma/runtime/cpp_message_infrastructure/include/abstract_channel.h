@@ -9,10 +9,14 @@
 #include "utils.h"
 #include <memory>
 
+namespace message_infrastrature{
+
 class AbstractChannel {
  public:
   std::shared_ptr<AbstractSendPort> src_port_;
   std::shared_ptr<AbstractRecvPort> dst_port_;
 };
+
+} // namespace message_infrastrature
 
 #endif

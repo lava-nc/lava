@@ -13,8 +13,12 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+namespace message_infrastrature{
+
 class SharedMemory {
 
 };
+
+} // namespace message_infrastrature
 
 #endif

@@ -11,6 +11,8 @@
 #include "shm.h"
 #include "utils.h"
 
+namespace message_infrastrature{
+
 class AbstractPort {
  public:
   virtual int Start() = 0;
@@ -35,5 +37,7 @@ class AbstractRecvPort : public AbstractPort {
 using PortPtr = AbstractPort *;
 using SendPortPtr = AbstractSendPort *;
 using RecvPortPtr = AbstractRecvPort *;
+
+} // namespace message_infrastrature
 
 #endif

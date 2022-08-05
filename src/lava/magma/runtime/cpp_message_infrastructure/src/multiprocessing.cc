@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <iostream>
 
+namespace message_infrastrature{
+
 #define CPP_INFO "[CPP_INFO] "
 
 void MultiProcessing::BuildActor(std::function<void()> target_fn) {
@@ -19,7 +21,7 @@ void MultiProcessing::BuildActor(std::function<void()> target_fn) {
 
   if (pid > 0) {
     std::cout << CPP_INFO << "parent, create actor\n";
-    AbstractActor *actor = new PosixActor(pid);
+    ActorPtr actor = new PosixActor(pid);
     actors_.push_back(actor);
   }
 
@@ -39,3 +41,5 @@ void MultiProcessing::CheckActor() {
     std::cout << CPP_INFO << actor->pid_ << std::endl;
   }
 }
+
+} // namespace message_infrastrature
