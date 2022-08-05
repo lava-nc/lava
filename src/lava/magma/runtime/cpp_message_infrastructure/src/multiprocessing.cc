@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <iostream>
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 #define CPP_INFO "[CPP_INFO] "
 

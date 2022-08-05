@@ -4,7 +4,7 @@
 
 #include "abstract_port_implementation.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 int AbstractPortImplementation::Start() {
   for (auto port : this->ports_){

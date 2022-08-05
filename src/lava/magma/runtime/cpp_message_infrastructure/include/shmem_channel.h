@@ -7,7 +7,7 @@
 
 #include "abstract_channel.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 class ShmemChannel : public AbstractChannel {
 

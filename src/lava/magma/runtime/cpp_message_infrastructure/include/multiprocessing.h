@@ -11,7 +11,7 @@
 #include "abstract_actor.h"
 #include "shm.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 class MultiProcessing {
  public:

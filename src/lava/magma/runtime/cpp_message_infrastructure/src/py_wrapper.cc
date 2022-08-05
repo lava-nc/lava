@@ -8,7 +8,7 @@
 #include "multiprocessing.h"
 //#include "abstract_port_implementation.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 namespace py = pybind11;
 

@@ -11,7 +11,7 @@
 #include "shm.h"
 #include "utils.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 class AbstractPort {
  public:

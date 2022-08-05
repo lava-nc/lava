@@ -10,7 +10,7 @@
 #include "abstract_port.h"
 #include "process_model.h"
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 class AbstractPortImplementation {
  public:

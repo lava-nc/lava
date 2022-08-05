@@ -5,7 +5,7 @@
 #ifndef ABSTACT_ACTOR_H_
 #define ABSTACT_ACTOR_H_
 
-namespace message_infrastrature{
+namespace message_infrastrature {
 
 class AbstractActor {
  public:
