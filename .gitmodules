@@ -1,3 +1,6 @@
 [submodule "docs"]
 	path = docs
 	url = https://github.com/lava-nc/lava-docs.git
+[submodule "src/lava/magma/runtime/cpp_message_infrastructure/pybind11"]
+	path = src/lava/magma/runtime/cpp_message_infrastructure/pybind11
+	url = https://github.com/pybind/pybind11.git
