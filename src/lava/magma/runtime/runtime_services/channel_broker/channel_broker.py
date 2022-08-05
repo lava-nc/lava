@@ -45,8 +45,9 @@ class AbstractChannelBroker(ABC):
 
 def generate_channel_name(prefix: str,
                           port_idx: int,
-                          csp_port: AbstractCspPort) -> str:
-    return prefix + str(port_idx) + "_" + str(csp_port.name)
+                          csp_port: AbstractCspPort,
+                          c_builder_idx: int) -> str:
+    return f"{prefix}{str(port_idx)}_{str(csp_port.name)}_{str(c_builder_idx)}"
 
 
 class ChannelBroker(AbstractChannelBroker):
@@ -168,14 +169,16 @@ class ChannelBroker(AbstractChannelBroker):
                        input_channel: bool,
                        port_idx: int,
                        c_port: AbstractCPort,
-                       snip: EmbeddedSnip) -> ty.List[Channel]:
+                       snip: EmbeddedSnip,
+                       c_builder_idx: int) -> ty.List[Channel]:
         channels: ty.List[Channel] = []
         MESSAGE_SIZE_IN_C = 128 * 4
         if input_channel:
             for csp_port in c_port.csp_ports:
                 channel_name = generate_channel_name("in_grpc_",
                                                      port_idx,
-                                                     csp_port)
+                                                     csp_port,
+                                                     c_builder_idx)
                 channels.append(self._create_channel(
                     channel_name=channel_name,
                     message_size=MESSAGE_SIZE_IN_C,
@@ -185,7 +188,8 @@ class ChannelBroker(AbstractChannelBroker):
             for csp_port in c_port.csp_ports:
                 channel_name = generate_channel_name("out_grpc_",
                                                      port_idx,
-                                                     csp_port)
+                                                     csp_port,
+                                                     c_builder_idx)
                 channels.append(self._create_channel(
                     channel_name=channel_name,
                     message_size=MESSAGE_SIZE_IN_C,
