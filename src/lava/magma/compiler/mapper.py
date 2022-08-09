@@ -90,7 +90,8 @@ class Mapper:
             for resource in ncb.compiled_resources:
                 l_addr: ResourceAddress = resource.l_address
                 if l_addr.core_id not in self.mapper_core_dict:
-                    self.mapper_core_dict[l_addr.core_id] = self.mapper_core_offset
+                    self.mapper_core_dict[
+                        l_addr.core_id] = self.mapper_core_offset
                     l_addr.core_id = self.mapper_core_offset
                     self.mapper_core_offset += 1
                 else:
