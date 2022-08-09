@@ -69,8 +69,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     du: int = LavaPyType(int, np.uint16, precision=12)
     dv: int = LavaPyType(int, np.uint16, precision=12)
-    bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
-    bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
+    bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=13)
+    bias_exp: np.ndarray = LavaPyType(np.ndarray, np.uint16, precision=3)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
