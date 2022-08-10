@@ -36,7 +36,7 @@ class ShmemChannel : public AbstractChannel {
   sem_t *ack_ = NULL;
 };
 
-template class<T>
+template <class T>
 ShmemChannel* GetShmemChannel(SharedMemory *shm,
                               pybind11::array_t<T> &data,
                               size_t size,
