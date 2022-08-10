@@ -151,6 +151,31 @@ class CppRefPortScalarSparse : public CppRefPort {
     std::vector<dtype_> Write();
 };
 
+// --------
+// VarPorts
+// --------
+// A CppVarPort is a Port linked to a variable Var of a Process and might be
+// connected to a RefPort of another process. It is used to get or set the
+// value of the referenced Var across Processes. A CppVarPort is connected via
+// two channels to a CppRefPort. One channel is used to send data from the
+// CppRefPort to the CppVarPort and the other is used to receive data from the
+// CppVarPort. CppVarPort set or send the value of the linked Var (service())
+// given the command VarPortCmd received by a connected CppRefPort.
+class CppVarPort : public AbstractCppPort {
+  public:
+    std::vector<AbstractCspPort> GetCspPorts();
+    virtual void Service();
+
+    const CppVarPortVectorDense  VEC_DENSE;
+    const CppVarPortVectorSparse VEC_SPARSE;
+    const CppVarPortScalarDense  SCALAR_DENSE;
+    const CppVarPortScalarSparse SCALAR_SPARSE;
+
+    AbstractTransformer transformer_;
+    CspSendPort csp_send_port_;
+    CspRecvPort csp_recv_port_;
+    char var_name_[];
+};
 
 } // namespace message_infrastrature
 
