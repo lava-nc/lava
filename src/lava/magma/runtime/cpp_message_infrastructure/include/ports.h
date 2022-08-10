@@ -177,6 +177,32 @@ class CppVarPort : public AbstractCppPort {
     char var_name_[];
 };
 
+class CppVarPortVectorDense : public CppVarPort {
+  public:
+    void Service();
+};
+
+class CppVarPortVectorSparse : public CppVarPort {
+  public:
+    std::vector<ndarray> Recv();
+    std::vector<ndarray> Peek();
+    void Service();   
+};
+
+class CppVarPortScalarDense : public CppVarPort {
+  public:
+    int Recv();
+    int Peek();
+    void Service(); 
+};
+
+class CppVarPortScalarSparse : public CppVarPort {
+  public:
+    std::vector<int> Recv();
+    std::vector<int> Peek();
+    void Service(); 
+};
+
 } // namespace message_infrastrature
 
 #endif
