@@ -26,11 +26,11 @@ template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(std::string name,
-                SharedMemory shm,
-                Proto proto,
+                SharedMemory *shm,
+                Proto *proto,
                 size_t size,
-                sem_t req,
-                sem_t ack);
+                sem_t *req,
+                sem_t *ack);
   int Start();
   int Probe();
   int Send();
@@ -51,11 +51,11 @@ template<typename T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(std::string name,
-                SharedMemory shm,
-                Proto proto,
+                SharedMemory *shm,
+                Proto *proto,
                 size_t size,
-                sem_t req,
-                sem_t ack);
+                sem_t *req,
+                sem_t *ack);
   int Start();
   int Probe();
   int Recv();
@@ -73,10 +73,6 @@ class ShmemRecvPort : public AbstractRecvPort {
   std::thread *thread_ = NULL;
   ShmemRecvQueue<T> *queue = NULL;
 };
-template<typename T>
-using ShmemSendPortPtr = ShmemSendPort *;
-template<typename T>
-using ShmemRecvPortPtr = ShmemRecvPort *;
 
 } // namespace message_infrastructure
 
