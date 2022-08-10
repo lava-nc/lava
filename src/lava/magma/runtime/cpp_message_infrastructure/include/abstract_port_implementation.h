@@ -17,7 +17,7 @@ class AbstractPortImplementation {
   int Start();
   int Join();
   std::vector<int> GetShape();
-  std::vector<PortPtr> GetPorts();
+  virtual std::vector<PortPtr> GetPorts();
 
   DataType dtype_;
   std::vector<int> shape_;

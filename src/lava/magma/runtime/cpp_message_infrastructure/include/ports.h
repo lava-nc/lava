@@ -13,12 +13,16 @@ namespace message_infrastrature {
 
 class AbstractCppPort : public AbstractPortImplementation {
   public:
-    std::vector<AbstractPort> GetPorts();
+    virtual std::vector<PortPtr> GetPorts();
+
+    std::vector<PortPtr> ports_;
 };
 
 class AbstractCppIOPort : public AbstractCppPort {
   public:
-    std::vector<AbstractPort> GetPorts();
+    std::vector<PortPtr> GetPorts();
+
+    std::vector<PortPtr> ports_;
 };
 
 class CppInPort : public AbstractCppIOPort {

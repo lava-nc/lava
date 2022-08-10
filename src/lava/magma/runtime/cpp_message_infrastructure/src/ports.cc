@@ -3,13 +3,12 @@
 // See: https://spdx.org/licenses/
 
 #include <ports.h>
+#include <vector>
 
-std::vector<int> AbstractCppPort::GetShape() {
-  return this->shape_;
-}
+namespace message_infrastrature {
 
-std::vector<int> AbstractCppIOPort::GetShape() {
-  return this->shape_;
+std::vector<PortPtr> AbstractCppIOPort::GetPorts() {
+  return this->ports_;
 }
 
 bool CppInPort::Probe() {
@@ -22,4 +21,4 @@ void CppInPort::Recv() {
 void CppInPort::Peek() {
 }
 
-
+}
