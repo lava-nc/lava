@@ -15,10 +15,5 @@ bool CppInPort::Probe() {
   return;
 }
 
-void CppInPort::Recv() {
-}
-
-void CppInPort::Peek() {
-}
 
 }
