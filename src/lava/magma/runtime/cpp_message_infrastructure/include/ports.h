@@ -104,6 +104,54 @@ class CppOutPortScalarSparse : public CppOutPort {
     int Send();
 };
 
+// --------
+// RefPorts
+// --------
+// A CppRefPort is a Port connected to a VarPort of a variable Var of another
+// Process. It is used to get or set the value of the referenced Var across
+// Processes.
+class CppRefPort : public AbstractCppPort {
+  public:
+    std::vector<PortPtr> GetPorts();
+    virtual Read();
+    virtual Write();
+    virtual Wait();
+
+    const CppRefPortVectorDense  VEC_DENSE;
+    const CppRefPortVectorSparse VEC_SPARSE;
+    const CppRefPortScalarDense  SCALAR_DENSE;
+    const CppRefPortScalarSparse SCALAR_SPARSE;
+};
+
+
+class CppRefPortVectorDense : public CppRefPort {
+  public:
+    std::vector<dtype_> Read();
+    std::vector<dtype_> Write();
+};
+
+
+class CppRefPortVectorSparse : public CppRefPort {
+  public:
+    std::vector<dtype_> Read();
+    std::vector<dtype_> Write();
+};
+
+
+class CppRefPortScalarDense : public CppRefPort {
+  public:
+    int Read();
+    std::vector<dtype_> Write();
+};
+
+
+class CppRefPortScalarSparse : public CppRefPort {
+  public:
+    std::vector<int> Read();
+    std::vector<dtype_> Write();
+};
+
+
 } // namespace message_infrastrature
 
 #endif
