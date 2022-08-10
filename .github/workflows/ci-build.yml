@@ -54,6 +54,7 @@ jobs:
       run: |
         source $VENV
         cpplint --quiet --root=src/lava/magma/runtime/cpp_message_infrastructure/src/*.cc src/lava/magma/runtime/cpp_message_infrastructure/include/*.h
+      continue-on-error: true
 
   security-lint:
     name: Security Lint Code
