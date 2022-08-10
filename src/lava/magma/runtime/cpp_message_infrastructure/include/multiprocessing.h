@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef MULTIPROCESSING_H_
-#define MULTIPROCESSING_H_
+#ifndef INCLUDE_MULTIPROCESSING_H_
+#define INCLUDE_MULTIPROCESSING_H_
 
 #include <vector>
 #include <functional>
@@ -11,7 +11,7 @@
 #include "abstract_actor.h"
 #include "shm.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class MultiProcessing {
  public:
@@ -24,6 +24,6 @@ class MultiProcessing {
   //SharedMemManager shmm_;
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif
