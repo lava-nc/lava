@@ -81,6 +81,7 @@ sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
 unittest2 = "^1.1.0"
 autopep8 = "^1.6.0"
 ipykernel = "^6.15.0"
+cpplint = "^1.6.0"
 
 [tool.black]
 line-length = 80
