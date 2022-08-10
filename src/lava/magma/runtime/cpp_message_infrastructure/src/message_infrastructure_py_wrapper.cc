@@ -8,7 +8,7 @@
 #include "multiprocessing.h"
 //#include "abstract_port_implementation.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 namespace py = pybind11;
 
@@ -20,4 +20,4 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("stop", &MultiProcessing::Stop);
 }
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure

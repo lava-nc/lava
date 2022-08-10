@@ -9,7 +9,7 @@
 
 #include "abstract_port_implementation.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractCppPort : public AbstractPortImplementation {
   public:
@@ -36,6 +36,6 @@ class CppInPort : public AbstractCppIOPort {
 };
 
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <iostream>
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 #define CPP_INFO "[CPP_INFO] "
 
@@ -42,4 +42,4 @@ void MultiProcessing::CheckActor() {
   }
 }
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure

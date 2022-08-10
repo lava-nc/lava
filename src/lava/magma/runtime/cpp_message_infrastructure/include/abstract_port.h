@@ -11,7 +11,7 @@
 #include "shm.h"
 #include "utils.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractPort {
  public:
@@ -38,6 +38,6 @@ using PortPtr = AbstractPort *;
 using SendPortPtr = AbstractSendPort *;
 using RecvPortPtr = AbstractRecvPort *;
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif
