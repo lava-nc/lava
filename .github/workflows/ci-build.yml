@@ -49,6 +49,12 @@ jobs:
         .venv\Scripts\activate.ps1
         flakeheaven lint src/lava tests/
 
+    - name: Run cpplint for cpp_message_infrastructure
+      if: runner.os == 'Linux'
+      run: |
+        source $VENV
+        cpplint --quiet --root=src/lava/magma/runtime/cpp_message_infrastructure/src/*.cc src/lava/magma/runtime/cpp_message_infrastructure/include/*.h
+
   security-lint:
     name: Security Lint Code
     runs-on: ubuntu-latest
