@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_ABSTRACT_ACTOR_H_
-#define INCLUDE_ABSTRACT_ACTOR_H_
+#ifndef ABSTRACT_ACTOR_H_
+#define ABSTRACT_ACTOR_H_
 
 namespace message_infrastructure {
 
@@ -37,4 +37,4 @@ using PosixActorPtr = PosixActor *;
 
 }  // namespace message_infrastructure
 
-#endif  // INCLUDE_ABSTRACT_ACTOR_H_
+#endif  // ABSTRACT_ACTOR_H_

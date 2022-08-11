@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_ABSTRACT_CHANNEL_H_
-#define INCLUDE_ABSTRACT_CHANNEL_H_
+#ifndef ABSTRACT_CHANNEL_H_
+#define ABSTRACT_CHANNEL_H_
 
 #include <memory>
 
@@ -20,4 +20,4 @@ class AbstractChannel {
 
 }  // namespace message_infrastructure
 
-#endif  // INCLUDE_ABSTRACT_CHANNEL_H_
+#endif  // ABSTRACT_CHANNEL_H_

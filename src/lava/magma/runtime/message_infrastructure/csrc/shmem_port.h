@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_SHMEM_PORT_H_
-#define INCLUDE_SHMEM_PORT_H_
+#ifndef SHMEM_PORT_H_
+#define SHMEM_PORT_H_
 
 #include <thread>  // NOLINT [build/c++11]
 #include <queue>
@@ -76,4 +76,4 @@ class ShmemRecvPort : public AbstractRecvPort {
 
 }  // namespace message_infrastructure
 
-#endif  // INCLUDE_SHMEM_PORT_H_
+#endif  // SHMEM_PORT_H_
