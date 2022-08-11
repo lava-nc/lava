@@ -5,7 +5,7 @@
 #include <ports.h>
 #include <vector>
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 std::vector<PortPtr> AbstractCppIOPort::GetPorts() {
   return this->ports_;

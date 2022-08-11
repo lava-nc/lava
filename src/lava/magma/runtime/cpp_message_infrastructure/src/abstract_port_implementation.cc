@@ -4,7 +4,7 @@
 
 #include "abstract_port_implementation.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 int AbstractPortImplementation::Start() {
   for (auto port : this->ports_){
@@ -22,4 +22,4 @@ std::vector<int> AbstractPortImplementation::GetShape() {
   return this->shape_;
 }
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure

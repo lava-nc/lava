@@ -5,12 +5,12 @@
 #ifndef PROCESS_MODEL_H_
 #define PROCESS_MODEL_H_
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class ProcessModel {
 
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

@@ -10,7 +10,7 @@
 #include "abstract_port.h"
 #include "process_model.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractPortImplementation {
  public:
@@ -26,6 +26,6 @@ class AbstractPortImplementation {
   std::vector<PortPtr> ports_;
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

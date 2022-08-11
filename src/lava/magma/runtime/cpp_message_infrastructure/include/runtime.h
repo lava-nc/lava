@@ -5,11 +5,11 @@
 #ifndef RUNTIME_H_
 #define RUNTIME_H_
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class Runtime {
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

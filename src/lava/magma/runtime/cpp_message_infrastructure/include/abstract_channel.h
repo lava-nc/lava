@@ -9,7 +9,7 @@
 #include "utils.h"
 #include <memory>
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractChannel {
  public:
@@ -17,6 +17,6 @@ class AbstractChannel {
   std::shared_ptr<AbstractRecvPort> dst_port_;
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

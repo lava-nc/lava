@@ -5,7 +5,7 @@
 #ifndef ABSTACT_ACTOR_H_
 #define ABSTACT_ACTOR_H_
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractActor {
  public:
@@ -35,6 +35,6 @@ class PosixActor : public AbstractActor {
 using ActorPtr = AbstractActor *;
 using PosixActorPtr = PosixActor *;
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif

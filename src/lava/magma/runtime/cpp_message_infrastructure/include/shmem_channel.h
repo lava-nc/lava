@@ -7,12 +7,12 @@
 
 #include "abstract_channel.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class ShmemChannel : public AbstractChannel {
 
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif
