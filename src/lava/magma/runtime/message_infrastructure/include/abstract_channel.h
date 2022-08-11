@@ -5,9 +5,10 @@
 #ifndef INCLUDE_ABSTRACT_CHANNEL_H_
 #define INCLUDE_ABSTRACT_CHANNEL_H_
 
+#include <memory>
+
 #include "abstract_port.h"
 #include "utils.h"
-#include <memory>
 
 namespace message_infrastructure {
 
@@ -17,6 +18,6 @@ class AbstractChannel {
   std::shared_ptr<AbstractRecvPort> dst_port_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_ABSTRACT_CHANNEL_H_

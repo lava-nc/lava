@@ -8,9 +8,8 @@
 namespace message_infrastructure {
 
 class ProcessModel {
-
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_PROCESS_MODEL_H_

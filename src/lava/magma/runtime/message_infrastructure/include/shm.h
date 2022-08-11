@@ -16,9 +16,8 @@
 namespace message_infrastructure {
 
 class SharedMemory {
-
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_SHM_H_

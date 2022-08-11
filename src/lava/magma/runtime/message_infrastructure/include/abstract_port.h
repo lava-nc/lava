@@ -5,11 +5,11 @@
 #ifndef INCLUDE_ABSTRACT_PORT_H_
 #define INCLUDE_ABSTRACT_PORT_H_
 
-#include <string>
-#include <vector>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+
+#include <string>
+#include <vector>
 
 #include "shm.h"
 #include "utils.h"
@@ -41,6 +41,6 @@ using PortPtr = AbstractPort *;
 using SendPortPtr = AbstractSendPort *;
 using RecvPortPtr = AbstractRecvPort *;
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_ABSTRACT_PORT_H_

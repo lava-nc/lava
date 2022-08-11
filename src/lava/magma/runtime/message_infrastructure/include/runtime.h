@@ -10,6 +10,6 @@ namespace message_infrastructure {
 class Runtime {
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_RUNTIME_H_

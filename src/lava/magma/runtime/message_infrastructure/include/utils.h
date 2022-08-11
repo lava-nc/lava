@@ -22,6 +22,6 @@ struct Proto {
   size_t nbytes_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_UTILS_H_

@@ -26,6 +26,6 @@ class AbstractPortImplementation {
   std::vector<PortPtr> ports_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_ABSTRACT_PORT_IMPLEMENTATION_H_
