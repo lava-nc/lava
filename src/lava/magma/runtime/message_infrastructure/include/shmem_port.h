@@ -25,10 +25,10 @@ class ShmemRecvQueue {
 template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
-  ShmemSendPort(std::string name,
+  ShmemSendPort(const std::string &name,
                 SharedMemory *shm,
                 Proto *proto,
-                size_t size,
+                const size_t &size,
                 sem_t *req,
                 sem_t *ack);
   int Start();
@@ -50,10 +50,10 @@ class ShmemSendPort : public AbstractSendPort {
 template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
-  ShmemRecvPort(std::string name,
+  ShmemRecvPort(const std::string &name,
                 SharedMemory *shm,
                 Proto *proto,
-                size_t size,
+                const size_t &size,
                 sem_t *req,
                 sem_t *ack);
   int Start();
