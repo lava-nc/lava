@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
-#define ABSTRACT_PORT_IMPLEMENTATION_H_
+#ifndef INCLUDE_ABSTRACT_PORT_IMPLEMENTATION_H_
+#define INCLUDE_ABSTRACT_PORT_IMPLEMENTATION_H_
 
 #include <vector>
 
 #include "abstract_port.h"
 #include "process_model.h"
 
-namespace message_infrastrature {
+namespace message_infrastructure {
 
 class AbstractPortImplementation {
  public:
@@ -26,6 +26,6 @@ class AbstractPortImplementation {
   std::vector<PortPtr> ports_;
 };
 
-} // namespace message_infrastrature
+} // namespace message_infrastructure
 
 #endif
