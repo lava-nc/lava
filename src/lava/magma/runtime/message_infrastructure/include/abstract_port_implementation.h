@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
-#define ABSTRACT_PORT_IMPLEMENTATION_H_
+#ifndef INCLUDE_ABSTRACT_PORT_IMPLEMENTATION_H_
+#define INCLUDE_ABSTRACT_PORT_IMPLEMENTATION_H_
 
 #include <vector>
 

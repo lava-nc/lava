@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SHM_H_
-#define SHM_H_
+#ifndef INCLUDE_SHM_H_
+#define INCLUDE_SHM_H_
 
 #include <sys/mman.h>
 #include <sys/stat.h>
