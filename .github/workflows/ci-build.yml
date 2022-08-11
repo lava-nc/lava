@@ -53,7 +53,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         source $VENV
-        cpplint --quiet --repository=src/lava/magma/runtime/message_infrastructure/ --root=src/lava/magma/runtime/message_infrastructure/src/*.cc src/lava/magma/runtime/message_infrastructure/include/*.h
+        cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/ --filter=-build/include_subdir --root=src/lava/magma/runtime/message_infrastructure/src/*.cc src/lava/magma/runtime/message_infrastructure/include/*.h
       continue-on-error: true
 
   security-lint:
