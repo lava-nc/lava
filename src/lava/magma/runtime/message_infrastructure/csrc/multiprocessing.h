@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_MULTIPROCESSING_H_
-#define INCLUDE_MULTIPROCESSING_H_
+#ifndef MULTIPROCESSING_H_
+#define MULTIPROCESSING_H_
 
 #include <vector>
 #include <functional>
@@ -26,4 +26,4 @@ class MultiProcessing {
 
 }  // namespace message_infrastructure
 
-#endif  // INCLUDE_MULTIPROCESSING_H_
+#endif  // MULTIPROCESSING_H_

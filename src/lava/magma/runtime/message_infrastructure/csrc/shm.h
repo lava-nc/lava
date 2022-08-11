@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_SHM_H_
-#define INCLUDE_SHM_H_
+#ifndef SHM_H_
+#define SHM_H_
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -20,4 +20,4 @@ class SharedMemory {
 
 }  // namespace message_infrastructure
 
-#endif  // INCLUDE_SHM_H_
+#endif  // SHM_H_
