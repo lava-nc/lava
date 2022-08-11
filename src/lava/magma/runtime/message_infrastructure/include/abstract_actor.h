@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef ABSTACT_ACTOR_H_
-#define ABSTACT_ACTOR_H_
+#ifndef INCLUDE_ABSTRACT_ACTOR_H_ 
+#define INCLUDE_ABSTRACT_ACTOR_H_ 
 
 namespace message_infrastructure {
 

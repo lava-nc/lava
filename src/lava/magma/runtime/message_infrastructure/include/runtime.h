@@ -2,15 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SHMEM_CHANNEL_H_
-#define SHMEM_CHANNEL_H_
-
-#include "abstract_channel.h"
+#ifndef INCLUDE_RUNTIME_H_
+#define INCLUDE_RUNTIME_H_
 
 namespace message_infrastructure {
 
-class ShmemChannel : public AbstractChannel {
-
+class Runtime {
 };
 
 } // namespace message_infrastructure

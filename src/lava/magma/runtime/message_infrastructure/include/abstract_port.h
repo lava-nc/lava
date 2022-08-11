@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef ABSTRACT_PORT_H_
-#define ABSTRACT_PORT_H_
+#ifndef INCLUDE_ABSTRACT_PORT_H_
+#define INCLUDE_ABSTRACT_PORT_H_
 
 #include <string>
 #include <vector>
+
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include "shm.h"
 #include "utils.h"
@@ -19,8 +22,8 @@ class AbstractPort {
   virtual int Join() = 0;
 
   std::string name_;
-  DataType dtype_;
-  std::vector<int> shape_;
+  pybind11::dtype dtype_;
+  ssize_t *shape_ = NULL;
   size_t size_;
 };
 

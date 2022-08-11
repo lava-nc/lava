@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef UTILS_H_
-#define UTILS_H_
+#ifndef INCLUDE_UTILS_H_
+#define INCLUDE_UTILS_H_
+
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 namespace message_infrastructure {
 
@@ -13,8 +16,10 @@ enum ChannelType {
   DdsChannel = 2
 };
 
-enum DataType {
-  // dtype
+struct Proto {
+  ssize_t *shape_ = NULL;
+  pybind11::dtype dtype_;
+  size_t nbytes_;
 };
 
 } // namespace message_infrastructure
