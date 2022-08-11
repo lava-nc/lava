@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(message_passing)
 
 set (CMAKE_CXX_STANDARD 17)
-include_directories(include)
+include_directories(message_infrastructure/csrc)
 
-file (GLOB MULTI_PROC_SRCS "src/multiprocessing.cc")
+file (GLOB MULTI_PROC_SRCS "message_infrastructure/csrc/multiprocessing.cc")
 
-file (GLOB PY_WRAPPER "src/message_infrastructure_py_wrapper.cc")
+file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 
 add_subdirectory(pybind11)
 
