@@ -5,10 +5,11 @@
 #ifndef INCLUDE_SHMEM_CHANNEL_H_
 #define INCLUDE_SHMEM_CHANNEL_H_
 
-#include <string>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+
+#include <memory>
+#include <string>
 
 #include "abstract_channel.h"
 #include "shm.h"
@@ -38,12 +39,13 @@ class ShmemChannel : public AbstractChannel {
 
 template <class T>
 ShmemChannel* GetShmemChannel(SharedMemory *shm,
-                              pybind11::array_t<T> &data,
+                              const pybind11::array_t<T> &data,
                               const size_t &size,
                               const std::string &name = "test_channel") {
   return (new ShmemChannel(shm, name, name, data.shape(), data.dtype(), size));
 }
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_SHMEM_CHANNEL_H_
+

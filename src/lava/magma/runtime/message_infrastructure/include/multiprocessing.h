@@ -21,9 +21,9 @@ class MultiProcessing {
   void CheckActor();
  private:
   std::vector<ActorPtr> actors_;
-  //SharedMemManager shmm_;
+  // SharedMemManager shmm_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // INCLUDE_MULTIPROCESSING_H_

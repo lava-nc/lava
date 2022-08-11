@@ -5,7 +5,7 @@
 #ifndef INCLUDE_SHMEM_PORT_H_
 #define INCLUDE_SHMEM_PORT_H_
 
-#include <thread>
+#include <thread>  // NOLINT [build/c++11]
 #include <queue>
 #include <string>
 
@@ -74,7 +74,6 @@ class ShmemRecvPort : public AbstractRecvPort {
   ShmemRecvQueue<T> *queue = NULL;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
- 
+#endif  // INCLUDE_SHMEM_PORT_H_
