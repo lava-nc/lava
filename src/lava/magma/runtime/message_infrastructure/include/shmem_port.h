@@ -47,7 +47,7 @@ class ShmemSendPort : public AbstractSendPort {
   void *observer = NULL;
   std::thread *thread_ = NULL;
 };
-template<typename T>
+template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(std::string name,
