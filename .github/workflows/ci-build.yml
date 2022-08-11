@@ -54,7 +54,6 @@ jobs:
       run: |
         source $VENV
         cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/ --filter=-build/include_subdir --root=src/lava/magma/runtime/message_infrastructure/src/*.cc src/lava/magma/runtime/message_infrastructure/include/*.h
-      continue-on-error: true
 
   security-lint:
     name: Security Lint Code
