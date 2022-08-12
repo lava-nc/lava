@@ -204,6 +204,14 @@ class TestTutorials(unittest.TestCase):
             e2e_tutorial=True
         )
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_end_to_end_02_ei_network(self):
+        """Test tutorial end to end 02 E/I network."""
+        self._run_notebook(
+            "tutorial02_excitatory_inhibitory_network.ipynb",
+            e2e_tutorial=True
+        )
+
     @unittest.skip("Tutorial is text only and does not contain code")
     def test_in_depth_01_install_lava(self):
         """Test tutorial in depth install lava."""
