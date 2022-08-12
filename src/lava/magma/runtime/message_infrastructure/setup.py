@@ -1,6 +1,6 @@
 import os
 import re
-import subprocess
+import subprocess  # nosec
 import sys
 
 from setuptools import Extension, setup
@@ -121,10 +121,8 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        subprocess.check_call(["cmake", ext.sourcedir] + cmake_args,
-                              cwd=build_temp, shell=True)
-        subprocess.check_call(["cmake", "--build", "."] + build_args,
-                              cwd=build_temp, shell=True)
+        subprocess.check_call(["cmake", ext.sourcedir] + cmake_args, cwd=build_temp)  # nosec # noqa
+        subprocess.check_call(["cmake", "--build", "."] + build_args,  cwd=build_temp)  # nosec # noqa
 
 
 # The information here can also be placed in setup.cfg - better separation of
