@@ -18,6 +18,8 @@ namespace message_infrastructure {
 class SharedMemory {
 };
 
+using SharedMemoryPtr = SharedMemory *;
+
 }  // namespace message_infrastructure
 
 #endif  // SHM_H_
