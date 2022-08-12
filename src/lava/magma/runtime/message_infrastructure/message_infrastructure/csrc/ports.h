@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef PORTS_H_
-#define PORTS_H_
+#ifndef INCLUDE_PORTS_H_
+#define INCLUDE_PORTS_H_
+
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include <vector>
 
@@ -12,7 +15,7 @@
 namespace message_infrastructure {
 
 class AbstractCppPort : public AbstractPortImplementation {
-  public:
+ public:
     virtual std::vector<PortPtr> GetPorts();
 
     std::vector<PortPtr> ports_;
@@ -20,7 +23,7 @@ class AbstractCppPort : public AbstractPortImplementation {
 
 
 class AbstractCppIOPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<PortPtr> GetPorts();
 
     std::vector<PortPtr> ports_;
@@ -28,7 +31,7 @@ class AbstractCppIOPort : public AbstractCppPort {
 
 
 class CppInPort : public AbstractCppIOPort {
-  public:
+ public:
     bool Probe();
     virtual std::vector<> Peek();
     virtual std::vector<> Recv();
@@ -42,35 +45,35 @@ class CppInPort : public AbstractCppIOPort {
 };
 
 class CppInPortVectorDense : public CppInPort {
-  public:
+ public:
     std::vector<dtype_> Recv();
     std::vector<dtype_> Peek();
 };
 
 
 class CppInPortVectorSparse : public CppInPort {
-  public:
+ public:
     std::vector<dtype_> Recv();
     std::vector<dtype_> Peek();
 };
 
 
 class CppInPortScalarDense : public CppInPort {
-  public:
+ public:
     std::vector<dtype_> Recv();
     std::vector<dtype_> Peek();
 };
 
 
 class CppInPortScalarSparse : public CppInPort {
-  public:
+ public:
     std::vector<dtype_> Recv();
     std::vector<dtype_> Peek();
 };
 
 
 class CppOutPort : public AbstractCppIOPort {
-  public:
+ public:
     virtual std::vector<ndarray> Send();
     virtual void Flush();
 
@@ -82,25 +85,25 @@ class CppOutPort : public AbstractCppIOPort {
 
 
 class CppOutPortVectorDense : public CppOutPort {
-  public:
+ public:
     std::vector<ndarray> Send();
 };
 
 
 class CppOutPortVectorSparse : public CppOutPort {
-  public:
+ public:
     std::vector<ndarray> Send();
 };
 
 
 class CppOutPortScalarDense : public CppOutPort {
-  public:
+ public:
     int Send();
 };
 
 
 class CppOutPortScalarSparse : public CppOutPort {
-  public:
+ public:
     int Send();
 };
 
@@ -111,7 +114,7 @@ class CppOutPortScalarSparse : public CppOutPort {
 // Process. It is used to get or set the value of the referenced Var across
 // Processes.
 class CppRefPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<PortPtr> GetPorts();
     virtual Read();
     virtual Write();
@@ -125,28 +128,28 @@ class CppRefPort : public AbstractCppPort {
 
 
 class CppRefPortVectorDense : public CppRefPort {
-  public:
+ public:
     std::vector<dtype_> Read();
     std::vector<dtype_> Write();
 };
 
 
 class CppRefPortVectorSparse : public CppRefPort {
-  public:
+ public:
     std::vector<dtype_> Read();
     std::vector<dtype_> Write();
 };
 
 
 class CppRefPortScalarDense : public CppRefPort {
-  public:
+ public:
     int Read();
     std::vector<dtype_> Write();
 };
 
 
 class CppRefPortScalarSparse : public CppRefPort {
-  public:
+ public:
     std::vector<int> Read();
     std::vector<dtype_> Write();
 };
@@ -162,7 +165,7 @@ class CppRefPortScalarSparse : public CppRefPort {
 // CppVarPort. CppVarPort set or send the value of the linked Var (service())
 // given the command VarPortCmd received by a connected CppRefPort.
 class CppVarPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<AbstractCspPort> GetCspPorts();
     virtual void Service();
 
@@ -178,31 +181,31 @@ class CppVarPort : public AbstractCppPort {
 };
 
 class CppVarPortVectorDense : public CppVarPort {
-  public:
+ public:
     void Service();
 };
 
 class CppVarPortVectorSparse : public CppVarPort {
-  public:
+ public:
     std::vector<ndarray> Recv();
     std::vector<ndarray> Peek();
-    void Service();   
+    void Service();
 };
 
 class CppVarPortScalarDense : public CppVarPort {
-  public:
+ public:
     int Recv();
     int Peek();
-    void Service(); 
+    void Service();
 };
 
 class CppVarPortScalarSparse : public CppVarPort {
-  public:
+ public:
     std::vector<int> Recv();
     std::vector<int> Peek();
-    void Service(); 
+    void Service();
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // PORTS_H_
