@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+from pty import CHILD
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -8,13 +9,15 @@ if ty.TYPE_CHECKING:
     from lava.magma.compiler.builders.runtimeservice_builder import \
         RuntimeServiceBuilder
 
-import multiprocessing as mp
-import os
-from multiprocessing.managers import SharedMemoryManager
-import traceback
+from MessageInfrastructurePywrapper import CppMultiProcessing
+from MessageInfrastructurePywrapper import SharedMemoryManager
+from MessageInfrastructurePywrapper import Actor
+
+from enum import Enum 
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+
 try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
@@ -26,8 +29,8 @@ except ImportError:
         pass
 
 from lava.magma.core.sync.domain import SyncDomain
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
-    import MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure.message_infrastructure\
+    .message_infrastructure_interface import MessageInfrastructureInterface
 
 
 """Implements the Message Infrastructure Interface using Python
@@ -37,40 +40,24 @@ further uses the SharedMemoryManager from MultiProcessing Library to
 implement the communication backend in this implementation."""
 
 
-class SystemProcess(mp.Process):
-    """Wraps a process so that the exceptions can be collected if present"""
-
-    def __init__(self, *args, **kwargs):
-        mp.Process.__init__(self, *args, **kwargs)
-        self._pconn, self._cconn = mp.Pipe()
-        self._exception = None
-
-    def run(self):
-        try:
-            mp.Process.run(self)
-            self._cconn.send(None)
-        except Exception as e:
-            tb = traceback.format_exc()
-            self._cconn.send((e, tb))
-
-    @property
-    def exception(self):
-        if self._pconn.poll():
-            self._exception = self._pconn.recv()
-        return self._exception
+class ProcessType(Enum):
+    ERR_PROC = -1
+    PARENT_PROC = 0
+    CHILD_PROC = 1
 
 
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
     def __init__(self):
+        self._mp: ty.Optional[CppMultiProcessing] = None
         self._smm: ty.Optional[SharedMemoryManager] = None
-        self._actors: ty.List[SystemProcess] = []
+        self._actors: ty.List[Actor] = []
 
     @property
     def actors(self):
         """Returns a list of actors"""
-        return self._actors
+        return self._mp.get_actors()
 
     @property
     def smm(self):
@@ -79,26 +66,28 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def start(self):
         """Starts the shared memory manager"""
+        self._mp = CppMultiProcessing()
         self._smm = SharedMemoryManager()
-        self._smm.start()
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
             SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
+
         system_process = SystemProcess(target=target_fn,
                                        args=(),
                                        kwargs={"builder": builder})
-        system_process.start()
-        self._actors.append(system_process)
-        return system_process
+        ret = self._mp.build_actor()
+        if ret == ProcessType.ERR_PROC:
+            exit(-1)
+        if ret == ProcessType.CHILD_PROC:
+            target_fn(args=(), kwargs={"builder": builder})
+            exit(0)
 
     def stop(self):
         """Stops the shared memory manager"""
-        for actor in self._actors:
-            if actor._parent_pid == os.getpid():
-                actor.join()
-        self._smm.shutdown()
+        self._mp.stop()
+        self._smm.stop()
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
         """Given a channel type, returns the shared memory based class

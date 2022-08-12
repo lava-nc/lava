@@ -15,7 +15,7 @@ namespace message_infrastructure {
 namespace py = pybind11;
 
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
-  py::class_<MultiProcessing> (m, "MultiProcessing")
+  py::class_<MultiProcessing> (m, "CppMultiProcessing")
     .def(py::init<>())
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
