@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_ABSTRACT_PORT_H_
-#define INCLUDE_ABSTRACT_PORT_H_
-
-#include <string>
-#include <vector>
+#ifndef ABSTRACT_PORT_H_
+#define ABSTRACT_PORT_H_
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+
+#include <string>
+#include <vector>
 
 #include "shm.h"
 #include "utils.h"
@@ -41,6 +41,6 @@ using PortPtr = AbstractPort *;
 using SendPortPtr = AbstractSendPort *;
 using RecvPortPtr = AbstractRecvPort *;
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // ABSTRACT_PORT_H_

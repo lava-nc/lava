@@ -54,6 +54,7 @@ networkx = "<=2.8"
 nbformat = "^5.3.0"
 nbconvert = "^6.5.0"
 pandas = "^1.4.2"
+message-infrastructure = {path = "src/lava/magma/runtime/message_infrastructure"}
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.2"

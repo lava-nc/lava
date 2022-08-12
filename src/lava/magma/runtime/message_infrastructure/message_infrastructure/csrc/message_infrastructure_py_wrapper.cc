@@ -6,9 +6,9 @@
 #include <pybind11/pybind11.h>
 
 #include "multiprocessing.h"
-#include "shmem.h"
-#include "shmem_channel.h"
-#include "shmem_port.h"
+// #include "shm.h"
+// #include "shmem_channel.h"
+// #include "shmem_port.h"
 
 namespace message_infrastructure {
 
@@ -20,6 +20,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("stop", &MultiProcessing::Stop);
+  /*
   py::class_<ShmemSendPort> (m, "ShmemSendPort")
     .def(py::init<std::string, SharedMemory*, Proto*, size_t, sem_t*, sem_t*>())
     .def("start", &ShmemSendPort::Start)
@@ -40,6 +41,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("get_srcport", &ShmemChannel::GetSrcPort, return_value_policy::reference)
     .def("get_dstport", &ShmemChannel::GetDstPort, return_value_policy::reference);
   m.def("get_shmemchannel", &GetShmemChannel, return_value_policy::reference);
+  */
 }
 
 

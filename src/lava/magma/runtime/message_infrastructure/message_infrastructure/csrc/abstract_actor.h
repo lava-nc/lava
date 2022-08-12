@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_ABSTRACT_ACTOR_H_ 
-#define INCLUDE_ABSTRACT_ACTOR_H_ 
+#ifndef ABSTRACT_ACTOR_H_
+#define ABSTRACT_ACTOR_H_
 
 namespace message_infrastructure {
 
@@ -18,23 +18,23 @@ class AbstractActor {
 
 class PosixActor : public AbstractActor {
  public:
-  explicit PosixActor(int pid){
+  explicit PosixActor(int pid) {
     this->pid_ = pid;
   }
-  int GetPid(){
+  int GetPid() {
     return this->pid_;
-  };
-  int Stop(){
+  }
+  int Stop() {
     return 0;
-  };
-  int Pause(){
+  }
+  int Pause() {
     return 0;
-  };
+  }
 };
 
 using ActorPtr = AbstractActor *;
 using PosixActorPtr = PosixActor *;
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // ABSTRACT_ACTOR_H_

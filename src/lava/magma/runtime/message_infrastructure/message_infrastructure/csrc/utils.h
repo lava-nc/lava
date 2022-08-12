@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_UTILS_H_
-#define INCLUDE_UTILS_H_
+#ifndef UTILS_H_
+#define UTILS_H_
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -22,6 +22,6 @@ struct Proto {
   size_t nbytes_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // UTILS_H_
