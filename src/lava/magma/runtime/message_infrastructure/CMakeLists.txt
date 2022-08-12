@@ -8,7 +8,7 @@ file (GLOB MULTI_PROC_SRCS "message_infrastructure/csrc/multiprocessing.cc")
 
 file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 
-add_subdirectory(pybind11)
+find_package(pybind11 CONFIG)
 
 add_library(multi_processing SHARED ${MULTI_PROC_SRCS})
 

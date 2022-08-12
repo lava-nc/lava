@@ -7,6 +7,7 @@ license = "BSD-3-Clause or LGPL-2.1-or-later"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pybind11 = {extras = ["global"], version = "^2.10.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
