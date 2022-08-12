@@ -20,6 +20,6 @@ class AbstractChannel {
 
 using AbstractChannelPtr = AbstractChannel *;
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
 #endif  // ABSTRACT_CHANNEL_H_
