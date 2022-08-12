@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_MULTIPROCESSING_H_
-#define INCLUDE_MULTIPROCESSING_H_
+#ifndef MULTIPROCESSING_H_
+#define MULTIPROCESSING_H_
 
 #include <vector>
 #include <functional>
@@ -21,9 +21,9 @@ class MultiProcessing {
   void CheckActor();
  private:
   std::vector<ActorPtr> actors_;
-  //SharedMemManager shmm_;
+  // SharedMemManager shmm_;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // MULTIPROCESSING_H_
