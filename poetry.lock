@@ -947,6 +947,19 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "message-infrastructure"
+version = "0.1.0"
+description = "Message Infrastructure"
+category = "main"
+optional = false
+python-versions = "^3.8"
+develop = false
+
+[package.source]
+type = "directory"
+url = "src/lava/magma/runtime/message_infrastructure"
+
+[[package]]
 name = "mistune"
 version = "0.8.4"
 description = "The fastest markdown parser in pure Python"
@@ -1891,7 +1904,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "e9009feb56c9f7953c89c0024ed8b6ef69c1229398082456a9771f254327919e"
+content-hash = "9eca04289ece2768f9504dc2d74fb925633038a4b728d7a51f3a2a3666b70665"
 
 [metadata.files]
 alabaster = [
@@ -2451,6 +2464,7 @@ mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
+message-infrastructure = []
 mistune = [
     {file = "mistune-0.8.4-py2.py3-none-any.whl", hash = "sha256:88a1051873018da288eee8538d476dffe1262495144b33ecb586c4ab266bb8d4"},
     {file = "mistune-0.8.4.tar.gz", hash = "sha256:59a3429db53c50b5c6bcc8a07f8848cb00d7dc8bdb431a4ab41920d201d4756e"},
