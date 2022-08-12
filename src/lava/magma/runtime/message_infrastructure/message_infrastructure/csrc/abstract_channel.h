@@ -18,6 +18,8 @@ class AbstractChannel {
   std::shared_ptr<AbstractRecvPort> dst_port_;
 };
 
-}  // namespace message_infrastructure
+using AbstractChannelPtr = AbstractChannel *;
+
+} // namespace message_infrastructure
 
 #endif  // ABSTRACT_CHANNEL_H_

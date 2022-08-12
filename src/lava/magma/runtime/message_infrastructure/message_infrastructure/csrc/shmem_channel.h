@@ -21,7 +21,7 @@ class ShmemChannel : public AbstractChannel {
   ShmemChannel(SharedMemoryPtr shm,
                const std::string &src_name,
                const std::string &dst_name,
-               const ssize_t &shape,
+               const ssize_t* shape,
                const pybind11::dtype &dtype,
                const size_t &size);
   std::shared_ptr<AbstractSendPort> GetSrcPort() {
@@ -38,6 +38,14 @@ class ShmemChannel : public AbstractChannel {
 };
 
 using ShmemChannelPtr = ShmemChannel *;
+
+template <class T>
+ShmemChannelPtr GetShmemChannel(SharedMemoryPtr shm,
+                              const pybind11::array_t<T> &data,
+                              const size_t &size,
+                              const std::string &name = "test_channel") {
+  return (new ShmemChannel(shm, name, name, data.shape(), data.dtype(), size));
+}
 
 }  // namespace message_infrastructure
 
