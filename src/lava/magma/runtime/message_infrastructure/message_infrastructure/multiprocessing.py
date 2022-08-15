@@ -13,7 +13,7 @@ from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import SharedMemoryManager
 from MessageInfrastructurePywrapper import Actor
 
-from enum import Enum 
+from enum import Enum
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
@@ -74,14 +74,12 @@ class MultiProcessing(MessageInfrastructureInterface):
             SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
 
-        system_process = SystemProcess(target=target_fn,
-                                       args=(),
-                                       kwargs={"builder": builder})
         ret = self._mp.build_actor()
         if ret == ProcessType.ERR_PROC:
             exit(-1)
         if ret == ProcessType.CHILD_PROC:
-            target_fn(args=(), kwargs={"builder": builder})
+            kwargs = {"builder": builder}
+            target_fn(**kwargs)
             exit(0)
 
     def stop(self):
