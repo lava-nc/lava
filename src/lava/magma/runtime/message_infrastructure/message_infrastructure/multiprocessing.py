@@ -10,7 +10,7 @@ if ty.TYPE_CHECKING:
         RuntimeServiceBuilder
 
 from MessageInfrastructurePywrapper import CppMultiProcessing
-from MessageInfrastructurePywrapper import SharedMemoryManager
+from MessageInfrastructurePywrapper import SharedMemManager
 from MessageInfrastructurePywrapper import Actor
 
 from enum import Enum

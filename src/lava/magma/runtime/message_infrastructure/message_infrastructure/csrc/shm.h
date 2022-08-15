@@ -36,7 +36,6 @@ class SharedMemManager {
     // Release specific shared memroy
     return 0;
   }
-  
  private:
   key_t key_ = 0xdead;
   std::vector<int> shms_;
