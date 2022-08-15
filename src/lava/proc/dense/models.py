@@ -12,6 +12,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
+from lava.magma.core.process.connection import ConnectionModelFixed
+
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
@@ -47,10 +49,12 @@ class PyDenseModelFloat(PyLoihiProcessModel):
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
 
+
+
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
-class PyDenseModelBitAcc(PyLoihiProcessModel):
+class PyDenseModelBitAcc(ConnectionModelFixed):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.
@@ -67,8 +71,10 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     sign_mode: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=2)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
+
     def __init__(self, proc_params):
-        super(PyDenseModelBitAcc, self).__init__(proc_params)
+        print ("PROC MODEL DENSE")
+        super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
@@ -102,7 +108,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         return wgts_scaled
 
     def run_spk(self):
-        # Since this Process has no learning, weights are assumed to be static
+
+        ## Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
             self.weights = self._set_wgts()
@@ -116,6 +123,13 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         else:
             s_in = self.s_in.recv().astype(bool)
             a_accum = self.weights[:, s_in].sum(axis=1)
+
+        if not self._learning_rule is None:
+            self._record_pre_spike_times(s_in)
+
         self.a_buff = np.left_shift(a_accum,
                                     self.weight_exp) if self.weight_exp > 0 \
             else np.right_shift(a_accum, -self.weight_exp)
+
+        super().run_spk()
+

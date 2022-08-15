@@ -5,13 +5,15 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.process.process import AbstractProcess, LogConfig
+from lava.magma.core.process.connection import ConnectionProcess
+from lava.magma.core.process.process import LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.utils.weightutils import SignMode
 
 
-class Dense(AbstractProcess):
+class Dense(ConnectionProcess):
+
     def __init__(self,
                  *,
                  weights: np.ndarray,
@@ -20,7 +22,8 @@ class Dense(AbstractProcess):
                  sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
                  num_message_bits: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
+                 log_config: ty.Optional[LogConfig] = None,
+                 **kwargs) -> None:
         """Dense connections between neurons. Realizes the following abstract
         behavior: a_out = weights * s_in '
 
@@ -59,13 +62,15 @@ class Dense(AbstractProcess):
             Flag to indicate graded spike. Default is False.
         """
 
-        super().__init__(weights=weights,
+        super().__init__(shape=weights.shape,
+                         weights=weights,
                          weight_exp=weight_exp,
                          num_weight_bits=num_weight_bits,
                          sign_mode=sign_mode,
                          num_message_bits=num_message_bits,
                          name=name,
-                         log_config=log_config)
+                         log_config=log_config,
+                         **kwargs)
 
         self._validate_weights(weights)
         shape = weights.shape
