@@ -5,6 +5,9 @@
 #ifndef PORTS_H_
 #define PORTS_H_
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include <vector>
 
 #include "abstract_port_implementation.h"
@@ -12,7 +15,7 @@
 namespace message_infrastructure {
 
 class AbstractCppPort : public AbstractPortImplementation {
-  public:
+ public:
     virtual std::vector<PortPtr> GetPorts();
 
     std::vector<PortPtr> ports_;
@@ -20,7 +23,7 @@ class AbstractCppPort : public AbstractPortImplementation {
 
 
 class AbstractCppIOPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<PortPtr> GetPorts();
 
     std::vector<PortPtr> ports_;
@@ -28,10 +31,10 @@ class AbstractCppIOPort : public AbstractCppPort {
 
 
 class CppInPort : public AbstractCppIOPort {
-  public:
+ public:
     bool Probe();
-    virtual std::vector<> Peek();
-    virtual std::vector<> Recv();
+    virtual std::vector<pybind11::dtype> Peek();
+    virtual std::vector<pybind11::dtype> Recv();
 
     const CppInPortVectorDense  VEC_DENSE;
     const CppInPortVectorSparse VEC_SPARSE;
@@ -42,36 +45,48 @@ class CppInPort : public AbstractCppIOPort {
 };
 
 class CppInPortVectorDense : public CppInPort {
-  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+ public:
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppInPortVectorSparse : public CppInPort {
-  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+ public:
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppInPortScalarDense : public CppInPort {
+<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/include/ports.h
   public:
     int Recv();
     int Peek();
+=======
+ public:
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
+>>>>>>> ff915b6fdba9ecbc1e1c5a2a7f9af2177830db8d:src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/ports.h
 };
 
 
 class CppInPortScalarSparse : public CppInPort {
+<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/include/ports.h
   public:
     std::vector<int> Recv();
     std::vector<int> Peek();
+=======
+ public:
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
+>>>>>>> ff915b6fdba9ecbc1e1c5a2a7f9af2177830db8d:src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/ports.h
 };
 
 
 class CppOutPort : public AbstractCppIOPort {
-  public:
-    virtual std::vector<ndarray> Send();
+ public:
+    virtual std::vector<pybind11::array_t<pybind11::dtype>> Send();
     virtual void Flush();
 
     const CppOutPortVectorDense  VEC_DENSE;
@@ -82,25 +97,25 @@ class CppOutPort : public AbstractCppIOPort {
 
 
 class CppOutPortVectorDense : public CppOutPort {
-  public:
-    std::vector<ndarray> Send();
+ public:
+    std::vector<pybind11::array_t<pybind11::dtype>> Send();
 };
 
 
 class CppOutPortVectorSparse : public CppOutPort {
-  public:
-    std::vector<ndarray> Send();
+ public:
+    std::vector<pybind11::array_t<pybind11::dtype>> Send();
 };
 
 
 class CppOutPortScalarDense : public CppOutPort {
-  public:
+ public:
     int Send();
 };
 
 
 class CppOutPortScalarSparse : public CppOutPort {
-  public:
+ public:
     int Send();
 };
 
@@ -111,7 +126,7 @@ class CppOutPortScalarSparse : public CppOutPort {
 // Process. It is used to get or set the value of the referenced Var across
 // Processes.
 class CppRefPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<PortPtr> GetPorts();
     virtual Read();
     virtual Write();
@@ -125,30 +140,30 @@ class CppRefPort : public AbstractCppPort {
 
 
 class CppRefPortVectorDense : public CppRefPort {
-  public:
-    std::vector<dtype_> Read();
-    std::vector<dtype_> Write();
+ public:
+    std::vector<pybind11::dtype> Read();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortVectorSparse : public CppRefPort {
-  public:
-    std::vector<dtype_> Read();
-    std::vector<dtype_> Write();
+ public:
+    std::vector<pybind11::dtype> Read();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortScalarDense : public CppRefPort {
-  public:
+ public:
     int Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortScalarSparse : public CppRefPort {
-  public:
+ public:
     std::vector<int> Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Write();
 };
 
 // --------
@@ -162,7 +177,7 @@ class CppRefPortScalarSparse : public CppRefPort {
 // CppVarPort. CppVarPort set or send the value of the linked Var (service())
 // given the command VarPortCmd received by a connected CppRefPort.
 class CppVarPort : public AbstractCppPort {
-  public:
+ public:
     std::vector<AbstractCspPort> GetCspPorts();
     virtual void Service();
 
@@ -178,31 +193,31 @@ class CppVarPort : public AbstractCppPort {
 };
 
 class CppVarPortVectorDense : public CppVarPort {
-  public:
+ public:
     void Service();
 };
 
 class CppVarPortVectorSparse : public CppVarPort {
-  public:
-    std::vector<ndarray> Recv();
-    std::vector<ndarray> Peek();
-    void Service();   
+ public:
+    std::vector<pybind11::array_t<pybind11::dtype>> Recv();
+    std::vector<pybind11::array_t<pybind11::dtype>> Peek();
+    void Service();
 };
 
 class CppVarPortScalarDense : public CppVarPort {
-  public:
+ public:
     int Recv();
     int Peek();
-    void Service(); 
+    void Service();
 };
 
 class CppVarPortScalarSparse : public CppVarPort {
-  public:
+ public:
     std::vector<int> Recv();
     std::vector<int> Peek();
-    void Service(); 
+    void Service();
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
+#endif  // PORTS_H_

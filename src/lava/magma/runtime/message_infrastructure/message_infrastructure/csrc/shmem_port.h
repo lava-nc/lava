@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_SHMEM_PORT_H_
-#define INCLUDE_SHMEM_PORT_H_
+#ifndef SHMEM_PORT_H_
+#define SHMEM_PORT_H_
 
-#include <thread>
+#include <thread>  // NOLINT [build/c++11]
 #include <queue>
 #include <string>
 
@@ -25,10 +25,10 @@ class ShmemRecvQueue {
 template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
-  ShmemSendPort(std::string name,
+  ShmemSendPort(const std::string &name,
                 SharedMemory *shm,
                 Proto *proto,
-                size_t size,
+                const size_t &size,
                 sem_t *req,
                 sem_t *ack);
   int Start();
@@ -50,10 +50,10 @@ class ShmemSendPort : public AbstractSendPort {
 template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
-  ShmemRecvPort(std::string name,
+  ShmemRecvPort(const std::string &name,
                 SharedMemory *shm,
                 Proto *proto,
-                size_t size,
+                const size_t &size,
                 sem_t *req,
                 sem_t *ack);
   int Start();
@@ -74,7 +74,6 @@ class ShmemRecvPort : public AbstractRecvPort {
   ShmemRecvQueue<T> *queue = NULL;
 };
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
-#endif
- 
+#endif  // SHMEM_PORT_H_
