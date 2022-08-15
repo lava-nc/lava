@@ -59,28 +59,16 @@ class CppInPortVectorSparse : public CppInPort {
 
 
 class CppInPortScalarDense : public CppInPort {
-<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/include/ports.h
-  public:
+ public:
     int Recv();
     int Peek();
-=======
- public:
-    std::vector<pybind11::dtype> Recv();
-    std::vector<pybind11::dtype> Peek();
->>>>>>> ff915b6fdba9ecbc1e1c5a2a7f9af2177830db8d:src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/ports.h
 };
 
 
 class CppInPortScalarSparse : public CppInPort {
-<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/include/ports.h
-  public:
+ public:
     std::vector<int> Recv();
     std::vector<int> Peek();
-=======
- public:
-    std::vector<pybind11::dtype> Recv();
-    std::vector<pybind11::dtype> Peek();
->>>>>>> ff915b6fdba9ecbc1e1c5a2a7f9af2177830db8d:src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/ports.h
 };
 
 
