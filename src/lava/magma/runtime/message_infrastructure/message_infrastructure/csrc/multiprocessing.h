@@ -13,11 +13,17 @@
 
 namespace message_infrastructure {
 
+enum ChannelType {
+  ERROR_PROCESS = -1,
+  CHILD_PROCESS = 0,
+  PARENT_PROCESS = 1
+};
+
 class MultiProcessing {
  public:
   // stop each actor in vector actors;
-  void Stop();
-  void BuildActor(std::function<void()>);
+  int Stop();
+  int BuildActor();
   void CheckActor();
  private:
   std::vector<ActorPtr> actors_;

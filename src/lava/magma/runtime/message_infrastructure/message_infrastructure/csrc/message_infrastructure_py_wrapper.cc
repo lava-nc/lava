@@ -6,7 +6,7 @@
 #include <pybind11/pybind11.h>
 
 #include "multiprocessing.h"
-// #include "shm.h"
+#include "shm.h"
 // #include "shmem_channel.h"
 // #include "shmem_port.h"
 
@@ -20,6 +20,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("stop", &MultiProcessing::Stop);
+  py::class_<SharedMemManager> (m, "SharedMemManager")
+    .def(py::init<>())
+    .def("alloc_mem", &SharedMemManager::AllocSharedMemory);
+  
   /*
   py::class_<ShmemSendPort> (m, "ShmemSendPort")
     .def(py::init<std::string, SharedMemory*, Proto*, size_t, sem_t*, sem_t*>())

@@ -57,7 +57,7 @@ class MultiProcessing(MessageInfrastructureInterface):
     @property
     def actors(self):
         """Returns a list of actors"""
-        return self._mp.get_actors()
+        return self._actors
 
     @property
     def smm(self):
