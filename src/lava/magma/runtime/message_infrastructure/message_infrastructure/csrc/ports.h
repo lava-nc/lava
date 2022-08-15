@@ -116,9 +116,9 @@ class CppOutPortScalarSparse : public CppOutPort {
 class CppRefPort : public AbstractCppPort {
  public:
     std::vector<PortPtr> GetPorts();
-    virtual Read();
-    virtual Write();
-    virtual Wait();
+    virtual std::vector<pybind11::dtype> Read();
+    virtual std::vector<pybind11::dtype> Write();
+    virtual void Wait();
 
     const CppRefPortVectorDense  VEC_DENSE;
     const CppRefPortVectorSparse VEC_SPARSE;
