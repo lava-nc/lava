@@ -11,8 +11,6 @@ class AbstractActor {
  public:
   virtual int GetPid() = 0;
   virtual int Stop() = 0;
-  virtual int Pause() = 0;
-
   int pid_;
 };
 
@@ -24,12 +22,7 @@ class PosixActor : public AbstractActor {
   int GetPid() {
     return this->pid_;
   }
-  int Stop() {
-    return 0;
-  }
-  int Pause() {
-    return 0;
-  }
+  int Stop();
 };
 
 using ActorPtr = AbstractActor *;

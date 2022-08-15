@@ -3,42 +3,47 @@
 // See: https://spdx.org/licenses/
 
 #include "multiprocessing.h"
+#include "message_infrastructure_logging.h"
 
 #include <sys/wait.h>
 #include <unistd.h>
-#include <iostream>
 
 namespace message_infrastructure {
 
-#define CPP_INFO "[CPP_INFO] "
-
-void MultiProcessing::BuildActor(std::function<void()> target_fn) {
+int MultiProcessing::BuildActor() {
   pid_t pid = fork();
 
-  if (pid < 0) {
-    std::cout << CPP_INFO << "cannot allocate pid\n";
-  }
-
   if (pid > 0) {
-    std::cout << CPP_INFO << "parent, create actor\n";
+    LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
     ActorPtr actor = new PosixActor(pid);
     actors_.push_back(actor);
+    return PARENT_PROCESS;
   }
 
   if (pid == 0) {
-    std::cout << CPP_INFO << "child, new process\n";
-    target_fn();
-    exit(0);
+    LAVA_LOG(LOG_MP, "child, new process\n");
+    return CHILD_PROCESS;
   }
+
+  LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
+  return ERROR_PROCESS;
 
 }
 
-void MultiProcessing::Stop() {
+int MultiProcessing::Stop() {
+  int error_cnts = 0;
+
+  for (auto actor : actors_) {
+    error_cnts += actor->Stop();
+  }
+
+  LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);
+  return error_cnts;
 }
 
 void MultiProcessing::CheckActor() {
-  for(auto actor : actors_){
-    std::cout << CPP_INFO << actor->pid_ << std::endl;
+  for (auto actor : actors_) {
+    LAVA_LOG(LOG_MP, "Actor info %d\n", actor->GetPid());
   }
 }
 

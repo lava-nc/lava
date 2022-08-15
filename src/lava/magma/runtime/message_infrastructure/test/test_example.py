@@ -2,22 +2,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from MessageInfrastructurePywrapper import MultiProcessing
+from MessageInfrastructurePywrapper import CppMultiProcessing
+from MessageInfrastructurePywrapper import SharedMemManager
 import time
 
 
-def print_hello():
-    print("hello")
-
-
 def main():
-    mp = MultiProcessing()
+    mp = CppMultiProcessing()
     for i in range(5):
-        mp.build_actor(print_hello)
+        ret = mp.build_actor()
+        if ret == 0 :
+            print ("child process, exit")
+            exit(0)
 
     mp.check_actor()
+    mp.stop()
+
+    shm = SharedMemManager()
+    for i in range(5):
+        print("shared id:", shm.alloc_mem(10))
 
 
 main()
-print("sleep 5")
-time.sleep(5)
