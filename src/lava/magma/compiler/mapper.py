@@ -112,9 +112,6 @@ class Mapper:
 
             for var_port_initializer in ncb.var_ports.values():
                 self._set_virtual_address_nc(var_port_initializer, num_cores)
-
-            # TODO: Yash - Please update Output Axons correctly to reflect
-            # TODO: core conflict (dstCoreIds)
             self.mapper_core_dict.clear()
 
         # Iterate over all the cbuilder and map them
