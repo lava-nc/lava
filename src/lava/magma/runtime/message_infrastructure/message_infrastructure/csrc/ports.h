@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef INCLUDE_PORTS_H_
-#define INCLUDE_PORTS_H_
+#ifndef PORTS_H_
+#define PORTS_H_
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
