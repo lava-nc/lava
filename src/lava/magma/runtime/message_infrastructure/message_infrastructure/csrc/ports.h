@@ -33,8 +33,8 @@ class AbstractCppIOPort : public AbstractCppPort {
 class CppInPort : public AbstractCppIOPort {
  public:
     bool Probe();
-    virtual std::vector<> Peek();
-    virtual std::vector<> Recv();
+    virtual std::vector<pybind11::dtype> Peek();
+    virtual std::vector<pybind11::dtype> Recv();
 
     const CppInPortVectorDense  VEC_DENSE;
     const CppInPortVectorSparse VEC_SPARSE;
@@ -46,35 +46,35 @@ class CppInPort : public AbstractCppIOPort {
 
 class CppInPortVectorDense : public CppInPort {
  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppInPortVectorSparse : public CppInPort {
  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppInPortScalarDense : public CppInPort {
  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppInPortScalarSparse : public CppInPort {
  public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
 class CppOutPort : public AbstractCppIOPort {
  public:
-    virtual std::vector<ndarray> Send();
+    virtual std::vector<pybind11::array_t<pybind11::dtype>> Send();
     virtual void Flush();
 
     const CppOutPortVectorDense  VEC_DENSE;
@@ -86,13 +86,13 @@ class CppOutPort : public AbstractCppIOPort {
 
 class CppOutPortVectorDense : public CppOutPort {
  public:
-    std::vector<ndarray> Send();
+    std::vector<pybind11::array_t<pybind11::dtype>> Send();
 };
 
 
 class CppOutPortVectorSparse : public CppOutPort {
  public:
-    std::vector<ndarray> Send();
+    std::vector<pybind11::array_t<pybind11::dtype>> Send();
 };
 
 
@@ -129,29 +129,29 @@ class CppRefPort : public AbstractCppPort {
 
 class CppRefPortVectorDense : public CppRefPort {
  public:
-    std::vector<dtype_> Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Read();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortVectorSparse : public CppRefPort {
  public:
-    std::vector<dtype_> Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Read();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortScalarDense : public CppRefPort {
  public:
     int Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Write();
 };
 
 
 class CppRefPortScalarSparse : public CppRefPort {
  public:
     std::vector<int> Read();
-    std::vector<dtype_> Write();
+    std::vector<pybind11::dtype> Write();
 };
 
 // --------
@@ -187,8 +187,8 @@ class CppVarPortVectorDense : public CppVarPort {
 
 class CppVarPortVectorSparse : public CppVarPort {
  public:
-    std::vector<ndarray> Recv();
-    std::vector<ndarray> Peek();
+    std::vector<pybind11::array_t<pybind11::dtype>> Recv();
+    std::vector<pybind11::array_t<pybind11::dtype>> Peek();
     void Service();
 };
 
