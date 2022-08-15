@@ -11,9 +11,34 @@ std::vector<PortPtr> AbstractCppIOPort::GetPorts() {
   return this->ports_;
 }
 
+ndarray AbstractTransformer::Transform(ndarray data){
+
+}
 bool CppInPort::Probe() {
-  return;
+  auto lambda = [&](int acc, int port){return acc && port->Probe();};
+  return std::accumulate(ports_.begin(), ports_.end(), true, lambda);
+}
+ //TODO: Implement transform and change ndarray type 
+ndarray CppInPortVectorDense::Recv(){
+  auto lambda = [&](int acc, int port){return acc + port->Transform();}
 }
 
+int CppInPortScalarDense::Recv() {
+}
+
+int CppInPortScalarDense::Peek() {
+}
+
+std::vector<int> CppInPortScalarSparse::Recv(){
+}
+
+std::vector<int> CppInPortScalarSparse::Peek(){
+}
+
+std::vector <ndarray> CppOutPortVectorDense::Send(ndarray data){
+  for (auto port : this->ports_){
+    port->Send(data);
+  }
+}
 
 }

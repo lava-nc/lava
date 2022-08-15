@@ -57,15 +57,15 @@ class CppInPortVectorSparse : public CppInPort {
 
 class CppInPortScalarDense : public CppInPort {
   public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    int Recv();
+    int Peek();
 };
 
 
 class CppInPortScalarSparse : public CppInPort {
   public:
-    std::vector<dtype_> Recv();
-    std::vector<dtype_> Peek();
+    std::vector<int> Recv();
+    std::vector<int> Peek();
 };
 
 
