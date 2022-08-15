@@ -118,18 +118,17 @@ class PyDenseModelBitAcc(ConnectionModelFixed):
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
         if self.num_message_bits.item() > 0:
-            s_in = self.s_in.recv()
+            s_in = self.s_in.recv().astype(bool)
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
             a_accum = self.weights[:, s_in].sum(axis=1)
 
-        if not self._learning_rule is None:
-            self._record_pre_spike_times(s_in)
-
         self.a_buff = np.left_shift(a_accum,
                                     self.weight_exp) if self.weight_exp > 0 \
             else np.right_shift(a_accum, -self.weight_exp)
 
-        super().run_spk()
+        if not self._learning_rule is None:
+            self._record_pre_spike_times(s_in)
 
+        super().run_spk()
