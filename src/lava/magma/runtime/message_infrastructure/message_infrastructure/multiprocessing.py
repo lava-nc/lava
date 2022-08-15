@@ -11,7 +11,6 @@ if ty.TYPE_CHECKING:
 
 from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import SharedMemManager
-from MessageInfrastructurePywrapper import Actor
 
 from enum import Enum
 
