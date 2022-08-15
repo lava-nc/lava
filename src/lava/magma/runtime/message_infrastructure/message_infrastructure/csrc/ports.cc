@@ -11,9 +11,6 @@ std::vector<PortPtr> AbstractCppIOPort::GetPorts() {
   return this->ports_;
 }
 
-ndarray AbstractTransformer::Transform(ndarray data){
-
-}
 bool CppInPort::Probe() {
   auto lambda = [&](int acc, int port){return acc && port->Probe();};
   return std::accumulate(ports_.begin(), ports_.end(), true, lambda);
