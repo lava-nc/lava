@@ -21,7 +21,7 @@ class SendPortProxy {
   ChannelType GetChannelType() {
     return channel_type_;
   }
-  std::shared_ptr<AbstractSendPort> GetSendPort() {
+  AbstractSendPortPtr GetSendPort() {
     return send_port_;
   }
   int Start() {
@@ -51,7 +51,7 @@ class SendPortProxy {
 
  private:
   ChannelType channel_type_;
-  std::shared_ptr<AbstractSendPort> send_port_;
+  AbstractSendPortPtr send_port_;
 };
 
 class RecvPortProxy {
@@ -63,7 +63,7 @@ class RecvPortProxy {
   ChannelType GetChannelType() {
     return channel_type_;
   }
-  std::shared_ptr<AbstractRecvPort> GetRecvPort() {
+  AbstractRecvPortPtr GetRecvPort() {
     return recv_port_;
   }
   int Start() {
@@ -96,7 +96,7 @@ class RecvPortProxy {
 
  private:
   ChannelType channel_type_;
-  std::shared_ptr<AbstractRecvPort> recv_port_ = NULL;
+  AbstractRecvPortPtr recv_port_;
 };
 
 }  // namespace message_infrastructure

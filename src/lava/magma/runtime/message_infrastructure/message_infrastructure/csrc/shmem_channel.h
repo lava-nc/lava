@@ -25,10 +25,10 @@ class ShmemChannel : public AbstractChannel {
                const pybind11::dtype &dtype,
                const size_t &size,
                const size_t &nbytes);
-  std::shared_ptr<AbstractSendPort> GetSendPort() {
+  AbstractSendPortPtr GetSendPort() {
     return this->send_port_;
   }
-  std::shared_ptr<AbstractRecvPort> GetRecvPort() {
+  AbstractRecvPortPtr GetRecvPort() {
     return this->recv_port_;
   }
 

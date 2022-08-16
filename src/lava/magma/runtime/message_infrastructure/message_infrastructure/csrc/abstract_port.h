@@ -47,9 +47,9 @@ class AbstractRecvPort : public AbstractPort {
   int Peek() {}
 };
 
-using PortPtr = AbstractPort *;
-using SendPortPtr = AbstractSendPort *;
-using RecvPortPtr = AbstractRecvPort *;
+using AbstractPortPtr = std::shared_ptr<AbstractPort>;
+using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
+using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 
 }  // namespace message_infrastructure
 

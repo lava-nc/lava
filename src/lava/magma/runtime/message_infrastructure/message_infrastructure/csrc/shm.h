@@ -5,6 +5,7 @@
 #ifndef SHM_H_
 #define SHM_H_
 
+#include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -18,7 +19,7 @@ namespace message_infrastructure {
 class SharedMemory {
 };
 
-using SharedMemoryPtr = SharedMemory *;
+using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
 
 }  // namespace message_infrastructure
 
