@@ -12,14 +12,14 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
-from lava.magma.core.process.connection import ConnectionModelFixed
+from lava.magma.core.process.connection import ConnectionModelFixed, ConnectionModelFloat
 
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PyDenseModelFloat(PyLoihiProcessModel):
+class PyDenseModelFloat(ConnectionModelFloat):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -48,6 +48,11 @@ class PyDenseModelFloat(PyLoihiProcessModel):
             s_in = self.s_in.recv().astype(bool)
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
+
+        if not self._learning_rule is None:
+            self._record_pre_spike_times(s_in)
+
+        super().run_spk()
 
 
 
@@ -118,7 +123,7 @@ class PyDenseModelBitAcc(ConnectionModelFixed):
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
         if self.num_message_bits.item() > 0:
-            s_in = self.s_in.recv().astype(bool)
+            s_in = self.s_in.recv()
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
