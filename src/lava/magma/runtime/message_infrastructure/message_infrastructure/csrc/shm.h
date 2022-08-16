@@ -5,7 +5,6 @@
 #ifndef SHM_H_
 #define SHM_H_
 
-#include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,6 +12,8 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <unistd.h>
+
+#include <memory>
 
 namespace message_infrastructure {
 
