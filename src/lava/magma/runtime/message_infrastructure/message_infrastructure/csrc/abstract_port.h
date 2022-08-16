@@ -20,10 +20,10 @@ class AbstractPort {
  public:
   virtual int Start() = 0;
   virtual int Join() = 0;
-  std::string Name();
-  pybind11::dtype Dtype();
-  ssize_t* Shape();
-  size_t Size();
+  virtual std::string Name();
+  virtual pybind11::dtype Dtype();
+  virtual ssize_t* Shape();
+  virtual size_t Size();
 
  private:
   std::string name_;

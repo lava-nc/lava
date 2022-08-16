@@ -26,11 +26,15 @@ template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
-                SharedMemory *shm,
+                SharedMemoryPtr shm,
                 Proto *proto,
                 const size_t &size,
                 sem_t *req,
                 sem_t *ack);
+  std::string Name();
+  pybind11::dtype Dtype();
+  ssize_t* Shape();
+  size_t Size();
   int Start();
   int Probe();
   int Send();
@@ -51,11 +55,15 @@ template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
-                SharedMemory *shm,
+                SharedMemoryPtr shm,
                 Proto *proto,
                 const size_t &size,
                 sem_t *req,
                 sem_t *ack);
+  std::string Name();
+  pybind11::dtype Dtype();
+  ssize_t* Shape();
+  size_t Size();
   int Start();
   int Probe();
   int Recv();
