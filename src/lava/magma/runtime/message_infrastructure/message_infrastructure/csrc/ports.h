@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "abstract_port_implementation.h"
+#include "transformer.h"
 
 namespace message_infrastructure {
 
@@ -77,10 +78,10 @@ class CppOutPort : public AbstractCppIOPort {
     virtual std::vector<pybind11::array_t<pybind11::dtype>> Send();
     virtual void Flush();
 
-    const CppOutPortVectorDense  VEC_DENSE;
-    const CppOutPortVectorSparse VEC_SPARSE;
-    const CppOutPortScalarDense  SCALAR_DENSE;
-    const CppOutPortScalarSparse SCALAR_SPARSE;
+    const CppOutPortVectorDense  VEC_DENSE = NULL;
+    const CppOutPortVectorSparse VEC_SPARSE = NULL;
+    const CppOutPortScalarDense  SCALAR_DENSE = NULL;
+    const CppOutPortScalarSparse SCALAR_SPARSE = NULL;
 };
 
 
@@ -122,10 +123,10 @@ class CppRefPort : public AbstractCppPort {
     virtual std::vector<pybind11::dtype> Write();
     virtual void Wait();
 
-    const CppRefPortVectorDense  VEC_DENSE;
-    const CppRefPortVectorSparse VEC_SPARSE;
-    const CppRefPortScalarDense  SCALAR_DENSE;
-    const CppRefPortScalarSparse SCALAR_SPARSE;
+    const CppRefPortVectorDense  VEC_DENSE = NULL;
+    const CppRefPortVectorSparse VEC_SPARSE = NULL;
+    const CppRefPortScalarDense  SCALAR_DENSE = NULL;
+    const CppRefPortScalarSparse SCALAR_SPARSE = NULL;
 };
 
 
@@ -171,10 +172,10 @@ class CppVarPort : public AbstractCppPort {
     std::vector<AbstractCspPort> GetCspPorts();
     virtual void Service();
 
-    const CppVarPortVectorDense  VEC_DENSE;
-    const CppVarPortVectorSparse VEC_SPARSE;
-    const CppVarPortScalarDense  SCALAR_DENSE;
-    const CppVarPortScalarSparse SCALAR_SPARSE;
+    const CppVarPortVectorDense  VEC_DENSE = NULL;
+    const CppVarPortVectorSparse VEC_SPARSE = NULL;
+    const CppVarPortScalarDense  SCALAR_DENSE = NULL;
+    const CppVarPortScalarSparse SCALAR_SPARSE = NULL;
 
     AbstractTransformer transformer_;
     CspSendPort csp_send_port_;
