@@ -4,18 +4,16 @@
 import traceback
 from functools import partial
 
-from MessageInfrastructurePywrapper import CppMultiProcessing
-from MessageInfrastructurePywrapper import SharedMemManager
-from MessageInfrastructurePywrapper import ProcessType
-from MessageInfrastructurePywrapper import Actor
+from message_infrastructure import CppMultiProcessing
+from message_infrastructure import SharedMemManager
+from message_infrastructure import ProcessType
+from message_infrastructure import Actor
+from message_infrastructure.multiprocessing import MultiProcessing
 
 
 class Builder():
-    def build(self):
-        print("Builder run build")
-
-    def start(self, *args, **kwargs):
-        print("Builder run start")
+    def build(self, i):
+        print("Builder run build ", i)
 
 
 def target_fn(*args, **kwargs):
@@ -28,7 +26,8 @@ def target_fn(*args, **kwargs):
     """
     try:
         builder = kwargs.pop("builder")
-        actor = builder.build()
+        idx = kwargs.pop("idx")
+        builder.build(idx)
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
         print("Traceback: ")
@@ -36,32 +35,28 @@ def target_fn(*args, **kwargs):
         raise e
 
 
-def main():
+def test_multiprocessing():
+    mp = MultiProcessing()
+    mp.start()
     builder = Builder()
-    mp = CppMultiProcessing()
-    bound_target_fn = partial(target_fn, builder=builder)
-    bound_target_fn()
     for i in range(5):
-        ret = mp.build_actor(bound_target_fn)
+        bound_target_fn = partial(target_fn, idx=i)
+        ret = mp.build_actor(bound_target_fn, builder)
         if ret == ProcessType.ChildProcess :
             print("child process, exit")
             exit(0)
 
-    mp.check_actor()
-    mp.stop()
+    shmm = mp.smm
+    for i in range(5):
+        print("shared memory id: ", shmm.alloc_mem(8))
 
-    actors = mp.get_actors()
+    actors = mp.actors
     print(actors)
     print("actor status: ", actors[0].get_status())
+    print("stop num: ", shmm.stop())
+    print("stop num: ", shmm.stop())
 
-    shm = mp.get_shmm()
-
-    for i in range(5):
-        print("shared id:", shm.alloc_mem(10))
-
-    shm2 = mp.get_shmm()
-    print("stop num: ", shm2.stop())
-    print("stop num: ", shm.stop())
+    mp.stop()
 
 
-main()
+test_multiprocessing()

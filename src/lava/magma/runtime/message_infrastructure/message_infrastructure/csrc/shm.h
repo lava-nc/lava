@@ -32,10 +32,24 @@ class SharedMemManager {
     return shmid;
   }
 
-  int DeleteSharedMemory(int key) {
-    // Release specific shared memroy
-    return 0;
+  int DeleteSharedMemory(int shmid) {
+    // Release specific shared memory
+    int del_cnt = 0;
+    for (auto it = shms_.begin(); it != shms_.end(); it++) {
+      if ((*it) == shmid) {
+        shms_.erase(it);
+        del_cnt++;
+      }
+    }
+    return del_cnt;
   }
+
+  int Stop() {
+    int stop_cnt = shms_.size();
+    shms_.clear();
+    return stop_cnt;
+  }
+
  private:
   key_t key_ = 0xdead;
   std::vector<int> shms_;

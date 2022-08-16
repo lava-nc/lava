@@ -26,4 +26,8 @@ int PosixActor::Stop() {
 
 }
 
+int PosixActor::Wait() {
+  return 0;
+}
+
 }

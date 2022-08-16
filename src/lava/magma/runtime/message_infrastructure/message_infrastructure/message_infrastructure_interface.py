@@ -2,15 +2,7 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
-if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import \
-        RuntimeServiceBuilder
 from abc import ABC, abstractmethod
-
-from lava.magma.compiler.channels.interfaces import ChannelType, Channel
-from lava.magma.core.sync.domain import SyncDomain
 
 """A Message Infrastructure Interface which can create actors which would
 participate in message passing/exchange, start and stop them as well as
@@ -32,9 +24,7 @@ class MessageInfrastructureInterface(ABC):
         pass
 
     @abstractmethod
-    def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
-        ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'RuntimeServiceBuilder']]):
+    def build_actor(self, target_fn: ty.Callable, builder):
         """Given a target_fn starts a system process"""
         pass
 
@@ -42,10 +32,4 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def actors(self) -> ty.List[ty.Any]:
         """Returns a list of actors"""
-        pass
-
-    @abstractmethod
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
-        """Given the Channel Type, Return the Channel Implementation to
-        be used during execution"""
         pass

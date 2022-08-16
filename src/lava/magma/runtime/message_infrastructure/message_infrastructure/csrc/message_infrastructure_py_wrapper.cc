@@ -4,8 +4,10 @@
 
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "multiprocessing.h"
+#include "abstract_actor.h"
 #include "shm.h"
 // #include "shmem_channel.h"
 // #include "shmem_port.h"
@@ -19,10 +21,22 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>())
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
+    .def("get_actors", &MultiProcessing::GetActors)
+    .def("get_shmm", &MultiProcessing::GetSharedMemManager)
     .def("stop", &MultiProcessing::Stop);
+  py::enum_<ProcessType> (m, "ProcessType")
+    .value("ErrorProcess", ErrorProcess)
+    .value("ChildProcess", ChildProcess)
+    .value("ParentProcess", ParentProcess);
   py::class_<SharedMemManager> (m, "SharedMemManager")
     .def(py::init<>())
-    .def("alloc_mem", &SharedMemManager::AllocSharedMemory);
+    .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
+    .def("stop", &SharedMemManager::Stop);
+  py::class_<PosixActor> (m, "Actor")
+    .def("wait", &PosixActor::Wait)
+    .def("stop", &PosixActor::Stop)
+    .def("get_status", &PosixActor::GetStatus);
+    // .def("trace", &PosixActor::Trace);
   
   /*
   py::class_<ShmemSendPort> (m, "ShmemSendPort")
