@@ -38,4 +38,4 @@ std::vector <ndarray> CppOutPortVectorDense::Send(ndarray data){
   }
 }
 
-}
+}  // namespace message_infrastructure
