@@ -16,6 +16,19 @@ int ShmemSendPort::Start();
 int ShmemSendPort::Probe();
 int ShmemSendPort::Send();
 int ShmemSendPort::Join();
-int ShmemSendPort::_ack_callback();
+int ShmemSendPort::AckCallback();
+
+ShmemRecvPort::ShmemRecvPort(const std::string &name,
+              SharedMemory *shm,
+              Proto *proto,
+              const size_t &size,
+              sem_t *req,
+              sem_t *ack);
+int ShmemRecvPort::Start();
+int ShmemRecvPort::Probe();
+int ShmemRecvPort::Send();
+int ShmemRecvPort::Join();
+int ShmemRecvPort::Peek();
+int ShmemRecvPort::ReqCallback();
 
 } // namespace message_infrastructure

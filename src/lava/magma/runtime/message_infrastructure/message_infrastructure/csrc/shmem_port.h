@@ -35,7 +35,7 @@ class ShmemSendPort : public AbstractSendPort {
   int Probe();
   int Send();
   int Join();
-  int _ack_callback();
+  int AckCallback();
 
   SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
@@ -61,7 +61,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   int Recv();
   int Join();
   int Peek();
-  int _req_callback();
+  int ReqCallback();
 
   SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
