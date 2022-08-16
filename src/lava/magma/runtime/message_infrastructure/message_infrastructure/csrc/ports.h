@@ -117,6 +117,8 @@ class CppRefPort : public AbstractCppPort {
  public:
     std::vector<PortPtr> GetPorts();
     virtual std::vector<pybind11::dtype> Read();
+    virtual int Read();
+    virtual std::vector<int> Read();
     virtual std::vector<pybind11::dtype> Write();
     virtual void Wait();
 
