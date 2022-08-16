@@ -6,6 +6,7 @@
 #define CHANNEL_FACTORY_H_
 
 #include <string>
+#include <memory>
 
 #include "abstract_channel.h"
 #include "shmem_channel.h"
@@ -15,18 +16,13 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
-  ChannelFactory(const ChannelFactory&) = delete;
-  ChannelFactory& operator=(const ChannelFactory&) = delete;
-  static ChannelFactory& GetChannelFactory() {
-    static ChannelFactory channel_factory;
-    return channel_factory;
-  }
   template<class T>
-  AbstractChannelPtr GetChannel(
+  std::shared_ptr<AbstractChannel> GetChannel(
       const ChannelType &channel_type,
       SharedMemoryPtr shm,
       const pybind11::array_t<T> &data,
       const size_t &size,
+      const size_t &nbytes,
       const std::string &name = "test_channel") {
     switch (channel_type) {
       case RPCCHANNEL:
@@ -34,14 +30,23 @@ class ChannelFactory {
       case DDSCHANNEL:
         break;
       default:
-        return GetShmemChannel<T>(shm, data, size, name);
+        return GetShmemChannel<T>(shm, data, size, nbytes, name);
     }
     return NULL;
   }
+  friend ChannelFactory& GetChannelFactory();
 
  private:
-  ChannelFactory();
+  ChannelFactory() {}
+  ChannelFactory(const ChannelFactory&) {}
+  static ChannelFactory channel_factory_;
 };
+
+ChannelFactory ChannelFactory::channel_factory_;
+
+ChannelFactory& GetChannelFactory() {
+  return ChannelFactory::channel_factory_;
+}
 
 }  // namespace message_infrastructure
 

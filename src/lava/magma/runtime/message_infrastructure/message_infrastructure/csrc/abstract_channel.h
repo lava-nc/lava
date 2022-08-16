@@ -14,8 +14,8 @@ namespace message_infrastructure {
 
 class AbstractChannel {
  public:
-  std::shared_ptr<AbstractSendPort> src_port_;
-  std::shared_ptr<AbstractRecvPort> dst_port_;
+  std::shared_ptr<AbstractSendPort> send_port_;
+  std::shared_ptr<AbstractRecvPort> recv_port_;
 };
 
 using AbstractChannelPtr = AbstractChannel *;

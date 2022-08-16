@@ -18,12 +18,16 @@ namespace message_infrastructure {
 
 class AbstractPort {
  public:
-  virtual int Start() = 0;
-  virtual int Join() = 0;
-  virtual std::string Name();
-  virtual pybind11::dtype Dtype();
-  virtual ssize_t* Shape();
-  virtual size_t Size();
+  AbstractPort() {}
+  std::string Name() {}
+  pybind11::dtype Dtype() {}
+  ssize_t* Shape() {}
+  size_t Size() {}
+
+  int Start() {}
+  int Probe() {}
+  int Recv() {}
+  int Join() {}
 
  private:
   std::string name_;
@@ -34,12 +38,13 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  virtual int Send() = 0;
+  int Send() {}
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  virtual int Recv() = 0;
+  int Recv() {}
+  int Peek() {}
 };
 
 using PortPtr = AbstractPort *;
