@@ -78,7 +78,6 @@ class PyDenseModelBitAcc(ConnectionModelFixed):
 
 
     def __init__(self, proc_params):
-        print ("PROC MODEL DENSE")
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
