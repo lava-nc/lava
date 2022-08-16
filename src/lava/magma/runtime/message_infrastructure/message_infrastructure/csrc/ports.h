@@ -9,6 +9,7 @@
 #include <pybind11/numpy.h>
 
 #include <vector>
+#include <variant>
 
 #include "abstract_port_implementation.h"
 #include "transformer.h"
@@ -34,7 +35,8 @@ class AbstractCppIOPort : public AbstractCppPort {
 class CppInPort : public AbstractCppIOPort {
  public:
     bool Probe();
-    virtual std::vector<pybind11::dtype> Peek();
+    virtual std::variant<std::vector<int, pybind11::dtype>, int> Peek();
+    // virtual std::vector<pybind11::dtype> Peek();
     virtual std::vector<pybind11::dtype> Recv();
 
     const CppInPortVectorDense  VEC_DENSE;
