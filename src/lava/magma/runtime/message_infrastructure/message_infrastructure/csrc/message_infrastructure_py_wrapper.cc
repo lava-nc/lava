@@ -45,84 +45,84 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   m.def("get_shmemchannel", &GetShmemChannel, return_value_policy::reference);
   */
 
-  py::class_<AbstractPyPort> (m, "AbstractCppPort")
+  py::class_<AbstractCppPort> (m, "AbstractPyPort")
     .def(py::init<>());
 
-  py::class_<AbstractPyIOPort> (m, "AbstractCppIOPort")
+  py::class_<AbstractCppIOPort> (m, "AbstractPyIOPort")
     .def("ports", &AbstractCppIOPort::GetPorts);
   
-  py::class_<PyInPort> (m, "CppInPort")
+  py::class_<CppInPort> (m, "PyInPort")
     .def("probe", &CppInPort::Probe);
   
-  py::class_<PyInPortVectorDense> (m, "CppInPortVectorDense")
+  py::class_<CppInPortVectorDense> (m, "PyInPortVectorDense")
     .def("recv", &CppInPortVectorDense::Recv)
     .def("peek", &CppInPortVectorDense::Peek);
   
-  py::class_<PyInPortVectorSparse> (m, "CppInPortVectorSparse")
+  py::class_<CppInPortVectorSparse> (m, "PyInPortVectorSparse")
     .def("recv", &CppInPortVectorSparse::Recv)
     .def("peek", &CppInPortVectorSparse::Peek);
 
-  py::class_<PyInPortScalarDense> (m, "CppInPortScalarDense")
+  py::class_<CppInPortScalarDense> (m, "PyInPortScalarDense")
     .def("recv", &CppInPortScalarDense::Recv)
     .def("peek", &CppInPortScalarDense::Peek);
   
-  py::class_<PyInPortScalarSparse> (m, "CppInPortScalarSparse")
+  py::class_<CppInPortScalarSparse> (m, "PyInPortScalarSparse")
     .def("recv", &CppInPortScalarSparse::Recv)
     .def("peek", &CppInPortScalarSparse::Peek);
   
-  py::class_<PyOutPort> (m, "CppOutPort")
+  py::class_<CppOutPort> (m, "PyOutPort")
     .def(py::init<>());
   
-  py::class_<PyOutPortVectorDense> (m, "CppOutPortVectorDense")
+  py::class_<CppOutPortVectorDense> (m, "PyOutPortVectorDense")
     .def("send", &CppOutPortVectorDense::Send);
   
-  py::class_<PyOutPortVectorSparse> (m, "CppOutPortVectorSparse")
+  py::class_<CppOutPortVectorSparse> (m, "PyOutPortVectorSparse")
     .def("send", &CppOutPortVectorSparse::Send);
   
-  py::class_<PyOutPortScalarDense> (m, "CppOutPortScalarDense")
+  py::class_<CppOutPortScalarDense> (m, "PyOutPortScalarDense")
     .def("send", &CppOutPortScalarDense::Send);
 
-  py::class_<PyOutPortScalarSparse> (m, "CppOutPortScalarSparse")
+  py::class_<CppOutPortScalarSparse> (m, "PyOutPortScalarSparse")
     .def("send", &CppOutPortScalarSparse::Send);
   
-  py::class_<PyRefPort> (m, "CppRefPort")
+  py::class_<CppRefPort> (m, "PyRefPort")
     .def(py::init<>())
     .def("ports", &CppRefPort::GetPorts);
   
-  py::class_<PyRefPortVectorDense> (m, "CppRefPortVectorDense")
+  py::class_<CppRefPortVectorDense> (m, "PyRefPortVectorDense")
     .def("read", &CppRefPortVectorDense::Read)
     .def("write", &CppRefPortVectorDense::Write);
   
-  py::class_<PyRefPortVectorSparse> (m, "CppRefPortVectorSparse")
+  py::class_<CppRefPortVectorSparse> (m, "PyRefPortVectorSparse")
     .def("read", &CppRefPortVectorSparse::Read)
     .def("write", &CppRefPortVectorSparse::Write);
 
-  py::class_<PyRefPortScalarDense> (m, "CppRefPortScalarDense")
+  py::class_<CppRefPortScalarDense> (m, "PyRefPortScalarDense")
     .def("read", &CppRefPortScalarDense::Read)
     .def("write", &CppRefPortScalarDense::Write);
   
-  py::class_<PyRefPortScalarSparse> (m, "CppRefPortScalarSparse")
+  py::class_<CppRefPortScalarSparse> (m, "PyRefPortScalarSparse")
     .def("read", &CppRefPortScalarSparse::Read)
     .def("write", &CppRefPortScalarSparse::Write);
   
-  py::class_<PyVarPort> (m, "CppVarPort")
+  py::class_<CppVarPort> (m, "PyVarPort")
     .def(py::init<>())
     .def("csp_ports", &CppVarPort::GetCspPorts);
   
-  py::class_<PyVarPortVectorDense> (m, "CppVarPortVectorDense")
+  py::class_<CppVarPortVectorDense> (m, "PyVarPortVectorDense")
     .def("service", &CppVarPortVectorDense::Service);
   
-  py::class_<PyVarPortVectorSparse> (m, "CppVarPortVectorSparse")
+  py::class_<CppVarPortVectorSparse> (m, "PyVarPortVectorSparse")
     .def("recv", &CppVarPortVectorSparse::Recv)
     .def("peek", &CppVarPortVectorSparse::Peek)
     .def("service", &CppVarPortVectorSparse::Service);
   
-  py::class_<PyVarPortScalarDense> (m, "CppVarPortScalarDense")
+  py::class_<CppVarPortScalarDense> (m, "PyVarPortScalarDense")
     .def("recv", &CppVarPortScalarDense::Recv)
     .def("peek", &CppVarPortScalarDense::Peek)
     .def("service", &CppVarPortScalarDense::Service);
 
-  py::class_<PyVarPortScalarSparse> (m, "CppVarPortScalarSparse")
+  py::class_<CppVarPortScalarSparse> (m, "PyVarPortScalarSparse")
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek)
     .def("service", &CppVarPortScalarSparse::Service);
