@@ -9,6 +9,8 @@
 // #include "shm.h"
 // #include "shmem_channel.h"
 // #include "shmem_port.h"
+#include "ports.h"
+#include "transformer.h"
 
 namespace message_infrastructure {
 
