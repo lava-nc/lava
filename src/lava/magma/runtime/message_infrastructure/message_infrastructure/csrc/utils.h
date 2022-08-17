@@ -17,7 +17,7 @@ enum ChannelType {
 };
 
 struct Proto {
-  ssize_t *shape_ = NULL;
+  const ssize_t *shape_;
   pybind11::dtype dtype_;
   size_t nbytes_;
 };

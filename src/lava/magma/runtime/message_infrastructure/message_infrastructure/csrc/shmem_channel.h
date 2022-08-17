@@ -13,6 +13,7 @@
 
 #include "abstract_channel.h"
 #include "shm.h"
+#include "port_proxy.h"
 
 namespace message_infrastructure {
 
@@ -24,18 +25,36 @@ class ShmemChannel : public AbstractChannel {
                const ssize_t* shape,
                const pybind11::dtype &dtype,
                const size_t &size,
-               const size_t &nbytes);
-  AbstractSendPortPtr GetSendPort() {
-    return this->send_port_;
+               const size_t &nbytes) {
+  Proto proto;
+  proto.shape_ = shape;
+  proto.dtype_ = dtype;
+  proto.nbytes_ = nbytes;
+
+  shm = NULL;
+
+  AbstractSendPortPtr send_port;
+  AbstractRecvPortPtr recv_port;
+  send_port_proxy_ = std::make_shared<SendPortProxy>(
+                      ChannelType::SHMEMCHANNEL,
+                      send_port);
+  recv_port_proxy_ = std::make_shared<RecvPortProxy>(
+                      ChannelType::SHMEMCHANNEL,
+                      recv_port);
   }
-  AbstractRecvPortPtr GetRecvPort() {
-    return this->recv_port_;
+  SendPortProxyPtr GetSendPort() {
+    return this->send_port_proxy_;
+  }
+  RecvPortProxyPtr GetRecvPort() {
+    return this->recv_port_proxy_;
   }
 
  private:
   SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
+  SendPortProxyPtr send_port_proxy_;
+  RecvPortProxyPtr recv_port_proxy_;
 };
 
 using ShmemChannelPtr = ShmemChannel *;
@@ -51,7 +70,8 @@ std::shared_ptr<ShmemChannel> GetShmemChannel(SharedMemoryPtr shm,
                                          name,
                                          data.shape(),
                                          data.dtype(),
-                                         size, nbytes));
+                                         size,
+                                         nbytes));
 }
 
 }  // namespace message_infrastructure

@@ -31,6 +31,7 @@ class ChannelFactory {
         break;
       default:
         return GetShmemChannel<T>(shm, data, size, nbytes, name);
+        break;
     }
     return NULL;
   }

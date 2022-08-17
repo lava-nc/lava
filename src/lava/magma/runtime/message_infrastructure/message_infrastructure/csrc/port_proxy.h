@@ -8,16 +8,15 @@
 #include <memory>
 #include <string>
 #include "abstract_port.h"
-#include "abstract_channel.h"
+#include "shmem_port.h"
 
 namespace message_infrastructure {
 
 class SendPortProxy {
  public:
-  SendPortProxy(AbstractChannelPtr channel,
-                ChannelType channel_type) :
-    send_port_(channel->send_port_),
-    channel_type_(channel_type) {}
+  SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
+                  channel_type_(channel_type),
+                  send_port_(send_port) {}
   ChannelType GetChannelType() {
     return channel_type_;
   }
@@ -56,10 +55,10 @@ class SendPortProxy {
 
 class RecvPortProxy {
  public:
-  RecvPortProxy(AbstractChannelPtr channel,
-                ChannelType channel_type) :
-    recv_port_(channel->recv_port_),
-    channel_type_(channel_type) {}
+  RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
+                  channel_type_(channel_type),
+                  recv_port_(recv_port) {}
+
   ChannelType GetChannelType() {
     return channel_type_;
   }
@@ -98,6 +97,9 @@ class RecvPortProxy {
   ChannelType channel_type_;
   AbstractRecvPortPtr recv_port_;
 };
+
+using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
+using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
 
 }  // namespace message_infrastructure
 

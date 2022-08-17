@@ -30,7 +30,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("get_recv_port", &ShmemChannel::GetRecvPort);
 
   py::class_<SendPortProxy> (m, "SendPortProxy")
-    .def(py::init<AbstractChannelPtr, ChannelType>())
+    .def(py::init<ChannelType, AbstractSendPortPtr>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)
     .def("get_send_port", &SendPortProxy::GetSendPort)
     .def("start", &SendPortProxy::Start)
@@ -43,6 +43,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("size", &SendPortProxy::Size);
 
   py::class_<RecvPortProxy> (m, "RecvPortProxy")
+    .def(py::init<ChannelType, AbstractRecvPortPtr>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
     .def("get_recv_port", &RecvPortProxy::GetRecvPort)
     .def("start", &RecvPortProxy::Start)
@@ -54,6 +55,11 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("dtype", &RecvPortProxy::Dtype)
     .def("shape", &RecvPortProxy::Shape)
     .def("size", &RecvPortProxy::Size);
+  
+  py::class_<ChannelFactory> (m, "ChannelFactory")
+    .def("get_channel", &ChannelFactory::GetChannel<double>)
+    .def("get_channel", &ChannelFactory::GetChannel<int>)
+    .def("get_channel", &ChannelFactory::GetChannel<float>);
 
   m.def("get_channel_factory", GetChannelFactory);
 }
