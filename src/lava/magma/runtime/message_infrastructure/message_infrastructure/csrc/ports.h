@@ -41,17 +41,19 @@ class AbstractCppIOPort : public AbstractCppPort {
 class CppInPort : public AbstractCppIOPort {
  public:
     bool Probe();
-    virtual std::variant<std::vector<int, pybind11::dtype>, int> Recv();
-    // virtual std::variant<std::vector<int, pybind11::dtype>, int> Peek();
-    virtual std::vector<pybind11::dtype> Peek();
-    // virtual std::vector<pybind11::dtype> Recv();
+
+    template <typename T>
+    T Recv() {}
+
+    template <typename T>
+    T Peek() {}
 
     // const CppInPortVectorDense  *VEC_DENSE;
     // const CppInPortVectorSparse *VEC_SPARSE;
     // const CppInPortScalarDense  *SCALAR_DENSE;
     // const CppInPortScalarSparse *SCALAR_SPARSE;
 
-    AbstractTransformer transformer_;
+    // AbstractTransformer transformer_;
 };
 
 class CppInPortVectorDense : public CppInPort {
@@ -71,8 +73,7 @@ class CppInPortVectorSparse : public CppInPort {
 class CppInPortScalarDense : public CppInPort {
  public:
     int Recv();
-    std::variant<std::vector<int, pybind11::dtype>, int> Peek();
-    std::vector<pybind11::dtype> Peek();
+    int Peek();
 };
 
 
