@@ -16,8 +16,8 @@ from lava.magma.compiler.channels.interfaces import (
 )
 
 if ty.TYPE_CHECKING:
-    from lava.magma.runtime.message_infrastructure \
-        .message_infrastructure_interface import (
+    from message_infrastructure.message_infrastructure_interface \
+        import (
             MessageInfrastructureInterface)
 
 

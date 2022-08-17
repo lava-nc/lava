@@ -13,9 +13,46 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+#include <vector>
+
 namespace message_infrastructure {
 
 class SharedMemory {
+};
+
+class SharedMemManager {
+ public:
+  int AllocSharedMemory(size_t mem_size) {
+    int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
+    if (shmid < 0)
+      return -1;
+
+    shms_.push_back(shmid);
+    key_++;
+    return shmid;
+  }
+
+  int DeleteSharedMemory(int shmid) {
+    // Release specific shared memory
+    int del_cnt = 0;
+    for (auto it = shms_.begin(); it != shms_.end(); it++) {
+      if ((*it) == shmid) {
+        shms_.erase(it);
+        del_cnt++;
+      }
+    }
+    return del_cnt;
+  }
+
+  int Stop() {
+    int stop_cnt = shms_.size();
+    shms_.clear();
+    return stop_cnt;
+  }
+
+ private:
+  key_t key_ = 0xdead;
+  std::vector<int> shms_;
 };
 
 }  // namespace message_infrastructure
