@@ -127,7 +127,15 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("peek", &CppVarPortScalarSparse::Peek)
     .def("service", &CppVarPortScalarSparse::Service);
   */
-}
+  py::class_<AbstractTransformer> (m, "AbstractTransformer")
+    .def("transform", &AbstractTransformer::Transform);
 
+  py::class_<IdentityTransformer> (m, "IdentityTransformer")
+    .def("transform", &IdentityTransformer::Transform);
+
+  py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
+    .def("transform", &VirtualPortTransformer::Transform)
+    .def("_get_transform", &VirtualPortTransformer::_Get_Transform);
+}
 
 }  // namespace message_infrastructure
