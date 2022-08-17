@@ -12,11 +12,9 @@ import typing as ty
 import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel
-from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.message_infrastructure \
-    .factory import MessageInfrastructureFactory
-from lava.magma.runtime.message_infrastructure.message_infrastructure \
-    .message_infrastructure_interface import \
+from message_infrastructure.message_interface_enum import ActorType
+from message_infrastructure.factory import MessageInfrastructureFactory
+from message_infrastructure.message_infrastructure_interface import \
     MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
                                                  enum_equal, enum_to_np)

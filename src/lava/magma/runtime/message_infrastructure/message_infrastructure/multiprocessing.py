@@ -23,7 +23,7 @@ class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
     def __init__(self):
-        self._mp: ty.Optional[CppMultiProcessing] = None
+        self._mp: ty.Optional[CppMultiProcessing] = CppMultiProcessing()
 
     @property
     def actors(self):
@@ -37,7 +37,7 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def start(self):
         """Init the MultiProcessing"""
-        self._mp = CppMultiProcessing()
+        pass
 
     def build_actor(self, target_fn: ty.Callable, builder) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
