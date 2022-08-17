@@ -69,7 +69,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<CppInPortScalarSparse> (m, "PyInPortScalarSparse")
     .def("recv", &CppInPortScalarSparse::Recv)
     .def("peek", &CppInPortScalarSparse::Peek);
-  
+  /*
   py::class_<CppOutPort> (m, "PyOutPort")
     .def(py::init<>());
   
@@ -126,6 +126,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek)
     .def("service", &CppVarPortScalarSparse::Service);
+  */
 }
 
 

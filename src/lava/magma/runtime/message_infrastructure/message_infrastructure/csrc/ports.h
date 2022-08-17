@@ -31,18 +31,25 @@ class AbstractCppIOPort : public AbstractCppPort {
     std::vector<PortPtr> ports_;
 };
 
+// Forward definition of Vector/Scalar classes
+// class CppInPortVectorDense;
+// class CppInPortVectorSparse;
+// class CppInPortScalarDense;
+// class CppInPortScalarSparse;
+
 
 class CppInPort : public AbstractCppIOPort {
  public:
     bool Probe();
-    virtual std::variant<std::vector<int, pybind11::dtype>, int> Peek();
-    // virtual std::vector<pybind11::dtype> Peek();
-    virtual std::vector<pybind11::dtype> Recv();
+    virtual std::variant<std::vector<int, pybind11::dtype>, int> Recv();
+    // virtual std::variant<std::vector<int, pybind11::dtype>, int> Peek();
+    virtual std::vector<pybind11::dtype> Peek();
+    // virtual std::vector<pybind11::dtype> Recv();
 
-    const CppInPortVectorDense  VEC_DENSE;
-    const CppInPortVectorSparse VEC_SPARSE;
-    const CppInPortScalarDense  SCALAR_DENSE;
-    const CppInPortScalarSparse SCALAR_SPARSE;
+    // const CppInPortVectorDense  *VEC_DENSE;
+    // const CppInPortVectorSparse *VEC_SPARSE;
+    // const CppInPortScalarDense  *SCALAR_DENSE;
+    // const CppInPortScalarSparse *SCALAR_SPARSE;
 
     AbstractTransformer transformer_;
 };
@@ -64,7 +71,8 @@ class CppInPortVectorSparse : public CppInPort {
 class CppInPortScalarDense : public CppInPort {
  public:
     int Recv();
-    int Peek();
+    std::variant<std::vector<int, pybind11::dtype>, int> Peek();
+    std::vector<pybind11::dtype> Peek();
 };
 
 
@@ -75,6 +83,8 @@ class CppInPortScalarSparse : public CppInPort {
 };
 
 
+
+/*
 class CppOutPort : public AbstractCppIOPort {
  public:
     virtual std::vector<pybind11::array_t<pybind11::dtype>> Send();
@@ -210,6 +220,7 @@ class CppVarPortScalarSparse : public CppVarPort {
     std::vector<int> Peek();
     void Service();
 };
+*/
 
 }  // namespace message_infrastructure
 
