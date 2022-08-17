@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 project(message_passing)
 
 set (CMAKE_CXX_STANDARD 17)
-include_directories(message_infrastructure/csrc)
 
 find_package(pybind11 REQUIRED)
 
-file (GLOB MULTI_PROC_SRCS "message_infrastructure/csrc/multiprocessing.cc"
-                           "message_infrastructure/csrc/shmem_port.cc"
-                           "message_infrastructure/csrc/port_proxy.cc")
+set (MULTI_PROC_SRCS
+     "message_infrastructure/csrc/multiprocessing.cc"
+     "message_infrastructure/csrc/posix_actor.cc"
+     "message_infrastructure/csrc/shmem_port.cc"
+     "message_infrastructure/csrc/port_proxy.cc")
 
 file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 
