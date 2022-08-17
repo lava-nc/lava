@@ -1,2 +1,3 @@
-export PYTHONPATH=${PWD}/build
-export LD_LIBRARY_PATH=${PWD}/build
+SCRIPTPATH=$(cd `dirname -- $0` && pwd)
+export PYTHONPATH="${SCRIPTPATH}/build:${SCRIPTPATH}:$PYTHONPATH"
+export LD_LIBRARY_PATH="${SCRIPTPATH}/build:${SCRIPTPATH}:$LD_LIBRARY_PATH"

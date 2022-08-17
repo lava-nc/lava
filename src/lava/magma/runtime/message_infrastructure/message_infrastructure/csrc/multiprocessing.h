@@ -13,15 +13,24 @@
 
 namespace message_infrastructure {
 
+enum ProcessType {
+  ErrorProcess = -1,
+  ChildProcess = 0,
+  ParentProcess = 1
+};
+
 class MultiProcessing {
  public:
-  // stop each actor in vector actors;
-  void Stop();
-  void BuildActor(std::function<void()>);
+  MultiProcessing();
+  int Stop();
+  int BuildActor(std::function<void()>);
   void CheckActor();
+  std::vector<ActorPtr>& GetActors();
+  SharedMemManager* GetSharedMemManager();
+
  private:
   std::vector<ActorPtr> actors_;
-  // SharedMemManager shmm_;
+  SharedMemManager *shmm_;
 };
 
 }  // namespace message_infrastructure
