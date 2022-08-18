@@ -87,7 +87,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<CppInPortScalarSparse> (m, "PyInPortScalarSparse")
     .def("recv", &CppInPortScalarSparse::Recv)
     .def("peek", &CppInPortScalarSparse::Peek);
-  /*
+  
   py::class_<CppOutPort> (m, "PyOutPort")
     .def(py::init<>());
   
@@ -124,8 +124,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("write", &CppRefPortScalarSparse::Write);
   
   py::class_<CppVarPort> (m, "PyVarPort")
-    .def(py::init<>())
-    .def("csp_ports", &CppVarPort::GetCspPorts);
+    .def(py::init<>());
+    // .def("csp_ports", &CppVarPort::GetCspPorts);
   
   py::class_<CppVarPortVectorDense> (m, "PyVarPortVectorDense")
     .def("service", &CppVarPortVectorDense::Service);
@@ -144,7 +144,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek)
     .def("service", &CppVarPortScalarSparse::Service);
-  */
+  
+
+  /*
   py::class_<AbstractTransformer> (m, "AbstractTransformer")
     .def("transform", &AbstractTransformer::Transform);
 
@@ -154,6 +156,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
     .def("transform", &VirtualPortTransformer::Transform)
     .def("_get_transform", &VirtualPortTransformer::_Get_Transform);
+  */
 }
 
 }  // namespace message_infrastructure
