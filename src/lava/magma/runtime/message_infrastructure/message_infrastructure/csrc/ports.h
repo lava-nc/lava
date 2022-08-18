@@ -145,7 +145,7 @@ class CppRefPort : public AbstractCppPort {
 
     template <typename T>
     T Read() {}
-    
+
     virtual std::vector<pybind11::dtype> Write();
     virtual void Wait();
 
