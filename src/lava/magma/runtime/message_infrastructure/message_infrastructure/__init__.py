@@ -2,3 +2,9 @@ from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import SharedMemManager
 from MessageInfrastructurePywrapper import Actor
 from MessageInfrastructurePywrapper import ProcessType
+from MessageInfrastructurePywrapper import ShmemChannel
+from MessageInfrastructurePywrapper import SendPortProxy
+from MessageInfrastructurePywrapper import RecvPortProxy
+from MessageInfrastructurePywrapper import ChannelFactory
+from MessageInfrastructurePywrapper import get_channel_factory
+from MessageInfrastructurePywrapper import SharedMemory

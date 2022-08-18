@@ -26,26 +26,29 @@ class ShmemChannel : public AbstractChannel {
                const pybind11::dtype &dtype,
                const size_t &size,
                const size_t &nbytes) {
-  Proto proto;
-  proto.shape_ = shape;
-  proto.dtype_ = dtype;
-  proto.nbytes_ = nbytes;
+    printf("Create ShmemChannel\n");
+    Proto proto;
+    proto.shape_ = shape;
+    proto.dtype_ = dtype;
+    proto.nbytes_ = nbytes;
 
-  shm = NULL;
+    shm = NULL;
 
-  AbstractSendPortPtr send_port;
-  AbstractRecvPortPtr recv_port;
-  send_port_proxy_ = std::make_shared<SendPortProxy>(
-                      ChannelType::SHMEMCHANNEL,
-                      send_port);
-  recv_port_proxy_ = std::make_shared<RecvPortProxy>(
-                      ChannelType::SHMEMCHANNEL,
-                      recv_port);
+    AbstractSendPortPtr send_port;
+    AbstractRecvPortPtr recv_port;
+    send_port_proxy_ = std::make_shared<SendPortProxy>(
+        ChannelType::SHMEMCHANNEL,
+        send_port);
+    recv_port_proxy_ = std::make_shared<RecvPortProxy>(
+        ChannelType::SHMEMCHANNEL,
+        recv_port);
   }
   SendPortProxyPtr GetSendPort() {
+    printf("Get send_port.\n");
     return this->send_port_proxy_;
   }
   RecvPortProxyPtr GetRecvPort() {
+    printf("Get recv_port.\n");
     return this->recv_port_proxy_;
   }
 

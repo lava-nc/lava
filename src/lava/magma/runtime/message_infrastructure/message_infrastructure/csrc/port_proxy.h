@@ -16,7 +16,9 @@ class SendPortProxy {
  public:
   SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
                   channel_type_(channel_type),
-                  send_port_(send_port) {}
+                  send_port_(send_port) {
+    printf("Create SendPortProxy\n");
+  }
   ChannelType GetChannelType() {
     return channel_type_;
   }
@@ -57,7 +59,9 @@ class RecvPortProxy {
  public:
   RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
                   channel_type_(channel_type),
-                  recv_port_(recv_port) {}
+                  recv_port_(recv_port) {
+    printf("Create RecvPortProxy\n");
+  }
 
   ChannelType GetChannelType() {
     return channel_type_;

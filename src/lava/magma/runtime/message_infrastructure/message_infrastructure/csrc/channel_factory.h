@@ -46,7 +46,8 @@ class ChannelFactory {
 ChannelFactory ChannelFactory::channel_factory_;
 
 ChannelFactory& GetChannelFactory() {
-  return ChannelFactory::channel_factory_;
+  ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
+  return channel_factory;
 }
 
 }  // namespace message_infrastructure

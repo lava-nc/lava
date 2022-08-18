@@ -36,6 +36,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>())
     .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
     .def("stop", &SharedMemManager::Stop);
+  py::class_<SharedMemory> (m, "SharedMemory")
+    .def(py::init<>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("stop", &PosixActor::Stop)
@@ -73,7 +75,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("get_channel", &ChannelFactory::GetChannel<double>)
     .def("get_channel", &ChannelFactory::GetChannel<int>)
     .def("get_channel", &ChannelFactory::GetChannel<float>);
-  m.def("get_channel_factory", GetChannelFactory);
+  m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
 }
 
 } // namespace message_infrastructure
