@@ -32,10 +32,10 @@ class AbstractCppIOPort : public AbstractCppPort {
 };
 
 // Forward definition of Vector/Scalar classes
-// class CppInPortVectorDense;
-// class CppInPortVectorSparse;
-// class CppInPortScalarDense;
-// class CppInPortScalarSparse;
+class CppInPortVectorDense;
+class CppInPortVectorSparse;
+class CppInPortScalarDense;
+class CppInPortScalarSparse;
 
 
 class CppInPort : public AbstractCppIOPort {
@@ -48,10 +48,10 @@ class CppInPort : public AbstractCppIOPort {
     template <typename T>
     T Peek() {}
 
-    // const CppInPortVectorDense  *VEC_DENSE;
-    // const CppInPortVectorSparse *VEC_SPARSE;
-    // const CppInPortScalarDense  *SCALAR_DENSE;
-    // const CppInPortScalarSparse *SCALAR_SPARSE;
+    const CppInPortVectorDense  *kVecDense;
+    const CppInPortVectorSparse *kVecSparse;
+    const CppInPortScalarDense  *kScalarDense;
+    const CppInPortScalarSparse *kScalarSparse;
 
     // AbstractTransformer transformer_;
 };
@@ -82,7 +82,6 @@ class CppInPortScalarSparse : public CppInPort {
     std::vector<int> Recv();
     std::vector<int> Peek();
 };
-
 
 
 /*
