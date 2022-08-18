@@ -9,6 +9,18 @@ set(MULTI_PROC_SRCS
     "message_infrastructure/csrc/posix_actor.cc"
 )
 
+set(ABSTRACT_PORT_SRCS
+    "message_infrastructure/csrc/abstract_port_implementation.cc"
+)
+
+set(PORT_SRCS
+    "message_infrastructure/csrc/ports.cc"
+)
+
+set(TRANSFORMER_SRCS
+    "message_infrastructure/csrc/transformer.cc"
+)
+
 file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 
 find_package(pybind11 CONFIG)
