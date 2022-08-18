@@ -21,16 +21,22 @@ class ChannelType(Enum):
 
 def main():
   channel_factory = get_channel_factory()
-  data = np.ones((2, 2, 2))
+  data = np.array([1,2,3], np.int32)  
   shm = SharedMemory()
   size = 2
   nbytes = nbytes_cal(data.shape, data.dtype)
+  name = 'test_channel'
+
+  print(data)
+  print(type(data))
+  print(data.dtype)
 
   shmem_channel = channel_factory.get_channel(ChannelType.SHMEMCHANNEL,
                                               shm,
                                               data,
                                               size,
-                                              nbytes)
+                                              nbytes,
+                                              name)
 
   send_port = shmem_channel.get_send_port()
   recv_port = shmem_channel.get_recv_port()
