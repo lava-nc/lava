@@ -5,6 +5,9 @@
 #ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
 #define ABSTRACT_PORT_IMPLEMENTATION_H_
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include <vector>
 
 #include "abstract_port.h"
@@ -17,9 +20,9 @@ class AbstractPortImplementation {
   int Start();
   int Join();
   std::vector<int> GetShape();
-  std::vector<PortPtr> GetPorts();
+  virtual std::vector<PortPtr> GetPorts();
 
-  DataType dtype_;
+  pybind11::dtype dtype_;
   std::vector<int> shape_;
   size_t size_;
   ProcessModel process_model_;

@@ -22,8 +22,4 @@ std::vector<int> AbstractPortImplementation::GetShape() {
   return this->shape_;
 }
 
-std::vector<PortPtr> AbstractPortImplementation::GetPorts() {
-  return this->ports_;
-}
-
-} // namespace message_infrastructure
+}  // namespace message_infrastrature
