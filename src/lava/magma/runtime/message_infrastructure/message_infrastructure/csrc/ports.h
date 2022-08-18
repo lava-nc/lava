@@ -105,13 +105,13 @@ class CppOutPort : public AbstractCppIOPort {
 
 class CppOutPortVectorDense : public CppOutPort {
  public:
-    pybind11::array_t<pybind11::dtype> Send();
+    std::vector<pybind11::dtype> Send();
 };
 
 
 class CppOutPortVectorSparse : public CppOutPort {
  public:
-    pybind11::array_t<pybind11::dtype> Send();
+    std::vector<pybind11::dtype> Send();
 };
 
 
@@ -231,8 +231,8 @@ class CppVarPortVectorDense : public CppVarPort {
 
 class CppVarPortVectorSparse : public CppVarPort {
  public:
-    pybind11::array_t<pybind11::dtype> Recv();
-    pybind11::array_t<pybind11::dtype> Peek();
+    std::vector<pybind11::dtype> Recv();
+    std::vector<pybind11::dtype> Peek();
     void Service();
 };
 
