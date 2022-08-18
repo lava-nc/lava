@@ -73,7 +73,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("size", &RecvPortProxy::Size);
   py::class_<ChannelFactory> (m, "ChannelFactory")
     .def("get_channel", &ChannelFactory::GetChannel<double>)
-    .def("get_channel", &ChannelFactory::GetChannel<int>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int16_t>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int32_t>)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>)
     .def("get_channel", &ChannelFactory::GetChannel<float>);
   m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
 }
