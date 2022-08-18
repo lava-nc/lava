@@ -19,6 +19,10 @@ if ty.TYPE_CHECKING:
     from message_infrastructure.message_infrastructure_interface \
         import (
             MessageInfrastructureInterface)
+from message_infrastructure import ShmemChannel
+from message_infrastructure import SendPortProxy as ShmemSendPort
+from message_infrastructure import RecvPortProxy as ShmemRecvPort
+from message_infrastructure import ChannelFactory, get_channel_factory
 
 
 @dataclass
@@ -361,3 +365,45 @@ class PyPyChannel(Channel):
     @property
     def dst_port(self) -> AbstractCspRecvPort:
         return self._dst_port
+
+
+class PyShmemChannel(Channel):
+    """Helper class to create the set of send and recv port and encapsulate
+    them inside a common structure. We call this a ShmemChannel"""
+
+    def __init__(
+            self,
+            message_infrastructure: "MessageInfrastructureInterface",
+            src_name,
+            dst_name,
+            shape,
+            dtype,
+            size,
+    ):
+        """Instantiates PyPyChannel object and class attributes
+
+        Parameters
+        ----------
+        message_infrastructure: MessageInfrastructureInterface
+        src_name : str
+        dst_name : str
+        shape : ty.Tuple[int, ...]
+        dtype : ty.Type[np.intc]
+        size : int
+        """
+        nbytes = self.nbytes(shape, dtype)
+        smm = message_infrastructure.smm
+        shm = smm.alloc_mem(int(nbytes * size))
+        proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
+        # self._shmem_channel = ShmemChannel(0, shm, proto, size, size, name)
+
+    def nbytes(self, shape, dtype):
+        return np.prod(shape) * np.dtype(dtype).itemsize
+
+    @property
+    def src_port(self) -> ShmemSendPort:
+        return self._shmem_channel.get_send_port()
+
+    @property
+    def dst_port(self) -> ShmemRecvPort:
+        return self._shmem_channel.get_recv_port()
