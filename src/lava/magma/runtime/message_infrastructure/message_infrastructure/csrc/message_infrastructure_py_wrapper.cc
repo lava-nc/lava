@@ -15,6 +15,7 @@
 #include "shm.h"
 #include "shmem_channel.h"
 #include "shmem_port.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 
@@ -43,6 +44,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("stop", &PosixActor::Stop)
     .def("get_status", &PosixActor::GetStatus);
     // .def("trace", &PosixActor::Trace);
+  py::enum_<ChannelType> (m, "ChannelType")
+    .value("SHMEMCHANNEL", SHMEMCHANNEL)
+    .value("RPCCHANNEL", RPCCHANNEL)
+    .value("DDSCHANNEL", DDSCHANNEL);
   py::class_<ShmemChannel> (m, "ShmemChannel")
     .def("get_send_port", &ShmemChannel::GetSendPort)
     .def("get_recv_port", &ShmemChannel::GetRecvPort);

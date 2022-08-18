@@ -8,3 +8,4 @@ from MessageInfrastructurePywrapper import RecvPortProxy
 from MessageInfrastructurePywrapper import ChannelFactory
 from MessageInfrastructurePywrapper import get_channel_factory
 from MessageInfrastructurePywrapper import SharedMemory
+from MessageInfrastructurePywrapper import ChannelType
