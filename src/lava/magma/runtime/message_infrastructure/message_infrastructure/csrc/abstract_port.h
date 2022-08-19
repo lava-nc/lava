@@ -20,15 +20,31 @@ namespace message_infrastructure {
 class AbstractPort {
  public:
   AbstractPort() {}
-  std::string Name() {}
-  pybind11::dtype Dtype() {}
-  ssize_t* Shape() {}
-  size_t Size() {}
+  std::string Name() { 
+    return name_;
+  }
+  pybind11::dtype Dtype() {
+    return dtype_;
+  }
+  ssize_t* Shape() {
+    return shape_;
+  }
+  size_t Size() {
+    return size;
+  }
 
-  int Start() {}
-  int Probe() {}
-  int Recv() {}
-  int Join() {}
+  int Start() {
+    return 0;
+  }
+  int Probe() {
+    return 0;
+  }
+  int Recv() {
+    return 0;
+  }
+  int Join() {
+    return 0;
+  }
 
  private:
   std::string name_;
@@ -39,13 +55,19 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send() {}
+  int Send() {
+    return 0;
+  }
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  int Recv() {}
-  int Peek() {}
+  int Recv() {
+    return 0;
+  }
+  int Peek() {
+    return 0;
+  }
 };
 
 using AbstractPortPtr = std::shared_ptr<AbstractPort>;
