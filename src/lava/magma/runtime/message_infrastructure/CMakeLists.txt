@@ -8,7 +8,10 @@ find_package(pybind11 REQUIRED)
 set (MULTI_PROC_SRCS
      "message_infrastructure/csrc/multiprocessing.cc"
      "message_infrastructure/csrc/posix_actor.cc"
-     "message_infrastructure/csrc/shmem_port.cc")
+     "message_infrastructure/csrc/shmem_port.cc"
+     "message_infrastructure/csrc/abstract_port_implementation.cc"
+     "message_infrastructure/csrc/ports.cc"
+     )
 
 file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
 

@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "abstract_port.h"
 #include "shmem_port.h"
 
@@ -104,7 +105,8 @@ class RecvPortProxy {
 
 using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
 using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
-
+using SendPortProxyList = std::vector<SendPortProxyPtr>;
+using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 }  // namespace message_infrastructure
 
 #endif  // PORT_PROXY_H_

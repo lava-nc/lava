@@ -11,3 +11,6 @@ from MessageInfrastructurePywrapper import test_get_channel
 from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import ChannelType
 from MessageInfrastructurePywrapper import AbstractChannel
+from MessageInfrastructurePywrapper import PyInPortVectorDense
+from MessageInfrastructurePywrapper import PyOutPortVectorDense
+from MessageInfrastructurePywrapper import PyVarPortVectorSparse

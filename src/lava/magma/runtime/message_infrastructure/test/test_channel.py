@@ -13,7 +13,6 @@ from message_infrastructure import SharedMemory
 from message_infrastructure import ChannelType
 from message_infrastructure import AbstractChannel
 
-
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
 
