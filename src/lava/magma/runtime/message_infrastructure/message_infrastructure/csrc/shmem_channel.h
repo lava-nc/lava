@@ -26,13 +26,13 @@ class ShmemChannel : public AbstractChannel {
                const pybind11::dtype &dtype,
                const size_t &size,
                const size_t &nbytes) {
-    printf("Create ShmemChannel\n");
+    printf("Construct ShmemChannel\n");
     Proto proto;
     proto.shape_ = shape;
     proto.dtype_ = dtype;
     proto.nbytes_ = nbytes;
 
-    shm = NULL;
+    shm_ = shm;
 
     AbstractSendPortPtr send_port;
     AbstractRecvPortPtr recv_port;
@@ -68,6 +68,7 @@ std::shared_ptr<ShmemChannel> GetShmemChannel(SharedMemoryPtr shm,
                               const size_t &size,
                               const size_t &nbytes,
                               const std::string &name = "test_channel") {
+  printf("Generate shmem_channel.\n");
   return (std::make_shared<ShmemChannel>(shm,
                                          name,
                                          name,

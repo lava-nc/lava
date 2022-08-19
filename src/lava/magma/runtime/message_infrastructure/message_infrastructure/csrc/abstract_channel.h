@@ -8,12 +8,14 @@
 #include <memory>
 
 #include "utils.h"
-
 namespace message_infrastructure {
 
 class AbstractChannel {
  public:
   ChannelType channel_type_;
+
+  void GetSendPort() {}
+  void GetRecvPort() {}
 };
 
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;

@@ -48,13 +48,17 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL);
+  py::class_<AbstractChannel> (m, "AbstractChannel")
+    .def(py::init<>())
+    .def("get_send_port", &AbstractChannel::GetSendPort)
+    .def("get_recv_port", &AbstractChannel::GetRecvPort);
   py::class_<ShmemChannel> (m, "ShmemChannel")
-    .def("get_send_port", &ShmemChannel::GetSendPort)
-    .def("get_recv_port", &ShmemChannel::GetRecvPort);
+    .def("get_send_port", &ShmemChannel::GetSendPort, py::return_value_policy::reference)
+    .def("get_recv_port", &ShmemChannel::GetRecvPort, py::return_value_policy::reference);
   py::class_<SendPortProxy> (m, "SendPortProxy")
     .def(py::init<ChannelType, AbstractSendPortPtr>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)
-    .def("get_send_port", &SendPortProxy::GetSendPort)
+    .def("get_send_port", &SendPortProxy::GetSendPort, py::return_value_policy::reference)
     .def("start", &SendPortProxy::Start)
     .def("probe", &SendPortProxy::Probe)
     .def("send", &SendPortProxy::Send)
@@ -66,7 +70,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<RecvPortProxy> (m, "RecvPortProxy")
     .def(py::init<ChannelType, AbstractRecvPortPtr>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
-    .def("get_recv_port", &RecvPortProxy::GetRecvPort)
+    .def("get_recv_port", &RecvPortProxy::GetRecvPort, py::return_value_policy::reference)
     .def("start", &RecvPortProxy::Start)
     .def("probe", &RecvPortProxy::Probe)
     .def("recv", &RecvPortProxy::Recv)
@@ -77,12 +81,16 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("shape", &RecvPortProxy::Shape)
     .def("size", &RecvPortProxy::Size);
   py::class_<ChannelFactory> (m, "ChannelFactory")
-    .def("get_channel", &ChannelFactory::GetChannel<double>)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int16_t>)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int32_t>)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>)
-    .def("get_channel", &ChannelFactory::GetChannel<float>);
+    .def("get_channel", &ChannelFactory::GetChannel<double>, py::return_value_policy::reference)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int16_t>, py::return_value_policy::reference)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int32_t>, py::return_value_policy::reference)
+    .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>, py::return_value_policy::reference)
+    .def("get_channel", &ChannelFactory::GetChannel<float>, py::return_value_policy::reference);
   m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
+  m.def("test_get_channel", TestGetChannel<double>, py::return_value_policy::reference);
+  m.def("test_get_channel", TestGetChannel<std::int16_t>, py::return_value_policy::reference);
+  m.def("test_get_channel", TestGetChannel<std::int32_t>, py::return_value_policy::reference);
+  m.def("test_get_channel", TestGetChannel<std::int64_t>, py::return_value_policy::reference);
 }
 
 } // namespace message_infrastructure

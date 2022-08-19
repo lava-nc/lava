@@ -7,5 +7,7 @@ from MessageInfrastructurePywrapper import SendPortProxy
 from MessageInfrastructurePywrapper import RecvPortProxy
 from MessageInfrastructurePywrapper import ChannelFactory
 from MessageInfrastructurePywrapper import get_channel_factory
+from MessageInfrastructurePywrapper import test_get_channel
 from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import ChannelType
+from MessageInfrastructurePywrapper import AbstractChannel

@@ -21,7 +21,7 @@ namespace message_infrastructure {
 class SharedMemory {
 };
 
-using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
+using SharedMemoryPtr = SharedMemory*;
 
 class SharedMemManager {
  public:

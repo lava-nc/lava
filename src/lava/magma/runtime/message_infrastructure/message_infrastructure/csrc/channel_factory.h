@@ -19,7 +19,7 @@ class ChannelFactory {
   template<class T>
   std::shared_ptr<AbstractChannel> GetChannel(
       const ChannelType &channel_type,
-      SharedMemoryPtr shm,
+      SharedMemory shm,
       const pybind11::array_t<T> &data,
       const size_t &size,
       const size_t &nbytes,
@@ -30,8 +30,7 @@ class ChannelFactory {
       case DDSCHANNEL:
         break;
       default:
-        return GetShmemChannel<T>(shm, data, size, nbytes, name);
-        break;
+        return GetShmemChannel<T>(&shm, data, size, nbytes, name);
     }
     return NULL;
   }
@@ -48,6 +47,13 @@ ChannelFactory ChannelFactory::channel_factory_;
 ChannelFactory& GetChannelFactory() {
   ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
   return channel_factory;
+}
+
+template<class T>
+std::shared_ptr<AbstractChannel> TestGetChannel(const pybind11::array_t<T> &data){
+  printf("Correct!\n");
+  SharedMemory shm;
+  return GetShmemChannel<T>(&shm, data, 2, 16, "test_channel");
 }
 
 }  // namespace message_infrastructure
