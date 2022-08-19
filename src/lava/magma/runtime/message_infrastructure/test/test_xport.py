@@ -3,15 +3,15 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from enum import Enum
-
 
 from message_infrastructure import get_channel_factory
 from message_infrastructure import SharedMemory
 from message_infrastructure import ChannelTransferType
-from message_infrastructure import PyInPortVectorDense
-from message_infrastructure import PyOutPortVectorDense
-from message_infrastructure import PyVarPortVectorSparse
+from MessageInfrastructurePywrapper import (
+    InPortVectorDense,
+    OutPortVectorDense,
+    VarPortVectorSparse,
+)
 
 
 def nbytes_cal(shape, dtype):
@@ -34,17 +34,17 @@ def channel():
 
 
 def test_inport(ports):
-    in_port = PyInPortVectorDense(ports)
+    in_port = InPortVectorDense(ports)
     print("PyInPortVectorDense.recv", in_port.recv())
 
 
 def test_outport(ports):
-    out_port = PyOutPortVectorDense(ports)
+    out_port = OutPortVectorDense(ports)
     print("PyOutPortVectorDense.send", out_port.send())
 
 
 def test_varport(s_ports, r_ports):
-    var_port = PyVarPortVectorSparse("test", s_ports, r_ports)
+    var_port = VarPortVectorSparse("test", s_ports, r_ports)
     print("PyVarPortVectorSparse.service", var_port.service())
 
 

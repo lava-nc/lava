@@ -11,7 +11,4 @@ from MessageInfrastructurePywrapper import get_channel_factory
 from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
-from MessageInfrastructurePywrapper import PyInPortVectorDense
-from MessageInfrastructurePywrapper import PyOutPortVectorDense
-from MessageInfrastructurePywrapper import PyVarPortVectorSparse
 from MessageInfrastructurePywrapper import Selector
