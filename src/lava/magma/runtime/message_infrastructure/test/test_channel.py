@@ -13,8 +13,10 @@ from message_infrastructure import SharedMemory
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 
+
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
+
 
 def main():
     channel_factory = get_channel_factory()
@@ -30,12 +32,13 @@ def main():
     print(ChannelTransferType.SHMEMCHANNEL)
     print(type(ChannelTransferType.SHMEMCHANNEL))
 
-    shmem_channel = channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
-                                                shm,
-                                                data,
-                                                size,
-                                                nbytes,
-                                                name)
+    shmem_channel = channel_factory.get_channel(
+        ChannelTransferType.SHMEMCHANNEL,
+        shm,
+        data,
+        size,
+        nbytes,
+        name)
 
     send_port = shmem_channel.get_send_port()
     recv_port = shmem_channel.get_recv_port()
@@ -44,5 +47,6 @@ def main():
     recv_port.start()
 
     print("finish test function.")
+
 
 main()

@@ -13,8 +13,10 @@ from message_infrastructure import PyInPortVectorDense
 from message_infrastructure import PyOutPortVectorDense
 from message_infrastructure import PyVarPortVectorSparse
 
+
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
+
 
 def channel():
     channel_factory = get_channel_factory()
@@ -30,17 +32,21 @@ def channel():
                                        nbytes,
                                        name)
 
+
 def test_inport(ports):
     in_port = PyInPortVectorDense(ports)
     print("PyInPortVectorDense.recv", in_port.recv())
+
 
 def test_outport(ports):
     out_port = PyOutPortVectorDense(ports)
     print("PyOutPortVectorDense.send", out_port.send())
 
+
 def test_varport(s_ports, r_ports):
     var_port = PyVarPortVectorSparse("test", s_ports, r_ports)
     print("PyVarPortVectorSparse.service", var_port.service())
+
 
 def main():
     channels = [channel() for _ in range(3)]
@@ -53,5 +59,6 @@ def main():
     test_varport(send_ports, recv_ports)
 
     print("finish test function.")
+
 
 main()
