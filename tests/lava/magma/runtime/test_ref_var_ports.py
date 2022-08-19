@@ -6,7 +6,7 @@ import unittest
 
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyRefPort, PyVarPort
+from message_infrastructure.ports import PyRefPort, PyVarPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import RefPort, VarPort
