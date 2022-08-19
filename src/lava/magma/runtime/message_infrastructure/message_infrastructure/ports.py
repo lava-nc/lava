@@ -726,7 +726,8 @@ class PyVarPort(AbstractPortImplementation):
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
         self.var_name = var_name
-        self._cpp_var_port = self.CPP_VARPORT(var_name, csp_send_port, csp_recv_port)
+        self._cpp_var_port = self.CPP_VARPORT(var_name, csp_send_port,
+                                              csp_recv_port)
         super().__init__(process_model, shape, d_type)
 
     @property
