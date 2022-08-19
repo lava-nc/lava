@@ -20,7 +20,7 @@ namespace message_infrastructure {
 class AbstractPort {
  public:
   AbstractPort() {}
-  std::string Name() { 
+  std::string Name() {
     return name_;
   }
   pybind11::dtype Dtype() {

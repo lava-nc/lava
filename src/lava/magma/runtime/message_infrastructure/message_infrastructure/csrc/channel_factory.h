@@ -49,13 +49,6 @@ ChannelFactory& GetChannelFactory() {
   return channel_factory;
 }
 
-template<class T>
-std::shared_ptr<AbstractChannel> TestGetChannel(const pybind11::array_t<T> &data){
-  printf("Correct!\n");
-  SharedMemory shm;
-  return GetShmemChannel<T>(&shm, data, 2, 16, "test_channel");
-}
-
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_FACTORY_H_

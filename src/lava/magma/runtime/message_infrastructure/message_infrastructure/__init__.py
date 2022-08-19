@@ -8,7 +8,6 @@ from MessageInfrastructurePywrapper import SendPort
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import ChannelFactory
 from MessageInfrastructurePywrapper import get_channel_factory
-from MessageInfrastructurePywrapper import test_get_channel
 from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType

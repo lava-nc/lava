@@ -11,6 +11,7 @@
 #include <vector>
 #include <variant>
 #include <memory>
+#include <string>
 
 #include "abstract_port_implementation.h"
 
@@ -61,7 +62,7 @@ class CppOutPort : public AbstractPortImplementation {
  public:
     explicit CppOutPort(const SendPortProxyList &send_ports);
     virtual int Send() = 0;
-    void Flush() {};
+    void Flush() {}
 };
 
 
@@ -99,7 +100,7 @@ class CppRefPort : public AbstractPortImplementation {
                         const RecvPortProxyList &recv_ports);
     virtual int Read() = 0;
     virtual int Write() = 0;
-    int Wait() {};
+    int Wait() {}
 };
 
 
@@ -147,7 +148,6 @@ class CppVarPort : public AbstractPortImplementation {
 
  private:
   std::string name_;
-    
 };
 
 

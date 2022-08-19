@@ -8,14 +8,21 @@
 #include <memory>
 
 #include "utils.h"
+#include "port_proxy.h"
+
 namespace message_infrastructure {
 
 class AbstractChannel {
  public:
+  virtual ~AbstractChannel() {}
   ChannelType channel_type_;
 
-  void GetSendPort() {}
-  void GetRecvPort() {}
+  SendPortProxyPtr GetSendPort() {
+     return NULL;
+  }
+  RecvPortProxyPtr GetRecvPort() {
+    return NULL;
+  }
 };
 
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;

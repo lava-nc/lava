@@ -6,16 +6,15 @@ import numpy as np
 from enum import Enum
 
 from message_infrastructure import ShmemChannel
-from message_infrastructure import SendPortProxy
-from message_infrastructure import RecvPortProxy
-from message_infrastructure import ChannelFactory, get_channel_factory, test_get_channel
+from message_infrastructure import SendPort
+from message_infrastructure import RecvPort
+from message_infrastructure import ChannelFactory, get_channel_factory
 from message_infrastructure import SharedMemory
-from message_infrastructure import ChannelType
-from message_infrastructure import AbstractChannel
+from message_infrastructure import ChannelTransferType
+from message_infrastructure import Channel
 
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
-
 
 def main():
     channel_factory = get_channel_factory()
@@ -28,10 +27,10 @@ def main():
     print(data)
     print(type(data))
     print(data.dtype)
-    print(ChannelType.SHMEMCHANNEL)
-    print(type(ChannelType.SHMEMCHANNEL))
+    print(ChannelTransferType.SHMEMCHANNEL)
+    print(type(ChannelTransferType.SHMEMCHANNEL))
 
-    shmem_channel = channel_factory.get_channel(ChannelType.SHMEMCHANNEL,
+    shmem_channel = channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
                                                 shm,
                                                 data,
                                                 size,
@@ -40,6 +39,9 @@ def main():
 
     send_port = shmem_channel.get_send_port()
     recv_port = shmem_channel.get_recv_port()
+
+    send_port.start()
+    recv_port.start()
 
     print("finish test function.")
 

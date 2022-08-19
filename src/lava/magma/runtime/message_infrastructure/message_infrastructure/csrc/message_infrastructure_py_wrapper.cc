@@ -50,15 +50,15 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL);
-  py::class_<ShmemChannel, AbstractChannel> (m, "ShmemChannel")
-    .def("get_send_port", &ShmemChannel::GetSendPort)
-    .def("get_recv_port", &ShmemChannel::GetRecvPort);
   py::class_<AbstractChannel, std::shared_ptr<AbstractChannel>> (m, "Channel")
     .def(py::init<>())
     .def("get_send_port", &AbstractChannel::GetSendPort)
     .def("get_recv_port", &AbstractChannel::GetRecvPort);
-  py::class_<PortProxy> (m, "AbstractTransferPort");
-  py::class_<SendPortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPortProxy")
+  py::class_<ShmemChannel, AbstractChannel, std::shared_ptr<ShmemChannel>> (m, "ShmemChannel")
+    .def("get_send_port", &ShmemChannel::GetSendPort)
+    .def("get_recv_port", &ShmemChannel::GetRecvPort);
+  py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
+  py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<ChannelType, AbstractSendPortPtr>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)
     .def("get_send_port", &SendPortProxy::GetSendPort, py::return_value_policy::reference)
@@ -70,7 +70,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("dtype", &SendPortProxy::Dtype)
     .def("shape", &SendPortProxy::Shape)
     .def("size", &SendPortProxy::Size);
-  py::class_<RecvPortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPortProxy")
+  py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
     .def(py::init<ChannelType, AbstractRecvPortPtr>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
     .def("get_recv_port", &RecvPortProxy::GetRecvPort, py::return_value_policy::reference)
@@ -90,11 +90,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>, py::return_value_policy::reference)
     .def("get_channel", &ChannelFactory::GetChannel<float>, py::return_value_policy::reference);
   m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
-  m.def("test_get_channel", TestGetChannel<double>, py::return_value_policy::reference);
-  m.def("test_get_channel", TestGetChannel<std::int16_t>, py::return_value_policy::reference);
-  m.def("test_get_channel", TestGetChannel<std::int32_t>, py::return_value_policy::reference);
-  m.def("test_get_channel", TestGetChannel<std::int64_t>, py::return_value_policy::reference);
-
 
   py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "PyInPortVectorDense")
     .def(py::init<RecvPortProxyList>())
