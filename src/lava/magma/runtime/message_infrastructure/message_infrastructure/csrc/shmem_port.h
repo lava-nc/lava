@@ -9,6 +9,8 @@
 #include <queue>
 #include <string>
 
+#include <pybind11/numpy.h>
+
 #include "abstract_port.h"
 #include "shm.h"
 #include "utils.h"
@@ -79,7 +81,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   void *array_ = NULL;
   void *observer = NULL;
   std::thread *thread_ = NULL;
-  ShmemRecvQueue<T> *queue = NULL;
+  ShmemRecvQueue<pybind11::array_t<T>> *queue = NULL;
 };
 
 }  // namespace message_infrastructure
