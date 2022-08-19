@@ -307,7 +307,7 @@ class PyInPort(AbstractPyIOPort):
         fashion.
         """
         self._cpp_inport.peek()
-    
+
     def probe(self) -> bool:
         """Method to check (probe) if there is data (vectors/scalars)
         to receive from connected OutPorts (source Ports).
@@ -406,7 +406,7 @@ class PyOutPort(AbstractPyIOPort):
                  shape: ty.Tuple[int, ...],
                  d_type: type):
         self._cpp_outport = self.CPP_OUTPORT(csp_ports)
-        super().__init__(csp_ports, process_model, shape, d_type) 
+        super().__init__(csp_ports, process_model, shape, d_type)
 
     @abstractmethod
     def send(self, data: ty.Union[np.ndarray, int]):
@@ -624,14 +624,6 @@ class PyRefPortVectorSparse(PyRefPort):
 class PyRefPortScalarDense(PyRefPort):
     """Python implementation of RefPort for dense scalar data."""
     CPP_REFPORT = RefPortScalarDense
-
-    def read(self) -> int:
-        """TBD"""
-        pass
-
-    def write(self, data: int):
-        """TBD"""
-        pass
 
 
 class PyRefPortScalarSparse(PyRefPort):
