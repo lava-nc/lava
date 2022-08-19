@@ -6,7 +6,7 @@ import numpy as np
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
+from message_infrastructure.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess

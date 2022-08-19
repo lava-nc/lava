@@ -10,23 +10,25 @@
 
 #include <vector>
 
-#include "abstract_port.h"
-#include "process_model.h"
+#include "port_proxy.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 
 class AbstractPortImplementation {
  public:
+  explicit AbstractPortImplementation(const SendPortProxyList &send_ports,
+                                      const RecvPortProxyList &recv_ports);
+  explicit AbstractPortImplementation(const RecvPortProxyList &recv_ports);
+  explicit AbstractPortImplementation(const SendPortProxyList &send_ports);
   int Start();
   int Join();
-  std::vector<int> GetShape();
-  virtual std::vector<PortPtr> GetPorts();
+  // std::vector<int> GetShape();
 
-  pybind11::dtype dtype_;
-  std::vector<int> shape_;
-  size_t size_;
-  ProcessModel process_model_;
-  std::vector<PortPtr> ports_;
+ protected:
+  SendPortProxyList send_ports_;
+  RecvPortProxyList recv_ports_;
+  Proto proto_;
 };
 
 }  // namespace message_infrastructure

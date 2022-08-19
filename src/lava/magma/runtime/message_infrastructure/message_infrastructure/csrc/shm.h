@@ -13,12 +13,15 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+#include <memory>
 #include <vector>
 
 namespace message_infrastructure {
 
 class SharedMemory {
 };
+
+using SharedMemoryPtr = SharedMemory*;
 
 class SharedMemManager {
  public:

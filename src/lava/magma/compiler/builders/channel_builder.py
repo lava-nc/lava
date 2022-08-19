@@ -10,10 +10,14 @@ from lava.magma.compiler.builders.interfaces import \
     AbstractProcessModel
 from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import (
+from message_infrastructure import (
     Channel,
-    ChannelType,
+    ChannelTransferType,
+    get_channel_factory,
+    ShmemChannel,
+    SharedMemory
 )
+from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
@@ -29,7 +33,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     and multi processing backbone.
     """
 
-    channel_type: ChannelType
+    channel_type: ChannelTransferType
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
     src_port_initializer: PortInitializer
@@ -54,9 +58,15 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
+        channel_factory = get_channel_factory()
+        shm = messaging_infrastructure.smm.alloc_mem(
+            self.src_port_initializer.size)
+        return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+                                           shm,
+                                           self.src_port_initializer.d_type,
+                                           self.src_port_initializer.size,
+                                           self.src_port_initializer.shape,
+                                           self.src_port_initializer.name)
         return channel_class(
             messaging_infrastructure,
             self.src_port_initializer.name,
@@ -73,7 +83,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     as messaging and multi processing backbone.
     """
 
-    channel_type: ChannelType
+    channel_type: ChannelTransferType
     src_process: ty.Union[RuntimeServiceBuilder,
                           ty.Type["AbstractProcessModel"]]
     dst_process: ty.Union[RuntimeServiceBuilder,
@@ -99,9 +109,15 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
+        channel_factory = get_channel_factory()
+        shm = messaging_infrastructure.smm.alloc_mem(
+            self.port_initializer.size)
+        return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+                                           shm,
+                                           self.port_initializer.d_type,
+                                           self.port_initializer.size,
+                                           self.port_initializer.shape,
+                                           self.port_initializer.name)
 
         channel_name: str = self.port_initializer.name
         return channel_class(
@@ -120,7 +136,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     used as messaging and multi processing backbone.
     """
 
-    channel_type: ChannelType
+    channel_type: ChannelTransferType
     src_process: ty.Union[RuntimeServiceBuilder, ty.Type["Runtime"]]
     dst_process: ty.Union[RuntimeServiceBuilder, ty.Type["Runtime"]]
     port_initializer: PortInitializer
@@ -144,9 +160,15 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
+        channel_factory = get_channel_factory()
+        shm = messaging_infrastructure.smm.alloc_mem(
+            self.port_initializer.size)
+        return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+                                           shm,
+                                           self.port_initializer.d_type,
+                                           self.port_initializer.size,
+                                           self.port_initializer.shape,
+                                           self.port_initializer.name)
 
         channel_name: str = self.port_initializer.name
         return channel_class(
@@ -165,7 +187,7 @@ class ChannelBuilderNx(AbstractChannelBuilder):
     infrastructure.
     """
 
-    channel_type: ChannelType
+    channel_type: ChannelTransferType
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
     src_port_initializer: PortInitializer

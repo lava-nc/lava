@@ -13,36 +13,69 @@
 
 #include "abstract_channel.h"
 #include "shm.h"
+#include "port_proxy.h"
 
 namespace message_infrastructure {
 
 class ShmemChannel : public AbstractChannel {
  public:
-  ShmemChannel(SharedMemory *shm,
+  ShmemChannel(SharedMemoryPtr shm,
                const std::string &src_name,
                const std::string &dst_name,
-               const ssize_t &shape,
+               const ssize_t* shape,
                const pybind11::dtype &dtype,
-               const size_t &size);
-  std::shared_ptr<AbstractSendPort> GetSrcPort() {
-    return src_port_;
+               const size_t &size,
+               const size_t &nbytes) {
+    printf("Construct ShmemChannel\n");
+    Proto proto;
+    proto.shape_ = shape;
+    proto.dtype_ = dtype;
+    proto.nbytes_ = nbytes;
+
+    shm_ = shm;
+
+    AbstractSendPortPtr send_port;
+    AbstractRecvPortPtr recv_port;
+    send_port_proxy_ = std::make_shared<SendPortProxy>(
+        ChannelType::SHMEMCHANNEL,
+        send_port);
+    recv_port_proxy_ = std::make_shared<RecvPortProxy>(
+        ChannelType::SHMEMCHANNEL,
+        recv_port);
   }
-  std::shared_ptr<AbstractRecvPort> GetDstPort() {
-    return dst_port_;
+  SendPortProxyPtr GetSendPort() {
+    printf("Get send_port.\n");
+    return this->send_port_proxy_;
+  }
+  RecvPortProxyPtr GetRecvPort() {
+    printf("Get recv_port.\n");
+    return this->recv_port_proxy_;
   }
 
  private:
-  SharedMemory *shm_ = NULL;
+  SharedMemoryPtr shm_ = NULL;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
+  SendPortProxyPtr send_port_proxy_;
+  RecvPortProxyPtr recv_port_proxy_;
 };
 
+using ShmemChannelPtr = ShmemChannel *;
+
 template <class T>
-ShmemChannel* GetShmemChannel(SharedMemory *shm,
+std::shared_ptr<ShmemChannel> GetShmemChannel(SharedMemoryPtr shm,
                               const pybind11::array_t<T> &data,
                               const size_t &size,
+                              const size_t &nbytes,
                               const std::string &name = "test_channel") {
-  return (new ShmemChannel(shm, name, name, data.shape(), data.dtype(), size));
+  printf("Generate shmem_channel.\n");
+  return (std::make_shared<ShmemChannel>(shm,
+                                         name,
+                                         name,
+                                         data.shape(),
+                                         data.dtype(),
+                                         size,
+                                         nbytes));
 }
 
 }  // namespace message_infrastructure

@@ -7,10 +7,10 @@ from abc import ABC, abstractmethod
 import logging
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
-    CspSelector
+from message_infrastructure import SendPort, RecvPort
+from message_infrastructure import Selector
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
+from message_infrastructure.ports import AbstractPortImplementation, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,
@@ -35,16 +35,16 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                  loglevel: ty.Optional[int] = logging.WARNING) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
-        self.service_to_process: ty.Optional[CspRecvPort] = None
-        self.process_to_service: ty.Optional[CspSendPort] = None
-        self.py_ports: ty.List[AbstractPyPort] = []
+        self.service_to_process: ty.Optional[RecvPort] = None
+        self.process_to_service: ty.Optional[SendPort] = None
+        self.py_ports: ty.List[AbstractPortImplementation] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
-        self._selector: CspSelector = CspSelector()
+        self._selector: Selector = Selector()
         self._action: str = 'cmd'
         self._stopped: bool = False
-        self._channel_actions: ty.List[ty.Tuple[ty.Union[CspSendPort,
-                                                         CspRecvPort],
+        self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
+                                                         RecvPort],
                                                 ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
             MGMT_COMMAND.STOP[0]: self._stop,
@@ -439,7 +439,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
-                    if isinstance(csp_port, CspRecvPort):
+                    if isinstance(csp_port, RecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
                         self._channel_actions.insert(0,

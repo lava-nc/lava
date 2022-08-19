@@ -12,7 +12,7 @@ from lava.magma.compiler.subcompilers.channel_builders_factory import (
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
+from message_infrastructure.ports import PyInPort, PyOutPort, PyRefPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort
 from lava.magma.core.process.ports.reduce_ops import ReduceSum

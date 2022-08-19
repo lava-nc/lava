@@ -11,13 +11,13 @@
 namespace message_infrastructure {
 
 enum ChannelType {
-  ShmemChannel = 0,
-  RpcChannel = 1,
-  DdsChannel = 2
+  SHMEMCHANNEL = 0,
+  RPCCHANNEL = 1,
+  DDSCHANNEL = 2
 };
 
 struct Proto {
-  ssize_t *shape_ = NULL;
+  const ssize_t *shape_;
   pybind11::dtype dtype_;
   size_t nbytes_;
 };

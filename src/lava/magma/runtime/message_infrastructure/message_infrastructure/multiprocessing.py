@@ -7,6 +7,8 @@ from functools import partial
 from message_infrastructure import CppMultiProcessing
 from message_infrastructure import SharedMemManager
 from message_infrastructure import Actor
+from message_infrastructure import ChannelTransferType
+from message_infrastructure import Channel
 
 from message_infrastructure.message_infrastructure_interface \
     import MessageInfrastructureInterface
@@ -47,3 +49,8 @@ class MultiProcessing(MessageInfrastructureInterface):
     def stop(self):
         """Stops the shared memory manager"""
         self._mp.stop()
+
+    def channel_class(self,
+                      channel_type: ChannelTransferType) -> ty.Type[Channel]:
+        """TODO: depricated. Return None"""
+        return None

@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "shm.h"
 #include "utils.h"
@@ -18,9 +19,34 @@ namespace message_infrastructure {
 
 class AbstractPort {
  public:
-  virtual int Start() = 0;
-  virtual int Join() = 0;
+  AbstractPort() {}
+  std::string Name() {
+    return name_;
+  }
+  pybind11::dtype Dtype() {
+    return dtype_;
+  }
+  ssize_t* Shape() {
+    return shape_;
+  }
+  size_t Size() {
+    return size_;
+  }
 
+  int Start() {
+    return 0;
+  }
+  int Probe() {
+    return 0;
+  }
+  int Recv() {
+    return 0;
+  }
+  int Join() {
+    return 0;
+  }
+
+ private:
   std::string name_;
   pybind11::dtype dtype_;
   ssize_t *shape_ = NULL;
@@ -29,17 +55,24 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  virtual int Send() = 0;
+  int Send() {
+    return 0;
+  }
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  virtual int Recv() = 0;
+  int Recv() {
+    return 0;
+  }
+  int Peek() {
+    return 0;
+  }
 };
 
-using PortPtr = AbstractPort *;
-using SendPortPtr = AbstractSendPort *;
-using RecvPortPtr = AbstractRecvPort *;
+using AbstractPortPtr = std::shared_ptr<AbstractPort>;
+using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
+using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 
 }  // namespace message_infrastructure
 

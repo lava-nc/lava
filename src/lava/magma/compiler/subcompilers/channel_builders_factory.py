@@ -8,6 +8,9 @@ from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp,
     ChannelBuilderNx,
 )
+
+from message_infrastructure import ChannelTransferType
+
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer, LoihiConnectedPortType, \
@@ -29,7 +32,7 @@ except ImportError:
 from lava.magma.core.process.ports.ports import AbstractPort, InPort
 from lava.magma.core.process.ports.ports import AbstractSrcPort, AbstractDstPort
 from lava.magma.core.process.ports.ports import VarPort, ImplicitVarPort
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from message_infrastructure.ports import PyInPort, PyOutPort
 
 
 class ChannelBuildersFactory:
@@ -50,6 +53,8 @@ class ChannelBuildersFactory:
     (i.e. PyProcBuilder.set_csp_ports(..)) and deploy the Process to the
     appropriate compute node.
     """
+    def _get_transfer_channel_type(self) -> ChannelTransferType:
+        return ChannelTransferType.SHMEMCHANNEL
 
     def from_channel_map(
         self,
@@ -73,6 +78,10 @@ class ChannelBuildersFactory:
         """
         channel_builders = []
         port_pairs = channel_map.keys()
+
+        # Should consider the transfer type
+        transfer_type = self._get_transfer_channel_type()
+
         for port_pair in port_pairs:
             src_port = port_pair.src
             dst_port = port_pair.dst
@@ -125,7 +134,7 @@ class ChannelBuildersFactory:
                     raise NotImplementedError
             if ch_type in [ChannelType.PyPy, ChannelType.PyC, ChannelType.CPy]:
                 channel_builder = ChannelBuilderMp(
-                    ch_type,
+                    transfer_type,
                     src_port.process,
                     dst_port.process,
                     src_pt_init,
@@ -137,7 +146,7 @@ class ChannelBuildersFactory:
                     # RefPort to VarPort connections need channels for
                     # read and write
                     rv_chb = ChannelBuilderMp(
-                        ch_type,
+                        transfer_type,
                         dst_port.process,
                         src_port.process,
                         dst_pt_init,

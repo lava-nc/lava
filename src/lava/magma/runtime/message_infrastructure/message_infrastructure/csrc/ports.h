@@ -10,246 +10,180 @@
 
 #include <vector>
 #include <variant>
+#include <memory>
+#include <string>
 
 #include "abstract_port_implementation.h"
-#include "transformer.h"
 
 namespace message_infrastructure {
 
-class AbstractCppPort : public AbstractPortImplementation {
+class CppInPort : public AbstractPortImplementation {
  public:
-    virtual std::vector<PortPtr> GetPorts();
-
-    std::vector<PortPtr> ports_;
-};
-
-
-class AbstractCppIOPort : public AbstractCppPort {
- public:
-    std::vector<PortPtr> GetPorts();
-
-    std::vector<PortPtr> ports_;
-};
-
-// Forward definition of Vector/Scalar classes
-class CppInPortVectorDense;
-class CppInPortVectorSparse;
-class CppInPortScalarDense;
-class CppInPortScalarSparse;
-
-
-class CppInPort : public AbstractCppIOPort {
- public:
+    explicit CppInPort(const RecvPortProxyList &recv_ports);
     bool Probe();
-
-    template <typename T>
-    T Recv() {}
-
-    template <typename T>
-    T Peek() {}
-
-    const CppInPortVectorDense  *kVecDense;
-    const CppInPortVectorSparse *kVecSparse;
-    const CppInPortScalarDense  *kScalarDense;
-    const CppInPortScalarSparse *kScalarSparse;
-
-    // AbstractTransformer transformer_;
-};
-
-class CppInPortVectorDense : public CppInPort {
- public:
-    std::vector<pybind11::dtype> Recv();
-    std::vector<pybind11::dtype> Peek();
+    virtual int Recv() = 0;
+    virtual int Peek() = 0;
 };
 
 
-class CppInPortVectorSparse : public CppInPort {
+class CppInPortVectorDense final : public CppInPort {
  public:
-    std::vector<pybind11::dtype> Recv();
-    std::vector<pybind11::dtype> Peek();
+    using CppInPort::CppInPort;
+    int Recv() override;
+    int Peek() override;
 };
 
 
-class CppInPortScalarDense : public CppInPort {
+class CppInPortVectorSparse final : public CppInPort {
  public:
-    int Recv();
-    int Peek();
+    using CppInPort::CppInPort;
+    int Recv() override;
+    int Peek() override;
 };
 
 
-class CppInPortScalarSparse : public CppInPort {
+class CppInPortScalarDense final : public CppInPort {
  public:
-    std::vector<int> Recv();
-    std::vector<int> Peek();
-};
-
-// Forward definition of Vector/Scalar classes
-class CppOutPortVectorDense;
-class CppOutPortVectorSparse;
-class CppOutPortScalarDense;
-class CppOutPortScalarSparse;
-
-class CppOutPort : public AbstractCppIOPort {
- public:
-    template <typename T>
-    T Send() {}
-
-    virtual void Flush();
-
-    const CppOutPortVectorDense  *kVecDense;
-    const CppOutPortVectorSparse *kVecSparse;
-    const CppOutPortScalarDense  *kScalarDense;
-    const CppOutPortScalarSparse *KScalarSparse;
+    using CppInPort::CppInPort;
+    int Recv() override;
+    int Peek() override;
 };
 
 
-class CppOutPortVectorDense : public CppOutPort {
+class CppInPortScalarSparse final : public CppInPort {
  public:
-    std::vector<pybind11::dtype> Send();
+    using CppInPort::CppInPort;
+    int Recv() override;
+    int Peek() override;
 };
 
 
-class CppOutPortVectorSparse : public CppOutPort {
+class CppOutPort : public AbstractPortImplementation {
  public:
-    std::vector<pybind11::dtype> Send();
+    explicit CppOutPort(const SendPortProxyList &send_ports);
+    virtual int Send() = 0;
+    void Flush() {}
 };
 
 
-class CppOutPortScalarDense : public CppOutPort {
+class CppOutPortVectorDense final : public CppOutPort {
  public:
-    int Send();
+    using CppOutPort::CppOutPort;
+    int Send() override;
 };
 
 
-class CppOutPortScalarSparse : public CppOutPort {
+class CppOutPortVectorSparse final : public CppOutPort {
  public:
-    int Send();
-};
-
-// --------
-// RefPorts
-// --------
-// A CppRefPort is a Port connected to a VarPort of a variable Var of another
-// Process. It is used to get or set the value of the referenced Var across
-// Processes.
-
-// Forward definition of Vector/Scalar classes
-class CppRefPortVectorDense;
-class CppRefPortVectorSparse;
-class CppRefPortScalarDense;
-class CppRefPortScalarSparse;
-
-class CppRefPort : public AbstractCppPort {
- public:
-    std::vector<PortPtr> GetPorts();
-
-    template <typename T>
-    T Read() {}
-
-    virtual std::vector<pybind11::dtype> Write();
-    virtual void Wait();
-
-    const CppRefPortVectorDense  *kVecDense;
-    const CppRefPortVectorSparse *kVecSparse;
-    const CppRefPortScalarDense  *kScalarDense;
-    const CppRefPortScalarSparse *kScalarSparse;
+    using CppOutPort::CppOutPort;
+    int Send() override;
 };
 
 
-class CppRefPortVectorDense : public CppRefPort {
+class CppOutPortScalarDense final : public CppOutPort {
  public:
-    std::vector<pybind11::dtype> Read();
-    std::vector<pybind11::dtype> Write();
+    using CppOutPort::CppOutPort;
+    int Send() override;
 };
 
 
-class CppRefPortVectorSparse : public CppRefPort {
+class CppOutPortScalarSparse final : public CppOutPort {
  public:
-    std::vector<pybind11::dtype> Read();
-    std::vector<pybind11::dtype> Write();
+    using CppOutPort::CppOutPort;
+    int Send() override;
 };
 
 
-class CppRefPortScalarDense : public CppRefPort {
+class CppRefPort : public AbstractPortImplementation {
  public:
-    int Read();
-    std::vector<pybind11::dtype> Write();
+    explicit CppRefPort(const SendPortProxyList &send_ports,
+                        const RecvPortProxyList &recv_ports);
+    virtual int Read() = 0;
+    virtual int Write() = 0;
+    int Wait() {}
 };
 
 
-class CppRefPortScalarSparse : public CppRefPort {
+class CppRefPortVectorDense final : public CppRefPort {
  public:
-    std::vector<int> Read();
-    std::vector<pybind11::dtype> Write();
-};
-
-// --------
-// VarPorts
-// --------
-// A CppVarPort is a Port linked to a variable Var of a Process and might be
-// connected to a RefPort of another process. It is used to get or set the
-// value of the referenced Var across Processes. A CppVarPort is connected via
-// two channels to a CppRefPort. One channel is used to send data from the
-// CppRefPort to the CppVarPort and the other is used to receive data from the
-// CppVarPort. CppVarPort set or send the value of the linked Var (service())
-// given the command VarPortCmd received by a connected CppRefPort.
-
-// Forward declaration of Vector/Sparse classes
-class CppVarPortVectorDense;
-class CppVarPortVectorSparse;
-class CppVarPortScalarDense;
-class CppVarPortScalarSparse;
-
-class CppVarPort : public AbstractCppPort {
- public:
-    // std::vector<AbstractCspPort> GetCspPorts();
-    virtual void Service();
-
-    template <typename T>
-    T Recv() {}
-
-    template <typename T>
-    T Peek() {}
-
-    const CppVarPortVectorDense  *kVecDense;
-    const CppVarPortVectorSparse *kVecSparse;
-    const CppVarPortScalarDense  *kScalarDense;
-    const CppVarPortScalarSparse *kScalarSparse;
-
-    // AbstractTransformer transformer_;
-    // CspSendPort csp_send_port_;
-    // CspRecvPort csp_recv_port_;
-    char var_name_[];
+    using CppRefPort::CppRefPort;
+    int Read() override;
+    int Write() override;
 };
 
 
-class CppVarPortVectorDense : public CppVarPort {
+class CppRefPortVectorSparse final : public CppRefPort {
  public:
-    void Service();
+    using CppRefPort::CppRefPort;
+    int Read() override;
+    int Write() override;
 };
 
 
-class CppVarPortVectorSparse : public CppVarPort {
+class CppRefPortScalarDense final : public CppRefPort {
  public:
-    std::vector<pybind11::dtype> Recv();
-    std::vector<pybind11::dtype> Peek();
-    void Service();
+    using CppRefPort::CppRefPort;
+    int Read() override;
+    int Write() override;
 };
 
 
-class CppVarPortScalarDense : public CppVarPort {
+class CppRefPortScalarSparse final : public CppRefPort {
  public:
-    int Recv();
-    int Peek();
-    void Service();
+    using CppRefPort::CppRefPort;
+    int Read() override;
+    int Write() override;
 };
 
 
-class CppVarPortScalarSparse : public CppVarPort {
+class CppVarPort : public AbstractPortImplementation {
  public:
-    std::vector<int> Recv();
-    std::vector<int> Peek();
-    void Service();
+    explicit CppVarPort(const std::string &name,
+                        const SendPortProxyList &send_ports,
+                        const RecvPortProxyList &recv_ports);
+
+    virtual int Service() = 0;
+    virtual int Recv()  = 0;
+    virtual int Peek() = 0;
+
+ private:
+  std::string name_;
+};
+
+
+class CppVarPortVectorDense final : public CppVarPort {
+ public:
+    using CppVarPort::CppVarPort;
+    int Service() override;
+    int Recv() override;
+    int Peek() override;
+};
+
+
+class CppVarPortVectorSparse final : public CppVarPort {
+ public:
+    using CppVarPort::CppVarPort;
+    int Service() override;
+    int Recv() override;
+    int Peek() override;
+};
+
+
+class CppVarPortScalarDense final : public CppVarPort {
+ public:
+    using CppVarPort::CppVarPort;
+    int Service() override;
+    int Recv() override;
+    int Peek() override;
+};
+
+
+class CppVarPortScalarSparse final : public CppVarPort {
+ public:
+    using CppVarPort::CppVarPort;
+    int Service() override;
+    int Recv() override;
+    int Peek() override;
 };
 
 
