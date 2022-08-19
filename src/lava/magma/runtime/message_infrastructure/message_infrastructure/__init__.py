@@ -14,3 +14,4 @@ from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
 from MessageInfrastructurePywrapper import PyInPortVectorDense
 from MessageInfrastructurePywrapper import PyOutPortVectorDense
 from MessageInfrastructurePywrapper import PyVarPortVectorSparse
+from MessageInfrastructurePywrapper import Selector

@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 from message_infrastructure import SendPort, RecvPort
-from lava.magma.compiler.channels.pypychannel import CspSelector
+from message_infrastructure import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
@@ -40,7 +40,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
-        self._selector: CspSelector = CspSelector()
+        self._selector: Selector = Selector()
         self._action: str = 'cmd'
         self._stopped: bool = False
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
@@ -439,7 +439,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                 enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
-                    if isinstance(csp_port, CspRecvPort):
+                    if isinstance(csp_port, RecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
                         self._channel_actions.insert(0,

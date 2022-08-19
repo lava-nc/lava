@@ -8,13 +8,10 @@ from abc import abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspSelector,
-)
-
 from message_infrastructure import (
     RecvPort,
-    SendPort
+    SendPort,
+    Selector
 )
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
@@ -280,7 +277,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         In this case iterate through the phases of the Loihi protocol until the
         last time step is reached. The runtime is informed after the last time
         step. The loop ends when receiving the STOP command from the runtime."""
-        selector = CspSelector()
+        selector = Selector()
         phase = LoihiPhase.HOST
 
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
@@ -444,7 +441,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
     def run(self):
         """Retrieves commands from the runtime and relays them to the process
         models. Also send the acknowledgement back to runtime."""
-        selector = CspSelector()
+        selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
             # Probe if there is a new command from the runtime

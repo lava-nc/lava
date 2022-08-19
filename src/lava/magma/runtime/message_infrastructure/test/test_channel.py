@@ -12,6 +12,7 @@ from message_infrastructure import ChannelFactory, get_channel_factory
 from message_infrastructure import SharedMemory
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
+from message_infrastructure import Selector
 
 
 def nbytes_cal(shape, dtype):
@@ -45,6 +46,9 @@ def main():
 
     send_port.start()
     recv_port.start()
+
+    selector = Selector()
+    print(selector.select(recv_port, "cmd"))
 
     print("finish test function.")
 

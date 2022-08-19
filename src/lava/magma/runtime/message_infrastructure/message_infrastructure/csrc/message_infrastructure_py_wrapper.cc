@@ -17,6 +17,7 @@
 #include "shmem_port.h"
 #include "utils.h"
 #include "ports.h"
+#include "selector.h"
 #include "transformer.h"
 
 namespace message_infrastructure {
@@ -50,6 +51,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL);
+  py::class_<ShmemSelector> (m, "Selector")
+    .def(py::init<>())
+    .def("select", &ShmemSelector::select);
   py::class_<AbstractChannel, std::shared_ptr<AbstractChannel>> (m, "Channel")
     .def(py::init<>())
     .def("get_send_port", &AbstractChannel::GetSendPort)
