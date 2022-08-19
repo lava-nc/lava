@@ -5,11 +5,11 @@
 #ifndef SHMEM_PORT_H_
 #define SHMEM_PORT_H_
 
+#include <pybind11/numpy.h>
+
 #include <thread>  // NOLINT [build/c++11]
 #include <queue>
 #include <string>
-
-#include <pybind11/numpy.h>
 
 #include "abstract_port.h"
 #include "shm.h"
