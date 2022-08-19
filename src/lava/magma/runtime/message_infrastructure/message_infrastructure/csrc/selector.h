@@ -5,8 +5,8 @@
 #ifndef SELECTOR_H_
 #define SELECTOR_H_
 
-#include "port_proxy.h"
 #include <functional>
+#include "port_proxy.h"
 
 namespace message_infrastructure {
 
