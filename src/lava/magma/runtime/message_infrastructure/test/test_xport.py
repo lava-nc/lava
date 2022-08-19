@@ -8,7 +8,7 @@ from enum import Enum
 
 from message_infrastructure import get_channel_factory
 from message_infrastructure import SharedMemory
-from message_infrastructure import ChannelType
+from message_infrastructure import ChannelTransferType
 from message_infrastructure import PyInPortVectorDense
 from message_infrastructure import PyOutPortVectorDense
 from message_infrastructure import PyVarPortVectorSparse
@@ -25,7 +25,7 @@ def channel():
     size = 2
     nbytes = nbytes_cal(data.shape, data.dtype)
     name = 'test_channel'
-    return channel_factory.get_channel(ChannelType.SHMEMCHANNEL,
+    return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
                                        shm,
                                        data,
                                        size,
