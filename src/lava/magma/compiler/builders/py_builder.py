@@ -15,10 +15,10 @@ from message_infrastructure import (
 from lava.magma.compiler.utils import (PortInitializer, VarInitializer,
                                        VarPortInitializer)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import (AbstractPyIOPort,
-                                            IdentityTransformer, PyInPort,
-                                            PyOutPort, PyRefPort, PyVarPort,
-                                            VirtualPortTransformer)
+from message_infrastructure.ports import (AbstractPyIOPort,
+                                          IdentityTransformer, PyInPort,
+                                          PyOutPort, PyRefPort, PyVarPort,
+                                          VirtualPortTransformer)
 from lava.magma.core.model.py.type import LavaPyType
 
 

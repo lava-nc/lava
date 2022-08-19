@@ -17,7 +17,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.magma.core.model.py.ports import (
+from message_infrastructure.ports import (
     PyInPort,
     PyOutPort,
     PyRefPort,

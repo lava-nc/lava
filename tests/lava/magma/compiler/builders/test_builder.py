@@ -20,7 +20,7 @@ from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
+from message_infrastructure.ports import PyInPort, PyOutPort, PyRefPort, \
     PyVarPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
