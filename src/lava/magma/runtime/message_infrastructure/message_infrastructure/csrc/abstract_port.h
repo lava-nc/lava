@@ -30,7 +30,7 @@ class AbstractPort {
     return shape_;
   }
   size_t Size() {
-    return size;
+    return size_;
   }
 
   int Start() {
