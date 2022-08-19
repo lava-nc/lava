@@ -10,9 +10,13 @@ import numpy as np
 
 from lava.magma.compiler.channels.pypychannel import (
     CspSelector,
-    CspRecvPort,
-    CspSendPort
 )
+
+from message_infrastructure import (
+    RecvPort,
+    SendPort
+)
+
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
@@ -61,8 +65,8 @@ class PyRuntimeService(AbstractRuntimeService):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
         super(PyRuntimeService, self).__init__(protocol=protocol)
-        self.service_to_process: ty.Iterable[CspSendPort] = []
-        self.process_to_service: ty.Iterable[CspRecvPort] = []
+        self.service_to_process: ty.Iterable[SendPort] = []
+        self.process_to_service: ty.Iterable[RecvPort] = []
 
     def start(self):
         """Start the necessary channels to coordinate with runtime and group

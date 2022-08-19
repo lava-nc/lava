@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 import logging
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
-    CspSelector
+from message_infrastructure import SendPort, RecvPort
+from lava.magma.compiler.channels.pypychannel import CspSelector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
@@ -35,16 +35,16 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                  loglevel: ty.Optional[int] = logging.WARNING) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
-        self.service_to_process: ty.Optional[CspRecvPort] = None
-        self.process_to_service: ty.Optional[CspSendPort] = None
+        self.service_to_process: ty.Optional[RecvPort] = None
+        self.process_to_service: ty.Optional[SendPort] = None
         self.py_ports: ty.List[AbstractPyPort] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
         self._selector: CspSelector = CspSelector()
         self._action: str = 'cmd'
         self._stopped: bool = False
-        self._channel_actions: ty.List[ty.Tuple[ty.Union[CspSendPort,
-                                                         CspRecvPort],
+        self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
+                                                         RecvPort],
                                                 ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
             MGMT_COMMAND.STOP[0]: self._stop,

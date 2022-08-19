@@ -5,8 +5,12 @@
 import logging
 import typing as ty
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from message_infrastructure import (
+    AbstractTransferPort,
+    RecvPort,
+    SendPort
+)
+
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
 from lava.magma.runtime.runtime_services.runtime_service import \
@@ -49,17 +53,17 @@ class RuntimeServiceBuilder:
         self.log.setLevel(loglevel)
         self._runtime_service_id = runtime_service_id
         self._model_ids: ty.List[int] = model_ids
-        self.csp_send_port: ty.Dict[str, CspSendPort] = {}
-        self.csp_recv_port: ty.Dict[str, CspRecvPort] = {}
-        self.csp_proc_send_port: ty.Dict[str, CspSendPort] = {}
-        self.csp_proc_recv_port: ty.Dict[str, CspRecvPort] = {}
+        self.csp_send_port: ty.Dict[str, SendPort] = {}
+        self.csp_recv_port: ty.Dict[str, RecvPort] = {}
+        self.csp_proc_send_port: ty.Dict[str, SendPort] = {}
+        self.csp_proc_recv_port: ty.Dict[str, RecvPort] = {}
         self.loihi_version: ty.Type[LoihiVersion] = loihi_version
 
     @property
     def runtime_service_id(self):
         return self._runtime_service_id
 
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
+    def set_csp_ports(self, csp_ports: ty.List[AbstractTransferPort]):
         """Set CSP Ports
 
         Parameters
@@ -68,12 +72,12 @@ class RuntimeServiceBuilder:
 
         """
         for port in csp_ports:
-            if isinstance(port, CspSendPort):
-                self.csp_send_port.update({port.name: port})
-            if isinstance(port, CspRecvPort):
-                self.csp_recv_port.update({port.name: port})
+            if isinstance(port, SendPort):
+                self.csp_send_port.update({port.name(): port})
+            if isinstance(port, RecvPort):
+                self.csp_recv_port.update({port.name(): port})
 
-    def set_csp_proc_ports(self, csp_ports: ty.List[AbstractCspPort]):
+    def set_csp_proc_ports(self, csp_ports: ty.List[AbstractTransferPort]):
         """Set CSP Process Ports
 
         Parameters
@@ -82,10 +86,10 @@ class RuntimeServiceBuilder:
 
         """
         for port in csp_ports:
-            if isinstance(port, CspSendPort):
-                self.csp_proc_send_port.update({port.name: port})
-            if isinstance(port, CspRecvPort):
-                self.csp_proc_recv_port.update({port.name: port})
+            if isinstance(port, SendPort):
+                self.csp_proc_send_port.update({port.name(): port})
+            if isinstance(port, RecvPort):
+                self.csp_proc_recv_port.update({port.name(): port})
 
     def build(self) -> AbstractRuntimeService:
         """Build the runtime service
@@ -115,21 +119,21 @@ class RuntimeServiceBuilder:
 
         if not nxsdk_rts:
             for port in self.csp_proc_send_port.values():
-                if "service_to_process" in port.name:
+                if "service_to_process" in port.name():
                     rs.service_to_process.append(port)
 
             for port in self.csp_proc_recv_port.values():
-                if "process_to_service" in port.name:
+                if "process_to_service" in port.name():
                     rs.process_to_service.append(port)
 
             self.log.debug("Setup 'RuntimeService <--> Rrocess; ports")
 
         for port in self.csp_send_port.values():
-            if "service_to_runtime" in port.name:
+            if "service_to_runtime" in port.name():
                 rs.service_to_runtime = port
 
         for port in self.csp_recv_port.values():
-            if "runtime_to_service" in port.name:
+            if "runtime_to_service" in port.name():
                 rs.runtime_to_service = port
 
         self.log.debug("Setup 'Runtime <--> RuntimeService' ports")

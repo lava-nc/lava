@@ -34,6 +34,8 @@ from lava.magma.core.resources import CPU, LMT, NeuroCore
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
+from message_infrastructure import ChannelTransferType
+
 
 # A minimal process (A) with an InPort, OutPort and RefPort
 class ProcA(AbstractProcess):
@@ -300,7 +302,7 @@ class TestChannelBuildersFactory(unittest.TestCase):
         builders = self.channel_builder_factory.from_channel_map(
             self.channel_map, self.cfg
         )
-        channel_types = {ChannelType.PyPy}
+        channel_types = {ChannelTransferType.SHMEMCHANNEL}
         outcome = {builder.channel_type for builder in builders}
         self.assertEqual(outcome, channel_types)
 
@@ -367,7 +369,8 @@ class TestChannelBuildersMp(unittest.TestCase):
         # Each channel builder should connect its source and destination
         # process and port
         # Let's check the first one in detail
-        self.assertEqual(channel_builders[0].channel_type, ChannelType.PyPy)
+        self.assertEqual(channel_builders[0].channel_type,
+                         ChannelTransferType.SHMEMCHANNEL)
         self.assertEqual(channel_builders[0].src_process, p1)
         self.assertEqual(channel_builders[0].src_port_initializer.name, "out")
         self.assertEqual(channel_builders[0].src_port_initializer.shape, (1,))

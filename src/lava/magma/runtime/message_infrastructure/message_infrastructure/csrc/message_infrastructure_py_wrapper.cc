@@ -50,13 +50,14 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL);
-  py::class_<AbstractChannel, std::shared_ptr<AbstractChannel>> (m, "AbstractChannel")
+  py::class_<ShmemChannel, AbstractChannel> (m, "ShmemChannel")
+    .def("get_send_port", &ShmemChannel::GetSendPort)
+    .def("get_recv_port", &ShmemChannel::GetRecvPort);
+  py::class_<AbstractChannel, std::shared_ptr<AbstractChannel>> (m, "Channel")
     .def(py::init<>())
     .def("get_send_port", &AbstractChannel::GetSendPort)
     .def("get_recv_port", &AbstractChannel::GetRecvPort);
-  py::class_<ShmemChannel> (m, "ShmemChannel")
-    .def("get_send_port", &ShmemChannel::GetSendPort, py::return_value_policy::reference)
-    .def("get_recv_port", &ShmemChannel::GetRecvPort, py::return_value_policy::reference);
+  py::class_<PortProxy> (m, "AbstractTransferPort");
   py::class_<SendPortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPortProxy")
     .def(py::init<ChannelType, AbstractSendPortPtr>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)

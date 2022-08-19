@@ -76,4 +76,3 @@ class ChannelType(IntEnum):
     NcNc = 5
     NcPy = 6
     PyNc = 7
-    Shm = 8

@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
+from message_infrastructure import AbstractTransferPort
 
 
 class AbstractPortImplementation(ABC):
@@ -24,7 +24,7 @@ class AbstractPortImplementation(ABC):
 
     @property
     @abstractmethod
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[AbstractTransferPort]:
         """Returns all csp ports of the port."""
         pass
 

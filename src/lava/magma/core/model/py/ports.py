@@ -8,8 +8,12 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from message_infrastructure import (
+    AbstractTransferPort,
+    RecvPort,
+    SendPort
+)
+
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
@@ -41,7 +45,7 @@ class AbstractPyPort(AbstractPortImplementation):
 
     @property
     @abstractmethod
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[AbstractTransferPort]:
         """
         Abstract property to get a list of the corresponding CSP Ports of all
         connected PyPorts. The CSP Port is the low level interface of the
@@ -83,7 +87,7 @@ class AbstractPyIOPort(AbstractPyPort):
     """
 
     def __init__(self,
-                 csp_ports: ty.List[AbstractCspPort],
+                 csp_ports: ty.List[AbstractTransferPort],
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...],
                  d_type: type):
@@ -91,7 +95,7 @@ class AbstractPyIOPort(AbstractPyPort):
         super().__init__(process_model, shape, d_type)
 
     @property
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[AbstractTransferPort]:
         """Property to get the corresponding CSP Ports of all connected
         PyPorts (csp_ports). The CSP Port is the low level interface of the
         backend messaging infrastructure which is used to send and receive data.
@@ -110,7 +114,7 @@ class AbstractTransformer(ABC):
     @abstractmethod
     def transform(self,
                   data: np.ndarray,
-                  csp_port: AbstractCspPort) -> np.ndarray:
+                  csp_port: AbstractTransferPort) -> np.ndarray:
         """Transforms incoming data in way that is determined by which CSP
         port the data is received.
 
@@ -133,13 +137,13 @@ class IdentityTransformer(AbstractTransformer):
 
     def transform(self,
                   data: np.ndarray,
-                  _: AbstractCspPort) -> np.ndarray:
+                  _: AbstractTransferPort) -> np.ndarray:
         return data
 
 
 class VirtualPortTransformer(AbstractTransformer):
     def __init__(self,
-                 csp_ports: ty.Dict[str, AbstractCspPort],
+                 csp_ports: ty.Dict[str, AbstractTransferPort],
                  transform_funcs: ty.Dict[str, ty.List[ft.partial]]):
         """Transformer that implements the virtual ports on the path to the
         receiving PyPort.
@@ -166,12 +170,11 @@ class VirtualPortTransformer(AbstractTransformer):
 
     def transform(self,
                   data: np.ndarray,
-                  csp_port: AbstractCspPort) -> np.ndarray:
+                  csp_port: AbstractTransferPort) -> np.ndarray:
         return self._get_transform(csp_port)(data)
 
-    def _get_transform(self,
-                       csp_port: AbstractCspPort) -> ty.Callable[[np.ndarray],
-                                                                 np.ndarray]:
+    def _get_transform(self, csp_port: AbstractTransferPort) \
+            -> ty.Callable[[np.ndarray], np.ndarray]:
         """For a given CSP port, returns a function that applies, in sequence,
         all the function pointers associated with the incoming virtual
         ports.
@@ -274,7 +277,7 @@ class PyInPort(AbstractPyIOPort):
 
     def __init__(
             self,
-            csp_ports: ty.List[AbstractCspPort],
+            csp_ports: ty.List[AbstractTransferPort],
             process_model: AbstractProcessModel,
             shape: ty.Tuple[int, ...],
             d_type: type,
@@ -622,8 +625,8 @@ class PyRefPort(AbstractPyPort):
 
     def __init__(
             self,
-            csp_send_port: ty.Optional[CspSendPort],
-            csp_recv_port: ty.Optional[CspRecvPort],
+            csp_send_port: ty.Optional[SendPort],
+            csp_recv_port: ty.Optional[RecvPort],
             process_model: AbstractProcessModel,
             shape: ty.Tuple[int, ...] = tuple(),
             d_type: type = int,
@@ -636,7 +639,7 @@ class PyRefPort(AbstractPyPort):
         super().__init__(process_model, shape, d_type)
 
     @property
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[AbstractTransferPort]:
         """Property to get the corresponding CSP Ports of all connected
         PyPorts (csp_ports). The CSP Port is the low level interface of the
         backend messaging infrastructure which is used to send and receive data.
@@ -857,8 +860,8 @@ class PyVarPort(AbstractPyPort):
 
     def __init__(self,
                  var_name: str,
-                 csp_send_port: ty.Optional[CspSendPort],
-                 csp_recv_port: ty.Optional[CspRecvPort],
+                 csp_send_port: ty.Optional[SendPort],
+                 csp_recv_port: ty.Optional[RecvPort],
                  process_model: AbstractProcessModel,
                  shape: ty.Tuple[int, ...] = tuple(),
                  d_type: type = int,
@@ -871,7 +874,7 @@ class PyVarPort(AbstractPyPort):
         super().__init__(process_model, shape, d_type)
 
     @property
-    def csp_ports(self) -> ty.List[AbstractCspPort]:
+    def csp_ports(self) -> ty.List[AbstractTransferPort]:
         """Property to get the corresponding CSP Ports of all connected
         PyPorts (csp_ports). The CSP Port is the low level interface of the
         backend messaging infrastructure which is used to send and receive data.

@@ -10,7 +10,7 @@ import typing
 import typing as ty
 
 import numpy as np
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from message_infrastructure import RecvPort, SendPort
 from lava.magma.compiler.var_model import AbstractVarModel
 from message_infrastructure.message_interface_enum import ActorType
 from message_infrastructure.factory import MessageInfrastructureFactory
@@ -122,8 +122,8 @@ class Runtime:
         self._is_started: bool = False
         self._req_paused: bool = False
         self._req_stop: bool = False
-        self.runtime_to_service: ty.Iterable[CspSendPort] = []
-        self.service_to_runtime: ty.Iterable[CspRecvPort] = []
+        self.runtime_to_service: ty.Iterable[SendPort] = []
+        self.service_to_runtime: ty.Iterable[RecvPort] = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -410,12 +410,12 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send SET Command
-            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
+            req_port: SendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.SET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
-            rsp_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
+            rsp_port: RecvPort = self.service_to_runtime[runtime_srv_id]
 
             # 2. Reshape the data
             buffer: np.ndarray = value
@@ -426,7 +426,7 @@ class Runtime:
             buffer = buffer.reshape((1, num_items))
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
+            data_port: SendPort = self.runtime_to_service[runtime_srv_id]
             data_port.send(enum_to_np(num_items))
             for i in range(num_items):
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
@@ -461,13 +461,13 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send GET Command
-            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
+            req_port: SendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.GET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
+            data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
             num_items: int = int(data_port.recv()[0].item())
             buffer: np.ndarray = np.empty((1, num_items))
             for i in range(num_items):

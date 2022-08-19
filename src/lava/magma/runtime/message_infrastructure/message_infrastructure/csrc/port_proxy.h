@@ -13,7 +13,10 @@
 
 namespace message_infrastructure {
 
-class SendPortProxy {
+class PortProxy {
+};
+
+class SendPortProxy : public PortProxy{
  public:
   SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
                   channel_type_(channel_type),
@@ -56,7 +59,7 @@ class SendPortProxy {
   AbstractSendPortPtr send_port_;
 };
 
-class RecvPortProxy {
+class RecvPortProxy : public PortProxy{
  public:
   RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
                   channel_type_(channel_type),
