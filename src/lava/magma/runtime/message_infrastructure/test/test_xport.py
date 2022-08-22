@@ -19,7 +19,7 @@ def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
 
 
-def channel(data, name = 'test_channel'):
+def channel(data, name='test_channel'):
     channel_factory = get_channel_factory()
     shm = SharedMemory()
     size = 2
@@ -31,15 +31,24 @@ def channel(data, name = 'test_channel'):
                                        nbytes,
                                        name)
 
+
 class TestPyPorts(unittest.TestCase):
     data = np.array([1, 2, 3], np.int32)
+
     def test_inport(self, ports):
         channel_1 = channel(name="channel_1", data=self.data)
         send_port_1 = channel_1.get_send_port()
         recv_port_1 = channel_1.get_recv_port()
-        recv_test_port_1 = InPortVectorDense([recv_port_1], None, self.data.shape, self.data.dtype)
-        #print("PyInPortVectorDense.recv", in_port.recv())
-        send_test_port_1 = OutPortVectorDense([send_port_1], None, self.data.shape, self.data.dtype)
+        recv_test_port_1 = InPortVectorDense([recv_port_1], 
+                                             None, 
+                                             self.data.shape,
+                                             self.data.dtype)
+        
+        # print("PyInPortVectorDense.recv", in_port.recv())
+        send_test_port_1 = OutPortVectorDense([send_port_1], 
+                                              None, 
+                                              self.data.shape,
+                                              self.data.dtype)
 
         recv_test_port_1.start()
         send_test_port_1.start()
@@ -47,7 +56,7 @@ class TestPyPorts(unittest.TestCase):
         send_test_port_1.send(self.data)
         probe_value = recv_test_port_1.probe()
 
-         # probe_value should be True if message reached the PyInPort
+        # probe_value should be True if message reached the PyInPort
         self.assertTrue(probe_value)
 
         # Get data that reached PyInPort to empty buffer
