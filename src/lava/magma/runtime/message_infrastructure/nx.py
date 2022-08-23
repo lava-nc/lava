@@ -33,7 +33,7 @@ class NxBoardMsgInterface(MessageInfrastructureInterface):
         """Stops the shared memory manager"""
         pass
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
+    def channel_class(self, channel_type: ChannelType) -> ty.Type[ChannelType]:
         """Given a channel type, returns the shared memory based class
         implementation for the same"""
         if channel_type == ChannelType.CNc:

@@ -15,18 +15,19 @@ class AbstractSyncProtocol:
 
     For example:
 
-        @property
-        def runtime_service(self) -> ty.Dict[Resource, AbstractRuntimeService]:
-            return {CPU: LoihiPyRuntimeService,
-                    LMT: NxSdkRuntimeService,
-                    NeuroCore: NxSdkRuntimeService,
-                    Loihi1NeuroCore: NxSdkRuntimeService,
-                    Loihi2NeuroCore: NxSdkRuntimeService}
+    >>> @property
+    >>> def runtime_service(self) -> ty.Dict[Resource, AbstractRuntimeService]:
+    >>>     return {CPU: LoihiPyRuntimeService,
+    >>>             LMT: NxSdkRuntimeService,
+    >>>             NeuroCore: NxSdkRuntimeService,
+    >>>             Loihi1NeuroCore: NxSdkRuntimeService,
+    >>>             Loihi2NeuroCore: NxSdkRuntimeService}
 
-    The phases of execution and synchronizations points are implemented in the
-    specific `RuntimeService`.
+    The phases of execution and synchronizations points are implemented in
+    the specific `RuntimeService`.
     """
     @property
     @abstractmethod
     def runtime_service(self):
+        """ Not implemented """
         pass

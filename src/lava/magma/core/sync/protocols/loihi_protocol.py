@@ -47,14 +47,13 @@ class LoihiProtocol(AbstractSyncProtocol):
     To execute the post management phase ('run_post_mgmt()'), the function
     `post_guard()` must return True.
 
-        def post_guard(self) -> bool:
-            return True
+        >>> def post_guard(self) -> bool:
+        >>>     return True
 
-        def run_post_mgmt(self) -> None:
-            # i.e. read out a variable from a neurocore
+        >>> def run_post_mgmt(self) -> None:
+        >>>     # i.e. read out a variable from a neurocore
 
-    Phases
-    ------
+    *Phases*
     The phases are executed in this order:
 
     1. Spiking phase:
@@ -64,8 +63,10 @@ class LoihiProtocol(AbstractSyncProtocol):
 
         Method:
             'run_spk()' -> None
+
         Guard:
             None
+
     2. Pre management phase (`run_pre_mgmt`):
         Memory is consolidated before the learning phase.
         In order to jump into this phase, 'pre_guard' and `learn_guard`
@@ -73,8 +74,10 @@ class LoihiProtocol(AbstractSyncProtocol):
 
         Method:
             'run_pre_mgmt()' -> None
+
         Guard:
             `learn_guard()` -> None, and `pre_guard()` -> None
+
     3. Learning phase:
         Activity traces are calculated, learning rules are applied and
         parameters (weights, thresholds, delays, tags, etc) are updated.
@@ -82,8 +85,10 @@ class LoihiProtocol(AbstractSyncProtocol):
 
         Method:
             'run_lrn()' -> None
+
         Guard:
             `learn_guard()` -> None
+
     4. Post management phase:
         Memory is consolidated after learning phase. Read and write access
         to neuron states are safe now.
@@ -91,16 +96,20 @@ class LoihiProtocol(AbstractSyncProtocol):
 
         Method:
             'run_post_mgmt()' -> None
+
           Guard:
             `learn_guard()` -> None
+
     5. Host phase:
         Memory of the host system is consolidated.
         In order to jump into this phase 'host_guard' must return True.
 
         Method:
             'run_host_mgmt()' -> None
+
         Guard:
             `host_guard()` -> None
+
     """
     # The phases of Loihi protocol
     phases = [Phase.SPK, Phase.PRE_MGMT,
@@ -117,6 +126,7 @@ class LoihiProtocol(AbstractSyncProtocol):
     # Synchronizer classes that implement protocol in a domain
     @property
     def runtime_service(self):
+        """ Return RuntimeService """
         return {CPU: LoihiPyRuntimeService,
                 LMT: NxSdkRuntimeService,
                 NeuroCore: NxSdkRuntimeService,

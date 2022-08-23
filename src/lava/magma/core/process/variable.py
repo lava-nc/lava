@@ -14,26 +14,27 @@ class Var(AbstractProcessMember):
 
     - Vars are numeric objects: Typically vars represent ints, float data types.
     - Vars are tensor-valued: In general Vars represent multiple numeric
-    values not just scalar objects with a shape.
+      values not just scalar objects with a shape.
     - Vars can be initialized with numeric objects with a dimensionality
-    equal or less than specified by its shape. The initial value will be
-    broadcast to the shape of the Var at compile time.
+      equal or less than specified by its shape. The initial value will be
+      broadcast to the shape of the Var at compile time.
     - Vars have a name: The Variable name will be assigned by the parent
-    process of a Var.
+      process of a Var.
     - Vars are mutable at runtime.
     - Vars are owned by a Process but shared-memory access by other Process
-    is possible though should be used with caution.
+      is possible though should be used with caution.
 
     How to enable interactive Var access?
-    Executable ----------
-                        |
-    Var -> Process -> Runtime -> RuntimeService -> ProcModel -> Var
+
+    >>> Executable ----------
+    >>>                     |
+    >>> Var -> Process -> Runtime -> RuntimeService -> ProcModel -> Var
 
     - Var can access Runtime via parent Process.
     - The compiler could have prepared the Executable with mapping
-    information where each Var of a Process got mapped to. I.e. these can
-    just be the former ExecVars. So the ExecVars are just stored inside the
-    Executable.
+      information where each Var of a Process got mapped to. I.e. these can
+      just be the former ExecVars. So the ExecVars are just stored inside the
+      Executable.
     - Alternatively, the Executable stores a map from var_id -> ExecVar
 
     """
@@ -63,6 +64,7 @@ class Var(AbstractProcessMember):
 
     @property
     def model(self):
+        """ Return model """
         return self._model
 
     @model.setter

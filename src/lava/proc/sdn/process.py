@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+
 import typing as ty
 from enum import IntEnum, unique
 
@@ -13,14 +14,14 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 @unique
 class ActivationMode(IntEnum):
     """Enum for synapse sigma delta activation mode. Options are
-    {``UNIT : 0``, ``RELU : 1``}.
+    UNIT: 0
+    RELU: 1
     """
     UNIT = 0
     RELU = 1
 
 
 class Sigma(AbstractProcess):
-
     def __init__(
             self,
             *,
@@ -31,6 +32,7 @@ class Sigma(AbstractProcess):
         Sigma dynamics:
         sigma = a_in + sigma                      # sigma dendrite
         a_out = sigma
+
         Parameters
         ----------
         shape: Tuple
@@ -45,6 +47,7 @@ class Sigma(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
+        """ Return shape of the Process """
         return self.proc_params['shape']
 
 
@@ -110,6 +113,7 @@ class Delta(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
+        """ Return shape of the Process """
         return self.proc_params['shape']
 
 
@@ -190,4 +194,5 @@ class SigmaDelta(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
+        """ Return shape of the Process """
         return self.proc_params['shape']

@@ -28,7 +28,7 @@ if ty.TYPE_CHECKING:
 
 
 class RunConfig(ABC):
-    """    Basic run configuration and base class for other run configurations.
+    """Basic run configuration and base class for other run configurations.
 
     A RunConfig specifies how to execute Processes on a specific hardware
     backend. Its main purpose is to select the appropriate ProcessModels
@@ -98,28 +98,27 @@ class AbstractLoihiRunCfg(RunConfig):
     `ProcessModel` is returned.
 
     2. If there is only 1 `ProcessModel` available:
-        (a) If the user does not specifically ask for any tags,
-            the `ProcessModel` is returned
-        (b) If the user asks for a specific tag, then the `ProcessModel` is
-            returned only if the tag is found in its list of tags.
+    (a) If the user does not specifically ask for any tags,
+    the `ProcessModel` is returned
+    (b) If the user asks for a specific tag, then the `ProcessModel` is
+    returned only if the tag is found in its list of tags.
 
     3. If there are multiple `ProcessModel`s available:
-        (a) If the user asks specifically to look for `SubProcessModel`s and
-            they are available,
-            (i)   If there is only 1 `SubProcessModel` available,
-                  it is returned
-            (ii)  If the user did not ask for any specific tags, the first
-                  available `SubProcessModel` is returned
-            (iii) If user asked for a specific tag, the first valid
-                 `SubProcessModel` is returned, which has the tag in its
-                 tag-list
-        (b) If user did not explicitly ask for `SubProcessModel`s
-            (i)   If the user did not also ask for any specific tag, then the
-                  first available ProcessModel is returned that requires the
-                  correct computing hardware.
-            (ii)  If the user asked for a specific tag,
-                  the hardware-specific ProcessModel which has the tag in its
-                  tag-list is returned
+    (a)   If the user asks specifically to look for `SubProcessModel`s and
+    they are available,
+    (i)   If there is only 1 `SubProcessModel` available, it is returned
+    (ii)  If the user did not ask for any specific tags, the first
+    available `SubProcessModel` is returned
+    (iii) If user asked for a specific tag, the first valid
+    `SubProcessModel` is returned, which has the tag in its
+    tag-list
+    (b)   If user did not explicitly ask for `SubProcessModel`s
+    (i)   If the user did not also ask for any specific tag, then the
+    first available ProcessModel is returned that requires the
+    correct computing hardware.
+    (ii)  If the user asked for a specific tag,
+    the hardware-specific ProcessModel which has the tag in its
+    tag-list is returned
 
     Parameters
     ----------
@@ -140,8 +139,8 @@ class AbstractLoihiRunCfg(RunConfig):
         dict are respected over any logic. For example, {Dense: PyDenseModel}.
         Note that this is a dict mapping classnames to classnames.
     loglevel: int
-              sets level of event logging, as defined by Python's 'logging'
-              facility. Default: logging.WARNING
+        sets level of event logging, as defined by Python's 'logging'
+        facility. Default: logging.WARNING
     """
 
     def __init__(self,

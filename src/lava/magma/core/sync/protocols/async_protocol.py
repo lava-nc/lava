@@ -25,18 +25,18 @@ class AsyncProtocol(AbstractSyncProtocol):
 
     For example:
 
-        @implements(proc=SimpleProcess, protocol=AsyncProtocol)
-        @requires(CPU)
-        class SimpleProcessModel(PyAsyncProcessModel):
-            u = LavaPyType(int, int)
-            v = LavaPyType(int, int)
+    >>>    @implements(proc=SimpleProcess, protocol=AsyncProtocol)
+    >>>    @requires(CPU)
+    >>>    class SimpleProcessModel(PyAsyncProcessModel):
+    >>>        u = LavaPyType(int, int)
+    >>>        v = LavaPyType(int, int)
 
-            def run_async(self):
-                while True:
-                    self.u = self.u + 10
-                    self.v = self.v + 1000
-                    if self.check_for_stop_cmd():
-                        return
+    >>>        def run_async(self):
+    >>>            while True:
+    >>>                self.u = self.u + 10
+    >>>                self.v = self.v + 1000
+    >>>                if self.check_for_stop_cmd():
+    >>>                    return
     """
 
     phases = []
