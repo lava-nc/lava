@@ -16,10 +16,11 @@ from MessageInfrastructurePywrapper import (
 
 
 def nbytes_cal(shape, dtype):
+    """Calculate number of bytes (size) of data to be sent/received"""
     return np.prod(shape) * np.dtype(dtype).itemsize
 
 
-def channel(data, name='test_channel'):
+def get_channel(data, name):
     channel_factory = get_channel_factory()
     shm = SharedMemory()
     size = 2
@@ -32,44 +33,75 @@ def channel(data, name='test_channel'):
                                        name)
 
 
-class TestPyPorts(unittest.TestCase):
+def create_channel(data, channel_name="test_channel"):
+    """
+    Creates a channel and returns a pair of send and receive ports connected
+    to the channel.
+
+    Parameters
+    ----------
+    data [NumPy array] : Data to be sent, used to determine data type and size
+    channel_name [str] : Name of channel
+
+    Returns
+    -------
+    send_port : Sending port connected to channel
+    recv_port : Receiving port connected to channel
+    """
+    channel = get_channel(data, channel_name)
+    send_port = channel.get_send_port()
+    receive_port = channel.get_recv_port()
+
+    return send_port, receive_port
+
+
+class TestPorts(unittest.TestCase):
+    """Test ports functionalities"""
+
     data = np.array([1, 2, 3], np.int32)
 
-    def test_inport(self, ports):
-        channel_1 = channel(name="channel_1", data=self.data)
-        send_port_1 = channel_1.get_send_port()
-        recv_port_1 = channel_1.get_recv_port()
-        recv_test_port_1 = InPortVectorDense([recv_port_1], 
-                                             None, 
+    def test_probe(self):
+        """
+        Tests that probe() returns True when InPort buffer has content,
+        and returns False when InPort buffer is empty.
+        """
+        # Creating a pair of send and receive ports from channel
+        send_port_1, recv_port_1 = create_channel(self.data,
+                                                  channel_name="Channel_1")
+
+        # Create an InPort
+        recv_test_port_1 = InPortVectorDense([recv_port_1],
+                                             None,
                                              self.data.shape,
                                              self.data.dtype)
-        
-        # print("PyInPortVectorDense.recv", in_port.recv())
-        send_test_port_1 = OutPortVectorDense([send_port_1], 
-                                              None, 
+
+        # Create an OutPort
+        send_test_port_1 = OutPortVectorDense([send_port_1],
+                                              None,
                                               self.data.shape,
                                               self.data.dtype)
 
+        # Initialize InPort and OutPort
         recv_test_port_1.start()
         send_test_port_1.start()
 
+        # Send data through OutPort
         send_test_port_1.send(self.data)
+
+        # Probe that InPort has received the data (boolean)
         probe_value = recv_test_port_1.probe()
 
-        # probe_value should be True if message reached the PyInPort
+        # probe_value should be True if message reached the InPort
         self.assertTrue(probe_value)
 
-        # Get data that reached PyInPort to empty buffer
+        # Get data that reached InPort to empty buffer
         _ = recv_test_port_1.recv()
-        # Probe PyInPort
+
+        # Probe InPort
         probe_value = recv_test_port_1.probe()
 
-        # probe_value should be False since PyInPort's buffer was emptied
+        # probe_value should be False since InPort's buffer was emptied
         self.assertFalse(probe_value)
-
-# def test_outport(ports):
-#     out_port = OutPortVectorDense(ports)
-#     print("PyOutPortVectorDense.send", out_port.send())
 
 
 # def test_varport(s_ports, r_ports):
@@ -89,7 +121,6 @@ class TestPyPorts(unittest.TestCase):
 #     print("finish test function.")
 
 
-# main()
-
+# Run unit tests
 if __name__ == '__main__':
     unittest.main()
