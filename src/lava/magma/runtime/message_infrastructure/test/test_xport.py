@@ -60,6 +60,60 @@ class TestPorts(unittest.TestCase):
 
     data = np.array([1, 2, 3], np.int32)
 
+    def test_send_and_receive_intergers(self):
+        """
+        Test that InPort received integer data that is send by OutPort.
+        """
+        sent_data = np.array([1, 2, 3], np.int32)
+        send_port, recv_port = create_channel(self.data,
+                                              channel_name="int_channel")
+
+        # Create an InPort
+        in_port = InPortVectorDense([recv_port], None,
+                                    self.data.shape, self.data.dtype)
+
+        # Create an OutPort
+        out_port = OutPortVectorDense([send_port], None,
+                                      self.data.shape, self.data.dtype)
+
+        # Initialize InPort and OutPort
+        in_port.start()
+        out_port.start()
+
+        # Send data through OutPort
+        out_port.send(self.data)
+
+        # Get received data
+        received_data = in_port.recv()
+        self.assertEqual(received_data, sent_data)
+
+    def test_send_and_receive_floats(self):
+        """
+        Test that InPort received floating-point data that is send by OutPort.
+        """
+        sent_data = np.array([3.14, 13.89, 0.54], np.float32)
+        send_port, recv_port = create_channel(self.data,
+                                              channel_name="float_channel")
+
+        # Create an InPort
+        in_port = InPortVectorDense([recv_port], None,
+                                    self.data.shape, self.data.dtype)
+
+        # Create an OutPort
+        out_port = OutPortVectorDense([send_port], None,
+                                      self.data.shape, self.data.dtype)
+
+        # Initialize InPort and OutPort
+        in_port.start()
+        out_port.start()
+
+        # Send data through OutPort
+        out_port.send(self.data)
+
+        # Get received data
+        received_data = in_port.recv()
+        self.assertEqual(received_data, sent_data)
+
     def test_probe(self):
         """
         Tests that probe() returns True when InPort buffer has content,
