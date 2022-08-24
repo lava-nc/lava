@@ -12,7 +12,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
-from lava.magma.core.process.connection import ConnectionModelFixed, ConnectionModelFloat
+from lava.magma.core.model.py.connection import ConnectionModelFixed, ConnectionModelFloat
 
 
 

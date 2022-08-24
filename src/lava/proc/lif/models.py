@@ -8,7 +8,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.proc.lif.process import LIF, TernaryLIF
-from lava.magma.core.process.neuron import NeuronModelFloat, NeuronModelFixed
+from lava.magma.core.model.py.neuron import NeuronModelFloat, NeuronModelFixed
 
 
 class AbstractPyLifModelFloat(NeuronModelFloat):
