@@ -227,7 +227,8 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     du: unsigned 12-bit integer (0 to 4095)
     dv: unsigned 12-bit integer (0 to 4095)
-    bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron bias.
+    bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
+               bias.
     bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
     vth: unsigned 17-bit integer (0 to 131071).
     """
