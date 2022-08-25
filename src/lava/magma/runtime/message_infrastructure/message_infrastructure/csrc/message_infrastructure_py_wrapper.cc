@@ -45,7 +45,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("stop", &PosixActor::Stop)
-    .def("get_status", &PosixActor::GetStatus);
+    .def("get_status", &PosixActor::GetStatus)
+    .def("restart", &PosixActor::ReStart);
     // .def("trace", &PosixActor::Trace);
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)

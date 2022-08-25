@@ -4,6 +4,7 @@
 
 #include "multiprocessing.h"
 #include "message_infrastructure_logging.h"
+#include "utils.h"
 
 #include <sys/wait.h>
 #include <unistd.h>

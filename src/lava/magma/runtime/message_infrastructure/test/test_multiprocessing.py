@@ -10,10 +10,15 @@ from message_infrastructure import ProcessType
 from message_infrastructure import Actor
 from message_infrastructure.multiprocessing import MultiProcessing
 
+import time
+
 
 class Builder():
     def build(self, i):
         print("Builder run build ", i)
+        print("sleep 10 s")
+        time.sleep(10)
+        print("Builder Achieved")
 
 
 def target_fn(*args, **kwargs):
@@ -42,17 +47,21 @@ def test_multiprocessing():
     for i in range(5):
         bound_target_fn = partial(target_fn, idx=i)
         ret = mp.build_actor(bound_target_fn, builder)
-        if ret == ProcessType.ChildProcess :
-            print("child process, exit")
-            exit(0)
+        if ret != 1 :
+            print("Error ProcessType, exit", ret)
 
     shmm = mp.smm
     for i in range(5):
         print("shared memory id: ", shmm.alloc_mem(8))
 
     actors = mp.actors
-    print(actors)
+    actor = actors[0]
     print("actor status: ", actors[0].get_status())
+    actor.stop()
+    print("actor status: ", actors[0].get_status())
+    actor.restart()
+    print("actor status: ", actors[0].get_status())
+
     print("stop num: ", shmm.stop())
     print("stop num: ", shmm.stop())
 

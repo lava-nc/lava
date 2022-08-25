@@ -13,12 +13,6 @@
 
 namespace message_infrastructure {
 
-enum ProcessType {
-  ErrorProcess = -1,
-  ChildProcess = 0,
-  ParentProcess = 1
-};
-
 class MultiProcessing {
  public:
   MultiProcessing();

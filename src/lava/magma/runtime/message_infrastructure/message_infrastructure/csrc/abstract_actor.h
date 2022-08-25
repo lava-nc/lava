@@ -12,7 +12,8 @@ namespace message_infrastructure {
 enum ActorStatus {
   StatsError = -1,
   StatsRuning = 0,
-  StatsStopped = 1
+  StatsStopped = 1,
+  StatsPaused = 2
 };
 
 class AbstractActor {
@@ -27,12 +28,14 @@ class PosixActor : public AbstractActor {
   explicit PosixActor(int pid, std::function<void()> target_fn) {
     this->pid_ = pid;
     this->target_fn_ = target_fn;
+    this->status_ = StatsRuning;
   }
   int GetPid() {
     return this->pid_;
   }
   int Wait();
   int Stop();
+  int ReStart();
   int GetStatus() {
     return this->status_;
   }
