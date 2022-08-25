@@ -152,6 +152,15 @@ via:
 conda install lava -c conda-forge
 ```
 
+Alternatively with intel numpy and scipy:
+
+```bash
+conda create -n lava python=3.9 -c intel
+conda activate lava
+conda install -n lava -c intel numpy scipy
+conda install -n lava -c conda-forge lava --freeze-installed
+```
+
 ## [Alternative] Installing Lava from binaries
 
 If you only need to install Lava as a user in your python environment, we will
