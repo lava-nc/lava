@@ -98,27 +98,31 @@ class AbstractLoihiRunCfg(RunConfig):
     `ProcessModel` is returned.
 
     2. If there is only 1 `ProcessModel` available:
-    (a) If the user does not specifically ask for any tags,
-    the `ProcessModel` is returned
-    (b) If the user asks for a specific tag, then the `ProcessModel` is
-    returned only if the tag is found in its list of tags.
+
+        - If the user does not specifically ask for any tags,
+          the `ProcessModel` is returned
+        - If the user asks for a specific tag, then the `ProcessModel` is
+          returned only if the tag is found in its list of tags.
 
     3. If there are multiple `ProcessModel`s available:
-    (a)   If the user asks specifically to look for `SubProcessModel`s and
-    they are available,
-    (i)   If there is only 1 `SubProcessModel` available, it is returned
-    (ii)  If the user did not ask for any specific tags, the first
-    available `SubProcessModel` is returned
-    (iii) If user asked for a specific tag, the first valid
-    `SubProcessModel` is returned, which has the tag in its
-    tag-list
-    (b)   If user did not explicitly ask for `SubProcessModel`s
-    (i)   If the user did not also ask for any specific tag, then the
-    first available ProcessModel is returned that requires the
-    correct computing hardware.
-    (ii)  If the user asked for a specific tag,
-    the hardware-specific ProcessModel which has the tag in its
-    tag-list is returned
+
+        - If the user asks specifically to look for `SubProcessModel`s and
+          they are available:
+
+             - If there is only 1 `SubProcessModel` available, it is returned
+             - If the user did not ask for any specific tags, the first
+               available `SubProcessModel` is returned
+             - If user asked for a specific tag, the first valid
+               `SubProcessModel` is returned, which has the tag in its tag-list
+
+        - If user did not explicitly ask for `SubProcessModel`s:
+
+            - If the user did not also ask for any specific tag, then the
+              first available ProcessModel is returned that requires the
+              correct computing hardware.
+            - If the user asked for a specific tag,
+              the hardware-specific ProcessModel which has the tag in its
+              tag-list is returned
 
     Parameters
     ----------
