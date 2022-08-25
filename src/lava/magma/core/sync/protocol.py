@@ -29,5 +29,4 @@ class AbstractSyncProtocol:
     @property
     @abstractmethod
     def runtime_service(self):
-        """ Not implemented """
-        pass
+        raise NotImplementedError()

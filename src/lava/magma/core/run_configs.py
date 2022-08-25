@@ -55,7 +55,7 @@ class RunConfig(ABC):
     custom_sync_domains : List[SyncDomain]
         List of user-specified synchronization domains.
     loglevel: int
-              sets level of event logging, as defined by Python's 'logging'
+              Sets level of event logging, as defined by Python's 'logging'
               facility. Default: logging.WARNING
     """
 
