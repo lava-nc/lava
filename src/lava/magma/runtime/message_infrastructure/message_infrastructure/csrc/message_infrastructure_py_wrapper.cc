@@ -44,7 +44,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
-    .def("stop", &PosixActor::Stop)
+    .def("stop", &PosixActor::ForceStop)
     .def("get_status", &PosixActor::GetStatus)
     .def("restart", &PosixActor::ReStart);
     // .def("trace", &PosixActor::Trace);

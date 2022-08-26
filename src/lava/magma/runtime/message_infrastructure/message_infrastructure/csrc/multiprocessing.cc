@@ -36,7 +36,7 @@ int MultiProcessing::BuildActor(std::function<void()> target_fn) {
 
 }
 
-int MultiProcessing::Stop() {
+int MultiProcessing::ForceStop() {
   int error_cnts = 0;
 
   for (auto actor : actors_) {

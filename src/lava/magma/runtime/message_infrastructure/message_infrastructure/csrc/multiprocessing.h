@@ -16,7 +16,7 @@ namespace message_infrastructure {
 class MultiProcessing {
  public:
   MultiProcessing();
-  int Stop();
+  int ForceStop();
   int BuildActor(std::function<void()>);
   void CheckActor();
   std::vector<ActorPtr>& GetActors();
