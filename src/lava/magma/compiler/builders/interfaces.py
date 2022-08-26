@@ -55,11 +55,12 @@ class AbstractProcessBuilder(AbstractBuilder):
     Process builders instantiate and initialize a ProcessModel.
 
     Parameters
-        ----------
-        proc_model: AbstractProcessModel
-                    ProcessModel class of the process to build.
-        model_id: int
-                  model_id represents the ProcessModel ID to build.
+    ----------
+    proc_model: AbstractProcessModel
+                ProcessModel class of the process to build.
+    model_id: int
+              model_id represents the ProcessModel ID to build.
+
     """
 
     def __init__(
