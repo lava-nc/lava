@@ -19,7 +19,7 @@ enum ActorStatus {
 class AbstractActor {
  public:
   virtual int GetPid() = 0;
-  virtual int Stop() = 0;
+  virtual int ForceStop() = 0;
   int pid_;
 };
 
@@ -34,7 +34,7 @@ class PosixActor : public AbstractActor {
     return this->pid_;
   }
   int Wait();
-  int Stop();
+  int ForceStop();
   int ReStart();
   int GetStatus() {
     return this->status_;

@@ -30,7 +30,7 @@ int PosixActor::Wait() {
 
 }
 
-int PosixActor::Stop() {
+int PosixActor::ForceStop() {
   int status;
   kill(pid_, SIGTERM);
   wait(&status);

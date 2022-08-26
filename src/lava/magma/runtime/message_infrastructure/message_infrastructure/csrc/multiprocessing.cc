@@ -15,7 +15,7 @@ MultiProcessing::MultiProcessing() {
   shmm_ = new SharedMemManager();
 }
 
-int MultiProcessing::BuildActor(std::function<void()> target_fn) {
+int MultiProcessing::BuildActor(std::function<int()> target_fn) {
   pid_t pid = fork();
 
   if (pid > 0) {
@@ -27,7 +27,11 @@ int MultiProcessing::BuildActor(std::function<void()> target_fn) {
 
   if (pid == 0) {
     LAVA_LOG(LOG_MP, "child, new process\n");
-    target_fn();
+    int target_ret;
+    do {
+      target_ret = target_fn();
+    } while (target_ret);
+
     exit(0);
   }
 
@@ -36,11 +40,11 @@ int MultiProcessing::BuildActor(std::function<void()> target_fn) {
 
 }
 
-int MultiProcessing::ForceStop() {
+int MultiProcessing::Stop() {
   int error_cnts = 0;
 
   for (auto actor : actors_) {
-    error_cnts += actor->Stop();
+    error_cnts += actor->ForceStop();
   }
 
   LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);
