@@ -5,14 +5,58 @@
 import typing as ty
 import numpy as np
 
-from lava.magma.core.process.process import AbstractProcess, LogConfig
+from lava.magma.core.process.connection import ConnectionProcess
+from lava.magma.core.process.process import LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
 from lava.proc.conv import utils
 
 
-class Conv(AbstractProcess):
+class Conv(ConnectionProcess):
+    """Connection Process that mimics a convolution of the incoming
+    events/spikes with a kernel of synaptic weights.
+
+    Parameters
+    ----------
+    weight : numpy.ndarray
+        Weights of the convolutional kernel; the format of the array
+        should be four-dimensional, with the shape (C_out, W, H, C_in),
+        where W and H are the width and height of the kernel in spatial
+        coordinates (e.g., image pixels), and C_out and C_in are the number
+        of outgoing and incoming channels/filters.
+    weight_exp : int, optional
+        Shared weight exponent of base-2 used to scale the magnitude of
+        weights, if needed. The effective weight is set to
+        >>> weight * pow(2, weight_exp)
+        This parameter is mostly needed for fixed point
+        implementations and unnecessary for floating point implementations.
+        Default value is 0.
+    input_shape : tuple(int, int, int), optional
+        Shape of input to the process in (X, Y, Z) or (W, H, C) format.
+        See 'weight'.
+    padding : int or tuple(int, int), optional
+        Convolution padding size. Default is 0.
+    stride : int or tuple(int, int)
+        Convolution stride. Default is 1.
+    dilation : int or tuple(int, int)
+        Convolution dilation. Default is 1.
+    groups : int
+        Number of groups in convolution. Default is 1.
+    num_weight_bits: int
+        Shared weight width/precision used by weight. Mostly for
+        fixed point  implementations. Unnecessary for floating point
+        implementations.
+        Default is for weights to use full 8 bit precision.
+    num_message_bits: int
+        Number of spike message bits. Default is 0.
+
+    Note
+    ----
+    Padding, stride and dilation are expected in (X, Y) or (W,
+    H) if they are supplied as a tuple.
+    """
+
     def __init__(
             self,
             *,
@@ -26,51 +70,14 @@ class Conv(AbstractProcess):
             num_weight_bits: ty.Optional[int] = 8,
             num_message_bits: ty.Optional[int] = 0,
             name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None) -> None:
-        """Connection Process that mimics a convolution of the incoming
-        events/spikes with a kernel of synaptic weights.
+            log_config: ty.Optional[LogConfig] = None,
+            **kwargs) -> None:
 
-        Parameters
-        ----------
-        weight : numpy.ndarray
-            Weights of the convolutional kernel; the format of the array
-            should be four-dimensional, with the shape (C_out, W, H, C_in),
-            where W and H are the width and height of the kernel in spatial
-            coordinates (e.g., image pixels), and C_out and C_in are the number
-            of outgoing and incoming channels/filters.
-        weight_exp : int, optional
-            Shared weight exponent of base-2 used to scale the magnitude of
-            weights, if needed. The effective weight is set to
-            >>> weight * pow(2, weight_exp)
-            This parameter is mostly needed for fixed point
-            implementations and unnecessary for floating point implementations.
-            Default value is 0.
-        input_shape : tuple(int, int, int), optional
-            Shape of input to the process in (X, Y, Z) or (W, H, C) format.
-            See 'weight'.
-        padding : int or tuple(int, int), optional
-            Convolution padding size. Default is 0.
-        stride : int or tuple(int, int)
-            Convolution stride. Default is 1.
-        dilation : int or tuple(int, int)
-            Convolution dilation. Default is 1.
-        groups : int
-            Number of groups in convolution. Default is 1.
-        num_weight_bits: int
-            Shared weight width/precision used by weight. Mostly for
-            fixed point  implementations. Unnecessary for floating point
-            implementations.
-            Default is for weights to use full 8 bit precision.
-        num_message_bits: int
-            Number of spike message bits. Default is 0.
+        if "learning_rule" in kwargs.keys():
+            raise NotImplementedError("Plasticity is not implemented for Convolutions.")
 
-        Note
-        ----
-        Padding, stride and dilation are expected in (X, Y) or (W,
-        H) if they are supplied as a tuple.
-        """
-
-        super().__init__(weight=weight,
+        super().__init__(shape=weight.shape,
+                         weight=weight,
                          weight_exp=weight_exp,
                          input_shape=input_shape,
                          padding=padding,
@@ -80,7 +87,8 @@ class Conv(AbstractProcess):
                          num_weight_bits=num_weight_bits,
                          num_message_bits=num_message_bits,
                          name=name,
-                         log_config=log_config)
+                         log_config=log_config,
+                         **kwargs)
 
         self._validate_input_shape(input_shape)
         self._validate_groups(groups)
