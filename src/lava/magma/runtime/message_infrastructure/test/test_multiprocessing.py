@@ -1,7 +1,8 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import traceback
+import unittest
 from functools import partial
 
 from message_infrastructure import CppMultiProcessing
@@ -33,6 +34,39 @@ def target_fn(*args, **kwargs):
         print("Traceback: ")
         print(traceback.format_exc())
         raise e
+
+
+class TestMultiprocessing(unittest.TestCase):
+    def test_multiprocessing_spawn(self):
+        """
+        Spawns an actor.
+        Checks that an actor is spawned successfully.
+        """
+        pass
+
+    def test_multiprocessing_shutdown(self):
+        """
+        Spawns an actor and sends a stop signal.
+        Checks that actor is stopped successfully.
+        """
+        pass
+
+    def test_multiprocessing_kill(self):
+        """
+        Spawns an actor and kills it after a certain time.
+        Checks that multiprocessing daemon will automatically restart crashed
+        actor and reassign to correct process.
+        """
+        pass
+
+    def test_get_actor_pid(self):
+        pass
+
+    def test_get_actor_list(self):
+        pass
+
+    def test_get_shared_memory_manager(self):
+        pass
 
 
 def test_multiprocessing():
