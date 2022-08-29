@@ -16,21 +16,18 @@ namespace message_infrastructure {
 
 class AbstractTransformer{
  public:
-    virtual std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
+    virtual std::vector<int> Transform(std::vector<int> data);
 };
 
 class IdentityTransformer: public AbstractTransformer {
  public:
-    std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
+    std::vector<int> Transform(std::vector<int> data);
 };
 
 class VirtualPortTransformer: public AbstractTransformer {
  public:
-    std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
-    std::vector<pybind11::array_t<pybind11::dtype>> _Get_Transform();
+    std::vector<int> Transform(std::vector<int> data);
+    std::vector<int> _Get_Transform();
 };
 
 }  // namespace message_infrastructure

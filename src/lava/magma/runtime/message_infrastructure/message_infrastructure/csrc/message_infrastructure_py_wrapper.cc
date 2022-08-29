@@ -162,12 +162,11 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("service", &CppVarPortScalarSparse::Service)
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek);
-  py::class_<CppIdentityTransformer> (m, "IdentityTransformer")
-    .def("transform", &CppIdentityTransformer::Transform);
-  py::class_<CppVirtualPortTransformer> (m, "CppVirtualPortTransformer")
-    # TODO: check how to initialize dictionary 
-    .def(py::init<std::string, SendPortProxyList, RecvPortProxyList>())
-    .def("transform", &CppVirtualPortTransformer::Transform);
+  py::class_<IdentityTransformer> (m, "IdentityTransformer")
+    .def("transform", &IdentityTransformer::Transform);
+  py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
+    // TODO: check how to initialize dictionary (constructors)
+    .def("transform", &VirtualPortTransformer::Transform);
 }
 
 }  // namespace message_infrastructure

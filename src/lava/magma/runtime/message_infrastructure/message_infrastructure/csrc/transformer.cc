@@ -7,8 +7,7 @@
 namespace message_infrastructure {
 
 // IdentityTransformer
-std::vector<pybind11::array_t<pybind11::dtype>> 
-    IdentityTransformer::Transform(pybind11::array_t<pybind11::dtype> data) {
+std::vector<int> IdentityTransformer::Transform(std::vector<int> data) {
     return data;
 }
 
