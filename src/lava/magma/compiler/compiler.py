@@ -62,7 +62,7 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import (CPU, LMT, Loihi1NeuroCore,
                                        Loihi2NeuroCore, NeuroCore)
-from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.run_configs import RunConfig, AbstractLoihiHWRunCfg
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
@@ -144,12 +144,13 @@ class Compiler:
         (
             runtime_service_builders,
             proc_id_to_runtime_service_id_map,
-        ) = self._create_runtime_service_as_py_process_model(
+        ) = self._create_runtime_service_builder(
             node_to_sync_domain_dict,
             self.log,
             nc_builders,
             c_builders,
-            self._compile_config
+            run_cfg,
+            self._compile_config,
         )
         channel_builders = ChannelBuildersFactory().from_channel_map(
             channel_map, compile_config=self._compile_config
@@ -641,11 +642,12 @@ class Compiler:
         return list(sync_domains.values()), node_to_sync_domain_dict
 
     @staticmethod
-    def _create_runtime_service_as_py_process_model(
+    def _create_runtime_service_builder(
         node_to_sync_domain_dict: ty.Dict[Node, ty.Set[SyncDomain]],
         log: logging.getLoggerClass(),
         nc_builders: ty.Dict[AbstractProcess, NcProcessBuilder],
         c_builders: ty.Dict[AbstractProcess, CProcessBuilder],
+        run_cfg: RunConfig,
         compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
     ) -> ty.Tuple[
         ty.Dict[SyncDomain, RuntimeServiceBuilder], ty.Dict[int, int]
@@ -697,6 +699,14 @@ class Compiler:
                 log.debug("RuntimeService Class: " + str(rs_class.__name__))
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
+                rs_kwargs = {
+                    "c_builders" : list(c_builders.values()),
+                    "nc_builders" : list(nc_builders.values())
+                }
+                if isinstance(run_cfg, AbstractLoihiHWRunCfg):
+                    rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
+                    rs_kwargs["post_run_fxs"] = run_cfg.post_run_fxs
+
                 rs_builder = RuntimeServiceBuilder(
                     rs_class,
                     sync_domain.protocol,
@@ -704,8 +714,7 @@ class Compiler:
                     model_ids,
                     loihi_version,
                     log.level,
-                    c_builders=list(c_builders.values()),
-                    nc_builders=list(nc_builders.values()),
+                    **rs_kwargs
                 )
                 rs_builders[sync_domain] = rs_builder
                 for p in sync_domain.processes:
