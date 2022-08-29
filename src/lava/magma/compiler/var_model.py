@@ -177,3 +177,9 @@ class ConvInVarModel(AbstractVarModel, Mappable):
         for idx, addr in enumerate(addrs):
             self.regions[idx].physical_chip_idx = addr.chip_id
             self.regions[idx].physical_core_idx = addr.core_id
+
+
+@dataclass
+class ConvNeuronVarModel(LoihiNeuronVarModel):
+    alloc_dims: ty.List[ty.Tuple[int, int, int]] = None
+    valid_dims: ty.List[ty.Tuple[int, int, int]] = None
