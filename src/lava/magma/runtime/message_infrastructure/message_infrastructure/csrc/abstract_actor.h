@@ -6,6 +6,8 @@
 #define ABSTRACT_ACTOR_H_
 
 #include <functional>
+#include <unistd.h>
+#include <sys/shm.h>
 
 namespace message_infrastructure {
 
@@ -21,14 +23,15 @@ class AbstractActor {
   virtual int GetPid() = 0;
   virtual int ForceStop() = 0;
   int pid_;
+  char* signal_;
 };
 
 class PosixActor : public AbstractActor {
  public:
-  explicit PosixActor(int pid, std::function<void()> target_fn) {
+  explicit PosixActor(int pid, std::function<int(int)> target_fn, char* signal) {
     this->pid_ = pid;
     this->target_fn_ = target_fn;
-    this->status_ = StatsRuning;
+    this->signal_ = signal;
   }
   int GetPid() {
     return this->pid_;
@@ -37,12 +40,11 @@ class PosixActor : public AbstractActor {
   int ForceStop();
   int ReStart();
   int GetStatus() {
-    return this->status_;
+    return *(this->signal_);
   }
   // int Trace();
  private:
-  std::function<void()> target_fn_ = NULL;
-  int status_ = StatsStopped;
+  std::function<int(int)> target_fn_ = NULL;
 };
 
 using ActorPtr = AbstractActor *;

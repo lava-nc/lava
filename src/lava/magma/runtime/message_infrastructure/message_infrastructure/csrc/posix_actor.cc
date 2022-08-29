@@ -23,7 +23,7 @@ int PosixActor::Wait() {
     LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
     return -1;
   }
-  this->status_ = StatsStopped;
+  *(this->signal_) = StatsStopped;
 
   // Check the status
   return 0;
@@ -42,11 +42,12 @@ int PosixActor::ForceStop() {
       LAVA_LOG(LOG_MP, "The Actor child was ended with signal %d\n", status);
     }
   }
-  this->status_ = StatsStopped;
+  *(this->signal_) = StatsStopped;
   return 0;
 }
 
 int PosixActor::ReStart() {
+  /* Depricated
   if (this->status_ == StatsStopped) {
     LAVA_LOG(LOG_MP, "Actor Restart, pid: %d\n", this->pid_);
     pid_t pid = fork();
@@ -67,6 +68,7 @@ int PosixActor::ReStart() {
   }
 
   LAVA_LOG_ERR("Actor Restart false\n");
+  */
   return ErrorProcess;
 
 }

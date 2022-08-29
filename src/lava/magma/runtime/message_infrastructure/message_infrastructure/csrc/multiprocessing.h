@@ -17,14 +17,14 @@ class MultiProcessing {
  public:
   MultiProcessing();
   int Stop();
-  int BuildActor(std::function<int()>);
+  int BuildActor(std::function<int(int)>);
   void CheckActor();
   std::vector<ActorPtr>& GetActors();
   SharedMemManager* GetSharedMemManager();
 
  private:
   std::vector<ActorPtr> actors_;
-  std::vector<char*> signals_;
+  int signal_key_ = 0xbee;
   SharedMemManager *shmm_;
 };
 

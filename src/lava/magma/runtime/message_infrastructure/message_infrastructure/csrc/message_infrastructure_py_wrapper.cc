@@ -41,7 +41,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
     .def("stop", &SharedMemManager::Stop);
   py::class_<SharedMemory> (m, "SharedMemory")
-    .def(py::init<>());
+    .def(py::init<int, int>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("stop", &PosixActor::ForceStop)

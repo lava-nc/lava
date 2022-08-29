@@ -19,6 +19,15 @@
 namespace message_infrastructure {
 
 class SharedMemory {
+ public:
+  SharedMemory(size_t mem_size, int shmid) {
+    data_ = (char*) shmat(shmid, NULL, 0);
+  }
+  int GetDataElem(int offset) {
+    return (int)data_[offset];
+  }
+ private:
+  char* data_;
 };
 
 using SharedMemoryPtr = SharedMemory*;
