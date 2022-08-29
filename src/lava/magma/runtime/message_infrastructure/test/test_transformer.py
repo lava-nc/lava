@@ -4,8 +4,9 @@
 
 import numpy as np
 import unittest
-from MessageInfrastructurePywrapper import (VirtualPortTransformer, 
+from MessageInfrastructurePywrapper import (VirtualPortTransformer,
                                             IdentityTransformer)
+
 
 class TestIdentityTransformer(unittest.TestCase):
     def test_init(self) -> None:
