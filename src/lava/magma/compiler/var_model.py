@@ -183,3 +183,4 @@ class ConvInVarModel(AbstractVarModel, Mappable):
 class ConvNeuronVarModel(LoihiNeuronVarModel):
     alloc_dims: ty.List[ty.Tuple[int, int, int]] = None
     valid_dims: ty.List[ty.Tuple[int, int, int]] = None
+    var_shape: ty.Tuple[int, int, int] = None
