@@ -68,7 +68,7 @@ class TestMultiprocessing(unittest.TestCase):
         for actor_pid in actor_list:
             self.assertFalse(psutil.pid_exists(actor_pid))
 
-    @unittest.skip("Test case fir reassigning actors to Processes not yet \
+    @unittest.skip("Test case for reassigning actors to Processes not yet \
         implemented")
     def test_multiprocessing_kill(self):
         """
