@@ -9,7 +9,7 @@ from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderNx,
 )
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -53,8 +53,8 @@ class ChannelBuildersFactory:
     (i.e. PyProcBuilder.set_csp_ports(..)) and deploy the Process to the
     appropriate compute node.
     """
-    def _get_transfer_channel_type(self) -> ChannelTransferType:
-        return ChannelTransferType.SHMEMCHANNEL
+    def _get_transfer_channel_type(self) -> ChannelBackend:
+        return ChannelBackend.SHMEMCHANNEL
 
     def from_channel_map(
         self,

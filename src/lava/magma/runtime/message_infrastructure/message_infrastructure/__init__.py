@@ -10,5 +10,5 @@ from MessageInfrastructurePywrapper import ChannelFactory
 from MessageInfrastructurePywrapper import get_channel_factory
 from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import Channel
-from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
+from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import Selector

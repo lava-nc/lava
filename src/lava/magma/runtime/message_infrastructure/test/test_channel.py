@@ -10,7 +10,7 @@ from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
 from message_infrastructure import ChannelFactory, get_channel_factory
 from message_infrastructure import SharedMemory
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 from message_infrastructure import Channel
 from message_infrastructure import Selector
 
@@ -30,11 +30,11 @@ def main():
     print(data)
     print(type(data))
     print(data.dtype)
-    print(ChannelTransferType.SHMEMCHANNEL)
-    print(type(ChannelTransferType.SHMEMCHANNEL))
+    print(ChannelBackend.SHMEMCHANNEL)
+    print(type(ChannelBackend.SHMEMCHANNEL))
 
     shmem_channel = channel_factory.get_channel(
-        ChannelTransferType.SHMEMCHANNEL,
+        ChannelBackend.SHMEMCHANNEL,
         shm,
         data,
         size,

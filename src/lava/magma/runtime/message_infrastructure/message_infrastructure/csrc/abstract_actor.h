@@ -10,9 +10,9 @@
 namespace message_infrastructure {
 
 enum ActorStatus {
-  StatsError = -1,
-  StatsRuning = 0,
-  StatsStopped = 1
+  StatusError = -1,
+  StatusRuning = 0,
+  StatusStopped = 1
 };
 
 class AbstractActor {
@@ -39,7 +39,7 @@ class PosixActor : public AbstractActor {
   // int Trace();
  private:
   std::function<void()> target_fn_ = NULL;
-  int status_ = StatsStopped;
+  int status_ = StatusStopped;
 };
 
 using ActorPtr = AbstractActor *;

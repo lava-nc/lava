@@ -217,7 +217,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         # Add or update the mapping
         self._csp_port_map.setdefault(
-            csp_port.name(), {}
+            csp_port.name, {}
         ).update({py_port_id: csp_port})
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractTransferPort]):
@@ -230,9 +230,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         for port in csp_ports:
             if isinstance(port, SendPort):
-                self.csp_rs_send_port.update({port.name(): port})
+                self.csp_rs_send_port.update({port.name: port})
             if isinstance(port, RecvPort):
-                self.csp_rs_recv_port.update({port.name(): port})
+                self.csp_rs_recv_port.update({port.name: port})
 
     def _get_lava_type(self, name: str) -> LavaPyType:
         return getattr(self.proc_model, name)

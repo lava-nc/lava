@@ -6,7 +6,7 @@ import numpy as np
 
 from message_infrastructure import get_channel_factory
 from message_infrastructure import SharedMemory
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 from MessageInfrastructurePywrapper import (
     InPortVectorDense,
     OutPortVectorDense,
@@ -25,7 +25,7 @@ def channel():
     size = 2
     nbytes = nbytes_cal(data.shape, data.dtype)
     name = 'test_channel'
-    return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+    return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
                                        shm,
                                        data,
                                        size,

@@ -16,7 +16,7 @@ from lava.magma.compiler.channels.pypychannel import (
     CspRecvPort,
 )
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 
 
 class MockMessageInterface:
@@ -36,7 +36,7 @@ class TestChannelBuilder(unittest.TestCase):
                 name="mock", shape=(1, 2), d_type=np.int32,
                 port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=ChannelTransferType.SHMEMCHANNEL,
+                channel_type=ChannelBackend.SHMEMCHANNEL,
                 src_port_initializer=port_initializer,
                 dst_port_initializer=port_initializer,
                 src_process=None,
