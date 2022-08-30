@@ -26,7 +26,7 @@ using SharedMemoryPtr = SharedMemory*;
 
 class SharedMemManager {
  public:
-  int AllocSharedMemory(const std::string &src_name, size_t mem_size) {
+  int AllocSharedMemory(const std::string &src_name, const size_t mem_size) {
     std::string shm_name = src_name + "_shm";
 
     int shmid = shm_open(shm_name.c_str(),
@@ -56,7 +56,7 @@ class SharedMemManager {
     return shmid;
   }
 
-  int AllocSharedMemory(size_t mem_size) {
+  int AllocSharedMemory(const size_t mem_size) {
     int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
     if (shmid < 0)
       return -1;
@@ -66,7 +66,7 @@ class SharedMemManager {
     return shmid;
   }
 
-  int DeleteSharedMemory(int shmid) {
+  int DeleteSharedMemory(const int shmid) {
     // Release specific shared memory
     int result = -1;
     if (shmids_.find(shmid) != shmids_.end()) {
