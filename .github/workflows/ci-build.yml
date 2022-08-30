@@ -152,10 +152,8 @@ jobs:
         pytest
 
     - name: Run message infrastructure unit tests
-      if: runner.os == 'Linux' || runner.os == 'macOS'
+      if: runner.os == 'Linux'
       run: |
-        git lfs fetch
-        git lfs pull
         source $VENV
         python3 -m pip install ipykernel
         pytest src/lava/magma/runtime/message_infrastructure
