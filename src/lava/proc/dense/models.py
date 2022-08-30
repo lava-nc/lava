@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from re import X
 import numpy as np
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
@@ -12,6 +11,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
+from lava.utils.weightutils import truncate_weights
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
@@ -53,7 +53,7 @@ class PyDenseModelFloat(PyLoihiProcessModel):
 class PyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit.
+    it mimics Loihi behavior bit-by-bit.
     """
 
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -72,40 +72,17 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
-    def _set_wgts(self):
-        wgt_vals = np.copy(self.weights)
-
-        # Saturate the weights according to the sign_mode:
-        # 0 : null
-        # 1 : mixed
-        # 2 : excitatory
-        # 3 : inhibitory
-        mixed_idx = np.equal(self.sign_mode, 1).astype(np.int32)
-        excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
-        inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
-
-        min_wgt = -2 ** 8 * (mixed_idx + inhibitory_idx)
-        max_wgt = (2 ** 8 - 1) * (mixed_idx + excitatory_idx)
-
-        saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
-
-        # Truncate least significant bits given sign_mode and num_wgt_bits.
-        num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
-
-        truncated_wgts = np.left_shift(
-            np.right_shift(saturated_wgts, num_truncate_bits),
-            num_truncate_bits)
-
-        wgt_vals = truncated_wgts.astype(np.int32)
-        wgts_scaled = np.copy(wgt_vals)
-        self.weights_set = True
-        return wgts_scaled
-
     def run_spk(self):
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
-            self.weights = self._set_wgts()
+            self.weights = truncate_weights(
+                weights=self.weights,
+                sign_mode=self.sign_mode,
+                num_weight_bits=self.num_weight_bits
+            )
+            self.weights_set = True
+
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.

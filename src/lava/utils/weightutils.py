@@ -55,6 +55,8 @@ def optimize_weight_bits(weight: np.ndarray,
         sign_mode = SignMode.MIXED
         is_signed = 1
 
+    scale = 0
+
     if sign_mode == SignMode.MIXED:
         pos_scale = 127 / max_weight
         neg_scale = -128 / min_weight
@@ -95,3 +97,52 @@ def optimize_weight_bits(weight: np.ndarray,
         int(weight_exponent),
         sign_mode
     )
+
+
+def truncate_weights(weights: np.ndarray,
+                     sign_mode: int,
+                     num_weight_bits: int) -> np.ndarray:
+    """
+    Truncate the given weight matrix based on the specified SignMode and
+    number of bits.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix that is to be truncated.
+    sign_mode : int
+        Integer representing the sign mode. See SignMode class for the
+        correct values.
+    num_weight_bits : int
+        Number of bits to use for the weight matrix.
+
+    Returns
+    -------
+    numpy.ndarray
+        Truncated weight matrix.
+
+    """
+    wgt_vals = np.copy(weights).astype(np.int32)
+
+    # Saturate the weights according to the sign_mode:
+    # 0 : null
+    # 1 : mixed
+    # 2 : excitatory
+    # 3 : inhibitory
+    mixed_flag = np.equal(sign_mode, 1).astype(np.int32)
+    excitatory_flag = np.equal(sign_mode, 2).astype(np.int32)
+    inhibitory_flag = np.equal(sign_mode, 3).astype(np.int32)
+
+    min_wgt = -2 ** 8 * (mixed_flag + inhibitory_flag)
+    max_wgt = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)
+
+    saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
+
+    # Truncate least significant bits given sign_mode and num_wgt_bits.
+    num_truncate_bits = 8 - num_weight_bits + mixed_flag
+
+    truncated_wgts = np.left_shift(
+        np.right_shift(saturated_wgts, num_truncate_bits),
+        num_truncate_bits).astype(np.int32)
+
+    return np.copy(truncated_wgts)
