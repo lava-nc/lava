@@ -30,9 +30,12 @@ def target_fn(*args, **kwargs):
     :return: None
     """
     try:
+        actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
+        # print("builder", actor.get_status())
         builder.build(idx)
+        return 0
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
         print("Traceback: ")
@@ -47,8 +50,7 @@ def test_multiprocessing():
     for i in range(5):
         bound_target_fn = partial(target_fn, idx=i)
         ret = mp.build_actor(bound_target_fn, builder)
-        if ret != 1 :
-            print("Error ProcessType, exit", ret)
+        print(ret)
 
     shmm = mp.smm
     for i in range(5):
@@ -56,11 +58,9 @@ def test_multiprocessing():
 
     actors = mp.actors
     actor = actors[0]
-    print("actor status: ", actors[0].get_status())
+    print("actor status: ", actor.get_status())
     actor.stop()
-    print("actor status: ", actors[0].get_status())
-    actor.restart()
-    print("actor status: ", actors[0].get_status())
+    print("actor status: ", actor.get_status())
 
     print("stop num: ", shmm.stop())
     print("stop num: ", shmm.stop())

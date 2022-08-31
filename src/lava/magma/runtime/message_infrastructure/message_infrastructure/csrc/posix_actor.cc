@@ -23,7 +23,7 @@ int PosixActor::Wait() {
     LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
     return -1;
   }
-  *(this->signal_) = StatsStopped;
+  this->actor_status_->ctl_status = StatusStopped;
 
   // Check the status
   return 0;
@@ -42,35 +42,32 @@ int PosixActor::ForceStop() {
       LAVA_LOG(LOG_MP, "The Actor child was ended with signal %d\n", status);
     }
   }
-  *(this->signal_) = StatsStopped;
+  this->actor_status_->ctl_status = StatusStopped;
   return 0;
 }
 
-int PosixActor::ReStart() {
-  /* Depricated
-  if (this->status_ == StatsStopped) {
-    LAVA_LOG(LOG_MP, "Actor Restart, pid: %d\n", this->pid_);
-    pid_t pid = fork();
-    if (pid == 0) {
-      target_fn_();
-      exit(0);
-    }
-    if (pid > 0) {
-      this->status_ = StatsRuning;
-      this->pid_ = pid;
-      LAVA_LOG(LOG_MP, "Actor Restart, new pid: %d\n", this->pid_);
-      return ParentProcess;
-    }
-  }
-  else {
-    LAVA_LOG_ERR("The Actor is running or paused, no need to restart\n");
-    return -1;
+int PosixActor::Run() {
+  pid_t pid = fork();
+  if (pid > 0) {
+    LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
+    this->actor_status_->ctl_status = StatusRunning;
+    this->pid_ = pid;
+    return ParentProcess;
   }
 
-  LAVA_LOG_ERR("Actor Restart false\n");
-  */
+  if (pid == 0) {
+    LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
+    this->pid_ = getpid();
+    ReMapActorStatus();
+    int target_ret;
+    do {
+      target_ret = target_fn_(this);
+    } while (target_ret && (this->actor_status_->ctl_status != StatusStopped));
+    LAVA_LOG(LOG_MP, "child exist\n");
+    exit(0);
+  }
+  LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
   return ErrorProcess;
-
 }
 
 }

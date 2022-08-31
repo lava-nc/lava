@@ -21,12 +21,18 @@ namespace message_infrastructure {
 class SharedMemory {
  public:
   SharedMemory(size_t mem_size, int shmid) {
-    data_ = (char*) shmat(shmid, NULL, 0);
+    data_ = reinterpret_cast<char*> (shmat(shmid, NULL, 0));
+    shmid_ = shmid;
   }
   int GetDataElem(int offset) {
-    return (int)data_[offset];
+    return static_cast<int> (data_[offset]);
+  }
+  void* MemMap() {
+    data_ = reinterpret_cast<char*> (shmat(shmid_, NULL, 0));
+    return data_;
   }
  private:
+  int shmid_;
   char* data_;
 };
 
@@ -34,6 +40,12 @@ using SharedMemoryPtr = SharedMemory*;
 
 class SharedMemManager {
  public:
+  SharedMemManager() {
+    this->key_ = 0x5555;
+  }
+  explicit SharedMemManager(int key) {
+    this->key_ = key;
+  }
   int AllocSharedMemory(size_t mem_size) {
     int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
     if (shmid < 0)
@@ -63,7 +75,7 @@ class SharedMemManager {
   }
 
  private:
-  key_t key_ = 0xdead;
+  key_t key_ = 0;
   std::vector<int> shms_;
 };
 

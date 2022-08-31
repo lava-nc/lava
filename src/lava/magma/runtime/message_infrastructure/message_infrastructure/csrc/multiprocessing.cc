@@ -6,58 +6,30 @@
 #include "message_infrastructure_logging.h"
 #include "utils.h"
 
-#include <sys/wait.h>
-#include <unistd.h>
 
 namespace message_infrastructure {
 
 MultiProcessing::MultiProcessing() {
-  shmm_ = new SharedMemManager();
+  int key = 0xbeef;
+  int offset = 0x1000;
+  shmm_ = new SharedMemManager(key);
+  actor_shmm_ = new SharedMemManager(key+offset);
 }
 
-int MultiProcessing::BuildActor(std::function<int(int)> target_fn) {
-  pid_t pid = fork();
-
-  int shmid = shmget(signal_key_, sizeof(char), 0644|IPC_CREAT);
-  if (shmid == -1) {
-    perror("Shared Memory allocate");
-    return ErrorProcess;
-  }
-  char *signal = (char*) shmat(shmid, NULL, 0);
-  if (signal == (void*) -1) {
-    perror("Shared Memrory attach");
-    return ErrorProcess;
-  }
-  *signal = StatsRuning;
-
-  if (pid > 0) {
-    LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
-    ActorPtr actor = new PosixActor(pid, target_fn, signal);
-    signal_key_++;
-    actors_.push_back(actor);
-    return ParentProcess;
-  }
-
-  if (pid == 0) {
-    LAVA_LOG(LOG_MP, "child, new process\n");
-    int target_ret;
-    do {
-      target_ret = target_fn(shmid);
-    } while (target_ret);
-
-    exit(0);
-  }
-
-  LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
-  return ErrorProcess;
-
+int MultiProcessing::BuildActor(std::function<int(ActorPtr)> target_fn) {
+  int shmid = actor_shmm_->AllocSharedMemory(sizeof(ActorStatusInfo));
+  ActorPtr actor = new PosixActor(target_fn, shmid);
+  int ret = actor->Run();
+  actors_.push_back(actor);
+  
+  return ret;
 }
 
 int MultiProcessing::Stop() {
   int error_cnts = 0;
 
   for (auto actor : actors_) {
-    *(actor->signal_) = StatsStopped;
+    error_cnts += actor->Stop();
   }
 
   LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);
