@@ -38,7 +38,6 @@ int PosixActor::Wait() {
     LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
     return -1;
   }
-  *(this->signal_) = StatsStopped;
 
   LAVA_DEBUG(LOG_ACTOR, "current actor status: %d\n", GetStatus());
   // Check the status

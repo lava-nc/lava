@@ -27,11 +27,3 @@ class MultiProcessing {
 }  // namespace message_infrastructure
 
 #endif  // MULTIPROCESSING_H_
-
-<<<<<<< HEAD
-  std::vector<AbstractActor::ActorPtr> actors_;
-=======
-  std::vector<ActorPtr> actors_;
-  int signal_key_ = 0xbee;
-  SharedMemManager *shmm_;
-};
