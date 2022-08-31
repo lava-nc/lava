@@ -333,7 +333,15 @@ class AbstractLoihiRunCfg(RunConfig):
         return list(range(len(proc_models)))
 
 
-class Loihi1SimCfg(AbstractLoihiRunCfg):
+class AbstractLoihiHWRunCfg(AbstractLoihiRunCfg):
+    pass
+
+
+class AbstractLoihiSimRunCfg(AbstractLoihiRunCfg):
+    pass
+
+
+class Loihi1SimCfg(AbstractLoihiSimRunCfg):
     """Run configuration selects appropriate ProcessModel -- either
     `SubProcessModel` for a hierarchical Process or else a `PyProcessModel`
     for a standard Process.
@@ -348,7 +356,7 @@ class Loihi1SimCfg(AbstractLoihiRunCfg):
         return proc_models_ordered
 
 
-class Loihi1HwCfg(AbstractLoihiRunCfg):
+class Loihi1HwCfg(AbstractLoihiHWRunCfg):
     """
     A RunConfig for executing model on Loihi1 HW.
     For Loihi1 HW configurations, the preferred ProcModels are NcProcModels
@@ -357,6 +365,23 @@ class Loihi1HwCfg(AbstractLoihiRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi1-compatible ProcModel is being found.
     ."""
+    def __init__(self,
+                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+                 select_tag: ty.Optional[str] = None,
+                 select_sub_proc_model: ty.Optional[bool] = False,
+                 exception_proc_model_map: ty.Optional[ty.Dict[
+                     ty.Type[AbstractProcess], ty.Type[
+                         AbstractProcessModel]]] = None,
+                 loglevel: int = logging.WARNING,
+                 pre_run_fxs: ty.List[ty.Callable] = [],
+                 post_run_fxs: ty.List[ty.Callable] = []):
+        super().__init__(custom_sync_domains,
+                         select_tag,
+                         select_sub_proc_model,
+                         exception_proc_model_map,
+                         loglevel)
+        self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
+        self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:
@@ -390,7 +415,7 @@ class Loihi2SimCfg(Loihi1SimCfg):
     pass
 
 
-class Loihi2HwCfg(AbstractLoihiRunCfg):
+class Loihi2HwCfg(AbstractLoihiHWRunCfg):
     """
     A RunConfig for executing model on Loihi2 HW.
     For Loihi2 HW configurations, the preferred ProcModels are NcProcModels
@@ -399,6 +424,23 @@ class Loihi2HwCfg(AbstractLoihiRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi2-compatible ProcModel is being found.
     """
+    def __init__(self,
+                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+                 select_tag: ty.Optional[str] = None,
+                 select_sub_proc_model: ty.Optional[bool] = False,
+                 exception_proc_model_map: ty.Optional[ty.Dict[
+                     ty.Type[AbstractProcess], ty.Type[
+                         AbstractProcessModel]]] = None,
+                 loglevel: int = logging.WARNING,
+                 pre_run_fxs: ty.List[ty.Callable] = [],
+                 post_run_fxs: ty.List[ty.Callable] = []):
+        super().__init__(custom_sync_domains,
+                         select_tag,
+                         select_sub_proc_model,
+                         exception_proc_model_map,
+                         loglevel)
+        self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
+        self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:
