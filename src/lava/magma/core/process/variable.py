@@ -64,7 +64,7 @@ class Var(AbstractProcessMember):
 
     @property
     def model(self):
-        """ Return model """
+        """Return model."""
         return self._model
 
     @model.setter

@@ -34,18 +34,18 @@ class CompiledResource(Resource):
 
     @property
     def l_address(self) -> ResourceAddress:
-        """Return the logical address of this compiled resource"""
+        """Return the logical address of this compiled resource."""
         raise NotImplementedError
 
 
 class MappedResource(Resource):
     """Signifies a physical resource held by the builder.
-    Must be serializable"""
+    Must be serializable."""
 
     @property
     @abstractmethod
     def p_address(self) -> ResourceAddress:
-        """Return the physical address of this mapped resource"""
+        """Return the physical address of this mapped resource."""
         pass
 
 
@@ -56,6 +56,7 @@ class AbstractProcessBuilder(AbstractBuilder):
 
     Parameters
     ----------
+
     proc_model: AbstractProcessModel
                 ProcessModel class of the process to build.
     model_id: int

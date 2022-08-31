@@ -47,7 +47,7 @@ class Sigma(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
-        """ Return shape of the Process """
+        """Return shape of the Process."""
         return self.proc_params['shape']
 
 
@@ -113,7 +113,7 @@ class Delta(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
-        """ Return shape of the Process """
+        """Return shape of the Process."""
         return self.proc_params['shape']
 
 
@@ -194,5 +194,5 @@ class SigmaDelta(AbstractProcess):
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
-        """ Return shape of the Process """
+        """Return shape of the Process."""
         return self.proc_params['shape']

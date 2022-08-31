@@ -126,7 +126,7 @@ class LoihiProtocol(AbstractSyncProtocol):
     # Synchronizer classes that implement protocol in a domain
     @property
     def runtime_service(self):
-        """ Return RuntimeService """
+        """Return RuntimeService."""
         return {CPU: LoihiPyRuntimeService,
                 LMT: NxSdkRuntimeService,
                 NeuroCore: NxSdkRuntimeService,
