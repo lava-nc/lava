@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <semaphore.h>
+#include <unistd.h>
+
 #include "shm.h"
 
 namespace message_infrastructure {
 
-SharedMemory::SharedMemory() {
-  
-}
 SharedMemory::SharedMemory(int shmid) {
   shmid_ = shmid;
 }

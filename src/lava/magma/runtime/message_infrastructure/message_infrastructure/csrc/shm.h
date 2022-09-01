@@ -5,23 +5,13 @@
 #ifndef SHM_H_
 #define SHM_H_
 
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include <unistd.h>
-
 #include <memory>
 #include <set>
 #include <string>
-
 namespace message_infrastructure {
 
 class SharedMemory {
  public:
-  SharedMemory();
   explicit SharedMemory(int shmid);
   int GetShmid();
   int SetShmid(int shmid);
@@ -30,8 +20,6 @@ class SharedMemory {
   int shmid_;
   size_t size_;
 };
-
-using SharedMemoryPtr = SharedMemory*;
 
 class SharedMemManager {
  public:

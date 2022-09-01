@@ -8,6 +8,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <semaphore.h>
+
 namespace message_infrastructure {
 
 enum ChannelType {
@@ -21,6 +26,11 @@ struct Proto {
   pybind11::dtype dtype_;
   size_t nbytes_;
 };
+
+#define ACC_MODE (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | \
+  S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)
+
+#define CREAT_FLAG (O_CREAT | O_RDWR)
 
 }  // namespace message_infrastructure
 

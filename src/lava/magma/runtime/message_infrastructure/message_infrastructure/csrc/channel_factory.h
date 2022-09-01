@@ -11,6 +11,7 @@
 #include "abstract_channel.h"
 #include "shmem_channel.h"
 #include "utils.h"
+#include "shm.h"
 
 namespace message_infrastructure {
 
@@ -19,10 +20,10 @@ class ChannelFactory {
   template<class T>
   std::shared_ptr<AbstractChannel> GetChannel(
       const ChannelType &channel_type,
-      SharedMemory shm,
-      const pybind11::array_t<T> &data,
+      const SharedMemManager &smm,
+      const T* data,
       const size_t &size,
-      const size_t &nbytes,
+      const size_t &length,
       const std::string &name = "test_channel") {
     switch (channel_type) {
       case RPCCHANNEL:
@@ -30,7 +31,7 @@ class ChannelFactory {
       case DDSCHANNEL:
         break;
       default:
-        return GetShmemChannel<T>(&shm, data, size, nbytes, name);
+        return GetShmemChannel<T>(smm, size, length, name);
     }
     return NULL;
   }

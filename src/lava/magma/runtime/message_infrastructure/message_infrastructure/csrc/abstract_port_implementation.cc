@@ -41,4 +41,4 @@ std::vector<int> AbstractPortImplementation::GetShape() {
 }
 */
 
-}  // namespace message_infrastrature
+}  // namespace message_infrastructure

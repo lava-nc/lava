@@ -10,17 +10,18 @@
 #include <vector>
 #include "abstract_port.h"
 #include "shmem_port.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 
 class PortProxy {
 };
 
-class SendPortProxy : public PortProxy{
+class SendPortProxy : public PortProxy {
  public:
   SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
-                  channel_type_(channel_type),
-                  send_port_(send_port) {
+                                          channel_type_(channel_type),
+                                          send_port_(send_port) {
     printf("Create SendPortProxy\n");
   }
   ChannelType GetChannelType() {
@@ -35,8 +36,8 @@ class SendPortProxy : public PortProxy{
   int Probe() {
     return send_port_->Probe();
   }
-  int Send() {
-    return send_port_->Send();
+  int Send(void* data) {
+    return send_port_->Send(data);
   }
   int Join() {
     return send_port_->Join();
@@ -44,12 +45,12 @@ class SendPortProxy : public PortProxy{
   std::string Name() {
     return send_port_->Name();
   }
-  pybind11::dtype Dtype() {
-    return send_port_->Dtype();
-  }
-  ssize_t* Shape() {
-    return send_port_->Shape();
-  }
+  // pybind11::dtype Dtype() {
+  //   return send_port_->Dtype();
+  // }
+  // ssize_t* Shape() {
+  //   return send_port_->Shape();
+  // }
   size_t Size() {
     return send_port_->Size();
   }
@@ -59,11 +60,11 @@ class SendPortProxy : public PortProxy{
   AbstractSendPortPtr send_port_;
 };
 
-class RecvPortProxy : public PortProxy{
+class RecvPortProxy : public PortProxy {
  public:
   RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
-                  channel_type_(channel_type),
-                  recv_port_(recv_port) {
+                                            channel_type_(channel_type),
+                                            send_port_(send_port) {
     printf("Create RecvPortProxy\n");
   }
 
@@ -79,7 +80,7 @@ class RecvPortProxy : public PortProxy{
   int Probe() {
     return recv_port_->Probe();
   }
-  int Recv() {
+  void* Recv() {
     return recv_port_->Recv();
   }
   int Join() {
@@ -91,12 +92,12 @@ class RecvPortProxy : public PortProxy{
   std::string Name() {
     return recv_port_->Name();
   }
-  pybind11::dtype Dtype() {
-    return recv_port_->Dtype();
-  }
-  ssize_t* Shape() {
-    return recv_port_->Shape();
-  }
+  // pybind11::dtype Dtype() {
+  //   return recv_port_->Dtype();
+  // }
+  // ssize_t* Shape() {
+  //   return recv_port_->Shape();
+  // }
   size_t Size() {
     return recv_port_->Size();
   }

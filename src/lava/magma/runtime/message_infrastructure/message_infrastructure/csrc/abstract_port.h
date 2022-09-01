@@ -23,12 +23,12 @@ class AbstractPort {
   std::string Name() {
     return name_;
   }
-  pybind11::dtype Dtype() {
-    return dtype_;
-  }
-  ssize_t* Shape() {
-    return shape_;
-  }
+  // pybind11::dtype Dtype() {
+  //   return dtype_;
+  // }
+  // ssize_t* Shape() {
+  //   return shape_;
+  // }
   size_t Size() {
     return size_;
   }
@@ -39,31 +39,29 @@ class AbstractPort {
   int Probe() {
     return 0;
   }
-  int Recv() {
-    return 0;
-  }
   int Join() {
     return 0;
   }
 
  private:
   std::string name_;
-  pybind11::dtype dtype_;
-  ssize_t *shape_ = NULL;
+  // pybind11::dtype dtype_;
+  // ssize_t *shape_ = NULL;
   size_t size_;
+  size_t nbytes_;
 };
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send() {
+  int Send(void* data) {
     return 0;
   }
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  int Recv() {
-    return 0;
+  void* Recv() {
+    return NULL;
   }
   int Peek() {
     return 0;
