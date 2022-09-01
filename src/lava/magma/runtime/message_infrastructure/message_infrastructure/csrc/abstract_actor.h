@@ -6,43 +6,67 @@
 #define ABSTRACT_ACTOR_H_
 
 #include <functional>
+#include "shm.h"
 
 namespace message_infrastructure {
 
 enum ActorStatus {
-  StatsError = -1,
-  StatsRuning = 0,
-  StatsStopped = 1
+  StatusError = -1,
+  StatusRunning = 0,
+  StatusStopped = 1,
+  StatusPaused = 2
+};
+
+struct ActorStatusInfo {
+  ActorStatus ctl_status;
 };
 
 class AbstractActor {
  public:
+  virtual int ForceStop() = 0;
+  virtual int GetActorStatus() = 0;
   virtual int GetPid() = 0;
+  virtual int Run() = 0;  // parent process only
   virtual int Stop() = 0;
   int pid_;
+ protected:
+  int ReMapActorStatus() {  // child process only
+    status_shm_->MemMap();
+    return 0;
+  }
+  ActorStatusInfo *actor_status_;
+  SharedMemory *status_shm_;
 };
+
+using ActorPtr = AbstractActor *;
 
 class PosixActor : public AbstractActor {
  public:
-  explicit PosixActor(int pid, std::function<void()> target_fn) {
-    this->pid_ = pid;
+  explicit PosixActor(std::function<int(ActorPtr)> target_fn, int shmid) {
     this->target_fn_ = target_fn;
+    status_shm_ = new SharedMemory(sizeof(ActorStatusInfo), shmid);
+    this->actor_status_ =
+      reinterpret_cast<ActorStatusInfo*>(status_shm_->MemMap());
   }
+
   int GetPid() {
     return this->pid_;
   }
   int Wait();
-  int Stop();
-  int GetStatus() {
-    return this->status_;
+  int ForceStop();
+  int GetActorStatus() {
+    return this->actor_status_->ctl_status;
   }
+  int Stop() {
+    this->actor_status_->ctl_status = StatusStopped;
+    return 0;
+  }
+  int Run();
   // int Trace();
  private:
-  std::function<void()> target_fn_ = NULL;
-  int status_ = StatsStopped;
+  std::function<int(ActorPtr)> target_fn_ = NULL;
 };
 
-using ActorPtr = AbstractActor *;
 using PosixActorPtr = PosixActor *;
 
 }  // namespace message_infrastructure
