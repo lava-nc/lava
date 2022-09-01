@@ -28,7 +28,7 @@ void* SharedMemory::MemMap() {
 }
 
 
-int SharedMemManager::AllocSharedMemory(const std::string &src_name, const size_t mem_size) {
+int SharedMemManager::AllocSharedMemoryWithName(const std::string &src_name, const size_t mem_size) {
   std::string shm_name = src_name + "_shm";
 
   int shmid = shm_open(shm_name.c_str(),

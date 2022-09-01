@@ -12,6 +12,7 @@ namespace message_infrastructure {
 
 class SharedMemory {
  public:
+  SharedMemory() {}
   explicit SharedMemory(int shmid);
   int GetShmid();
   int SetShmid(int shmid);
@@ -23,7 +24,9 @@ class SharedMemory {
 
 class SharedMemManager {
  public:
-  int AllocSharedMemory(const std::string &src_name, const size_t mem_size);
+  SharedMemManager() {}
+  int AllocSharedMemoryWithName(const std::string &src_name,
+                                const size_t mem_size);
   int AllocSharedMemory(const size_t mem_size);
 
   int DeleteSharedMemory(const int shmid);

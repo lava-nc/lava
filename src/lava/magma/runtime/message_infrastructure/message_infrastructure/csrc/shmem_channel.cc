@@ -21,14 +21,13 @@
 
 namespace message_infrastructure {
 
-template <class T>
-ShmemChannel<T>::ShmemChannel(const SharedMemManager &smm,
+ShmemChannel::ShmemChannel(const SharedMemManager &smm,
                            const std::string &src_name,
                            const std::string &dst_name,
                            const size_t &size,
                            const size_t &nbytes) {
   smm_ = smm;
-  int shmid = smm_.AllocSharedMemory(src_name, nbytes * size);
+  int shmid = smm_.AllocSharedMemoryWithName(src_name, nbytes * size);
   SharedMemory shm(shmid);
 
   std::string req_name = src_name + "_req";
@@ -42,8 +41,8 @@ ShmemChannel<T>::ShmemChannel(const SharedMemManager &smm,
     exit(-1);
   }
 
-  AbstractSendPortPtr send_port = std::make_shared<ShmemSendPort<T>>(src_name, shm, size, nbytes);
-  AbstractRecvPortPtr recv_port = std::make_shared<ShmemRecvPort<T>>(dst_name, shm, size, nbytes);
+  AbstractSendPortPtr send_port = std::make_shared<ShmemSendPort>(src_name, shm, size, nbytes);
+  AbstractRecvPortPtr recv_port = std::make_shared<ShmemRecvPort>(dst_name, shm, size, nbytes);
   
   send_port_proxy_ = std::make_shared<SendPortProxy>(
       ChannelType::SHMEMCHANNEL,
@@ -53,20 +52,17 @@ ShmemChannel<T>::ShmemChannel(const SharedMemManager &smm,
       recv_port);
 }
 
-template <class T>
-SendPortProxyPtr ShmemChannel<T>::GetSendPort() {
+SendPortProxyPtr ShmemChannel::GetSendPort() {
   printf("Get send_port.\n");
   return this->send_port_proxy_;
 }
 
-template <class T>
-RecvPortProxyPtr ShmemChannel<T>::GetRecvPort() {
+RecvPortProxyPtr ShmemChannel::GetRecvPort() {
   printf("Get recv_port.\n");
   return this->recv_port_proxy_;
 }
 
-template <class T>
-ShmemChannel<T>::~ShmemChannel() {
+ShmemChannel::~ShmemChannel() {
   sem_destroy(req_);
   sem_destroy(ack_);
 }

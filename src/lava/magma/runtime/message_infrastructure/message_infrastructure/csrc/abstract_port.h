@@ -43,7 +43,6 @@ class AbstractPort {
     return 0;
   }
 
- private:
   std::string name_;
   // pybind11::dtype dtype_;
   // ssize_t *shape_ = NULL;

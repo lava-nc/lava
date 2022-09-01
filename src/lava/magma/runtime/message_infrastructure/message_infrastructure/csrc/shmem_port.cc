@@ -21,8 +21,7 @@
 
 namespace message_infrastructure {
 
-template<class T>
-ShmemSendPort<T>::ShmemSendPort(const std::string &name,
+ShmemSendPort::ShmemSendPort(const std::string &name,
                 const SharedMemory &shm,
                 const size_t &size,
                 const size_t &nbytes) {
@@ -41,32 +40,31 @@ ShmemSendPort<T>::ShmemSendPort(const std::string &name,
     exit(-1);
   }
   
-  T *ptr = (T *)mmap(NULL, nbytes_ * size, PROT_WRITE, MAP_SHARED, shmid, 0);
+  void *ptr = mmap(NULL, nbytes_ * size, PROT_WRITE, MAP_SHARED, shmid, 0);
 
   for(int i = 0; i < size_; i++) {
     array_.push_back(ptr + nbytes_ * i);
   }
 }
 
-template<class T>
-int ShmemSendPort<T>::Start() {
+int ShmemSendPort::Start() {
+  printf("SendPort start.\n");
   std::string semaphore_name = name_ + "_semaphore";
   semaphore_ = sem_open(semaphore_name.c_str(), CREAT_FLAG, ACC_MODE, 0);
-  std::thread send_thread(this->AckCallback);
+  std::thread send_thread(&message_infrastructure::ShmemSendPort::AckCallback, this);
   send_thread.join();
   return 0;
 }
 
-template<class T>
-int ShmemSendPort<T>::Probe() {
+int ShmemSendPort::Probe() {
   int result = sem_trywait(semaphore_);
   if(!result)
     sem_post(semaphore_);
   return result;
 }
 
-template<class T>
-int ShmemSendPort<T>::Send(T* data) {
+int ShmemSendPort::Send(void* data) {
+  printf("SendPort send.\n");
   std::string req_name = name_ + "_req";
   req_ = sem_open(req_name.c_str(), 0);
   sem_wait(semaphore_);
@@ -76,50 +74,45 @@ int ShmemSendPort<T>::Send(T* data) {
   return 0;
 }
 
-template<class T>
-int ShmemSendPort<T>::Join() {
-  this->done_ = true;
+int ShmemSendPort::Join() {
+  done_ = true;
   return 0;
 }
 
-template<class T>
-int ShmemSendPort<T>::AckCallback() {
+int ShmemSendPort::AckCallback() {
   std::string ack_name = name_ + "_ack";
   ack_ = sem_open(ack_name.c_str(), 0);
 
-  while(!this->done_) {
+  while(!done_) {
     sem_wait(ack_);
     sem_post(semaphore_);
-    // bool not_full = this->Probe();
-    // if(this->observer && !not_full)
+    // bool not_full = Probe();
+    // if(>observer && !not_full)
     // Todo(hexu1) : CspSelector.Observer
-    // printf("this->observer");
+    // printf("observer");
   }
   return 0;
 }
 
-template<class T>
-std::string ShmemSendPort<T>::Name() {
-  return this->name_;
+std::string ShmemSendPort::Name() {
+  return name_;
 }
 
 // template<class T>
 // pybind11::dtype ShmemSendPort<T>::Dtype() {
-//   return this->dtype_;
+//   return dtype_;
 // }
 
 // template<class T>
 // ssize_t* ShmemSendPort<T>::Shape() {
-//   return this->shape_;
+//   return shape_;
 // }
 
-template<class T>
-size_t ShmemSendPort<T>::Size() {
-  return this->size_;
+size_t ShmemSendPort::Size() {
+  return size_;
 }
 
-template<class T>
-ShmemRecvPort<T>::ShmemRecvPort(const std::string &name,
+ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const SharedMemory &shm,
                 const size_t &size,
                 const size_t &nbytes) {
@@ -138,59 +131,56 @@ ShmemRecvPort<T>::ShmemRecvPort(const std::string &name,
     exit(-1);
   }
   
-  T *ptr = (T *)mmap(NULL, nbytes_ * size, PROT_WRITE, MAP_SHARED, shmid, 0);
+  void *ptr = mmap(NULL, nbytes_ * size, PROT_WRITE, MAP_SHARED, shmid, 0);
 
   for(int i = 0; i < size_; i++) {
     array_.push_back(ptr + nbytes_ * i);
   }
 }
 
-template<class T>
-int ShmemRecvPort<T>::Start() {
-  std::thread recv_thread(this->ReqCallback);
+int ShmemRecvPort::Start() {
+  printf("RecvPort start.\n");
+  std::thread recv_thread(&message_infrastructure::ShmemRecvPort::ReqCallback, this);
   recv_thread.join();
   return 0;
 }
 
-template<class T>
-bool ShmemRecvPort<T>::Probe() {
+bool ShmemRecvPort::Probe() {
   // return queue_.size() > 0;
   return true;
 }
 
-template<class T>
-T* ShmemRecvPort<T>::Recv() {
+void* ShmemRecvPort::Recv() {
   // queue_.get();
-  T result[nbytes_ / sizeof(T)];
+  // todo
+  printf("RecvPort recv.\n");
+  int result[nbytes_ / sizeof(int)];
   memcpy(result, array_[idx_], nbytes_);
   idx_ = (idx_ + 1) % size_;
   sem_post(ack_);
   return result;
 }
 
-template<class T>
-int ShmemRecvPort<T>::Join() {
-  this->done_ = true;
+int ShmemRecvPort::Join() {
+  done_ = true;
   return 0;
 }
 
-template<class T>
-T* ShmemRecvPort<T>::Peek() {
+void* ShmemRecvPort::Peek() {
   // queue_.get(true);
-  T result[nbytes_ / sizeof(T)];
+  int result[nbytes_ / sizeof(int)];
   memcpy(result, array_[idx_], nbytes_);
   return result;
 }
 
-template<class T>
-int ShmemRecvPort<T>::ReqCallback() {
-  while(!this->done_) {
+int ShmemRecvPort::ReqCallback() {
+   while(!done_) {
     sem_wait(req_);
-    // bool not_empty = this->Probe();
+    // bool not_empty = Probe();
     // queue_.put_nowait(0);
-    // if (this->observer && !not_empty)
+    // if (observer && !not_empty)
       // Todo(hexu1) CspSelector.Observer
-      // printf("this->observer");
+      // printf("observer");
   }
   return 0;
 }

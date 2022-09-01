@@ -19,9 +19,9 @@
 
 namespace message_infrastructure {
 
-template <class T>
 class ShmemChannel : public AbstractChannel {
  public:
+  ShmemChannel() {}
   ShmemChannel(const SharedMemManager &smm,
                const std::string &src_name,
                const std::string &dst_name,
@@ -31,24 +31,26 @@ class ShmemChannel : public AbstractChannel {
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:
-  SharedMemManager &smm_;
+  SharedMemManager smm_;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
   SendPortProxyPtr send_port_proxy_ = NULL;
   RecvPortProxyPtr recv_port_proxy_ = NULL;
+  size_t size_;
+  size_t nbytes_;
+  size_t name_;
 };
 
-template <class T>
-std::shared_ptr<ShmemChannel<T>> GetShmemChannel(const SharedMemManager &smm,
+std::shared_ptr<ShmemChannel> GetShmemChannel(const SharedMemManager &smm,
                               const size_t &size,
-                              const size_t &length,
+                              const size_t &nbytes,
                               const std::string &name) {
   printf("Generate shmem_channel.\n");
-  return (std::make_shared<ShmemChannel<T>>(smm,
+  return (std::make_shared<ShmemChannel>(smm,
                                          name,
                                          name,
                                          size,
-                                         length * sizeof(T)));
+                                         nbytes));
 }
 
 }  // namespace message_infrastructure

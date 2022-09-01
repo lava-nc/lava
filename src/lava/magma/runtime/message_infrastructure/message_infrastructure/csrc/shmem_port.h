@@ -18,7 +18,6 @@
 
 namespace message_infrastructure {
 
-template<class T>
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
@@ -31,23 +30,21 @@ class ShmemSendPort : public AbstractSendPort {
   size_t Size();
   int Start();
   int Probe();
-  int Send(T* data);
+  int Send(void* data);
   int Join();
   int AckCallback();
 
-  SharedMemory &shm_;
+  SharedMemory shm_;
   sem_t *req_ = NULL;
   sem_t *ack_ = NULL;
   int idx_ = 0;
   bool done_ = false;
-  // std::vector<pybind11::array> array_;
-  std::vector<T *> array_;
+  std::vector<void *> array_;
   // void *array_ = NULL;
   sem_t *semaphore_ = NULL;
   void *observer = NULL;
   std::thread *thread_ = NULL;
 };
-template<class T>
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
@@ -60,9 +57,9 @@ class ShmemRecvPort : public AbstractRecvPort {
   size_t Size();
   int Start();
   bool Probe();
-  T* Recv();
+  void* Recv();
   int Join();
-  T* Peek();
+  void* Peek();
   int ReqCallback();
 
   SharedMemory shm_;
@@ -71,7 +68,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   int idx_ = 0;
   bool done_ = false;
   // std::vector<pybind11::array*> array_;
-  std::vector<T *> array_;
+  std::vector<void *> array_;
   // void *array_ = NULL;
   void *observer = NULL;
   std::thread *thread_ = NULL;

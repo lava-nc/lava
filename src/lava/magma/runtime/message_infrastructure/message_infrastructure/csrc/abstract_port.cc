@@ -11,12 +11,12 @@ namespace message_infrastructure {
 std::string AbstractPort::Name() {
   return this->name_;
 }
-pybind11::dtype AbstractPort::Dtype() {
-  return this->dtype_;
-}
-ssize_t* AbstractPort::Shape() {
-  return this->shape_;
-}
+// pybind11::dtype AbstractPort::Dtype() {
+//   return this->dtype_;
+// }
+// ssize_t* AbstractPort::Shape() {
+//   return this->shape_;
+// }
 size_t AbstractPort::Size() {
   return this->size_;
 }
