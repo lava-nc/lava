@@ -78,8 +78,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         if not self.weights_set:
             self.weights = truncate_weights(
                 weights=self.weights,
-                sign_mode=self.sign_mode,
-                num_weight_bits=self.num_weight_bits
+                sign_mode=self.sign_mode[0],
+                num_weight_bits=self.num_weight_bits[0]
             )
             self.weights_set = True
 
