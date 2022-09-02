@@ -6,9 +6,4 @@
 
 namespace message_infrastructure {
 
-// IdentityTransformer
-std::vector<int> IdentityTransformer::Transform(std::vector<int> data) {
-    return data;
-}
-
 }  // namespace message_infrastructure
