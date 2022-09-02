@@ -14,20 +14,28 @@
 
 namespace message_infrastructure {
 
-class AbstractTransformer{
+class AbstractTransformer {
  public:
-    virtual std::vector<int> Transform(std::vector<int> data);
+    int Transform() {
+        return 0;
+    }
 };
 
 class IdentityTransformer: public AbstractTransformer {
  public:
-    std::vector<int> Transform(std::vector<int> data);
+    int Transform() {
+         return 0;
+    }
 };
 
 class VirtualPortTransformer: public AbstractTransformer {
  public:
-    std::vector<int> Transform(std::vector<int> data);
-    std::vector<int> _Get_Transform();
+    int Transform() {
+        return 0;
+    } 
+    int _Get_Transform() {
+        return 0;
+    }
 };
 
 }  // namespace message_infrastructure
