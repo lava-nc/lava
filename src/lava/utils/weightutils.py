@@ -42,6 +42,8 @@ def optimize_weight_bits(weight: np.ndarray,
     SignMode
         synapse sign mode
     """
+    weight = np.clip(weight, a_min=-256, a_max=255)
+
     max_weight = np.max(weight)
     min_weight = np.min(weight)
 
