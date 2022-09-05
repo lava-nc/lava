@@ -731,7 +731,3 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         lif_v_float = np.right_shift(np.array(lif_v), 6)
         self.assertListEqual(expected_v_timeseries, lif_v)
         self.assertListEqual(expected_float_v, lif_v_float.tolist())
-
-
-if __name__ == "__main__":
-    unittest.main()
