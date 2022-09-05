@@ -29,6 +29,8 @@ ShmemSendPort::ShmemSendPort(const std::string &name,
   shm_ = shm;
   nbytes_ = nbytes;
   size_ = size;
+
+  done_ = false;
   
   void *ptr = shmat(shm.GetShmid(), NULL, 0);
 
@@ -72,6 +74,8 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   shm_ = shm;
   nbytes_ = nbytes;
   size_ = size;
+
+  done_ = false;
   
   void *ptr = shmat(shm.GetShmid(), NULL, 0);
 

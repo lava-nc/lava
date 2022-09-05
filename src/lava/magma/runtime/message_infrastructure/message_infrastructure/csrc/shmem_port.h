@@ -9,6 +9,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <atomic> 
 
 #include "abstract_port.h"
 #include "shm.h"
@@ -32,7 +33,7 @@ class ShmemSendPort : public AbstractSendPort {
 
   SharedMemory shm_;
   int idx_ = 0;
-  bool done_ = false;
+  std::atomic_bool done_;
   std::vector<void *> array_;
   sem_t *semaphore_ = NULL;
   void *observer = NULL;
@@ -53,10 +54,8 @@ class ShmemRecvPort : public AbstractRecvPort {
   int ReqCallback();
 
   SharedMemory shm_;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
   int idx_ = 0;
-  bool done_ = false;
+  std::atomic_bool done_;
   std::vector<void *> array_;
   void *observer = NULL;
 };
