@@ -46,12 +46,6 @@ class SendPortProxy : public PortProxy {
   std::string Name() {
     return send_port_->Name();
   }
-  // pybind11::dtype Dtype() {
-  //   return send_port_->Dtype();
-  // }
-  // ssize_t* Shape() {
-  //   return send_port_->Shape();
-  // }
   size_t Size() {
     return send_port_->Size();
   }
@@ -94,12 +88,6 @@ class RecvPortProxy : public PortProxy {
   std::string Name() {
     return recv_port_->Name();
   }
-  // pybind11::dtype Dtype() {
-  //   return recv_port_->Dtype();
-  // }
-  // ssize_t* Shape() {
-  //   return recv_port_->Shape();
-  // }
   size_t Size() {
     return recv_port_->Size();
   }

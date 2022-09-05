@@ -5,9 +5,6 @@
 #ifndef ABSTRACT_PORT_H_
 #define ABSTRACT_PORT_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -23,29 +20,24 @@ class AbstractPort {
   std::string Name() {
     return name_;
   }
-  // pybind11::dtype Dtype() {
-  //   return dtype_;
-  // }
-  // ssize_t* Shape() {
-  //   return shape_;
-  // }
   size_t Size() {
     return size_;
   }
 
   int Start() {
+    printf("AbstractPort Start.\n");
     return 0;
   }
   int Probe() {
+    printf("AbstractPort Probe.\n");
     return 0;
   }
   int Join() {
+    printf("AbstractPort Join.\n");
     return 0;
   }
 
   std::string name_;
-  // pybind11::dtype dtype_;
-  // ssize_t *shape_ = NULL;
   size_t size_;
   size_t nbytes_;
 };
@@ -53,6 +45,7 @@ class AbstractPort {
 class AbstractSendPort : public AbstractPort {
  public:
   int Send(void* data) {
+    printf("AbstractPort Send.\n");
     return 0;
   }
 };
@@ -60,9 +53,11 @@ class AbstractSendPort : public AbstractPort {
 class AbstractRecvPort : public AbstractPort {
  public:
   void* Recv() {
+    printf("AbstractPort Recv.\n");
     return NULL;
   }
   int Peek() {
+    printf("AbstractPort Peek.\n");
     return 0;
   }
 };

@@ -5,7 +5,7 @@
 #ifndef SHMEM_PORT_H_
 #define SHMEM_PORT_H_
 
-#include <pybind11/numpy.h>
+// #include <pybind11/numpy.h>
 
 #include <thread>  // NOLINT [build/c++11]
 #include <queue>
@@ -25,8 +25,6 @@ class ShmemSendPort : public AbstractSendPort {
                 const size_t &size,
                 const size_t &nbytes);
   std::string Name();
-  // pybind11::dtype Dtype();
-  // ssize_t* Shape();
   size_t Size();
   int Start();
   int Probe();
@@ -40,7 +38,6 @@ class ShmemSendPort : public AbstractSendPort {
   int idx_ = 0;
   bool done_ = false;
   std::vector<void *> array_;
-  // void *array_ = NULL;
   sem_t *semaphore_ = NULL;
   void *observer = NULL;
   std::thread *thread_ = NULL;
@@ -52,8 +49,6 @@ class ShmemRecvPort : public AbstractRecvPort {
                 const size_t &size,
                 const size_t &nbytes);
   std::string Name();
-  // pybind11::dtype Dtype();
-  // ssize_t* Shape();
   size_t Size();
   int Start();
   bool Probe();
@@ -67,9 +62,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   sem_t *ack_ = NULL;
   int idx_ = 0;
   bool done_ = false;
-  // std::vector<pybind11::array*> array_;
   std::vector<void *> array_;
-  // void *array_ = NULL;
   void *observer = NULL;
   std::thread *thread_ = NULL;
   // ShmemRecvQueue<pybind11::array_t<T>> queue;

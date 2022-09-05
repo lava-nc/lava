@@ -3,7 +3,7 @@
 // See: https://spdx.org/licenses/
 
 #include <pthread.h>
-#include <pybind11/numpy.h>
+// #include <pybind11/numpy.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -97,16 +97,6 @@ int ShmemSendPort::AckCallback() {
 std::string ShmemSendPort::Name() {
   return name_;
 }
-
-// template<class T>
-// pybind11::dtype ShmemSendPort<T>::Dtype() {
-//   return dtype_;
-// }
-
-// template<class T>
-// ssize_t* ShmemSendPort<T>::Shape() {
-//   return shape_;
-// }
 
 size_t ShmemSendPort::Size() {
   return size_;

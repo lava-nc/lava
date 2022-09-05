@@ -5,9 +5,6 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <fcntl.h>
@@ -19,12 +16,6 @@ enum ChannelType {
   SHMEMCHANNEL = 0,
   RPCCHANNEL = 1,
   DDSCHANNEL = 2
-};
-
-struct Proto {
-  const ssize_t *shape_;
-  pybind11::dtype dtype_;
-  size_t nbytes_;
 };
 
 #define ACC_MODE (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | \

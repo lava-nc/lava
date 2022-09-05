@@ -5,8 +5,8 @@
 #ifndef SHMEM_CHANNEL_H_
 #define SHMEM_CHANNEL_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+// #include <pybind11/pybind11.h>
+// #include <pybind11/numpy.h>
 #include <semaphore.h>
 
 #include <memory>
