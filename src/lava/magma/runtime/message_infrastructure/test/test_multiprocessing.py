@@ -18,10 +18,10 @@ import time
 
 class Builder():
     def build(self, i):
-        print("Builder run build ", i)
-        print("sleep 10 s")
+        print(f"Builder running build {i}")
+        print(f"Build {i}: sleep for 10s")
         time.sleep(10)
-        print("Builder Achieved")
+        print(f"Build {i}: Builder Achieved")
 
 
 def target_fn(*args, **kwargs):
@@ -56,12 +56,17 @@ class TestMultiprocessing(unittest.TestCase):
         """
         self.mp.start()
         builder = Builder()
-        return_type = self.mp.build_actor(target_fn, builder, idx=1)
-        # build_actor returns 0 if it is a child process
-        self.assertEqual(return_type, 0)
+
+        # Build 5 actors
+        for i in range(5):
+            bound_target_fn = partial(target_fn, idx=i)
+            return_type = self.mp.build_actor(bound_target_fn, builder)
+            # build_actor returns 0 if it is a child process
+            self.assertEqual(return_type, 0)
 
         self.test_get_actor_pid()
 
+    @unittest.skip
     def test_multiprocessing_shutdown(self):
         """
         Spawns an actor and sends a stop signal.
@@ -69,7 +74,7 @@ class TestMultiprocessing(unittest.TestCase):
         """
         self.test_multiprocessing_spawn()
 
-        actor_list = self.mp.actor_pids()
+        actor_list = self.mp.actor_pids
         self.mp.stop()
 
         # Check that all actor PIDs no longer exist
@@ -87,36 +92,39 @@ class TestMultiprocessing(unittest.TestCase):
         self.test_multiprocessing_spawn()
 
         # Gets list of actor PIDs and kills the 1st one in the list
-        actor_list = self.mp.actor_pids()
+        actor_list = self.mp.actor_pids
         os.kill(actor_list[0])
 
         # TODO: How to check that an actor has been reassinged to the correct
         # process
 
+    @unittest.skip
     def test_get_actor_pid(self):
         """
         Gets list of actor PIDs
         Checks that all actor PIDs exist
         """
-        actor_list = self.mp.actor_pids()
+        actor_list = self.mp.actor_pids
         for actor_pid in actor_list:
             self.assertTrue(psutil.pid_exists(actor_pid))
 
+    @unittest.skip
     def test_get_actor_list(self):
         """
         Gets list of actors
         Checks that all actors are of Actor type
         """
-        actor_list = self.mp.actors()
+        actor_list = self.mp.actors
         for actor in actor_list:
             self.assertIsInstance(actor, Actor)
 
+    @unittest.skip
     def test_get_shared_memory_manager(self):
         """
         Gets the Shared Memory Manager
         Checks that the shared memory manager is of SharedMemManager type
         """
-        shared_memory_manager = self.mp.smm()
+        shared_memory_manager = self.mp.smm
         self.assertIsInstance(shared_memory_manager, SharedMemManager)
 
 
@@ -145,4 +153,7 @@ def test_multiprocessing():
     mp.stop()
 
 
-test_multiprocessing()
+# Run unit tests
+if __name__ == '__main__':
+    test_multiprocessing()
+    unittest.main()
