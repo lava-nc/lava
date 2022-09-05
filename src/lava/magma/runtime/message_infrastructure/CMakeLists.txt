@@ -36,8 +36,8 @@ if(PY_WRAPPER)
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
                                )
 
-    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER})
-    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
+    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
+    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure rt)
 else()
     target_include_directories(message_infrastructure PUBLIC 
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
