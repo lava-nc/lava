@@ -386,6 +386,31 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         self.assertListEqual(expected_v_timeseries, lif_v)
         self.assertListEqual(expected_float_v, lif_v_float.tolist())
 
+    def test_bitacc_pm_eff_bias(self):
+        """
+        Tests fixed point LIF ProcessModel's scaling of threshold.
+        """
+        shape = (1,)  # a single neuron
+        num_steps = 1
+        # Set up high threshold and high bias current to check for potential
+        # overflow in effective bias
+        lif = LIF(shape=shape,
+                  du=0,
+                  dv=0,
+                  bias_mant=2 ** 12 - 1,
+                  bias_exp=5,
+                  vth=2 ** 17)
+
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='fixed_pt')
+
+        lif.run(condition=rcnd, run_cfg=rcfg)
+        lif_v = lif.v.get()[0]
+        lif.stop()
+
+        # Check if lif_v is positive
+        self.assertGreater(lif_v, 0)
+
 
 class TestTLIFProcessModelsFloat(unittest.TestCase):
     """Tests for ternary LIF floating point neuron model"""
@@ -706,3 +731,7 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         lif_v_float = np.right_shift(np.array(lif_v), 6)
         self.assertListEqual(expected_v_timeseries, lif_v)
         self.assertListEqual(expected_float_v, lif_v_float.tolist())
+
+
+if __name__ == "__main__":
+    unittest.main()
