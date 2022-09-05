@@ -19,6 +19,7 @@
 #include "ports.h"
 #include "selector.h"
 #include "transformer.h"
+#include "py_middle_layer_test.h"
 
 namespace message_infrastructure {
 
@@ -162,6 +163,11 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("service", &CppVarPortScalarSparse::Service)
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek);
+  py::class_<ProxySimplePort> (m, "ProxySimplePort")
+    .def(py::init<>())
+    .def("set_data", &ProxySimplePort::set_data)
+    .def("transfer", &ProxySimplePort::transfer)
+    .def("get_data", &ProxySimplePort::get_data, py::return_value_policy::reference);
 }
 
 }  // namespace message_infrastructure
