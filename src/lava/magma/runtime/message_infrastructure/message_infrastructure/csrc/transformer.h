@@ -5,9 +5,6 @@
 #ifndef TRANSFORMER_H_
 #define TRANSFORMER_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <vector>
 
 #include "abstract_port_implementation.h"
@@ -32,7 +29,7 @@ class VirtualPortTransformer: public AbstractTransformer {
  public:
     int Transform() {
         return 0;
-    } 
+    }
     int _Get_Transform() {
         return 0;
     }
