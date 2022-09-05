@@ -51,27 +51,30 @@ class Dense(ConnectionProcess):
         Flag to indicate graded spike. Default is False.
     """
 
-    def __init__(self,
-                 *,
-                 weights: np.ndarray,
-                 weight_exp: ty.Optional[int] = 0,
-                 num_weight_bits: ty.Optional[int] = 8,
-                 sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
-                 num_message_bits: ty.Optional[int] = 0,
-                 name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None,
-                 **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        weights: np.ndarray,
+        weight_exp: ty.Optional[int] = 0,
+        num_weight_bits: ty.Optional[int] = 8,
+        sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
+        num_message_bits: ty.Optional[int] = 0,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+        **kwargs,
+    ) -> None:
 
-
-        super().__init__(shape=weights.shape,
-                         weights=weights,
-                         weight_exp=weight_exp,
-                         num_weight_bits=num_weight_bits,
-                         sign_mode=sign_mode,
-                         num_message_bits=num_message_bits,
-                         name=name,
-                         log_config=log_config,
-                         **kwargs)
+        super().__init__(
+            shape=weights.shape,
+            weights=weights,
+            weight_exp=weight_exp,
+            num_weight_bits=num_weight_bits,
+            sign_mode=sign_mode,
+            num_message_bits=num_message_bits,
+            name=name,
+            log_config=log_config,
+            **kwargs,
+        )
 
         self._validate_weights(weights)
         shape = weights.shape
@@ -91,5 +94,7 @@ class Dense(ConnectionProcess):
     @staticmethod
     def _validate_weights(weights: np.ndarray) -> None:
         if len(np.shape(weights)) != 2:
-            raise ValueError("Dense Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
+            raise ValueError(
+                "Dense Process 'weights' expects a 2D matrix, "
+                f"got {weights}."
+            )

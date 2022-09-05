@@ -5,9 +5,9 @@
 import typing as ty
 from enum import IntEnum, unique
 
+from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.process.neuron import NeuronProcess
 
 
 @unique
@@ -19,7 +19,7 @@ class ActivationMode(IntEnum):
     RELU = 1
 
 
-class Sigma(NeuronProcess):
+class Sigma(AbstractProcess):
 
     def __init__(
             self,
@@ -48,7 +48,7 @@ class Sigma(NeuronProcess):
         return self.proc_params['shape']
 
 
-class Delta(NeuronProcess):
+class Delta(AbstractProcess):
     def __init__(self,
                  *,
                  shape: ty.Tuple[int, ...],
@@ -100,6 +100,7 @@ class Delta(NeuronProcess):
         self.s_out = OutPort(shape=shape)
 
         self.vth = Var(shape=(1,), init=vth)
+        self.sigma = Var(shape=shape, init=0)
         self.act = Var(shape=shape, init=0)
         self.residue = Var(shape=shape, init=0)
         self.error = Var(shape=shape, init=0)
@@ -112,7 +113,7 @@ class Delta(NeuronProcess):
         return self.proc_params['shape']
 
 
-class SigmaDelta(NeuronProcess):
+class SigmaDelta(AbstractProcess):
     def __init__(
             self,
             *,

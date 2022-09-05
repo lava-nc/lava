@@ -4,4 +4,4 @@
 
 from . import reset, source, sink, dataloader
 
-__all__ = ['reset', 'source', 'sink', 'dataloader']
+__all__ = ["reset", "source", "sink", "dataloader"]
