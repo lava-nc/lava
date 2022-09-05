@@ -21,50 +21,24 @@
 
 namespace message_infrastructure {
 
-ShmemChannel::ShmemChannel(const SharedMemManager &smm,
+ShmemChannel::ShmemChannel(SharedMemManager smm,
                            const std::string &src_name,
                            const std::string &dst_name,
                            const size_t &size,
                            const size_t &nbytes) {
-  smm_ = smm;
-  int shmid = smm_.AllocSharedMemoryWithName(src_name, nbytes * size);
-  SharedMemory shm(shmid);
+  shm_ = smm.AllocSharedMemory(nbytes * size);
 
-  std::string req_name = src_name + "_req";
-  std::string ack_name = src_name + "_ack";
-
-  req_ = sem_open(req_name.c_str(), CREAT_FLAG, ACC_MODE, 0);
-  ack_ = sem_open(ack_name.c_str(), CREAT_FLAG, ACC_MODE, 0);
-
-  if (req_ == SEM_FAILED || req_ == SEM_FAILED) {
-    printf("Create sem fail for channel %s\n", src_name.c_str());
-    exit(-1);
-  }
-
-  AbstractSendPortPtr send_port = std::make_shared<ShmemSendPort>(src_name, shm, size, nbytes);
-  AbstractRecvPortPtr recv_port = std::make_shared<ShmemRecvPort>(dst_name, shm, size, nbytes);
-  
-  send_port_proxy_ = std::make_shared<SendPortProxy>(
-      ChannelType::SHMEMCHANNEL,
-      send_port);
-  recv_port_proxy_ = std::make_shared<RecvPortProxy>(
-      ChannelType::SHMEMCHANNEL,
-      recv_port);
+  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, nbytes);
+  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, nbytes);
 }
 
-SendPortProxyPtr ShmemChannel::GetSendPort() {
+AbstractSendPortPtr ShmemChannel::GetSendPort() {
   printf("Get send_port.\n");
-  return this->send_port_proxy_;
+  return send_port_;
 }
 
-RecvPortProxyPtr ShmemChannel::GetRecvPort() {
+AbstractRecvPortPtr ShmemChannel::GetRecvPort() {
   printf("Get recv_port.\n");
-  return this->recv_port_proxy_;
+  return recv_port_;
 }
-
-ShmemChannel::~ShmemChannel() {
-  sem_destroy(req_);
-  sem_destroy(ack_);
-}
-
 } // namespace message_infrastructure

@@ -22,7 +22,7 @@ class ChannelFactory {
       const SharedMemManager &smm,
       const size_t &size,
       const size_t &nbytes,
-      const std::string &name = "test_channel") {
+      const std::string &name) {
     switch (channel_type) {
       case RPCCHANNEL:
         break;

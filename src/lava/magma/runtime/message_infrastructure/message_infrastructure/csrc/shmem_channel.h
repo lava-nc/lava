@@ -22,26 +22,23 @@ namespace message_infrastructure {
 class ShmemChannel : public AbstractChannel {
  public:
   ShmemChannel() {}
-  ShmemChannel(const SharedMemManager &smm,
+  ShmemChannel(SharedMemManager smm,
                const std::string &src_name,
                const std::string &dst_name,
                const size_t &size,
                const size_t &nbytes);
-  ~ShmemChannel();
-  SendPortProxyPtr GetSendPort();
-  RecvPortProxyPtr GetRecvPort();
+  AbstractSendPortPtr GetSendPort();
+  AbstractRecvPortPtr GetRecvPort();
  private:
-  SharedMemManager smm_;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
-  SendPortProxyPtr send_port_proxy_ = NULL;
-  RecvPortProxyPtr recv_port_proxy_ = NULL;
+  SharedMemory shm_;
+  AbstractSendPortPtr send_port_ = NULL;
+  AbstractRecvPortPtr recv_port_ = NULL;
   size_t size_;
   size_t nbytes_;
   size_t name_;
 };
 
-std::shared_ptr<ShmemChannel> GetShmemChannel(const SharedMemManager &smm,
+std::shared_ptr<ShmemChannel> GetShmemChannel(SharedMemManager smm,
                               const size_t &size,
                               const size_t &nbytes,
                               const std::string &name) {
