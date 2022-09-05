@@ -217,7 +217,7 @@ def convert_rate_to_lif_params(**kwargs):
         try:
             mean_exc_weight_new = fsolve(func, mean_exc_weight)[0]
             # Determine weight scaling factor
-            weight_scale = mean_exc_weight_new / mean_exc_weight
+            weight_scale = np.sqrt(mean_exc_weight_new / mean_exc_weight)
         except Warning:
             # Theory breaks done, most likely due to strong correlations
             # induced by strong weights. Choose 1 as scaling factor.
@@ -228,6 +228,10 @@ def convert_rate_to_lif_params(**kwargs):
         weights *= weight_scale
     else:
         print('Weigh scaling factor not positive: No weight scaling possible')
+
+    # Scale weights with integration time step
+    weights[:, :num_neurons_exc] *= du_exc
+    weights[:, num_neurons_exc:] *= du_inh
 
     # Single neuron paramters
     # Bias_mant is set to make the neuron spike
