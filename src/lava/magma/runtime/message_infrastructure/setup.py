@@ -64,7 +64,6 @@ class CMakeBuild(build_ext):
         # Set numpy include header to cpplib
         cmake_args += [
             f"-DNUMPY_INCLUDE_DIRS={numpy.get_include()}"]
-        print (cmake_args)
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
