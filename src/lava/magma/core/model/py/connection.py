@@ -14,6 +14,7 @@ from lava.magma.core.learning.constants import *
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 import lava.magma.core.learning.string_symbols as str_symbols
 from lava.utils.weightutils import SignMode
+from lava.magma.core.learning.utils import saturate
 import numpy as np
 import typing
 import math
@@ -773,22 +774,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         self._reset_dependencies_and_spike_times()
 
-    @staticmethod
-    def _saturate_trace(trace: np.ndarray) -> np.ndarray:
-        """Saturate trace.
-
-        Parameters
-        ----------
-        trace : ndarray
-            Trace values to saturate.
-
-        Returns
-        ----------
-        result : ndarray
-            Saturated trace values.
-        """
-        return np.minimum(2**BITS_LOW - 1, trace)
-
     def _add_impulse(
         self,
         trace_values: np.ndarray,
@@ -819,7 +804,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         trace_new = np.where(rth < impulses_frac, trace_new + 1, trace_new)
 
-        trace_new = self._saturate_trace(trace_new)
+        trace_new = saturate(0, trace_new, 2**BITS_LOW - 1)
 
         return trace_new
 
