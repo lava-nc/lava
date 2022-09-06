@@ -15,45 +15,6 @@
 import numpy as np
 
 
-def get_bit(int_number: int, bit_number: int) -> int:
-    """Get nth bit of an integer.
-
-    Parameters
-    ----------
-    int_number : int
-        Integer number.
-    bit_number : int
-        Bit index.
-
-    Returns
-    ----------
-    result : int
-        Bit value.
-    """
-    return int_number >> bit_number & 1
-
-
-def apply_mask(int_number: int, nb_bits: int) -> int:
-    """Get nb_bits least-significant bits.
-
-    Parameters
-    ----------
-    int_number : int
-        Integer number.
-    nb_bits : int
-        Number of LSBs to keep.
-
-    Returns
-    ----------
-    result : int
-        Least-significant bits.
-    """
-
-    mask = ~(~0 << nb_bits)
-
-    return int_number & mask
-
-
 def saturate(min_value: int, values: np.ndarray, max_value: int) -> np.ndarray:
     """Saturate numpy array given minimum and maximum values.
 

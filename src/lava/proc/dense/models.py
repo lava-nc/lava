@@ -134,6 +134,4 @@ class PyDenseModelBitApproximate(ConnectionModelBitApproximate):
         if self._learning_rule is not None:
             self._record_pre_spike_times(s_in)
 
-        print("run_spk", self.weights.dtype)
-
         super().run_spk()

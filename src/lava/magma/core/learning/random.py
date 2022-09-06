@@ -1,7 +1,7 @@
 import typing as ty
 import numpy as np
 from abc import abstractmethod
-from lava.magma.core.learning.constants import BITS_LOW, BITS_HIGH
+from lava.magma.core.learning.constants import W_TRACE
 
 
 class AbstractRandomGenerator:
@@ -29,7 +29,7 @@ class TraceRandom(AbstractRandomGenerator):
 
         self._random_trace_decay = self._rng_trace_decay.random(1)[0]
         self._random_impulse_addition = self._rng_impulse_addition.integers(
-            0, 2**BITS_LOW, size=1
+            0, 2**W_TRACE, size=1
         )[0]
 
     @property
@@ -45,7 +45,7 @@ class TraceRandom(AbstractRandomGenerator):
 
     def _advance_impulse_addition(self) -> None:
         self._random_impulse_addition = self._rng_impulse_addition.integers(
-            0, 2**BITS_LOW, size=1
+            0, 2**W_TRACE, size=1
         )[0]
 
     def advance(self, *args, **kwargs):

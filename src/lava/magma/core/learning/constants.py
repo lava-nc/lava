@@ -18,34 +18,45 @@ import lava.magma.core.learning.string_symbols as str_symbols
 # ---------------------------------------------------------------------------
 # Width constants (only for fixed-point implementation)
 
-BITS_LOW = 7
-BITS_MID = 9
-BITS_HIGH = 16
+W_WEIGHTS_U = 8
+W_WEIGHTS_S = W_WEIGHTS_U + 1
+W_TAG_2_U = 7
+W_TAG_2_S = W_TAG_2_U + 1
+W_TAG_1_U = 8
+W_TAG_1_S = W_TAG_1_U + 1
 
-W_MASKS_DICT = {
-    "weights": BITS_MID,
-    "tag_2": BITS_MID,
-    "tag_1": BITS_MID
+W_SYN_VAR_U = {
+    "weights": W_WEIGHTS_U,
+    "tag_2": W_TAG_2_U,
+    "tag_1": W_TAG_1_U
 }
 
-W_SYN_VAR_DICT = {
-    "weights": BITS_MID,
-    "tag_2": BITS_MID,
-    "tag_1": BITS_MID
+W_SYN_VAR_S = {
+    "weights": W_WEIGHTS_S,
+    "tag_2": W_TAG_2_S,
+    "tag_1": W_TAG_1_S
 }
+
+W_TRACE = 7
+W_CONST = 8
+
+W_S_MANT = 4
+
+W_ACCUMULATOR_U = 15
+W_ACCUMULATOR_S = W_ACCUMULATOR_U + 1
 
 FACTOR_TO_WIDTH_DICT = {
     str_symbols.X0: 1,
-    str_symbols.X1: BITS_LOW,
-    str_symbols.X2: BITS_LOW,
+    str_symbols.X1: W_TRACE,
+    str_symbols.X2: W_TRACE,
     str_symbols.Y0: 1,
-    str_symbols.Y1: BITS_LOW,
-    str_symbols.Y2: BITS_LOW,
-    str_symbols.Y3: BITS_LOW,
-    str_symbols.W: BITS_MID,
-    str_symbols.D: BITS_MID,
-    str_symbols.T: BITS_MID,
-    str_symbols.C: BITS_MID
+    str_symbols.Y1: W_TRACE,
+    str_symbols.Y2: W_TRACE,
+    str_symbols.Y3: W_TRACE,
+    str_symbols.W: W_WEIGHTS_S,
+    str_symbols.D: W_TAG_2_S,
+    str_symbols.T: W_TAG_1_S,
+    str_symbols.C: W_CONST
 }
 
 DEP_TO_IDX_DICT = {
@@ -62,3 +73,7 @@ TRACE_TO_IDX_DICT = {
     str_symbols.Y2: 1,
     str_symbols.Y3: 2
 }
+
+BITS_LOW = 7
+BITS_MID = 9
+BITS_HIGH = 16

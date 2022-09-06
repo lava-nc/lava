@@ -151,7 +151,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         for impulse in impulses:
             impulse_int = math.floor(impulse)
 
-            impulse_frac = round((impulse - impulse_int) * 2 ** BITS_LOW)
+            impulse_frac = round((impulse - impulse_int) * 2 ** W_TRACE)
 
             impulses_int.append(impulse_int)
             impulses_frac.append(impulse_frac)
@@ -367,7 +367,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     @staticmethod
     def _decay_trace(
-            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray, random: float
+            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray,
+            random: float
     ) -> np.ndarray:
         """Stochastically decay trace to a given within-epoch time step.
 
@@ -393,7 +394,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         integer_part = np.floor(integer_part)
         result = stochastic_round(integer_part, random,
                                   fractional_part)
-        print("trace", result.dtype)
 
         return result
 
@@ -449,7 +449,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         result = np.where(
             decay_only,
             self._decay_trace(
-                trace_values, t_eval, trace_taus, trace_random.random_trace_decay
+                trace_values, t_eval, trace_taus,
+                trace_random.random_trace_decay
             ),
             trace_values,
         )
@@ -484,35 +485,75 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         return result
 
     @staticmethod
-    def _stochastic_round_synaptic_variable(var: np.ndarray, random: float) \
+    def _stochastic_round_synaptic_variable(synaptic_variable_name: str,
+                                            synaptic_variable_values: np.ndarray,
+                                            random: float) \
             -> np.ndarray:
         """Stochastically round synaptic variable.
 
         Parameters
         ----------
-        var : ndarray
-            Synaptic variable values.
-        random: float
-            Randomly generated number.
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to stochastically round.
 
         Returns
         ----------
         result : ndarray
             Stochastically rounded synaptic variable values.
         """
-        # TODO: Make sure this works with all synaptic variables
-        exp_mant = 2 ** BITS_LOW
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
 
-        integer_part = var / exp_mant
+        integer_part = synaptic_variable_values / exp_mant
         fractional_part = integer_part % 1
 
         integer_part = np.floor(integer_part)
         integer_part = stochastic_round(integer_part,
                                         random,
                                         fractional_part)
-        result = (integer_part * exp_mant).astype(var.dtype)
+        result = (integer_part * exp_mant).astype(
+            synaptic_variable_values.dtype)
 
         return result
+
+    def _saturate_synaptic_variable_accumulator(
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
+    ) -> np.ndarray:
+        """Saturate synaptic variable accumulator.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to saturate.
+
+        Returns
+        ----------
+        result : ndarray
+            Saturated synaptic variable values.
+        """
+        # Weights
+        if synaptic_variable_name == "weights":
+            if np.equal(self.sign_mode, SignMode.MIXED.value):
+                return synaptic_variable_values
+            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+                return np.maximum(0, synaptic_variable_values)
+            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+                return np.minimum(0, synaptic_variable_values)
+        # Delays
+        elif synaptic_variable_name == "tag_2":
+            return np.maximum(0, synaptic_variable_values)
+        # Tags
+        elif synaptic_variable_name == "tag_1":
+            return synaptic_variable_values
+        else:
+            raise ValueError(
+                "Invalid synaptic_variable_name in "
+                "saturate_synaptic_variable"
+            )
 
     def _saturate_synaptic_variable(
             self, synaptic_variable_name: str,
@@ -535,20 +576,21 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         # Weights
         if synaptic_variable_name == "weights":
             if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return synaptic_variable_values
+                return saturate(-(2 ** W_WEIGHTS_U) - 1,
+                                synaptic_variable_values, 2 ** W_WEIGHTS_U - 1)
             elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return np.maximum(0, synaptic_variable_values)
+                return saturate(0, synaptic_variable_values,
+                                2 ** W_WEIGHTS_U - 1)
             elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return np.minimum(
-                    2 ** (BITS_HIGH - 1) - 1,
-                    -np.minimum(0, synaptic_variable_values),
-                )
+                return saturate(-(2 ** W_WEIGHTS_U) - 1,
+                                synaptic_variable_values, 0)
         # Delays
         elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
+            return saturate(0, synaptic_variable_values, 2 ** W_TAG_2_U - 1)
         # Tags
         elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
+            return saturate(-(2 ** W_WEIGHTS_U) - 1, synaptic_variable_values,
+                            2 ** W_WEIGHTS_U - 1)
         else:
             raise ValueError(
                 "Invalid synaptic_variable_name in "
@@ -691,23 +733,19 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             syn_var = np.left_shift(
-                syn_var, BITS_HIGH - W_SYN_VAR_DICT[syn_var_name]
+                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             )
             syn_var = lr_applier.apply(syn_var, **applier_args)
-            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
+            syn_var = self._saturate_synaptic_variable_accumulator(syn_var_name,
+                                                                   syn_var)
             syn_var = \
-                self._stochastic_round_synaptic_variable(syn_var,
+                self._stochastic_round_synaptic_variable(syn_var_name, syn_var,
                                                          self._conn_var_random.random_stochastic_round)
             syn_var = np.right_shift(
-                syn_var, BITS_HIGH - W_SYN_VAR_DICT[syn_var_name]
+                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             )
 
-            mask = ~(
-                    ~np.zeros(self._shape, dtype=int) << W_MASKS_DICT[
-                syn_var_name]
-            )
-            syn_var = syn_var & mask
-            print("syn_var", syn_var.dtype)
+            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 
     def _update_traces(self) -> None:
@@ -777,15 +815,12 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
-
         self._apply_learning_rules()
-
         self._update_traces()
-
         self._reset_dependencies_and_spike_times()
 
+    @staticmethod
     def _add_impulse(
-            self,
             trace_values: np.ndarray,
             random: int,
             impulses_int: np.ndarray,
@@ -811,13 +846,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             Trace values before impulse addition and stochastic rounding.
         """
         trace_new = trace_values + impulses_int
-
-        # trace_new = np.where(rth < impulses_frac, trace_new + 1, trace_new)
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-
-        trace_new = saturate(0, trace_new, 2 ** BITS_LOW - 1)
-
-        print("impulse", trace_new.dtype)
+        trace_new = saturate(0, trace_new, 2 ** W_TRACE - 1)
 
         return trace_new
 
