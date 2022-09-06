@@ -27,13 +27,9 @@ if(PY_WRAPPER)
     target_include_directories(message_infrastructure PUBLIC 
                                ${pybind11_INCLUDE_DIRS}
                                ${PYTHON_INCLUDE_DIRS}
+                               ${NUMPY_INCLUDE_DIRS}
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
                                )
-    exec_program(${PYTHON_EXECUTABLE}
-                 ARGS "-c \"import numpy; print(numpy.get_include())\""
-                 OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-                 RETURN_VALUE NUMPY_NOT_FOUND
-    )
 
     pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
     target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)

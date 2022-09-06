@@ -2,6 +2,7 @@ import os
 import re
 import subprocess  # nosec
 import sys
+import numpy
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -59,6 +60,11 @@ class CMakeBuild(build_ext):
         # In this example, we pass in the version to C++. You might not need to.
         cmake_args += [
             f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
+
+        # Set numpy include header to cpplib
+        cmake_args += [
+            f"-DNUMPY_INCLUDE_DIRS={numpy.get_include()}"]
+        print (cmake_args)
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
