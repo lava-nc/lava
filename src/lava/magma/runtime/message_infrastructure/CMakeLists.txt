@@ -14,6 +14,7 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/shmem_port.cc"
      "message_infrastructure/csrc/abstract_port_implementation.cc"
      "message_infrastructure/csrc/ports.cc"
+     "message_infrastructure/csrc/transformer.cc"
      )
 
 file (GLOB PY_WRAPPER_SRCS
