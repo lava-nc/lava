@@ -65,15 +65,6 @@ class TestMultiprocessing(unittest.TestCase):
         # Wait 10 seconds
         time.sleep(10)
 
-        actor_list = self.mp.actors
-
-        for actor in actor_list:
-            actor_status = actor.get_status()
-            # actor status returns 0 if it is running
-            self.assertEqual(actor_status, 0)
-
-        self.test_get_actor_pid()
-
     @unittest.skip
     def test_multiprocessing_shutdown(self):
         """
@@ -106,17 +97,6 @@ class TestMultiprocessing(unittest.TestCase):
         # TODO: How to check that an actor has been reassinged to the correct
         # process
 
-    @unittest.skip
-    def test_get_actor_pid(self):
-        """
-        Gets list of actor PIDs
-        Checks that all actor PIDs exist
-        """
-        actor_list = self.mp.actor_pids
-        for actor_pid in actor_list:
-            self.assertTrue(psutil.pid_exists(actor_pid))
-
-    @unittest.skip
     def test_get_actor_list(self):
         """
         Gets list of actors
@@ -125,6 +105,28 @@ class TestMultiprocessing(unittest.TestCase):
         actor_list = self.mp.actors
         for actor in actor_list:
             self.assertIsInstance(actor, Actor)
+
+    def test_actor_is_running(self):
+        """
+        Checks that actor status returns 0 (StatusRunning)
+        """
+        actor_list = self.mp.actors
+        for actor in actor_list:
+            actor_status = actor.get_status()
+            # actor status returns 0 if it is running
+            self.assertEqual(actor_status, 0)
+
+    def test_actor_stop(self):
+        """
+        Stops all running actors
+        Checks that actor status returns 1 (StatusStopped)
+        """
+        actor_list = self.mp.actors
+        for actor in actor_list:
+            actor.stop()
+            actor_status = actor.get_status()
+            # actor status returns 1 if it is stopped
+            self.assertEqual(actor_status, 1)
 
     @unittest.skip
     def test_get_shared_memory_manager(self):
@@ -163,5 +165,6 @@ def test_multiprocessing():
 
 # Run unit tests
 if __name__ == '__main__':
-    test_multiprocessing()
+    # test_multiprocessing()
+    print("UNIT TEST BEGINSSSSS")
     unittest.main()
