@@ -14,7 +14,7 @@ from lava.magma.core.learning.constants import *
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 import lava.magma.core.learning.string_symbols as str_symbols
 from lava.utils.weightutils import SignMode
-from lava.magma.core.learning.utils import saturate
+from lava.magma.core.learning.utils import saturate, stochastic_round
 import numpy as np
 import typing
 import math
@@ -76,8 +76,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
         inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
 
-        min_wgt = -(2**8) * (mixed_idx + inhibitory_idx)
-        max_wgt = (2**8 - 1) * (mixed_idx + excitatory_idx)
+        min_wgt = -(2 ** 8) * (mixed_idx + inhibitory_idx)
+        max_wgt = (2 ** 8 - 1) * (mixed_idx + excitatory_idx)
 
         saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
 
@@ -129,7 +129,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     @staticmethod
     def _decompose_impulses(
-        impulses: typing.List[float],
+            impulses: typing.List[float],
     ) -> typing.Tuple[np.ndarray, np.ndarray]:
         """Decompose float impulse values into integer and fractional parts.
 
@@ -151,7 +151,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         for impulse in impulses:
             impulse_int = math.floor(impulse)
 
-            impulse_frac = round((impulse - impulse_int) * 2**BITS_LOW)
+            impulse_frac = round((impulse - impulse_int) * 2 ** W_TRACE)
 
             impulses_int.append(impulse_int)
             impulses_frac.append(impulse_frac)
@@ -210,8 +210,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             dtype=bool,
         )
         for (
-            dependency,
-            traces,
+                dependency,
+                traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -240,13 +240,13 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
+                                               :, :2
+                                               ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
+                                               :, 2:
+                                               ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -285,10 +285,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def _update_trace_randoms(self) -> None:
         """Update trace random generators."""
-        time_bit = self.time_step & 1
-
-        self._x_random.advance(time_bit)
-        self._y_random.advance(time_bit)
+        self._x_random.advance()
+        self._y_random.advance()
 
     def _update_synaptic_variable_random(self) -> None:
         """Update synaptic variable random generators."""
@@ -367,188 +365,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         return within_epoch_ts
 
-    @staticmethod
-    def _decay_trace(
-        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray, rth: int
-    ) -> np.ndarray:
-        """Stochastically decay trace to a given within-epoch time step.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values to decay.
-        t : np.ndarray
-            Time steps to advance.
-        taus : int
-            Trace decay time constant
-        rth: int
-            Random thresholding bits.
-
-        Returns
-        ----------
-        result : ndarray
-            Decayed trace values.
-        """
-        result = np.exp(-t / taus) * trace_values
-        decimals = result % 1
-        rand = rth / (2**BITS_LOW - 1)
-        result = np.floor(result)
-        result += (rand < decimals).astype(int)
-
-        return result
-
-    def _evaluate_trace(
-        self,
-        trace_values: np.ndarray,
-        t_spikes: np.ndarray,
-        t_eval: np.ndarray,
-        trace_impulses_int: np.ndarray,
-        trace_impulses_frac: np.ndarray,
-        trace_taus: np.ndarray,
-        trace_random: TraceRandom,
-    ) -> np.ndarray:
-        """Evaluate a trace at given within-epoch time steps, given
-        within-epoch spike timings.
-
-        (1) If t_spikes > 0, stochastic decay to t_spikes,
-        stochastic addition of trace impulse value, stochastic decay to t_eval.
-
-        (2) If t_spikes == 0, stochastic decay to t_eval.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values at the beginning of the epoch.
-        t_eval: ndarray
-            Within-epoch evaluation time steps.
-        t_spikes : ndarray
-            Within-epoch spike timings.
-        trace_impulses_int: ndarray
-            Trace impulse values, integer part.
-        trace_impulses_frac: ndarray
-            Trace impulse values, fractional part.
-        trace_taus: ndarray
-            Trace decay time constants.
-
-        Returns
-        ----------
-        result : ndarray
-            Evaluated trace values.
-        """
-        broad_tau = np.broadcast_to(trace_taus, trace_values.shape)
-
-        t_diff = t_eval - t_spikes
-
-        decay_only = np.logical_and(
-            np.logical_or(t_spikes == 0, t_diff < 0), broad_tau > 0
-        )
-        decay_spike_decay = np.logical_and(
-            t_spikes != 0, t_diff >= 0, broad_tau > 0
-        )
-
-        result = np.where(
-            decay_only,
-            self._decay_trace(
-                trace_values, t_eval, trace_taus, trace_random.rth_trace_decay
-            ),
-            trace_values,
-        )
-
-        result = np.where(
-            decay_spike_decay,
-            self._decay_trace(
-                result, t_spikes, trace_taus, trace_random.rth_trace_decay
-            ),
-            result,
-        )
-
-        result = np.where(
-            decay_spike_decay,
-            self._add_impulse(
-                result,
-                trace_random.rth_impulse_addition,
-                trace_impulses_int,
-                trace_impulses_frac,
-            ),
-            result,
-        )
-
-        result = np.where(
-            decay_spike_decay,
-            self._decay_trace(
-                result, t_diff, trace_taus, trace_random.rth_trace_decay
-            ),
-            result,
-        )
-
-        return result
-
-    @staticmethod
-    def _stochastic_round(var: np.ndarray, random: int) -> np.ndarray:
-        """Stochastically round synaptic variable.
-
-        Parameters
-        ----------
-        var : ndarray
-            Synaptic variable values.
-        random: int
-            Randomly generated integer.
-
-        Returns
-        ----------
-        result : ndarray
-            Stochastically rounded synaptic variable values.
-        """
-
-        exp_mant = 2**BITS_LOW
-        var_w = var / exp_mant
-        var_f = var_w % 1
-        var_w = np.floor(var_w)
-        var_w += (var_f > random / 2 ** (BITS_HIGH - 1)).astype(int)
-        result = (var_w * exp_mant).astype(var.dtype)
-
-        return result
-
-    def _saturate_synaptic_variable(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
-    ) -> np.ndarray:
-        """Saturate synaptic variable.
-
-        Parameters
-        ----------
-        synaptic_variable_name: str
-            Synaptic variable name.
-        synaptic_variable_values: ndarray
-            Synaptic variable values to saturate.
-
-        Returns
-        ----------
-        result : ndarray
-            Saturated synaptic variable values.
-        """
-        # Weights
-        if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return np.minimum(
-                    2 ** (BITS_HIGH - 1) - 1,
-                    -np.minimum(0, synaptic_variable_values),
-                )
-        # Delays
-        elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
-        # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
-        else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
-
     def _extract_applier_args(self) -> typing.Dict[str, np.ndarray]:
         # Shape: (3, 2, num_post_neurons, num_pre_neurons)
         # Shape of active_x_traces_per_dependency : (3, 2) ->
@@ -586,7 +402,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             u = (
                 1
                 if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
-                == 0
+                   == 0
                 else 0
             )
 
@@ -676,6 +492,119 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         return applier_args
 
+    @staticmethod
+    def _stochastic_round_synaptic_variable(synaptic_variable_name: str,
+                                            synaptic_variable_values: np.ndarray,
+                                            random: float) \
+            -> np.ndarray:
+        """Stochastically round synaptic variable.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to stochastically round.
+
+        Returns
+        ----------
+        result : ndarray
+            Stochastically rounded synaptic variable values.
+        """
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
+
+        integer_part = synaptic_variable_values / exp_mant
+        fractional_part = integer_part % 1
+
+        integer_part = np.floor(integer_part)
+        integer_part = stochastic_round(integer_part,
+                                        random,
+                                        fractional_part)
+        result = (integer_part * exp_mant).astype(
+            synaptic_variable_values.dtype)
+
+        return result
+
+    def _saturate_synaptic_variable_accumulator(
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
+    ) -> np.ndarray:
+        """Saturate synaptic variable accumulator.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to saturate.
+
+        Returns
+        ----------
+        result : ndarray
+            Saturated synaptic variable values.
+        """
+        # Weights
+        if synaptic_variable_name == "weights":
+            if np.equal(self.sign_mode, SignMode.MIXED.value):
+                return synaptic_variable_values
+            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+                return np.maximum(0, synaptic_variable_values)
+            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+                return np.minimum(0, synaptic_variable_values)
+        # Delays
+        elif synaptic_variable_name == "tag_2":
+            return np.maximum(0, synaptic_variable_values)
+        # Tags
+        elif synaptic_variable_name == "tag_1":
+            return synaptic_variable_values
+        else:
+            raise ValueError(
+                "Invalid synaptic_variable_name in "
+                "saturate_synaptic_variable"
+            )
+
+    def _saturate_synaptic_variable(
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
+    ) -> np.ndarray:
+        """Saturate synaptic variable.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to saturate.
+
+        Returns
+        ----------
+        result : ndarray
+            Saturated synaptic variable values.
+        """
+        # Weights
+        if synaptic_variable_name == "weights":
+            if np.equal(self.sign_mode, SignMode.MIXED.value):
+                return saturate(-(2 ** W_WEIGHTS_U) - 1,
+                                synaptic_variable_values, 2 ** W_WEIGHTS_U - 1)
+            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+                return saturate(0, synaptic_variable_values,
+                                2 ** W_WEIGHTS_U - 1)
+            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+                return saturate(-(2 ** W_WEIGHTS_U) - 1,
+                                synaptic_variable_values, 0)
+        # Delays
+        elif synaptic_variable_name == "tag_2":
+            return saturate(0, synaptic_variable_values, 2 ** W_TAG_2_U - 1)
+        # Tags
+        elif synaptic_variable_name == "tag_1":
+            return saturate(-(2 ** W_WEIGHTS_U) - 1, synaptic_variable_values,
+                            2 ** W_WEIGHTS_U - 1)
+        else:
+            raise ValueError(
+                "Invalid synaptic_variable_name in "
+                "saturate_synaptic_variable"
+            )
+
     def _apply_learning_rules(self) -> None:
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
@@ -685,20 +614,164 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             syn_var = np.left_shift(
-                syn_var, BITS_HIGH - W_SYN_VAR_DICT[syn_var_name]
+                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             )
             syn_var = lr_applier.apply(syn_var, **applier_args)
-            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
-            syn_var = self._stochastic_round(syn_var, self._conn_var_random.rp)
+            syn_var = self._saturate_synaptic_variable_accumulator(syn_var_name,
+                                                                   syn_var)
+            syn_var = \
+                self._stochastic_round_synaptic_variable(syn_var_name, syn_var,
+                                                         self._conn_var_random.random_stochastic_round)
             syn_var = np.right_shift(
-                syn_var, BITS_HIGH - W_SYN_VAR_DICT[syn_var_name]
+                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             )
 
-            mask = ~(
-                ~np.zeros(self._shape, dtype=int) << W_MASKS_DICT[syn_var_name]
-            )
-            syn_var = syn_var & mask
+            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
+
+    @staticmethod
+    def _add_impulse(
+            trace_values: np.ndarray,
+            random: int,
+            impulses_int: np.ndarray,
+            impulses_frac: np.ndarray,
+    ) -> np.ndarray:
+        """Add trace impulse impulse value and stochastically round
+        the result.
+
+        Parameters
+        ----------
+        trace_values : np.ndarray
+            Trace values before impulse addition.
+        random : int
+            Randomly generated number.
+        impulses_int: np.ndarray
+            Trace impulses integer part.
+        impulses_frac: np.ndarray
+            Trace impulses fractional part.
+
+        Returns
+        ----------
+        trace_new : np.ndarray
+            Trace values before impulse addition and stochastic rounding.
+        """
+        trace_new = trace_values + impulses_int
+        trace_new = stochastic_round(trace_new, random, impulses_frac)
+        trace_new = saturate(0, trace_new, 2 ** W_TRACE - 1)
+
+        return trace_new
+
+    @staticmethod
+    def _decay_trace(
+            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray,
+            random: float
+    ) -> np.ndarray:
+        """Stochastically decay trace to a given within-epoch time step.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values to decay.
+        t : np.ndarray
+            Time steps to advance.
+        taus : int
+            Trace decay time constant
+        random: float
+            Randomly generated number.
+
+        Returns
+        ----------
+        result : ndarray
+            Decayed trace values.
+        """
+        integer_part = np.exp(-t / taus) * trace_values
+        fractional_part = integer_part % 1
+
+        integer_part = np.floor(integer_part)
+        result = stochastic_round(integer_part, random,
+                                  fractional_part)
+
+        return result
+
+    def _evaluate_trace(
+            self,
+            trace_values: np.ndarray,
+            t_spikes: np.ndarray,
+            t_eval: np.ndarray,
+            trace_impulses_int: np.ndarray,
+            trace_impulses_frac: np.ndarray,
+            trace_taus: np.ndarray,
+            trace_random: TraceRandom,
+    ) -> np.ndarray:
+        """Evaluate a trace at given within-epoch time steps, given
+        within-epoch spike timings.
+
+        (1) If t_spikes > 0, stochastic decay to t_spikes,
+        stochastic addition of trace impulse value, stochastic decay to t_eval.
+
+        (2) If t_spikes == 0, stochastic decay to t_eval.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values at the beginning of the epoch.
+        t_eval: ndarray
+            Within-epoch evaluation time steps.
+        t_spikes : ndarray
+            Within-epoch spike timings.
+        trace_impulses_int: ndarray
+            Trace impulse values, integer part.
+        trace_impulses_frac: ndarray
+            Trace impulse values, fractional part.
+        trace_taus: ndarray
+            Trace decay time constants.
+
+        Returns
+        ----------
+        result : ndarray
+            Evaluated trace values.
+        """
+        broad_impulses_int = np.broadcast_to(trace_impulses_int,
+                                             trace_values.shape)
+        broad_impulses_frac = np.broadcast_to(trace_impulses_frac,
+                                              trace_values.shape)
+        broad_taus = np.broadcast_to(trace_taus, trace_values.shape)
+
+        t_diff = t_eval - t_spikes
+
+        decay_only = np.logical_and(
+            np.logical_or(t_spikes == 0, t_diff < 0), broad_taus > 0
+        )
+        decay_spike_decay = np.logical_and(
+            t_spikes != 0, t_diff >= 0, broad_taus > 0
+        )
+
+        result = trace_values.copy()
+
+        result[decay_only] = self._decay_trace(trace_values[decay_only],
+                                               t_eval[decay_only],
+                                               broad_taus[decay_only],
+                                               trace_random.random_trace_decay)
+
+        result[decay_spike_decay] = \
+            self._decay_trace(result[decay_spike_decay],
+                              t_spikes[decay_spike_decay],
+                              broad_taus[decay_spike_decay],
+                              trace_random.random_trace_decay)
+
+        result[decay_spike_decay] = \
+            self._add_impulse(result[decay_spike_decay],
+                              trace_random.random_impulse_addition,
+                              broad_impulses_int[decay_spike_decay],
+                              broad_impulses_frac[decay_spike_decay])
+
+        result[decay_spike_decay] = \
+            self._decay_trace(result[decay_spike_decay],
+                              t_diff[decay_spike_decay],
+                              broad_taus[decay_spike_decay],
+                              trace_random.random_trace_decay)
+
+        return result
 
     def _update_traces(self) -> None:
         """Update all traces at the end of the learning epoch."""
@@ -767,46 +840,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
-
         self._apply_learning_rules()
-
         self._update_traces()
-
         self._reset_dependencies_and_spike_times()
-
-    def _add_impulse(
-        self,
-        trace_values: np.ndarray,
-        rth: int,
-        impulses_int: np.ndarray,
-        impulses_frac: np.ndarray,
-    ) -> np.ndarray:
-        """Add trace impulse impulse value and stochastically round
-        the result.
-
-        Parameters
-        ----------
-        trace_values : np.ndarray
-            Trace values before impulse addition.
-        rth : int
-            Random thresholding bits.
-        impulses_int: np.ndarray
-            Trace impulses integer part.
-        impulses_frac: np.ndarray
-            Trace impulses fractional part.
-
-        Returns
-        ----------
-        trace_new : np.ndarray
-            Trace values before impulse addition and stochastic rounding.
-        """
-        trace_new = trace_values + impulses_int
-
-        trace_new = np.where(rth < impulses_frac, trace_new + 1, trace_new)
-
-        trace_new = saturate(0, trace_new, 2**BITS_LOW - 1)
-
-        return trace_new
 
     def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
         """Record within-epoch spiking times of pre- and post-synaptic neurons.
@@ -825,7 +861,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         y_traces = self._y_traces
         y_traces[:, multi_spike_y] = self._add_impulse(
             y_traces[:, multi_spike_y],
-            self._y_random.rth_impulse_addition,
+            self._y_random.random_impulse_addition,
             self._y_impulses_int[:, np.newaxis],
             self._y_impulses_frac[:, np.newaxis],
         )
@@ -851,7 +887,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         x_traces = self._x_traces
         x_traces[:, multi_spike_x] = self._add_impulse(
             x_traces[:, multi_spike_x],
-            self._x_random.rth_impulse_addition,
+            self._x_random.random_impulse_addition,
             self._x_impulses_int[:, np.newaxis],
             self._x_impulses_frac[:, np.newaxis],
         )
@@ -1019,8 +1055,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             dtype=bool,
         )
         for (
-            dependency,
-            traces,
+                dependency,
+                traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -1049,13 +1085,13 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
+                                               :, :2
+                                               ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
+                                               :, 2:
+                                               ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -1157,133 +1193,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
         return within_epoch_ts
 
-    @staticmethod
-    def _decay_trace(
-        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
-    ) -> np.ndarray:
-        """Decay trace to a given within-epoch time step.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values to decay.
-        t : np.ndarray
-            Time steps to advance.
-        taus : int
-            Trace decay time constant
-
-        Returns
-        ----------
-        result : ndarray
-            Decayed trace values.
-
-        """
-        return np.exp(-t / taus) * trace_values
-
-    def _evaluate_trace(
-        self,
-        trace_values: np.ndarray,
-        t_spikes: np.ndarray,
-        t_eval: np.ndarray,
-        trace_impulses: np.ndarray,
-        trace_taus: np.ndarray,
-    ) -> np.ndarray:
-        """Evaluate a trace at given within-epoch time steps, given
-        within-epoch spike timings.
-
-        (1) If t_spikes > 0, decay to t_spikes,
-        addition of trace impulse value, decay to t_eval.
-
-        (2) If t_spikes == 0, decay to t_eval.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values at the beginning of the epoch.
-        t_spikes : ndarray
-            Within-epoch spike timings.
-        t_eval: ndarray
-            Within-epoch evaluation time steps.
-        trace_impulses: ndarray
-            Trace impulse values.
-        trace_taus: ndarray
-            Trace decay time constants.
-
-        Returns
-        ----------
-        result : ndarray
-            Evaluated trace values.
-        """
-        broad_tau = np.broadcast_to(trace_taus, trace_values.shape)
-
-        t_diff = t_eval - t_spikes
-
-        decay_only = np.logical_and(
-            np.logical_or(t_spikes == 0, t_diff < 0), broad_tau > 0
-        )
-        decay_spike_decay = np.logical_and(
-            t_spikes != 0, t_diff >= 0, broad_tau > 0
-        )
-
-        result = np.where(
-            decay_only,
-            self._decay_trace(trace_values, t_eval, trace_taus),
-            trace_values,
-        )
-
-        result = np.where(
-            decay_spike_decay,
-            self._decay_trace(result, t_spikes, trace_taus),
-            result,
-        )
-
-        result = np.where(decay_spike_decay, result + trace_impulses, result)
-
-        result = np.where(
-            decay_spike_decay,
-            self._decay_trace(result, t_diff, trace_taus),
-            result,
-        )
-
-        return result
-
-    def _saturate_synaptic_variable(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
-    ) -> np.ndarray:
-        """Saturate synaptic variable.
-
-        Parameters
-        ----------
-        synaptic_variable_name: str
-            Synaptic variable name.
-        synaptic_variable_values: ndarray
-            Synaptic variable values to saturate.
-
-        Returns
-        ----------
-        result : ndarray
-            Saturated synaptic variable values.
-        """
-        # Weights
-        if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return np.minimum(0, synaptic_variable_values)
-        # Delays
-        elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
-        # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
-        else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
-
     def _extract_applier_args(self) -> dict:
         """Extracts arguments for the LearningRuleApplier.
 
@@ -1342,7 +1251,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             u = (
                 1
                 if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
-                == 0
+                   == 0
                 else 0
             )
 
@@ -1407,10 +1316,10 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             np.concatenate((t_spikes_x, t_spikes_y), axis=1),
             t_eval,
             np.concatenate((self._x_impulses, self._y_impulses), axis=0)[
-                np.newaxis, :, np.newaxis, np.newaxis
+            np.newaxis, :, np.newaxis, np.newaxis
             ],
             np.concatenate((self._x_taus, self._y_taus), axis=0)[
-                np.newaxis, :, np.newaxis, np.newaxis
+            np.newaxis, :, np.newaxis, np.newaxis
             ],
         )
 
@@ -1418,6 +1327,44 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         applier_args["traces"] = evaluated_traces
 
         return applier_args
+
+    def _saturate_synaptic_variable(
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
+    ) -> np.ndarray:
+        """Saturate synaptic variable.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to saturate.
+
+        Returns
+        ----------
+        result : ndarray
+            Saturated synaptic variable values.
+        """
+        # Weights
+        if synaptic_variable_name == "weights":
+            if np.equal(self.sign_mode, SignMode.MIXED.value):
+                return synaptic_variable_values
+            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+                return np.maximum(0, synaptic_variable_values)
+            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+                return np.minimum(0, synaptic_variable_values)
+        # Delays
+        elif synaptic_variable_name == "tag_2":
+            return np.maximum(0, synaptic_variable_values)
+        # Tags
+        elif synaptic_variable_name == "tag_1":
+            return synaptic_variable_values
+        else:
+            raise ValueError(
+                "Invalid synaptic_variable_name in "
+                "saturate_synaptic_variable"
+            )
 
     def _apply_learning_rules(self) -> None:
         """Update all synaptic variables according to the
@@ -1430,6 +1377,96 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
+
+    @staticmethod
+    def _decay_trace(
+            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
+    ) -> np.ndarray:
+        """Decay trace to a given within-epoch time step.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values to decay.
+        t : np.ndarray
+            Time steps to advance.
+        taus : int
+            Trace decay time constant
+
+        Returns
+        ----------
+        result : ndarray
+            Decayed trace values.
+
+        """
+        return np.exp(-t / taus) * trace_values
+
+    def _evaluate_trace(
+            self,
+            trace_values: np.ndarray,
+            t_spikes: np.ndarray,
+            t_eval: np.ndarray,
+            trace_impulses: np.ndarray,
+            trace_taus: np.ndarray,
+    ) -> np.ndarray:
+        """Evaluate a trace at given within-epoch time steps, given
+        within-epoch spike timings.
+
+        (1) If t_spikes > 0, decay to t_spikes,
+        addition of trace impulse value, decay to t_eval.
+
+        (2) If t_spikes == 0, decay to t_eval.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values at the beginning of the epoch.
+        t_spikes : ndarray
+            Within-epoch spike timings.
+        t_eval: ndarray
+            Within-epoch evaluation time steps.
+        trace_impulses: ndarray
+            Trace impulse values.
+        trace_taus: ndarray
+            Trace decay time constants.
+
+        Returns
+        ----------
+        result : ndarray
+            Evaluated trace values.
+        """
+        broad_impulses = np.broadcast_to(trace_impulses,
+                                         trace_values.shape)
+        broad_taus = np.broadcast_to(trace_taus, trace_values.shape)
+
+        t_diff = t_eval - t_spikes
+
+        decay_only = np.logical_and(
+            np.logical_or(t_spikes == 0, t_diff < 0), broad_taus > 0
+        )
+        decay_spike_decay = np.logical_and(
+            t_spikes != 0, t_diff >= 0, broad_taus > 0
+        )
+
+        result = trace_values.copy()
+
+        result[decay_only] = self._decay_trace(trace_values[decay_only],
+                                               t_eval[decay_only],
+                                               broad_taus[decay_only])
+
+        result[decay_spike_decay] = \
+            self._decay_trace(result[decay_spike_decay],
+                              t_spikes[decay_spike_decay],
+                              broad_taus[decay_spike_decay])
+
+        result[decay_spike_decay] += broad_impulses[decay_spike_decay]
+
+        result[decay_spike_decay] = \
+            self._decay_trace(result[decay_spike_decay],
+                              t_diff[decay_spike_decay],
+                              broad_taus[decay_spike_decay])
+
+        return result
 
     def _update_traces(self) -> None:
         """Update all traces at the end of the learning epoch."""
