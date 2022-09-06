@@ -15,8 +15,8 @@ namespace py = pybind11;
 
 struct MetaData {
   int nd;
-  long *dimensions;
-  long *strides;
+  int64_t *dimensions;
+  int64_t *strides;
   size_t size;
   char* mdata;
   char type;
