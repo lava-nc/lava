@@ -33,7 +33,7 @@ def convert_rate_to_lif_params(**kwargs):
     g_factor = kwargs['g_factor']
     q_factor = kwargs['q_factor']
 
-    weights = kwargs['weights']
+    weights = kwargs['weights'].copy()
 
     num_neurons_exc = shape_exc
     num_neurons_inh = shape_inh
@@ -67,8 +67,8 @@ def convert_rate_to_lif_params(**kwargs):
     # We then determine the the bias for the LIF network.
     # We have to be careful not the reduce the bias since a too small bias
     # results in inactivity
-    bias_exc = 1.5 * vth_exc * dv_exc * rel_exc_inh_bias
-    bias_inh = 1.5 * vth_inh * dv_inh * rel_inh_exc_bias
+    bias_exc = 5 * vth_exc * dv_exc * rel_exc_inh_bias
+    bias_inh = 5 * vth_inh * dv_inh * rel_inh_exc_bias
 
     # Get the mean excitatory weight
     exc_weights = weights[:, :num_neurons_exc]
@@ -194,8 +194,8 @@ def convert_rate_to_lif_params(**kwargs):
         '''
         val = np.sqrt(np.pi) * (mean * dv_exc * 0.01) ** 2
         val *= 1/(2 * std ** 2)
-        val *= (f(_y_th(vth, mean, mean)) * (vth - mean) / std
-                - f(_y_r(mean, mean)) * (-1 * mean) / std)
+        val *= (f(_y_th(vth, mean, std)) * (vth - mean) / std
+                - f(_y_r(mean, std)) * (-1 * mean) / std)
 
         return val
 
@@ -217,7 +217,7 @@ def convert_rate_to_lif_params(**kwargs):
         try:
             mean_exc_weight_new = fsolve(func, mean_exc_weight)[0]
             # Determine weight scaling factor
-            weight_scale = np.sqrt(mean_exc_weight_new / mean_exc_weight)
+            weight_scale = mean_exc_weight_new / mean_exc_weight
         except Warning:
             # Theory breaks done, most likely due to strong correlations
             # induced by strong weights. Choose 1 as scaling factor.
@@ -240,14 +240,14 @@ def convert_rate_to_lif_params(**kwargs):
         "vth_exc": vth_exc,
         "du_exc": du_exc,
         "dv_exc": dv_exc,
-        "bias_exc": bias_exc}
+        "bias_mant_exc": bias_exc}
 
     lif_params_inh = {
         "shape_inh": num_neurons_inh,
         "vth_inh": vth_inh,
         "du_inh": du_inh,
         "dv_inh": dv_inh,
-        "bias_inh": bias_inh}
+        "bias_mant_inh": bias_inh}
 
     # Parameters Paramters for E/I network
     network_params_lif = {}
