@@ -61,8 +61,16 @@ class TestMultiprocessing(unittest.TestCase):
         for i in range(5):
             bound_target_fn = partial(target_fn, idx=i)
             return_type = self.mp.build_actor(bound_target_fn, builder)
-            # build_actor returns 0 if it is a child process
-            self.assertEqual(return_type, 0)
+
+        # Wait 10 seconds
+        time.sleep(10)
+
+        actor_list = self.mp.actors
+
+        for actor in actor_list:
+            actor_status = actor.get_status()
+            # actor status returns 0 if it is running
+            self.assertEqual(actor_status, 0)
 
         self.test_get_actor_pid()
 
