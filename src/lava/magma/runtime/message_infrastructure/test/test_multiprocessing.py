@@ -80,22 +80,18 @@ class TestMultiprocessing(unittest.TestCase):
         for actor_pid in actor_list:
             self.assertFalse(psutil.pid_exists(actor_pid))
 
-    @unittest.skip("Test case for reassigning actors to Processes not yet \
-        implemented")
-    def test_multiprocessing_kill(self):
+    @unittest.skip
+    def test_actor_force_stop(self):
         """
-        Spawns an actor and kills it after a certain time.
-        Checks that multiprocessing daemon will automatically restart crashed
-        actor and reassign to correct process.
+        Stops all running actors
+        Checks that actor status returns 1 (StatusStopped)
         """
-        self.test_multiprocessing_spawn()
-
-        # Gets list of actor PIDs and kills the 1st one in the list
-        actor_list = self.mp.actor_pids
-        os.kill(actor_list[0])
-
-        # TODO: How to check that an actor has been reassinged to the correct
-        # process
+        actor_list = self.mp.actors
+        for actor in actor_list:
+            actor.force_stop()
+            actor_status = actor.get_status()
+            # actor status returns 1 if it is stopped
+            self.assertEqual(actor_status, 1)
 
     def test_get_actor_list(self):
         """
