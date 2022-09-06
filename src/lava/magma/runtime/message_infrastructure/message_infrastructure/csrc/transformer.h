@@ -5,32 +5,34 @@
 #ifndef TRANSFORMER_H_
 #define TRANSFORMER_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <vector>
 
 #include "abstract_port_implementation.h"
 
 namespace message_infrastructure {
 
-class AbstractTransformer{
+class AbstractTransformer {
  public:
-    virtual std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
+    int Transform() {
+        return 0;
+    }
 };
 
 class IdentityTransformer: public AbstractTransformer {
  public:
-    std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
+    int Transform() {
+         return 0;
+    }
 };
 
 class VirtualPortTransformer: public AbstractTransformer {
  public:
-    std::vector<pybind11::array_t<pybind11::dtype>>
-        Transform(pybind11::array_t<pybind11::dtype> data);
-    std::vector<pybind11::array_t<pybind11::dtype>> _Get_Transform();
+    int Transform() {
+        return 0;
+    }
+    int _Get_Transform() {
+        return 0;
+    }
 };
 
 }  // namespace message_infrastructure
