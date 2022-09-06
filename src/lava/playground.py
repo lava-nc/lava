@@ -32,5 +32,11 @@ def decay_trace(trace_values, t, taus, rth):
     return result
 
 
-def new_func(random, value):
-    return
+def new_func(value, random_number, probability):
+    return value + (random_number < probability).astype(int)
+
+
+rng = np.random.default_rng()
+
+rp = rng.random((1, ))[0]
+print(rp)

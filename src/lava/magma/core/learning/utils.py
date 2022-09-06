@@ -72,3 +72,7 @@ def saturate(min_value: int, values: np.ndarray, max_value: int) -> np.ndarray:
         Saturated values.
     """
     return np.maximum(min_value, np.minimum(values, max_value))
+
+
+def stochastic_round(value, random_number, probability):
+    return (value + (random_number < probability).astype(int)).astype(int)

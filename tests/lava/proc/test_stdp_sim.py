@@ -56,6 +56,8 @@ class TestSTDPSim(unittest.TestCase):
         weight_after_run = dense.weights.get()
         lif_0.stop()
 
+        print(weight_after_run.dtype)
+
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(weight_after_run, np.array([[48]]))
 
