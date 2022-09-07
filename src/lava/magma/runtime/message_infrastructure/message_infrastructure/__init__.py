@@ -5,29 +5,4 @@ from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import SendPort
 from MessageInfrastructurePywrapper import RecvPort
-<<<<<<< HEAD
 from MessageInfrastructurePywrapper import AbstractTransferPort
-=======
-from MessageInfrastructurePywrapper import ChannelFactory
-from MessageInfrastructurePywrapper import get_channel_factory
-from MessageInfrastructurePywrapper import SharedMemory
-from MessageInfrastructurePywrapper import Channel
-from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
-from MessageInfrastructurePywrapper import Selector
-from MessageInfrastructurePywrapper import InPortVectorDense
-from MessageInfrastructurePywrapper import InPortVectorSparse
-from MessageInfrastructurePywrapper import InPortScalarDense
-from MessageInfrastructurePywrapper import InPortScalarSparse
-from MessageInfrastructurePywrapper import OutPortVectorDense
-from MessageInfrastructurePywrapper import OutPortVectorSparse
-from MessageInfrastructurePywrapper import OutPortScalarDense
-from MessageInfrastructurePywrapper import OutPortScalarSparse
-from MessageInfrastructurePywrapper import RefPortVectorDense
-from MessageInfrastructurePywrapper import RefPortVectorSparse
-from MessageInfrastructurePywrapper import RefPortScalarDense
-from MessageInfrastructurePywrapper import RefPortScalarSparse
-from MessageInfrastructurePywrapper import VarPortVectorDense
-from MessageInfrastructurePywrapper import VarPortVectorSparse
-from MessageInfrastructurePywrapper import VarPortScalarDense
-from MessageInfrastructurePywrapper import VarPortScalarSparse
->>>>>>> 962b51d (Add empty transformer test file)
