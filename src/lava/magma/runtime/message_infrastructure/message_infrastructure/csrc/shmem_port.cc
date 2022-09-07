@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/shm.h>
+#include <memory.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <unistd.h>
@@ -226,7 +227,7 @@ void* ShmemRecvPort::Recv() {
 void ShmemRecvPort::Join() {
   done_ = true;
   // req_callback_thread_->join();
-  // recv_queue_thread_->join();
+  recv_queue_thread_->join();
 }
 
 void* ShmemRecvPort::Peek() {
