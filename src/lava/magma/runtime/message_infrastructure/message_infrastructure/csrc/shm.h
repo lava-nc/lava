@@ -13,29 +13,33 @@ namespace message_infrastructure {
 class SharedMemory {
  public:
   SharedMemory() {}
-  SharedMemory(const int &shmid, const size_t &mem_size);
+  SharedMemory(const size_t &mem_size, const int &shmid);
   int GetShmid();
   sem_t GetReqSemaphore();
   sem_t GetAckSemaphore();
   void* MemMap();
+  void InitSemaphore();
+  int GetDataElem(int offset);
  private:
   int shmid_;
   size_t size_;
   sem_t req_;
   sem_t ack_;
+  void* data_;
 };
 
 class SharedMemManager {
  public:
   SharedMemManager() {}
-  int Alloc(const size_t &mem_size);
-  SharedMemory AllocSharedMemory(const size_t &mem_size);
+  explicit SharedMemManager(int key) : key_(key) {}
+  int AllocSharedMemory(const size_t &mem_size);
+  SharedMemory AllocChannelSharedMemory(const size_t &mem_size);
   int DeleteSharedMemory(const int &shmid);
   int Stop();
 
  private:
   std::set<int> shmids_;
-  key_t key_ = 0xdead;
+  key_t key_ = 0x5555;
 };
 
 }  // namespace message_infrastructure

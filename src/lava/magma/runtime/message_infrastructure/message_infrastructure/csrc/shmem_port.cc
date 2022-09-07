@@ -154,7 +154,7 @@ ShmemSendPort::ShmemSendPort(const std::string &name,
 
   done_ = false;
 
-  array_ = shmat(shm.GetShmid(), NULL, 0);
+  array_ = shm_.MemMap();
 }
 
 void ShmemSendPort::Start() {
@@ -198,7 +198,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   nbytes_ = nbytes;
   size_ = size;
   done_ = false;
-  array_ = shmat(shm.GetShmid(), NULL, 0);
+  array_ = shm_.MemMap();
   queue_.Init(name, size, nbytes);
 }
 

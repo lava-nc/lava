@@ -14,9 +14,11 @@
 
 namespace message_infrastructure {
 
-SharedMemory::SharedMemory(const int &shmid, const size_t &mem_size) {
+SharedMemory::SharedMemory(const size_t &mem_size, const int &shmid) {
   shmid_ = shmid;
   size_ = mem_size;
+}
+void SharedMemory::InitSemaphore() {
   sem_init(&req_, 1, 0);
   sem_init(&ack_, 1, 0);
 }
@@ -24,15 +26,29 @@ int SharedMemory::GetShmid() {
   return shmid_;
 }
 void* SharedMemory::MemMap() {
-  // Todo(hexu1) : return pointer of shmem in user space
+  return (data_ = shmat(shmid_, NULL, 0));
 }
 
-SharedMemory SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
+int SharedMemory::GetDataElem(int offset) {
+  return static_cast<int> (*(((char*)data_) + offset));
+}
+
+int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
+  int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
+  if (shmid < 0)
+    return -1;
+
+  shmids_.insert(shmid);
+  key_++;
+  return shmid;
+}
+SharedMemory SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
   int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
   if (shmid < 0)
     exit(-1); // Log_Error
 
-  SharedMemory shm(shmid, mem_size);
+  SharedMemory shm(mem_size, shmid);
+  shm.InitSemaphore();
 
   shmids_.insert(shmid);
   key_++;
