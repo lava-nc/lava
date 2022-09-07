@@ -5,6 +5,7 @@
 #ifndef SHM_H_
 #define SHM_H_
 
+#include <semaphore.h>
 #include <memory>
 #include <set>
 #include <string>
@@ -15,8 +16,8 @@ class SharedMemory {
   SharedMemory() {}
   SharedMemory(const size_t &mem_size, const int &shmid);
   int GetShmid();
-  sem_t GetReqSemaphore();
-  sem_t GetAckSemaphore();
+  sem_t& GetReqSemaphore();
+  sem_t& GetAckSemaphore();
   void* MemMap();
   void InitSemaphore();
   int GetDataElem(int offset);

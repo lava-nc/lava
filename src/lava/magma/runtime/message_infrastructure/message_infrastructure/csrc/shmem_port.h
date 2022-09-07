@@ -5,7 +5,6 @@
 #ifndef SHMEM_PORT_H_
 #define SHMEM_PORT_H_
 
-#include <pthread.h>
 #include <queue>
 #include <string>
 #include <vector>
@@ -13,6 +12,7 @@
 #include <atomic>
 #include <mutex>  // NOLINT
 #include <condition_variable>  // NOLINT
+#include <thread>  // NOLINT
 
 #include "abstract_port.h"
 #include "shm.h"

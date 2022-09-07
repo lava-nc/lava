@@ -169,7 +169,7 @@ int ShmemSendPort::Send(void* data) {
   return 0;
 }
 
-void ShmemRecvPort::Join() {
+void ShmemSendPort::Join() {
   done_ = true;
   // ack_callback_thread_->join();
 }

@@ -29,7 +29,12 @@ int SharedMemory::GetShmid() {
 void* SharedMemory::MemMap() {
   return (data_ = shmat(shmid_, NULL, 0));
 }
-
+sem_t& SharedMemory::GetReqSemaphore() {
+  return req_;
+}
+sem_t& SharedMemory::GetAckSemaphore() {
+  return ack_;
+}
 int SharedMemory::GetDataElem(int offset) {
   return static_cast<int> (*(((char*)data_) + offset));
 }
