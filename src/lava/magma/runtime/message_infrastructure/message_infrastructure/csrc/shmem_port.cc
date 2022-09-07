@@ -9,108 +9,137 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <memory.h>
 #include <unistd.h>
 #include <thread>
 #include <mutex>
+#include <memory>
 #include <string>
 #include <condition_variable>
 
 #include "shmem_port.h"
 #include "shm.h"
 #include "utils.h"
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
-void ShmemRecvQueue::Init(const size_t &capacity, const size_t &nbytes) {
-  capacity_ = capacity;
+void ShmemRecvQueue::Init(const std::string& name,
+                          const size_t &size,
+                          const size_t &nbytes) {
+  size_ = size;
+  name_ = name;
   nbytes_ = nbytes;
+  array_.clear();
+  for(int i = 0; i < size_; i++)
+    array_.push_back(NULL);
 }
-
-// void ShmemRecvQueue::Push(void* src) {
-//   void *ptr = malloc(nbytes_);
-//   memcpy(ptr, src, nbytes_);
-//   lock_.lock();
-//   if (queue_.empty()) {
-//     cond_.notify_one();
-//   }
-//   while(queue_.size() >= capacity_) {
-//     usleep(1);
-//   }
-//   queue_.push(ptr);
-//   lock_.unlock();
-// }
-
-// void ShmemRecvQueue::Pop() {
-//   std::unique_lock<std::mutex> l(lock_);
-//   while (queue_.empty()) {
-//     cond_.wait(l);
-//   };
-//   queue_.pop();
-// }
-
-// void* ShmemRecvQueue::Front() {
-//   void *ptr = NULL;
-//   std::unique_lock<std::mutex> l(lock_);
-//   while (queue_.empty()) {
-//     cond_.wait(l);
-//   };
-//   ptr = queue_.front();
-//   return ptr;
-// }
-
-// void* ShmemRecvQueue::FrontPop() {
-//   void *ptr = NULL;
-//   std::unique_lock<std::mutex> l(lock_);
-//   while (queue_.empty()) {
-//     cond_.wait(l);
-//   };
-//   ptr = queue_.front();
-//   queue_.pop();
-//   return ptr;
-// }
-
-// bool ShmemRecvQueue::Probe() {
-//   return (queue_.size() == capacity_);
-// }
-
 
 void ShmemRecvQueue::Push(void* src) {
   void *ptr = malloc(nbytes_);
   memcpy(ptr, src, nbytes_);
-  std::unique_lock<std::mutex> l(lock_);
-  cond_.wait(l, [this]() { return this->queue_.size() < this->capacity_; });
-  queue_.push(ptr);
-  cond_.notify_all();
+  auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+  auto next_write_index = curr_write_index + 1;
+  if (next_write_index == size_) {
+      next_write_index = 0;
+  }
+  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  if (next_write_index == curr_read_index) {
+    auto next_read_index = curr_read_index + 1;
+    if(next_read_index == size_) {
+      next_read_index = 0;
+    }
+    read_index_.store(next_read_index, std::memory_order_release);
+    LAVA_LOG_WARN(LOG_SMMP, "Drop data in ShmemChannel %s\n", name_.c_str());
+  }
+
+  array_[curr_write_index] = ptr;
+  write_index_.store(next_write_index, std::memory_order_release);
 }
 
 void ShmemRecvQueue::Pop() {
-  std::unique_lock<std::mutex> l(lock_);
-  cond_.wait(l, [this]() { return !this->queue_.empty(); });
-  queue_.pop();
-  cond_.notify_all();
+  if(Empty()) {
+    LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel %s is empty.\n", name_.c_str());
+    return;
+  }
+  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  auto next_read_index = curr_read_index + 1;
+  if(next_read_index == size_) {
+    next_read_index = 0;
+  }
+  read_index_.store(next_read_index, std::memory_order_release);
+  return;
 }
 
 void* ShmemRecvQueue::Front() {
+  if(Empty()) {
+    LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
+    return NULL;
+  }
   void *ptr = NULL;
-  std::unique_lock<std::mutex> l(lock_);
-  cond_.wait(l, [this]() { return !this->queue_.empty(); });
-  ptr = queue_.front();
-  cond_.notify_all();
+  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  ptr = array_[curr_read_index];
   return ptr;
 }
 
 void* ShmemRecvQueue::FrontPop() {
+  if(Empty()) {
+    LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
+    return NULL;
+  }
   void *ptr = NULL;
-  std::unique_lock<std::mutex> l(lock_);
-  cond_.wait(l, [this]() { return !this->queue_.empty(); });
-  ptr = queue_.front();
-  queue_.pop();
-  cond_.notify_all();
+  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  ptr = array_[curr_read_index];
+  auto next_read_index = curr_read_index + 1;
+  if(next_read_index == size_) {
+    next_read_index = 0;
+  }
+  read_index_.store(next_read_index, std::memory_order_release);
   return ptr;
 }
 
 bool ShmemRecvQueue::Probe() {
-  return (queue_.size() == capacity_);  // Will this be unsafe?
+  return ((write_index_.load(std::memory_order_acquire) + 1) % size_ ==  \
+           read_index_.load(std::memory_order_acquire));
+}
+
+bool ShmemRecvQueue::Empty() {
+  return (write_index_.load(std::memory_order_acquire) ==  \
+                            read_index_.load(std::memory_order_acquire));
+}
+
+void ShmemRecvQueue::Free() {
+  if(!Empty()) {
+    auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+    auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+    int max, min;
+    if(curr_read_index < curr_write_index) {
+      max = curr_write_index;
+      min = curr_read_index;
+    } else {
+      min = curr_write_index + 1;
+      max = curr_read_index + 1;
+    }
+    for(int i = min; i < max; i++)
+      if(array_[i]) free(array_[i]);
+    read_index_.store(0, std::memory_order_release);
+    write_index_.store(0, std::memory_order_release);
+  }
+}
+
+ShmemRecvQueue::~ShmemRecvQueue() {
+  if(!Empty()) {
+    auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+    auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+    int max, min;
+    if(curr_read_index < curr_write_index) {
+      max = curr_write_index;
+      min = curr_read_index;
+    } else {
+      min = curr_write_index + 1;
+      max = curr_read_index + 1;
+    }
+    for(int i = min; i < max; i++)
+      if(array_[i]) free(array_[i]);
+  }
 }
 
 ShmemSendPort::ShmemSendPort(const std::string &name,
@@ -127,11 +156,9 @@ ShmemSendPort::ShmemSendPort(const std::string &name,
   array_ = shmat(shm.GetShmid(), NULL, 0);
 }
 
-int ShmemSendPort::Start() {
+void ShmemSendPort::Start() {
   sem_post(&shm_.GetAckSemaphore());
-  // std::thread ack_callback_thread(&message_infrastructure::ShmemSendPort::AckCallback, this);
-  // ack_callback_thread.detach();
-  return 0;
+  // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
 int ShmemSendPort::Send(void* data) {
@@ -141,9 +168,9 @@ int ShmemSendPort::Send(void* data) {
   return 0;
 }
 
-int ShmemSendPort::Join() {
+void ShmemRecvPort::Join() {
   done_ = true;
-  return 0;
+  // ack_callback_thread_->join();
 }
 
 int ShmemSendPort::AckCallback() {
@@ -171,15 +198,12 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   size_ = size;
   done_ = false;
   array_ = shmat(shm.GetShmid(), NULL, 0);
-  queue_.Init(size, nbytes);
+  queue_.Init(name, size, nbytes);
 }
 
-int ShmemRecvPort::Start() {
-  // std::thread req_callback_thread(&message_infrastructure::ShmemRecvPort::ReqCallback, this);
-  // req_callback_thread.detach();
-  std::thread recv_queue_thread(&message_infrastructure::ShmemRecvPort::QueueRecv, this);
-  recv_queue_thread.detach();
-  return 0;
+void ShmemRecvPort::Start() {
+  // req_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemRecvPort::ReqCallback, this);
+  recv_queue_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemRecvPort::QueueRecv, this);
 }
 
 void ShmemRecvPort::QueueRecv() {
@@ -188,6 +212,7 @@ void ShmemRecvPort::QueueRecv() {
     queue_.Push(array_);
     sem_post(&shm_.GetAckSemaphore());
   }
+  queue_.Free();
 }
 
 bool ShmemRecvPort::Probe() {
@@ -198,9 +223,10 @@ void* ShmemRecvPort::Recv() {
   return queue_.FrontPop();
 }
 
-int ShmemRecvPort::Join() {
+void ShmemRecvPort::Join() {
   done_ = true;
-  return 0;
+  // req_callback_thread_->join();
+  // recv_queue_thread_->join();
 }
 
 void* ShmemRecvPort::Peek() {

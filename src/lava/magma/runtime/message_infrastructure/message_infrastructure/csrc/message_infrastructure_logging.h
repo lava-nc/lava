@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #define LOG_MP (1)  // log for multiprocessing
-
+#define LOG_SMMP (1)  // log for shmemport
 
 #define LAVA_LOG(_cond, _fmt, ...) { \
   if ((_cond)) { \

@@ -9,6 +9,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <memory>
 #include <atomic>
 #include <mutex>  // NOLINT
 #include <condition_variable>  // NOLINT
@@ -19,6 +20,8 @@
 
 namespace message_infrastructure {
 
+using ThreadPtr = std::shared_ptr<std::thread>;
+
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
@@ -27,10 +30,11 @@ class ShmemSendPort : public AbstractSendPort {
                 const size_t &nbytes);
   std::string Name();
   size_t Size();
-  int Start();
+  void Start();
   int Probe();
   int Send(void* data);
-  int Join();
+  void Join();
+  void Stop();
   int AckCallback();
 
   SharedMemory shm_;
@@ -39,23 +43,28 @@ class ShmemSendPort : public AbstractSendPort {
   void *array_ = NULL;
   sem_t *semaphore_ = NULL;
   void *observer = NULL;
+  ThreadPtr ack_callback_thread_ = NULL;
 };
 
 class ShmemRecvQueue {
  public:
-  void Init(const size_t &capacity, const size_t &nbytes);
+  ~ShmemRecvQueue();
+  void Init(const std::string& name, const size_t &size, const size_t &nbytes);
   void Push(void* src);
   void Pop();
   void* Front();
   void* FrontPop();
   bool Probe();
+  bool Empty();
+  void Free();
 
  private:
-  std::mutex lock_;
-  std::condition_variable cond_;
+  std::string name_;
   size_t nbytes_;
-  size_t capacity_;
-  std::queue<void *> queue_;
+  size_t size_;
+  std::vector<void *> array_;
+  std::atomic<uint32_t> read_index_;
+  std::atomic<uint32_t> write_index_;
 };
 
 class ShmemRecvPort : public AbstractRecvPort {
@@ -66,10 +75,10 @@ class ShmemRecvPort : public AbstractRecvPort {
                 const size_t &nbytes);
   std::string Name();
   size_t Size();
-  int Start();
+  void Start();
   bool Probe();
   void* Recv();
-  int Join();
+  void Join();
   void* Peek();
   int ReqCallback();
   void QueueRecv();
@@ -80,7 +89,8 @@ class ShmemRecvPort : public AbstractRecvPort {
   void *array_ = NULL;
   void *observer = NULL;
   ShmemRecvQueue queue_;
-  void *dst;
+  ThreadPtr req_callback_thread_ = NULL;
+  ThreadPtr recv_queue_thread_ = NULL;
 };
 
 }  // namespace message_infrastructure
