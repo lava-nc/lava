@@ -50,4 +50,4 @@ std::vector<ActorPtr>& MultiProcessing::GetActors() {
   return this->actors_;
 }
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure

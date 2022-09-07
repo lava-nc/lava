@@ -241,4 +241,4 @@ int ShmemRecvPort::ReqCallback() {
   return 0;
 }
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure

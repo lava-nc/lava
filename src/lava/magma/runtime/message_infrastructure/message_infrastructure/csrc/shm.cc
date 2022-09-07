@@ -83,4 +83,4 @@ int SharedMemManager::Stop() {
   shmids_.clear();
   return result;
 }
-} // message_infrastructure
+}  // namespace message_infrastructure

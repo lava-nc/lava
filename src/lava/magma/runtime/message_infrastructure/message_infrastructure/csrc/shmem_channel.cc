@@ -41,4 +41,4 @@ AbstractRecvPortPtr ShmemChannel::GetRecvPort() {
   printf("Get recv_port.\n");
   return recv_port_;
 }
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
