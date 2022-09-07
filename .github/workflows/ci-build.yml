@@ -150,3 +150,11 @@ jobs:
         .venv\Scripts\activate.ps1
         python3 -m pip install ipykernel
         pytest
+
+    - name: Run message infrastructure unit tests
+      if: runner.os == 'Linux'
+      run: |
+        source $VENV
+        python3 -m pip install ipykernel
+        pytest src/lava/magma/runtime/message_infrastructure
+        
