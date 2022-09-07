@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.learning.learning_rule import LearningRule

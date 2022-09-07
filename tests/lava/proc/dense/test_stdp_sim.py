@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import unittest
 
 import numpy as np
@@ -6,7 +10,6 @@ from lava.magma.core.run_configs import Loihi2HwCfg, Loihi1SimCfg
 from lava.proc.lif.process import LIF
 from lava.proc.dense.process import Dense
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
-from lava.proc.monitor.process import Monitor
 
 
 class TestSTDPSim(unittest.TestCase):
