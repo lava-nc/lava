@@ -39,7 +39,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("ParentProcess", ParentProcess);
   py::class_<SharedMemManager> (m, "SharedMemManager")
     .def(py::init<>())
-    .def("alloc_mem_with_name", &SharedMemManager::AllocSharedMemoryWithName)
+    .def("alloc_channel_mem", &SharedMemManager::AllocChannelSharedMemory)
     .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
     .def("stop", &SharedMemManager::Stop);
   py::class_<SharedMemory> (m, "SharedMemory")
@@ -73,8 +73,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
     .def("name", &SendPortProxy::Name)
-    // .def("dtype", &SendPortProxy::Dtype)
-    // .def("shape", &SendPortProxy::Shape)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
     .def(py::init<ChannelType, AbstractRecvPortPtr>())
@@ -86,8 +84,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("peek", &RecvPortProxy::Peek)
     .def("join", &RecvPortProxy::Join)
     .def("name", &RecvPortProxy::Name)
-    // .def("dtype", &RecvPortProxy::Dtype)
-    // .def("shape", &RecvPortProxy::Shape)
     .def("size", &RecvPortProxy::Size);
   py::class_<ChannelFactory> (m, "ChannelFactory")
     .def("get_channel", &ChannelFactory::GetChannel, py::return_value_policy::reference);
