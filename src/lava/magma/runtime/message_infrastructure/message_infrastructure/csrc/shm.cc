@@ -17,6 +17,7 @@ namespace message_infrastructure {
 SharedMemory::SharedMemory(const size_t &mem_size, const int &shmid) {
   shmid_ = shmid;
   size_ = mem_size;
+  data_ = shmat(shmid, NULL, 0);
 }
 void SharedMemory::InitSemaphore() {
   sem_init(&req_, 1, 0);
