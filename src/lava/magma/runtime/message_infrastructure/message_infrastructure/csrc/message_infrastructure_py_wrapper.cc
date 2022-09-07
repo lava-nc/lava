@@ -19,6 +19,7 @@
 #include "ports.h"
 #include "selector.h"
 #include "transformer.h"
+#include "py_middle_layer_test.h"
 
 namespace message_infrastructure {
 
@@ -41,11 +42,12 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("alloc_mem_with_name", &SharedMemManager::AllocSharedMemoryWithName)
     .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
     .def("stop", &SharedMemManager::Stop);
+  py::class_<SharedMemory> (m, "SharedMemory")
+    .def(py::init<int, int>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
-    .def("stop", &PosixActor::Stop)
-    .def("get_status", &PosixActor::GetStatus);
-    // .def("trace", &PosixActor::Trace);
+    .def("get_status", &PosixActor::GetActorStatus)
+    .def("stop", &PosixActor::Stop);
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
@@ -158,6 +160,16 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("service", &CppVarPortScalarSparse::Service)
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek);
+  py::class_<ProxySimplePort> (m, "ProxySimplePort")
+    .def(py::init<>())
+    .def("set_data", &ProxySimplePort::set_data)
+    .def("transfer", &ProxySimplePort::transfer)
+    .def("get_data", &ProxySimplePort::get_data, py::return_value_policy::reference);
+  // py::class_<IdentityTransformer> (m, "IdentityTransformer")
+    // .def("transform", &IdentityTransformer::Transform);
+  // py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
+    // TODO: check how to initialize dictionary (constructors)
+    // .def("transform", &VirtualPortTransformer::Transform);
 }
 
 }  // namespace message_infrastructure

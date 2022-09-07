@@ -3,9 +3,12 @@ project(message_passing)
 
 set (CMAKE_CXX_STANDARD 17)
 
-find_package(pybind11 REQUIRED)
+option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
+if(PY_WRAPPER)
+    find_package(pybind11 REQUIRED)
+endif()
 
-set (MULTI_PROC_SRCS
+set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/multiprocessing.cc"
      "message_infrastructure/csrc/posix_actor.cc"
      "message_infrastructure/csrc/shm.cc"
@@ -13,15 +16,28 @@ set (MULTI_PROC_SRCS
      "message_infrastructure/csrc/shmem_channel.cc"
      "message_infrastructure/csrc/abstract_port_implementation.cc"
      "message_infrastructure/csrc/ports.cc"
+     "message_infrastructure/csrc/transformer.cc"
      )
 
-file (GLOB PY_WRAPPER "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc")
+file (GLOB PY_WRAPPER_SRCS
+    "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
+    "message_infrastructure/csrc/py_middle_layer.cc"
+    )
 
-add_library(multi_processing SHARED ${MULTI_PROC_SRCS})
-target_include_directories(multi_processing PUBLIC 
-                           ${pybind11_INCLUDE_DIRS}
-                           ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
-                           )
+add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
 
-pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER})
-target_link_libraries(MessageInfrastructurePywrapper PRIVATE multi_processing)
+if(PY_WRAPPER)
+    target_include_directories(message_infrastructure PUBLIC 
+                               ${pybind11_INCLUDE_DIRS}
+                               ${PYTHON_INCLUDE_DIRS}
+                               ${NUMPY_INCLUDE_DIRS}
+                               ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
+                               )
+
+    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
+    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
+else()
+    target_include_directories(message_infrastructure PUBLIC 
+                               ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
+                               )
+endif()

@@ -4,35 +4,25 @@
 
 #include "multiprocessing.h"
 #include "message_infrastructure_logging.h"
+#include "utils.h"
 
-#include <sys/wait.h>
-#include <unistd.h>
 
 namespace message_infrastructure {
 
 MultiProcessing::MultiProcessing() {
-  shmm_ = new SharedMemManager();
+  int key = 0xbeef;
+  int offset = 0x1000;
+  shmm_ = new SharedMemManager(key);
+  actor_shmm_ = new SharedMemManager(key+offset);
 }
 
-int MultiProcessing::BuildActor(std::function<void()> target_fn) {
-  pid_t pid = fork();
-
-  if (pid > 0) {
-    LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
-    ActorPtr actor = new PosixActor(pid, target_fn);
-    actors_.push_back(actor);
-    return ParentProcess;
-  }
-
-  if (pid == 0) {
-    LAVA_LOG(LOG_MP, "child, new process\n");
-    target_fn();
-    exit(0);
-  }
-
-  LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
-  return ErrorProcess;
-
+int MultiProcessing::BuildActor(std::function<int(ActorPtr)> target_fn) {
+  int shmid = actor_shmm_->AllocSharedMemory(sizeof(ActorStatusInfo));
+  ActorPtr actor = new PosixActor(target_fn, shmid);
+  int ret = actor->Run();
+  actors_.push_back(actor);
+  
+  return ret;
 }
 
 int MultiProcessing::Stop() {

@@ -6,10 +6,4 @@
 
 namespace message_infrastructure {
 
-// IdentityTransformer
-std::vector<pybind11::array_t<pybind11::dtype>> 
-    IdentityTransformer::Transform(pybind11::array_t<pybind11::dtype> data) {
-    return data;
-}
-
 }  // namespace message_infrastructure

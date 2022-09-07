@@ -12,6 +12,12 @@
 
 namespace message_infrastructure {
 
+enum ProcessType {
+  ErrorProcess = 0,
+  ParentProcess = 1,
+  ChildProcess = 2
+};
+
 enum ChannelType {
   SHMEMCHANNEL = 0,
   RPCCHANNEL = 1,

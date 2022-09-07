@@ -11,3 +11,4 @@ from MessageInfrastructurePywrapper import get_channel_factory
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
 from MessageInfrastructurePywrapper import Selector
+from MessageInfrastructurePywrapper import ProxySimplePort
