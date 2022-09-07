@@ -73,7 +73,3 @@ TRACE_TO_IDX_DICT = {
     str_symbols.Y2: 1,
     str_symbols.Y3: 2
 }
-
-BITS_LOW = 7
-BITS_MID = 9
-BITS_HIGH = 16

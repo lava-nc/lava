@@ -308,13 +308,11 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
                 current_result *= factor_val.astype(np.int32)
 
-            # TODO : Uncomment the line below
-            # factor_width_sum += W_S_MANT
+            factor_width_sum += W_S_MANT
             # Handle scaling factor
             current_result *= product.s_mantissa
 
-            # TODO: Check this! Should be factor_width_sum - W_ACCUMULATOR_U
-            shift = np.maximum(0, factor_width_sum + BITS_LOW - BITS_HIGH + 1)
+            shift = np.maximum(0, factor_width_sum - W_ACCUMULATOR_U)
             current_result = np.right_shift(current_result, shift)
 
             current_result = np.left_shift(current_result, product.s_exp)
