@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #define LOG_MP (1)  // log for multiprocessing
+#define LOG_LAYER (1)
 
 
 #define LAVA_LOG(_cond, _fmt, ...) { \

@@ -12,4 +12,4 @@ from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
 from MessageInfrastructurePywrapper import Selector
-from MessageInfrastructurePywrapper import ProxySimplePort
+from MessageInfrastructurePywrapper import PyDataTransfer

@@ -19,7 +19,6 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
 
 file (GLOB PY_WRAPPER_SRCS
     "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
-    "message_infrastructure/csrc/py_middle_layer.cc"
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})

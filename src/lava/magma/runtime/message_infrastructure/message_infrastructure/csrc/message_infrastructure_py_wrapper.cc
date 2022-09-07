@@ -19,7 +19,7 @@
 #include "ports.h"
 #include "selector.h"
 #include "transformer.h"
-#include "py_middle_layer_test.h"
+#include "py_middle_layer.h"
 
 namespace message_infrastructure {
 
@@ -162,11 +162,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("service", &CppVarPortScalarSparse::Service)
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek);
-  py::class_<ProxySimplePort> (m, "ProxySimplePort")
+  py::class_<PyDataTransfer> (m, "PyDataTransfer")
     .def(py::init<>())
-    .def("set_data", &ProxySimplePort::set_data)
-    .def("transfer", &ProxySimplePort::transfer)
-    .def("get_data", &ProxySimplePort::get_data, py::return_value_policy::reference);
+    .def("mdata_from_object", &PyDataTransfer::MDataFromObject)
+    .def("get_obj", &PyDataTransfer::GetObj);
   // py::class_<IdentityTransformer> (m, "IdentityTransformer")
     // .def("transform", &IdentityTransformer::Transform);
   // py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
