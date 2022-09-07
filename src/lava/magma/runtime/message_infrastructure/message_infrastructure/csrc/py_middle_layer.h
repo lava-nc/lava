@@ -18,6 +18,13 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+int trick() {
+    import_array();
+    return 0;
+}
+
+const int tricky_var = trick();
+
 class MetaDataTransfer {
  public:
   int CopyMDataToMem(MetaData* metadata, char* mem) {
@@ -114,7 +121,7 @@ class PyDataTransfer {
     for (int i = 0; i < ndim; i++) {
       metadata->dims.push_back(dims[i]);
       metadata->strides.push_back(strides[i]/element_size_in_bytes);
-      if (strides[i] % element_size_in_bytes == 0) {
+      if (strides[i] % element_size_in_bytes != 0) {
         LAVA_LOG_ERR("numpy array stride not a multiple of the element bytes\n");
       }
     }
