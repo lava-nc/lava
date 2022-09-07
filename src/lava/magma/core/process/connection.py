@@ -11,6 +11,51 @@ from lava.magma.core.process.variable import Var
 
 
 class ConnectionProcess(AbstractProcess):
+    """Base class for connection Processes.
+
+    This base class holds all necessary Vars, Ports and functionality for
+    online learning in fixed and floating point simulations. If the
+    learning_rule parameter is not set, plasticity is disabled.
+
+    Attributes
+    ----------
+
+    s_in_bap: InPort
+        Input port to receive back-propagating actionpotentials (BAP)
+    x0: Var
+        Conditional for pre-synaptic spike times (is 1 if pre-synaptic neurons
+        spiked in this time-step).
+    tx: Var
+        Within-epoch spike times of pre-synaptic neurons.
+    x1: Var
+        First pre-synaptic trace.
+    x2: Var
+        Second pre-synaptic trace.
+    y0: Var
+        Conditional for post-synaptic spike times (is 1 if post-synaptic neurons
+        spiked in this time-step).
+    ty: Var
+        Within-epoch spike times of post-synaptic neurons.
+    y1: Var
+        First post-synaptic trace.
+    y2: Var
+        Second post-synaptic trace.
+    y3: Var
+        Third post-synaptic trace.
+    tag_1: Var
+        Tag synaptic variable
+    tag_2: Var
+        Delay synaptic variable
+
+    Parameters
+    ----------
+
+    shape: tuple, ndarray
+        Shape of the connection in format (post, pre) order.
+    learning_rule: LearningRule
+        Learning rule which determines the parameters for online learning.
+
+    """
     def __init__(
         self,
         shape: tuple = (1, 1),

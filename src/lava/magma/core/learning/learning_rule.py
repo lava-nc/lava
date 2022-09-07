@@ -11,6 +11,13 @@ from lava.magma.core.learning.product_series import ProductSeries
 
 
 class LearningRule:
+    """Base class for learning rules.
+
+    See also
+    --------
+    lava.magma.core.learning.learning_rule.LoihiLearningRule
+
+    """
     pass
 
 
@@ -31,46 +38,40 @@ class LoihiLearningRule(LearningRule):
 
     From the user's perspective, a LearningRule object is to be used as follows:
     (1) Instantiate a LearningRule object with learning rules given in string
-    format for all three synaptic variables (dw, dd, dt), as well as trace
-    configuration parameters (impulse, decay) for all available traces
-    (x1, x2, y1), and the learning epoch length.
+        format for all three synaptic variables (dw, dd, dt), as well as trace
+        configuration parameters (impulse, decay) for all available traces
+        (x1, x2, y1), and the learning epoch length.
 
     (2) The LearningRule object encapsulating learning-related information is
-    then passed to the LearningConn Process as instantiation argument.
+        then passed to the LearningConn Process as instantiation argument.
 
     (3) It will internally be used by ProcessModels to derive the operations
-    to be executed in the learning phase (Py and Nc).
+        to be executed in the learning phase (Py and Nc).
 
-    Attributes
+    Parameters
     ----------
-    decimate_exponent: int
-        Decimate exponent used in uk dependencies, if any.
+
+    dw: str
+        ProductSeries representation of synaptic weight learning rule.
+    dd: str
+        ProductSeries representation of synaptic delay learning rule.
+    dt: str
+        ProductSeries representation of synaptic tag learning rule.
     x1_impulse: float
         Impulse by which x1 increases upon each pre-synaptic spike.
-    x2_impulse: float
-        Impulse by which x2 increases upon each pre-synaptic spike.
-    y1_impulse: float
-        Impulse by which y1 increases upon each post-synaptic spike.
     x1_tau: int
         Time constant by which x1 trace decays exponentially over time.
+    x2_impulse: float
+        Impulse by which x2 increases upon each pre-synaptic spike.
     x2_tau: int
         Time constant by which x2 trace decays exponentially over time.
+    y1_impulse: float
+        Impulse by which y1 increases upon each post-synaptic spike.
     y1_tau: int
         Time constant by which y1 trace decays exponentially over time.
     t_epoch: int
         Duration of learning epoch.
-    dw: ProductSeries
-        ProductSeries representation of synaptic weight learning rule.
-    dd: ProductSeries
-        ProductSeries representation of synaptic delay learning rule.
-    dt: ProductSeries
-        ProductSeries representation of synaptic tag learning rule.
-    active_product_series: dict
-        Dict containing ProductSeries for active learning rules.
-    active_traces_per_dependency: dict
-        Dict mapping active traces to the set of dependencies they appear with.
-    active_traces : set
-        Set of all active traces.
+
     """
 
     def __init__(
@@ -481,6 +482,70 @@ class LoihiLearningRule(LearningRule):
 
 
 class Loihi1LearningRule(LoihiLearningRule):
+    """Encapsulation of learning-related information according to: Loihi1
+
+    A LearningRule object has the following main objectives:
+    (1) Given string representations of learning rules (equations)
+        describing dynamics of the three synaptic variables
+        (weight, delay, tag), generate adequate ProductSeries
+        representations and store them.
+
+    (2) Store other learning-related information such as:
+        impulse values by which to update traces upon spikes,
+        time constants by which to decay traces over time,
+        the length of the learning epoch,
+        the set of dependencies used by all specified learning rules and
+        the set of traces used by all specified learning rules.
+
+    From the user's perspective, a LearningRule object is to be used as
+    follows:
+
+    (1) Instantiate a LearningRule object with learning rules given in
+        string format for all three synaptic variables (dw, dd, dt), as
+        well as trace configuration parameters (impulse, decay) for all
+        available traces (x1, x2, y1, y2, y3), and the learning epoch
+        length.
+
+    (2) The LearningRule object encapsulating learning-related information
+        is then passed to the LearningConn Process as instantiation
+        argument.
+
+    (3) It will internally be used by ProcessModels to derive the
+        operations to be executed in the learning phase (Py and Nc).
+
+    Parameters
+    ----------
+
+    dw: str
+        ProductSeries representation of synaptic weight learning rule.
+    dd: str
+        ProductSeries representation of synaptic delay learning rule.
+    dt: str
+        ProductSeries representation of synaptic tag learning rule.
+    x1_impulse: float
+        Impulse by which x1 increases upon each pre-synaptic spike.
+    x1_tau: int
+        Time constant by which x1 trace decays exponentially over time.
+    x2_impulse: float
+        Impulse by which x2 increases upon each pre-synaptic spike.
+    x2_tau: int
+        Time constant by which x2 trace decays exponentially over time.
+    y1_impulse: float
+        Impulse by which y1 increases upon each post-synaptic spike.
+    y1_tau: int
+        Time constant by which y1 trace decays exponentially over time.
+    y2_impulse: float
+        Impulse by which y2 increases upon each post-synaptic spike.
+    y2_tau: int
+        Time constant by which y2 trace decays exponentially over time.
+    y3_impulse: float
+        Impulse by which y3 increases upon each post-synaptic spike.
+    y3_tau: int
+        Time constant by which y3 trace decays exponentially over time.
+    t_epoch: int
+        Duration of learning epoch.
+
+    """
     def __init__(
         self,
         dw: ty.Optional[str] = None,
@@ -498,77 +563,6 @@ class Loihi1LearningRule(LoihiLearningRule):
         y3_tau: int = 0,
         t_epoch: int = 1,
     ) -> None:
-        """Encapsulation of learning-related information according to: Loihi1
-
-        A LearningRule object has the following main objectives:
-        (1) Given string representations of learning rules (equations)
-            describing dynamics of the three synaptic variables
-            (weight, delay, tag), generate adequate ProductSeries
-            representations and store them.
-
-        (2) Store other learning-related information such as:
-            impulse values by which to update traces upon spikes,
-            time constants by which to decay traces over time,
-            the length of the learning epoch,
-            the set of dependencies used by all specified learning rules and
-            the set of traces used by all specified learning rules.
-
-        From the user's perspective, a LearningRule object is to be used as
-        follows:
-
-        (1) Instantiate a LearningRule object with learning rules given in
-            string format for all three synaptic variables (dw, dd, dt), as
-            well as trace configuration parameters (impulse, decay) for all
-            available traces (x1, x2, y1, y2, y3), and the learning epoch
-            length.
-
-        (2) The LearningRule object encapsulating learning-related information
-            is then passed to the LearningConn Process as instantiation
-            argument.
-
-        (3) It will internally be used by ProcessModels to derive the
-            operations to be executed in the learning phase (Py and Nc).
-
-        Attributes
-        ----------
-        decimate_exponent: int
-            Decimate exponent used in uk dependencies, if any.
-        x1_impulse: float
-            Impulse by which x1 increases upon each pre-synaptic spike.
-        x2_impulse: float
-            Impulse by which x2 increases upon each pre-synaptic spike.
-        y1_impulse: float
-            Impulse by which y1 increases upon each post-synaptic spike.
-        y2_impulse: float
-            Impulse by which y2 increases upon each post-synaptic spike.
-        y3_impulse: float
-            Impulse by which y3 increases upon each post-synaptic spike.
-        x1_tau: int
-            Time constant by which x1 trace decays exponentially over time.
-        x2_tau: int
-            Time constant by which x2 trace decays exponentially over time.
-        y1_tau: int
-            Time constant by which y1 trace decays exponentially over time.
-        y2_tau: int
-            Time constant by which y2 trace decays exponentially over time.
-        y3_tau: int
-            Time constant by which y3 trace decays exponentially over time.
-        t_epoch: int
-            Duration of learning epoch.
-        dw: ProductSeries
-            ProductSeries representation of synaptic weight learning rule.
-        dd: ProductSeries
-            ProductSeries representation of synaptic delay learning rule.
-        dt: ProductSeries
-            ProductSeries representation of synaptic tag learning rule.
-        active_product_series: dict
-            Dict containing ProductSeries for active learning rules.
-        active_traces_per_dependency: dict
-            Dict mapping active traces to the set of dependencies they appear
-            with.
-        active_traces : set
-            Set of all active traces.
-        """
 
         self._y2_impulse = self._validate_impulse(y2_impulse)
         self._y3_impulse = self._validate_impulse(y3_impulse)

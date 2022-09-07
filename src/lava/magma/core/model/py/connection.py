@@ -25,6 +25,19 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
 class ConnectionModelBitApproximate(PyLoihiProcessModel):
+    """Fixed-point, bit-approximate implementation of the Connection base
+    class.
+
+    This class implements the learning simulation with integer and fixed
+    point arithmetic but does not implement the exact behavior of Loihi.
+    Nevertheless, the results are comparable to those by Loihi.
+
+    Parameters
+    ----------
+
+    proc_params: dict
+        Parameters from the ProcessModel
+    """
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
 
