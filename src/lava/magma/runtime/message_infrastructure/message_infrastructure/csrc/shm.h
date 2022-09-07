@@ -15,6 +15,8 @@ class SharedMemory {
   SharedMemory() {}
   SharedMemory(const int &shmid, const size_t &mem_size);
   int GetShmid();
+  sem_t GetReqSemaphore();
+  sem_t GetAckSemaphore();
   void* MemMap();
  private:
   int shmid_;
