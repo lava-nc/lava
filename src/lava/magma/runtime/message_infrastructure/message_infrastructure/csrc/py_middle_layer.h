@@ -10,6 +10,7 @@
 #include <numpy/arrayobject.h>
 
 #include <cstring>
+#include <vector>
 
 #include "utils.h"
 #include "message_infrastructure_logging.h"
@@ -48,7 +49,7 @@ class MetaDataTransfer {
     std::memcpy(metadata, ptr, offsetof(MetaData, dims));
     ptr+=offsetof(MetaData, dims);
 
-    int64_t *iptr = (int64_t*)ptr;
+    auto *iptr = reinterpret_cast<int64_t*> (ptr);
     for (int i=0; i < metadata->nd; i++) {
       metadata->dims.push_back((*iptr++));
     }
@@ -59,7 +60,6 @@ class MetaDataTransfer {
     std::memcpy(iptr, metadata->mdata, metadata->elsize * metadata->total_size);
 
     return 0;
-
   }
 };
 
@@ -69,7 +69,7 @@ class PyDataTransfer {
     std::vector<npy_intp> dims(metadata->nd);
     std::vector<npy_intp> strides(metadata->nd);
 
-    for (int i=0; i<metadata->nd; i++) {
+    for (int i = 0; i < metadata->nd; i++) {
       dims[i] = metadata->dims[i];
       strides[i] = metadata->strides[i] * metadata->elsize;
     }
@@ -84,7 +84,7 @@ class PyDataTransfer {
       metadata->elsize,
       NPY_ARRAY_ALIGNED | NPY_ARRAY_WRITEABLE,
       nullptr);
-    
+
     if (!array)
       return py::cast(0);
 
@@ -100,7 +100,7 @@ class PyDataTransfer {
 
     LAVA_LOG(LOG_LAYER, "check obj achieved\n");
 
-    auto array = (PyArrayObject*)obj;
+    auto array = reinterpret_cast<PyArrayObject*> (obj);
     if (!PyArray_ISWRITEABLE(array)) {
       LAVA_LOG(LOG_MP, "The array is not writeable\n");
     }
@@ -122,7 +122,7 @@ class PyDataTransfer {
       metadata->dims.push_back(dims[i]);
       metadata->strides.push_back(strides[i]/element_size_in_bytes);
       if (strides[i] % element_size_in_bytes != 0) {
-        LAVA_LOG_ERR("numpy array stride not a multiple of the element bytes\n");
+        LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
       }
     }
     metadata->type = dtype;
@@ -130,13 +130,18 @@ class PyDataTransfer {
     metadata->elsize = element_size_in_bytes;
     metadata->total_size = tsize;
 
-    // for test only
-    this->metadata_ = metadata;
-
     return metadata;
   }
   py::object GetObj() {
     return MDataToObject(this->metadata_);
+  }
+  int SetObj(py::object *obj) {
+    this->metadata_ = MDataFromObject(obj);
+    return 0;
+  }
+  void TestDataChange() {
+    int32_t* ptr = reinterpret_cast<int32_t*> (this->metadata_->mdata);
+    ptr[2] = 99;
   }
 
  private:

@@ -164,7 +164,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("peek", &CppVarPortScalarSparse::Peek);
   py::class_<PyDataTransfer> (m, "PyDataTransfer")
     .def(py::init<>())
-    .def("mdata_from_object", &PyDataTransfer::MDataFromObject)
+    .def("change_var", &PyDataTransfer::TestDataChange)
+    .def("set_obj", &PyDataTransfer::SetObj)
     .def("get_obj", &PyDataTransfer::GetObj);
   // py::class_<IdentityTransformer> (m, "IdentityTransformer")
     // .def("transform", &IdentityTransformer::Transform);
