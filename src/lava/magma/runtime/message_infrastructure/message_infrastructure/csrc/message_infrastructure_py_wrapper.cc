@@ -9,12 +9,9 @@
 #include <pybind11/stl.h>
 
 #include "abstract_actor.h"
-#include "channel_factory.h"
+#include "channel_proxy.h"
 #include "multiprocessing.h"
 #include "port_proxy.h"
-#include "shm.h"
-#include "shmem_channel.h"
-#include "shmem_port.h"
 #include "utils.h"
 #include "ports.h"
 #include "selector.h"
@@ -31,18 +28,11 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("get_actors", &MultiProcessing::GetActors)
-    .def("get_shmm", &MultiProcessing::GetSharedMemManager)
     .def("stop", &MultiProcessing::Stop);
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
     .value("ChildProcess", ChildProcess)
     .value("ParentProcess", ParentProcess);
-  py::class_<SharedMemManager> (m, "SharedMemManager")
-    .def(py::init<>())
-    .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
-    .def("stop", &SharedMemManager::Stop);
-  py::class_<SharedMemory> (m, "SharedMemory")
-    .def(py::init<int, int>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("get_status", &PosixActor::GetActorStatus)
@@ -54,16 +44,13 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<ShmemSelector> (m, "Selector")
     .def(py::init<>())
     .def("select", &ShmemSelector::select);
-  py::class_<AbstractChannel, std::shared_ptr<AbstractChannel>> (m, "Channel")
+  py::class_<ChannelProxy> (m, "Channel")
+    .def(py::init<ChannelType, size_t, size_t, std::string>())
     .def(py::init<>())
-    .def("get_send_port", &AbstractChannel::GetSendPort)
-    .def("get_recv_port", &AbstractChannel::GetRecvPort);
-  py::class_<ShmemChannel, AbstractChannel, std::shared_ptr<ShmemChannel>> (m, "ShmemChannel")
-    .def("get_send_port", &ShmemChannel::GetSendPort)
-    .def("get_recv_port", &ShmemChannel::GetRecvPort);
+    .def("get_send_port", &ChannelProxy::GetSendPort)
+    .def("get_recv_port", &ChannelProxy::GetRecvPort);
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
   py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
-    .def(py::init<ChannelType, AbstractSendPortPtr>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)
     .def("get_send_port", &SendPortProxy::GetSendPort, py::return_value_policy::reference)
     .def("start", &SendPortProxy::Start)
@@ -71,11 +58,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
     .def("name", &SendPortProxy::Name)
-    .def("dtype", &SendPortProxy::Dtype)
-    .def("shape", &SendPortProxy::Shape)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
-    .def(py::init<ChannelType, AbstractRecvPortPtr>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
     .def("get_recv_port", &RecvPortProxy::GetRecvPort, py::return_value_policy::reference)
     .def("start", &RecvPortProxy::Start)
@@ -84,16 +68,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("peek", &RecvPortProxy::Peek)
     .def("join", &RecvPortProxy::Join)
     .def("name", &RecvPortProxy::Name)
-    .def("dtype", &RecvPortProxy::Dtype)
-    .def("shape", &RecvPortProxy::Shape)
     .def("size", &RecvPortProxy::Size);
-  py::class_<ChannelFactory> (m, "ChannelFactory")
-    .def("get_channel", &ChannelFactory::GetChannel<double>, py::return_value_policy::reference)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int16_t>, py::return_value_policy::reference)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int32_t>, py::return_value_policy::reference)
-    .def("get_channel", &ChannelFactory::GetChannel<std::int64_t>, py::return_value_policy::reference)
-    .def("get_channel", &ChannelFactory::GetChannel<float>, py::return_value_policy::reference);
-  m.def("get_channel_factory", GetChannelFactory, py::return_value_policy::reference);
   py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "InPortVectorDense")
     .def(py::init<RecvPortProxyList>())
     .def("recv", &CppInPortVectorDense::Recv)

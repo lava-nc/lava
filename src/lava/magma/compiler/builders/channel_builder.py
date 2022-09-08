@@ -14,8 +14,7 @@ from message_infrastructure import (
     Channel,
     ChannelTransferType,
     get_channel_factory,
-    ShmemChannel,
-    SharedMemory
+    ShmemChannel
 )
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer

@@ -5,9 +5,6 @@
 #ifndef ABSTRACT_PORT_H_
 #define ABSTRACT_PORT_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -20,54 +17,26 @@ namespace message_infrastructure {
 class AbstractPort {
  public:
   AbstractPort() {}
-  std::string Name() {
-    return name_;
-  }
-  pybind11::dtype Dtype() {
-    return dtype_;
-  }
-  ssize_t* Shape() {
-    return shape_;
-  }
-  size_t Size() {
-    return size_;
-  }
+  std::string Name();
+  size_t Size();
+  int Start();
+  int Probe();
+  int Join();
 
-  int Start() {
-    return 0;
-  }
-  int Probe() {
-    return 0;
-  }
-  int Recv() {
-    return 0;
-  }
-  int Join() {
-    return 0;
-  }
-
- private:
   std::string name_;
-  pybind11::dtype dtype_;
-  ssize_t *shape_ = NULL;
   size_t size_;
+  size_t nbytes_;
 };
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send() {
-    return 0;
-  }
+  int Send(void *data);
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  int Recv() {
-    return 0;
-  }
-  int Peek() {
-    return 0;
-  }
+  void *Recv();
+  int Peek();
 };
 
 using AbstractPortPtr = std::shared_ptr<AbstractPort>;

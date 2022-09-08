@@ -34,11 +34,4 @@ int AbstractPortImplementation::Join() {
     port->Join();
   }
 }
-
-/*
-std::vector<int> AbstractPortImplementation::GetShape() {
-  return this->shape_;
-}
-*/
-
-}  // namespace message_infrastrature
+}  // namespace message_infrastructure
