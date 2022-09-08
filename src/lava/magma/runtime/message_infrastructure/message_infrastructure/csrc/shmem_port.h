@@ -69,6 +69,8 @@ class ShmemRecvQueue {
   std::atomic<uint32_t> write_index_;
 };
 
+using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
+
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
@@ -90,10 +92,10 @@ class ShmemRecvPort : public AbstractRecvPort {
   std::atomic_bool done_;
   void *array_ = NULL;
   void *observer = NULL;
-  ShmemRecvQueue queue_;
+  ShmemRecvQueuePtr queue_ = NULL;
   ThreadPtr req_callback_thread_ = NULL;
   ThreadPtr recv_queue_thread_ = NULL;
-};
+}
 
 }  // namespace message_infrastructure
 

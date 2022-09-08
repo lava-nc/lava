@@ -195,7 +195,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   size_ = size;
   done_ = false;
   array_ = shm_.MemMap();
-  queue_.Init(name, size, nbytes);
+  queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes);
 }
 
 void ShmemRecvPort::Start() {
@@ -206,18 +206,18 @@ void ShmemRecvPort::Start() {
 void ShmemRecvPort::QueueRecv() {
   while(!done_) {
     sem_wait(&shm_.GetReqSemaphore());
-    queue_.Push(array_);
+    queue_->Push(array_);
     sem_post(&shm_.GetAckSemaphore());
   }
-  queue_.Free();
+  queue_->Free();
 }
 
 bool ShmemRecvPort::Probe() {
-  return queue_.Probe();
+  return queue_->Probe();
 }
 
 void* ShmemRecvPort::Recv() {
-  return queue_.FrontPop();
+  return queue_->FrontPop();
 }
 
 void ShmemRecvPort::Join() {
@@ -227,7 +227,7 @@ void ShmemRecvPort::Join() {
 }
 
 void* ShmemRecvPort::Peek() {
-  return queue_.Front();
+  return queue_->Front();
 }
 
 int ShmemRecvPort::ReqCallback() {
