@@ -21,18 +21,18 @@ def nbytes_cal(shape, dtype):
 
 def main():
     channel_factory = get_channel_factory()
-    data = [12, 3]
-    shm = SharedMemManager()
+    data = 12
+    smm = SharedMemManager()
     size = 2
     nbytes = 4
-    name = 'test_channel'
+    name = 'test_shmem_channel'
 
     print(data)
     print(type(data))
 
-    shmem_channel = channel_factory.get_channel(
+    shmem_channel = Channel(
         ChannelTransferType.SHMEMCHANNEL,
-        shm,
+        smm,
         size,
         nbytes,
         name)
