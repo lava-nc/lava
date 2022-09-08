@@ -95,7 +95,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   ShmemRecvQueuePtr queue_ = NULL;
   ThreadPtr req_callback_thread_ = NULL;
   ThreadPtr recv_queue_thread_ = NULL;
-}
+};
 
 }  // namespace message_infrastructure
 
