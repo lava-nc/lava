@@ -45,7 +45,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>())
     .def("select", &ShmemSelector::select);
   py::class_<ChannelProxy> (m, "Channel")
-    .def(py::init<ChannelType, SharedMemManager, size_t, size_t, std::string>())
+    .def(py::init<ChannelType, size_t, size_t, std::string>())
     .def(py::init<>())
     .def("get_send_port", &Channel::GetSendPort)
     .def("get_recv_port", &Channel::GetRecvPort);
