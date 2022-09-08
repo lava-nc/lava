@@ -33,14 +33,12 @@ ShmemRecvQueue::ShmemRecvQueue(const std::string& name,
 }
 
 void ShmemRecvQueue::Push(void* src) {
-  void *ptr = malloc(nbytes_);
-  memcpy(ptr, src, nbytes_);
-  auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+  auto const curr_write_index = write_index_.load(std::memory_order_acquire);
+  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   auto next_write_index = curr_write_index + 1;
   if (next_write_index == size_) {
       next_write_index = 0;
   }
-  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
   if (next_write_index == curr_read_index) {
     auto next_read_index = curr_read_index + 1;
     if(next_read_index == size_) {
@@ -49,6 +47,8 @@ void ShmemRecvQueue::Push(void* src) {
     read_index_.store(next_read_index, std::memory_order_release);
     LAVA_LOG_WARN(LOG_SMMP, "Drop data in ShmemChannel %s\n", name_.c_str());
   }
+  void *ptr = malloc(nbytes_);
+  memcpy(ptr, src, nbytes_);
 
   array_[curr_write_index] = ptr;
   write_index_.store(next_write_index, std::memory_order_release);
@@ -73,9 +73,8 @@ void* ShmemRecvQueue::Front() {
     LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
     return NULL;
   }
-  void *ptr = NULL;
   auto const curr_read_index = read_index_.load(std::memory_order_acquire);
-  ptr = array_[curr_read_index];
+  void *ptr = array_[curr_read_index];
   return ptr;
 }
 
@@ -84,9 +83,8 @@ void* ShmemRecvQueue::FrontPop() {
     LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
     return NULL;
   }
-  void *ptr = NULL;
   auto const curr_read_index = read_index_.load(std::memory_order_acquire);
-  ptr = array_[curr_read_index];
+  void *ptr = array_[curr_read_index];
   auto next_read_index = curr_read_index + 1;
   if(next_read_index == size_) {
     next_read_index = 0;
