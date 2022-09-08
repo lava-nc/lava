@@ -163,7 +163,7 @@ class PyDataTransfer {
     std::cout << metadata->elsize << std::endl;
     std::cout << metadata->total_size << std::endl;
     std::cout << "(dims, strides)" << std::endl;
-    for (int i = 0; i < etadata->nd; i++) {
+    for (int i = 0; i < metadata->nd; i++) {
       std::cout << metadata->dims[i] << " " << metadata->strides[i] <<std::endl;
     }
     std::cout << "memdata:\n";
