@@ -47,8 +47,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<ChannelProxy> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string>())
     .def(py::init<>())
-    .def("get_send_port", &Channel::GetSendPort)
-    .def("get_recv_port", &Channel::GetRecvPort);
+    .def("get_send_port", &ChannelProxy::GetSendPort)
+    .def("get_recv_port", &ChannelProxy::GetRecvPort);
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
   py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def("get_channel_type", &SendPortProxy::GetChannelType)
