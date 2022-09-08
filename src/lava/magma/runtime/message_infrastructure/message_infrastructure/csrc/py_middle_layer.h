@@ -11,6 +11,7 @@
 
 #include <cstring>
 #include <vector>
+#include <iostream>
 
 #include "utils.h"
 #include "message_infrastructure_logging.h"
@@ -57,7 +58,8 @@ class MetaDataTransfer {
       metadata->strides.push_back((*iptr++));
     }
 
-    std::memcpy(iptr, metadata->mdata, metadata->elsize * metadata->total_size);
+    metadata->mdata = new char(metadata->elsize * metadata->total_size);
+    std::memcpy(metadata->mdata, iptr, metadata->elsize * metadata->total_size);
 
     return 0;
   }
@@ -133,19 +135,47 @@ class PyDataTransfer {
     return metadata;
   }
   py::object GetObj() {
-    return MDataToObject(this->metadata_);
+    MetaData* mdata = new MetaData();
+    std::cout << "direct get data\n";
+    print_mdata_(this->metadata_);
+    this->trsfer->CopyMDataFromMem(mdata, this->shm_simulator);
+    std::cout << "mem get data\n";
+    print_mdata_(mdata);
+    return MDataToObject(mdata);
   }
   int SetObj(py::object *obj) {
     this->metadata_ = MDataFromObject(obj);
+    this->trsfer = new MetaDataTransfer();
+    this->shm_simulator = new char[512];
+    this->trsfer->CopyMDataToMem(this->metadata_, shm_simulator);
+
     return 0;
   }
   void TestDataChange() {
     int32_t* ptr = reinterpret_cast<int32_t*> (this->metadata_->mdata);
-    ptr[2] = 99;
+    // ptr[2] = 99;
   }
 
  private:
+  void print_mdata_(MetaData* metadata) {
+    std::cout << metadata->nd << std::endl;
+    std::cout << metadata->type << std::endl;
+    std::cout << metadata->elsize << std::endl;
+    std::cout << metadata->total_size << std::endl;
+    std::cout << "(dims, strides)" << std::endl;
+    for (int i = 0; i < etadata->nd; i++) {
+      std::cout << metadata->dims[i] << " " << metadata->strides[i] <<std::endl;
+    }
+    std::cout << "memdata:\n";
+    char* cptr = reinterpret_cast<char*>(metadata->mdata);
+    for (int i = 0; i < metadata->elsize*metadata->total_size; i++) {
+      std::cout << static_cast<int>(cptr[i]) << " ";
+    }
+    std::cout << std::endl;
+  }
   MetaData *metadata_ = nullptr;
+  MetaDataTransfer *trsfer = nullptr;
+  char* shm_simulator = nullptr;
 };
 
 }  // namespace message_infrastructure
