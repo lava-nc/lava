@@ -8,6 +8,7 @@
 #include <stdio.h>
 #define LOG_MP (1)  // log for multiprocessing
 #define LOG_LAYER (1)
+#define DEBUG_MODE (1)
 
 
 #define LAVA_LOG(_cond, _fmt, ...) { \
@@ -17,13 +18,13 @@
 }
 
 #define LAVA_DUMP(_cond, _fmt, ...) { \
-  if ((_cond)) { \
+  if ((_cond && DEBUG_MODE)) { \
     printf(_fmt, ## __VA_ARGS__); \
   } \
 }
 
 #define LAVA_DEBUG(_cond, _fmt, ...) { \
-  if ((_cond)) { \
+  if ((_cond && DEBUG_MODE)) { \
     printf("[CPP DEBUG]" _fmt, ## __VA_ARGS__); \
   } \
 }
