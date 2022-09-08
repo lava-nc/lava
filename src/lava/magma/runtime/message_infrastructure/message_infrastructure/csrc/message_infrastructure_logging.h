@@ -16,6 +16,18 @@
   } \
 }
 
+#define LAVA_DUMP(_cond, _fmt, ...) { \
+  if ((_cond)) { \
+    printf(_fmt, ## __VA_ARGS__); \
+  } \
+}
+
+#define LAVA_DEBUG(_cond, _fmt, ...) { \
+  if ((_cond)) { \
+    printf("[CPP DEBUG]" _fmt, ## __VA_ARGS__); \
+  } \
+}
+
 #define LAVA_LOG_WARN(_cond, _fmt, ...) { \
   if ((_cond)) { \
     printf("[CPP WARNING]" _fmt, __FUNCTION__, ## __VA_ARGS__); \

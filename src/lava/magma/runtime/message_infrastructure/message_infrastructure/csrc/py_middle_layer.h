@@ -104,7 +104,7 @@ class PyDataTransfer {
 
     auto array = reinterpret_cast<PyArrayObject*> (obj);
     if (!PyArray_ISWRITEABLE(array)) {
-      LAVA_LOG(LOG_MP, "The array is not writeable\n");
+      LAVA_LOG(LOG_LAYER, "The array is not writeable\n");
     }
 
     // var from numpy
@@ -158,20 +158,24 @@ class PyDataTransfer {
 
  private:
   void print_mdata_(MetaData* metadata) {
-    std::cout << metadata->nd << std::endl;
-    std::cout << metadata->type << std::endl;
-    std::cout << metadata->elsize << std::endl;
-    std::cout << metadata->total_size << std::endl;
-    std::cout << "(dims, strides)" << std::endl;
+    LAVA_DUMP(LOG_LAYER, "==========\nMetaData Dump:\n"
+                        "(nd, type, elsize, total_size):"
+                        "(%ld, %ld, %ld, %ld)\n",
+                        metadata->nd,
+                        metadata->type,
+                        metadata->elsize,
+                        metadata->total_size);
+    LAVA_DUMP(LOG_LAYER, "(dims, strides):\n");
     for (int i = 0; i < metadata->nd; i++) {
-      std::cout << metadata->dims[i] << " " << metadata->strides[i] <<std::endl;
+      LAVA_DUMP(LOG_LAYER, "(%ld, %ld):\n",
+                metadata->dims[i], metadata->strides[i]);
     }
-    std::cout << "memdata:\n";
+    LAVA_DUMP(LOG_LAYER, "memdata:\n");
     char* cptr = reinterpret_cast<char*>(metadata->mdata);
     for (int i = 0; i < metadata->elsize*metadata->total_size; i++) {
-      std::cout << static_cast<int>(cptr[i]) << " ";
+      LAVA_DUMP(LOG_LAYER, "%02x ", cptr[i]);
     }
-    std::cout << std::endl;
+    LAVA_DUMP(LOG_LAYER, "\n==========\n");
   }
   MetaData *metadata_ = nullptr;
   MetaDataTransfer *trsfer = nullptr;
