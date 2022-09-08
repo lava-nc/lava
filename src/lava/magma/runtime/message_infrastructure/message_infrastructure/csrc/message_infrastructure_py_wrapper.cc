@@ -9,12 +9,9 @@
 #include <pybind11/stl.h>
 
 #include "abstract_actor.h"
-#include "channel_factory.h"
+#include "channel_proxy.h"
 #include "multiprocessing.h"
 #include "port_proxy.h"
-#include "shm.h"
-#include "shmem_channel.h"
-#include "shmem_port.h"
 #include "utils.h"
 #include "ports.h"
 #include "selector.h"
@@ -31,19 +28,11 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("get_actors", &MultiProcessing::GetActors)
-    .def("get_shmm", &MultiProcessing::GetSharedMemManager)
     .def("stop", &MultiProcessing::Stop);
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
     .value("ChildProcess", ChildProcess)
     .value("ParentProcess", ParentProcess);
-  py::class_<SharedMemManager> (m, "SharedMemManager")
-    .def(py::init<>())
-    .def("alloc_channel_mem", &SharedMemManager::AllocChannelSharedMemory)
-    .def("alloc_mem", &SharedMemManager::AllocSharedMemory)
-    .def("stop", &SharedMemManager::Stop);
-  py::class_<SharedMemory> (m, "SharedMemory")
-    .def(py::init<int, int>());
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("get_status", &PosixActor::GetActorStatus)

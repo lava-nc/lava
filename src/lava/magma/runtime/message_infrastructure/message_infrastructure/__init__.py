@@ -1,7 +1,5 @@
 from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import ProcessType
-from MessageInfrastructurePywrapper import SharedMemManager
-from MessageInfrastructurePywrapper import SharedMemory
 from MessageInfrastructurePywrapper import Actor
 from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
 from MessageInfrastructurePywrapper import Selector

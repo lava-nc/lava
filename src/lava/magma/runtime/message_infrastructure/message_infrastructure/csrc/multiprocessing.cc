@@ -9,15 +9,9 @@
 
 namespace message_infrastructure {
 
-MultiProcessing::MultiProcessing() {
-  int key = 0xbeef;
-  int offset = 0x1000;
-  shmm_ = new SharedMemManager(key);
-  actor_shmm_ = new SharedMemManager(key+offset);
-}
-
 int MultiProcessing::BuildActor(std::function<int(ActorPtr)> target_fn) {
-  int shmid = actor_shmm_->AllocSharedMemory(sizeof(ActorStatusInfo));
+  SharedMemManager &actor_shmm = GetSharedMemManager();
+  int shmid = actor_shmm.AllocSharedMemory(sizeof(ActorStatusInfo));
   ActorPtr actor = new PosixActor(target_fn, shmid);
   int ret = actor->Run();
   actors_.push_back(actor);
@@ -40,10 +34,6 @@ void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
     LAVA_LOG(LOG_MP, "Actor info %d\n", actor->GetPid());
   }
-}
-
-SharedMemManager* MultiProcessing::GetSharedMemManager() {
-  return this->shmm_;
 }
 
 std::vector<ActorPtr>& MultiProcessing::GetActors() {

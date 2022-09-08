@@ -15,17 +15,13 @@ namespace message_infrastructure {
 
 class MultiProcessing {
  public:
-  MultiProcessing();
   int Stop();
   int BuildActor(std::function<int(ActorPtr)>);
   void CheckActor();
   std::vector<ActorPtr>& GetActors();
-  SharedMemManager* GetSharedMemManager();
 
  private:
   std::vector<ActorPtr> actors_;
-  SharedMemManager *shmm_;
-  SharedMemManager *actor_shmm_;
 };
 
 }  // namespace message_infrastructure

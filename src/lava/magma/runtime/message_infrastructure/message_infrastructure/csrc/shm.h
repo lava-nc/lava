@@ -9,6 +9,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <atomic>
 namespace message_infrastructure {
 
 class SharedMemory {
@@ -29,19 +30,26 @@ class SharedMemory {
   void* data_;
 };
 
+using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
+
 class SharedMemManager {
  public:
-  SharedMemManager() {}
-  explicit SharedMemManager(int key) : key_(key) {}
+  ~SharedMemManager();
   int AllocSharedMemory(const size_t &mem_size);
-  SharedMemory AllocChannelSharedMemory(const size_t &mem_size);
+  SharedMemoryPtr AllocChannelSharedMemory(const size_t &mem_size);
   int DeleteSharedMemory(const int &shmid);
-  int Stop();
+  friend SharedMemManager& GetSharedMemManager();
 
  private:
+  SharedMemManager() {}
   std::set<int> shmids_;
-  key_t key_ = 0x5555;
+  std::atomic<key_t> key_ {0x1111};
+  static SharedMemManager smm_;
 };
+
+SharedMemManager& GetSharedMemManager();
+
+using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure
 

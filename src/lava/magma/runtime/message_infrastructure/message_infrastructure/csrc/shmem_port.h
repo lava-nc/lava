@@ -25,7 +25,7 @@ using ThreadPtr = std::shared_ptr<std::thread>;
 class ShmemSendPort : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
-                SharedMemory shm,
+                SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
   std::string Name();
@@ -37,7 +37,7 @@ class ShmemSendPort : public AbstractSendPort {
   void Stop();
   int AckCallback();
 
-  SharedMemory shm_;
+  SharedMemoryPtr shm_ = NULL;
   int idx_ = 0;
   std::atomic_bool done_;
   void *array_ = NULL;
@@ -65,6 +65,7 @@ class ShmemRecvQueue {
   size_t nbytes_;
   size_t size_;
   std::vector<void *> array_;
+  std::vector<void *> drop_array_;
   std::atomic<uint32_t> read_index_;
   std::atomic<uint32_t> write_index_;
 };
@@ -74,7 +75,7 @@ using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
 class ShmemRecvPort : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
-                SharedMemory shm,
+                SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
   std::string Name();
@@ -87,7 +88,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   int ReqCallback();
   void QueueRecv();
 
-  SharedMemory shm_;
+  SharedMemoryPtr shm_ = NULL;
   int idx_ = 0;
   std::atomic_bool done_;
   void *array_ = NULL;

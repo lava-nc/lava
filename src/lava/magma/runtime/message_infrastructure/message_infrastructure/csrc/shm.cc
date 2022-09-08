@@ -48,13 +48,13 @@ int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
   key_++;
   return shmid;
 }
-SharedMemory SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
+SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
   int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
   if (shmid < 0)
     exit(-1); // Log_Error
 
-  SharedMemory shm(mem_size, shmid);
-  shm.InitSemaphore();
+  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmid);
+  shm->InitSemaphore();
 
   shmids_.insert(shmid);
   key_++;
@@ -73,7 +73,7 @@ int SharedMemManager::DeleteSharedMemory(const int &shmid) {
   return result;
 }
 
-int SharedMemManager::Stop() {
+SharedMemManager::~SharedMemManager() {
   int result = 0;
   for (auto it = shmids_.begin(); it != shmids_.end(); it++) {
     result = shmctl(*it, IPC_RMID, NULL);
@@ -81,6 +81,12 @@ int SharedMemManager::Stop() {
       exit(-1);
   }
   shmids_.clear();
-  return result;
+}
+
+SharedMemManager SharedMemManager::smm_;
+
+SharedMemManager& GetSharedMemManager() {
+  SharedMemManager &smm = SharedMemManager::smm_;
+  return smm;
 }
 }  // namespace message_infrastructure

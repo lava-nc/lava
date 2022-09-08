@@ -19,7 +19,6 @@ class ChannelFactory {
  public:
   std::shared_ptr<AbstractChannel> GetChannel(
       const ChannelType &channel_type,
-      const SharedMemManager &smm,
       const size_t &size,
       const size_t &nbytes,
       const std::string &name) {
@@ -29,7 +28,7 @@ class ChannelFactory {
       case DDSCHANNEL:
         break;
       default:
-        return GetShmemChannel(smm, size, nbytes, name);
+        return GetShmemChannel(size, nbytes, name);
     }
     return NULL;
   }

@@ -18,13 +18,11 @@ class ChannelProxy {
  public:
   ChannelProxy() {}
   ChannelProxy(const ChannelType &channel_type,
-               SharedMemManager smm,
                const size_t &size,
                const size_t &nbytes,
                const std::string &name = "test_channel") {
       ChannelFactory &channel_factory = GetChannelFactory();
       channel_ = channel_factory.GetChannel(channel_type,
-                                            smm,
                                             size,
                                             nbytes,
                                             name);
