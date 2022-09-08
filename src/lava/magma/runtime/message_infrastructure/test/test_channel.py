@@ -9,10 +9,10 @@ from message_infrastructure import ShmemChannel
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
 from message_infrastructure import ChannelFactory, get_channel_factory
-from message_infrastructure import SharedMemory
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 from message_infrastructure import Selector
+from message_infrastructure import SharedMemManager
 
 
 def nbytes_cal(shape, dtype):
@@ -21,22 +21,18 @@ def nbytes_cal(shape, dtype):
 
 def main():
     channel_factory = get_channel_factory()
-    data = np.array([1, 2, 3], np.int32)
-    shm = SharedMemory()
+    data = 12
+    smm = SharedMemManager()
     size = 2
-    nbytes = nbytes_cal(data.shape, data.dtype)
-    name = 'test_channel'
+    nbytes = 4
+    name = 'test_shmem_channel'
 
     print(data)
     print(type(data))
-    print(data.dtype)
-    print(ChannelTransferType.SHMEMCHANNEL)
-    print(type(ChannelTransferType.SHMEMCHANNEL))
 
-    shmem_channel = channel_factory.get_channel(
+    shmem_channel = Channel(
         ChannelTransferType.SHMEMCHANNEL,
-        shm,
-        data,
+        smm,
         size,
         nbytes,
         name)
@@ -47,8 +43,11 @@ def main():
     send_port.start()
     recv_port.start()
 
-    selector = Selector()
-    print(selector.select(recv_port, "cmd"))
+    # selector = Selector()
+    # print(selector.select(recv_port, "cmd"))
+
+    # send_port.send(data)
+    # res = recv_port.recv()
 
     print("finish test function.")
 

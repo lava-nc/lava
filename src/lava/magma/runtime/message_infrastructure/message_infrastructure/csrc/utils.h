@@ -5,8 +5,10 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <semaphore.h>
 
 #include <vector>
 
@@ -24,11 +26,10 @@ enum ChannelType {
   DDSCHANNEL = 2
 };
 
-struct Proto {
-  const ssize_t *shape_;
-  pybind11::dtype dtype_;
-  size_t nbytes_;
-};
+#define ACC_MODE (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | \
+  S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)
+
+#define CREAT_FLAG (O_CREAT | O_RDWR)
 
 struct MetaData {
   int64_t nd;
