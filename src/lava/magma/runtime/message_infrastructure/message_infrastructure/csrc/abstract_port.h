@@ -17,25 +17,11 @@ namespace message_infrastructure {
 class AbstractPort {
  public:
   AbstractPort() {}
-  std::string Name() {
-    return name_;
-  }
-  size_t Size() {
-    return size_;
-  }
-
-  int Start() {
-    printf("AbstractPort Start.\n");
-    return 0;
-  }
-  int Probe() {
-    printf("AbstractPort Probe.\n");
-    return 0;
-  }
-  int Join() {
-    printf("AbstractPort Join.\n");
-    return 0;
-  }
+  std::string Name();
+  size_t Size();
+  int Start();
+  int Probe();
+  int Join();
 
   std::string name_;
   size_t size_;
@@ -44,22 +30,13 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send(void* data) {
-    printf("AbstractPort Send.\n");
-    return 0;
-  }
+  int Send(void *data);
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  void* Recv() {
-    printf("AbstractPort Recv.\n");
-    return NULL;
-  }
-  int Peek() {
-    printf("AbstractPort Peek.\n");
-    return 0;
-  }
+  void *Recv();
+  int Peek();
 };
 
 using AbstractPortPtr = std::shared_ptr<AbstractPort>;
