@@ -27,9 +27,9 @@ class ChannelProxy {
                                             nbytes,
                                             name);
       send_port_ = std::make_shared<SendPortProxy>(channel_type,
-                                                   channel_->GetSendPort());
+                                                   channel_->GetSendPort()->GetSendPort());
       recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
-                                                   channel_->GetRecvPort());
+                                                   channel_->GetRecvPort()->GetRecvPort());
   }
   SendPortProxyPtr GetSendPort() {
      return send_port_;
