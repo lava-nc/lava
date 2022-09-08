@@ -48,8 +48,8 @@ class ShmemSendPort : public AbstractSendPort {
 
 class ShmemRecvQueue {
  public:
+  ShmemRecvQueue(const std::string& name, const size_t &size, const size_t &nbytes);
   ~ShmemRecvQueue();
-  void Init(const std::string& name, const size_t &size, const size_t &nbytes);
   void Push(void* src);
   void Pop();
   void* Front();

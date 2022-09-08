@@ -23,15 +23,13 @@
 #include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
-void ShmemRecvQueue::Init(const std::string& name,
+ShmemRecvQueue::ShmemRecvQueue(const std::string& name,
                           const size_t &size,
                           const size_t &nbytes) {
   size_ = size;
   name_ = name;
   nbytes_ = nbytes;
-  array_.clear();
-  for(int i = 0; i < size_; i++)
-    array_.push_back(NULL);
+  array_.reserve(size_);
 }
 
 void ShmemRecvQueue::Push(void* src) {
@@ -61,7 +59,7 @@ void ShmemRecvQueue::Pop() {
     LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel %s is empty.\n", name_.c_str());
     return;
   }
-  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   auto next_read_index = curr_read_index + 1;
   if(next_read_index == size_) {
     next_read_index = 0;
@@ -76,7 +74,7 @@ void* ShmemRecvQueue::Front() {
     return NULL;
   }
   void *ptr = NULL;
-  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   ptr = array_[curr_read_index];
   return ptr;
 }
@@ -87,7 +85,7 @@ void* ShmemRecvQueue::FrontPop() {
     return NULL;
   }
   void *ptr = NULL;
-  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
+  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   ptr = array_[curr_read_index];
   auto next_read_index = curr_read_index + 1;
   if(next_read_index == size_) {
@@ -109,8 +107,8 @@ bool ShmemRecvQueue::Empty() {
 
 void ShmemRecvQueue::Free() {
   if(!Empty()) {
-    auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
-    auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+    auto const curr_read_index = read_index_.load(std::memory_order_acquire);
+    auto const curr_write_index = write_index_.load(std::memory_order_acquire);
     int max, min;
     if(curr_read_index < curr_write_index) {
       max = curr_write_index;
@@ -128,8 +126,8 @@ void ShmemRecvQueue::Free() {
 
 ShmemRecvQueue::~ShmemRecvQueue() {
   if(!Empty()) {
-    auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
-    auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
+    auto const curr_read_index = read_index_.load(std::memory_order_acquire);
+    auto const curr_write_index = write_index_.load(std::memory_order_acquire);
     int max, min;
     if(curr_read_index < curr_write_index) {
       max = curr_write_index;
