@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#define MAX_ARRAY_DIMS (5)
+
 namespace message_infrastructure {
 
 enum ProcessType {
@@ -36,10 +38,12 @@ struct MetaData {
   int64_t type;
   int64_t elsize;
   int64_t total_size;
-  std::vector<int64_t> dims;
-  std::vector<int64_t> strides;
+  int64_t dims[MAX_ARRAY_DIMS] = {0};
+  int64_t strides[MAX_ARRAY_DIMS] = {0};
   void* mdata;
 };
+
+using MetaDataPtr = std::shared_ptr<MetaData>;
 
 }  // namespace message_infrastructure
 

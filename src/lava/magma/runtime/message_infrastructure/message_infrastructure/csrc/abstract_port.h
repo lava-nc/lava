@@ -30,12 +30,12 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send(void *data);
+  int Send(MetaDataPtr);
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  void *Recv();
+  MetaDataPtr Recv();
   int Peek();
 };
 

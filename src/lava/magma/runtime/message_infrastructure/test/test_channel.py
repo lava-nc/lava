@@ -8,7 +8,6 @@ from enum import Enum
 from message_infrastructure import ShmemChannel
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
-from message_infrastructure import ChannelFactory, get_channel_factory
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 from message_infrastructure import Selector
@@ -20,9 +19,7 @@ def nbytes_cal(shape, dtype):
 
 
 def main():
-    channel_factory = get_channel_factory()
-    data = 12
-    smm = SharedMemManager()
+    data = np.array([6,5,4,3,2,1], dtype = np.int32)
     size = 2
     nbytes = 4
     name = 'test_shmem_channel'
@@ -32,7 +29,6 @@ def main():
 
     shmem_channel = Channel(
         ChannelTransferType.SHMEMCHANNEL,
-        smm,
         size,
         nbytes,
         name)
@@ -42,6 +38,9 @@ def main():
 
     send_port.start()
     recv_port.start()
+
+    send_port.send(data)
+    print(recv_port.recv())
 
     # selector = Selector()
     # print(selector.select(recv_port, "cmd"))

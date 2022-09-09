@@ -32,7 +32,7 @@ class ShmemSendPort : public AbstractSendPort {
   size_t Size();
   void Start();
   int Probe();
-  int Send(void* data);
+  int Send(MetaDataPtr);
   void Join();
   void Stop();
   int AckCallback();
@@ -82,7 +82,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   size_t Size();
   void Start();
   bool Probe();
-  void* Recv();
+  MetaDataPtr Recv();
   void Join();
   void* Peek();
   int ReqCallback();

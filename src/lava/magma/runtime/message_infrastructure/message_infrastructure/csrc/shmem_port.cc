@@ -164,9 +164,12 @@ void ShmemSendPort::Start() {
   // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
-int ShmemSendPort::Send(void* data) {
+int ShmemSendPort::Send(MetaDataPtr metadata) {
+  char* cptr = (char*)array_;
   sem_wait(&shm_->GetAckSemaphore());
-  memcpy(array_, data, nbytes_);
+  memcpy(cptr, metadata.get(), offsetof(MetaData, mdata));
+  cptr+=offsetof(MetaData, mdata);
+  memcpy(cptr, metadata->mdata, nbytes_);
   sem_post(&shm_->GetReqSemaphore());
   return 0;
 }
@@ -222,8 +225,14 @@ bool ShmemRecvPort::Probe() {
   return queue_->Probe();
 }
 
-void* ShmemRecvPort::Recv() {
-  return queue_->FrontPop();
+MetaDataPtr ShmemRecvPort::Recv() {
+  char* cptr = (char*)queue_->FrontPop();
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  memcpy(metadata.get(), cptr, offsetof(MetaData, mdata));
+  cptr+=offsetof(MetaData, mdata);
+  metadata->mdata = new char(nbytes_);
+  memcpy(metadata->mdata, cptr, nbytes_);
+  return metadata;
 }
 
 void ShmemRecvPort::Join() {

@@ -5,14 +5,20 @@
 #ifndef PORT_PROXY_H_
 #define PORT_PROXY_H_
 
+#include <pybind11/pybind11.h>
+
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "abstract_port.h"
+#include "message_infrastructure_logging.h"
 #include "shmem_port.h"
 #include "utils.h"
 
 namespace message_infrastructure {
+
+namespace py = pybind11;
 
 class PortProxy {
 };
@@ -37,8 +43,9 @@ class SendPortProxy : public PortProxy {
   int Probe() {
     return send_port_->Probe();
   }
-  int Send(void* data) {
-    return send_port_->Send(data);
+  int Send(py::object* object) {
+    MetaDataPtr metadata = MDataFromObject_(object);
+    return send_port_->Send(metadata);
   }
   int Join() {
     return send_port_->Join();
@@ -51,9 +58,11 @@ class SendPortProxy : public PortProxy {
   }
 
  private:
+  MetaDataPtr MDataFromObject_(py::object*);
   ChannelType channel_type_;
   AbstractSendPortPtr send_port_;
 };
+
 
 class RecvPortProxy : public PortProxy {
  public:
@@ -76,8 +85,9 @@ class RecvPortProxy : public PortProxy {
   int Probe() {
     return recv_port_->Probe();
   }
-  void* Recv() {
-    return recv_port_->Recv();
+  py::object Recv() {
+    MetaDataPtr metadata = recv_port_->Recv();
+    return MDataToObject_(metadata);
   }
   int Join() {
     return recv_port_->Join();
@@ -93,6 +103,7 @@ class RecvPortProxy : public PortProxy {
   }
 
  private:
+  py::object MDataToObject_(MetaDataPtr);
   ChannelType channel_type_;
   AbstractRecvPortPtr recv_port_;
 };
