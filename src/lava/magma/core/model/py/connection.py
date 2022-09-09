@@ -614,9 +614,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         # Tags
         elif synaptic_variable_name == "tag_1":
             return saturate(
-                -(2**W_WEIGHTS_U) - 1,
+                -(2**W_TAG_1_U) - 1,
                 synaptic_variable_values,
-                2**W_WEIGHTS_U - 1,
+                2**W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
