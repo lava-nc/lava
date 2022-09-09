@@ -11,3 +11,8 @@ cd ..
 source setenv.sh
 python test/test_example.py
 ```
+
+# An example to run GoogleTest
+```
+ctest
+```
