@@ -335,7 +335,7 @@ class LoihiLearningRule(LearningRule):
         decimate_exponent = None
 
         if len(uk_set) == 1:
-            decimate_exponent = int(uk_list[0])
+            decimate_exponent = int(uk_list[0][1])
         elif len(uk_set) > 1:
             raise ValueError(
                 "Learning rules (dw, dd, dt) cannot contain uk terms "

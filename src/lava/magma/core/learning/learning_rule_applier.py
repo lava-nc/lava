@@ -270,8 +270,8 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
         result = init_accumulator
 
         for product in self._product_series.products:
-            if not applier_args[product.dependency]:
-                continue
+            # if not applier_args[product.dependency]:
+            #     continue
 
             # MAC
             current_result = np.ones(applier_args["shape"], dtype=np.int32)
