@@ -11,7 +11,6 @@ from lava.magma.core.learning.utils import saturate
 from lava.magma.core.learning import string_symbols as str_symbols
 from lava.magma.core.learning.constants import *
 
-
 class AbstractLearningRuleApplier:
     """The LearningRuleApplier is a Python-specific representation of learning
     rules. It is associated with a ProductSeries
@@ -58,6 +57,7 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
 
         self._applier_str = self._build_applier_str()
         self._applier_compiled = compile(self._applier_str, "<string>", "eval")
+        self.eval_func = asteval.Interpreter()
 
     def _build_applier_str(self) -> str:
         """Build the string representation of the LearningRuleFloatApplier
@@ -167,8 +167,11 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
         result: np.ndarray
             Values of the synaptic variable after learning rule application.
         """
-        eval_func = asteval.Interpreter(symtable=applier_args)
-        return init_accumulator + eval_func(self._applier_str)
+
+        self.eval_func.symtable = applier_args
+        result = init_accumulator + self.eval_func(self._applier_str)
+
+        return result
 
 
 class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
