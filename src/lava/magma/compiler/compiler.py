@@ -129,9 +129,6 @@ class Compiler:
         proc_group_digraph = ProcGroupDiGraphs(process, run_cfg)
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
         channel_map = ChannelMap.from_proc_groups(proc_groups)
-        if isinstance(run_cfg, AbstractLoihiHWRunCfg):
-            channel_map.embedded_core_allocation_order = \
-                run_cfg.embedded_core_allocation_order
         proc_builders, channel_map = self._compile_proc_groups(
             proc_groups, channel_map
         )
@@ -709,6 +706,8 @@ class Compiler:
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
                     rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
                     rs_kwargs["post_run_fxs"] = run_cfg.post_run_fxs
+                    rs_kwargs["embedded_core_allocation_order"] = \
+                        run_cfg.embedded_core_allocation_order
 
                 rs_builder = RuntimeServiceBuilder(
                     rs_class,
