@@ -32,9 +32,39 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
     point arithmetic but does not implement the exact behavior of Loihi.
     Nevertheless, the results are comparable to those by Loihi.
 
+    To summarize the behavior:
+
+    Spiking phase:
+    run_spk:
+
+        (1) (Dense) Send activations from past time step to post-synaptic
+        neuron Process.
+        (2) (Dense) Compute activations to be sent on next time step.
+        (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+        (4) (Dense) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (5) Receive spikes from post-synaptic neuron Process.
+        (6) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (7) Advance trace random generators.
+
+    Learning phase:
+    run_lrn:
+
+        (1) Advance synaptic variable random generators.
+        (2) Compute updates for each active synaptic variable,
+        according to associated learning rule,
+        based on the state of Vars representing dependencies and factors.
+        (3) Update traces based on within-epoch spiking times and trace
+        configuration parameters (impulse, decay).
+        (4) Reset within-epoch spiking times and dependency Vars
+
+    Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
+    delay in this connections Process. It can be adapted according to its
+    learning rule (learned), but it will not affect synaptic activity.
+
     Parameters
     ----------
-
     proc_params: dict
         Parameters from the ProcessModel
     """
@@ -66,13 +96,21 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         self.weights_set = False
 
         if self._learning_rule is not None:
+            # store shapes that useful throught the lifetime of this PM
             self._store_shapes()
+            # store impulses and taus in ndarrays with the right shapes
             self._store_impulses_and_taus()
 
+            # store active traces per dependency from learning_rule in ndarrays
+            # with the right shapes
             self._build_active_traces_per_dependency()
+            # store active traces from learning_rule in ndarrays
+            # with the right shapes
             self._build_active_traces()
+            # generate LearningRuleApplierBitApprox from ProductSeries
             self._build_learning_rule_appliers()
 
+            # initialize TraceRandoms and ConnVarRandom
             self._init_randoms()
 
         super().__init__(proc_params)
@@ -172,7 +210,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         return np.array(impulses_int, int), np.array(impulses_frac, int)
 
     def _store_impulses_and_taus(self) -> None:
-        """Build and store integer numpy arrays representing x and y
+        """Build and store integer ndarrays representing x and y
         impulses and taus."""
         self._x_impulses_int, self._x_impulses_frac = self._decompose_impulses(
             [self._learning_rule.x1_impulse, self._learning_rule.x2_impulse]
@@ -279,7 +317,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         )
 
     def _build_learning_rule_appliers(self) -> None:
-        """Build and store LearningRuleApplier for each active learning
+        """Build and store LearningRuleApplierBitApprox for each active learning
         rule in a dict mapped by the learning rule's target."""
         self._learning_rule_appliers = {
             str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
@@ -290,7 +328,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def _init_randoms(self) -> None:
         """Initialize trace and synaptic variable random generators."""
-
         self._x_random = TraceRandom()
         self._y_random = TraceRandom()
 
@@ -379,6 +416,34 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         return within_epoch_ts
 
     def _extract_applier_args(self) -> typing.Dict[str, np.ndarray]:
+        """Extracts arguments for the LearningRuleApplierFloat.
+
+        "shape" is a tuple, shape of this Connection Process.
+        "u" is a scalar.
+        "np" is a reference to numpy as it is needed for the evaluation of
+        "np.sign()" types of call inside the applier string.
+
+        Shapes of numpy array args:
+        "x0": (1, num_neurons_pre)
+        "y0": (num_neurons_post, 1)
+        "weights":  (num_neurons_post, num_neurons_pre)
+        "tag_2": (num_neurons_post, num_neurons_pre)
+        "tag_1": (num_neurons_post, num_neurons_pre)
+        "x_traces": (3, 2, num_neurons_post, num_neurons_pre)
+        "y_traces": (3, 2, num_neurons_post, num_neurons_pre)
+
+        "x_traces" is of shape (3, 2, num_neurons_post, num_neurons_pre) with:
+        First dimension representing the within-epoch time step at which the
+        trace is evaluated (tx, ty, t_epoch).
+        Second dimension representing the trace that is evaluated
+        (x1, x2).
+
+        "y_traces" is of shape (3, 3, num_neurons_post, num_neurons_pre) with:
+        First dimension representing the within-epoch time step at which the
+        trace is evaluated (tx, ty, t_epoch).
+        Second dimension representing the trace that is evaluated
+        (y1, y2, y3).
+        """
         # Shape: (3, 2, num_post_neurons, num_pre_neurons)
         # Shape of active_x_traces_per_dependency : (3, 2) ->
         # (3, 2, 1, 1)
@@ -511,7 +576,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         synaptic_variable_values: np.ndarray,
         random: float,
     ) -> np.ndarray:
-        """Stochastically round synaptic variable.
+        """Stochastically round synaptic variable after learning rule
+        application.
 
         Parameters
         ----------
@@ -542,6 +608,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable accumulator.
+
+        Checks that sign is valid.
 
         Parameters
         ----------
@@ -579,6 +647,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable.
+
+        Checks that synaptic variable values is between bounds set by
+        the hardware.
 
         Parameters
         ----------
@@ -942,12 +1013,15 @@ class ConnectionModelFloat(PyLoihiProcessModel):
     Spiking phase:
     run_spk:
 
-        (1) Send activations from past time step to post-synaptic
+        (1) (Dense) Send activations from past time step to post-synaptic
         neuron Process.
-        (2) Receive spikes from pre- and post-synaptic neuron Process.
-        (3) Record within-epoch spiking times. Update traces if more than
-        one spike during the epoch.
-        (4) Compute activations to be sent on next time step.
+        (2) (Dense) Compute activations to be sent on next time step.
+        (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+        (4) (Dense) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (5) Receive spikes from post-synaptic neuron Process.
+        (6) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
 
     Learning phase:
     run_lrn:
@@ -962,6 +1036,11 @@ class ConnectionModelFloat(PyLoihiProcessModel):
     Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
     delay in this connections Process. It can be adapted according to its
     learning rule (learned), but it will not affect synaptic activity.
+
+    Parameters
+    ----------
+    proc_params: dict
+        Parameters from the ProcessModel
     """
 
     # Learning Ports
@@ -989,11 +1068,18 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         self._learning_rule = self.proc_params["learning_rule"]
 
         if self._learning_rule is not None:
+            # store shapes that useful throught the lifetime of this PM
             self._store_shapes()
+            # store impulses and taus in ndarrays with the right shapes
             self._store_impulses_and_taus()
 
+            # store active traces per dependency from learning_rule in ndarrays
+            # with the right shapes
             self._build_active_traces_per_dependency()
+            # store active traces from learning_rule in ndarrays
+            # with the right shapes
             self._build_active_traces()
+            # generate LearningRuleApplierFloat from ProductSeries
             self._build_learning_rule_appliers()
 
     def _store_shapes(self) -> None:
@@ -1031,7 +1117,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         )
 
     def _store_impulses_and_taus(self) -> None:
-        """Build and store integer numpy arrays representing x and y
+        """Build and store integer ndarrays representing x and y
         impulses and taus."""
         self._x_impulses = np.array(
             [self._learning_rule.x1_impulse, self._learning_rule.x2_impulse]
@@ -1138,7 +1224,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         )
 
     def _build_learning_rule_appliers(self) -> None:
-        """Build and store LearningRule for each active learning
+        """Build and store LearningRuleApplierFloat for each active learning
         rule in a dict mapped by the learning rule's target."""
         self._learning_rule_appliers = {
             str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
@@ -1221,7 +1307,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         return within_epoch_ts
 
     def _extract_applier_args(self) -> dict:
-        """Extracts arguments for the LearningRuleApplier.
+        """Extracts arguments for the LearningRuleApplierFloat.
 
         "u" is a scalar.
         "np" is a reference to numpy as it is needed for the evaluation of

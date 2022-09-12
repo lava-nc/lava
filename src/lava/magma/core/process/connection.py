@@ -19,7 +19,6 @@ class ConnectionProcess(AbstractProcess):
 
     Attributes
     ----------
-
     s_in_bap: InPort
         Input port to receive back-propagating actionpotentials (BAP)
     x0: Var
@@ -49,12 +48,10 @@ class ConnectionProcess(AbstractProcess):
 
     Parameters
     ----------
-
     shape: tuple, ndarray
         Shape of the connection in format (post, pre) order.
     learning_rule: LearningRule
         Learning rule which determines the parameters for online learning.
-
     """
     def __init__(
         self,
@@ -63,7 +60,6 @@ class ConnectionProcess(AbstractProcess):
         *args,
         **kwargs,
     ):
-
         kwargs["learning_rule"] = learning_rule
         kwargs["shape"] = shape
 

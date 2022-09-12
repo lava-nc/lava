@@ -1,17 +1,6 @@
-# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
-#
-# Copyright © 2021-2022 Intel Corporation.
-#
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 
 import unittest
 
@@ -23,6 +12,8 @@ from lava.magma.core.learning.product_series import Factor, Product, \
 
 class TestFactor(unittest.TestCase):
     def _sub_test_regular_factor(self, state_var: str) -> None:
+        """Atomic test for creating simple Factor objects with "regular"
+        factor state vars."""
         factor_type = state_var + "+C"
 
         factor = Factor(state_var=state_var)
@@ -34,6 +25,8 @@ class TestFactor(unittest.TestCase):
         self.assertEqual(factor.factor_type, factor_type)
 
     def _sub_test_w_t_factor(self, state_var: str) -> None:
+        """Atomic test for creating simple Factor objects with "exception"
+        factor state vars."""
         factor_type = state_var + "+2C"
 
         factor = Factor(state_var=state_var)
@@ -45,6 +38,8 @@ class TestFactor(unittest.TestCase):
         self.assertEqual(factor.factor_type, factor_type)
 
     def test_regular_factors(self) -> None:
+        """Tests creating simple Factor objects for each of the "regular"
+        factor state vars."""
         excluded_factors = {'w', 't', 'C'}
 
         for state_var in str_symbols.FACTOR_STATE_VARS:
@@ -52,10 +47,14 @@ class TestFactor(unittest.TestCase):
                 self._sub_test_regular_factor(state_var)
 
     def test_exception_factors(self) -> None:
+        """Tests creating simple Factor objects for each of the "exception"
+        factor state vars."""
         self._sub_test_w_t_factor("w")
         self._sub_test_w_t_factor("t")
 
     def test_factor_sgn(self) -> None:
+        """Tests creating sgn Factor objects for each of the synaptic variable
+        factor state vars."""
         state_var = "w"
         factor_type = f"sgn({state_var}+2C)"
 
@@ -90,18 +89,23 @@ class TestFactor(unittest.TestCase):
         self.assertEqual(factor.factor_type, factor_type)
 
     def test_unknown_factor(self) -> None:
+        """Tests that instantiating Factor objects for a factor state var
+        that unknown throws an error."""
         state_var = "n"
 
         with self.assertRaises(ValueError):
             Factor(state_var=state_var)
 
     def test_invalid_factor_sgn(self) -> None:
+        """Tests that instantiating sgn Factor objects for a factor state var
+        that is not a synaptic variable throws an error."""
         state_var = "x1"
 
         with self.assertRaises(ValueError):
             Factor(state_var=state_var, is_sgn=True)
 
     def test_factor_plus_const(self) -> None:
+        """Tests creating Factor object with a constant added."""
         state_var = "x1"
         const = 5
         factor_type = state_var + "+C"
@@ -115,6 +119,7 @@ class TestFactor(unittest.TestCase):
         self.assertEqual(factor.factor_type, factor_type)
 
     def test_factor_const(self) -> None:
+        """Tests creating Factor object with C as factor state var."""
         state_var = "C"
         const = 5
         factor_type = state_var
@@ -130,6 +135,7 @@ class TestFactor(unittest.TestCase):
 
 class TestProduct(unittest.TestCase):
     def test_product(self) -> None:
+        """Tests creating a valid Product object."""
         target = "dw"
         dependency = "y0"
         s_mantissa = 1
@@ -150,6 +156,8 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(product.decimate_exponent, None)
 
     def test_product_u_dep_and_decimate_exponent(self) -> None:
+        """Tests creating a valid Product object with u dependency and
+        a decimate exponent."""
         target = "dw"
         dependency = "u"
         s_mantissa = 1
@@ -171,6 +179,8 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(product.decimate_exponent, decimate_exponent)
 
     def test_product_u_dep_and_no_decimate_exponent(self) -> None:
+        """Tests that creating a Product object with u dependency without
+        a decimate exponent throws an error."""
         target = "dw"
         dependency = "u"
         s_mantissa = 1
@@ -184,6 +194,8 @@ class TestProduct(unittest.TestCase):
             Product(target, dependency, s_mantissa, s_exp, factor_list)
 
     def test_product_no_u_dep_and_decimate_exponent(self) -> None:
+        """Tests that creating a Product object without u dependency
+        but with a decimate exponent throws an error."""
         target = "dw"
         dependency = "x0"
         s_mantissa = 1
@@ -199,6 +211,8 @@ class TestProduct(unittest.TestCase):
                     decimate_exponent)
 
     def test_product_unknown_target(self) -> None:
+        """Tests that creating a Product object with an unknown target
+        throws an error."""
         target = "n"
         dependency = "x0"
         s_mantissa = 1
@@ -212,6 +226,8 @@ class TestProduct(unittest.TestCase):
             Product(target, dependency, s_mantissa, s_exp, factor_list)
 
     def test_product_unknown_dependency(self) -> None:
+        """Tests that creating a Product object with an unknown dependency
+        throws an error."""
         target = "dw"
         dependency = "n"
         s_mantissa = 1
@@ -227,6 +243,7 @@ class TestProduct(unittest.TestCase):
 
 class TestProductSeries(unittest.TestCase):
     def test_product_series(self) -> None:
+        """Tests creating a valid ProductSeries object."""
         target = "dw"
         str_learning_rule = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
 
@@ -266,6 +283,7 @@ class TestProductSeries(unittest.TestCase):
         self.assertEqual(product_2.factors[0].is_sgn, False)
 
     def test_product_series_u_dep(self) -> None:
+        """Tests creating a valid ProductSeries object with u dependency."""
         target = "dw"
         str_learning_rule = 'u4*(-1)*2^-1*y1 + y0*1*2^1*x1'
 
@@ -305,6 +323,8 @@ class TestProductSeries(unittest.TestCase):
         self.assertEqual(product_2.factors[0].is_sgn, False)
 
     def test_product_series_u_dep_multi_decimate_exponent(self) -> None:
+        """Tests that creating a ProductSeries object with u dependency with
+        multiple decimate exponent throws an error."""
         target = "dw"
         str_learning_rule = 'u4*(-1)*2^-1*y1 + u5*1*2^1*x1'
 

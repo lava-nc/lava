@@ -24,33 +24,34 @@ class LearningRule:
 class LoihiLearningRule(LearningRule):
     """Encapsulation of learning-related information according to: Loihi
 
-    A LearningRule object has the following main objectives:
+    A LoihiLearningRule object has the following main objectives:
     (1) Given string representations of learning rules (equations) describing
     dynamics of the three synaptic variables (weight, delay, tag),
     generate adequate ProductSeries representations and store them.
 
     (2) Store other learning-related information such as:
-    impulse values by which to update traces upon spikes,
-    time constants by which to decay traces over time,
-    the length of the learning epoch,
-    the set of dependencies used by all specified learning rules and
+    impulse values by which to update traces upon spikes;
+    time constants by which to decay traces over time;
+    the length of the learning epoch;
+    a dict with dependencies as keys and the set of all traces appearing
+    with them in the specified learning rules as values;
     the set of traces used by all specified learning rules.
 
-    From the user's perspective, a LearningRule object is to be used as follows:
-    (1) Instantiate a LearningRule object with learning rules given in string
-        format for all three synaptic variables (dw, dd, dt), as well as trace
-        configuration parameters (impulse, decay) for all available traces
-        (x1, x2, y1), and the learning epoch length.
+    From the user's perspective, a LoihiLearningRule object is to be used
+    as follows:
+    (1) Instantiate an implementation of LoihiLearningRule object with
+    learning rules given in string format for all three synaptic variables
+    (dw, dd, dt), as well as trace configuration parameters (impulse, decay)
+    for all available traces (x1, x2, y1), and the learning epoch length.
 
-    (2) The LearningRule object encapsulating learning-related information is
-        then passed to the LearningConn Process as instantiation argument.
+    (2) The LoihiLearningRule object encapsulating learning-related information
+    is then passed to the Dense Process as instantiation argument.
 
     (3) It will internally be used by ProcessModels to derive the operations
-        to be executed in the learning phase (Py and Nc).
+    to be executed in the learning phase (Py and Nc).
 
     Parameters
     ----------
-
     dw: str
         ProductSeries representation of synaptic weight learning rule.
     dd: str
@@ -71,9 +72,7 @@ class LoihiLearningRule(LearningRule):
         Time constant by which y1 trace decays exponentially over time.
     t_epoch: int
         Duration of learning epoch.
-
     """
-
     def __init__(
         self,
         dw: ty.Optional[str] = None,
@@ -87,43 +86,58 @@ class LoihiLearningRule(LearningRule):
         y1_tau: int = 0,
         t_epoch: int = 1,
     ) -> None:
+        # dict of string learning rules
         str_learning_rules = {
             str_symbols.DW: dw,
             str_symbols.DD: dd,
             str_symbols.DT: dt,
         }
 
+        # dict of string learning rules that were provided only
         active_str_learning_rules = {
             key: str_learning_rule
             for key, str_learning_rule in str_learning_rules.items()
             if str_learning_rule is not None
         }
 
+        # validate that at least one learning rule was provided
         self._validate_at_least_one_learning_rule(active_str_learning_rules)
+        # validate that same k was used throughout all learning rules in case
+        # a uk dependency is used
         self._decimate_exponent = self._validate_uk(active_str_learning_rules)
 
+        # extract and validate x trace impulses and taus
         self._x1_impulse = self._validate_impulse(x1_impulse)
         self._x2_impulse = self._validate_impulse(x2_impulse)
         self._x1_tau = self._validate_tau(x1_tau)
         self._x2_tau = self._validate_tau(x2_tau)
 
+        # extract and validate y1 trace impulse and tau
         self._y1_impulse = self._validate_impulse(y1_impulse)
         self._y1_tau = self._validate_tau(y1_tau)
 
+        # extract and validate t_epoch (epoch length)
         self._t_epoch = self._validate_t_epoch(t_epoch)
 
+        # generate ProductSeries for all learning rules that were provided in
+        # string format
         self._active_product_series = {
             key: self._generate_product_series_from_string(
                 key, str_learning_rule
             )
             for key, str_learning_rule in active_str_learning_rules.items()
-            if str_learning_rule is not None
         }
 
+        # set attribute for each of the active ProductSeries
         self._dw = self._dd = self._dt = None
         for key, product_series in self._active_product_series.items():
             setattr(self, f"_{key}", product_series)
 
+        # active_traces: set of traces used by all learning rules that
+        # were specified.
+        # active_traces_per_dependency: dict with dependencies as keys and
+        # the set of all traces appearing with them in the specified
+        # learning rules as values
         (
             self._active_traces,
             self._active_traces_per_dependency,
@@ -241,12 +255,12 @@ class LoihiLearningRule(LearningRule):
 
     @property
     def decimate_exponent(self) -> ty.Optional[int]:
-        """Get the decimate exponent of this LearningRule.
+        """Get the decimate exponent of this LoihiLearningRule.
 
         Returns
         ----------
         decimate_exponent : int, optional
-            Decimate exponent of this LearningRule.
+            Decimate exponent of this LoihiLearningRule.
         """
         return self._decimate_exponent
 
@@ -267,7 +281,7 @@ class LoihiLearningRule(LearningRule):
     @property
     def active_traces_per_dependency(self) -> ty.Dict[str, ty.Set[str]]:
         """Get the dict of active traces per dependency associated with
-        this LearningRule.
+        all ProductSeries of this LoihiLearningRule.
 
         Returns
         ----------
@@ -278,7 +292,8 @@ class LoihiLearningRule(LearningRule):
 
     @property
     def active_traces(self) -> ty.Set[str]:
-        """Get the set of all active traces in this LearningRule.
+        """Get the set of all active traces in all ProductSeries of
+        this LoihiLearningRule.
 
         Returns
         ----------
@@ -297,7 +312,7 @@ class LoihiLearningRule(LearningRule):
         Parameters
         ----------
         active_str_learning_rules : dict
-            dictionary containing active learning rules
+            Dictionary containing active learning rules
         """
         if len(active_str_learning_rules) == 0:
             raise ValueError(
@@ -317,7 +332,7 @@ class LoihiLearningRule(LearningRule):
         Parameters
         ----------
         active_str_learning_rules : dict
-            dictionary containing active learning rules
+            Dictionary containing active learning rules
 
         Returns
         -------
@@ -346,7 +361,7 @@ class LoihiLearningRule(LearningRule):
 
     @staticmethod
     def _validate_impulse(impulse: float) -> float:
-        """Validate that an impulse value is allowed.
+        """Validate that an impulse value is allowed (non-negative).
 
         Parameters
         ----------
@@ -367,7 +382,7 @@ class LoihiLearningRule(LearningRule):
 
     @staticmethod
     def _validate_tau(tau: int) -> int:
-        """Validate that a decay time constant is allowed.
+        """Validate that a decay time constant is allowed (non-negative).
 
         Parameters
         ----------
@@ -386,7 +401,7 @@ class LoihiLearningRule(LearningRule):
 
     @staticmethod
     def _validate_t_epoch(t_epoch: int) -> int:
-        """Validate that a learning epoch length is allowed.
+        """Validate that a learning epoch length is allowed (non-negative).
 
         Parameters
         ----------
@@ -484,38 +499,35 @@ class LoihiLearningRule(LearningRule):
 class Loihi1LearningRule(LoihiLearningRule):
     """Encapsulation of learning-related information according to: Loihi1
 
-    A LearningRule object has the following main objectives:
-    (1) Given string representations of learning rules (equations)
-        describing dynamics of the three synaptic variables
-        (weight, delay, tag), generate adequate ProductSeries
-        representations and store them.
+    A Loihi1LearningRule object has the following main objectives:
+    (1) Given string representations of learning rules (equations) describing
+    dynamics of the three synaptic variables (weight, delay, tag),
+    generate adequate ProductSeries representations and store them.
 
     (2) Store other learning-related information such as:
-        impulse values by which to update traces upon spikes,
-        time constants by which to decay traces over time,
-        the length of the learning epoch,
-        the set of dependencies used by all specified learning rules and
-        the set of traces used by all specified learning rules.
+    impulse values by which to update traces upon spikes;
+    time constants by which to decay traces over time;
+    the length of the learning epoch;
+    a dict with dependencies as keys and the set of all traces appearing
+    with them in the specified learning rules as values;
+    the set of traces used by all specified learning rules.
 
     From the user's perspective, a LearningRule object is to be used as
     follows:
+    (1) Instantiate a Loihi1LearningRule object with
+    learning rules given in string format for all three synaptic variables
+    (dw, dd, dt), as well as trace configuration parameters (impulse, decay)
+    for all available traces (x1, x2, y1, y2, y3), and the
+    learning epoch length.
 
-    (1) Instantiate a LearningRule object with learning rules given in
-        string format for all three synaptic variables (dw, dd, dt), as
-        well as trace configuration parameters (impulse, decay) for all
-        available traces (x1, x2, y1, y2, y3), and the learning epoch
-        length.
-
-    (2) The LearningRule object encapsulating learning-related information
-        is then passed to the LearningConn Process as instantiation
-        argument.
+    (2) The Loihi1LearningRule object encapsulating learning-related information
+    is then passed to the Dense Process as instantiation argument.
 
     (3) It will internally be used by ProcessModels to derive the
-        operations to be executed in the learning phase (Py and Nc).
+    operations to be executed in the learning phase (Py and Nc).
 
     Parameters
     ----------
-
     dw: str
         ProductSeries representation of synaptic weight learning rule.
     dd: str
@@ -544,7 +556,6 @@ class Loihi1LearningRule(LoihiLearningRule):
         Time constant by which y3 trace decays exponentially over time.
     t_epoch: int
         Duration of learning epoch.
-
     """
     def __init__(
         self,
@@ -563,12 +574,12 @@ class Loihi1LearningRule(LoihiLearningRule):
         y3_tau: int = 0,
         t_epoch: int = 1,
     ) -> None:
-
+        # extract and validate y2 and y3 trace impulse and tau
         self._y2_impulse = self._validate_impulse(y2_impulse)
         self._y3_impulse = self._validate_impulse(y3_impulse)
-
         self._y2_tau = self._validate_tau(y2_tau)
         self._y3_tau = self._validate_tau(y3_tau)
+
         super().__init__(
             dw=dw,
             dd=dd,

@@ -13,18 +13,18 @@ from lava.magma.core.learning.constants import *
 
 class AbstractLearningRuleApplier:
     """The LearningRuleApplier is a Python-specific representation of learning
-    rules. It is associated with a ProductSeries
+    rules. It is associated with a ProductSeries.
 
     LearningRuleApplier implementations have to define an apply method, which
     tells how the learning rule represented by the associated ProductSeries,
-    given states of Dependencies and Factors pass as arguments.
+    given states of Dependencies and Factors passed as arguments, is to be
+    evaluated.
 
     Parameters
     ----------
     product_series: ProductSeries
         ProductSeries associated with this LearningRuleApplier.
     """
-
     def __init__(self, product_series: ProductSeries) -> None:
         self._product_series = product_series
 
@@ -68,27 +68,39 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
         applier_str: str
             String representation associated to this LearningRuleFloatApplier.
         """
+        # initialize empty applier_str for the ProductSeries
         applier_str = ""
 
+        # for each Product in the ProductSeries
         for product in self._product_series.products:
+            # initialize empty applier_sub_str for the Product
             applier_sub_str = ""
 
+            # derive scaling factor string representation
             sf_str = f"({product.s_mantissa}) * 2 ** (({product.s_exp}) - 7)"
+            # derive dependency string representation
             dep_str = f"{product.dependency}"
 
+            # append sf_str and dep_str to applier_sub_str
             applier_sub_str = applier_sub_str + sf_str + " * " + dep_str + " * "
 
+            # for each Factor in the Product
             for factor in product.factors:
+                # derive factor string representation
                 factor_str = self._extract_factor_str(
                     factor, product.dependency
                 )
 
+                # append factor_str to applier_sub_str
                 applier_sub_str = applier_sub_str + factor_str + " * "
 
+            # remove dangling " * " at the end of applier_sub_str
             applier_sub_str = applier_sub_str[:-3]
 
+            # append applier_sub_str to applier_str
             applier_str = applier_str + applier_sub_str + " + "
 
+        # remove dangling " * " at the end of applier_str
         applier_str = applier_str[:-3]
 
         return applier_str
@@ -103,10 +115,12 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
         factor_str: str
             LearningRuleFloatApplier-string representation of the Factor.
         """
+        # if factor is a C Factor, return "{factor.const}"
         if factor.state_var == "C":
             factor_str = f"({factor.const})"
             return factor_str
 
+        # if factor is a Trace Factor
         if factor.state_var in str_symbols.TRACES:
             factor_str = "traces"
 
@@ -128,6 +142,7 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
             elif factor.state_var == str_symbols.Y3:
                 factor_str += "[4]"
 
+        # if factor is a Synaptic Variable Factor
         elif factor.state_var in str_symbols.SYNAPTIC_VARIABLES:
             factor_str = str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
                 factor.state_var
@@ -136,9 +151,11 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
         else:
             raise Exception("Unknown Factor in LearningRuleFloatApplier.")
 
+        # if factor has a constant, add " + {factor.const}" to factor_str
         if factor.has_const():
             factor_str = f"({factor_str} + ({factor.const}))"
 
+        # if factor is a sign Factor, wrap factor_str in np.sign() call
         if factor.is_sgn:
             factor_str = f"np.sign({factor_str})"
 
@@ -167,8 +184,9 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
         result: np.ndarray
             Values of the synaptic variable after learning rule application.
         """
-
         self.eval_func.symtable = applier_args
+
+        # e.g: result = w + evaluation(dw)
         result = init_accumulator + self.eval_func(self._applier_str)
 
         return result
@@ -208,14 +226,14 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
         factor_val : ndarray
             Computed value for the given dependency and Factor.
         """
-
+        # get constant of factor if it is not None, otherwise set it to 0
         const = factor.const if factor.has_const() else 0
 
-        # Handle factor of type Dependency
+        # handle factor of type Dependency
         if factor.state_var in str_symbols.DEPENDENCIES:
             return applier_args[factor.state_var] + const
 
-        # Handle factor of type Trace
+        # handle factor of type Trace
         if factor.state_var in str_symbols.TRACES:
             return (
                 applier_args[f"{factor.state_var[0]}_traces"][
@@ -224,7 +242,7 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
                 + const
             )
 
-        # Handle factor of type Synaptic variable
+        # handle factor of type Synaptic variable
         if (
             factor.state_var in str_symbols.SYNAPTIC_VARIABLES
             and not factor.is_sgn
@@ -235,7 +253,7 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
             return applier_args[attr_name] + const
 
-        # Handle factor of type Sign of Synaptic Variable
+        # handle factor of type Sign of Synaptic Variable
         if factor.state_var in str_symbols.SYNAPTIC_VARIABLES and factor.is_sgn:
             attr_name = str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
                 factor.state_var
@@ -243,7 +261,7 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
             return np.sign(applier_args[attr_name] + const)
 
-        # Handle factor of type Constant
+        # handle factor of type Constant
         if factor.state_var == str_symbols.C:
             return const
 
@@ -270,51 +288,67 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
             Shifted values of the synaptic variable after learning rule
             application.
         """
+        # result: addition accumulator, initialize to left-shifted values of
+        # synaptic variable before learning rule application
+        # bit width: 15b
         result = init_accumulator
 
+        # for each Product in ProductSeries
         for product in self._product_series.products:
             # if not applier_args[product.dependency]:
             #     continue
 
-            # MAC
+            # initialize multiplication accumulator (MAC)
             current_result = np.ones(applier_args["shape"], dtype=np.int32)
 
-            # Handle dependency factor
+            # multiply MAC with dependency state variable from applier_args
             current_result *= applier_args[product.dependency]
 
+            # sum of factor bit widths
             factor_width_sum = 0
 
-            # Handle factors
+            # for each Factor in Product
             for factor in product.factors:
+                # add factor bit width to sum of factor bit widths
                 factor_width = FACTOR_TO_WIDTH_DICT[factor.state_var]  # BITS
                 factor_width_sum += factor_width
 
-                # get value of factor
+                # get value of factor from applier_args
                 factor_val = self._compute_factor(
                     product.dependency, factor, applier_args
                 )
 
+                # saturate value of factor (after constant addition)
                 factor_val = saturate(
                     -(2**factor_width), factor_val, 2**factor_width - 1
                 )
 
+                # multiply MAC with value of factor
                 current_result *= factor_val.astype(np.int32)
 
+            # add bit width of mantissa of scaling factor to
+            # sum of factor bit widths
             factor_width_sum += W_S_MANT
-            # Handle scaling factor
+
+            # multiply MAC with mantissa of scaling factor
             current_result *= product.s_mantissa
 
+            # right-shift MAC back to 15b, in order to avoid overflows from
+            # all the multiplications
             shift = np.maximum(0, factor_width_sum - W_ACCUMULATOR_U)
             current_result = np.right_shift(current_result, shift)
 
+            # TODO (GK) : put this before right_shift (?)
             current_result = np.left_shift(current_result, product.s_exp)
+
+            # saturate current_result
             current_result = saturate(
                 -(2 ** W_ACCUMULATOR_U) - 1,
                 current_result,
                 2 ** W_ACCUMULATOR_U - 1,
             )
 
-            # Accumulate result
+            # accumulate and saturate result
             result = result + current_result
             result = saturate(
                 -(2 ** W_ACCUMULATOR_U) - 1, result, 2 ** W_ACCUMULATOR_U - 1

@@ -1,17 +1,6 @@
-# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
-#
-# Copyright © 2021-2022 Intel Corporation.
-#
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 
 import unittest
 import numpy as np
@@ -21,6 +10,7 @@ from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 
 class TestTraceRandom(unittest.TestCase):
     def test_init(self) -> None:
+        """Tests creating a valid TraceRandom object."""
         trace_random = TraceRandom()
 
         self.assertIsInstance(trace_random, TraceRandom)
@@ -28,6 +18,7 @@ class TestTraceRandom(unittest.TestCase):
         self.assertEqual(trace_random.random_impulse_addition.dtype, int)
 
     def test_advance(self) -> None:
+        """Tests advance on TraceRandom object."""
         trace_random = TraceRandom()
 
         random_trace_decay_old = trace_random.random_trace_decay
@@ -43,12 +34,14 @@ class TestTraceRandom(unittest.TestCase):
 
 class TestConnVarRandom(unittest.TestCase):
     def test_init(self) -> None:
+        """Tests creating a valid ConnVarRandom object."""
         conn_var_random = ConnVarRandom()
 
         self.assertIsInstance(conn_var_random, ConnVarRandom)
         self.assertEqual(conn_var_random.random_stochastic_round.dtype, float)
 
     def test_advance(self) -> None:
+        """Tests advance on ConnVarRandom object."""
         conn_var_random = ConnVarRandom()
 
         random_random_stochastic_round_old = \

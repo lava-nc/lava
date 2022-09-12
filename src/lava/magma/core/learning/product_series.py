@@ -24,14 +24,14 @@ from lava.magma.core.learning.symbolic_equation import (
 
 
 class Factor:
-    """Factor representation of a single factor found in a Product
+    """Factor representation of a single factor found in a Product.
 
     A Factor is a custom data structure holding information on:
-    (1) State variable used by this Factor
-    (2) An optional constant added to the state variable
+    (1) State variable used by this Factor.
+    (2) An optional constant added to the state variable.
     (3) Flag specifying if this Factor is a sgn() factor.
 
-    Attributes
+    Parameters
     ----------
     state_var: str
         State variable involved in this Factor.
@@ -39,8 +39,6 @@ class Factor:
         Constant involved in this Factor.
     is_sgn: bool
         Flag specifying if this Factor involves the sgn() function.
-    factor_type: str
-        Factor type string.
     """
 
     def __init__(
@@ -169,27 +167,28 @@ class Product:
     """Product representation of a single product found in a ProductSeries.
 
     A Product is a custom data structure holding information on:
-    (1) Synaptic variable affected by the learning rule (destination)
-    (2) Dependency of the Product, and the decimate exponent in case the
-    dependency is uk
-    (3) Mantissa and exponent of the scaling factor associated with the Product
-    (4) List of Factors
+    (1) Synaptic variable affected by the learning rule (target).
+    (2) Dependency of the Product.
+    (3) Mantissa of the scaling factor associated with the Product.
+    (4) Exponent of the scaling factor associated with the Product.
+    (5) List of Factors.
+    (6) Decimate exponent used if the Dependency is uk.
 
-    Attributes
+    Parameters
     ----------
     target: str
         Left-hand side of learning rule equation in which the product appears.
         Either one of (dw, dd, dt).
     dependency: str
         Dependency used for this Product.
-    decimate_exponent: int, optional
-        Decimate exponent used, if dependency is uk.
     s_mantissa: int
         Mantissa of the scaling constant for this Product.
     s_exp: int
         Exponent of the scaling constant for this Product.
     factors: list
         List of Factor objects for this Product.
+    decimate_exponent: int, optional
+        Decimate exponent used, if dependency is uk.
     """
 
     def __init__(
@@ -368,13 +367,13 @@ class ProductSeries:
     """ProductSeries representation of a single learning rule.
 
     A ProductSeries is a custom data structure holding information on:
-    (1) Synaptic variable affected by the learning rule (destination)
-    (2) List of Products
-    (3) Dependencies present in the list of Products, and the decimate exponent
-    in case a uk dependency is present
-    (4) Pre, post and reward traces present in the list of Products
+    (1) Synaptic variable affected by the learning rule (target).
+    (2) Decimate exponent used in uk dependencies, if any.
+    (3) List of Products.
+    (4) Dict with dependencies as keys and the set of all traces appearing
+    with them in this ProductSeries.
 
-    Attributes
+    Parameters
     ----------
     target: str
         Left-hand side of learning rule equation. Either one of (dw, dd, dt).
@@ -382,6 +381,9 @@ class ProductSeries:
         Decimate exponent used in uk dependencies, if any.
     products: list
         List of Products.
+
+    Attributes
+    ----------
     active_traces_per_dependency: dict
         Dict mapping active traces to the set of dependencies they appear with.
     """

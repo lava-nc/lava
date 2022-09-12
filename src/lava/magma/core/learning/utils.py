@@ -3,10 +3,11 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+import typing as ty
 
 
 def saturate(min_value: int, values: np.ndarray, max_value: int) -> np.ndarray:
-    """Saturate numpy array given minimum and maximum values.
+    """Saturate ndarray given minimum and maximum values.
 
     Parameters
     ----------
@@ -25,5 +26,24 @@ def saturate(min_value: int, values: np.ndarray, max_value: int) -> np.ndarray:
     return np.maximum(min_value, np.minimum(values, max_value))
 
 
-def stochastic_round(value, random_number, probability):
-    return (value + (random_number < probability).astype(int)).astype(int)
+def stochastic_round(values: np.ndarray,
+                     random_numbers: ty.Union[int, float, np.ndarray],
+                     probabilities: np.ndarray) -> np.ndarray:
+    """Stochastically add 1 to an ndarray at location where random numbers are
+    less than given probabilities.
+
+    Parameters
+    ----------
+    values: ndarray
+        Values before stochastic rounding.
+    random_numbers: int or float or ndarray
+        Randomly generated number or ndarray of numbers.
+    probabilities: ndarray
+        Probabilities to stochastically round.
+
+    Returns
+    ----------
+    result : ndarray
+        Stochastically rounded values.
+    """
+    return (values + (random_numbers < probabilities).astype(int)).astype(int)

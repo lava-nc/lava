@@ -1,17 +1,6 @@
-# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
-#
-# Copyright © 2021-2022 Intel Corporation.
-#
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 
 import unittest
 import numpy as np
@@ -24,6 +13,7 @@ from lava.magma.core.learning.learning_rule_applier import \
 
 class TestLearningRuleFloatApplier(unittest.TestCase):
     def test_learning_rule_float_applier(self) -> None:
+        """Known value test for LearningRuleApplierFloat's apply method."""
         default_rng = np.random.default_rng(seed=0)
 
         target = "dw"
@@ -54,8 +44,6 @@ class TestLearningRuleFloatApplier(unittest.TestCase):
 
         learning_rule_applier = LearningRuleApplierFloat(product_series)
 
-        print(learning_rule_applier._applier_str)
-
         self.assertIsInstance(learning_rule_applier, LearningRuleApplierFloat)
 
         # Shape x0: (num_pre_neurons) -> (1, num_pre_neurons)
@@ -80,15 +68,15 @@ class TestLearningRuleFloatApplier(unittest.TestCase):
                       + u * np.broadcast_to(x2_u[np.newaxis, :], conn_shape)
                       + u * np.sign(w + 4))
 
-        print(learning_rule_applier.apply(w, **applier_args) - result)
-        # print(result)
-
+        # TODO (GK): Check this! asteval made learning rule evaluation with
+        #  LearningRuleApplier different than with eval()
         np.testing.assert_array_equal(
             learning_rule_applier.apply(w, **applier_args), result)
 
 
 class TestLearningRuleFixedBitApproxApplier(unittest.TestCase):
     def test_learning_rule_bit_approx_applier(self) -> None:
+        """Known value test for LearningRuleApplierBitApprox's apply method."""
         default_rng = np.random.default_rng(seed=0)
 
         target = "dw"
