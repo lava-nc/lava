@@ -3,17 +3,19 @@
 # See: https://spdx.org/licenses/
 
 from __future__ import annotations
+
 import logging
 import typing as ty
-from _collections import OrderedDict
 from dataclasses import dataclass
-from lava.magma.compiler.executable import Executable
 
-from lava.magma.core.process.interfaces import \
-    AbstractProcessMember, IdGeneratorSingleton
+from _collections import OrderedDict
+
+from lava.magma.compiler.executable import Executable
+from lava.magma.core.process.interfaces import (AbstractProcessMember,
+                                                IdGeneratorSingleton)
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.core.process.ports.ports import \
-    InPort, OutPort, RefPort, VarPort
+from lava.magma.core.process.ports.ports import (InPort, OutPort, RefPort,
+                                                 VarPort)
 from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
@@ -29,6 +31,7 @@ class ProcessPostInitCaller(type):
     call _post_init() initializer method after __init__() of any sub class
     is called.
     """
+
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
         getattr(obj, "_post_init")()
@@ -174,10 +177,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         # Setup Logging
         self.log = logging.getLogger()
-        self._log_config = proc_params.get("log_config") or LogConfig(
-            file="lava.log")
-        formatter = logging.Formatter(self._log_config.format,
-                                      datefmt=self._log_config.date_format)
+        self._log_config = proc_params.get("log_config") or LogConfig(file="lava.log")
+        formatter = logging.Formatter(
+            self._log_config.format, datefmt=self._log_config.date_format
+        )
         console_handler = logging.StreamHandler()
         console_handler.setLevel(self._log_config.level_console)
         console_handler.setFormatter(formatter)
@@ -188,7 +191,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
                 filename=self._log_config.file,
                 level=self._log_config.level,
                 format=self._log_config.format,
-                datefmt=self._log_config.date_format
+                datefmt=self._log_config.date_format,
             )
 
         # Containers for InPorts, OutPorts, RefPorts, VarPorts, Vars,
@@ -297,10 +300,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         else:
             return False
 
-    def run(self,
-            condition: AbstractRunCondition,
-            run_cfg: ty.Optional[RunConfig] = None,
-            compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
+    def run(
+        self,
+        condition: AbstractRunCondition,
+        run_cfg: ty.Optional[RunConfig] = None,
+        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
+    ):
         """Executes this and any connected Processes that form a Process
         network. If any Process has not been compiled, it is automatically
         compiled before execution.
@@ -335,23 +340,24 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """
         if not self._runtime:
             if not run_cfg:
-                raise ValueError("The Processes that are to be executed have "
-                                 "not been compiled yet. This requires that a"
-                                 "RunConfig is passed to the run() method.")
+                raise ValueError(
+                    "The Processes that are to be executed have "
+                    "not been compiled yet. This requires that a"
+                    "RunConfig is passed to the run() method."
+                )
 
             executable = self.compile(run_cfg, compile_config)
-            self._runtime = Runtime(executable,
-                                    ActorType.MultiProcessing,
-                                    loglevel=self._log_config.level)
+            self._runtime = Runtime(
+                executable, ActorType.MultiProcessing, loglevel=self._log_config.level
+            )
             executable.assign_runtime_to_all_processes(self._runtime)
             self._runtime.initialize()
 
         self._runtime.start(condition)
 
-    def compile(self,
-                run_cfg: RunConfig,
-                compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
-                ) -> Executable:
+    def compile(
+        self, run_cfg: RunConfig, compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
+    ) -> Executable:
         """Compiles this and any process connected to this process and
         returns the resulting Executable that can either be serialized or
         passed to Runtime.
@@ -364,6 +370,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             Configuration options for the Compiler and SubCompilers.
         """
         from lava.magma.compiler.compiler import Compiler
+
         compiler = Compiler(compile_config, self._log_config.level)
         return compiler.compile(self, run_cfg)
 
@@ -397,7 +404,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     @property
     def model(self) -> "AbstractProcessModel":
-        """ Return model """
+        """Return model"""
         return self._model
 
     @model.setter
@@ -406,7 +413,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     @property
     def model_class(self) -> ty.Type["AbstractProcessModel"]:
-        """ Return model class """
+        """Return model class"""
         return self._model_class
 
     @property
@@ -427,6 +434,7 @@ class ProcessParameters:
     initial_parameters : Dict[str, Any]
         Initial dictionary of parameters for a Process/ProcessModel.
     """
+
     def __init__(self, initial_parameters: ty.Dict[str, ty.Any]) -> None:
         self._parameters = initial_parameters
 
@@ -456,6 +464,7 @@ class ProcessParameters:
 @dataclass
 class LogConfig:
     """Configuration options for logging that can be passed into a Process."""
+
     file: str = ""
     level: int = logging.WARNING
     level_console: int = logging.ERROR
@@ -465,8 +474,9 @@ class LogConfig:
 
     def __post_init__(self) -> None:
         if self.logs_to_file and self.file == "":
-            raise ValueError("Please provide a file name to log to when "
-                             "setting logs_to_file=True.")
+            raise ValueError(
+                "Please provide a file name to log to when " "setting logs_to_file=True."
+            )
 
 
 class ProcessServer(IdGeneratorSingleton):
@@ -518,9 +528,9 @@ class Collection:
     name : str
         Name of the Collection
     """
+
     # Abbreviation for type annotation in Collection class
-    mem_type = ty.Union[
-        InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"]
+    mem_type = ty.Union[InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"]
 
     def __init__(self, process: AbstractProcess, name: str) -> None:
         """Creates a new Collection."""

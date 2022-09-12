@@ -3,13 +3,14 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from lava.magma.core.model.py.ports import PyRefPort, PyInPort
-from lava.proc.monitor.process import Monitor
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.type import LavaPyType
+
 from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.ports import PyInPort, PyRefPort
+from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.proc.monitor.process import Monitor
 
 
 @implements(proc=Monitor, protocol=LoihiProtocol)
@@ -19,12 +20,9 @@ class PyMonitorModel(PyLoihiProcessModel):
     This process model contains prototypical Ports and Vars to have
     one-to-one correspondes with Monitor process.
     """
-    var_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                        float,
-                                        precision=24)
-    out_read_0: np.ndarray = LavaPyType(np.ndarray,
-                                        float,
-                                        precision=24)
+
+    var_read_0: np.ndarray = LavaPyType(np.ndarray, float, precision=24)
+    out_read_0: np.ndarray = LavaPyType(np.ndarray, float, precision=24)
     ref_port_0: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
     in_port_0: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
@@ -43,8 +41,9 @@ class PyMonitorModel(PyLoihiProcessModel):
         for i in range(self.proc_params["n_ref_ports"]):
             ref_port_name = self.proc_params["RefPorts"][i]
             var_read_name = self.proc_params["VarsData1"][i]
-            getattr(self, var_read_name)[self.time_step - 1, ...] = \
-                np.squeeze(np.array(getattr(self, ref_port_name).read()))
+            getattr(self, var_read_name)[self.time_step - 1, ...] = np.squeeze(
+                np.array(getattr(self, ref_port_name).read())
+            )
 
     def run_spk(self):
         """
@@ -57,5 +56,6 @@ class PyMonitorModel(PyLoihiProcessModel):
         for i in range(self.proc_params["n_in_ports"]):
             in_port_name = self.proc_params["InPorts"][i]
             out_read_name = self.proc_params["VarsData2"][i]
-            getattr(self, out_read_name)[self.time_step - 1, ...] = \
-                np.squeeze(np.array(getattr(self, in_port_name).recv()))
+            getattr(self, out_read_name)[self.time_step - 1, ...] = np.squeeze(
+                np.array(getattr(self, in_port_name).recv())
+            )

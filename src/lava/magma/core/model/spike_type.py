@@ -7,6 +7,7 @@ from enum import IntEnum
 
 class SpikeType(IntEnum):
     """Types of Spike Encoding"""
+
     BINARY_SPIKE = 1
     LONG_SPIKE = 2
     GRADED8_SPIKE = 3

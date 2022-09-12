@@ -16,8 +16,10 @@ try:
     from lava.magma.runtime.runtime_services.nxsdk_runtime_service import \
         NxSdkRuntimeService
 except ImportError:
+
     class NxSdkRuntimeService:
         pass
+
 
 Proc_Function_With_Guard = namedtuple("Proc_Function_With_Guard", "guard func")
 
@@ -111,9 +113,9 @@ class LoihiProtocol(AbstractSyncProtocol):
             `host_guard()` -> None
 
     """
+
     # The phases of Loihi protocol
-    phases = [Phase.SPK, Phase.PRE_MGMT,
-              Phase.LRN, Phase.POST_MGMT, Phase.HOST]
+    phases = [Phase.SPK, Phase.PRE_MGMT, Phase.LRN, Phase.POST_MGMT, Phase.HOST]
     # Methods that processes implementing protocol may provide
     proc_functions = [
         Proc_Function_With_Guard("pre_guard", "run_pre_mgmt"),
@@ -127,8 +129,10 @@ class LoihiProtocol(AbstractSyncProtocol):
     @property
     def runtime_service(self):
         """Return RuntimeService."""
-        return {CPU: LoihiPyRuntimeService,
-                LMT: NxSdkRuntimeService,
-                NeuroCore: NxSdkRuntimeService,
-                Loihi1NeuroCore: NxSdkRuntimeService,
-                Loihi2NeuroCore: NxSdkRuntimeService}
+        return {
+            CPU: LoihiPyRuntimeService,
+            LMT: NxSdkRuntimeService,
+            NeuroCore: NxSdkRuntimeService,
+            Loihi1NeuroCore: NxSdkRuntimeService,
+            Loihi2NeuroCore: NxSdkRuntimeService,
+        }

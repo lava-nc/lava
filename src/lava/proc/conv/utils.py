@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from enum import IntEnum, unique
 from typing import Tuple, Union
+
 import numpy as np
 from scipy import signal
-from enum import IntEnum, unique
 
 try:
     import torch
     import torch.nn.functional as F
+
     TORCH_IS_AVAILABLE = True
 except ModuleNotFoundError:
     TORCH_IS_AVAILABLE = False
@@ -25,6 +27,7 @@ class TensorOrder(IntEnum):
         W: width of an image
         C: number of channels of an image
     """
+
     NCHW = 1  # default order in PyTorch
     CHWN = 2
     HWCN = 3  # default order in TensorFlow
@@ -55,14 +58,10 @@ def make_tuple(value: Union[int, Tuple[int, ...]]) -> Tuple[int, int]:
     elif len(value) == 2:
         return value[0], value[1]
     else:
-        raise ValueError(
-            f"Expected 'value' to be two dimensional."
-            f"Got: value = {value}."
-        )
+        raise ValueError(f"Expected 'value' to be two dimensional." f"Got: value = {value}.")
 
 
-def signed_clamp(x: Union[int, float, np.ndarray],
-                 bits: int) -> Union[int, float, np.ndarray]:
+def signed_clamp(x: Union[int, float, np.ndarray], bits: int) -> Union[int, float, np.ndarray]:
     """clamps as if input is a signed value within the precision of bits.
 
     Parameters
@@ -81,12 +80,14 @@ def signed_clamp(x: Union[int, float, np.ndarray],
     return (x + base // 2) % base - base // 2  # signed value clamping
 
 
-def output_shape(input_shape: Tuple[int, int, int],
-                 out_channels: int,
-                 kernel_size: Tuple[int, int],
-                 stride: Tuple[int, int],
-                 padding: Tuple[int, int],
-                 dilation: Tuple[int, int]) -> Tuple[int, int, int]:
+def output_shape(
+    input_shape: Tuple[int, int, int],
+    out_channels: int,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+) -> Tuple[int, int, int]:
     """Calculates the output shape of convolution operation.
 
     Parameters
@@ -117,53 +118,49 @@ def output_shape(input_shape: Tuple[int, int, int],
         for invalid y convolution dimension.
     """
     x_out = np.floor(
-        (
-            input_shape[0] + 2 * padding[0]
-            - dilation[0] * (kernel_size[0] - 1) - 1
-        ) / stride[0] + 1
+        (input_shape[0] + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0] + 1
     ).astype(int)
     y_out = np.floor(
-        (
-            input_shape[1] + 2 * padding[1]
-            - dilation[1] * (kernel_size[1] - 1) - 1
-        ) / stride[1] + 1
+        (input_shape[1] + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[1] + 1
     ).astype(int)
 
     if x_out < 1:
-        print(f'{input_shape=}')
-        print(f'{out_channels=}')
-        print(f'{kernel_size=}')
-        print(f'{stride=}')
-        print(f'{padding=}')
-        print(f'{dilation=}')
+        print(f"{input_shape=}")
+        print(f"{out_channels=}")
+        print(f"{kernel_size=}")
+        print(f"{stride=}")
+        print(f"{padding=}")
+        print(f"{dilation=}")
         print(x_out, y_out, out_channels)
         raise Exception(
-            f'Found output x dimension (={x_out}) to be less than 1.'
-            f'Check your convolution sizes.'
+            f"Found output x dimension (={x_out}) to be less than 1."
+            f"Check your convolution sizes."
         )
     if y_out < 1:
-        print(f'{input_shape=}')
-        print(f'{out_channels=}')
-        print(f'{kernel_size=}')
-        print(f'{stride=}')
-        print(f'{padding=}')
-        print(f'{dilation=}')
+        print(f"{input_shape=}")
+        print(f"{out_channels=}")
+        print(f"{kernel_size=}")
+        print(f"{stride=}")
+        print(f"{padding=}")
+        print(f"{dilation=}")
         print(x_out, y_out, out_channels)
         raise Exception(
-            f'Found output y dimension (={y_out}) to be less than 1.'
-            f'Check your convolution sizes.'
+            f"Found output y dimension (={y_out}) to be less than 1."
+            f"Check your convolution sizes."
         )
 
     return x_out, y_out, out_channels
 
 
-def conv(input: np.ndarray,
-         weight: np.ndarray,
-         kernel_size: Tuple[int, int],
-         stride: Tuple[int, int],
-         padding: Tuple[int, int],
-         dilation: Tuple[int, int],
-         groups: int) -> np.ndarray:
+def conv(
+    input: np.ndarray,
+    weight: np.ndarray,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+    groups: int,
+) -> np.ndarray:
     """Convolution implementation
 
     Parameters
@@ -190,38 +187,45 @@ def conv(input: np.ndarray,
     """
     if TORCH_IS_AVAILABLE:
         # with torch.no_grad():  # this seems to cause problems
-        output = F.conv2d(
-            torch.unsqueeze(  # torch expects a batch dimension NCHW
-                torch.FloatTensor(input.transpose([2, 1, 0])),
-                dim=0,
-            ),
-            torch.FloatTensor(
-                # torch actually does correlation
-                # so flipping the spatial dimension of weight
-                # copy() is needed because
-                # torch cannot handle negative stride
-                weight[:, ::-1, ::-1].transpose([0, 3, 2, 1]).copy()
-            ),
-            stride=stride[::-1].tolist(),
-            padding=padding[::-1].tolist(),
-            dilation=dilation[::-1].tolist(),
-            groups=groups
-        )[0].cpu().data.numpy().transpose([2, 1, 0])
-    else:
-        output = conv_scipy(
-            input, weight, kernel_size, stride, padding, dilation, groups
+        output = (
+            F.conv2d(
+                torch.unsqueeze(  # torch expects a batch dimension NCHW
+                    torch.FloatTensor(input.transpose([2, 1, 0])),
+                    dim=0,
+                ),
+                torch.FloatTensor(
+                    # torch actually does correlation
+                    # so flipping the spatial dimension of weight
+                    # copy() is needed because
+                    # torch cannot handle negative stride
+                    weight[:, ::-1, ::-1]
+                    .transpose([0, 3, 2, 1])
+                    .copy()
+                ),
+                stride=stride[::-1].tolist(),
+                padding=padding[::-1].tolist(),
+                dilation=dilation[::-1].tolist(),
+                groups=groups,
+            )[0]
+            .cpu()
+            .data.numpy()
+            .transpose([2, 1, 0])
         )
+    else:
+        output = conv_scipy(input, weight, kernel_size, stride, padding, dilation, groups)
 
     return output.astype(weight.dtype)
 
 
-def conv_scipy(input: np.ndarray,
-               weight: np.ndarray,
-               kernel_size: Tuple[int, int],
-               stride: Tuple[int, int],
-               padding: Tuple[int, int],
-               dilation: Tuple[int, int],
-               groups: int) -> np.ndarray:
+def conv_scipy(
+    input: np.ndarray,
+    weight: np.ndarray,
+    kernel_size: Tuple[int, int],
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+    groups: int,
+) -> np.ndarray:
     """Scipy based implementation of convolution
 
     Parameters
@@ -248,35 +252,34 @@ def conv_scipy(input: np.ndarray,
     """
     input_shape = input.shape
     output = np.zeros(
-        output_shape(
-            input_shape, weight.shape[0],
-            kernel_size, stride, padding, dilation
-        )
+        output_shape(input_shape, weight.shape[0], kernel_size, stride, padding, dilation)
     )
 
-    dilated_weight = np.zeros([
-        weight.shape[0],
-        dilation[0] * (kernel_size[0] - 1) + 1,
-        dilation[1] * (kernel_size[1] - 1) + 1,
-        weight.shape[-1]
-    ])
-    dilated_weight[:, ::dilation[0], ::dilation[1], :] = weight
+    dilated_weight = np.zeros(
+        [
+            weight.shape[0],
+            dilation[0] * (kernel_size[0] - 1) + 1,
+            dilation[1] * (kernel_size[1] - 1) + 1,
+            weight.shape[-1],
+        ]
+    )
+    dilated_weight[:, :: dilation[0], :: dilation[1], :] = weight
 
     input_padded = np.pad(
         input,
         ((padding[0], padding[0]), (padding[1], padding[1]), (0, 0)),
-        mode='constant',
+        mode="constant",
     )
 
     if input.shape[-1] % groups != 0:
         raise Exception(
-            f'Expected number of in_channels to be divisible by group.'
-            f'Found {weight.shape[3] = } and {groups = }.'
+            f"Expected number of in_channels to be divisible by group."
+            f"Found {weight.shape[3] = } and {groups = }."
         )
     if output.shape[-1] % groups != 0:
         raise Exception(
-            f'Expected number of out_channels to be divisible by group.'
-            f'Found {weight.shape[0] = } and {groups = }.'
+            f"Expected number of out_channels to be divisible by group."
+            f"Found {weight.shape[0] = } and {groups = }."
         )
 
     k_grp = output.shape[2] // groups
@@ -287,22 +290,22 @@ def conv_scipy(input: np.ndarray,
                 temp = signal.convolve2d(
                     input_padded[:, :, c + g * c_grp],
                     dilated_weight[k + g * k_grp, :, :, c],
-                    mode='valid'
+                    mode="valid",
                 )
-                output[:, :, k + g * k_grp] += temp[::stride[0], ::stride[1]]
+                output[:, :, k + g * k_grp] += temp[:: stride[0], :: stride[1]]
     return output
 
 
-def conv_to_sparse(input_shape: Tuple[int, int, int],
-                   output_shape: Tuple[int, int, int],
-                   kernel: np.ndarray,
-                   stride: Tuple[int, int],
-                   padding: Tuple[int, int],
-                   dilation: Tuple[int, int],
-                   group: int,
-                   order: TensorOrder = TensorOrder.NWHC) -> Tuple[np.ndarray,
-                                                                   np.ndarray,
-                                                                   np.ndarray]:
+def conv_to_sparse(
+    input_shape: Tuple[int, int, int],
+    output_shape: Tuple[int, int, int],
+    kernel: np.ndarray,
+    stride: Tuple[int, int],
+    padding: Tuple[int, int],
+    dilation: Tuple[int, int],
+    group: int,
+    order: TensorOrder = TensorOrder.NWHC,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Translate convolution kernel into sparse matrix.
 
     Parameters
@@ -379,6 +382,7 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
 
         def dst_id(x: int, y: int, c: int):
             return x * size_yout * size_cout + y * size_cout + c
+
     elif order == TensorOrder.NCHW:  # default order in PyTorch
         size_cin, size_yin, size_xin = input_shape
         size_cout, size_yout, size_xout = output_shape
@@ -392,6 +396,7 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
 
         def dst_id(x: int, y: int, c: int):
             return c * size_yout * size_xout + y * size_xout + x
+
         # Convert Tensor order from NCHW to NWHC
         # + flip the spatial dimension because PyTorch actually
         #   does correlation
@@ -409,6 +414,7 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
 
         def dst_id(x: int, y: int, c: int):
             return c * size_yout * size_xout + y * size_xout + x
+
     elif order == TensorOrder.HWCN:  # default order in TensorFlow
         size_yin, size_xin, size_cin = input_shape
         size_yout, size_xout, size_cout = output_shape
@@ -422,6 +428,7 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
 
         def dst_id(x: int, y: int, c: int):
             return y * size_xout * size_cout + x * size_yout + c
+
         # Convert Tensor order from HWCN to NWHC
         # + flip the spatial dimension because Tensorflow actually
         #   does correlation
@@ -443,11 +450,15 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
     for grp in np.arange(group):
         # assuming size_cout and size_cin are absolutely divisible by group
         if size_cin % group != 0:
-            raise AssertionError('size_cin must be absolutely divisible by '
-                                 f'group. Found {size_cin=} and {group=}')
+            raise AssertionError(
+                "size_cin must be absolutely divisible by "
+                f"group. Found {size_cin=} and {group=}"
+            )
         if size_cout % group != 0:
-            raise AssertionError('size_cout must be absolutely divisible '
-                                 f'by group. Found {size_cout=} and {group=}')
+            raise AssertionError(
+                "size_cout must be absolutely divisible "
+                f"by group. Found {size_cout=} and {group=}"
+            )
 
         # The strategy here is to connect all the neurons in a spatial location
         # to it's inputs
@@ -472,9 +483,12 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
                     num_src = size_cin // group
                     c_src = np.arange(num_src) + grp * (num_src)
                     src = src_id(xx[i], yy[i], c_src)
-                    weight = kernel[c_dst,
-                                    conv_x - int(dx[i] / dilation_x) - 1,
-                                    conv_y - int(dy[i] / dilation_y) - 1, :]
+                    weight = kernel[
+                        c_dst,
+                        conv_x - int(dx[i] / dilation_x) - 1,
+                        conv_y - int(dy[i] / dilation_y) - 1,
+                        :,
+                    ]
 
                     ss, dd = np.meshgrid(src, dst)
 

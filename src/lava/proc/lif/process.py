@@ -2,31 +2,43 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 import typing as ty
 
+import numpy as np
+
+from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 class AbstractLIF(AbstractProcess):
     """Abstract class for variables common to all neurons with leaky
     integrator dynamics."""
-    def __init__(self,
-                 *,
-                 shape: ty.Tuple[int, ...],
-                 u: ty.Union[float, list, np.ndarray],
-                 v: ty.Union[float, list, np.ndarray],
-                 du: float,
-                 dv: float,
-                 bias_mant: ty.Union[float, list, np.ndarray],
-                 bias_exp: ty.Union[float, list, np.ndarray],
-                 name: str,
-                 log_config: LogConfig) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant, bias_exp=bias_exp, name=name,
-                         log_config=log_config)
+
+    def __init__(
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u: ty.Union[float, list, np.ndarray],
+        v: ty.Union[float, list, np.ndarray],
+        du: float,
+        dv: float,
+        bias_mant: ty.Union[float, list, np.ndarray],
+        bias_exp: ty.Union[float, list, np.ndarray],
+        name: str,
+        log_config: LogConfig,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            name=name,
+            log_config=log_config,
+        )
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
@@ -77,23 +89,32 @@ class LIF(AbstractLIF):
     This will create 200x15 LIF neurons that all have the same current decay
     of 10 and voltage decay of 5.
     """
+
     def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            du: ty.Optional[float] = 0,
-            dv: ty.Optional[float] = 0,
-            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10,
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant,
-                         bias_exp=bias_exp, name=name,
-                         log_config=log_config)
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        du: ty.Optional[float] = 0,
+        dv: ty.Optional[float] = 0,
+        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        vth: ty.Optional[float] = 10,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            name=name,
+            log_config=log_config,
+        )
 
         self.vth = Var(shape=(1,), init=vth)
 
@@ -142,27 +163,40 @@ class TernaryLIF(AbstractLIF):
     lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron for
     documentation on rest of the parameters.
     """
-    def __init__(self,
-                 *,
-                 shape: ty.Tuple[int, ...],
-                 u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-                 v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-                 du: ty.Optional[float] = 0,
-                 dv: ty.Optional[float] = 0,
-                 bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-                 bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-                 vth_hi: ty.Optional[float] = 10,
-                 vth_lo: ty.Optional[float] = -10,
-                 name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant, bias_exp=bias_exp, name=name,
-                         log_config=log_config)
+
+    def __init__(
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        du: ty.Optional[float] = 0,
+        dv: ty.Optional[float] = 0,
+        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        vth_hi: ty.Optional[float] = 10,
+        vth_lo: ty.Optional[float] = -10,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            name=name,
+            log_config=log_config,
+        )
 
         if np.isscalar(vth_lo) and np.isscalar(vth_hi) and vth_lo > vth_hi:
-            raise ValueError(f"The lower threshold (vth_lo) must be"
-                             f"smaller than the higher threshold (vth_hi)."
-                             f"Got vth_lo={vth_lo}, vth_hi={vth_hi}.")
+            raise ValueError(
+                f"The lower threshold (vth_lo) must be"
+                f"smaller than the higher threshold (vth_hi)."
+                f"Got vth_lo={vth_lo}, vth_hi={vth_hi}."
+            )
         self.vth_hi = Var(shape=(1,), init=vth_hi)
         self.vth_lo = Var(shape=(1,), init=vth_lo)
 
@@ -201,27 +235,35 @@ class LIFReset(LIF):
     lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron for
     documentation on rest of the behavior between reset intervals.
     """
+
     def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            du: ty.Optional[float] = 0,
-            dv: ty.Optional[float] = 0,
-            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10,
-            reset_interval: ty.Optional[int] = 1,
-            reset_offset: ty.Optional[int] = 0,
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant,
-                         bias_exp=bias_exp,
-                         vth=vth,
-                         name=name,
-                         log_config=log_config)
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        du: ty.Optional[float] = 0,
+        dv: ty.Optional[float] = 0,
+        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        vth: ty.Optional[float] = 10,
+        reset_interval: ty.Optional[int] = 1,
+        reset_offset: ty.Optional[int] = 0,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            vth=vth,
+            name=name,
+            log_config=log_config,
+        )
         if reset_interval < 1:
             raise ValueError("Reset interval must be > 0.")
         if reset_offset < 0:

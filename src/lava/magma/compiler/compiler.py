@@ -7,8 +7,9 @@ import logging
 import typing as ty
 from collections import OrderedDict, defaultdict
 
-import lava.magma.compiler.var_model as var_model
 import numpy as np
+
+import lava.magma.compiler.var_model as var_model
 from lava.magma.compiler.builders.interfaces import (AbstractChannelBuilder,
                                                      AbstractProcessBuilder)
 
@@ -21,6 +22,7 @@ try:
     from lava.magma.core.model.c.model import AbstractCProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
 except ImportError:
+
     class CProcessBuilder(AbstractProcessBuilder):
         pass
 
@@ -40,6 +42,7 @@ except ImportError:
 
     class AbstractNcProcessModel:
         pass
+
 
 from lava.magma.compiler.builders.channel_builder import (
     RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
@@ -62,7 +65,7 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import (CPU, LMT, Loihi1NeuroCore,
                                        Loihi2NeuroCore, NeuroCore)
-from lava.magma.core.run_configs import RunConfig, AbstractLoihiHWRunCfg
+from lava.magma.core.run_configs import AbstractLoihiHWRunCfg, RunConfig
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
@@ -101,9 +104,7 @@ class Compiler:
         self.log.addHandler(logging.StreamHandler())
         self.log.setLevel(loglevel)
 
-    def compile(
-        self, process: AbstractProcess, run_cfg: RunConfig
-    ) -> Executable:
+    def compile(self, process: AbstractProcess, run_cfg: RunConfig) -> Executable:
         """Compiles all Processes connected to the given Process and the
         channels defined by their connectivity.
 
@@ -129,12 +130,8 @@ class Compiler:
         proc_group_digraph = ProcGroupDiGraphs(process, run_cfg)
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
         channel_map = ChannelMap.from_proc_groups(proc_groups)
-        proc_builders, channel_map = self._compile_proc_groups(
-            proc_groups, channel_map
-        )
-        py_builders, c_builders, nc_builders = split_proc_builders_by_type(
-            proc_builders
-        )
+        proc_builders, channel_map = self._compile_proc_groups(proc_groups, channel_map)
+        py_builders, c_builders, nc_builders = split_proc_builders_by_type(proc_builders)
 
         node_configs = self._create_node_cfgs(proc_groups)
         sync_domains, node_to_sync_domain_dict = self._create_sync_domains(
@@ -155,9 +152,7 @@ class Compiler:
         channel_builders = ChannelBuildersFactory().from_channel_map(
             channel_map, compile_config=self._compile_config
         )
-        sync_channel_builders = self._create_sync_channel_builders(
-            runtime_service_builders
-        )
+        sync_channel_builders = self._create_sync_channel_builders(runtime_service_builders)
 
         # Package all Builders and NodeConfigs into an Executable.
         executable = Executable(
@@ -181,10 +176,7 @@ class Compiler:
 
     def _compile_proc_groups(
         self, proc_groups: ty.List[ProcGroup], channel_map: ChannelMap
-    ) -> ty.Tuple[
-        ty.Dict[AbstractProcess, AbstractProcessBuilder],
-        ty.Dict[PortPair, Payload],
-    ]:
+    ) -> ty.Tuple[ty.Dict[AbstractProcess, AbstractProcessBuilder], ty.Dict[PortPair, Payload],]:
         """Compiles all Processes within all given ProcGroups with the
         respective SubCompiler they require.
 
@@ -215,9 +207,7 @@ class Compiler:
         for proc_group in proc_groups:
             # Create a mapping from SubCompiler class to a list of Processes
             # that must be compiled with that SubCompiler.
-            subcompiler_to_procs = self._map_subcompiler_type_to_procs(
-                proc_group
-            )
+            subcompiler_to_procs = self._map_subcompiler_type_to_procs(proc_group)
 
             # Create all the SubCompiler instances required for this
             # ProcGroup and append them to the list of all SubCompilers.
@@ -231,9 +221,7 @@ class Compiler:
         subcompilers = list(itertools.chain.from_iterable(subcompilers))
 
         # Extract Builders from SubCompilers.
-        proc_builders, channel_map = self._extract_proc_builders(
-            subcompilers, channel_map
-        )
+        proc_builders, channel_map = self._extract_proc_builders(subcompilers, channel_map)
 
         return proc_builders, channel_map
 
@@ -270,17 +258,14 @@ class Compiler:
                 comp_to_procs.setdefault(NcProcCompiler, []).append(proc)
             else:
                 raise NotImplementedError(
-                    "No subcompiler exists for the given ProcessModel of "
-                    f"type {model_cls}"
+                    "No subcompiler exists for the given ProcessModel of " f"type {model_cls}"
                 )
 
         return comp_to_procs
 
     def _create_subcompilers(
         self,
-        compiler_type_to_procs: ty.Dict[
-            ty.Type[AbstractSubCompiler], ty.List[AbstractProcess]
-        ],
+        compiler_type_to_procs: ty.Dict[ty.Type[AbstractSubCompiler], ty.List[AbstractProcess]],
     ) -> ty.List[AbstractSubCompiler]:
         """Creates all SubCompiler instances that are required for the given
         mapping from SubCompiler to its Processes.
@@ -303,8 +288,7 @@ class Compiler:
         c_idx = []
         nc_idx = []
         # Go through all required subcompiler classes...
-        for idx, (subcompiler_class, procs) in \
-                enumerate(compiler_type_to_procs.items()):
+        for idx, (subcompiler_class, procs) in enumerate(compiler_type_to_procs.items()):
             # ...create the subcompiler instance...
             compiler = subcompiler_class(procs, self._compile_config)
             # ...and add it to the list.
@@ -324,14 +308,15 @@ class Compiler:
         # `self._map_subcompiler_type_to_procs`.
         # 1. Confirm that there is only one instance of C and Nc subcompilers
         if len(c_idx) > 1 or len(nc_idx) > 1:
-            raise AssertionError("More than one instance of C or Nc "
-                                 "subcompiler detected.")
+            raise AssertionError("More than one instance of C or Nc " "subcompiler detected.")
         # 2. If the index of C subcompiler is larger (appears later in the
         # list), then swap it with Nc subcompiler.
         if len(c_idx) > 0 and len(nc_idx) > 0:
             if c_idx[0] > nc_idx[0]:
-                subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = subcompilers[
-                    nc_idx[0]], subcompilers[c_idx[0]]
+                subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = (
+                    subcompilers[nc_idx[0]],
+                    subcompilers[c_idx[0]],
+                )
         # We have ensured that C subcompiler appears before Nc subcompiler in
         # the list we return. As compile() is called serially on each
         # subcompiler, C Processes will be compiled before Nc Processes
@@ -399,9 +384,7 @@ class Compiler:
                 proc_builders.update(builders)
         return proc_builders, channel_map
 
-    def _create_node_cfgs(
-        self, proc_groups: ty.List[ProcGroup]
-    ) -> ty.List[NodeConfig]:
+    def _create_node_cfgs(self, proc_groups: ty.List[ProcGroup]) -> ty.List[NodeConfig]:
         """Creates and returns a list of NodeConfigs from the
         AbstractResource requirements of all process's ProcessModels where
         each NodeConfig is a set of Nodes that satisfies the resource
@@ -490,17 +473,15 @@ class Compiler:
         # if so add hardcoded Node for OheoGulch
         node_tracker = {}
         for proc in procs:
-            if issubclass(
-                proc.model_class, AbstractNcProcessModel
-            ) or issubclass(proc.model_class, AbstractCProcessModel):
+            if issubclass(proc.model_class, AbstractNcProcessModel) or issubclass(
+                proc.model_class, AbstractCProcessModel
+            ):
                 self.log.debug("LOIHI_GEN: " + str(loihi_gen.upper()))
                 if loihi_gen.upper() == resources.OheoGulch.__name__.upper():
                     if resources.OheoGulch not in node_tracker:
-                        node = Node(
-                            node_type=resources.OheoGulch, processes=[])
+                        node = Node(node_type=resources.OheoGulch, processes=[])
                         self.log.debug(
-                            "OheoGulch Node Added to NodeConfig: "
-                            + str(node.node_type)
+                            "OheoGulch Node Added to NodeConfig: " + str(node.node_type)
                         )
                         node_tracker[resources.OheoGulch] = node
                     else:
@@ -509,10 +490,7 @@ class Compiler:
                 elif loihi_gen.upper() == resources.Nahuku.__name__.upper():
                     if resources.Nahuku not in node_tracker:
                         node = Node(node_type=resources.Nahuku, processes=[])
-                        self.log.debug(
-                            "Nahuku Node Added to NodeConfig: "
-                            + str(node.node_type)
-                        )
+                        self.log.debug("Nahuku Node Added to NodeConfig: " + str(node.node_type))
                         node_tracker[resources.Nahuku] = node
                     else:
                         node = node_tracker[resources.Nahuku]
@@ -629,9 +607,7 @@ class Compiler:
                 sd.add_process(p)
                 proc_to_domain_map[p] = sd
 
-        node_to_sync_domain_dict: ty.Dict[
-            Node, ty.Set[SyncDomain]
-        ] = defaultdict(set)
+        node_to_sync_domain_dict: ty.Dict[Node, ty.Set[SyncDomain]] = defaultdict(set)
         for node_cfg in node_cfgs:
             for node in node_cfg:
                 log.debug("Node: " + str(node.node_type.__name__))
@@ -648,10 +624,8 @@ class Compiler:
         nc_builders: ty.Dict[AbstractProcess, NcProcessBuilder],
         c_builders: ty.Dict[AbstractProcess, CProcessBuilder],
         run_cfg: RunConfig,
-        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
-    ) -> ty.Tuple[
-        ty.Dict[SyncDomain, RuntimeServiceBuilder], ty.Dict[int, int]
-    ]:
+        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
+    ) -> ty.Tuple[ty.Dict[SyncDomain, RuntimeServiceBuilder], ty.Dict[int, int]]:
         rs_builders: ty.Dict[SyncDomain, RuntimeServiceBuilder] = {}
         proc_id_to_runtime_service_id_map: ty.Dict[int, int] = {}
         rs_id: int = 0
@@ -669,39 +643,27 @@ class Compiler:
                 node_resource_types = node.node_type.resources
                 if log.level == logging.DEBUG:
                     for resource in node_resource_types:
-                        log.debug(
-                            "node.node_type.resources: " + resource.__name__
-                        )
+                        log.debug("node.node_type.resources: " + resource.__name__)
 
                 if NeuroCore in node_resource_types:
                     rs_class = sync_domain.protocol.runtime_service[NeuroCore]
                 elif LMT in node_resource_types:
                     rs_class = sync_domain.protocol.runtime_service[LMT]
                 elif Loihi1NeuroCore in node_resource_types:
-                    log.debug(
-                        "sync_domain.protocol. "
-                        + "runtime_service[Loihi1NeuroCore]"
-                    )
-                    rs_class = sync_domain.protocol.runtime_service[
-                        Loihi1NeuroCore
-                    ]
+                    log.debug("sync_domain.protocol. " + "runtime_service[Loihi1NeuroCore]")
+                    rs_class = sync_domain.protocol.runtime_service[Loihi1NeuroCore]
                     loihi_version: LoihiVersion = LoihiVersion.N2
                 elif Loihi2NeuroCore in node_resource_types:
-                    log.debug(
-                        "sync_domain.protocol. "
-                        + "runtime_service[Loihi2NeuroCore]"
-                    )
-                    rs_class = sync_domain.protocol.runtime_service[
-                        Loihi2NeuroCore
-                    ]
+                    log.debug("sync_domain.protocol. " + "runtime_service[Loihi2NeuroCore]")
+                    rs_class = sync_domain.protocol.runtime_service[Loihi2NeuroCore]
                 else:
                     rs_class = sync_domain.protocol.runtime_service[CPU]
                 log.debug("RuntimeService Class: " + str(rs_class.__name__))
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
                 rs_kwargs = {
-                    "c_builders" : list(c_builders.values()),
-                    "nc_builders" : list(nc_builders.values())
+                    "c_builders": list(c_builders.values()),
+                    "nc_builders": list(nc_builders.values()),
                 }
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
                     rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
@@ -714,7 +676,7 @@ class Compiler:
                     model_ids,
                     loihi_version,
                     log.level,
-                    **rs_kwargs
+                    **rs_kwargs,
                 )
                 rs_builders[sync_domain] = rs_builder
                 for p in sync_domain.processes:
@@ -740,9 +702,7 @@ class Compiler:
                 ChannelType.PyPy,
                 Runtime,
                 rsb[sync_domain],
-                self._create_mgmt_port_initializer(
-                    f"runtime_to_service_" f"{sync_domain.name}"
-                ),
+                self._create_mgmt_port_initializer(f"runtime_to_service_" f"{sync_domain.name}"),
             )
             sync_channel_builders.append(runtime_to_service)
 
@@ -750,9 +710,7 @@ class Compiler:
                 ChannelType.PyPy,
                 rsb[sync_domain],
                 Runtime,
-                self._create_mgmt_port_initializer(
-                    f"service_to_runtime_" f"{sync_domain.name}"
-                ),
+                self._create_mgmt_port_initializer(f"service_to_runtime_" f"{sync_domain.name}"),
             )
             sync_channel_builders.append(service_to_runtime)
 
@@ -762,9 +720,7 @@ class Compiler:
                         ChannelType.PyPy,
                         rsb[sync_domain],
                         process,
-                        self._create_mgmt_port_initializer(
-                            f"service_to_process_" f"{process.id}"
-                        ),
+                        self._create_mgmt_port_initializer(f"service_to_process_" f"{process.id}"),
                     )
                     sync_channel_builders.append(service_to_process)
 
@@ -772,9 +728,7 @@ class Compiler:
                         ChannelType.PyPy,
                         process,
                         rsb[sync_domain],
-                        self._create_mgmt_port_initializer(
-                            f"process_to_service_" f"{process.id}"
-                        ),
+                        self._create_mgmt_port_initializer(f"process_to_service_" f"{process.id}"),
                     )
                     sync_channel_builders.append(process_to_service)
         return sync_channel_builders

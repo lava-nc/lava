@@ -10,6 +10,7 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import \
 
 class MessageInfrastructureFactory:
     """Creates the message infrastructure instance based on type"""
+
     @staticmethod
     def create(factory_type: ActorType):
         """type of actor framework being chosen"""

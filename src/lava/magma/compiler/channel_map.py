@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 from lava.magma.compiler.compiler_graphs import ProcGroup
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.core.process.ports.ports import AbstractPort
-from lava.magma.core.process.ports.ports import AbstractSrcPort, AbstractDstPort
+from lava.magma.core.process.ports.ports import (AbstractDstPort, AbstractPort,
+                                                 AbstractSrcPort)
 
 
 @dataclass(eq=True, frozen=True)
@@ -37,9 +37,7 @@ class ChannelMap(dict):
         self._initializers_lookup = dict()
         self._lmt_allocation_dict: ty.Dict[int, int] = defaultdict(lambda: -1)
 
-    def __setitem__(
-        self, key: PortPair, value: Payload, dict_setitem=dict.__setitem__
-    ):
+    def __setitem__(self, key: PortPair, value: Payload, dict_setitem=dict.__setitem__):
         self._validate_item(key, value)
         dict_setitem(self, key, value)
 
@@ -47,13 +45,11 @@ class ChannelMap(dict):
     def _validate_item(key: PortPair, value: Payload) -> None:
         if not isinstance(key, PortPair):
             raise TypeError(
-                f"Key of ChannelMap should be of type PortPair, "
-                f"got type {type(key)}."
+                f"Key of ChannelMap should be of type PortPair, " f"got type {type(key)}."
             )
         if not isinstance(value, Payload):
             raise TypeError(
-                f"Value of ChannelMap should be of type Payload, "
-                f"got type {type(value)}."
+                f"Value of ChannelMap should be of type Payload, " f"got type {type(value)}."
             )
 
     @property
@@ -94,9 +90,7 @@ class ChannelMap(dict):
         processes = list(itertools.chain.from_iterable(proc_groups))
         port_pairs = []
         for src_process in processes:
-            src_ports = (
-                src_process.out_ports.members + src_process.ref_ports.members
-            )
+            src_ports = src_process.out_ports.members + src_process.ref_ports.members
             for src_port in src_ports:
                 dst_ports = src_port.get_dst_ports()
                 for dst_port in dst_ports:
@@ -109,13 +103,9 @@ class ChannelMap(dict):
         dst_process = dst_port.process
         return True if dst_process in processes else False
 
-    def set_port_initializer(
-        self, port: AbstractPort, port_initializer: PortInitializer
-    ):
+    def set_port_initializer(self, port: AbstractPort, port_initializer: PortInitializer):
         if port in self._initializers_lookup.keys():
-            raise AssertionError(
-                "An initializer for this port has already " "been assigned."
-            )
+            raise AssertionError("An initializer for this port has already " "been assigned.")
         self._initializers_lookup[port] = port_initializer
 
     def get_port_initializer(self, port):

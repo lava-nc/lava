@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import abstractmethod
-
 from collections import OrderedDict
 
 from lava.magma.core.model.model import AbstractProcessModel

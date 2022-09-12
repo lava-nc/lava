@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
-    NcVirtualAddress
+from lava.magma.compiler.subcompilers.address import (NcLogicalAddress,
+                                                      NcVirtualAddress)
 from lava.magma.compiler.var_model import LoihiVarModel
 from lava.magma.core.model.spike_type import SpikeType
 
@@ -49,6 +49,7 @@ class LoihiVarInitializer(VarInitializer):
 @dataclass
 class LoihiPortInitializer(PortInitializer, Mappable):
     """This address needs to be defined based on var model"""
+
     var_model: ty.Optional[LoihiVarModel] = None
 
     def get_logical(self) -> ty.List[NcLogicalAddress]:
@@ -58,9 +59,10 @@ class LoihiPortInitializer(PortInitializer, Mappable):
         -------
         Returns logical address of the port initializer.
         """
-        return [NcLogicalAddress(chip_id=addr.logical_chip_id,
-                                 core_id=addr.logical_core_id) for addr in
-                self.var_model.address]
+        return [
+            NcLogicalAddress(chip_id=addr.logical_chip_id, core_id=addr.logical_core_id)
+            for addr in self.var_model.address
+        ]
 
     def set_virtual(self, addrs: ty.List[NcVirtualAddress]):
         """
@@ -74,9 +76,11 @@ class LoihiPortInitializer(PortInitializer, Mappable):
 
         """
         if len(addrs) != len(self.var_model.address):
-            raise ValueError("Length of list of address provided doesn't "
-                             "match size of the address list of the port "
-                             "initializer.")
+            raise ValueError(
+                "Length of list of address provided doesn't "
+                "match size of the address list of the port "
+                "initializer."
+            )
         for idx, addr in enumerate(addrs):
             self.var_model.address[idx].physical_chip_id = addr.chip_id
             self.var_model.address[idx].physical_core_id = addr.core_id
@@ -84,6 +88,7 @@ class LoihiPortInitializer(PortInitializer, Mappable):
 
 class LoihiConnectedPortType(IntEnum):
     """Types of port connectivity; direction does not matter"""
+
     # Denotes port is associated with C/NC Process
     C_NC = 1
     # Denotes port is associated with C/C Process
@@ -94,6 +99,7 @@ class LoihiConnectedPortType(IntEnum):
 
 class LoihiConnectedPortEncodingType(IntEnum):
     """Encoding type of the connected port - Required in case of C_PY"""
+
     # Denotes data fmt is VEC_DENSE
     VEC_DENSE = 1
     # Denotes data fmt is SEQ_DENSE
@@ -107,15 +113,16 @@ class LoihiConnectedPortEncodingType(IntEnum):
 @dataclass
 class LoihiIOPortInitializer(LoihiPortInitializer):
     """Port Initializer for a I/O Port for C/NC Models"""
+
     connected_port_type: ty.Optional[LoihiConnectedPortType] = None
-    connected_port_encoding_type: ty.Optional[LoihiConnectedPortEncodingType] \
-        = None
+    connected_port_encoding_type: ty.Optional[LoihiConnectedPortEncodingType] = None
     spike_type: ty.Optional[SpikeType] = None
 
 
 @dataclass
 class LoihiInPortInitializer(LoihiIOPortInitializer):
     """Port Initializer for a InPort for C/NC Models"""
+
     pass
 
 
@@ -128,6 +135,7 @@ class LoihiCInPortInitializer(LoihiIOPortInitializer):
 @dataclass
 class LoihiOutPortInitializer(LoihiIOPortInitializer):
     """Port Initializer for a OutPort for C/NC Models"""
+
     pass
 
 

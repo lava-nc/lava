@@ -3,30 +3,31 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
+
 import numpy as np
 
+from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
-
 from lava.proc.conv import utils
 
 
 class Conv(AbstractProcess):
     def __init__(
-            self,
-            *,
-            weight: np.ndarray,
-            weight_exp: ty.Optional[int] = 0,
-            input_shape: ty.Optional[ty.Tuple[int, int, int]] = (1, 1, 1),
-            padding: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 0,
-            stride: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 1,
-            dilation: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 1,
-            groups: ty.Optional[int] = 1,
-            num_weight_bits: ty.Optional[int] = 8,
-            num_message_bits: ty.Optional[int] = 0,
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None) -> None:
+        self,
+        *,
+        weight: np.ndarray,
+        weight_exp: ty.Optional[int] = 0,
+        input_shape: ty.Optional[ty.Tuple[int, int, int]] = (1, 1, 1),
+        padding: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 0,
+        stride: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 1,
+        dilation: ty.Optional[ty.Union[int, ty.Tuple[int, int]]] = 1,
+        groups: ty.Optional[int] = 1,
+        num_weight_bits: ty.Optional[int] = 8,
+        num_message_bits: ty.Optional[int] = 0,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
         """Connection Process that mimics a convolution of the incoming
         events/spikes with a kernel of synaptic weights.
 
@@ -70,17 +71,19 @@ class Conv(AbstractProcess):
         H) if they are supplied as a tuple.
         """
 
-        super().__init__(weight=weight,
-                         weight_exp=weight_exp,
-                         input_shape=input_shape,
-                         padding=padding,
-                         stride=stride,
-                         dilation=dilation,
-                         groups=groups,
-                         num_weight_bits=num_weight_bits,
-                         num_message_bits=num_message_bits,
-                         name=name,
-                         log_config=log_config)
+        super().__init__(
+            weight=weight,
+            weight_exp=weight_exp,
+            input_shape=input_shape,
+            padding=padding,
+            stride=stride,
+            dilation=dilation,
+            groups=groups,
+            num_weight_bits=num_weight_bits,
+            num_message_bits=num_message_bits,
+            name=name,
+            log_config=log_config,
+        )
 
         self._validate_input_shape(input_shape)
         self._validate_groups(groups)
@@ -116,30 +119,22 @@ class Conv(AbstractProcess):
     @staticmethod
     def _validate_input_shape(input_shape: ty.Tuple[int, int, int]) -> None:
         if len(input_shape) != 3:
-            raise ValueError(
-                f'Expected input shape to be 3 dimensional.'
-                f'Found {input_shape}.'
-            )
+            raise ValueError(f"Expected input shape to be 3 dimensional." f"Found {input_shape}.")
 
     @staticmethod
     def _validate_groups(groups: int) -> None:
         if not np.isscalar(groups):
-            raise ValueError(
-                f'Expected groups to be a scalar.'
-                f'found {groups = }.'
-            )
+            raise ValueError(f"Expected groups to be a scalar." f"found {groups = }.")
 
     @staticmethod
-    def _validate_channels(in_channels: int,
-                           out_channels: int,
-                           groups: int) -> None:
+    def _validate_channels(in_channels: int, out_channels: int, groups: int) -> None:
         if in_channels % groups != 0:
             raise ValueError(
-                f'Expected number of in_channels to be divisible by groups.'
-                f'Found {in_channels = } and {groups = }.'
+                f"Expected number of in_channels to be divisible by groups."
+                f"Found {in_channels = } and {groups = }."
             )
         if out_channels % groups != 0:
             raise ValueError(
-                f'Expected number of out_channels to be divisible by groups.'
-                f'Found {out_channels = } and {groups = }.'
+                f"Expected number of out_channels to be divisible by groups."
+                f"Found {out_channels = } and {groups = }."
             )

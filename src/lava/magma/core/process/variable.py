@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import typing as ty
+
 import numpy as np
 
-from lava.magma.core.process.interfaces import \
-    AbstractProcessMember, IdGeneratorSingleton
+from lava.magma.core.process.interfaces import (AbstractProcessMember,
+                                                IdGeneratorSingleton)
 
 
 class Var(AbstractProcessMember):
@@ -40,10 +41,11 @@ class Var(AbstractProcessMember):
     """
 
     def __init__(
-            self,
-            shape: ty.Tuple[int, ...],
-            init: ty.Union[bool, float, list, tuple, np.ndarray] = 0,
-            shareable: bool = True):
+        self,
+        shape: ty.Tuple[int, ...],
+        init: ty.Union[bool, float, list, tuple, np.ndarray] = 0,
+        shareable: bool = True,
+    ):
         """Initializes a new Lava variable.
 
         Parameters:
@@ -68,10 +70,10 @@ class Var(AbstractProcessMember):
         return self._model
 
     @model.setter
-    def model(self, val: 'AbstractVarModel'):
+    def model(self, val: "AbstractVarModel"):
         self._model = val
 
-    def alias(self, other_var: 'Var'):
+    def alias(self, other_var: "Var"):
         """Establishes an 'alias' relationship between this and 'other_var'.
         The other Var must be a member of a strict sub processes of this
         Var's parent process which might be instantiated within a
@@ -88,11 +90,11 @@ class Var(AbstractProcessMember):
         if not isinstance(other_var, Var):
             raise AssertionError("'other_var' must be a Var instance.")
         if self.shape != other_var.shape:
-            raise AssertionError("Shapes of this and 'other_var' must "
-                                 "be the same.")
+            raise AssertionError("Shapes of this and 'other_var' must " "be the same.")
         if self.shareable != other_var.shareable:
-            raise AssertionError("'shareable' attribute of this and "
-                                 "'other_var' must be the same.")
+            raise AssertionError(
+                "'shareable' attribute of this and " "'other_var' must be the same."
+            )
 
         # Establish 'alias' relationship
         self.aliased_var = other_var
@@ -116,7 +118,8 @@ class Var(AbstractProcessMember):
                     f"must be a member of a process that is a strict sub "
                     f"process of the aliasing Var's '{self.name}' in process "
                     f"'{self.process.name}::{self.process.__class__.__name__}'"
-                    f".")
+                    f"."
+                )
 
     def set(self, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
@@ -128,8 +131,8 @@ class Var(AbstractProcessMember):
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
-                    "No Runtime available yet. Cannot set new 'Var' without "
-                    "Runtime.")
+                    "No Runtime available yet. Cannot set new 'Var' without " "Runtime."
+                )
 
     def get(self, idx: np.ndarray = None) -> np.ndarray:
         """Gets and returns value of Var. If this Var aliases another Var,

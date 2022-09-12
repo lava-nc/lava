@@ -39,18 +39,14 @@ class ConcatIndexError(Exception):
     bounds."""
 
     def __init__(self, shape: ty.Tuple[int], axis: int):
-        msg = (
-            "Axis {} is out of bounds for given shape {}.".format(axis, shape)
-        )
+        msg = "Axis {} is out of bounds for given shape {}.".format(axis, shape)
         super().__init__(self, msg)
 
 
 class TransposeShapeError(Exception):
     """Raised when transpose axes is incompatible with old shape dimension."""
 
-    def __init__(
-        self, old_shape: ty.Tuple, axes: ty.Union[ty.Tuple, ty.List]
-    ) -> None:
+    def __init__(self, old_shape: ty.Tuple, axes: ty.Union[ty.Tuple, ty.List]) -> None:
         msg = (
             "Cannot transpose 'old_shape'={} with permutation 'axes={}. "
             "Total number of dimensions must not change during "
@@ -64,10 +60,7 @@ class TransposeIndexError(Exception):
     shape dimension."""
 
     def __init__(
-        self,
-        old_shape: ty.Tuple,
-        axes: ty.Union[ty.Tuple, ty.List],
-        wrong_index
+        self, old_shape: ty.Tuple, axes: ty.Union[ty.Tuple, ty.List], wrong_index
     ) -> None:
         msg = (
             f"Cannot transpose 'old_shape'={old_shape} with permutation"
@@ -81,8 +74,5 @@ class VarNotSharableError(Exception):
     non-sharable Var."""
 
     def __init__(self, var_name: str):
-        msg = (
-            "Var '{}' is not shareable. Cannot connect RefPort or "
-            "VarPort.".format(var_name)
-        )
+        msg = "Var '{}' is not shareable. Cannot connect RefPort or " "VarPort.".format(var_name)
         super().__init__(msg)

@@ -2,26 +2,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 import typing as ty
 from enum import Enum, unique
+
+import numpy as np
 
 
 @unique
 class SignMode(Enum):
-    """Enumeration of sign mode of weights.
-    """
+    """Enumeration of sign mode of weights."""
+
     NULL = 0
     MIXED = 1
     EXCITATORY = 2
     INHIBITORY = 3
 
 
-def optimize_weight_bits(weight: np.ndarray,
-                         loihi2: bool = False) -> ty.Tuple[np.ndarray,
-                                                           int,
-                                                           int,
-                                                           SignMode]:
+def optimize_weight_bits(
+    weight: np.ndarray, loihi2: bool = False
+) -> ty.Tuple[np.ndarray, int, int, SignMode]:
     """Optimizes the weight matrix to best fit in Loihi's synapse.
 
     Parameters
@@ -69,9 +68,7 @@ def optimize_weight_bits(weight: np.ndarray,
     precision_found = False
     n = 8
     while (precision_found is False) and (n > 0):
-        roundingError = np.sum(
-            np.abs(weight / (2**n) - np.round(weight / (2**n)))
-        )
+        roundingError = np.sum(np.abs(weight / (2**n) - np.round(weight / (2**n))))
         if roundingError == 0:
             precision_found = True
         else:
@@ -89,9 +86,4 @@ def optimize_weight_bits(weight: np.ndarray,
         if sign_mode == SignMode.MIXED:
             weight = weight // 2
 
-    return (
-        weight.astype(int),
-        int(num_weight_bits),
-        int(weight_exponent),
-        sign_mode
-    )
+    return (weight.astype(int), int(num_weight_bits), int(weight_exponent), sign_mode)

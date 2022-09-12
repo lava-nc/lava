@@ -2,16 +2,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 from typing import Any, Dict
 
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+import numpy as np
+
+from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ActivationMode
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.proc.sdn.process import ActivationMode, Delta, Sigma, SigmaDelta
 
 
 def ReLU(x: np.ndarray) -> np.ndarray:
@@ -86,16 +87,10 @@ class AbstractDeltaModel(PyLoihiProcessModel):
 
         if self.cum_error:
             self.error += delta
-            s_out = np.where(
-                np.abs(self.error) >= self.vth,
-                delta, 0
-            )
+            s_out = np.where(np.abs(self.error) >= self.vth, delta, 0)
             self.error *= 1 - (np.abs(s_out) > 0)
         else:
-            s_out = np.where(
-                np.abs(delta) >= self.vth,
-                delta, 0
-            )
+            s_out = np.where(np.abs(delta) >= self.vth, delta, 0)
         self.residue = delta - s_out
         return s_out
 
@@ -116,7 +111,7 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
 
     def __init__(self, proc_params: Dict[str, Any]) -> None:
         super().__init__(proc_params)
-        self.act_mode = self.proc_params['act_mode']
+        self.act_mode = self.proc_params["act_mode"]
 
     def activation_dynamics(self, sigma_data: np.ndarray) -> np.ndarray:
         """Sigma Delta activation dynamics. UNIT and RELU activations are
@@ -142,9 +137,7 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
         elif self.act_mode == ActivationMode.RELU:
             act = ReLU(sigma_data + self.bias)
         else:
-            raise NotImplementedError(
-                f'Activation mode {self.act_mode} is not implemented.'
-            )
+            raise NotImplementedError(f"Activation mode {self.act_mode} is not implemented.")
         return act
 
     def dynamics(self, a_in_data: np.ndarray) -> np.ndarray:
@@ -158,9 +151,10 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
 
 @implements(proc=Sigma, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PySigmaModelFloat(AbstractSigmaModel):
-    """ Floating point implementation of Sigma decoding"""
+    """Floating point implementation of Sigma decoding"""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
     sigma: np.ndarray = LavaPyType(np.ndarray, float)
@@ -168,9 +162,10 @@ class PySigmaModelFloat(AbstractSigmaModel):
 
 @implements(proc=Sigma, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PySigmaModelFixed(AbstractSigmaModel):
-    """ Fixed point implementation of Sigma decoding"""
+    """Fixed point implementation of Sigma decoding"""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
@@ -178,9 +173,10 @@ class PySigmaModelFixed(AbstractSigmaModel):
 
 @implements(proc=Delta, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyDeltaModelFloat(AbstractDeltaModel):
     """Floating point implementation of Delta encoding."""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
@@ -204,9 +200,10 @@ class PyDeltaModelFloat(AbstractDeltaModel):
 
 @implements(proc=Delta, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PyDeltaModelFixed(AbstractDeltaModel):
     """Fixed point implementation of Delta encoding."""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
 
@@ -222,9 +219,7 @@ class PyDeltaModelFixed(AbstractDeltaModel):
 
     def run_spk(self) -> None:
         # Receive synaptic input
-        a_in_data = np.left_shift(
-            self.a_in.recv(), self.spike_exp + self.state_exp
-        )
+        a_in_data = np.left_shift(self.a_in.recv(), self.spike_exp + self.state_exp)
         s_out_scaled = self.delta_dynamics(a_in_data)
         s_out = np.right_shift(s_out_scaled, self.state_exp)
         self.act = a_in_data
@@ -233,9 +228,10 @@ class PyDeltaModelFixed(AbstractDeltaModel):
 
 @implements(proc=SigmaDelta, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PySigmaDeltaModelFloat(AbstractSigmaDeltaModel):
     """Floating point implementation of Sigma Delta neuron."""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
@@ -259,9 +255,10 @@ class PySigmaDeltaModelFloat(AbstractSigmaDeltaModel):
 
 @implements(proc=SigmaDelta, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PySigmaDeltaModelFixed(AbstractSigmaDeltaModel):
     """Fixed point implementation of Sigma Delta neuron."""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
 

@@ -26,6 +26,7 @@ class AbstractSyncProtocol:
     The phases of execution and synchronizations points are implemented in
     the specific `RuntimeService`.
     """
+
     @property
     @abstractmethod
     def runtime_service(self):

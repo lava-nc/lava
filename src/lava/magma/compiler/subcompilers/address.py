@@ -11,6 +11,7 @@ class NcLogicalAddress(ResourceAddress):
     """
     Represents Logical Id of a resource.
     """
+
     chip_id: int
     core_id: int
 
@@ -20,5 +21,6 @@ class NcVirtualAddress(ResourceAddress):
     """
     Represents Virtual Id of a resource.
     """
+
     chip_id: int
     core_id: int

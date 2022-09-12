@@ -4,30 +4,22 @@
 
 import typing as ty
 
-from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
+from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.channel_map import ChannelMap
 from lava.magma.compiler.compiler_graphs import ProcGroup
-from lava.magma.compiler.subcompilers.channel_builders_factory import (
-    ChannelBuildersFactory,
-)
-from lava.magma.compiler.subcompilers.channel_map_updater import (
-    ChannelMapUpdater,
-)
+from lava.magma.compiler.subcompilers.channel_builders_factory import \
+    ChannelBuildersFactory
+from lava.magma.compiler.subcompilers.channel_map_updater import \
+    ChannelMapUpdater
 from lava.magma.compiler.subcompilers.interfaces import SubCompiler
-from lava.magma.compiler.utils import (
-    VarInitializer,
-    VarPortInitializer,
-    PortInitializer,
-)
+from lava.magma.compiler.utils import (PortInitializer, VarInitializer,
+                                       VarPortInitializer)
 from lava.magma.compiler.var_model import PyVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import RefVarTypeMapping, PyVarPort
-from lava.magma.core.process.ports.ports import (
-    AbstractPort,
-    ImplicitVarPort,
-    VarPort,
-)
+from lava.magma.core.model.py.ports import PyVarPort, RefVarTypeMapping
+from lava.magma.core.process.ports.ports import (AbstractPort, ImplicitVarPort,
+                                                 VarPort)
 from lava.magma.core.process.process import AbstractProcess
 
 
@@ -63,44 +55,31 @@ class PyProcCompiler(SubCompiler):
         self._tmp_channel_map = None
         return builders, channel_map
 
-    def _create_builder_for_process(
-        self, process: AbstractProcess
-    ) -> PyProcessBuilder:
+    def _create_builder_for_process(self, process: AbstractProcess) -> PyProcessBuilder:
         if not issubclass(process.model_class, AbstractPyProcessModel):
             raise TypeError(
-                f"ProcessModel of Process '{process.name}' is "
-                "incompatible with PyProcCompiler."
+                f"ProcessModel of Process '{process.name}' is " "incompatible with PyProcCompiler."
             )
 
-        var_initializers = [
-            VarInitializer(v.name, v.shape, v.init, v.id) for v in process.vars
-        ]
+        var_initializers = [VarInitializer(v.name, v.shape, v.init, v.id) for v in process.vars]
         inport_initializers = self._create_inport_initializers(process)
         outport_initializers = self._create_outport_initializers(process)
         refport_initializers = self._create_refport_initializers(process)
         varport_initializers = self._create_varport_initializers(process)
 
-        process_model_cls = ty.cast(
-            ty.Type[AbstractPyProcessModel], process.model_class
-        )
-        builder = PyProcessBuilder(
-            process_model_cls, process.id, process.proc_params
-        )
+        process_model_cls = ty.cast(ty.Type[AbstractPyProcessModel], process.model_class)
+        builder = PyProcessBuilder(process_model_cls, process.id, process.proc_params)
         builder.set_variables(var_initializers)
         builder.set_py_ports(inport_initializers + outport_initializers)
         builder.set_ref_ports(refport_initializers)
         builder.set_var_ports(varport_initializers)
 
-        builder.var_id_to_var_model_map = {
-            v.id: PyVarModel(var=v) for v in process.vars
-        }
+        builder.var_id_to_var_model_map = {v.id: PyVarModel(var=v) for v in process.vars}
 
         builder.check_all_vars_and_ports_set()
         return builder
 
-    def _create_inport_initializers(
-        self, process: AbstractProcess
-    ) -> ty.List[PortInitializer]:
+    def _create_inport_initializers(self, process: AbstractProcess) -> ty.List[PortInitializer]:
         port_initializers = []
         for port in list(process.in_ports):
             pi = PortInitializer(
@@ -115,9 +94,7 @@ class PyProcCompiler(SubCompiler):
             self._tmp_channel_map.set_port_initializer(port, pi)
         return port_initializers
 
-    def _create_outport_initializers(
-        self, process: AbstractProcess
-    ) -> ty.List[PortInitializer]:
+    def _create_outport_initializers(self, process: AbstractProcess) -> ty.List[PortInitializer]:
         port_initializers = []
         for port in list(process.out_ports):
             pi = PortInitializer(
@@ -132,9 +109,7 @@ class PyProcCompiler(SubCompiler):
             self._tmp_channel_map.set_port_initializer(port, pi)
         return port_initializers
 
-    def _create_refport_initializers(
-        self, process: AbstractProcess
-    ) -> ty.List[PortInitializer]:
+    def _create_refport_initializers(self, process: AbstractProcess) -> ty.List[PortInitializer]:
         port_initializers = []
         for port in list(process.ref_ports):
             pi = PortInitializer(

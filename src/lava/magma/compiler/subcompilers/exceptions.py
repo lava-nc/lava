@@ -9,9 +9,9 @@ from lava.magma.core.resources import AbstractResource
 
 
 class ResourceMismatchError(Exception):
-    def __init__(self,
-                 process: AbstractProcess,
-                 resources: ty.List[ty.Type[AbstractResource]]) -> None:
+    def __init__(
+        self, process: AbstractProcess, resources: ty.List[ty.Type[AbstractResource]]
+    ) -> None:
         msg = (
             f"The ProcessModel '{type(process.model).__name__}' does not have"
             f"a resource requirement that the subcompiler could handle. The "

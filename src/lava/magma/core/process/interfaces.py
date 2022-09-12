@@ -3,9 +3,10 @@
 # See: https://spdx.org/licenses/
 
 from __future__ import annotations
+
+import math
 import typing as ty
 from abc import ABC, abstractmethod
-import math
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess

@@ -43,8 +43,10 @@ class SyncDomain:
         self.protocol = protocol
 
     def add_process(
-        self, process: ty.Union["AbstractProcess",  # noqa: F821
-                                ty.List["AbstractProcess"]]  # noqa: F821
+        self,
+        process: ty.Union[
+            "AbstractProcess", ty.List["AbstractProcess"]  # noqa: F821
+        ],  # noqa: F821
     ):
         process = [process]
         self.processes += process

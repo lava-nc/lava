@@ -5,26 +5,16 @@ import logging
 import typing as ty
 from abc import abstractmethod
 
-
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspSelector,
-    CspRecvPort,
-    CspSendPort
-)
+from lava.magma.compiler.channels.pypychannel import (CspRecvPort, CspSelector,
+                                                      CspSendPort)
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.mgmt_token_enums import (
-    enum_to_np,
-    enum_equal,
-    MGMT_RESPONSE,
-    MGMT_COMMAND,
-)
-
+from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
+                                                 enum_equal, enum_to_np)
 from lava.magma.runtime.runtime_services.enums import LoihiPhase
 from lava.magma.runtime.runtime_services.interfaces import \
     AbstractRuntimeService
-
 
 """The RuntimeService interface is responsible for
 coordinating the execution of a group of process models belonging to a common
@@ -55,9 +45,7 @@ class PyRuntimeService(AbstractRuntimeService):
     but used by inheritance
     """
 
-    def __init__(
-            self, protocol: ty.Type[AbstractSyncProtocol], *args, **kwargs
-    ):
+    def __init__(self, protocol: ty.Type[AbstractSyncProtocol], *args, **kwargs):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
         super(PyRuntimeService, self).__init__(protocol=protocol)
@@ -181,25 +169,15 @@ class LoihiPyRuntimeService(PyRuntimeService):
             rcv_msgs.append(ptos_recv_port.recv())
             counter += 1
         for idx, recv_msg in enumerate(rcv_msgs):
-            if enum_equal(
-                    recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_ERROR
-            ):
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_ERROR):
                 self._error = True
-            if enum_equal(
-                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PRE_LRN_MGMT
-            ):
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PRE_LRN_MGMT):
                 self.req_pre_lrn_mgmt = True
-            if enum_equal(
-                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_POST_LRN_MGMT
-            ):
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_POST_LRN_MGMT):
                 self.req_post_lrn_mgmt = True
-            if enum_equal(
-                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_LEARNING
-            ):
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_LEARNING):
                 self.req_lrn = True
-            if enum_equal(
-                    recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PAUSE
-            ):
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_PAUSE):
                 self.log.info(f"Process : {idx} has requested Pause")
                 self.req_pause = True
             if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_STOP):
@@ -249,9 +227,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.PAUSE)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED
-            ):
+            if not enum_equal(rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
@@ -261,9 +237,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-            ):
+            if not enum_equal(rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
         self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
@@ -293,7 +267,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     self._handle_pause()
                     self.paused = True
                 elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
-                        command, MGMT_COMMAND.SET_DATA
+                    command, MGMT_COMMAND.SET_DATA
                 ):
                     self._handle_get_set(phase, command)
                 else:
@@ -305,21 +279,17 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     is_last_ts = False
                     while True:
                         # Check if it is the last time step
-                        is_last_ts = enum_equal(
-                            enum_to_np(curr_time_step), command
-                        )
+                        is_last_ts = enum_equal(enum_to_np(curr_time_step), command)
                         # Advance to the next phase
                         phase = self._next_phase(is_last_ts)
                         if enum_equal(phase, MGMT_COMMAND.STOP):
                             if not self.stopping:
-                                self.service_to_runtime.send(
-                                    MGMT_RESPONSE.REQ_STOP)
+                                self.service_to_runtime.send(MGMT_RESPONSE.REQ_STOP)
                             phase = LoihiPhase.HOST
                             break
                         if enum_equal(phase, MGMT_COMMAND.PAUSE):
                             if not self.pausing:
-                                self.service_to_runtime.send(
-                                    MGMT_RESPONSE.REQ_PAUSE)
+                                self.service_to_runtime.send(MGMT_RESPONSE.REQ_PAUSE)
                             # Move to Host phase (get/set Var needs it)
                             phase = LoihiPhase.HOST
                             break
@@ -329,15 +299,11 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # Inform ProcessModels about current phase
                         self._send_pm_cmd(phase)
                         # ProcessModels respond with DONE if not HOST phase
-                        if not enum_equal(
-                                phase, LoihiPyRuntimeService.Phase.HOST
-                        ):
+                        if not enum_equal(phase, LoihiPyRuntimeService.Phase.HOST):
                             self._get_pm_resp()
                             if self._error:
                                 # Forward error to runtime
-                                self.service_to_runtime.send(
-                                    MGMT_RESPONSE.ERROR
-                                )
+                                self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                                 # stop all other pm
                                 self._send_pm_cmd(MGMT_COMMAND.STOP)
                                 return
@@ -354,9 +320,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(phase, LoihiPhase.HOST):
                             break
-                    if self.pausing or self.stopping or enum_equal(
-                            phase, MGMT_COMMAND.STOP) or enum_equal(
-                            phase, MGMT_COMMAND.PAUSE):
+                    if (
+                        self.pausing
+                        or self.stopping
+                        or enum_equal(phase, MGMT_COMMAND.STOP)
+                        or enum_equal(phase, MGMT_COMMAND.PAUSE)
+                    ):
                         continue
                     # Inform the runtime that last time step was reached
                     if is_last_ts:
@@ -428,9 +397,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-            ):
+            if not enum_equal(rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
@@ -456,28 +423,20 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 else:
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
                     for ptos_recv_port in self.process_to_service:
-                        channel_actions.append(
-                            (ptos_recv_port, lambda: "resp")
-                        )
+                        channel_actions.append((ptos_recv_port, lambda: "resp"))
             elif action == "resp":
                 resps = self._get_pm_resp()
                 done: bool = True
                 for resp in resps:
-                    if enum_equal(
-                            resp, AsyncPyRuntimeService.PMResponse.REQ_PAUSE
-                    ):
+                    if enum_equal(resp, AsyncPyRuntimeService.PMResponse.REQ_PAUSE):
                         self.req_pause = True
-                    if enum_equal(
-                            resp, AsyncPyRuntimeService.PMResponse.REQ_STOP
-                    ):
+                    if enum_equal(resp, AsyncPyRuntimeService.PMResponse.REQ_STOP):
                         self.req_stop = True
-                    if enum_equal(
-                            resp, AsyncPyRuntimeService.PMResponse.STATUS_ERROR
-                    ):
+                    if enum_equal(resp, AsyncPyRuntimeService.PMResponse.STATUS_ERROR):
                         self._error = True
-                    if not enum_equal(resp,
-                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE  # noqa: E501
-                                      ):
+                    if not enum_equal(
+                        resp, AsyncPyRuntimeService.PMResponse.STATUS_DONE  # noqa: E501
+                    ):
                         done = False
                 if done:
                     self.service_to_runtime.send(MGMT_RESPONSE.DONE)

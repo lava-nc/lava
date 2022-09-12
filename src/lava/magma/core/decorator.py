@@ -9,8 +9,10 @@ from lava.magma.core.resources import AbstractResource
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
 
-def implements(proc: ty.Optional[ty.Type[AbstractProcess]] = None,
-               protocol: ty.Optional[ty.Type[AbstractSyncProtocol]] = None):
+def implements(
+    proc: ty.Optional[ty.Type[AbstractProcess]] = None,
+    protocol: ty.Optional[ty.Type[AbstractSyncProtocol]] = None,
+):
     """Decorates ProcessModel class by adding the class of the Process and
     SyncProtocol that this ProcessModel implements as a class variable.
 
@@ -32,41 +34,43 @@ def implements(proc: ty.Optional[ty.Type[AbstractProcess]] = None,
 
     def decorate_process_model(cls: type):
         if not issubclass(cls, AbstractProcessModel):
-            raise AssertionError("Decorated class must be a \
-            subclass of 'AbstractProcessModel'.")
+            raise AssertionError(
+                "Decorated class must be a \
+            subclass of 'AbstractProcessModel'."
+            )
 
         # Check existing 'implements_process' does not get overwritten by a
         # different process
         if cls.implements_process and proc and cls.implements_process != proc:
             raise AssertionError(
                 f"ProcessModel '{cls.__name__}' already implements a "
-                f"Process (perhaps due to sub classing).")
+                f"Process (perhaps due to sub classing)."
+            )
 
         # Only set which Process the ProcessModel implements if not 'None'
         if proc:
             # Reset attribute on this class to not overwrite parent class
-            setattr(cls, 'implements_process', proc)
+            setattr(cls, "implements_process", proc)
 
         # Check existing 'implements_protocol' does not get overwritten by a
         # different protocol
-        if cls.implements_protocol and protocol and \
-                cls.implements_protocol != protocol:
+        if cls.implements_protocol and protocol and cls.implements_protocol != protocol:
             raise AssertionError(
                 f"ProcessModel '{cls.__name__}' already implements a "
-                f"SyncProtocol (perhaps due to sub classing).")
+                f"SyncProtocol (perhaps due to sub classing)."
+            )
 
         # Only set which SyncProtocol the ProcessModel implements if not 'None'
         if protocol:
             # Reset attribute on this class to not overwrite parent class
-            setattr(cls, 'implements_protocol', protocol)
+            setattr(cls, "implements_protocol", protocol)
 
         return cls
 
     return decorate_process_model
 
 
-def requires(*args: ty.Union[ty.Type[AbstractResource],
-                             ty.List[ty.Type[AbstractResource]]]):
+def requires(*args: ty.Union[ty.Type[AbstractResource], ty.List[ty.Type[AbstractResource]]]):
     """Decorator for ProcessModel classes that adds class variable to
     ProcessModel class that specifies which resources the ProcessModel
     requires.
@@ -81,24 +85,28 @@ def requires(*args: ty.Union[ty.Type[AbstractResource],
 
     for req in reqs:
         if not isinstance(req, list) and not issubclass(req, AbstractResource):
-            raise AssertionError("'requires' accepts individual or "
-                                 "lists of 'AbstractResources'.")
+            raise AssertionError(
+                "'requires' accepts individual or " "lists of 'AbstractResources'."
+            )
         if isinstance(req, list):
             for r in req:
                 if not issubclass(r, AbstractResource):
-                    raise AssertionError("Lists passed to 'require' must \
-                    contain subclasses of AbstractResource.")
+                    raise AssertionError(
+                        "Lists passed to 'require' must \
+                    contain subclasses of AbstractResource."
+                    )
 
     def decorate_process_model(cls: type):
         if not issubclass(cls, AbstractProcessModel):
-            raise AssertionError("Decorated class must be a subclass "
-                                 "of 'AbstractProcessModel'.")
+            raise AssertionError(
+                "Decorated class must be a subclass " "of 'AbstractProcessModel'."
+            )
 
         # Get requirements of parent class
         super_res = cls.required_resources.copy()
         # Set new requirements on this cls to not overwrite parent class
         # requirements
-        setattr(cls, 'required_resources', super_res + reqs)
+        setattr(cls, "required_resources", super_res + reqs)
         return cls
 
     return decorate_process_model
@@ -147,21 +155,24 @@ def tag(*args: ty.Union[str, ty.List[str]]):
         if isinstance(arg, str):
             tags.append(arg)
         else:
-            raise AssertionError("Invalid input to the 'tags' decorator. "
-                                 "Valid input should be comma-separated "
-                                 "keywords as strings")
+            raise AssertionError(
+                "Invalid input to the 'tags' decorator. "
+                "Valid input should be comma-separated "
+                "keywords as strings"
+            )
 
     def decorate_process_model(cls: type):
         if not issubclass(cls, AbstractProcessModel):
-            raise AssertionError("Decorated class must be a subclass "
-                                 "of 'AbstractProcessModel'.")
+            raise AssertionError(
+                "Decorated class must be a subclass " "of 'AbstractProcessModel'."
+            )
         # Check existing 'tags' from parent in case of sub-classing
-        if hasattr(cls, 'tags'):
+        if hasattr(cls, "tags"):
             super_tags = cls.tags.copy()
             # Add to the parent's tags
-            setattr(cls, 'tags', super_tags + tags)
+            setattr(cls, "tags", super_tags + tags)
         else:
-            setattr(cls, 'tags', tags)
+            setattr(cls, "tags", tags)
         return cls
 
     return decorate_process_model

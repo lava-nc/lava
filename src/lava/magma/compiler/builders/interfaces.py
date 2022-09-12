@@ -64,13 +64,8 @@ class AbstractProcessBuilder(AbstractBuilder):
 
     """
 
-    def __init__(
-            self,
-            proc_model: ty.Type[AbstractProcessModel],
-            model_id: int):
-        self.var_id_to_var_model_map: \
-            ty.Dict[int,
-                    ty.Type["AbstractVarModel"]] = {}
+    def __init__(self, proc_model: ty.Type[AbstractProcessModel], model_id: int):
+        self.var_id_to_var_model_map: ty.Dict[int, ty.Type["AbstractVarModel"]] = {}
         self._proc_model = proc_model
         self._model_id = model_id
 
@@ -98,15 +93,11 @@ class AbstractProcessBuilder(AbstractBuilder):
             if not hasattr(self.proc_model, m.name):
                 raise AssertionError(
                     "Both Process '{}' and ProcessModel '{}' are expected to "
-                    "have {} named '{}'.".format(
-                        proc_name, proc_model_name, m_type, m.name
-                    )
+                    "have {} named '{}'.".format(proc_name, proc_model_name, m_type, m.name)
                 )
 
     @staticmethod
-    def _check_not_assigned_yet(
-            collection: dict, keys: ty.Iterable[str], m_type: str
-    ):
+    def _check_not_assigned_yet(collection: dict, keys: ty.Iterable[str], m_type: str):
         """Checks that collection dictionary not already contain given keys
         to prevent overwriting of existing elements.
 
@@ -126,9 +117,7 @@ class AbstractProcessBuilder(AbstractBuilder):
         """
         for key in keys:
             if key in collection:
-                raise AssertionError(
-                    f"Member '{key}' already found in {m_type}."
-                )
+                raise AssertionError(f"Member '{key}' already found in {m_type}.")
 
     def set_variables(self, variables: ty.List["VarInitializer"]):
         """Appends the given list of variables to the ProcessModel. Used by the

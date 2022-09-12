@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import typing
 import typing as ty
-from collections import UserList, OrderedDict
+from collections import OrderedDict, UserList
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.resources import AbstractNode
+
 from lava.magma.compiler.var_model import AbstractVarModel
+from lava.magma.core.resources import AbstractNode
 
 
 class Node:
