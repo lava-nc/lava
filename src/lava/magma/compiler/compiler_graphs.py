@@ -36,9 +36,14 @@ except ImportError:
         pass
 
 
-from lava.magma.core.process.ports.ports import (AbstractPort,
-                                                 AbstractVirtualPort, InPort,
-                                                 OutPort, RefPort, VarPort)
+from lava.magma.core.process.ports.ports import (
+    AbstractPort,
+    AbstractVirtualPort,
+    InPort,
+    OutPort,
+    RefPort,
+    VarPort,
+)
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.run_configs import RunConfig
 

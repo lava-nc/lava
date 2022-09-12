@@ -9,14 +9,13 @@ from lava.magma.compiler.channel_map import ChannelMap
 from lava.magma.compiler.compiler_utils import split_proc_builders_by_type
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import (NcLogicalAddress,
-                                                      NcVirtualAddress)
-from lava.magma.compiler.subcompilers.constants import (NUM_VIRTUAL_CORES_L2,
-                                                        NUM_VIRTUAL_CORES_L3)
+from lava.magma.compiler.subcompilers.address import NcLogicalAddress, NcVirtualAddress
+from lava.magma.compiler.subcompilers.constants import NUM_VIRTUAL_CORES_L2, NUM_VIRTUAL_CORES_L3
 
 try:
-    from lava.magma.compiler.subcompilers.nc.neurocore.n3_logical_neurocore import \
-        N3LogicalNeuroCore
+    from lava.magma.compiler.subcompilers.nc.neurocore.n3_logical_neurocore import (
+        N3LogicalNeuroCore,
+    )
     from lava.magma.core.model.c.ports import CRefPort
 except ImportError:
 

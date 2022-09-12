@@ -10,15 +10,13 @@ from collections import OrderedDict, defaultdict
 import numpy as np
 
 import lava.magma.compiler.var_model as var_model
-from lava.magma.compiler.builders.interfaces import (AbstractChannelBuilder,
-                                                     AbstractProcessBuilder)
+from lava.magma.compiler.builders.interfaces import AbstractChannelBuilder, AbstractProcessBuilder
 
 try:
     from lava.magma.compiler.builders.c_builder import CProcessBuilder
     from lava.magma.compiler.builders.nc_builder import NcProcessBuilder
     from lava.magma.compiler.subcompilers.c.cproc_compiler import CProcCompiler
-    from lava.magma.compiler.subcompilers.nc.ncproc_compiler import \
-        NcProcCompiler
+    from lava.magma.compiler.subcompilers.nc.ncproc_compiler import NcProcCompiler
     from lava.magma.core.model.c.model import AbstractCProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
 except ImportError:
@@ -45,9 +43,10 @@ except ImportError:
 
 
 from lava.magma.compiler.builders.channel_builder import (
-    RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
-from lava.magma.compiler.builders.runtimeservice_builder import \
-    RuntimeServiceBuilder
+    RuntimeChannelBuilderMp,
+    ServiceChannelBuilderMp,
+)
+from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.compiler_graphs import ProcGroup, ProcGroupDiGraphs
@@ -55,16 +54,14 @@ from lava.magma.compiler.compiler_utils import split_proc_builders_by_type
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.mapper import Mapper
 from lava.magma.compiler.node import Node, NodeConfig
-from lava.magma.compiler.subcompilers.channel_builders_factory import \
-    ChannelBuildersFactory
+from lava.magma.compiler.subcompilers.channel_builders_factory import ChannelBuildersFactory
 from lava.magma.compiler.subcompilers.interfaces import AbstractSubCompiler
 from lava.magma.compiler.subcompilers.py.pyproc_compiler import PyProcCompiler
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.core import resources
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.resources import (CPU, LMT, Loihi1NeuroCore,
-                                       Loihi2NeuroCore, NeuroCore)
+from lava.magma.core.resources import CPU, LMT, Loihi1NeuroCore, Loihi2NeuroCore, NeuroCore
 from lava.magma.core.run_configs import AbstractLoihiHWRunCfg, RunConfig
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol

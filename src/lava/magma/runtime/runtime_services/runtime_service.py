@@ -7,14 +7,11 @@ from abc import abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import (CspRecvPort, CspSelector,
-                                                      CspSendPort)
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSelector, CspSendPort
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
-                                                 enum_equal, enum_to_np)
+from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, enum_equal, enum_to_np
 from lava.magma.runtime.runtime_services.enums import LoihiPhase
-from lava.magma.runtime.runtime_services.interfaces import \
-    AbstractRuntimeService
+from lava.magma.runtime.runtime_services.interfaces import AbstractRuntimeService
 
 """The RuntimeService interface is responsible for
 coordinating the execution of a group of process models belonging to a common

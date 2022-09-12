@@ -8,8 +8,7 @@ from abc import ABC
 from dataclasses import InitVar, dataclass
 
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import (NcLogicalAddress,
-                                                      NcVirtualAddress)
+from lava.magma.compiler.subcompilers.address import NcLogicalAddress, NcVirtualAddress
 
 if ty.TYPE_CHECKING:
     pass

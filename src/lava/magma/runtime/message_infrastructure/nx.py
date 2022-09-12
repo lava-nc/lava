@@ -6,8 +6,9 @@ import typing as ty
 
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.core.sync.domain import SyncDomain
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import \
-    MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
 
 
 class NxBoardMsgInterface(MessageInfrastructureInterface):

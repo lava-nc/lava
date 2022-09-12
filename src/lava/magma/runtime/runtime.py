@@ -14,30 +14,29 @@ import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.factory import \
-    MessageInfrastructureFactory
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import \
-    MessageInfrastructureInterface
-from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
-                                                 enum_equal, enum_to_np)
-from lava.magma.runtime.runtime_services.runtime_service import \
-    AsyncPyRuntimeService
+from lava.magma.runtime.message_infrastructure.factory import MessageInfrastructureFactory
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
+from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, enum_equal, enum_to_np
+from lava.magma.runtime.runtime_services.runtime_service import AsyncPyRuntimeService
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 
 from lava.magma.compiler.builders.channel_builder import (
-    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
+    ChannelBuilderMp,
+    RuntimeChannelBuilderMp,
+    ServiceChannelBuilderMp,
+)
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.builders.runtimeservice_builder import \
-    RuntimeServiceBuilder
+from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
 from lava.magma.compiler.channels.interfaces import Channel
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
-from lava.magma.core.run_conditions import (AbstractRunCondition,
-                                            RunContinuous, RunSteps)
+from lava.magma.core.run_conditions import AbstractRunCondition, RunContinuous, RunSteps
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in

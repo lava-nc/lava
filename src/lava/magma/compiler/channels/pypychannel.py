@@ -10,13 +10,16 @@ from time import time
 
 import numpy as np
 
-from lava.magma.compiler.channels.interfaces import (AbstractCspRecvPort,
-                                                     AbstractCspSendPort,
-                                                     Channel)
+from lava.magma.compiler.channels.interfaces import (
+    AbstractCspRecvPort,
+    AbstractCspSendPort,
+    Channel,
+)
 
 if ty.TYPE_CHECKING:
-    from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import \
-        MessageInfrastructureInterface
+    from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+        MessageInfrastructureInterface,
+    )
 
 
 @dataclass

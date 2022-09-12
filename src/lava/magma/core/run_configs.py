@@ -9,8 +9,7 @@ from abc import ABC
 from itertools import chain
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.resources import (AbstractNode, Loihi1NeuroCore,
-                                       Loihi2NeuroCore, NeuroCore)
+from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, Loihi2NeuroCore, NeuroCore
 
 try:
     from lava.magma.core.model.c.model import CLoihiProcessModel

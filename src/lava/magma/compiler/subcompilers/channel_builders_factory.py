@@ -4,12 +4,14 @@
 
 import typing as ty
 
-from lava.magma.compiler.builders.channel_builder import (ChannelBuilderMp,
-                                                          ChannelBuilderNx)
+from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp, ChannelBuilderNx
 from lava.magma.compiler.channel_map import ChannelMap, PortPair
 from lava.magma.compiler.channels.interfaces import ChannelType
-from lava.magma.compiler.utils import (LoihiConnectedPortEncodingType,
-                                       LoihiConnectedPortType, PortInitializer)
+from lava.magma.compiler.utils import (
+    LoihiConnectedPortEncodingType,
+    LoihiConnectedPortType,
+    PortInitializer,
+)
 from lava.magma.compiler.var_model import LoihiAddress
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -27,10 +29,14 @@ except ImportError:
 
 
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
-from lava.magma.core.process.ports.ports import (AbstractDstPort, AbstractPort,
-                                                 AbstractSrcPort,
-                                                 ImplicitVarPort, InPort,
-                                                 VarPort)
+from lava.magma.core.process.ports.ports import (
+    AbstractDstPort,
+    AbstractPort,
+    AbstractSrcPort,
+    ImplicitVarPort,
+    InPort,
+    VarPort,
+)
 
 
 class ChannelBuildersFactory:

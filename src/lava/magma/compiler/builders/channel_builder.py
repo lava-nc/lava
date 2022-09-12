@@ -5,14 +5,13 @@
 import typing as ty
 from dataclasses import dataclass
 
-from lava.magma.compiler.builders.interfaces import (AbstractChannelBuilder,
-                                                     AbstractProcessModel)
-from lava.magma.compiler.builders.runtimeservice_builder import \
-    RuntimeServiceBuilder
+from lava.magma.compiler.builders.interfaces import AbstractChannelBuilder, AbstractProcessModel
+from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
 from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import \
-    MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess

@@ -9,13 +9,17 @@ import numpy as np
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
-from lava.magma.compiler.utils import (PortInitializer, VarInitializer,
-                                       VarPortInitializer)
+from lava.magma.compiler.utils import PortInitializer, VarInitializer, VarPortInitializer
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import (AbstractPyIOPort,
-                                            IdentityTransformer, PyInPort,
-                                            PyOutPort, PyRefPort, PyVarPort,
-                                            VirtualPortTransformer)
+from lava.magma.core.model.py.ports import (
+    AbstractPyIOPort,
+    IdentityTransformer,
+    PyInPort,
+    PyOutPort,
+    PyRefPort,
+    PyVarPort,
+    VirtualPortTransformer,
+)
 from lava.magma.core.model.py.type import LavaPyType
 
 

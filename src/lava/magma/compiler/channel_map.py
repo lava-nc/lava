@@ -9,8 +9,7 @@ from dataclasses import dataclass
 
 from lava.magma.compiler.compiler_graphs import ProcGroup
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.core.process.ports.ports import (AbstractDstPort, AbstractPort,
-                                                 AbstractSrcPort)
+from lava.magma.core.process.ports.ports import AbstractDstPort, AbstractPort, AbstractSrcPort
 
 
 @dataclass(eq=True, frozen=True)

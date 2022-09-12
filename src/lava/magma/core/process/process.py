@@ -11,11 +11,9 @@ from dataclasses import dataclass
 from _collections import OrderedDict
 
 from lava.magma.compiler.executable import Executable
-from lava.magma.core.process.interfaces import (AbstractProcessMember,
-                                                IdGeneratorSingleton)
+from lava.magma.core.process.interfaces import AbstractProcessMember, IdGeneratorSingleton
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.core.process.ports.ports import (InPort, OutPort, RefPort,
-                                                 VarPort)
+from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, VarPort
 from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig

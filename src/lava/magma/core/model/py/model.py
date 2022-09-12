@@ -8,12 +8,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import (CspRecvPort, CspSelector,
-                                                      CspSendPort)
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSelector, CspSendPort
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
-from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
-                                                 enum_equal, enum_to_np)
+from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, enum_equal, enum_to_np
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):

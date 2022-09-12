@@ -5,8 +5,7 @@ import typing as ty
 
 import numpy as np
 
-from lava.magma.core.process.interfaces import (AbstractProcessMember,
-                                                IdGeneratorSingleton)
+from lava.magma.core.process.interfaces import AbstractProcessMember, IdGeneratorSingleton
 
 
 class Var(AbstractProcessMember):

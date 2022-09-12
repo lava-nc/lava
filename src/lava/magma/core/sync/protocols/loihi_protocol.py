@@ -5,16 +5,13 @@
 from collections import namedtuple
 from dataclasses import dataclass
 
-from lava.magma.core.resources import (CPU, LMT, Loihi1NeuroCore,
-                                       Loihi2NeuroCore, NeuroCore)
+from lava.magma.core.resources import CPU, LMT, Loihi1NeuroCore, Loihi2NeuroCore, NeuroCore
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
-from lava.magma.runtime.runtime_services.runtime_service import \
-    LoihiPyRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import LoihiPyRuntimeService
 
 try:
-    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import \
-        NxSdkRuntimeService
+    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import NxSdkRuntimeService
 except ImportError:
 
     class NxSdkRuntimeService:

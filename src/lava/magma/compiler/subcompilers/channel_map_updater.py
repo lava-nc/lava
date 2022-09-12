@@ -5,8 +5,7 @@
 import typing as ty
 
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
-from lava.magma.core.process.ports.ports import (AbstractDstPort,
-                                                 AbstractSrcPort)
+from lava.magma.core.process.ports.ports import AbstractDstPort, AbstractSrcPort
 
 
 class ChannelMapUpdater:
