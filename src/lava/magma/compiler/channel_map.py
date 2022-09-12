@@ -11,6 +11,9 @@ from lava.magma.compiler.compiler_graphs import ProcGroup
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.core.process.ports.ports import AbstractPort
 from lava.magma.core.process.ports.ports import AbstractSrcPort, AbstractDstPort
+from lava.magma.core.run_configs import RunConfig, AbstractLoihiHWRunCfg
+from lava.magma.compiler.subcompilers.constants import \
+    EMBEDDED_CORE_ALLOCATION_ORDER, MAX_EMBEDDED_CORES_PER_CHIP
 
 
 @dataclass(eq=True, frozen=True)
@@ -35,7 +38,17 @@ class ChannelMap(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._initializers_lookup = dict()
-        self._lmt_allocation_dict: ty.Dict[int, int] = defaultdict(lambda: -1)
+        self.embedded_core_allocation_order: EMBEDDED_CORE_ALLOCATION_ORDER = \
+            EMBEDDED_CORE_ALLOCATION_ORDER.NORMAL
+        self._lmt_allocation_dict: ty.Dict[int, int] = \
+            defaultdict(self._get_embedded_initial_allocation_id)
+
+    def _get_embedded_initial_allocation_id(self) -> int:
+        if self.embedded_core_allocation_order is \
+                EMBEDDED_CORE_ALLOCATION_ORDER.NORMAL:
+            return -1
+        else:
+            return MAX_EMBEDDED_CORES_PER_CHIP
 
     def __setitem__(
         self, key: PortPair, value: Payload, dict_setitem=dict.__setitem__
@@ -61,7 +74,8 @@ class ChannelMap(dict):
         return self._lmt_allocation_dict
 
     @classmethod
-    def from_proc_groups(self, proc_groups: ty.List[ProcGroup]) -> "ChannelMap":
+    def from_proc_groups(self,
+                         proc_groups: ty.List[ProcGroup]) -> "ChannelMap":
         """Initializes a ChannelMap from a list of process ProcGroups
         extracting the ports from every process group.
 
