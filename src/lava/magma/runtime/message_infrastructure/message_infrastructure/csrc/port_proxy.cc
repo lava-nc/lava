@@ -4,8 +4,64 @@
 
 #include <numpy/arrayobject.h>
 #include <Python.h>
+#include <memory>
+#include <vector>
 #include "port_proxy.h"
 #include "message_infrastructure_logging.h"
+
+namespace message_infrastructure {
+
+namespace py = pybind11;
+
+ChannelType SendPortProxy::GetChannelType() {
+  return channel_type_;
+}
+void SendPortProxy::Start() {
+  send_port_->Start();
+}
+bool SendPortProxy::Probe() {
+  return send_port_->Probe();
+}
+void SendPortProxy::Send(py::object* object) {
+  MetaDataPtr metadata = MDataFromObject_(object);
+  send_port_->Send(metadata);
+}
+void SendPortProxy::Join() {
+  send_port_->Join();
+}
+std::string SendPortProxy::Name() {
+  return send_port_->Name();
+}
+size_t SendPortProxy::Size() {
+  return send_port_->Size();
+}
+
+ChannelType RecvPortProxy::GetChannelType() {
+  return channel_type_;
+}
+void RecvPortProxy::Start() {
+  recv_port_->Start();
+}
+bool RecvPortProxy::Probe() {
+  return recv_port_->Probe();
+}
+py::object RecvPortProxy::Recv() {
+  MetaDataPtr metadata = recv_port_->Recv();
+  return MDataToObject_(metadata);
+}
+void RecvPortProxy::Join() {
+  recv_port_->Join();
+}
+py::object RecvPortProxy::Peek() {
+  MetaDataPtr metadata = recv_port_->Peek();
+  return MDataToObject_(metadata);
+}
+std::string RecvPortProxy::Name() {
+  return recv_port_->Name();
+}
+size_t RecvPortProxy::Size() {
+  return recv_port_->Size();
+}
 
 int trick() {
     import_array();
@@ -82,4 +138,5 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
 
   return py::reinterpret_borrow<py::object>(array);
 }
- 
+
+}  // namespace message_infrastructure

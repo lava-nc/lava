@@ -5,14 +5,12 @@
 import numpy as np
 from enum import Enum
 
-from message_infrastructure import ShmemChannel
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
+# from message_infrastructure import ShmemSendPort
+# from message_infrastructure import ShmemRecvPort
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
-from message_infrastructure import Selector
-from message_infrastructure import SharedMemManager
-
 
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
@@ -42,11 +40,8 @@ def main():
     send_port.send(data)
     print(recv_port.recv())
 
-    # selector = Selector()
-    # print(selector.select(recv_port, "cmd"))
-
-    # send_port.send(data)
-    # res = recv_port.recv()
+    # send_port.join()
+    # recv_port.join()
 
     print("finish test function.")
 

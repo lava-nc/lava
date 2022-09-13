@@ -164,14 +164,17 @@ void ShmemSendPort::Start() {
   // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
-int ShmemSendPort::Send(MetaDataPtr metadata) {
+void ShmemSendPort::Send(MetaDataPtr metadata) {
   char* cptr = (char*)array_;
   sem_wait(&shm_->GetAckSemaphore());
   memcpy(cptr, metadata.get(), offsetof(MetaData, mdata));
   cptr+=offsetof(MetaData, mdata);
   memcpy(cptr, metadata->mdata, nbytes_);
   sem_post(&shm_->GetReqSemaphore());
-  return 0;
+}
+
+bool ShmemSendPort::Probe() {
+  return false;
 }
 
 void ShmemSendPort::Join() {
@@ -204,7 +207,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   size_ = size;
   done_ = false;
   array_ = shm_->MemMap();
-  queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes);
+  queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes_);
 }
 
 void ShmemRecvPort::Start() {
@@ -241,8 +244,9 @@ void ShmemRecvPort::Join() {
   recv_queue_thread_->join();
 }
 
-void* ShmemRecvPort::Peek() {
-  return queue_->Front();
+MetaDataPtr ShmemRecvPort::Peek() {
+  // return queue_->Front();
+  return NULL;
 }
 
 int ShmemRecvPort::ReqCallback() {

@@ -24,6 +24,7 @@ using ThreadPtr = std::shared_ptr<std::thread>;
 
 class ShmemSendPort : public AbstractSendPort {
  public:
+  ShmemSendPort() {}
   ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
@@ -31,11 +32,10 @@ class ShmemSendPort : public AbstractSendPort {
   std::string Name();
   size_t Size();
   void Start();
-  int Probe();
-  int Send(MetaDataPtr);
+  void Send(MetaDataPtr);
   void Join();
-  void Stop();
   int AckCallback();
+  bool Probe();
 
   SharedMemoryPtr shm_ = NULL;
   int idx_ = 0;
@@ -45,6 +45,8 @@ class ShmemSendPort : public AbstractSendPort {
   void *observer = NULL;
   ThreadPtr ack_callback_thread_ = NULL;
 };
+
+using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
 
 class ShmemRecvQueue {
  public:
@@ -74,6 +76,7 @@ using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
 
 class ShmemRecvPort : public AbstractRecvPort {
  public:
+  ShmemRecvPort() {}
   ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
@@ -84,7 +87,7 @@ class ShmemRecvPort : public AbstractRecvPort {
   bool Probe();
   MetaDataPtr Recv();
   void Join();
-  void* Peek();
+  MetaDataPtr Peek();
   int ReqCallback();
   void QueueRecv();
 
@@ -97,6 +100,8 @@ class ShmemRecvPort : public AbstractRecvPort {
   ThreadPtr req_callback_thread_ = NULL;
   ThreadPtr recv_queue_thread_ = NULL;
 };
+
+using ShmemRecvPortPtr = std::shared_ptr<ShmemRecvPort>;
 
 }  // namespace message_infrastructure
 

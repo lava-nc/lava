@@ -40,34 +40,44 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL);
-  py::class_<ShmemSelector> (m, "Selector")
-    .def(py::init<>())
-    .def("select", &ShmemSelector::select);
-  py::class_<ChannelProxy> (m, "Channel")
+  py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string>())
+    .def("get_send_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
+    .def("get_recv_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
+  py::class_<SendPortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())
-    .def("get_send_port", &ChannelProxy::GetSendPort)
-    .def("get_recv_port", &ChannelProxy::GetRecvPort);
-  py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
-  py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def("get_channel_type", &SendPortProxy::GetChannelType)
-    .def("get_send_port", &SendPortProxy::GetSendPort, py::return_value_policy::reference)
     .def("start", &SendPortProxy::Start)
     .def("probe", &SendPortProxy::Probe)
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
     .def("name", &SendPortProxy::Name)
     .def("size", &SendPortProxy::Size);
-  py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
+  py::class_<RecvPortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
+    .def(py::init<>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
-    .def("get_recv_port", &RecvPortProxy::GetRecvPort, py::return_value_policy::reference)
     .def("start", &RecvPortProxy::Start)
     .def("probe", &RecvPortProxy::Probe)
     .def("recv", &RecvPortProxy::Recv)
-    .def("peek", &RecvPortProxy::Peek)
+    //.def("peek", &RecvPortProxy::Peek)
     .def("join", &RecvPortProxy::Join)
     .def("name", &RecvPortProxy::Name)
     .def("size", &RecvPortProxy::Size);
+  py::class_<ShmemSendPort, std::shared_ptr<ShmemSendPort>> (m, "ShmemSendPort")
+    .def("start", &ShmemSendPort::Start)
+    .def("probe", &ShmemSendPort::Probe)
+    .def("send", &ShmemSendPort::Send)
+    .def("join", &ShmemSendPort::Join)
+    .def("name", &ShmemSendPort::Name)
+    .def("size", &ShmemSendPort::Size);
+  py::class_<ShmemRecvPort, std::shared_ptr<ShmemRecvPort>> (m, "ShmemRecvPort")
+    .def("start", &ShmemRecvPort::Start)
+    .def("probe", &ShmemRecvPort::Probe)
+    .def("recv", &ShmemRecvPort::Recv)
+    //.def("peek", &RecvPortProxy::Peek)
+    .def("join", &ShmemRecvPort::Join)
+    .def("name", &ShmemRecvPort::Name)
+    .def("size", &ShmemRecvPort::Size);
   py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "InPortVectorDense")
     .def(py::init<RecvPortProxyList>())
     .def("recv", &CppInPortVectorDense::Recv)
@@ -137,10 +147,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("recv", &CppVarPortScalarSparse::Recv)
     .def("peek", &CppVarPortScalarSparse::Peek);
   // py::class_<IdentityTransformer> (m, "IdentityTransformer")
-    // .def("transform", &IdentityTransformer::Transform);
+  //   .def("transform", &IdentityTransformer::Transform);
   // py::class_<VirtualPortTransformer> (m, "VirtualPortTransformer")
-    // TODO: check how to initialize dictionary (constructors)
-    // .def("transform", &VirtualPortTransformer::Transform);
+  //   TODO: check how to initialize dictionary (constructors)
+  //   .def("transform", &VirtualPortTransformer::Transform);
 }
 
 }  // namespace message_infrastructure

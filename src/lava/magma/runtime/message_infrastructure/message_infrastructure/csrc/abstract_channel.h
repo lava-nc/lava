@@ -14,15 +14,19 @@ namespace message_infrastructure {
 
 class AbstractChannel {
  public:
-  virtual ~AbstractChannel() {}
+  virtual ~AbstractChannel() = default;
   ChannelType channel_type_;
 
-  SendPortProxyPtr GetSendPort() {
-     return NULL;
-  }
-  RecvPortProxyPtr GetRecvPort() {
+  virtual AbstractSendPortPtr GetSendPort() {
     return NULL;
   }
+  virtual AbstractRecvPortPtr GetRecvPort() {
+    return NULL;
+  }
+
+  size_t size_;
+  size_t nbytes_;
+  size_t name_;
 };
 
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;

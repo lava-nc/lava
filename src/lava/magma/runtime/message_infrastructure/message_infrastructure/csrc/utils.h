@@ -9,7 +9,7 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <semaphore.h>
-
+#include <memory>
 #include <vector>
 
 #define MAX_ARRAY_DIMS (5)
