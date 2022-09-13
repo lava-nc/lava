@@ -63,21 +63,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &RecvPortProxy::Join)
     .def("name", &RecvPortProxy::Name)
     .def("size", &RecvPortProxy::Size);
-  py::class_<ShmemSendPort, std::shared_ptr<ShmemSendPort>> (m, "ShmemSendPort")
-    .def("start", &ShmemSendPort::Start)
-    .def("probe", &ShmemSendPort::Probe)
-    .def("send", &ShmemSendPort::Send)
-    .def("join", &ShmemSendPort::Join)
-    .def("name", &ShmemSendPort::Name)
-    .def("size", &ShmemSendPort::Size);
-  py::class_<ShmemRecvPort, std::shared_ptr<ShmemRecvPort>> (m, "ShmemRecvPort")
-    .def("start", &ShmemRecvPort::Start)
-    .def("probe", &ShmemRecvPort::Probe)
-    .def("recv", &ShmemRecvPort::Recv)
-    //.def("peek", &RecvPortProxy::Peek)
-    .def("join", &ShmemRecvPort::Join)
-    .def("name", &ShmemRecvPort::Name)
-    .def("size", &ShmemRecvPort::Size);
   py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "InPortVectorDense")
     .def(py::init<RecvPortProxyList>())
     .def("recv", &CppInPortVectorDense::Recv)

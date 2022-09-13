@@ -7,8 +7,6 @@ from enum import Enum
 
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
-# from message_infrastructure import ShmemSendPort
-# from message_infrastructure import ShmemRecvPort
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 
