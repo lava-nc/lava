@@ -230,11 +230,10 @@ bool ShmemRecvPort::Probe() {
 
 MetaDataPtr ShmemRecvPort::Recv() {
   char* cptr = (char*)queue_->FrontPop();
-  MetaDataPtr metadata = std::make_shared<MetaData>();
-  memcpy(metadata.get(), cptr, offsetof(MetaData, mdata));
+  MetaData *metadata_ptr = (MetaData*)cptr;
   cptr+=offsetof(MetaData, mdata);
-  metadata->mdata = new char(nbytes_);
-  memcpy(metadata->mdata, cptr, nbytes_);
+  metadata_ptr->mdata = cptr;
+  MetaDataPtr metadata(metadata_ptr);
   return metadata;
 }
 
