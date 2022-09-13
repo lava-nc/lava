@@ -23,7 +23,7 @@ class ChannelProxy {
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:
-  AbstractChannelPtr channel_;
+  AbstractChannelPtr channel_ = NULL;
   SendPortProxyPtr send_port_ = NULL;
   RecvPortProxyPtr recv_port_ = NULL;
 };
