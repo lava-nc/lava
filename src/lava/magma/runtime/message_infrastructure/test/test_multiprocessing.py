@@ -92,7 +92,7 @@ class TestMultiprocessing(unittest.TestCase):
     @unittest.skip
     def test_actor_force_stop(self):
         """
-        Stops all running actors
+        Force stops all running actors
         Checks that actor status returns 1 (StatusStopped)
         """
         actor_list = self.mp.actors
