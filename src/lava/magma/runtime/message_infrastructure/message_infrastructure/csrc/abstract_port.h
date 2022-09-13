@@ -14,23 +14,36 @@
 #include "utils.h"
 
 namespace message_infrastructure {
-
-class AbstractSendPort {
+class AbstractPort {
  public:
+  AbstractPort() = default;
+  virtual ~AbstractPort() = default;
+
   virtual std::string Name();
   virtual size_t Size();
   virtual void Start();
   virtual void Join();
   virtual bool Probe();
-  virtual void Send(MetaDataPtr data);
 
   std::string name_;
   size_t size_;
   size_t nbytes_;
 };
 
-class AbstractRecvPort {
+class AbstractSendPort : public AbstractPort {
  public:
+  virtual ~AbstractSendPort() = default;
+  virtual std::string Name();
+  virtual size_t Size();
+  virtual void Start();
+  virtual void Join();
+  virtual bool Probe();
+  virtual void Send(MetaDataPtr data);
+};
+
+class AbstractRecvPort : public AbstractPort {
+ public:
+  virtual ~AbstractRecvPort() = default;
   virtual std::string Name();
   virtual size_t Size();
   virtual void Start();
@@ -38,10 +51,6 @@ class AbstractRecvPort {
   virtual void Join();
   virtual MetaDataPtr Recv();
   virtual MetaDataPtr Peek();
-
-  std::string name_;
-  size_t size_;
-  size_t nbytes_;
 };
 
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
