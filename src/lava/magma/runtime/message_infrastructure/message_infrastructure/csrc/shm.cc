@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "shm.h"
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
 
@@ -41,8 +42,11 @@ int SharedMemory::GetDataElem(int offset) {
 
 int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
   int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
-  if (shmid < 0)
-    return -1;
+  LAVA_LOG(LOG_MP, "Allocate shm %d\n", mem_size);
+  if (shmid < 0){
+    LAVA_LOG_ERR("Cannot allocate %d shm memory, ret shmid: %d\n", mem_size, shmid);
+    return shmid;
+  }
 
   shmids_.insert(shmid);
   return shmid;
