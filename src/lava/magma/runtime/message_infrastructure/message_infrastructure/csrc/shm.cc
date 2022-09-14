@@ -40,16 +40,15 @@ int SharedMemory::GetDataElem(int offset) {
 }
 
 int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
-  int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
+  int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
   if (shmid < 0)
     return -1;
 
   shmids_.insert(shmid);
-  key_++;
   return shmid;
 }
 SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
-  int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
+  int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
   if (shmid < 0)
     exit(-1); // Log_Error
 
@@ -57,7 +56,6 @@ SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_siz
   shm->InitSemaphore();
 
   shmids_.insert(shmid);
-  key_++;
   return shm;
 }
 
