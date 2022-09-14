@@ -9,7 +9,7 @@ if(PY_WRAPPER)
 endif()
 
 set (MESSAGE_INFRASTRUCTURE_SRCS
-     "message_infrastructure/csrc/abstract_port_implementation.cc"
+    #  "message_infrastructure/csrc/abstract_port_implementation.cc"
      "message_infrastructure/csrc/abstract_port.cc"
      "message_infrastructure/csrc/channel_proxy.cc"
      "message_infrastructure/csrc/multiprocessing.cc"

@@ -255,4 +255,12 @@ int ShmemRecvPort::ReqCallback() {
   return 0;
 }
 
+std::string ShmemRecvPort::Name() {
+  return name_;
+}
+
+size_t ShmemRecvPort::Size() {
+  return size_;
+}
+
 }  // namespace message_infrastructure

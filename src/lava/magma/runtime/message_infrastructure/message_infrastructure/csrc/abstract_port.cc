@@ -9,6 +9,23 @@
 namespace message_infrastructure {
 namespace py = pybind11;
 
+std::string AbstractPort::Name() {
+  return this->name_;
+}
+size_t AbstractPort::Size() {
+  return this->size_;
+}
+void AbstractPort::Start() {
+  printf("AbstractPort Start.\n");
+}
+bool AbstractPort::Probe() {
+  printf("AbstractPort Probe.\n");
+  return true;
+}
+void AbstractPort::Join() {
+  printf("AbstractPort Join.\n");
+}
+
 std::string AbstractSendPort::Name() {
   return this->name_;
 }
@@ -23,10 +40,10 @@ bool AbstractSendPort::Probe() {
   return true;
 }
 void AbstractSendPort::Join() {
-  printf("AbstractPort Join.\n");
+  printf("AbstractSendPort Join.\n");
 }
 void AbstractSendPort::Send(MetaDataPtr data) {
-  printf("AbstractPort Send.\n");
+  printf("AbstractSendPort Send.\n");
 }
 std::string AbstractRecvPort::Name() {
   return this->name_;
