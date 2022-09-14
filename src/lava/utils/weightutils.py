@@ -47,7 +47,6 @@ def optimize_weight_bits(
     SignMode
         synapse sign mode
     """
-    print(f"optimize {sign_mode=}")
     if not sign_mode:
         if np.max(weight) < 0:
             sign_mode = SignMode.INHIBITORY
