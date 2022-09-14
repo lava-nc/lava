@@ -3,9 +3,9 @@
 // See: https://spdx.org/licenses/
 
 #include <iostream>
+
 #include <gtest/gtest.h>
-#include <../message_infrastructure/csrc/multiprocessing.h>
-#include <../message_infrastructure/csrc/abstract_actor.h>
+#include <multiprocessing.h>
 
 TEST(HelloTest, BasicAssertions) {
   // Expect two strings not to be equal.
@@ -14,7 +14,7 @@ TEST(HelloTest, BasicAssertions) {
   EXPECT_EQ(7 * 6, 42);
 }
 
-MultiProcessing multiprocessing = new MultiProcessing();
+using namespace message_infrastructure;
 
 class Builder {
   public:
@@ -31,7 +31,6 @@ void Builder::Build(int i) {
 void TargetFunction() {
 
 }
-
 
 TEST(TestMultiprocessing, MultiprocessingSpawn) {
   // Spawns an actor
