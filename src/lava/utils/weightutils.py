@@ -17,17 +17,22 @@ class SignMode(Enum):
     INHIBITORY = 3
 
 
-def optimize_weight_bits(weight: np.ndarray,
-                         loihi2: bool = False) -> ty.Tuple[np.ndarray,
-                                                           int,
-                                                           int,
-                                                           SignMode]:
+def optimize_weight_bits(
+        weight: np.ndarray,
+        sign_mode: ty.Optional[SignMode] = None,
+        loihi2: ty.Optional[bool] = False) -> ty.Tuple[np.ndarray,
+                                                       int,
+                                                       int,
+                                                       SignMode]:
     """Optimizes the weight matrix to best fit in Loihi's synapse.
 
     Parameters
     ----------
     weight : np.ndarray
         Standard 8 bit signed weight matrix.
+    sign_mode : SignMode, optional
+        Determines whether the weights are purely excitatory, inhibitory,
+        or mixed sign.
     loihi2 : bool, optional
         Flag to optimize for Lohi 2. By default False.
 
@@ -42,24 +47,23 @@ def optimize_weight_bits(weight: np.ndarray,
     SignMode
         synapse sign mode
     """
-    weight = truncate_weights(weight, sign_mode=1, num_weight_bits=8)
+    print(f"optimize {sign_mode=}")
+    if not sign_mode:
+        if np.max(weight) < 0:
+            sign_mode = SignMode.INHIBITORY
+        elif np.min(weight) >= 0:
+            sign_mode = SignMode.EXCITATORY
+        else:
+            sign_mode = SignMode.MIXED
 
     max_weight = np.max(weight)
     min_weight = np.min(weight)
 
-    if max_weight < 0:
-        sign_mode = SignMode.INHIBITORY
-        is_signed = 0
-    elif min_weight >= 0:
-        sign_mode = SignMode.EXCITATORY
-        is_signed = 0
-    else:
-        sign_mode = SignMode.MIXED
-        is_signed = 1
-
     scale = 0
+    is_signed = 0
 
     if sign_mode == SignMode.MIXED:
+        is_signed = 1
         pos_scale = 127 / max_weight
         neg_scale = -128 / min_weight
         scale = np.min([pos_scale, neg_scale])
@@ -73,10 +77,10 @@ def optimize_weight_bits(weight: np.ndarray,
     precision_found = False
     n = 8
     while (precision_found is False) and (n > 0):
-        roundingError = np.sum(
+        rounding_error = np.sum(
             np.abs(weight / (2**n) - np.round(weight / (2**n)))
         )
-        if roundingError == 0:
+        if rounding_error == 0:
             precision_found = True
         else:
             n -= 1
@@ -102,7 +106,7 @@ def optimize_weight_bits(weight: np.ndarray,
 
 
 def truncate_weights(weights: np.ndarray,
-                     sign_mode: int,
+                     sign_mode: SignMode,
                      num_weight_bits: int) -> np.ndarray:
     """
     Truncate the given weight matrix based on the specified SignMode and
@@ -112,8 +116,8 @@ def truncate_weights(weights: np.ndarray,
     ----------
     weights : numpy.ndarray
         Weight matrix that is to be truncated.
-    sign_mode : int
-        Integer representing the sign mode. See SignMode class for the
+    sign_mode : SignMode
+        Sign mode to use for truncation. See SignMode class for the
         correct values.
     num_weight_bits : int
         Number of bits to use for the weight matrix.
@@ -126,14 +130,10 @@ def truncate_weights(weights: np.ndarray,
     """
     wgt_vals = np.copy(weights).astype(np.int32)
 
-    # Saturate the weights according to the sign_mode:
-    # 0 : null
-    # 1 : mixed
-    # 2 : excitatory
-    # 3 : inhibitory
-    mixed_flag = np.equal(sign_mode, 1).astype(np.int32)
-    excitatory_flag = np.equal(sign_mode, 2).astype(np.int32)
-    inhibitory_flag = np.equal(sign_mode, 3).astype(np.int32)
+    # Saturate the weights according to the sign_mode.
+    mixed_flag = int(sign_mode == SignMode.MIXED)
+    excitatory_flag = int(sign_mode == SignMode.EXCITATORY)
+    inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
 
     min_wgt = -2 ** 8 * (mixed_flag + inhibitory_flag)
     max_wgt = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)

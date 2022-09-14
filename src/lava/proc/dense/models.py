@@ -11,7 +11,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
-from lava.utils.weightutils import truncate_weights
+from lava.utils.weightutils import truncate_weights, SignMode
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
@@ -78,7 +78,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         if not self.weights_set:
             self.weights = truncate_weights(
                 weights=self.weights,
-                sign_mode=self.sign_mode[0],
+                sign_mode=SignMode(self.sign_mode[0]),
                 num_weight_bits=self.num_weight_bits[0]
             )
             self.weights_set = True
