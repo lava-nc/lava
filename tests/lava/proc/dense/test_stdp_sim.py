@@ -24,6 +24,7 @@ class TestSTDPSim(unittest.TestCase):
             tau_plus=10,
             tau_minus=10,
             t_epoch=2,
+            rng_seed=0,
         )
 
         size = 1
@@ -53,7 +54,7 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         # np.testing.assert_almost_equal(weight_after_run, np.array([[48]]))
-        np.testing.assert_almost_equal(weight_after_run, np.array([[56]]))
+        np.testing.assert_almost_equal(weight_after_run, np.array([[60]]))
 
     def test_stdp_floating_point(self):
         """Known value test. Run a simple learning dense layer between two LIF
