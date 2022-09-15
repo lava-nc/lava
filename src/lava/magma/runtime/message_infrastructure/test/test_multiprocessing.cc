@@ -28,13 +28,21 @@ void Builder::Build(int i) {
   std::cout << "Build " << i << "... Builder complete" << std::endl;
 }
 
-void TargetFunction() {
-
+std::function<int(ActorPtr)> TargetFunction(Builder builder, int idx) {
+  std::cout << "Target Function running" << std::endl;
+  builder.Build(idx);
 }
 
 TEST(TestMultiprocessing, MultiprocessingSpawn) {
   // Spawns an actor
   // Checks that actor is spawned successfully
+  Builder *builder = new Builder();
+
+  for (int i = 0; i < 5; i++) {
+    auto bound_fn = std::bind(TargetFunction, std::placeholders::_1, i);
+    // TODO: Add multiprocessing BuildActor
+    // bound_fn(*builder);
+  }
 }
 
 TEST(TestMultiprocessing, MultiprocessingShutdown) {
