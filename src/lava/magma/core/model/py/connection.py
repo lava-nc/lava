@@ -70,6 +70,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
     """
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
 
     # Learning Vars
     x0: np.ndarray = LavaPyType(np.ndarray, bool)
@@ -1048,6 +1050,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool)
+    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
 
     # Learning Vars
     x0: np.ndarray = LavaPyType(np.ndarray, bool)
@@ -1698,5 +1702,14 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         s_in_bap = self.s_in_bap.recv().astype(bool)
+        y2 = self.s_in_y2.recv()
+        y3 = self.s_in_y3.recv()
+
+
         if self._learning_rule is not None:
             self._record_post_spike_times(s_in_bap)
+
+        y_traces = self._y_traces
+        y_traces[1, :] = y2
+        y_traces[2, :] = y3
+        self._set_y_traces(y_traces)

@@ -67,6 +67,8 @@ class ConnectionProcess(AbstractProcess):
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
+        self.s_in_y2 = InPort(shape=(shape[0],))
+        self.s_in_y3 = InPort(shape=(shape[0],))
 
         # Learning Vars
         self.x0 = Var(shape=(shape[-1],), init=0)

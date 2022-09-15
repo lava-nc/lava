@@ -9,9 +9,10 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.lif.process import LIF, TernaryLIF
+from lava.magma.core.model.py.neuron import NeuronModelFloat, NeuronModelFixed
 
 
-class AbstractPyLifModelFloat(PyLoihiProcessModel):
+class AbstractPyLifModelFloat(NeuronModelFloat):
     """Abstract implementation of floating point precision
     leaky-integrate-and-fire neuron model.
 
@@ -51,14 +52,18 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         a_in_data = self.a_in.recv()
         self.subthr_dynamics(activation_in=a_in_data)
         s_out = self.spiking_activation()
         self.reset_voltage(spike_vector=s_out)
         self.s_out.send(s_out)
 
+        if self._enable_learning:
+            self.s_out_bap.send(s_out)
 
-class AbstractPyLifModelFixed(PyLoihiProcessModel):
+
+class AbstractPyLifModelFixed(NeuronModelFixed):
     """Abstract implementation of fixed point precision
     leaky-integrate-and-fire neuron model. Implementations like those
     bit-accurate with Loihi hardware inherit from here.
@@ -173,6 +178,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
@@ -192,6 +198,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.reset_voltage(spike_vector=s_out)
         self.s_out.send(s_out)
 
+        if self._enable_learning:
+            self.s_out_bap.send(s_out)
 
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
