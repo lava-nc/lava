@@ -9,22 +9,28 @@ from lava.magma.compiler.channel_map import ChannelMap
 from lava.magma.compiler.compiler_utils import split_proc_builders_by_type
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import (NcLogicalAddress,
-                                                      NcVirtualAddress)
-from lava.magma.compiler.subcompilers.constants import (NUM_VIRTUAL_CORES_L2,
-                                                        NUM_VIRTUAL_CORES_L3)
+from lava.magma.compiler.subcompilers.address import (
+    NcLogicalAddress,
+    NcVirtualAddress,
+)
+from lava.magma.compiler.subcompilers.constants import (
+    NUM_VIRTUAL_CORES_L2,
+    NUM_VIRTUAL_CORES_L3,
+)
 
 try:
-    from lava.magma.compiler.subcompilers.nc.neurocore. \
-        n3_logical_neurocore import \
-        N3LogicalNeuroCore
+    from lava.magma.compiler.subcompilers.nc.neurocore.n3_logical_neurocore import (
+        N3LogicalNeuroCore,
+    )
     from lava.magma.core.model.c.ports import CRefPort
 except ImportError:
+
     class N3LogicalNeuroCore:
         pass
 
     class CRefPort:
         pass
+
 
 from lava.magma.compiler.var_model import LoihiAddress
 
@@ -34,12 +40,14 @@ class Mapper:
     Assigns virtual addresses to different processes, mappable by mapping
     logical addresses to virtual addresses.
     """
+
     def __init__(self):
         self.mapper_core_offset: LogicalCoreId = 0
         self.mapper_core_dict: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
 
-    def _set_virtual_address_nc(self, mappable: Mappable, num_cores: int) \
-            -> None:
+    def _set_virtual_address_nc(
+        self, mappable: Mappable, num_cores: int
+    ) -> None:
         """
         Sets virtual address for a Neuro Core Mappable.
         Mappable includes : VarPorts, Ports and Vars.
@@ -61,12 +69,12 @@ class Mapper:
                 l_addr.core_id = self.mapper_core_dict[l_addr.core_id]
             chip_idx = l_addr.core_id // num_cores
             core_idx = l_addr.core_id % num_cores
-            p_addrs.append(
-                NcVirtualAddress(chip_id=chip_idx, core_id=core_idx))
+            p_addrs.append(NcVirtualAddress(chip_id=chip_idx, core_id=core_idx))
         mappable.set_virtual(p_addrs)
 
-    def map_cores(self, executable: Executable,
-                  channel_map: ChannelMap) -> None:
+    def map_cores(
+        self, executable: Executable, channel_map: ChannelMap
+    ) -> None:
         """
         This function gets called from the Compiler class once the partition
         is done. It maps logical addresses to virtual addresses.
@@ -77,11 +85,11 @@ class Mapper:
 
         """
         py_builders, c_builders, nc_builders = split_proc_builders_by_type(
-            executable.proc_builders)
+            executable.proc_builders
+        )
         # Iterate over all the ncbuilder and map them
         for ncb in nc_builders.values():
-            if isinstance(ncb.compiled_resources[0],
-                          N3LogicalNeuroCore):
+            if isinstance(ncb.compiled_resources[0], N3LogicalNeuroCore):
                 num_cores = NUM_VIRTUAL_CORES_L3
             else:
                 num_cores = NUM_VIRTUAL_CORES_L2
@@ -91,7 +99,8 @@ class Mapper:
                 l_addr: ResourceAddress = resource.l_address
                 if l_addr.core_id not in self.mapper_core_dict:
                     self.mapper_core_dict[
-                        l_addr.core_id] = self.mapper_core_offset
+                        l_addr.core_id
+                    ] = self.mapper_core_offset
                     l_addr.core_id = self.mapper_core_offset
                     self.mapper_core_offset += 1
                 else:
@@ -99,7 +108,8 @@ class Mapper:
                 chip_idx = l_addr.core_id // num_cores
                 core_idx = l_addr.core_id % num_cores
                 p_addrs.append(
-                    NcVirtualAddress(chip_id=chip_idx, core_id=core_idx))
+                    NcVirtualAddress(chip_id=chip_idx, core_id=core_idx)
+                )
             ncb.map_to_virtual(p_addrs)
 
             for port_initializer in ncb.io_ports.values():
@@ -126,10 +136,13 @@ class Mapper:
                     src = port_pair.src
                     dst = port_pair.dst
                     # Checking if the initializers are same
-                    if channel_map[port_pair].src_port_initializer == ports[
-                            port]:
+                    if (
+                        channel_map[port_pair].src_port_initializer
+                        == ports[port]
+                    ):
                         dst_addr: ty.List[LoihiAddress] = channel_map[
-                            port_pair].dst_port_initializer.var_model.address
+                            port_pair
+                        ].dst_port_initializer.var_model.address
                         chips = [addr.physical_chip_id for addr in dst_addr]
                         address.update(chips)
                         # Set address of c ref_var as that of the var port its
@@ -139,22 +152,29 @@ class Mapper:
                             src_initializer = payload.src_port_initializer
                             dst_initializer = payload.dst_port_initializer
                             p_addrs = [
-                                NcVirtualAddress(chip_id=addr.p_chip_id,
-                                                 core_id=addr.p_core_id)
-                                for addr in
-                                dst_initializer.address.address]
+                                NcVirtualAddress(
+                                    chip_id=addr.p_chip_id,
+                                    core_id=addr.p_core_id,
+                                )
+                                for addr in dst_initializer.address.address
+                            ]
                             src_initializer.set_virtual(p_addrs)
                         break
-                    if channel_map[port_pair].dst_port_initializer == ports[
-                            port]:
+                    if (
+                        channel_map[port_pair].dst_port_initializer
+                        == ports[port]
+                    ):
                         src_addr: ty.List[LoihiAddress] = channel_map[
-                            port_pair].src_port_initializer.var_model.address
+                            port_pair
+                        ].src_port_initializer.var_model.address
                         chips = [addr.physical_chip_id for addr in src_addr]
                         address.update(chips)
                         break
             if len(address) > 1:
-                raise ValueError("Lava Compiler doesn't support port"
-                                 "splitting currently. MultiChip "
-                                 "Not Supported ")
+                raise ValueError(
+                    "Lava Compiler doesn't support port"
+                    "splitting currently. MultiChip "
+                    "Not Supported "
+                )
             if address:
                 cb.address_map.chip_id = address.pop()

@@ -3,17 +3,18 @@
 # See: https://spdx.org/licenses/
 
 from typing import Iterable, Tuple, Union
+
 import numpy as np
 
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import OutPort, RefPort
-from lava.magma.core.process.variable import Var
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyOutPort, PyRefPort
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.resources import HostCPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.ports import PyOutPort, PyRefPort
+from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.process.ports.ports import OutPort, RefPort
+from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
+from lava.magma.core.resources import HostCPU
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 
 # Abstract Dataloader #########################################################
@@ -30,6 +31,7 @@ class AbstractDataloader(AbstractProcess):
     offset : int, optional
         Offset (phase) for each data load, by default 0
     """
+
     def __init__(
         self,
         gt_shape: Tuple[int],
@@ -37,13 +39,14 @@ class AbstractDataloader(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__(gt_shape=gt_shape, dataset=dataset,
-                         interval=interval, offset=offset)
+        super().__init__(
+            gt_shape=gt_shape, dataset=dataset, interval=interval, offset=offset
+        )
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
 
         self.ground_truth = OutPort(shape=gt_shape)
-        self.proc_params['saved_dataset'] = dataset
+        self.proc_params["saved_dataset"] = dataset
 
 
 @requires(HostCPU)
@@ -56,7 +59,7 @@ class AbstractPyDataloaderModel(PyLoihiProcessModel):
         super().__init__(proc_params)
         self.sample_id = 0
         self.ground_truth_state = 0
-        self.dataset = self.proc_params['saved_dataset']
+        self.dataset = self.proc_params["saved_dataset"]
 
     def ground_truth_array(self) -> np.ndarray:
         if np.isscalar(self.ground_truth_state):
@@ -79,6 +82,7 @@ class StateDataloader(AbstractDataloader):
     offset : int, optional
         Offset (phase) for each data load, by default 0
     """
+
     def __init__(
         self,
         *,
@@ -128,13 +132,13 @@ class AbstractPyStateDataloaderModel(AbstractPyDataloaderModel):
 
 
 @implements(proc=StateDataloader, protocol=LoihiProtocol)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PyStateModelFixed(AbstractPyStateDataloaderModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, np.int32)
 
 
 @implements(proc=StateDataloader, protocol=LoihiProtocol)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyStateModelFloat(AbstractPyStateDataloaderModel):
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)
 
@@ -154,6 +158,7 @@ class SpikeDataloader(AbstractDataloader):
     offset : int, optional
         Offset (phase) for each data load, by default 0
     """
+
     def __init__(
         self,
         *,
@@ -191,10 +196,10 @@ class AbstractPySpikeDataloaderModel(AbstractPyDataloaderModel):
         data, self.ground_truth_state = self.dataset[self.sample_id]
         self.ground_truth_state = self.ground_truth_array()
         if data.shape[-1] >= self.interval:
-            self.data = data[..., :self.interval.item()]
+            self.data = data[..., : self.interval.item()]
         else:
             self.data = np.zeros_like(self.data)
-            self.data[..., :data.shape[-1]] = data
+            self.data[..., : data.shape[-1]] = data
         self.sample_time = 0
         self.sample_id += 1
         if self.sample_id == len(self.dataset):
@@ -202,14 +207,14 @@ class AbstractPySpikeDataloaderModel(AbstractPyDataloaderModel):
 
 
 @implements(proc=SpikeDataloader, protocol=LoihiProtocol)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PySpikeModelFixed(AbstractPySpikeDataloaderModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
     data: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
 
 @implements(proc=SpikeDataloader, protocol=LoihiProtocol)
-@tag('floating_pt')
+@tag("floating_pt")
 class PySpikeModelFloat(AbstractPySpikeDataloaderModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     data: np.ndarray = LavaPyType(np.ndarray, float)

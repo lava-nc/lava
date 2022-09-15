@@ -1,13 +1,13 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
-import threading
-from abc import ABC
 import logging
+import threading
+import typing as ty
+from abc import ABC
 from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
-import typing as ty
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
@@ -15,9 +15,10 @@ from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
 try:
     from nxcore.arch.base.nxboard import NxBoard
     from nxcore.graph.channel import Channel
-    from nxcore.graph.processes.phase_enums import Phase
     from nxcore.graph.processes.embedded.embedded_snip import EmbeddedSnip
+    from nxcore.graph.processes.phase_enums import Phase
 except ImportError:
+
     class NxBoard:
         pass
 
@@ -30,9 +31,11 @@ except ImportError:
     class EmbeddedSnip:
         pass
 
+
 try:
     from lava.magma.core.model.c.ports import AbstractCPort, CInPort, COutPort
 except ImportError:
+
     class AbstractCPort:
         pass
 
@@ -46,18 +49,15 @@ except ImportError:
 class AbstractChannelBroker(ABC):
     """Abstract ChannelBroker."""
 
-    def __init__(self,
-                 *args,
-                 **kwargs):
+    def __init__(self, *args, **kwargs):
         """Initialize the abstract ChannelBroker with logging."""
         self.log = logging.getLogger(__name__)
         self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
 
 
-def generate_channel_name(prefix: str,
-                          port_idx: int,
-                          csp_port: AbstractCspPort,
-                          c_builder_idx: int) -> str:
+def generate_channel_name(
+    prefix: str, port_idx: int, csp_port: AbstractCspPort, c_builder_idx: int
+) -> str:
     return f"{prefix}{str(port_idx)}_{str(csp_port.name)}_{str(c_builder_idx)}"
 
 
@@ -74,10 +74,12 @@ class ChannelBroker(AbstractChannelBroker):
     runtime and Loihi Boards.
     """
 
-    def __init__(self,
-                 board: NxBoard,
-                 *args,
-                 **kwargs,):
+    def __init__(
+        self,
+        board: NxBoard,
+        *args,
+        **kwargs,
+    ):
         """Initialize ChannelBroker with NxBoard.
 
         Parameters
@@ -112,7 +114,8 @@ class ChannelBroker(AbstractChannelBroker):
                 dst_name="mgmt_channel",
                 shape=(1,),
                 dtype=np.int32,
-                size=1)
+                size=1,
+            )
             self.mgmt_channel.src_port.start()
             self.mgmt_channel.dst_port.start()
             self.port_poller = threading.Thread(target=self.poll_c_inports)
@@ -149,8 +152,9 @@ class ChannelBroker(AbstractChannelBroker):
                 result = (cport, channel)
                 channel_actions.append((cport.csp_ports[0], lambda: result))
 
-            channel_actions.append((self.mgmt_channel.dst_port,
-                                    lambda: ('stop', None)))
+            channel_actions.append(
+                (self.mgmt_channel.dst_port, lambda: ("stop", None))
+            )
             action, channel = selector.select(*channel_actions)
             if action == "stop":
                 return
@@ -165,47 +169,53 @@ class ChannelBroker(AbstractChannelBroker):
                 if channel.probe() > 0:
                     cport._send(channel)
 
-    def _create_channel(self,
-                        channel_name: str,
-                        message_size: int,
-                        number_elements: int,
-                        host_idx: int = 0):
+    def _create_channel(
+        self,
+        channel_name: str,
+        message_size: int,
+        number_elements: int,
+        host_idx: int = 0,
+    ):
         return self.board.hosts[host_idx].createChannel(
             name=channel_name,
             messageSize=message_size,
-            numElements=number_elements
+            numElements=number_elements,
         )
 
-    def create_channel(self,
-                       input_channel: bool,
-                       port_idx: int,
-                       c_port: AbstractCPort,
-                       snip: EmbeddedSnip,
-                       c_builder_idx: int) -> ty.List[Channel]:
+    def create_channel(
+        self,
+        input_channel: bool,
+        port_idx: int,
+        c_port: AbstractCPort,
+        snip: EmbeddedSnip,
+        c_builder_idx: int,
+    ) -> ty.List[Channel]:
         channels: ty.List[Channel] = []
         MESSAGE_SIZE_IN_C = 128 * 4
         if input_channel:
             for csp_port in c_port.csp_ports:
-                channel_name = generate_channel_name("in_grpc_",
-                                                     port_idx,
-                                                     csp_port,
-                                                     c_builder_idx)
-                channels.append(self._create_channel(
-                    channel_name=channel_name,
-                    message_size=MESSAGE_SIZE_IN_C,
-                    number_elements=csp_port.size
-                ))
+                channel_name = generate_channel_name(
+                    "in_grpc_", port_idx, csp_port, c_builder_idx
+                )
+                channels.append(
+                    self._create_channel(
+                        channel_name=channel_name,
+                        message_size=MESSAGE_SIZE_IN_C,
+                        number_elements=csp_port.size,
+                    )
+                )
         else:
             for csp_port in c_port.csp_ports:
-                channel_name = generate_channel_name("out_grpc_",
-                                                     port_idx,
-                                                     csp_port,
-                                                     c_builder_idx)
-                channels.append(self._create_channel(
-                    channel_name=channel_name,
-                    message_size=MESSAGE_SIZE_IN_C,
-                    number_elements=csp_port.size
-                ))
+                channel_name = generate_channel_name(
+                    "out_grpc_", port_idx, csp_port, c_builder_idx
+                )
+                channels.append(
+                    self._create_channel(
+                        channel_name=channel_name,
+                        message_size=MESSAGE_SIZE_IN_C,
+                        number_elements=csp_port.size,
+                    )
+                )
 
         if input_channel:
             for channel in channels:

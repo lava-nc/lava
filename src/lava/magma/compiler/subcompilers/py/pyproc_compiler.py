@@ -4,8 +4,8 @@
 
 import typing as ty
 
-from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
+from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.channel_map import ChannelMap
 from lava.magma.compiler.compiler_graphs import ProcGroup
 from lava.magma.compiler.subcompilers.channel_builders_factory import (
@@ -16,13 +16,13 @@ from lava.magma.compiler.subcompilers.channel_map_updater import (
 )
 from lava.magma.compiler.subcompilers.interfaces import SubCompiler
 from lava.magma.compiler.utils import (
+    PortInitializer,
     VarInitializer,
     VarPortInitializer,
-    PortInitializer,
 )
 from lava.magma.compiler.var_model import PyVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import RefVarTypeMapping, PyVarPort
+from lava.magma.core.model.py.ports import PyVarPort, RefVarTypeMapping
 from lava.magma.core.process.ports.ports import (
     AbstractPort,
     ImplicitVarPort,

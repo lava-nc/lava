@@ -5,17 +5,25 @@
 import typing as ty
 
 import numpy as np
-from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 
+from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
-from lava.magma.compiler.utils import (PortInitializer, VarInitializer,
-                                       VarPortInitializer)
+from lava.magma.compiler.utils import (
+    PortInitializer,
+    VarInitializer,
+    VarPortInitializer,
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.py.ports import (AbstractPyIOPort,
-                                            IdentityTransformer, PyInPort,
-                                            PyOutPort, PyRefPort, PyVarPort,
-                                            VirtualPortTransformer)
+from lava.magma.core.model.py.ports import (
+    AbstractPyIOPort,
+    IdentityTransformer,
+    PyInPort,
+    PyOutPort,
+    PyRefPort,
+    PyVarPort,
+    VirtualPortTransformer,
+)
 from lava.magma.core.model.py.type import LavaPyType
 
 
@@ -44,14 +52,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
     """
 
     def __init__(
-            self,
-            proc_model: ty.Type[AbstractPyProcessModel],
-            model_id: int,
-            proc_params: ty.Dict[str, ty.Any] = None):
-        super().__init__(
-            proc_model=proc_model,
-            model_id=model_id
-        )
+        self,
+        proc_model: ty.Type[AbstractPyProcessModel],
+        model_id: int,
+        proc_params: ty.Dict[str, ty.Any] = None,
+    ):
+        super().__init__(proc_model=proc_model, model_id=model_id)
         if not issubclass(proc_model, AbstractPyProcessModel):
             raise AssertionError("Is not a subclass of AbstractPyProcessModel")
         self.vars: ty.Dict[str, VarInitializer] = {}
@@ -77,10 +83,10 @@ class PyProcessBuilder(AbstractProcessBuilder):
             attr = getattr(self.proc_model, attr_name)
             if isinstance(attr, LavaPyType):
                 if (
-                        attr_name not in self.vars
-                        and attr_name not in self.py_ports
-                        and attr_name not in self.ref_ports
-                        and attr_name not in self.var_ports
+                    attr_name not in self.vars
+                    and attr_name not in self.py_ports
+                    and attr_name not in self.ref_ports
+                    and attr_name not in self.var_ports
                 ):
                     raise AssertionError(
                         f"No LavaPyType '{attr_name}' found in ProcModel "
@@ -187,8 +193,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
         proc_name = self.proc_model.implements_process.__name__
         for port_name in new_ports:
             if not hasattr(self.proc_model, port_name):
-                raise AssertionError("PyProcessModel '{}' has \
-                    no port named '{}'.".format(proc_name, port_name))
+                raise AssertionError(
+                    "PyProcessModel '{}' has \
+                    no port named '{}'.".format(
+                        proc_name, port_name
+                    )
+                )
 
             if port_name in self.csp_ports:
                 self.csp_ports[port_name].extend(new_ports[port_name])
@@ -209,9 +219,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
             a CSP port
         """
         # Add or update the mapping
-        self._csp_port_map.setdefault(
-            csp_port.name, {}
-        ).update({py_port_id: csp_port})
+        self._csp_port_map.setdefault(csp_port.name, {}).update(
+            {py_port_id: csp_port}
+        )
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """Set RS CSP Ports
@@ -274,17 +284,21 @@ class PyProcessBuilder(AbstractProcessBuilder):
                     csp_ports = [csp_ports]
 
             if issubclass(port_cls, PyInPort):
-                transformer = VirtualPortTransformer(
-                    self._csp_port_map[name],
-                    p.transform_funcs
-                ) if p.transform_funcs else IdentityTransformer()
+                transformer = (
+                    VirtualPortTransformer(
+                        self._csp_port_map[name], p.transform_funcs
+                    )
+                    if p.transform_funcs
+                    else IdentityTransformer()
+                )
                 port_cls = ty.cast(ty.Type[PyInPort], lt.cls)
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type, transformer)
             elif issubclass(port_cls, PyOutPort):
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type)
             else:
-                raise AssertionError("port_cls must be of type PyInPort or "
-                                     "PyOutPort")
+                raise AssertionError(
+                    "port_cls must be of type PyInPort or " "PyOutPort"
+                )
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)
@@ -300,18 +314,28 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = csp_ports[0] if isinstance(
-                    csp_ports[0], CspRecvPort) else csp_ports[1]
-                csp_send = csp_ports[0] if isinstance(
-                    csp_ports[0], CspSendPort) else csp_ports[1]
+                csp_recv = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspRecvPort)
+                    else csp_ports[1]
+                )
+                csp_send = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspSendPort)
+                    else csp_ports[1]
+                )
 
-            transformer = VirtualPortTransformer(
-                self._csp_port_map[name],
-                p.transform_funcs
-            ) if p.transform_funcs else IdentityTransformer()
+            transformer = (
+                VirtualPortTransformer(
+                    self._csp_port_map[name], p.transform_funcs
+                )
+                if p.transform_funcs
+                else IdentityTransformer()
+            )
 
-            port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type,
-                            transformer)
+            port = port_cls(
+                csp_send, csp_recv, pm, p.shape, lt.d_type, transformer
+            )
 
             # Create dynamic RefPort attribute on ProcModel
             setattr(pm, name, port)
@@ -327,19 +351,34 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = csp_ports[0] if isinstance(
-                    csp_ports[0], CspRecvPort) else csp_ports[1]
-                csp_send = csp_ports[0] if isinstance(
-                    csp_ports[0], CspSendPort) else csp_ports[1]
+                csp_recv = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspRecvPort)
+                    else csp_ports[1]
+                )
+                csp_send = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspSendPort)
+                    else csp_ports[1]
+                )
 
-            transformer = VirtualPortTransformer(
-                self._csp_port_map[name],
-                p.transform_funcs
-            ) if p.transform_funcs else IdentityTransformer()
+            transformer = (
+                VirtualPortTransformer(
+                    self._csp_port_map[name], p.transform_funcs
+                )
+                if p.transform_funcs
+                else IdentityTransformer()
+            )
 
             port = port_cls(
-                p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type,
-                transformer)
+                p.var_name,
+                csp_send,
+                csp_recv,
+                pm,
+                p.shape,
+                p.d_type,
+                transformer,
+            )
 
             # Create dynamic VarPort attribute on ProcModel
             setattr(pm, name, port)
@@ -364,10 +403,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
             elif issubclass(lt.cls, (int, float)):
                 var = v.value
             else:
-                raise NotImplementedError("Cannot initiliaze variable "
-                                          "datatype, \
+                raise NotImplementedError(
+                    "Cannot initiliaze variable "
+                    "datatype, \
                                           only subclasses of int and float are \
-                                          supported")
+                                          supported"
+                )
 
             # Create dynamic variable attribute on ProcModel
             setattr(pm, name, var)

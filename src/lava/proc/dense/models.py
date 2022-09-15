@@ -3,26 +3,28 @@
 # See: https://spdx.org/licenses/
 
 from re import X
+
 import numpy as np
 
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.process import Dense
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyDenseModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
     """
+
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
@@ -49,7 +51,7 @@ class PyDenseModelFloat(PyLoihiProcessModel):
 
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
+@tag("bit_accurate_loihi", "fixed_pt")
 class PyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
@@ -84,8 +86,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
         inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
 
-        min_wgt = -2 ** 8 * (mixed_idx + inhibitory_idx)
-        max_wgt = (2 ** 8 - 1) * (mixed_idx + excitatory_idx)
+        min_wgt = -(2**8) * (mixed_idx + inhibitory_idx)
+        max_wgt = (2**8 - 1) * (mixed_idx + excitatory_idx)
 
         saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
 
@@ -93,8 +95,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
 
         truncated_wgts = np.left_shift(
-            np.right_shift(saturated_wgts, num_truncate_bits),
-            num_truncate_bits)
+            np.right_shift(saturated_wgts, num_truncate_bits), num_truncate_bits
+        )
 
         wgt_vals = truncated_wgts.astype(np.int32)
         wgts_scaled = np.copy(wgt_vals)
@@ -116,6 +118,8 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         else:
             s_in = self.s_in.recv().astype(bool)
             a_accum = self.weights[:, s_in].sum(axis=1)
-        self.a_buff = np.left_shift(a_accum,
-                                    self.weight_exp) if self.weight_exp > 0 \
+        self.a_buff = (
+            np.left_shift(a_accum, self.weight_exp)
+            if self.weight_exp > 0
             else np.right_shift(a_accum, -self.weight_exp)
+        )

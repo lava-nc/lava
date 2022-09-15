@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
+
 import numpy as np
 
 """Defines message tokens for Actions (Commands) and Responses. Also defines
 helper functions to convert scalar values to these message tokens"""
 
 
-def enum_to_np(value: ty.Union[int, float],
-               d_type: type = np.float64) -> np.array:
+def enum_to_np(
+    value: ty.Union[int, float], d_type: type = np.float64
+) -> np.array:
     """
     Helper function to convert an int (or EnumInt) or a float to a single value
     np array so as to pass it via the message passing framework. The dtype of

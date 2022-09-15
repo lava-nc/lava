@@ -9,10 +9,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.runtime.mgmt_token_enums import enum_to_np, enum_equal
+from lava.magma.runtime.mgmt_token_enums import enum_equal, enum_to_np
 
 
 class AbstractPyPort(AbstractPortImplementation):
@@ -82,11 +82,13 @@ class AbstractPyIOPort(AbstractPyPort):
         A list of CSP Ports used by this IO Port.
     """
 
-    def __init__(self,
-                 csp_ports: ty.List[AbstractCspPort],
-                 process_model: AbstractProcessModel,
-                 shape: ty.Tuple[int, ...],
-                 d_type: type):
+    def __init__(
+        self,
+        csp_ports: ty.List[AbstractCspPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...],
+        d_type: type,
+    ):
         self._csp_ports = csp_ports
         super().__init__(process_model, shape, d_type)
 
@@ -108,9 +110,9 @@ class AbstractTransformer(ABC):
     transform data."""
 
     @abstractmethod
-    def transform(self,
-                  data: np.ndarray,
-                  csp_port: AbstractCspPort) -> np.ndarray:
+    def transform(
+        self, data: np.ndarray, csp_port: AbstractCspPort
+    ) -> np.ndarray:
         """Transforms incoming data in way that is determined by which CSP
         port the data is received.
 
@@ -131,16 +133,16 @@ class AbstractTransformer(ABC):
 class IdentityTransformer(AbstractTransformer):
     """Transformer that does not transform the data but returns it unchanged."""
 
-    def transform(self,
-                  data: np.ndarray,
-                  _: AbstractCspPort) -> np.ndarray:
+    def transform(self, data: np.ndarray, _: AbstractCspPort) -> np.ndarray:
         return data
 
 
 class VirtualPortTransformer(AbstractTransformer):
-    def __init__(self,
-                 csp_ports: ty.Dict[str, AbstractCspPort],
-                 transform_funcs: ty.Dict[str, ty.List[ft.partial]]):
+    def __init__(
+        self,
+        csp_ports: ty.Dict[str, AbstractCspPort],
+        transform_funcs: ty.Dict[str, ty.List[ft.partial]],
+    ):
         """Transformer that implements the virtual ports on the path to the
         receiving PyPort.
 
@@ -161,17 +163,20 @@ class VirtualPortTransformer(AbstractTransformer):
         # Associate CSP ports with the list of function pointers that must be
         # applied for the transformation.
         for port_id, csp_port in csp_ports.items():
-            self._csp_port_to_fp[csp_port] = transform_funcs[port_id] \
-                if port_id in transform_funcs else [lambda x: x]
+            self._csp_port_to_fp[csp_port] = (
+                transform_funcs[port_id]
+                if port_id in transform_funcs
+                else [lambda x: x]
+            )
 
-    def transform(self,
-                  data: np.ndarray,
-                  csp_port: AbstractCspPort) -> np.ndarray:
+    def transform(
+        self, data: np.ndarray, csp_port: AbstractCspPort
+    ) -> np.ndarray:
         return self._get_transform(csp_port)(data)
 
-    def _get_transform(self,
-                       csp_port: AbstractCspPort) -> ty.Callable[[np.ndarray],
-                                                                 np.ndarray]:
+    def _get_transform(
+        self, csp_port: AbstractCspPort
+    ) -> ty.Callable[[np.ndarray], np.ndarray]:
         """For a given CSP port, returns a function that applies, in sequence,
         all the function pointers associated with the incoming virtual
         ports.
@@ -201,13 +206,15 @@ class VirtualPortTransformer(AbstractTransformer):
             returned function f(data)
         """
         if csp_port not in self._csp_port_to_fp:
-            raise AssertionError(f"The CSP port '{csp_port.name}' is not "
-                                 f"registered with a transformation function.")
+            raise AssertionError(
+                f"The CSP port '{csp_port.name}' is not "
+                f"registered with a transformation function."
+            )
 
         return ft.reduce(
             lambda f, g: lambda data: g(f(data)),
             self._csp_port_to_fp[csp_port],
-            lambda h: h
+            lambda h: h,
         )
 
 
@@ -271,13 +278,12 @@ class PyInPort(AbstractPyIOPort):
     SCALAR_SPARSE: ty.Type["PyInPortScalarSparse"] = None
 
     def __init__(
-            self,
-            csp_ports: ty.List[AbstractCspPort],
-            process_model: AbstractProcessModel,
-            shape: ty.Tuple[int, ...],
-            d_type: type,
-            transformer: ty.Optional[
-                AbstractTransformer] = IdentityTransformer()
+        self,
+        csp_ports: ty.List[AbstractCspPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...],
+        d_type: type,
+        transformer: ty.Optional[AbstractTransformer] = IdentityTransformer(),
     ):
         self._transformer = transformer
         super().__init__(csp_ports, process_model, shape, d_type)
@@ -345,10 +351,10 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, port: acc + self._transformer.transform(port.recv(),
-                                                                port),
+            lambda acc, port: acc
+            + self._transformer.transform(port.recv(), port),
             self.csp_ports,
-            np.zeros(self._shape, self._d_type)
+            np.zeros(self._shape, self._d_type),
         )
 
     def peek(self) -> np.ndarray:
@@ -363,8 +369,8 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, port: acc + self._transformer.transform(port.recv(),
-                                                                port),
+            lambda acc, port: acc
+            + self._transformer.transform(port.recv(), port),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
@@ -500,8 +506,9 @@ class PyOutPortVectorSparse(PyOutPort):
         """TBD"""
         data_clone = np.copy(data)
         indices_clone = np.copy(indices)
-        data_length: np.ndarray = np.array([len(data.flatten())],
-                                           dtype=np.int32)
+        data_length: np.ndarray = np.array(
+            [len(data.flatten())], dtype=np.int32
+        )
         for csp_port in self.csp_ports:
             data_length.resize(csp_port.shape)
             data_clone.resize(csp_port.shape)
@@ -536,6 +543,7 @@ PyOutPort.SCALAR_SPARSE = PyOutPortScalarSparse
 class VarPortCmd:
     """Helper class to specify constants. Used for communication between
     PyRefPorts and PyVarPorts."""
+
     GET = enum_to_np(0)
     SET = enum_to_np(1)
 
@@ -605,14 +613,13 @@ class PyRefPort(AbstractPyPort):
     SCALAR_SPARSE: ty.Type["PyRefPortScalarSparse"] = None
 
     def __init__(
-            self,
-            csp_send_port: ty.Optional[CspSendPort],
-            csp_recv_port: ty.Optional[CspRecvPort],
-            process_model: AbstractProcessModel,
-            shape: ty.Tuple[int, ...] = tuple(),
-            d_type: type = int,
-            transformer: ty.Optional[
-                AbstractTransformer] = IdentityTransformer()
+        self,
+        csp_send_port: ty.Optional[CspSendPort],
+        csp_recv_port: ty.Optional[CspRecvPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...] = tuple(),
+        d_type: type = int,
+        transformer: ty.Optional[AbstractTransformer] = IdentityTransformer(),
     ):
         self._transformer = transformer
         self._csp_recv_port = csp_recv_port
@@ -637,7 +644,7 @@ class PyRefPort(AbstractPyPort):
 
     @abstractmethod
     def read(
-            self,
+        self,
     ) -> ty.Union[
         np.ndarray, ty.Tuple[np.ndarray, np.ndarray], int, ty.Tuple[int, int]
     ]:
@@ -650,13 +657,13 @@ class PyRefPort(AbstractPyPort):
 
     @abstractmethod
     def write(
-            self,
-            data: ty.Union[
-                np.ndarray,
-                ty.Tuple[np.ndarray, np.ndarray],
-                int,
-                ty.Tuple[int, int],
-            ],
+        self,
+        data: ty.Union[
+            np.ndarray,
+            ty.Tuple[np.ndarray, np.ndarray],
+            int,
+            ty.Tuple[int, int],
+        ],
     ):
         """Abstract method to write data to a VarPort to set its Var.
 
@@ -669,20 +676,20 @@ class PyRefPort(AbstractPyPort):
 
     def wait(self):
         """Blocks execution until receipt of prior 'write' commands (sent from
-         RefPort to VarPort) have been acknowledged. Calling wait() ensures that
-         the value written by the RefPort can be received (and set) by the
-         VarPort at the same time step. If wait() is not called, it is possible
-         that the value is received only at the next time step
-         (non-deterministic).
+        RefPort to VarPort) have been acknowledged. Calling wait() ensures that
+        the value written by the RefPort can be received (and set) by the
+        VarPort at the same time step. If wait() is not called, it is possible
+        that the value is received only at the next time step
+        (non-deterministic).
 
-         >>> port = PyRefPort()
-         >>> port.write(5)
-         >>> # potentially do other stuff
-         >>> port.wait()  # waits until (all) previous writes have finished
+        >>> port = PyRefPort()
+        >>> port.write(5)
+        >>> # potentially do other stuff
+        >>> port.wait()  # waits until (all) previous writes have finished
 
-         Preliminary implementation. Currently, a simple read() ensures the
-         writes have been acknowledged. This is inefficient and will be
-         optimized later at the CspChannel level"""
+        Preliminary implementation. Currently, a simple read() ensures the
+        writes have been acknowledged. This is inefficient and will be
+        optimized later at the CspChannel level"""
         self.read()
 
 
@@ -702,8 +709,9 @@ class PyRefPortVectorDense(PyRefPort):
             header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
             self._csp_send_port.send(header)
 
-            return self._transformer.transform(self._csp_recv_port.recv(),
-                                               self._csp_recv_port)
+            return self._transformer.transform(
+                self._csp_recv_port.recv(), self._csp_recv_port
+            )
 
         return np.zeros(self._shape, self._d_type)
 
@@ -831,14 +839,16 @@ class PyVarPort(AbstractPyPort):
     SCALAR_DENSE: ty.Type["PyVarPortScalarDense"] = None
     SCALAR_SPARSE: ty.Type["PyVarPortScalarSparse"] = None
 
-    def __init__(self,
-                 var_name: str,
-                 csp_send_port: ty.Optional[CspSendPort],
-                 csp_recv_port: ty.Optional[CspRecvPort],
-                 process_model: AbstractProcessModel,
-                 shape: ty.Tuple[int, ...] = tuple(),
-                 d_type: type = int,
-                 transformer: AbstractTransformer = IdentityTransformer()):
+    def __init__(
+        self,
+        var_name: str,
+        csp_send_port: ty.Optional[CspSendPort],
+        csp_recv_port: ty.Optional[CspRecvPort],
+        process_model: AbstractProcessModel,
+        shape: ty.Tuple[int, ...] = tuple(),
+        d_type: type = int,
+        transformer: AbstractTransformer = IdentityTransformer(),
+    ):
 
         self._transformer = transformer
         self._csp_recv_port = csp_recv_port
@@ -894,8 +904,8 @@ class PyVarPortVectorDense(PyVarPort):
                 # Set the value of the Var with the given data
                 if enum_equal(cmd, VarPortCmd.SET):
                     data = self._transformer.transform(
-                        self._csp_recv_port.recv(),
-                        self._csp_recv_port)
+                        self._csp_recv_port.recv(), self._csp_recv_port
+                    )
                     setattr(self._process_model, self.var_name, data)
                 elif enum_equal(cmd, VarPortCmd.GET):
                     data = getattr(self._process_model, self.var_name)
@@ -978,7 +988,8 @@ class RefVarTypeMapping:
         PyRefPortVectorDense: PyVarPortVectorDense,
         PyRefPortVectorSparse: PyVarPortVectorSparse,
         PyRefPortScalarDense: PyVarPortScalarDense,
-        PyRefPortScalarSparse: PyVarPortScalarSparse}
+        PyRefPortScalarSparse: PyVarPortScalarSparse,
+    }
 
     @classmethod
     def get(cls, ref_port: ty.Type[PyRefPort]) -> ty.Type[PyVarPort]:

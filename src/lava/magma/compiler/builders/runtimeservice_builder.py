@@ -9,13 +9,16 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
-from lava.magma.runtime.runtime_services.runtime_service import \
-    AbstractRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import (
+    AbstractRuntimeService,
+)
 
 try:
-    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import \
-        NxSdkRuntimeService
+    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import (
+        NxSdkRuntimeService,
+    )
 except ImportError:
+
     class NxSdkRuntimeService:
         pass
 
@@ -31,15 +34,15 @@ class RuntimeServiceBuilder:
     """
 
     def __init__(
-            self,
-            rs_class: ty.Type[AbstractRuntimeService],
-            protocol: ty.Type[AbstractSyncProtocol],
-            runtime_service_id: int,
-            model_ids: ty.List[int],
-            loihi_version: ty.Type[LoihiVersion],
-            loglevel: int = logging.WARNING,
-            *args,
-            **kwargs
+        self,
+        rs_class: ty.Type[AbstractRuntimeService],
+        protocol: ty.Type[AbstractSyncProtocol],
+        runtime_service_id: int,
+        model_ids: ty.List[int],
+        loihi_version: ty.Type[LoihiVersion],
+        loglevel: int = logging.WARNING,
+        *args,
+        **kwargs,
     ):
         self.rs_class = rs_class
         self.sync_protocol = protocol
@@ -103,7 +106,7 @@ class RuntimeServiceBuilder:
                 self.sync_protocol,
                 loihi_version=self.loihi_version,
                 loglevel=self.log.level,
-                **self.rs_kwargs
+                **self.rs_kwargs,
             )
             nxsdk_rts = True
             self.log.debug("Initilized NxSdkRuntimeService")

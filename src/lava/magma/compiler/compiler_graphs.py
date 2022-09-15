@@ -12,13 +12,14 @@ import re
 import sys
 import types
 import typing as ty
+import warnings
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum, auto
-import warnings
+
+import networkx as ntx
 
 import lava.magma.compiler.exceptions as ex
-import networkx as ntx
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -27,15 +28,22 @@ try:
     from lava.magma.core.model.c.model import AbstractCProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
 except ImportError:
+
     class AbstractCProcessModel:
         pass
 
     class AbstractNcProcessModel:
         pass
 
-from lava.magma.core.process.ports.ports import (AbstractPort,
-                                                 AbstractVirtualPort, InPort,
-                                                 OutPort, RefPort, VarPort)
+
+from lava.magma.core.process.ports.ports import (
+    AbstractPort,
+    AbstractVirtualPort,
+    InPort,
+    OutPort,
+    RefPort,
+    VarPort,
+)
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.run_configs import RunConfig
 
@@ -44,8 +52,8 @@ ProcGroup = ty.List[AbstractProcess]
 
 
 class ProcessModelTypes(Enum):
-    """Enumeration of different types of ProcessModels: Py, C, Nc, etc.
-    """
+    """Enumeration of different types of ProcessModels: Py, C, Nc, etc."""
+
     PY = AbstractPyProcessModel
     C = AbstractCProcessModel
     NC = AbstractNcProcessModel
@@ -65,6 +73,7 @@ class NodeAnnotation(Enum):
     7. INVALID a Process node that does not fit any of the above (unlikely)
 
     """
+
     PUREIN = auto()
     PUREOUT = auto()
     ISOLATED = auto()
@@ -99,14 +108,13 @@ def flatten_list_recursive(ll: ty.List) -> ty.List:
 
 
 def flatten_list_itertools(ll: ty.List) -> ty.List:
-    """Simpler way to flatten nested lists.
-    """
+    """Simpler way to flatten nested lists."""
     return list(itertools.chain.from_iterable(ll))
 
 
-def find_processes(proc: AbstractProcess,
-                   seen_procs: ty.List[AbstractProcess] = None) -> \
-        ty.List[AbstractProcess]:
+def find_processes(
+    proc: AbstractProcess, seen_procs: ty.List[AbstractProcess] = None
+) -> ty.List[AbstractProcess]:
     """Find all processes that are connected to `proc`.
 
     Processes are connected via different kinds of Ports to other
@@ -155,8 +163,7 @@ def find_processes(proc: AbstractProcess,
 
     for proc in set(new_list):
         if proc not in seen_procs:
-            new_list.extend(
-                find_processes(proc, seen_procs))
+            new_list.extend(find_processes(proc, seen_procs))
 
     seen_procs.extend(new_list)
     seen_procs = list(set(seen_procs))
@@ -192,22 +199,23 @@ class DiGraphBase(ntx.DiGraph):
         for node, nodeattr in self.nodes.items():
             if self.out_degree[node] == 0:
                 if self.out_degree[node] == self.in_degree[node]:
-                    nodeattr['degdef'] = NodeAnnotation.ISOLATED
+                    nodeattr["degdef"] = NodeAnnotation.ISOLATED
                 else:
-                    nodeattr['degdef'] = NodeAnnotation.PUREOUT
+                    nodeattr["degdef"] = NodeAnnotation.PUREOUT
             elif self.in_degree[node] == 0:
-                nodeattr['degdef'] = NodeAnnotation.PUREIN
+                nodeattr["degdef"] = NodeAnnotation.PUREIN
             elif self.out_degree[node] - self.in_degree[node] > 0:
-                nodeattr['degdef'] = NodeAnnotation.INLIKE
+                nodeattr["degdef"] = NodeAnnotation.INLIKE
             elif self.out_degree[node] - self.in_degree[node] < 0:
-                nodeattr['degdef'] = NodeAnnotation.OUTLIKE
+                nodeattr["degdef"] = NodeAnnotation.OUTLIKE
             elif self.out_degree[node] == self.in_degree[node]:
-                nodeattr['degdef'] = NodeAnnotation.NEUTRAL
+                nodeattr["degdef"] = NodeAnnotation.NEUTRAL
             else:
-                nodeattr['degdef'] = NodeAnnotation.INVALID
+                nodeattr["degdef"] = NodeAnnotation.INVALID
 
-    def is_dag(self, graph: 'DiGraphBase' = None) -> ty.Tuple[bool,
-                                                              'DiGraphBase']:
+    def is_dag(
+        self, graph: "DiGraphBase" = None
+    ) -> ty.Tuple[bool, "DiGraphBase"]:
         """Check if the input DiGraphBase is a DAG by recursive leaf pruning.
 
         Parameters
@@ -231,9 +239,12 @@ class DiGraphBase(ntx.DiGraph):
 
         graph.annotate_digraph_by_degree()
 
-        leaves = [node for node, nodeattr in graph.nodes.items() if
-                  nodeattr['degdef'] == NodeAnnotation.PUREOUT or nodeattr[
-                      'degdef'] == NodeAnnotation.PUREIN]
+        leaves = [
+            node
+            for node, nodeattr in graph.nodes.items()
+            if nodeattr["degdef"] == NodeAnnotation.PUREOUT
+            or nodeattr["degdef"] == NodeAnnotation.PUREIN
+        ]
         num_leaves = len(leaves)
 
         if num_leaves > 0:
@@ -246,8 +257,9 @@ class DiGraphBase(ntx.DiGraph):
         else:
             return True, graph
 
-    def collapse_subgraph_to_node(self, subgraph: 'DiGraphBase') -> \
-            'DiGraphBase':
+    def collapse_subgraph_to_node(
+        self, subgraph: "DiGraphBase"
+    ) -> "DiGraphBase":
         """Replace any connected subgraph of the DiGraphBase object with a
         single node, while preserving connectivity.
 
@@ -267,9 +279,12 @@ class DiGraphBase(ntx.DiGraph):
         """
 
         if not set(self.nodes).intersection(set(subgraph.nodes)) == set(
-                subgraph.nodes):
-            raise AssertionError("The set of nodes of input subgraph is not a "
-                                 "proper subset of nodes of the graph.")
+            subgraph.nodes
+        ):
+            raise AssertionError(
+                "The set of nodes of input subgraph is not a "
+                "proper subset of nodes of the graph."
+            )
 
         out_graph = self.copy()
         # If the subgraph contains 0 nodes, there is nothing to
@@ -278,15 +293,18 @@ class DiGraphBase(ntx.DiGraph):
             return out_graph
         # If the subgraph contains onlt 1 node AND it has degree 0, there is
         # nothing to collapse/condense. Just return the original graph.
-        if len(list(subgraph.nodes)) == 1 and \
-                list(subgraph.nodes.values())[0]['degdef'] == \
-                NodeAnnotation.ISOLATED:
+        if (
+            len(list(subgraph.nodes)) == 1
+            and list(subgraph.nodes.values())[0]["degdef"]
+            == NodeAnnotation.ISOLATED
+        ):
             return out_graph
         # If the subgraph is the same as the main graph, remove
         # everything from out_graph, add just 1 node corresponding to the
         # entire graph, annotate the new graph, and return.
-        if list(subgraph.edges) == list(self.edges) and set(subgraph.nodes) \
-                == set(self.nodes):
+        if list(subgraph.edges) == list(self.edges) and set(
+            subgraph.nodes
+        ) == set(self.nodes):
             out_graph.remove_nodes_from(list(out_graph.nodes))
             out_graph.add_node(self)
             out_graph.annotate_digraph_by_degree()
@@ -302,8 +320,9 @@ class DiGraphBase(ntx.DiGraph):
         #      main graph.
         #   4. nodes belonging to the subgraph are deleted from the main graph
         for node in subgraph:
-            neighbours = set(out_graph.successors(node)).union(set(
-                out_graph.predecessors(node)))
+            neighbours = set(out_graph.successors(node)).union(
+                set(out_graph.predecessors(node))
+            )
             for neighbour in neighbours - set(subgraph):
                 if neighbour in set(out_graph.successors(node)):
                     out_graph.add_edge(subgraph, neighbour)
@@ -314,7 +333,7 @@ class DiGraphBase(ntx.DiGraph):
         out_graph.annotate_digraph_by_degree()
         return out_graph
 
-    def collapse_cycles_to_nodes(self) -> 'DiGraphBase':
+    def collapse_cycles_to_nodes(self) -> "DiGraphBase":
         """Find simple cycles and collapse them on a single node iteratively,
         until no simple cycles can be found or the entire graph reduces to a
         single simple cycle.
@@ -368,20 +387,25 @@ class ProcDiGraph(DiGraphBase):
         if proc_list:
             self.add_nodes_from(proc_list)
             node_name_dict = dict(
-                zip(proc_list, [proc.name for proc in proc_list]))
+                zip(proc_list, [proc.name for proc in proc_list])
+            )
             ntx.set_node_attributes(self, node_name_dict, name="name")
 
             for proc in proc_list:
                 # Get all processes connected in to and connected out from proc
-                in_proc_list, out_proc_list = \
-                    ProcDiGraph._traverse_ports_of_proc(proc)
+                (
+                    in_proc_list,
+                    out_proc_list,
+                ) = ProcDiGraph._traverse_ports_of_proc(proc)
 
                 in_edge_list = list(
-                    zip(in_proc_list, [proc] * len(in_proc_list)))
+                    zip(in_proc_list, [proc] * len(in_proc_list))
+                )
                 self.add_edges_from(in_edge_list)
 
                 out_edge_list = list(
-                    zip([proc] * len(out_proc_list), out_proc_list))
+                    zip([proc] * len(out_proc_list), out_proc_list)
+                )
                 self.add_edges_from(out_edge_list)
 
             self.annotate_digraph_by_degree()
@@ -413,9 +437,9 @@ class ProcDiGraph(DiGraphBase):
             raise TypeError(f"Invalid port type: {port}.")
 
     @staticmethod
-    def _find_terminal_procs_recursively(port_list: ty.List[AbstractPort],
-                                         trace_dir: str) -> \
-            ty.List[AbstractProcess]:
+    def _find_terminal_procs_recursively(
+        port_list: ty.List[AbstractPort], trace_dir: str
+    ) -> ty.List[AbstractProcess]:
         """Iterate through a list of ports of a Process and for each port in
         the list, recursively follow ports in a specified tracing/traversal
         direction until a terminal process is reached.
@@ -436,10 +460,11 @@ class ProcDiGraph(DiGraphBase):
 
         proc_list = []
         if trace_dir != "inward" and trace_dir != "outward":
-            raise ValueError("Invalid traversal direction. Must be 'inward' "
-                             "or 'outward'.")
+            raise ValueError(
+                "Invalid traversal direction. Must be 'inward' " "or 'outward'."
+            )
         # in_connections or out_connections attributes of ports
-        collection_attr = trace_dir[:-4] + '_connections'
+        collection_attr = trace_dir[:-4] + "_connections"
         for port in port_list:
             port_dir = ProcDiGraph._get_port_direction(port)
             conn_collection = getattr(port, collection_attr)
@@ -449,8 +474,10 @@ class ProcDiGraph(DiGraphBase):
                 # follow it.
                 if len(getattr(conn, collection_attr)) > 0:
                     proc_list.extend(
-                        ProcDiGraph._find_terminal_procs_recursively([conn],
-                                                                     trace_dir))
+                        ProcDiGraph._find_terminal_procs_recursively(
+                            [conn], trace_dir
+                        )
+                    )
                 # If there is nothing to follow, we have reached a 'terminal'
                 # Port/connection. However, if it is of same type as the
                 # previous Port *and* same type as the traversal direction,
@@ -469,8 +496,9 @@ class ProcDiGraph(DiGraphBase):
         return proc_list
 
     @staticmethod
-    def _traverse_ports_of_proc(proc: AbstractProcess) -> ty.Tuple[
-            ty.List[AbstractProcess], ty.List[AbstractProcess]]:
+    def _traverse_ports_of_proc(
+        proc: AbstractProcess,
+    ) -> ty.Tuple[ty.List[AbstractProcess], ty.List[AbstractProcess]]:
         """Traverse along port connectivity of all ports of the input Process.
 
         The SubProcessModels of hierarchical Processes are expected to be
@@ -493,14 +521,14 @@ class ProcDiGraph(DiGraphBase):
 
         # Ports with incoming connections
         port_list_in = proc.in_ports.members + proc.var_ports.members
-        in_proc_list = \
-            ProcDiGraph._find_terminal_procs_recursively(
-                port_list_in, "inward")
+        in_proc_list = ProcDiGraph._find_terminal_procs_recursively(
+            port_list_in, "inward"
+        )
         # Ports with outgoing connections
         port_list_out = proc.out_ports.members + proc.ref_ports.members
-        out_proc_list = \
-            ProcDiGraph._find_terminal_procs_recursively(port_list_out,
-                                                         "outward")
+        out_proc_list = ProcDiGraph._find_terminal_procs_recursively(
+            port_list_out, "outward"
+        )
 
         return in_proc_list, out_proc_list
 
@@ -543,6 +571,7 @@ class AbstractProcGroupDiGraphs(ABC):
     Downstream compiler iterates over the list of ProcGroups and invokes
     appropriate sub-compilers depending on the ProcessModel type.
     """
+
     @abstractmethod
     def get_proc_groups(self) -> ty.List[ProcGroup]:
         pass
@@ -615,8 +644,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # ProcessModels
         self._raw_proc_digraph = ProcDiGraph(proc_list=proc_list)
         # 3. Find and select ProcessModels based on RunConfig:
-        proc_procmodel_map = ProcGroupDiGraphs._map_proc_to_model(proc_list,
-                                                                  self._run_cfg)
+        proc_procmodel_map = ProcGroupDiGraphs._map_proc_to_model(
+            proc_list, self._run_cfg
+        )
         # Assign ProcessModels to Processes
         for p, pm in proc_procmodel_map.items():
             p._model_class = pm
@@ -626,8 +656,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # ProcessModel}, SubProcessModels are already resolved. Therefore,
         # ResolvedProcDiGraph will not contain HierarchicalProcesses.
         # First create a list of Processes from the dict/map above
-        resolved_proc_list = \
-            [proc for proc in list(proc_procmodel_map.keys())]
+        resolved_proc_list = [proc for proc in list(proc_procmodel_map.keys())]
         # Generate a graph with Processes as nodes
         self._resolved_proc_digraph = ProcDiGraph(proc_list=resolved_proc_list)
         # 5. Generate IsoModelCondensedDiGraph: a graph after condensing
@@ -636,18 +665,21 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # 6. Generate ProcGroupDiGraph: a graph after condensing cycles
         # into a single node; always either a DAG or a simple cycle by
         # construction, compilation order is derived from this graph.
-        self._proc_group_digraph = \
+        self._proc_group_digraph = (
             self._isomodel_condensed_digraph.collapse_cycles_to_nodes()
+        )
         # Check if self._compile_group_graph is DAG or is itself a simple cycle.
         chk1, _ = self._proc_group_digraph.is_dag()
         chk2 = len(list(ntx.simple_cycles(self._proc_group_digraph))) == 1
         if not chk1 and not chk2:
-            raise NotImplementedError("LavaProcGraph init failed. The graph "
-                                      "generated as proc_group_digraph is "
-                                      "neither a DAG nor a simple cycle. "
-                                      "Does the original computational graph "
-                                      "of Processes contain disconnected "
-                                      "components?")
+            raise NotImplementedError(
+                "LavaProcGraph init failed. The graph "
+                "generated as proc_group_digraph is "
+                "neither a DAG nor a simple cycle. "
+                "Does the original computational graph "
+                "of Processes contain disconnected "
+                "components?"
+            )
 
     @property
     def raw_proc_digraph(self):
@@ -695,8 +727,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
     @property
     def base_proc(self):
-        """The Process on which Process.run(...) is called.
-        """
+        """The Process on which Process.run(...) is called."""
         return self._base_proc
 
     @property
@@ -725,9 +756,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         return self._num_procs_post_sub_exp
 
     @staticmethod
-    def _find_proc_models_in_module(proc: AbstractProcess,
-                                    module: types.ModuleType) \
-            -> ty.List[ty.Type[AbstractProcessModel]]:
+    def _find_proc_models_in_module(
+        proc: AbstractProcess, module: types.ModuleType
+    ) -> ty.List[ty.Type[AbstractProcessModel]]:
         """Find and return all ProcModels that implement given Process in
         given Python module.
 
@@ -748,10 +779,10 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         proc_models = []
         for name, cls in module.__dict__.items():
             if (
-                    hasattr(cls, "implements_process")
-                    and issubclass(cls, AbstractProcessModel)
-                    and cls.implements_process is not None
-                    and type(proc) is cls.implements_process
+                hasattr(cls, "implements_process")
+                and issubclass(cls, AbstractProcessModel)
+                and cls.implements_process is not None
+                and type(proc) is cls.implements_process
             ):
                 # Collect ProcessModel
                 proc_models.append(cls)
@@ -759,8 +790,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         return proc_models
 
     @staticmethod
-    def _find_proc_models(proc: AbstractProcess) \
-            -> ty.List[ty.Type[AbstractProcessModel]]:
+    def _find_proc_models(
+        proc: AbstractProcess,
+    ) -> ty.List[ty.Type[AbstractProcessModel]]:
         """Find all ProcessModels that implement given Process.
 
         First, we search in the same Python module, in which 'proc' is defined,
@@ -781,27 +813,30 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
         # Find all ProcModel classes that implement 'proc' in same module
         proc_module = sys.modules[proc.__module__]
-        proc_models = \
-            ProcGroupDiGraphs._find_proc_models_in_module(proc, proc_module)
+        proc_models = ProcGroupDiGraphs._find_proc_models_in_module(
+            proc, proc_module
+        )
 
         # Search for the file of the module.
         file = None
         if inspect.isclass(proc.__class__):
-            if hasattr(proc.__class__, '__module__'):
+            if hasattr(proc.__class__, "__module__"):
                 proc_ = sys.modules.get(proc.__class__.__module__)
                 # check if it has file (classes in jupyter nb do not)
-                if hasattr(proc_, '__file__'):
+                if hasattr(proc_, "__file__"):
                     file = proc_.__file__
             else:
-                raise TypeError('Source for {!r} not found'.format(object))
+                raise TypeError("Source for {!r} not found".format(object))
 
             if file is None:
                 # class is probably defined in a jupyter notebook
                 # lookup file name per methods
                 for _, m in inspect.getmembers(proc.__class__):
-                    if inspect.isfunction(m) and \
-                            proc.__class__.__qualname__ + '.' \
-                            + m.__name__ == m.__qualname__:
+                    if (
+                        inspect.isfunction(m)
+                        and proc.__class__.__qualname__ + "." + m.__name__
+                        == m.__qualname__
+                    ):
                         file = inspect.getfile(m)
                         break
         else:
@@ -823,8 +858,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                 # multiple repositories.
                 namespace_module_infos = list(
                     pkgutil.iter_modules(
-                        parent_module.__path__,
-                        parent_module.__name__ + "."
+                        parent_module.__path__, parent_module.__name__ + "."
                     )
                 )
 
@@ -841,21 +875,27 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                 name_not_dir = not os.path.isdir(import_path)
                 if name_not_dir:
                     spec = import_utils.spec_from_file_location(
-                        name, os.path.join(dir_name, name + ".py"))
+                        name, os.path.join(dir_name, name + ".py")
+                    )
                     module = import_utils.module_from_spec(spec)
                     try:
                         spec.loader.exec_module(module)
                         if module != proc_module:
                             pm = ProcGroupDiGraphs._find_proc_models_in_module(
-                                proc, module)
+                                proc, module
+                            )
                             for proc_model in pm:
-                                proc_cls_mod = \
-                                    inspect.getmodule(proc).__package__ + \
-                                    '.' + proc_model.__module__
-                                proc_cls_mod = importlib. \
-                                    import_module(proc_cls_mod)
-                                class_ = getattr(proc_cls_mod,
-                                                 proc_model.__name__)
+                                proc_cls_mod = (
+                                    inspect.getmodule(proc).__package__
+                                    + "."
+                                    + proc_model.__module__
+                                )
+                                proc_cls_mod = importlib.import_module(
+                                    proc_cls_mod
+                                )
+                                class_ = getattr(
+                                    proc_cls_mod, proc_model.__name__
+                                )
                                 if class_ not in proc_models:
                                     proc_models.append(class_)
                     except Exception:
@@ -871,9 +911,10 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
     @staticmethod
     def _select_proc_models(
-            proc: AbstractProcess,
-            models: ty.List[ty.Type[AbstractProcessModel]],
-            run_cfg: RunConfig) -> ty.Type[AbstractProcessModel]:
+        proc: AbstractProcess,
+        models: ty.List[ty.Type[AbstractProcessModel]],
+        run_cfg: RunConfig,
+    ) -> ty.Type[AbstractProcessModel]:
         """Select a ProcessModel from list of provided models given RunCfg.
 
         Parameters
@@ -893,9 +934,11 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
             specified in `run_cfg`.
         """
         selected_proc_model = run_cfg.select(proc, models)
-        err_msg = f"RunConfig {run_cfg.__class__.__qualname__}.select() must " \
-                  f"return a sub-class of AbstractProcessModel. Got" \
-                  f" {type(selected_proc_model)} instead."
+        err_msg = (
+            f"RunConfig {run_cfg.__class__.__qualname__}.select() must "
+            f"return a sub-class of AbstractProcessModel. Got"
+            f" {type(selected_proc_model)} instead."
+        )
         if not isinstance(selected_proc_model, type):
             raise AssertionError(err_msg)
         if not issubclass(selected_proc_model, AbstractProcessModel):
@@ -932,8 +975,11 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                 vp.connect(imp_vp)
 
     @staticmethod
-    def _expand_sub_proc_model(model_cls: ty.Type[AbstractSubProcessModel],
-                               proc: AbstractProcess, run_cfg: RunConfig):
+    def _expand_sub_proc_model(
+        model_cls: ty.Type[AbstractSubProcessModel],
+        proc: AbstractProcess,
+        run_cfg: RunConfig,
+    ):
         """Expand a SubProcessModel by building it, extracting the
         sub-Processes contained within, and mapping the sub-Processes
         recursively to their ProcessModels.
@@ -962,12 +1008,14 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         proc.register_sub_procs(sub_procs)
         proc.validate_var_aliases()
         # Recursively map sub processes to their ProcModel
-        return ProcGroupDiGraphs._map_proc_to_model(list(sub_procs.values()),
-                                                    run_cfg)
+        return ProcGroupDiGraphs._map_proc_to_model(
+            list(sub_procs.values()), run_cfg
+        )
 
     @staticmethod
-    def _map_proc_to_model(procs: ty.List[AbstractProcess],
-                           run_cfg: RunConfig) -> ProcMap:
+    def _map_proc_to_model(
+        procs: ty.List[AbstractProcess], run_cfg: RunConfig
+    ) -> ProcMap:
         """Associate each Process in a list of Processes to the corresponding
         ProcessModel as selected by run_cfg.
 
@@ -993,14 +1041,14 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         for proc in procs:
             # Select a specific ProcessModel
             models_cls = ProcGroupDiGraphs._find_proc_models(proc=proc)
-            model_cls = \
-                ProcGroupDiGraphs._select_proc_models(
-                    proc, models_cls, run_cfg)
+            model_cls = ProcGroupDiGraphs._select_proc_models(
+                proc, models_cls, run_cfg
+            )
             if issubclass(model_cls, AbstractSubProcessModel):
                 # Recursively substitute SubProcModel by sub processes
-                sub_map = ProcGroupDiGraphs._expand_sub_proc_model(model_cls,
-                                                                   proc,
-                                                                   run_cfg)
+                sub_map = ProcGroupDiGraphs._expand_sub_proc_model(
+                    model_cls, proc, run_cfg
+                )
                 proc_map.update(sub_map)
             else:
                 # Just map current Process to selected ProcessModel
@@ -1024,8 +1072,11 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # 1. Create subgraphs of Processes with the same type of model
         subgraph_list = []
         for pm_type in ProcessModelTypes:
-            subgraph_nodes = [node for node in rpg.nodes if issubclass(
-                node.model_class, pm_type.value)]
+            subgraph_nodes = [
+                node
+                for node in rpg.nodes
+                if issubclass(node.model_class, pm_type.value)
+            ]
             subgraph_list.append(rpg.subgraph(subgraph_nodes).copy())
         for model_sg in subgraph_list:
             # Subgraphs can be disconnected. Iterate over each weakly
@@ -1062,14 +1113,17 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
             proc_list.append(node)
 
         if isinstance(node, ntx.DiGraph):
-            proc_list.extend([self._flatten_node_of_proc_group_digraph(n) for n
-                              in node.nodes])
+            proc_list.extend(
+                [
+                    self._flatten_node_of_proc_group_digraph(n)
+                    for n in node.nodes
+                ]
+            )
             proc_list = flatten_list_recursive(proc_list)
 
         return proc_list
 
-    def get_proc_groups(self) -> \
-            ty.List[ProcGroup]:
+    def get_proc_groups(self) -> ty.List[ProcGroup]:
         """
         Create a list of process groups sorted in compilation order.
 
@@ -1090,8 +1144,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
         proc_groups = []
 
-        topo_ord = list(reversed(list(ntx.topological_sort(
-            self._proc_group_digraph))))
+        topo_ord = list(
+            reversed(list(ntx.topological_sort(self._proc_group_digraph)))
+        )
 
         for node in topo_ord:
             proc_groups.append(self._flatten_node_of_proc_group_digraph(node))

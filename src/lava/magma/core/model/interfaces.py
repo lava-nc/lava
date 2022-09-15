@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
+
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 
 

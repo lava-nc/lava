@@ -39,9 +39,7 @@ class ConcatIndexError(Exception):
     bounds."""
 
     def __init__(self, shape: ty.Tuple[int], axis: int):
-        msg = (
-            "Axis {} is out of bounds for given shape {}.".format(axis, shape)
-        )
+        msg = "Axis {} is out of bounds for given shape {}.".format(axis, shape)
         super().__init__(self, msg)
 
 
@@ -67,7 +65,7 @@ class TransposeIndexError(Exception):
         self,
         old_shape: ty.Tuple,
         axes: ty.Union[ty.Tuple, ty.List],
-        wrong_index
+        wrong_index,
     ) -> None:
         msg = (
             f"Cannot transpose 'old_shape'={old_shape} with permutation"

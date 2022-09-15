@@ -2,20 +2,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import logging
 import typing as ty
 from abc import ABC, abstractmethod
-import logging
+
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
-    CspSelector
+from lava.magma.compiler.channels.pypychannel import (
+    CspRecvPort,
+    CspSelector,
+    CspSendPort,
+)
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
-    enum_to_np,
-    enum_equal,
     MGMT_COMMAND,
-    MGMT_RESPONSE, )
+    MGMT_RESPONSE,
+    enum_equal,
+    enum_to_np,
+)
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -30,9 +35,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self,
-                 proc_params: ty.Type["ProcessParameters"],
-                 loglevel: ty.Optional[int] = logging.WARNING) -> None:
+    def __init__(
+        self,
+        proc_params: ty.Type["ProcessParameters"],
+        loglevel: ty.Optional[int] = logging.WARNING,
+    ) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[CspRecvPort] = None
@@ -41,16 +48,16 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
         self._selector: CspSelector = CspSelector()
-        self._action: str = 'cmd'
+        self._action: str = "cmd"
         self._stopped: bool = False
-        self._channel_actions: ty.List[ty.Tuple[ty.Union[CspSendPort,
-                                                         CspRecvPort],
-                                                ty.Callable]] = []
+        self._channel_actions: ty.List[
+            ty.Tuple[ty.Union[CspSendPort, CspRecvPort], ty.Callable]
+        ] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
             MGMT_COMMAND.STOP[0]: self._stop,
             MGMT_COMMAND.PAUSE[0]: self._pause,
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
-            MGMT_COMMAND.SET_DATA[0]: self._set_var
+            MGMT_COMMAND.SET_DATA[0]: self._set_var,
         }
 
     def __setattr__(self, key: str, value: ty.Any):
@@ -113,7 +120,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port.send(enum_to_np(var))
         elif isinstance(var, np.ndarray):
             # FIXME: send a whole vector (also runtime_service.py)
-            var_iter = np.nditer(var, order='C')
+            var_iter = np.nditer(var, order="C")
             num_items: np.integer = np.prod(var.shape)
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
@@ -141,7 +148,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         elif isinstance(var, np.ndarray):
             # First item is number of items
             num_items = data_port.recv()[0]
-            var_iter = np.nditer(var, op_flags=['readwrite'])
+            var_iter = np.nditer(var, op_flags=["readwrite"])
             # Set data one by one
             for i in var_iter:
                 if num_items == 0:
@@ -164,7 +171,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
-            if self._action == 'cmd':
+            if self._action == "cmd":
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
@@ -176,7 +183,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                             f"Illegal RuntimeService command! ProcessModels of "
                             f"type {self.__class__.__qualname__} "
                             f"{self.model_id} cannot handle "
-                            f"command: {cmd} ")
+                            f"command: {cmd} "
+                        )
                 except Exception as inst:
                     # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
@@ -185,7 +193,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             else:
                 # Handle VarPort requests from RefPorts
                 self._handle_var_port(self._action)
-            self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
+            self._channel_actions = [(self.service_to_process, lambda: "cmd")]
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
 
@@ -234,13 +242,15 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         super().__init__(proc_params=proc_params)
         self.time_step = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
-        self._cmd_handlers.update({
-            PyLoihiProcessModel.Phase.SPK[0]: self._spike,
-            PyLoihiProcessModel.Phase.PRE_MGMT[0]: self._pre_mgmt,
-            PyLoihiProcessModel.Phase.LRN[0]: self._lrn,
-            PyLoihiProcessModel.Phase.POST_MGMT[0]: self._post_mgmt,
-            PyLoihiProcessModel.Phase.HOST[0]: self._host
-        })
+        self._cmd_handlers.update(
+            {
+                PyLoihiProcessModel.Phase.SPK[0]: self._spike,
+                PyLoihiProcessModel.Phase.PRE_MGMT[0]: self._pre_mgmt,
+                PyLoihiProcessModel.Phase.LRN[0]: self._lrn,
+                PyLoihiProcessModel.Phase.POST_MGMT[0]: self._post_mgmt,
+                PyLoihiProcessModel.Phase.HOST[0]: self._host,
+            }
+        )
         self._req_pause: bool = False
         self._req_stop: bool = False
 
@@ -248,6 +258,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Different States of the State Machine of a Loihi Process
         """
+
         SPK = enum_to_np(1)
         PRE_MGMT = enum_to_np(2)
         LRN = enum_to_np(3)
@@ -258,6 +269,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Different types of response for a RuntimeService Request
         """
+
         STATUS_DONE = enum_to_np(0)
         """Signfies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)
@@ -334,16 +346,20 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             return
         if self.lrn_guard() and self.pre_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT
+            )
         elif self.lrn_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_LEARNING)
+                PyLoihiProcessModel.Response.REQ_LEARNING
+            )
         elif self.post_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
         else:
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.STATUS_DONE)
+                PyLoihiProcessModel.Response.STATUS_DONE
+            )
 
     def _pre_mgmt(self):
         """
@@ -355,8 +371,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         if self._req_pause or self._req_stop:
             self._handle_pause_or_stop_req()
             return
-        self.process_to_service.send(
-            PyLoihiProcessModel.Response.REQ_LEARNING)
+        self.process_to_service.send(PyLoihiProcessModel.Response.REQ_LEARNING)
 
     def _post_mgmt(self):
         """
@@ -382,7 +397,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             return
         if self.post_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
             return
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
@@ -397,7 +413,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         Command handler for Stop Command.
         """
         self.process_to_service.send(
-            PyLoihiProcessModel.Response.STATUS_TERMINATED)
+            PyLoihiProcessModel.Response.STATUS_TERMINATED
+        )
         self.join()
 
     def _pause(self):
@@ -434,15 +451,19 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Add various ports to poll for communication on ports
         """
-        if enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
-                enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
+        if enum_equal(
+            self.phase, PyLoihiProcessModel.Phase.PRE_MGMT
+        ) or enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, CspRecvPort):
+
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
-                        self._channel_actions.insert(0,
-                                                     (csp_port, func(var_port)))
+
+                        self._channel_actions.insert(
+                            0, (csp_port, func(var_port))
+                        )
 
 
 class PyAsyncProcessModel(AbstractPyProcessModel):
@@ -475,14 +496,13 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
 
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
-        self._cmd_handlers.update({
-            MGMT_COMMAND.RUN[0]: self._run_async
-        })
+        self._cmd_handlers.update({MGMT_COMMAND.RUN[0]: self._run_async})
 
     class Response:
         """
         Different types of response for a RuntimeService Request
         """
+
         STATUS_DONE = enum_to_np(0)
         """Signifies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)

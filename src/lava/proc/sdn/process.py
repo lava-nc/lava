@@ -6,9 +6,9 @@
 import typing as ty
 from enum import IntEnum, unique
 
+from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 @unique
@@ -17,15 +17,13 @@ class ActivationMode(IntEnum):
     UNIT: 0
     RELU: 1
     """
+
     UNIT = 0
     RELU = 1
 
 
 class Sigma(AbstractProcess):
-    def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...]) -> None:
+    def __init__(self, *, shape: ty.Tuple[int, ...]) -> None:
         """Sigma integration unit process definition. A sigma process is simply
         a cumulative accumulator over time.
 
@@ -48,17 +46,19 @@ class Sigma(AbstractProcess):
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
-        return self.proc_params['shape']
+        return self.proc_params["shape"]
 
 
 class Delta(AbstractProcess):
-    def __init__(self,
-                 *,
-                 shape: ty.Tuple[int, ...],
-                 vth: ty.Union[int, float],
-                 cum_error: ty.Optional[bool] = False,
-                 spike_exp: ty.Optional[int] = 0,
-                 state_exp: ty.Optional[int] = 0) -> None:
+    def __init__(
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        vth: ty.Union[int, float],
+        cum_error: ty.Optional[bool] = False,
+        spike_exp: ty.Optional[int] = 0,
+        state_exp: ty.Optional[int] = 0,
+    ) -> None:
         """Delta process definition. Spike mechanism based on accumulated error
         is also supported.
 
@@ -94,8 +94,13 @@ class Delta(AbstractProcess):
             Note: This should only be used for fixed point models.
             Default is 0.
         """
-        super().__init__(shape=shape, vth=vth, cum_error=cum_error,
-                         spike_exp=spike_exp, state_exp=state_exp)
+        super().__init__(
+            shape=shape,
+            vth=vth,
+            cum_error=cum_error,
+            spike_exp=spike_exp,
+            state_exp=state_exp,
+        )
 
         vth = vth * (1 << (spike_exp + state_exp))
 
@@ -114,20 +119,21 @@ class Delta(AbstractProcess):
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
-        return self.proc_params['shape']
+        return self.proc_params["shape"]
 
 
 class SigmaDelta(AbstractProcess):
     def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            vth: float,
-            bias: ty.Optional[float] = 0,
-            act_mode: ty.Optional[ActivationMode] = ActivationMode.RELU,
-            cum_error: ty.Optional[bool] = False,
-            spike_exp: ty.Optional[int] = 0,
-            state_exp: ty.Optional[int] = 0) -> None:
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        vth: float,
+        bias: ty.Optional[float] = 0,
+        act_mode: ty.Optional[ActivationMode] = ActivationMode.RELU,
+        cum_error: ty.Optional[bool] = False,
+        spike_exp: ty.Optional[int] = 0,
+        state_exp: ty.Optional[int] = 0,
+    ) -> None:
         """Sigma delta neuron process. At the moment only ReLu activation is
         supported. Spike mechanism based on accumulated error is also supported.
 
@@ -172,9 +178,15 @@ class SigmaDelta(AbstractProcess):
             Note: This should only be used for fixed point models.
             Default is 0.
         """
-        super().__init__(shape=shape, vth=vth, bias=bias,
-                         act_mode=act_mode, cum_error=cum_error,
-                         spike_exp=spike_exp, state_exp=state_exp)
+        super().__init__(
+            shape=shape,
+            vth=vth,
+            bias=bias,
+            act_mode=act_mode,
+            cum_error=cum_error,
+            spike_exp=spike_exp,
+            state_exp=state_exp,
+        )
         # scaling factor for fixed precision scaling
         vth = vth * (1 << (spike_exp + state_exp))
         bias = bias * (1 << (spike_exp + state_exp))
@@ -195,4 +207,4 @@ class SigmaDelta(AbstractProcess):
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
-        return self.proc_params['shape']
+        return self.proc_params["shape"]

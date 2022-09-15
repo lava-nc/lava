@@ -5,18 +5,18 @@
 import typing as ty
 from dataclasses import dataclass
 
-from lava.magma.compiler.builders.interfaces import \
-    AbstractChannelBuilder, \
-    AbstractProcessModel
-from lava.magma.compiler.builders. \
-    runtimeservice_builder import RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import (
-    Channel,
-    ChannelType,
+from lava.magma.compiler.builders.interfaces import (
+    AbstractChannelBuilder,
+    AbstractProcessModel,
 )
+from lava.magma.compiler.builders.runtimeservice_builder import (
+    RuntimeServiceBuilder,
+)
+from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.runtime.message_infrastructure \
-    .message_infrastructure_interface import (MessageInfrastructureInterface)
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -36,7 +36,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     dst_port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+        self, messaging_infrastructure: MessageInfrastructureInterface
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -74,14 +74,16 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     """
 
     channel_type: ChannelType
-    src_process: ty.Union[RuntimeServiceBuilder,
-                          ty.Type["AbstractProcessModel"]]
-    dst_process: ty.Union[RuntimeServiceBuilder,
-                          ty.Type["AbstractProcessModel"]]
+    src_process: ty.Union[
+        RuntimeServiceBuilder, ty.Type["AbstractProcessModel"]
+    ]
+    dst_process: ty.Union[
+        RuntimeServiceBuilder, ty.Type["AbstractProcessModel"]
+    ]
     port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+        self, messaging_infrastructure: MessageInfrastructureInterface
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -126,7 +128,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+        self, messaging_infrastructure: MessageInfrastructureInterface
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -172,7 +174,7 @@ class ChannelBuilderNx(AbstractChannelBuilder):
     dst_port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+        self, messaging_infrastructure: MessageInfrastructureInterface
     ) -> Channel:
         """Given the message passing framework builds a channel
 

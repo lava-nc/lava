@@ -6,9 +6,9 @@ import typing as ty
 
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.core.sync.domain import SyncDomain
-from lava.magma.runtime.message_infrastructure \
-    .message_infrastructure_interface import \
-    MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
 
 
 class NxBoardMsgInterface(MessageInfrastructureInterface):
@@ -23,9 +23,14 @@ class NxBoardMsgInterface(MessageInfrastructureInterface):
         """Starts the shared memory manager"""
         pass
 
-    def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
-        ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
+    def build_actor(
+        self,
+        target_fn: ty.Callable,
+        builder: ty.Union[
+            ty.Dict["AbstractProcess", "PyProcessBuilder"],
+            ty.Dict[SyncDomain, "RuntimeServiceBuilder"],
+        ],
+    ) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
         pass
 

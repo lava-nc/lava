@@ -2,19 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 from typing import Union
 
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import RefPort
-from lava.magma.core.process.process import AbstractProcess
+import numpy as np
 
-from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyRefPort
+from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.process.ports.ports import RefPort
+from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
+from lava.magma.core.resources import CPU
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 
 class Reset(AbstractProcess):
@@ -29,6 +29,7 @@ class Reset(AbstractProcess):
     offset : int, optional
         reset offset (phase), by default 0
     """
+
     def __init__(
         self,
         *,
@@ -36,8 +37,9 @@ class Reset(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__(reset_value=reset_value, interval=interval,
-                         offset=offset)
+        super().__init__(
+            reset_value=reset_value, interval=interval, offset=offset
+        )
         self.reset_value = Var((1,), init=reset_value)
         self.interval = Var((1,), init=interval)
         self.offset = Var((1,), init=offset % interval)
@@ -51,6 +53,7 @@ class Reset(AbstractProcess):
 
 class AbstractPyReset(PyLoihiProcessModel):
     """Abstract Reset process implementation."""
+
     state: Union[PyRefPort, None] = None
     reset_value: np.ndarray = LavaPyType(np.ndarray, int)
     interval: np.ndarray = LavaPyType(np.ndarray, int)
@@ -60,22 +63,25 @@ class AbstractPyReset(PyLoihiProcessModel):
         return (self.time_step - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        self.state.write(np.zeros(self.state._shape,
-                                  self.state._d_type) + self.reset_value)
+        self.state.write(
+            np.zeros(self.state._shape, self.state._d_type) + self.reset_value
+        )
         self.state.wait()  # ensures write() has finished before moving on
 
 
 @implements(proc=Reset, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PyResetFixed(AbstractPyReset):
     """Reset process implementation for int type."""
+
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
 
 @implements(proc=Reset, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyResetFloat(AbstractPyReset):
     """Reset process implementation for float type."""
+
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, float)

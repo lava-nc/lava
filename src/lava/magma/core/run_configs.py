@@ -2,29 +2,37 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 from __future__ import annotations
+
 import logging
 import typing as ty
 from abc import ABC
 from itertools import chain
-from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, \
-    Loihi2NeuroCore, NeuroCore
+
 from lava.magma.core.model.py.model import AbstractPyProcessModel
+from lava.magma.core.resources import (
+    AbstractNode,
+    Loihi1NeuroCore,
+    Loihi2NeuroCore,
+    NeuroCore,
+)
 
 try:
     from lava.magma.core.model.c.model import CLoihiProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
 except ImportError:
+
     class AbstractCProcessModel:
         pass
 
     class AbstractNcProcessModel:
         pass
 
+
 from lava.magma.core.sync.domain import SyncDomain
 
 if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process import AbstractProcess
     from lava.magma.core.model.model import AbstractProcessModel
+    from lava.magma.core.process.process import AbstractProcess
 
 
 class RunConfig(ABC):
@@ -59,9 +67,11 @@ class RunConfig(ABC):
               facility. Default: logging.WARNING
     """
 
-    def __init__(self,
-                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
-                 loglevel: int = logging.WARNING):
+    def __init__(
+        self,
+        custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+        loglevel: int = logging.WARNING,
+    ):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
         self.custom_sync_domains = []
@@ -81,10 +91,11 @@ class RunConfig(ABC):
         """Requires that compiler maps processes to given nodes."""
         pass
 
-    def select(self,
-               process: AbstractProcess,
-               proc_model: ty.List[ty.Type[AbstractProcessModel]]) \
-            -> ty.Type[AbstractProcessModel]:
+    def select(
+        self,
+        process: AbstractProcess,
+        proc_model: ty.List[ty.Type[AbstractProcessModel]],
+    ) -> ty.Type[AbstractProcessModel]:
         pass
 
 
@@ -147,26 +158,30 @@ class AbstractLoihiRunCfg(RunConfig):
         facility. Default: logging.WARNING
     """
 
-    def __init__(self,
-                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
-                 select_tag: ty.Optional[str] = None,
-                 select_sub_proc_model: ty.Optional[bool] = False,
-                 exception_proc_model_map: ty.Optional[ty.Dict[
-                     ty.Type[AbstractProcess], ty.Type[
-                         AbstractProcessModel]]] = None,
-                 loglevel: int = logging.WARNING):
-        super().__init__(custom_sync_domains=custom_sync_domains,
-                         loglevel=loglevel)
+    def __init__(
+        self,
+        custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+        select_tag: ty.Optional[str] = None,
+        select_sub_proc_model: ty.Optional[bool] = False,
+        exception_proc_model_map: ty.Optional[
+            ty.Dict[ty.Type[AbstractProcess], ty.Type[AbstractProcessModel]]
+        ] = None,
+        loglevel: int = logging.WARNING,
+    ):
+        super().__init__(
+            custom_sync_domains=custom_sync_domains, loglevel=loglevel
+        )
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
         self.exception_proc_model_map = exception_proc_model_map
         if not exception_proc_model_map:
             self.exception_proc_model_map = {}
 
-    def select(self,
-               proc: AbstractProcess,
-               proc_models: ty.List[ty.Type[AbstractProcessModel]]) \
-            -> ty.Type[AbstractProcessModel]:
+    def select(
+        self,
+        proc: AbstractProcess,
+        proc_models: ty.List[ty.Type[AbstractProcessModel]],
+    ) -> ty.Type[AbstractProcessModel]:
         """
         Selects an appropriate ProcessModel from a list of ProcessModels for
         a Process, based on user requests.
@@ -187,9 +202,11 @@ class AbstractLoihiRunCfg(RunConfig):
         # ------------------------------
         # Raise error
         if num_pm == 0:
-            raise AssertionError(f"[{self.__class__.__qualname__}]: No "
-                                 f"ProcessModels exist for Process "
-                                 f"{proc.name}::{proc.__class__.__qualname__}.")
+            raise AssertionError(
+                f"[{self.__class__.__qualname__}]: No "
+                f"ProcessModels exist for Process "
+                f"{proc.name}::{proc.__class__.__qualname__}."
+            )
 
         # Required modules and helper functions
         from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -210,14 +227,18 @@ class AbstractLoihiRunCfg(RunConfig):
         # Assumption: User doesn't care about the type: Sub or HW-specific.
         if num_pm == 1:
             # If type of the PM is neither Sub nor HW-supported, raise error
-            if not (_issubpm(proc_models[0]) or self._is_hw_supported(
-                    proc_models[0])):
-                raise NotImplementedError(f"[{self.__class__.__qualname__}]: "
-                                          f"The only found ProcessModel "
-                                          f"{proc_models[0].__qualname__} is "
-                                          f"neither a SubProcessModel nor "
-                                          f"runs on a backend supported by "
-                                          f"this RunConfig.")
+            if not (
+                _issubpm(proc_models[0])
+                or self._is_hw_supported(proc_models[0])
+            ):
+                raise NotImplementedError(
+                    f"[{self.__class__.__qualname__}]: "
+                    f"The only found ProcessModel "
+                    f"{proc_models[0].__qualname__} is "
+                    f"neither a SubProcessModel nor "
+                    f"runs on a backend supported by "
+                    f"this RunConfig."
+                )
             # Case 2a: User did not provide select_tag:
             # ----------------------------------------
             # Assumption: User doesn't care about tags, that's why none was
@@ -244,13 +265,15 @@ class AbstractLoihiRunCfg(RunConfig):
                             f"ProcessModels found with tag "
                             f"'{self.select_tag}' for Process "
                             f"{proc.name}::"
-                            f"{proc.__class__.__qualname__}.")
+                            f"{proc.__class__.__qualname__}."
+                        )
 
         # Case 3: Multiple PMs exist:
         # --------------------------
         # Collect indices of Sub and HW-specific PMs:
-        sub_pm_idxs = [idx for idx, pm in enumerate(proc_models) if
-                       _issubpm(pm)]
+        sub_pm_idxs = [
+            idx for idx, pm in enumerate(proc_models) if _issubpm(pm)
+        ]
         leaf_pm_idxs = self._order_according_to_resources(proc_models)
         # Case 3a: User specifically asked for a SubProcessModel:
         # ------------------------------------------------------
@@ -265,67 +288,82 @@ class AbstractLoihiRunCfg(RunConfig):
             # Assumption: User doesn't care about tags. We return the first
             # SubProcessModel found
             if self.select_tag is None:
-                self.log.info(f"[{self.__class__.__qualname__}]: Using the"
-                              f" first SubProcessModel "
-                              f"{proc_models[sub_pm_idxs[0]].__qualname__} "
-                              f"available for Process "
-                              f"{proc.name}::{proc.__class__.__qualname__}.")
+                self.log.info(
+                    f"[{self.__class__.__qualname__}]: Using the"
+                    f" first SubProcessModel "
+                    f"{proc_models[sub_pm_idxs[0]].__qualname__} "
+                    f"available for Process "
+                    f"{proc.name}::{proc.__class__.__qualname__}."
+                )
                 return proc_models[sub_pm_idxs[0]]
             # Case 3a(iii): User asked for a specific tag:
             # -------------------------------------------
             else:
                 # Collect indices of all SubPMs with select_tag
-                valid_sub_pm_idxs = \
-                    [idx for idx in sub_pm_idxs
-                     if self.select_tag in proc_models[sub_pm_idxs[idx]].tags]
+                valid_sub_pm_idxs = [
+                    idx
+                    for idx in sub_pm_idxs
+                    if self.select_tag in proc_models[sub_pm_idxs[idx]].tags
+                ]
                 if len(valid_sub_pm_idxs) == 0:
-                    raise AssertionError(f"[{self.__class__.__qualname__}]: No "
-                                         f"ProcessModels found with tag "
-                                         f"{self.select_tag} for Process "
-                                         f"{proc.name}::"
-                                         f"{proc.__class__.__qualname__}.")
+                    raise AssertionError(
+                        f"[{self.__class__.__qualname__}]: No "
+                        f"ProcessModels found with tag "
+                        f"{self.select_tag} for Process "
+                        f"{proc.name}::"
+                        f"{proc.__class__.__qualname__}."
+                    )
                 return proc_models[valid_sub_pm_idxs[0]]
         # Case 3b: User didn't ask for SubProcessModel:
         # --------------------------------------------
         # Raise error if no HW-specific ProcessModels exist
         if len(leaf_pm_idxs) == 0:
-            raise AssertionError(f"[{self.__class__.__qualname__}]: "
-                                 f"No hardware-specific ProcessModels were "
-                                 f"found for Process {proc.name}::"
-                                 f"{proc.__class__.__qualname__}. "
-                                 f"Try setting select_sub_proc_model=True.")
+            raise AssertionError(
+                f"[{self.__class__.__qualname__}]: "
+                f"No hardware-specific ProcessModels were "
+                f"found for Process {proc.name}::"
+                f"{proc.__class__.__qualname__}. "
+                f"Try setting select_sub_proc_model=True."
+            )
         # Case 3b(i): User didn't provide select_tag:
         # ------------------------------------------
         # Assumption: User doesn't care about tags. We return the first
         # HW-specific ProcessModel found
         if self.select_tag is None:
-            self.log.info(f"[{self.__class__.__qualname__}]: Using the first "
-                          f"Hardware-specific ProcessModel "
-                          f"{proc_models[leaf_pm_idxs[0]].__qualname__} "
-                          f"available for Process "
-                          f"{proc.name}::{proc.__class__.__qualname__}.")
+            self.log.info(
+                f"[{self.__class__.__qualname__}]: Using the first "
+                f"Hardware-specific ProcessModel "
+                f"{proc_models[leaf_pm_idxs[0]].__qualname__} "
+                f"available for Process "
+                f"{proc.name}::{proc.__class__.__qualname__}."
+            )
             return proc_models[leaf_pm_idxs[0]]
         # Case 3b(ii): User asked for a specific tag:
         # ------------------------------------------
         else:
             # Collect indices of all HW-specific PMs with select_tag
-            valid_leaf_pm_idxs = \
-                [idx for idx in leaf_pm_idxs
-                 if self.select_tag in proc_models[idx].tags]
+            valid_leaf_pm_idxs = [
+                idx
+                for idx in leaf_pm_idxs
+                if self.select_tag in proc_models[idx].tags
+            ]
             if len(valid_leaf_pm_idxs) == 0:
-                raise AssertionError(f"[{self.__class__.__qualname__}]: No "
-                                     f"ProcessModels found with tag "
-                                     f"'{self.select_tag}' for Process "
-                                     f"{proc.name}::"
-                                     f"{proc.__class__.__qualname__}.")
+                raise AssertionError(
+                    f"[{self.__class__.__qualname__}]: No "
+                    f"ProcessModels found with tag "
+                    f"'{self.select_tag}' for Process "
+                    f"{proc.name}::"
+                    f"{proc.__class__.__qualname__}."
+                )
             return proc_models[valid_leaf_pm_idxs[0]]
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:
         """Checks if the process models is a PyProcModel"""
         return issubclass(pm, AbstractPyProcessModel)
 
-    def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
-            AbstractProcessModel]]) -> ty.List[int]:
+    def _order_according_to_resources(
+        self, proc_models: ty.List[ty.Type[AbstractProcessModel]]
+    ) -> ty.List[int]:
         """Orders a list of ProcModels according to the resources that it
         runs on. ProcModels that require unsupported HW are left out. The
         return value is a list of the indices specifying the preferred order.
@@ -347,12 +385,16 @@ class Loihi1SimCfg(AbstractLoihiSimRunCfg):
     for a standard Process.
     """
 
-    def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
-            AbstractProcessModel]]) -> ty.List[int]:
+    def _order_according_to_resources(
+        self, proc_models: ty.List[ty.Type[AbstractProcessModel]]
+    ) -> ty.List[int]:
         """For Sim configurations, only PyProcModels are allowed."""
 
-        proc_models_ordered = [idx for idx, pm in enumerate(proc_models)
-                               if issubclass(pm, AbstractPyProcessModel)]
+        proc_models_ordered = [
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
+        ]
         return proc_models_ordered
 
 
@@ -365,48 +407,69 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi1-compatible ProcModel is being found.
     ."""
-    def __init__(self,
-                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
-                 select_tag: ty.Optional[str] = None,
-                 select_sub_proc_model: ty.Optional[bool] = False,
-                 exception_proc_model_map: ty.Optional[ty.Dict[
-                     ty.Type[AbstractProcess], ty.Type[
-                         AbstractProcessModel]]] = None,
-                 loglevel: int = logging.WARNING,
-                 pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = []):
-        super().__init__(custom_sync_domains,
-                         select_tag,
-                         select_sub_proc_model,
-                         exception_proc_model_map,
-                         loglevel)
+
+    def __init__(
+        self,
+        custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+        select_tag: ty.Optional[str] = None,
+        select_sub_proc_model: ty.Optional[bool] = False,
+        exception_proc_model_map: ty.Optional[
+            ty.Dict[ty.Type[AbstractProcess], ty.Type[AbstractProcessModel]]
+        ] = None,
+        loglevel: int = logging.WARNING,
+        pre_run_fxs: ty.List[ty.Callable] = [],
+        post_run_fxs: ty.List[ty.Callable] = [],
+    ):
+        super().__init__(
+            custom_sync_domains,
+            select_tag,
+            select_sub_proc_model,
+            exception_proc_model_map,
+            loglevel,
+        )
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
 
-    def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
-            AbstractProcessModel]]) -> ty.List[int]:
+    def _order_according_to_resources(
+        self, proc_models: ty.List[ty.Type[AbstractProcessModel]]
+    ) -> ty.List[int]:
         """Orders the provided ProcModels according to the preferences for
         Loihi 1 HW."""
         # PyProcModels
-        proc_models_py = [idx for idx, pm in enumerate(proc_models)
-                          if issubclass(pm, AbstractPyProcessModel)]
+        proc_models_py = [
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
+        ]
         # NcProcModels compatible with Loihi1 HW
-        proc_models_nc = [idx for idx, pm in enumerate(proc_models)
-                          if (NeuroCore in pm.required_resources
-                              or Loihi1NeuroCore in pm.required_resources)
-                          and issubclass(pm, AbstractNcProcessModel)]
+        proc_models_nc = [
+            idx
+            for idx, pm in enumerate(proc_models)
+            if (
+                NeuroCore in pm.required_resources
+                or Loihi1NeuroCore in pm.required_resources
+            )
+            and issubclass(pm, AbstractNcProcessModel)
+        ]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models
-                         if issubclass(pm, CLoihiProcessModel)]
+        proc_models_c = [
+            pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)
+        ]
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:
         """Checks if the process models is a supporte by Loihi 1 HW."""
-        return issubclass(pm, AbstractPyProcessModel) \
-            or issubclass(pm, CLoihiProcessModel) \
-            or ((NeuroCore in pm.required_resources or Loihi1NeuroCore in
-                 pm.required_resources)
-                and issubclass(pm, AbstractNcProcessModel))
+        return (
+            issubclass(pm, AbstractPyProcessModel)
+            or issubclass(pm, CLoihiProcessModel)
+            or (
+                (
+                    NeuroCore in pm.required_resources
+                    or Loihi1NeuroCore in pm.required_resources
+                )
+                and issubclass(pm, AbstractNcProcessModel)
+            )
+        )
 
 
 class Loihi2SimCfg(Loihi1SimCfg):
@@ -424,45 +487,66 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi2-compatible ProcModel is being found.
     """
-    def __init__(self,
-                 custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
-                 select_tag: ty.Optional[str] = None,
-                 select_sub_proc_model: ty.Optional[bool] = False,
-                 exception_proc_model_map: ty.Optional[ty.Dict[
-                     ty.Type[AbstractProcess], ty.Type[
-                         AbstractProcessModel]]] = None,
-                 loglevel: int = logging.WARNING,
-                 pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = []):
-        super().__init__(custom_sync_domains,
-                         select_tag,
-                         select_sub_proc_model,
-                         exception_proc_model_map,
-                         loglevel)
+
+    def __init__(
+        self,
+        custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
+        select_tag: ty.Optional[str] = None,
+        select_sub_proc_model: ty.Optional[bool] = False,
+        exception_proc_model_map: ty.Optional[
+            ty.Dict[ty.Type[AbstractProcess], ty.Type[AbstractProcessModel]]
+        ] = None,
+        loglevel: int = logging.WARNING,
+        pre_run_fxs: ty.List[ty.Callable] = [],
+        post_run_fxs: ty.List[ty.Callable] = [],
+    ):
+        super().__init__(
+            custom_sync_domains,
+            select_tag,
+            select_sub_proc_model,
+            exception_proc_model_map,
+            loglevel,
+        )
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
 
-    def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
-            AbstractProcessModel]]) -> ty.List[int]:
+    def _order_according_to_resources(
+        self, proc_models: ty.List[ty.Type[AbstractProcessModel]]
+    ) -> ty.List[int]:
         """Orders the provided ProcModels according to the preferences for
         Loihi 1 HW."""
-        proc_models_py = [idx for idx, pm in enumerate(proc_models)
-                          if issubclass(pm, AbstractPyProcessModel)]
+        proc_models_py = [
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
+        ]
         # NcProcModels compatible with Loihi2 HW
-        proc_models_nc = [idx for idx, pm in enumerate(proc_models)
-                          if (NeuroCore in pm.required_resources
-                              or Loihi2NeuroCore in pm.required_resources)
-                          and issubclass(pm, AbstractNcProcessModel)]
+        proc_models_nc = [
+            idx
+            for idx, pm in enumerate(proc_models)
+            if (
+                NeuroCore in pm.required_resources
+                or Loihi2NeuroCore in pm.required_resources
+            )
+            and issubclass(pm, AbstractNcProcessModel)
+        ]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models
-                         if issubclass(pm, CLoihiProcessModel)]
+        proc_models_c = [
+            pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)
+        ]
         # PyProcModels in Loihi2HwCfg will be made available in the future
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:
         """Checks if the process models is a supporte by Loihi 2 HW."""
-        return issubclass(pm, AbstractPyProcessModel) \
-            or issubclass(pm, CLoihiProcessModel) \
-            or ((NeuroCore in pm.required_resources or Loihi2NeuroCore in
-                 pm.required_resources)
-                and issubclass(pm, AbstractNcProcessModel))
+        return (
+            issubclass(pm, AbstractPyProcessModel)
+            or issubclass(pm, CLoihiProcessModel)
+            or (
+                (
+                    NeuroCore in pm.required_resources
+                    or Loihi2NeuroCore in pm.required_resources
+                )
+                and issubclass(pm, AbstractNcProcessModel)
+            )
+        )

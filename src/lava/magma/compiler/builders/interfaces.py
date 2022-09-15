@@ -65,12 +65,11 @@ class AbstractProcessBuilder(AbstractBuilder):
     """
 
     def __init__(
-            self,
-            proc_model: ty.Type[AbstractProcessModel],
-            model_id: int):
-        self.var_id_to_var_model_map: \
-            ty.Dict[int,
-                    ty.Type["AbstractVarModel"]] = {}
+        self, proc_model: ty.Type[AbstractProcessModel], model_id: int
+    ):
+        self.var_id_to_var_model_map: ty.Dict[
+            int, ty.Type["AbstractVarModel"]
+        ] = {}
         self._proc_model = proc_model
         self._model_id = model_id
 
@@ -105,7 +104,7 @@ class AbstractProcessBuilder(AbstractBuilder):
 
     @staticmethod
     def _check_not_assigned_yet(
-            collection: dict, keys: ty.Iterable[str], m_type: str
+        collection: dict, keys: ty.Iterable[str], m_type: str
     ):
         """Checks that collection dictionary not already contain given keys
         to prevent overwriting of existing elements.

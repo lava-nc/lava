@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import typing as ty
 from abc import ABC
-from dataclasses import dataclass, InitVar
+from dataclasses import InitVar, dataclass
 
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
-    NcVirtualAddress
+from lava.magma.compiler.subcompilers.address import (
+    NcLogicalAddress,
+    NcVirtualAddress,
+)
 
 if ty.TYPE_CHECKING:
     pass
@@ -85,9 +87,12 @@ class LoihiVarModel(AbstractVarModel, Mappable):
         -------
         Returns logical address of the port initializer.
         """
-        return [NcLogicalAddress(chip_id=addr.logical_chip_id,
-                                 core_id=addr.logical_core_id) for addr in
-                self.address]
+        return [
+            NcLogicalAddress(
+                chip_id=addr.logical_chip_id, core_id=addr.logical_core_id
+            )
+            for addr in self.address
+        ]
 
     def set_virtual(self, addrs: ty.List[NcVirtualAddress]):
         """
@@ -101,9 +106,11 @@ class LoihiVarModel(AbstractVarModel, Mappable):
 
         """
         if len(addrs) != len(self.address):
-            raise ValueError("Length of list of address provided doesn't "
-                             "match size of the address list of the port "
-                             "initializer.")
+            raise ValueError(
+                "Length of list of address provided doesn't "
+                "match size of the address list of the port "
+                "initializer."
+            )
         for idx, addr in enumerate(addrs):
             self.address[idx].physical_chip_id = addr.chip_id
             self.address[idx].physical_core_id = addr.core_id

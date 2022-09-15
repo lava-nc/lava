@@ -4,19 +4,19 @@
 
 import numpy as np
 
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.conv.process import Conv
-
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.conv import utils
+from lava.proc.conv.process import Conv
 
 
 class AbstractPyConvModel(PyLoihiProcessModel):
     """Abstract template implementation of PyConvModel."""
+
     s_in = None
     a_out = None
     a_buf = None
@@ -36,9 +36,13 @@ class AbstractPyConvModel(PyLoihiProcessModel):
             s_in = self.s_in.recv().astype(bool)
 
         a_out = utils.conv(
-            s_in, self.weight,
-            self.kernel_size, self.stride, self.padding, self.dilation,
-            self.groups[0]
+            s_in,
+            self.weight,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.groups[0],
         )
 
         if self.a_buf is None:
@@ -53,9 +57,10 @@ class AbstractPyConvModel(PyLoihiProcessModel):
 
 @implements(proc=Conv, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyConvModelFloat(AbstractPyConvModel):
     """Conv with float synapse implementation."""
+
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buf: np.ndarray = LavaPyType(np.ndarray, float)
@@ -64,9 +69,10 @@ class PyConvModelFloat(AbstractPyConvModel):
 
 @implements(proc=Conv, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PyConvModelFixed(AbstractPyConvModel):
     """Conv with fixed point synapse implementation."""
+
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     a_buf: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)

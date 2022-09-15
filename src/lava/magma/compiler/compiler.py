@@ -7,20 +7,25 @@ import logging
 import typing as ty
 from collections import OrderedDict, defaultdict
 
-import lava.magma.compiler.var_model as var_model
 import numpy as np
-from lava.magma.compiler.builders.interfaces import (AbstractChannelBuilder,
-                                                     AbstractProcessBuilder)
+
+import lava.magma.compiler.var_model as var_model
+from lava.magma.compiler.builders.interfaces import (
+    AbstractChannelBuilder,
+    AbstractProcessBuilder,
+)
 
 try:
     from lava.magma.compiler.builders.c_builder import CProcessBuilder
     from lava.magma.compiler.builders.nc_builder import NcProcessBuilder
     from lava.magma.compiler.subcompilers.c.cproc_compiler import CProcCompiler
-    from lava.magma.compiler.subcompilers.nc.ncproc_compiler import \
-        NcProcCompiler
+    from lava.magma.compiler.subcompilers.nc.ncproc_compiler import (
+        NcProcCompiler,
+    )
     from lava.magma.core.model.c.model import AbstractCProcessModel
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
 except ImportError:
+
     class CProcessBuilder(AbstractProcessBuilder):
         pass
 
@@ -41,10 +46,14 @@ except ImportError:
     class AbstractNcProcessModel:
         pass
 
+
 from lava.magma.compiler.builders.channel_builder import (
-    RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
-from lava.magma.compiler.builders.runtimeservice_builder import \
-    RuntimeServiceBuilder
+    RuntimeChannelBuilderMp,
+    ServiceChannelBuilderMp,
+)
+from lava.magma.compiler.builders.runtimeservice_builder import (
+    RuntimeServiceBuilder,
+)
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.compiler_graphs import ProcGroup, ProcGroupDiGraphs
@@ -52,17 +61,23 @@ from lava.magma.compiler.compiler_utils import split_proc_builders_by_type
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.mapper import Mapper
 from lava.magma.compiler.node import Node, NodeConfig
-from lava.magma.compiler.subcompilers.channel_builders_factory import \
-    ChannelBuildersFactory
+from lava.magma.compiler.subcompilers.channel_builders_factory import (
+    ChannelBuildersFactory,
+)
 from lava.magma.compiler.subcompilers.interfaces import AbstractSubCompiler
 from lava.magma.compiler.subcompilers.py.pyproc_compiler import PyProcCompiler
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.core import resources
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.resources import (CPU, LMT, Loihi1NeuroCore,
-                                       Loihi2NeuroCore, NeuroCore)
-from lava.magma.core.run_configs import RunConfig, AbstractLoihiHWRunCfg
+from lava.magma.core.resources import (
+    CPU,
+    LMT,
+    Loihi1NeuroCore,
+    Loihi2NeuroCore,
+    NeuroCore,
+)
+from lava.magma.core.run_configs import AbstractLoihiHWRunCfg, RunConfig
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
@@ -303,8 +318,9 @@ class Compiler:
         c_idx = []
         nc_idx = []
         # Go through all required subcompiler classes...
-        for idx, (subcompiler_class, procs) in \
-                enumerate(compiler_type_to_procs.items()):
+        for idx, (subcompiler_class, procs) in enumerate(
+            compiler_type_to_procs.items()
+        ):
             # ...create the subcompiler instance...
             compiler = subcompiler_class(procs, self._compile_config)
             # ...and add it to the list.
@@ -324,14 +340,17 @@ class Compiler:
         # `self._map_subcompiler_type_to_procs`.
         # 1. Confirm that there is only one instance of C and Nc subcompilers
         if len(c_idx) > 1 or len(nc_idx) > 1:
-            raise AssertionError("More than one instance of C or Nc "
-                                 "subcompiler detected.")
+            raise AssertionError(
+                "More than one instance of C or Nc " "subcompiler detected."
+            )
         # 2. If the index of C subcompiler is larger (appears later in the
         # list), then swap it with Nc subcompiler.
         if len(c_idx) > 0 and len(nc_idx) > 0:
             if c_idx[0] > nc_idx[0]:
-                subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = subcompilers[
-                    nc_idx[0]], subcompilers[c_idx[0]]
+                subcompilers[c_idx[0]], subcompilers[nc_idx[0]] = (
+                    subcompilers[nc_idx[0]],
+                    subcompilers[c_idx[0]],
+                )
         # We have ensured that C subcompiler appears before Nc subcompiler in
         # the list we return. As compile() is called serially on each
         # subcompiler, C Processes will be compiled before Nc Processes
@@ -496,8 +515,7 @@ class Compiler:
                 self.log.debug("LOIHI_GEN: " + str(loihi_gen.upper()))
                 if loihi_gen.upper() == resources.OheoGulch.__name__.upper():
                     if resources.OheoGulch not in node_tracker:
-                        node = Node(
-                            node_type=resources.OheoGulch, processes=[])
+                        node = Node(node_type=resources.OheoGulch, processes=[])
                         self.log.debug(
                             "OheoGulch Node Added to NodeConfig: "
                             + str(node.node_type)
@@ -648,7 +666,7 @@ class Compiler:
         nc_builders: ty.Dict[AbstractProcess, NcProcessBuilder],
         c_builders: ty.Dict[AbstractProcess, CProcessBuilder],
         run_cfg: RunConfig,
-        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
+        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
     ) -> ty.Tuple[
         ty.Dict[SyncDomain, RuntimeServiceBuilder], ty.Dict[int, int]
     ]:
@@ -700,8 +718,8 @@ class Compiler:
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
                 rs_kwargs = {
-                    "c_builders" : list(c_builders.values()),
-                    "nc_builders" : list(nc_builders.values())
+                    "c_builders": list(c_builders.values()),
+                    "nc_builders": list(nc_builders.values()),
                 }
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
                     rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
@@ -714,7 +732,7 @@ class Compiler:
                     model_ids,
                     loihi_version,
                     log.level,
-                    **rs_kwargs
+                    **rs_kwargs,
                 )
                 rs_builders[sync_domain] = rs_builder
                 for p in sync_domain.processes:

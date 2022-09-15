@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import os
+
 import numpy as np
 
 
@@ -14,34 +15,36 @@ class MnistDataset:
     ]
 
     files = [
-        "train-images-idx3-ubyte.gz", "train-labels-idx1-ubyte.gz",
-        "t10k-images-idx3-ubyte.gz", "t10k-labels-idx1-ubyte.gz",
+        "train-images-idx3-ubyte.gz",
+        "train-labels-idx1-ubyte.gz",
+        "t10k-images-idx3-ubyte.gz",
+        "t10k-labels-idx1-ubyte.gz",
     ]
 
-    def __init__(self, data_path=os.path.join(os.path.dirname(__file__),
-                                              'mnist.npy')):
+    def __init__(
+        self, data_path=os.path.join(os.path.dirname(__file__), "mnist.npy")
+    ):
         """data_path (str): Path to mnist.npy file containing the MNIST
         dataset"""
         if not os.path.exists(data_path):
             # Download MNIST from internet and convert it to .npy
-            os.makedirs(os.path.join(os.path.dirname(__file__), 'temp'),
-                        exist_ok=True)
-            MnistDataset. \
-                download_mnist(path=os.path.join(
-                    os.path.dirname(__file__),
-                    'temp'
-                )
-                )
+            os.makedirs(
+                os.path.join(os.path.dirname(__file__), "temp"), exist_ok=True
+            )
+            MnistDataset.download_mnist(
+                path=os.path.join(os.path.dirname(__file__), "temp")
+            )
             # GUnzip, Parse and save MNIST data as .npy
             MnistDataset.decompress_convert_save(
-                download_path=os.path.join(os.path.dirname(__file__), 'temp'),
-                save_path=data_path)
+                download_path=os.path.join(os.path.dirname(__file__), "temp"),
+                save_path=data_path,
+            )
         self.data = np.load(data_path, allow_pickle=True)
 
     @staticmethod
-    def download_mnist(path=os.path.join(os.path.dirname(__file__), 'temp')):
-        import urllib.request
+    def download_mnist(path=os.path.join(os.path.dirname(__file__), "temp")):
         import urllib.error
+        import urllib.request
 
         for file in MnistDataset.files:
             err = None
@@ -66,8 +69,9 @@ class MnistDataset:
 
     @staticmethod
     def decompress_convert_save(
-            download_path=os.path.join(os.path.dirname(__file__), 'temp'),
-            save_path=os.path.dirname(__file__)):
+        download_path=os.path.join(os.path.dirname(__file__), "temp"),
+        save_path=os.path.dirname(__file__),
+    ):
         """
         download_path (str): path of downloaded raw MNIST dataset in IDX
         format
@@ -81,6 +85,7 @@ class MnistDataset:
         """
 
         import gzip
+
         arrays = []
         for file in MnistDataset.files:
             with gzip.open(os.path.join(download_path, file), "rb") as f:
@@ -94,8 +99,8 @@ class MnistDataset:
         np.save(
             save_path,
             np.array(
-                [[arrays[0], arrays[1]], [arrays[2], arrays[3]]],
-                dtype="object"),
+                [[arrays[0], arrays[1]], [arrays[2], arrays[3]]], dtype="object"
+            ),
         )
 
     @property

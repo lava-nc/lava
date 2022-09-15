@@ -2,17 +2,20 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 from enum import IntEnum
+
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
 
 
 class LoihiVersion(IntEnum):
     """Enumerator of different Loihi Versions."""
+
     N2 = 2
     N3 = 3
 
 
 class LoihiPhase:
     """Enumerator of Lava Loihi phases"""
+
     SPK = enum_to_np(1)
     PRE_MGMT = enum_to_np(2)
     LRN = enum_to_np(3)

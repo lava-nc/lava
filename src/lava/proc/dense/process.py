@@ -2,25 +2,28 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 import typing as ty
 
+import numpy as np
+
+from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.utils.weightutils import SignMode
 
 
 class Dense(AbstractProcess):
-    def __init__(self,
-                 *,
-                 weights: np.ndarray,
-                 weight_exp: ty.Optional[int] = 0,
-                 num_weight_bits: ty.Optional[int] = 8,
-                 sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
-                 num_message_bits: ty.Optional[int] = 0,
-                 name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
+    def __init__(
+        self,
+        *,
+        weights: np.ndarray,
+        weight_exp: ty.Optional[int] = 0,
+        num_weight_bits: ty.Optional[int] = 8,
+        sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
+        num_message_bits: ty.Optional[int] = 0,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
         """Dense connections between neurons. Realizes the following abstract
         behavior: a_out = weights * s_in
 
@@ -59,13 +62,15 @@ class Dense(AbstractProcess):
             Flag to indicate graded spike. Default is False.
         """
 
-        super().__init__(weights=weights,
-                         weight_exp=weight_exp,
-                         num_weight_bits=num_weight_bits,
-                         sign_mode=sign_mode,
-                         num_message_bits=num_message_bits,
-                         name=name,
-                         log_config=log_config)
+        super().__init__(
+            weights=weights,
+            weight_exp=weight_exp,
+            num_weight_bits=num_weight_bits,
+            sign_mode=sign_mode,
+            num_message_bits=num_message_bits,
+            name=name,
+            log_config=log_config,
+        )
 
         self._validate_weights(weights)
         shape = weights.shape
@@ -85,5 +90,7 @@ class Dense(AbstractProcess):
     @staticmethod
     def _validate_weights(weights: np.ndarray) -> None:
         if len(np.shape(weights)) != 2:
-            raise ValueError("Dense Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
+            raise ValueError(
+                "Dense Process 'weights' expects a 2D matrix, "
+                f"got {weights}."
+            )

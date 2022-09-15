@@ -2,33 +2,37 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
+
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import \
-        RuntimeServiceBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import (
+        RuntimeServiceBuilder,
+    )
 
 import multiprocessing as mp
 import os
-from multiprocessing.managers import SharedMemoryManager
 import traceback
+from multiprocessing.managers import SharedMemoryManager
 
-from lava.magma.compiler.channels.interfaces import ChannelType, Channel
+from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+
 try:
-    from lava.magma.compiler.channels.cpychannel import \
-        CPyChannel, PyCChannel
+    from lava.magma.compiler.channels.cpychannel import CPyChannel, PyCChannel
 except ImportError:
+
     class CPyChannel:
         pass
 
     class PyCChannel:
         pass
 
-from lava.magma.core.sync.domain import SyncDomain
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
-    import MessageInfrastructureInterface
 
+from lava.magma.core.sync.domain import SyncDomain
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
+    MessageInfrastructureInterface,
+)
 
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
@@ -83,13 +87,18 @@ class MultiProcessing(MessageInfrastructureInterface):
         self._smm = SharedMemoryManager()
         self._smm.start()
 
-    def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
-        ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
+    def build_actor(
+        self,
+        target_fn: ty.Callable,
+        builder: ty.Union[
+            ty.Dict["AbstractProcess", "PyProcessBuilder"],
+            ty.Dict[SyncDomain, "RuntimeServiceBuilder"],
+        ],
+    ) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
-        system_process = SystemProcess(target=target_fn,
-                                       args=(),
-                                       kwargs={"builder": builder})
+        system_process = SystemProcess(
+            target=target_fn, args=(), kwargs={"builder": builder}
+        )
         system_process.start()
         self._actors.append(system_process)
         return system_process

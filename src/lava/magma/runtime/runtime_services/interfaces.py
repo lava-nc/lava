@@ -4,10 +4,7 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspRecvPort,
-    CspSendPort
-)
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
 
