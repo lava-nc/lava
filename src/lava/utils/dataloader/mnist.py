@@ -21,16 +21,23 @@ class MnistDataset:
         "t10k-labels-idx1-ubyte.gz",
     ]
 
-    def __init__(self, data_path=os.path.join(os.path.dirname(__file__), "mnist.npy")):
+    def __init__(
+        self, data_path=os.path.join(os.path.dirname(__file__), "mnist.npy")
+    ):
         """data_path (str): Path to mnist.npy file containing the MNIST
         dataset"""
         if not os.path.exists(data_path):
             # Download MNIST from internet and convert it to .npy
-            os.makedirs(os.path.join(os.path.dirname(__file__), "temp"), exist_ok=True)
-            MnistDataset.download_mnist(path=os.path.join(os.path.dirname(__file__), "temp"))
+            os.makedirs(
+                os.path.join(os.path.dirname(__file__), "temp"), exist_ok=True
+            )
+            MnistDataset.download_mnist(
+                path=os.path.join(os.path.dirname(__file__), "temp")
+            )
             # GUnzip, Parse and save MNIST data as .npy
             MnistDataset.decompress_convert_save(
-                download_path=os.path.join(os.path.dirname(__file__), "temp"), save_path=data_path
+                download_path=os.path.join(os.path.dirname(__file__), "temp"),
+                save_path=data_path,
             )
         self.data = np.load(data_path, allow_pickle=True)
 
@@ -91,7 +98,9 @@ class MnistDataset:
 
         np.save(
             save_path,
-            np.array([[arrays[0], arrays[1]], [arrays[2], arrays[3]]], dtype="object"),
+            np.array(
+                [[arrays[0], arrays[1]], [arrays[2], arrays[3]]], dtype="object"
+            ),
         )
 
     @property

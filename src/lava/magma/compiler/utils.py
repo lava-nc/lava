@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import NcLogicalAddress, NcVirtualAddress
+from lava.magma.compiler.subcompilers.address import (
+    NcLogicalAddress,
+    NcVirtualAddress,
+)
 from lava.magma.compiler.var_model import LoihiVarModel
 from lava.magma.core.model.spike_type import SpikeType
 
@@ -59,7 +62,9 @@ class LoihiPortInitializer(PortInitializer, Mappable):
         Returns logical address of the port initializer.
         """
         return [
-            NcLogicalAddress(chip_id=addr.logical_chip_id, core_id=addr.logical_core_id)
+            NcLogicalAddress(
+                chip_id=addr.logical_chip_id, core_id=addr.logical_core_id
+            )
             for addr in self.var_model.address
         ]
 
@@ -114,7 +119,9 @@ class LoihiIOPortInitializer(LoihiPortInitializer):
     """Port Initializer for a I/O Port for C/NC Models"""
 
     connected_port_type: ty.Optional[LoihiConnectedPortType] = None
-    connected_port_encoding_type: ty.Optional[LoihiConnectedPortEncodingType] = None
+    connected_port_encoding_type: ty.Optional[
+        LoihiConnectedPortEncodingType
+    ] = None
     spike_type: ty.Optional[SpikeType] = None
 
 

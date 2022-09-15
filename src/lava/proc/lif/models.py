@@ -33,7 +33,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         how spikes are generated.
         """
         raise NotImplementedError(
-            "spiking activation() cannot be called from " "an abstract ProcessModel"
+            "spiking activation() cannot be called from "
+            "an abstract ProcessModel"
         )
 
     def subthr_dynamics(self, activation_in: np.ndarray):
@@ -113,13 +114,15 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     def scale_threshold(self):
         """Placeholder method for scaling threshold(s)."""
         raise NotImplementedError(
-            "spiking activation() cannot be called from " "an abstract ProcessModel"
+            "spiking activation() cannot be called from "
+            "an abstract ProcessModel"
         )
 
     def spiking_activation(self):
         """Placeholder method to specify spiking behaviour of a LIF neuron."""
         raise NotImplementedError(
-            "spiking activation() cannot be called from " "an abstract ProcessModel"
+            "spiking activation() cannot be called from "
+            "an abstract ProcessModel"
         )
 
     def subthr_dynamics(self, activation_in: np.ndarray):

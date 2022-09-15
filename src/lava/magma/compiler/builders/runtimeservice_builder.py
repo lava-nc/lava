@@ -9,10 +9,14 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
-from lava.magma.runtime.runtime_services.runtime_service import AbstractRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import (
+    AbstractRuntimeService,
+)
 
 try:
-    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import NxSdkRuntimeService
+    from lava.magma.runtime.runtime_services.nxsdk_runtime_service import (
+        NxSdkRuntimeService,
+    )
 except ImportError:
 
     class NxSdkRuntimeService:

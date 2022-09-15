@@ -95,7 +95,11 @@ class Delta(AbstractProcess):
             Default is 0.
         """
         super().__init__(
-            shape=shape, vth=vth, cum_error=cum_error, spike_exp=spike_exp, state_exp=state_exp
+            shape=shape,
+            vth=vth,
+            cum_error=cum_error,
+            spike_exp=spike_exp,
+            state_exp=state_exp,
         )
 
         vth = vth * (1 << (spike_exp + state_exp))

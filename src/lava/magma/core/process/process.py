@@ -11,9 +11,17 @@ from dataclasses import dataclass
 from _collections import OrderedDict
 
 from lava.magma.compiler.executable import Executable
-from lava.magma.core.process.interfaces import AbstractProcessMember, IdGeneratorSingleton
+from lava.magma.core.process.interfaces import (
+    AbstractProcessMember,
+    IdGeneratorSingleton,
+)
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, VarPort
+from lava.magma.core.process.ports.ports import (
+    InPort,
+    OutPort,
+    RefPort,
+    VarPort,
+)
 from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
@@ -175,7 +183,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
         # Setup Logging
         self.log = logging.getLogger()
-        self._log_config = proc_params.get("log_config") or LogConfig(file="lava.log")
+        self._log_config = proc_params.get("log_config") or LogConfig(
+            file="lava.log"
+        )
         formatter = logging.Formatter(
             self._log_config.format, datefmt=self._log_config.date_format
         )
@@ -346,7 +356,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
             executable = self.compile(run_cfg, compile_config)
             self._runtime = Runtime(
-                executable, ActorType.MultiProcessing, loglevel=self._log_config.level
+                executable,
+                ActorType.MultiProcessing,
+                loglevel=self._log_config.level,
             )
             executable.assign_runtime_to_all_processes(self._runtime)
             self._runtime.initialize()
@@ -354,7 +366,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         self._runtime.start(condition)
 
     def compile(
-        self, run_cfg: RunConfig, compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None
+        self,
+        run_cfg: RunConfig,
+        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
     ) -> Executable:
         """Compiles this and any process connected to this process and
         returns the resulting Executable that can either be serialized or
@@ -473,7 +487,8 @@ class LogConfig:
     def __post_init__(self) -> None:
         if self.logs_to_file and self.file == "":
             raise ValueError(
-                "Please provide a file name to log to when " "setting logs_to_file=True."
+                "Please provide a file name to log to when "
+                "setting logs_to_file=True."
             )
 
 
@@ -528,7 +543,9 @@ class Collection:
     """
 
     # Abbreviation for type annotation in Collection class
-    mem_type = ty.Union[InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"]
+    mem_type = ty.Union[
+        InPort, OutPort, RefPort, VarPort, Var, "AbstractProcess"
+    ]
 
     def __init__(self, process: AbstractProcess, name: str) -> None:
         """Creates a new Collection."""

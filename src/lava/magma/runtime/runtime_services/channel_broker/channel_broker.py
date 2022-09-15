@@ -152,7 +152,9 @@ class ChannelBroker(AbstractChannelBroker):
                 result = (cport, channel)
                 channel_actions.append((cport.csp_ports[0], lambda: result))
 
-            channel_actions.append((self.mgmt_channel.dst_port, lambda: ("stop", None)))
+            channel_actions.append(
+                (self.mgmt_channel.dst_port, lambda: ("stop", None))
+            )
             action, channel = selector.select(*channel_actions)
             if action == "stop":
                 return
@@ -168,10 +170,16 @@ class ChannelBroker(AbstractChannelBroker):
                     cport._send(channel)
 
     def _create_channel(
-        self, channel_name: str, message_size: int, number_elements: int, host_idx: int = 0
+        self,
+        channel_name: str,
+        message_size: int,
+        number_elements: int,
+        host_idx: int = 0,
     ):
         return self.board.hosts[host_idx].createChannel(
-            name=channel_name, messageSize=message_size, numElements=number_elements
+            name=channel_name,
+            messageSize=message_size,
+            numElements=number_elements,
         )
 
     def create_channel(
@@ -186,7 +194,9 @@ class ChannelBroker(AbstractChannelBroker):
         MESSAGE_SIZE_IN_C = 128 * 4
         if input_channel:
             for csp_port in c_port.csp_ports:
-                channel_name = generate_channel_name("in_grpc_", port_idx, csp_port, c_builder_idx)
+                channel_name = generate_channel_name(
+                    "in_grpc_", port_idx, csp_port, c_builder_idx
+                )
                 channels.append(
                     self._create_channel(
                         channel_name=channel_name,

@@ -68,7 +68,9 @@ def optimize_weight_bits(
     precision_found = False
     n = 8
     while (precision_found is False) and (n > 0):
-        roundingError = np.sum(np.abs(weight / (2**n) - np.round(weight / (2**n))))
+        roundingError = np.sum(
+            np.abs(weight / (2**n) - np.round(weight / (2**n)))
+        )
         if roundingError == 0:
             precision_found = True
         else:
@@ -86,4 +88,9 @@ def optimize_weight_bits(
         if sign_mode == SignMode.MIXED:
             weight = weight // 2
 
-    return (weight.astype(int), int(num_weight_bits), int(weight_exponent), sign_mode)
+    return (
+        weight.astype(int),
+        int(num_weight_bits),
+        int(weight_exponent),
+        sign_mode,
+    )

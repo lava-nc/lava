@@ -5,7 +5,10 @@ import typing as ty
 
 import numpy as np
 
-from lava.magma.core.process.interfaces import AbstractProcessMember, IdGeneratorSingleton
+from lava.magma.core.process.interfaces import (
+    AbstractProcessMember,
+    IdGeneratorSingleton,
+)
 
 
 class Var(AbstractProcessMember):
@@ -89,10 +92,13 @@ class Var(AbstractProcessMember):
         if not isinstance(other_var, Var):
             raise AssertionError("'other_var' must be a Var instance.")
         if self.shape != other_var.shape:
-            raise AssertionError("Shapes of this and 'other_var' must " "be the same.")
+            raise AssertionError(
+                "Shapes of this and 'other_var' must " "be the same."
+            )
         if self.shareable != other_var.shareable:
             raise AssertionError(
-                "'shareable' attribute of this and " "'other_var' must be the same."
+                "'shareable' attribute of this and "
+                "'other_var' must be the same."
             )
 
         # Establish 'alias' relationship
@@ -130,7 +136,8 @@ class Var(AbstractProcessMember):
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
-                    "No Runtime available yet. Cannot set new 'Var' without " "Runtime."
+                    "No Runtime available yet. Cannot set new 'Var' without "
+                    "Runtime."
                 )
 
     def get(self, idx: np.ndarray = None) -> np.ndarray:

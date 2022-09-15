@@ -13,7 +13,9 @@ from lava.magma.core.sync.domain import SyncDomain
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
-    from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import (
+        RuntimeServiceBuilder,
+    )
 
 from lava.magma.compiler.node import NodeConfig
 
@@ -36,8 +38,12 @@ class Executable:
     channel_builders: ty.List[ChannelBuilderMp]
     node_configs: ty.List[NodeConfig]
     sync_domains: ty.List[SyncDomain]
-    runtime_service_builders: ty.Optional[ty.Dict[SyncDomain, RuntimeServiceBuilder]] = None
-    sync_channel_builders: ty.Optional[ty.Iterable[AbstractChannelBuilder]] = None
+    runtime_service_builders: ty.Optional[
+        ty.Dict[SyncDomain, RuntimeServiceBuilder]
+    ] = None
+    sync_channel_builders: ty.Optional[
+        ty.Iterable[AbstractChannelBuilder]
+    ] = None
 
     def assign_runtime_to_all_processes(self, runtime):
         for p in self.proc_builders.keys():

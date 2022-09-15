@@ -37,7 +37,9 @@ class Reset(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__(reset_value=reset_value, interval=interval, offset=offset)
+        super().__init__(
+            reset_value=reset_value, interval=interval, offset=offset
+        )
         self.reset_value = Var((1,), init=reset_value)
         self.interval = Var((1,), init=interval)
         self.offset = Var((1,), init=offset % interval)
@@ -61,7 +63,9 @@ class AbstractPyReset(PyLoihiProcessModel):
         return (self.time_step - 1) % self.interval == self.offset
 
     def run_post_mgmt(self) -> None:
-        self.state.write(np.zeros(self.state._shape, self.state._d_type) + self.reset_value)
+        self.state.write(
+            np.zeros(self.state._shape, self.state._d_type) + self.reset_value
+        )
         self.state.wait()  # ensures write() has finished before moving on
 
 

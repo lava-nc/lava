@@ -9,7 +9,9 @@ from lava.magma.core.process.ports.ports import AbstractDstPort, AbstractSrcPort
 
 
 class ChannelMapUpdater:
-    def __init__(self, channel_map: ChannelMap, payload: ty.Optional[Payload] = None):
+    def __init__(
+        self, channel_map: ChannelMap, payload: ty.Optional[Payload] = None
+    ):
         """Offers convenience methods to add entries with a default
         multiplicity into the ChannelMap.
 
@@ -50,7 +52,9 @@ class ChannelMapUpdater:
             if not isinstance(src_port, AbstractDstPort):
                 self.add_port_pair(src_port, dst_port)
 
-    def add_port_pair(self, src_port: AbstractSrcPort, dst_port: AbstractDstPort) -> None:
+    def add_port_pair(
+        self, src_port: AbstractSrcPort, dst_port: AbstractDstPort
+    ) -> None:
         port_pair = PortPair(src=src_port, dst=dst_port)
         self._channel_map[port_pair] = self._payload
 

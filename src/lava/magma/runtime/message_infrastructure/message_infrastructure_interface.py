@@ -6,7 +6,9 @@ import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import (
+        RuntimeServiceBuilder,
+    )
 
 from abc import ABC, abstractmethod
 

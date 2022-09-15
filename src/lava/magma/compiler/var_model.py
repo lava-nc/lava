@@ -8,7 +8,10 @@ from abc import ABC
 from dataclasses import InitVar, dataclass
 
 from lava.magma.compiler.mappable_interface import Mappable
-from lava.magma.compiler.subcompilers.address import NcLogicalAddress, NcVirtualAddress
+from lava.magma.compiler.subcompilers.address import (
+    NcLogicalAddress,
+    NcVirtualAddress,
+)
 
 if ty.TYPE_CHECKING:
     pass
@@ -85,7 +88,9 @@ class LoihiVarModel(AbstractVarModel, Mappable):
         Returns logical address of the port initializer.
         """
         return [
-            NcLogicalAddress(chip_id=addr.logical_chip_id, core_id=addr.logical_core_id)
+            NcLogicalAddress(
+                chip_id=addr.logical_chip_id, core_id=addr.logical_core_id
+            )
             for addr in self.address
         ]
 

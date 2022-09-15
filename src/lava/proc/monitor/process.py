@@ -84,10 +84,16 @@ class Monitor(AbstractProcess):
         """
         # Create names for prototypical Ports/Vars to be created in Monitor
         # process for probing purposes.
-        self.new_ref_port_name = "ref_port_" + str(self.proc_params["n_ref_ports"])
-        self.new_var_read_name = "var_read_" + str(self.proc_params["n_ref_ports"])
+        self.new_ref_port_name = "ref_port_" + str(
+            self.proc_params["n_ref_ports"]
+        )
+        self.new_var_read_name = "var_read_" + str(
+            self.proc_params["n_ref_ports"]
+        )
         self.new_in_port_name = "in_port_" + str(self.proc_params["n_in_ports"])
-        self.new_out_read_name = "out_read_" + str(self.proc_params["n_in_ports"])
+        self.new_out_read_name = "out_read_" + str(
+            self.proc_params["n_in_ports"]
+        )
 
         # Create and set new Refport and corresponding Var to store data
         setattr(self, self.new_ref_port_name, RefPort(shape=(1,)))
@@ -127,18 +133,32 @@ class Monitor(AbstractProcess):
         # Create names for Ports/Vars to be created in Monitor process for
         # probing purposes. Names are given incrementally each time probe(..)
         # method is called.
-        self.new_ref_port_name = "ref_port_" + str(self.proc_params["n_ref_ports"])
-        self.new_var_read_name = "var_read_" + str(self.proc_params["n_ref_ports"])
+        self.new_ref_port_name = "ref_port_" + str(
+            self.proc_params["n_ref_ports"]
+        )
+        self.new_var_read_name = "var_read_" + str(
+            self.proc_params["n_ref_ports"]
+        )
         self.new_in_port_name = "in_port_" + str(self.proc_params["n_in_ports"])
-        self.new_out_read_name = "out_read_" + str(self.proc_params["n_in_ports"])
+        self.new_out_read_name = "out_read_" + str(
+            self.proc_params["n_in_ports"]
+        )
 
         # Create and set new Refport and corresponding Var to store data
         setattr(self, self.new_ref_port_name, RefPort(shape=target.shape))
-        setattr(self, self.new_var_read_name, Var(shape=(num_steps,) + target.shape, init=0))
+        setattr(
+            self,
+            self.new_var_read_name,
+            Var(shape=(num_steps,) + target.shape, init=0),
+        )
 
         # Create and set new InPort and corresponding Var to store data
         setattr(self, self.new_in_port_name, InPort(shape=target.shape))
-        setattr(self, self.new_out_read_name, Var(shape=(num_steps,) + target.shape, init=0))
+        setattr(
+            self,
+            self.new_out_read_name,
+            Var(shape=(num_steps,) + target.shape, init=0),
+        )
 
         # Add the names of new RefPort and Var_read name to proc_params dict
         self.proc_params["RefPorts"].append(self.new_ref_port_name)
@@ -172,7 +192,10 @@ class Monitor(AbstractProcess):
             getattr(self, self.new_ref_port_name).connect_var(target)
 
             # Add the name of probed Var and its process to the target_names
-            self.target_names[self.new_var_read_name] = [target.process.name, target.name]
+            self.target_names[self.new_var_read_name] = [
+                target.process.name,
+                target.name,
+            ]
         # If target to be monitored is an OutPort
         elif isinstance(target, OutPort):
 
@@ -184,12 +207,17 @@ class Monitor(AbstractProcess):
             getattr(self, self.new_in_port_name).connect_from(target)
 
             # Add the name of OutPort and its process to the target_names
-            self.target_names[self.new_out_read_name] = [target.process.name, target.name]
+            self.target_names[self.new_out_read_name] = [
+                target.process.name,
+                target.name,
+            ]
 
         # If target is an InPort raise a Type error, as monitoring InPorts is
         # not supported yet
         else:
-            raise TypeError("Non-supported probe target: type {}".format(target))
+            raise TypeError(
+                "Non-supported probe target: type {}".format(target)
+            )
 
         # Create corresponding dict keys for monitored Var/OutPort and its
         # process

@@ -6,7 +6,9 @@ import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
+    from lava.magma.compiler.builders.runtimeservice_builder import (
+        RuntimeServiceBuilder,
+    )
 
 import multiprocessing as mp
 import os
@@ -94,7 +96,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         ],
     ) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
-        system_process = SystemProcess(target=target_fn, args=(), kwargs={"builder": builder})
+        system_process = SystemProcess(
+            target=target_fn, args=(), kwargs={"builder": builder}
+        )
         system_process.start()
         self._actors.append(system_process)
         return system_process

@@ -137,7 +137,9 @@ class AbstractSigmaDeltaModel(AbstractSigmaModel, AbstractDeltaModel):
         elif self.act_mode == ActivationMode.RELU:
             act = ReLU(sigma_data + self.bias)
         else:
-            raise NotImplementedError(f"Activation mode {self.act_mode} is not implemented.")
+            raise NotImplementedError(
+                f"Activation mode {self.act_mode} is not implemented."
+            )
         return act
 
     def dynamics(self, a_in_data: np.ndarray) -> np.ndarray:
@@ -219,7 +221,9 @@ class PyDeltaModelFixed(AbstractDeltaModel):
 
     def run_spk(self) -> None:
         # Receive synaptic input
-        a_in_data = np.left_shift(self.a_in.recv(), self.spike_exp + self.state_exp)
+        a_in_data = np.left_shift(
+            self.a_in.recv(), self.spike_exp + self.state_exp
+        )
         s_out_scaled = self.delta_dynamics(a_in_data)
         s_out = np.right_shift(s_out_scaled, self.state_exp)
         self.act = a_in_data

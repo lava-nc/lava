@@ -9,7 +9,12 @@ from abc import ABC
 from itertools import chain
 
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, Loihi2NeuroCore, NeuroCore
+from lava.magma.core.resources import (
+    AbstractNode,
+    Loihi1NeuroCore,
+    Loihi2NeuroCore,
+    NeuroCore,
+)
 
 try:
     from lava.magma.core.model.c.model import CLoihiProcessModel
@@ -87,7 +92,9 @@ class RunConfig(ABC):
         pass
 
     def select(
-        self, process: AbstractProcess, proc_model: ty.List[ty.Type[AbstractProcessModel]]
+        self,
+        process: AbstractProcess,
+        proc_model: ty.List[ty.Type[AbstractProcessModel]],
     ) -> ty.Type[AbstractProcessModel]:
         pass
 
@@ -161,7 +168,9 @@ class AbstractLoihiRunCfg(RunConfig):
         ] = None,
         loglevel: int = logging.WARNING,
     ):
-        super().__init__(custom_sync_domains=custom_sync_domains, loglevel=loglevel)
+        super().__init__(
+            custom_sync_domains=custom_sync_domains, loglevel=loglevel
+        )
         self.select_tag = select_tag
         self.select_sub_proc_model = select_sub_proc_model
         self.exception_proc_model_map = exception_proc_model_map
@@ -169,7 +178,9 @@ class AbstractLoihiRunCfg(RunConfig):
             self.exception_proc_model_map = {}
 
     def select(
-        self, proc: AbstractProcess, proc_models: ty.List[ty.Type[AbstractProcessModel]]
+        self,
+        proc: AbstractProcess,
+        proc_models: ty.List[ty.Type[AbstractProcessModel]],
     ) -> ty.Type[AbstractProcessModel]:
         """
         Selects an appropriate ProcessModel from a list of ProcessModels for
@@ -216,7 +227,10 @@ class AbstractLoihiRunCfg(RunConfig):
         # Assumption: User doesn't care about the type: Sub or HW-specific.
         if num_pm == 1:
             # If type of the PM is neither Sub nor HW-supported, raise error
-            if not (_issubpm(proc_models[0]) or self._is_hw_supported(proc_models[0])):
+            if not (
+                _issubpm(proc_models[0])
+                or self._is_hw_supported(proc_models[0])
+            ):
                 raise NotImplementedError(
                     f"[{self.__class__.__qualname__}]: "
                     f"The only found ProcessModel "
@@ -257,7 +271,9 @@ class AbstractLoihiRunCfg(RunConfig):
         # Case 3: Multiple PMs exist:
         # --------------------------
         # Collect indices of Sub and HW-specific PMs:
-        sub_pm_idxs = [idx for idx, pm in enumerate(proc_models) if _issubpm(pm)]
+        sub_pm_idxs = [
+            idx for idx, pm in enumerate(proc_models) if _issubpm(pm)
+        ]
         leaf_pm_idxs = self._order_according_to_resources(proc_models)
         # Case 3a: User specifically asked for a SubProcessModel:
         # ------------------------------------------------------
@@ -327,7 +343,9 @@ class AbstractLoihiRunCfg(RunConfig):
         else:
             # Collect indices of all HW-specific PMs with select_tag
             valid_leaf_pm_idxs = [
-                idx for idx in leaf_pm_idxs if self.select_tag in proc_models[idx].tags
+                idx
+                for idx in leaf_pm_idxs
+                if self.select_tag in proc_models[idx].tags
             ]
             if len(valid_leaf_pm_idxs) == 0:
                 raise AssertionError(
@@ -373,7 +391,9 @@ class Loihi1SimCfg(AbstractLoihiSimRunCfg):
         """For Sim configurations, only PyProcModels are allowed."""
 
         proc_models_ordered = [
-            idx for idx, pm in enumerate(proc_models) if issubclass(pm, AbstractPyProcessModel)
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
         ]
         return proc_models_ordered
 
@@ -417,17 +437,24 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
         Loihi 1 HW."""
         # PyProcModels
         proc_models_py = [
-            idx for idx, pm in enumerate(proc_models) if issubclass(pm, AbstractPyProcessModel)
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
         ]
         # NcProcModels compatible with Loihi1 HW
         proc_models_nc = [
             idx
             for idx, pm in enumerate(proc_models)
-            if (NeuroCore in pm.required_resources or Loihi1NeuroCore in pm.required_resources)
+            if (
+                NeuroCore in pm.required_resources
+                or Loihi1NeuroCore in pm.required_resources
+            )
             and issubclass(pm, AbstractNcProcessModel)
         ]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)]
+        proc_models_c = [
+            pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)
+        ]
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:
@@ -436,7 +463,10 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
             issubclass(pm, AbstractPyProcessModel)
             or issubclass(pm, CLoihiProcessModel)
             or (
-                (NeuroCore in pm.required_resources or Loihi1NeuroCore in pm.required_resources)
+                (
+                    NeuroCore in pm.required_resources
+                    or Loihi1NeuroCore in pm.required_resources
+                )
                 and issubclass(pm, AbstractNcProcessModel)
             )
         )
@@ -486,17 +516,24 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
         """Orders the provided ProcModels according to the preferences for
         Loihi 1 HW."""
         proc_models_py = [
-            idx for idx, pm in enumerate(proc_models) if issubclass(pm, AbstractPyProcessModel)
+            idx
+            for idx, pm in enumerate(proc_models)
+            if issubclass(pm, AbstractPyProcessModel)
         ]
         # NcProcModels compatible with Loihi2 HW
         proc_models_nc = [
             idx
             for idx, pm in enumerate(proc_models)
-            if (NeuroCore in pm.required_resources or Loihi2NeuroCore in pm.required_resources)
+            if (
+                NeuroCore in pm.required_resources
+                or Loihi2NeuroCore in pm.required_resources
+            )
             and issubclass(pm, AbstractNcProcessModel)
         ]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)]
+        proc_models_c = [
+            pm for pm in proc_models if issubclass(pm, CLoihiProcessModel)
+        ]
         # PyProcModels in Loihi2HwCfg will be made available in the future
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
 
@@ -506,7 +543,10 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
             issubclass(pm, AbstractPyProcessModel)
             or issubclass(pm, CLoihiProcessModel)
             or (
-                (NeuroCore in pm.required_resources or Loihi2NeuroCore in pm.required_resources)
+                (
+                    NeuroCore in pm.required_resources
+                    or Loihi2NeuroCore in pm.required_resources
+                )
                 and issubclass(pm, AbstractNcProcessModel)
             )
         )

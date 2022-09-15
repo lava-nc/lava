@@ -14,12 +14,21 @@ import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.factory import MessageInfrastructureFactory
+from lava.magma.runtime.message_infrastructure.factory import (
+    MessageInfrastructureFactory,
+)
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import (
     MessageInfrastructureInterface,
 )
-from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, enum_equal, enum_to_np
-from lava.magma.runtime.runtime_services.runtime_service import AsyncPyRuntimeService
+from lava.magma.runtime.mgmt_token_enums import (
+    MGMT_COMMAND,
+    MGMT_RESPONSE,
+    enum_equal,
+    enum_to_np,
+)
+from lava.magma.runtime.runtime_services.runtime_service import (
+    AsyncPyRuntimeService,
+)
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -31,12 +40,18 @@ from lava.magma.compiler.builders.channel_builder import (
 )
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.builders.runtimeservice_builder import RuntimeServiceBuilder
+from lava.magma.compiler.builders.runtimeservice_builder import (
+    RuntimeServiceBuilder,
+)
 from lava.magma.compiler.channels.interfaces import Channel
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
-from lava.magma.core.run_conditions import AbstractRunCondition, RunContinuous, RunSteps
+from lava.magma.core.run_conditions import (
+    AbstractRunCondition,
+    RunContinuous,
+    RunSteps,
+)
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in
@@ -116,8 +131,12 @@ class Runtime:
         self._run_cond: typing.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
-        self._messaging_infrastructure_type: ActorType = message_infrastructure_type
-        self._messaging_infrastructure: ty.Optional[MessageInfrastructureInterface] = None
+        self._messaging_infrastructure_type: ActorType = (
+            message_infrastructure_type
+        )
+        self._messaging_infrastructure: ty.Optional[
+            MessageInfrastructureInterface
+        ] = None
         self._is_initialized: bool = False
         self._is_running: bool = False
         self._is_started: bool = False
@@ -165,7 +184,9 @@ class Runtime:
         )
         self._messaging_infrastructure.start()
 
-    def _get_process_builder_for_process(self, process: AbstractProcess) -> AbstractProcessBuilder:
+    def _get_process_builder_for_process(
+        self, process: AbstractProcess
+    ) -> AbstractProcessBuilder:
         """Given a process return its process builder."""
         return self._executable.proc_builders[process]
 
@@ -175,19 +196,24 @@ class Runtime:
         if self._executable.channel_builders:
             for channel_builder in self._executable.channel_builders:
                 if isinstance(channel_builder, ChannelBuilderMp):
-                    channel = channel_builder.build(self._messaging_infrastructure)
+                    channel = channel_builder.build(
+                        self._messaging_infrastructure
+                    )
 
                     self._get_process_builder_for_process(
                         channel_builder.src_process
                     ).set_csp_ports([channel.src_port])
 
-                    dst_pb = self._get_process_builder_for_process(channel_builder.dst_process)
+                    dst_pb = self._get_process_builder_for_process(
+                        channel_builder.dst_process
+                    )
                     dst_pb.set_csp_ports([channel.dst_port])
 
                     # Add a mapping from the ID of the source PyPort
                     # to the CSP port
                     src_port_id = create_port_id(
-                        channel_builder.src_process.id, channel_builder.src_port_initializer.name
+                        channel_builder.src_process.id,
+                        channel_builder.src_port_initializer.name,
                     )
                     dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
 
@@ -196,29 +222,45 @@ class Runtime:
         components"""
         if self._executable.sync_channel_builders:
             for sync_channel_builder in self._executable.sync_channel_builders:
-                channel: Channel = sync_channel_builder.build(self._messaging_infrastructure)
+                channel: Channel = sync_channel_builder.build(
+                    self._messaging_infrastructure
+                )
                 if isinstance(sync_channel_builder, RuntimeChannelBuilderMp):
-                    if isinstance(sync_channel_builder.src_process, RuntimeServiceBuilder):
-                        sync_channel_builder.src_process.set_csp_ports([channel.src_port])
+                    if isinstance(
+                        sync_channel_builder.src_process, RuntimeServiceBuilder
+                    ):
+                        sync_channel_builder.src_process.set_csp_ports(
+                            [channel.src_port]
+                        )
                     else:
-                        sync_channel_builder.dst_process.set_csp_ports([channel.dst_port])
+                        sync_channel_builder.dst_process.set_csp_ports(
+                            [channel.dst_port]
+                        )
                     if "runtime_to_service" in channel.src_port.name:
                         self.runtime_to_service.append(channel.src_port)
                     elif "service_to_runtime" in channel.src_port.name:
                         self.service_to_runtime.append(channel.dst_port)
                 elif isinstance(sync_channel_builder, ServiceChannelBuilderMp):
-                    if isinstance(sync_channel_builder.src_process, RuntimeServiceBuilder):
-                        sync_channel_builder.src_process.set_csp_proc_ports([channel.src_port])
+                    if isinstance(
+                        sync_channel_builder.src_process, RuntimeServiceBuilder
+                    ):
+                        sync_channel_builder.src_process.set_csp_proc_ports(
+                            [channel.src_port]
+                        )
                         self._get_process_builder_for_process(
                             sync_channel_builder.dst_process
                         ).set_rs_csp_ports([channel.dst_port])
                     else:
-                        sync_channel_builder.dst_process.set_csp_proc_ports([channel.dst_port])
+                        sync_channel_builder.dst_process.set_csp_proc_ports(
+                            [channel.dst_port]
+                        )
                         self._get_process_builder_for_process(
                             sync_channel_builder.src_process
                         ).set_rs_csp_ports([channel.src_port])
                 else:
-                    self.log.info(sync_channel_builder.dst_process.__class__.__name__)
+                    self.log.info(
+                        sync_channel_builder.dst_process.__class__.__name__
+                    )
                     raise ValueError("Unexpected type of Sync Channel Builder")
 
     def _build_processes(self):
@@ -231,14 +273,18 @@ class Runtime:
                 if isinstance(proc_builder, PyProcessBuilder):
                     # Assign current Runtime to process
                     proc._runtime = self
-                    self._messaging_infrastructure.build_actor(target_fn, proc_builder)
+                    self._messaging_infrastructure.build_actor(
+                        target_fn, proc_builder
+                    )
 
     def _build_runtime_services(self):
         """Builds the runtime services"""
         runtime_service_builders = self._executable.runtime_service_builders
         if self._executable.runtime_service_builders:
             for _, rs_builder in runtime_service_builders.items():
-                self._messaging_infrastructure.build_actor(target_fn, rs_builder)
+                self._messaging_infrastructure.build_actor(
+                    target_fn, rs_builder
+                )
 
     def _get_resp_for_run(self):
         """
@@ -262,7 +308,8 @@ class Runtime:
                                 self.log.info(traceback)
                                 error_cnt += 1
                         raise RuntimeError(
-                            f"{error_cnt} Exception(s) occurred. See " f"output above for details."
+                            f"{error_cnt} Exception(s) occurred. See "
+                            f"output above for details."
                         )
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
@@ -308,7 +355,10 @@ class Runtime:
                 for send_port in self.runtime_to_service:
                     send_port.send(enum_to_np(self.num_steps))
             else:
-                raise ValueError(f"Wrong type of run_condition : " f"{run_condition.__class__}")
+                raise ValueError(
+                    f"Wrong type of run_condition : "
+                    f"{run_condition.__class__}"
+                )
         else:
             self.log.info("Runtime not started yet.")
 
@@ -336,7 +386,8 @@ class Runtime:
                                 error_cnt += 1
                         self.stop()
                         raise RuntimeError(
-                            f"{error_cnt} Exception(s) occurred. See " f"output above for details."
+                            f"{error_cnt} Exception(s) occurred. See "
+                            f"output above for details."
                         )
             self._is_running = False
 
@@ -369,7 +420,9 @@ class Runtime:
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
         if self._is_running:
-            self.log.info("WARNING: Cannot Set a Var when the execution is going on")
+            self.log.info(
+                "WARNING: Cannot Set a Var when the execution is going on"
+            )
             return
         node_config: NodeConfig = self._executable.node_configs[0]
 
@@ -386,7 +439,9 @@ class Runtime:
         model_id: int = ev.proc_id
 
         if issubclass(
-            list(self._executable.runtime_service_builders.values())[runtime_srv_id].rs_class,
+            list(self._executable.runtime_service_builders.values())[
+                runtime_srv_id
+            ].rs_class,
             AsyncPyRuntimeService,
         ):
             raise RuntimeError("Set is not supported in AsyncPyRuntimeService")
@@ -418,14 +473,18 @@ class Runtime:
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
             rsp = rsp_port.recv()
             if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
-                raise RuntimeError("Var Set couldn't get successfully " "completed")
+                raise RuntimeError(
+                    "Var Set couldn't get successfully " "completed"
+                )
         else:
             raise RuntimeError("Runtime has not started")
 
     def get_var(self, var_id: int, idx: np.ndarray = None) -> np.ndarray:
         """Gets value of a variable with id 'var_id'."""
         if self._is_running:
-            self.log.info("WARNING: Cannot Get a Var when the execution is going on")
+            self.log.info(
+                "WARNING: Cannot Get a Var when the execution is going on"
+            )
             return
         node_config: NodeConfig = self._executable.node_configs[0]
 

@@ -88,7 +88,8 @@ class AbstractPort(AbstractProcessMember):
         for p in ports:
             if not isinstance(p, port_type):
                 raise AssertionError(
-                    "'ports' must be of type {} but " "found {}.".format(cls_name, p.__class__)
+                    "'ports' must be of type {} but "
+                    "found {}.".format(cls_name, p.__class__)
                 )
             if assert_same_type:
                 if not isinstance(p, specific_cls):
@@ -99,7 +100,8 @@ class AbstractPort(AbstractProcessMember):
             if assert_same_shape:
                 if self.shape != p.shape:
                     raise AssertionError(
-                        "Shapes {} and {} " "are incompatible.".format(self.shape, p.shape)
+                        "Shapes {} and {} "
+                        "are incompatible.".format(self.shape, p.shape)
                     )
 
     def _add_inputs(self, inputs: ty.List["AbstractPort"]):
@@ -127,7 +129,9 @@ class AbstractPort(AbstractProcessMember):
         ports by adding other ports to this AbstractPort's out_connection and
         by adding this AbstractIOPort to other port's in_connections."""
 
-        self._validate_ports(ports, port_type, assert_same_shape, assert_same_type)
+        self._validate_ports(
+            ports, port_type, assert_same_shape, assert_same_type
+        )
         # Add other ports to this port's output connections
         self._add_outputs(ports)
         # Add this port to input connections of other ports
@@ -146,7 +150,9 @@ class AbstractPort(AbstractProcessMember):
         in_connection and by adding this AbstractPort to other port's
         out_connections."""
 
-        self._validate_ports(ports, port_type, assert_same_shape, assert_same_type)
+        self._validate_ports(
+            ports, port_type, assert_same_shape, assert_same_type
+        )
         # Add other ports to this port's input connections
         self._add_inputs(ports)
         # Add this port to output connections of other ports
@@ -188,7 +194,9 @@ class AbstractPort(AbstractProcessMember):
 
         return transform_func_map
 
-    def get_incoming_virtual_ports(self) -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
+    def get_incoming_virtual_ports(
+        self,
+    ) -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
         """Returns the list of all incoming virtual ports in order from
         source to the current port.
 
@@ -213,7 +221,9 @@ class AbstractPort(AbstractProcessMember):
 
             if isinstance(self, AbstractVirtualPort):
                 if isinstance(self, ConcatPort):
-                    raise NotImplementedError("ConcatPorts are not yet " "supported.")
+                    raise NotImplementedError(
+                        "ConcatPorts are not yet " "supported."
+                    )
                 virtual_ports.append(self)
 
             return src_port_id, virtual_ports
@@ -233,10 +243,14 @@ class AbstractPort(AbstractProcessMember):
         transform_funcs = {}
         for p in self.out_connections:
             dst_port_id, vps = p.get_outgoing_virtual_ports()
-            transform_funcs[dst_port_id] = [vp.get_transform_func_bwd() for vp in vps]
+            transform_funcs[dst_port_id] = [
+                vp.get_transform_func_bwd() for vp in vps
+            ]
         return transform_funcs
 
-    def get_outgoing_virtual_ports(self) -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
+    def get_outgoing_virtual_ports(
+        self,
+    ) -> ty.Tuple[str, ty.List["AbstractVirtualPort"]]:
         """Returns the list of all outgoing virtual ports in order from
         the current port to the destination port.
 
@@ -261,7 +275,9 @@ class AbstractPort(AbstractProcessMember):
 
             if isinstance(self, AbstractVirtualPort):
                 if isinstance(self, ConcatPort):
-                    raise NotImplementedError("ConcatPorts are not yet " "supported.")
+                    raise NotImplementedError(
+                        "ConcatPorts are not yet " "supported."
+                    )
                 virtual_ports.append(self)
 
             return dst_port_id, virtual_ports
@@ -294,7 +310,9 @@ class AbstractPort(AbstractProcessMember):
             raise pe.ReshapeError(self.shape, new_shape)
 
         reshape_port = ReshapePort(new_shape, old_shape=self.shape)
-        self._connect_forward([reshape_port], AbstractPort, assert_same_shape=False)
+        self._connect_forward(
+            [reshape_port], AbstractPort, assert_same_shape=False
+        )
         return reshape_port
 
     def flatten(self) -> "ReshapePort":
@@ -360,7 +378,9 @@ class AbstractPort(AbstractProcessMember):
 
         new_shape = tuple([self.shape[i] for i in axes])
         transpose_port = TransposePort(new_shape, axes)
-        self._connect_forward([transpose_port], AbstractPort, assert_same_shape=False)
+        self._connect_forward(
+            [transpose_port], AbstractPort, assert_same_shape=False
+        )
         return transpose_port
 
 
@@ -412,7 +432,9 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
     sub processes.
     """
 
-    def connect(self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]):
+    def connect(
+        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+    ):
         """Connects this OutPort to other InPort(s) of another process
         or to OutPort(s) of its parent process.
 
@@ -471,7 +493,9 @@ class InPort(AbstractIOPort, AbstractDstPort):
         """
         self._connect_forward(to_list(ports), InPort)
 
-    def connect_from(self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]):
+    def connect_from(
+        self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
+    ):
         """Connects other OutPort(s) to this InPort or connects other
         InPort(s) of parent process to this InPort.
 
@@ -503,7 +527,9 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     Alternatively, VarPorts can be created dynamically by connecting a
     RefPort to a Var via the connect_var(..) method."""
 
-    def connect(self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]):
+    def connect(
+        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+    ):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
 
@@ -516,8 +542,14 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         # Check if multiple ports should be connected (currently not supported)
         if (
             len(to_list(ports)) > 1
-            or (len(self.get_dst_ports()) > 0 and not isinstance(ports, AbstractSrcPort))
-            or (len(self.get_src_ports()) > 0 and not isinstance(ports, AbstractDstPort))
+            or (
+                len(self.get_dst_ports()) > 0
+                and not isinstance(ports, AbstractSrcPort)
+            )
+            or (
+                len(self.get_src_ports()) > 0
+                and not isinstance(ports, AbstractDstPort)
+            )
         ):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
@@ -551,8 +583,14 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         # Check if multiple ports should be connected (currently not supported)
         if (
             len(to_list(ports)) > 1
-            or (len(self.get_dst_ports()) > 0 and not isinstance(ports, AbstractSrcPort))
-            or (len(self.get_src_ports()) > 0 and not isinstance(ports, AbstractDstPort))
+            or (
+                len(self.get_dst_ports()) > 0
+                and not isinstance(ports, AbstractSrcPort)
+            )
+            or (
+                len(self.get_src_ports()) > 0
+                and not isinstance(ports, AbstractDstPort)
+            )
         ):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
@@ -585,8 +623,14 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         # Check if multiple ports should be connected (currently not supported)
         if (
             len(to_list(variables)) > 1
-            or (len(self.get_dst_ports()) > 0 and not isinstance(variables, AbstractSrcPort))
-            or (len(self.get_src_ports()) > 0 and not isinstance(variables, AbstractDstPort))
+            or (
+                len(self.get_dst_ports()) > 0
+                and not isinstance(variables, AbstractSrcPort)
+            )
+            or (
+                len(self.get_src_ports()) > 0
+                and not isinstance(variables, AbstractDstPort)
+            )
         ):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for RefPorts:"
@@ -605,7 +649,9 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             if self.process is not None:
                 # Only assign when parent process is already assigned
                 if self.process == v.process:
-                    raise AssertionError("RefPort and Var have same " "parent process.")
+                    raise AssertionError(
+                        "RefPort and Var have same " "parent process."
+                    )
         var_ports = []
         var_shape = variables[0].shape
         for v in variables:
@@ -635,7 +681,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             # VarPort name could shadow existing attribute
             if hasattr(var.process, vp.name):
                 raise AssertionError(
-                    "Name of implicit VarPort might conflict" " with existing attribute."
+                    "Name of implicit VarPort might conflict"
+                    " with existing attribute."
                 )
             setattr(var.process, vp.name, vp)
             var.process.var_ports.add_members({vp.name: vp})
@@ -684,8 +731,14 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         # Check if multiple ports should be connected (currently not supported)
         if (
             len(to_list(ports)) > 1
-            or (len(self.get_dst_ports()) > 0 and not isinstance(ports, AbstractSrcPort))
-            or (len(self.get_src_ports()) > 0 and not isinstance(ports, AbstractDstPort))
+            or (
+                len(self.get_dst_ports()) > 0
+                and not isinstance(ports, AbstractSrcPort)
+            )
+            or (
+                len(self.get_src_ports()) > 0
+                and not isinstance(ports, AbstractDstPort)
+            )
         ):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for VarPorts:"
@@ -705,7 +758,9 @@ class VarPort(AbstractRVPort, AbstractDstPort):
                 )
         self._connect_forward(to_list(ports), VarPort)
 
-    def connect_from(self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]):
+    def connect_from(
+        self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
+    ):
         """Connects other RefPort(s) to this VarPort or connects other
         VarPort(s) of parent process to this VarPort.
 
@@ -718,8 +773,14 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         # Check if multiple ports should be connected (currently not supported)
         if (
             len(to_list(ports)) > 1
-            or (len(self.get_dst_ports()) > 0 and not isinstance(ports, AbstractSrcPort))
-            or (len(self.get_src_ports()) > 0 and not isinstance(ports, AbstractDstPort))
+            or (
+                len(self.get_dst_ports()) > 0
+                and not isinstance(ports, AbstractSrcPort)
+            )
+            or (
+                len(self.get_src_ports()) > 0
+                and not isinstance(ports, AbstractDstPort)
+            )
         ):
             raise AssertionError(
                 "Currently only 1:1 connections are supported for VarPorts:"
@@ -818,7 +879,9 @@ class ReshapePort(AbstractVirtualPort):
     It is used by the compiler to map the indices of the underlying
     tensor-valued data array from the derived to the new shape."""
 
-    def __init__(self, new_shape: ty.Tuple[int, ...], old_shape: ty.Tuple[int, ...]):
+    def __init__(
+        self, new_shape: ty.Tuple[int, ...], old_shape: ty.Tuple[int, ...]
+    ):
         AbstractPort.__init__(self, new_shape)
         self.old_shape = old_shape
 
@@ -855,7 +918,9 @@ class ConcatPort(AbstractVirtualPort):
 
     def __init__(self, ports: ty.List[AbstractPort], axis: int):
         AbstractPort.__init__(self, self._get_new_shape(ports, axis))
-        self._connect_backward(ports, AbstractPort, assert_same_shape=False, assert_same_type=True)
+        self._connect_backward(
+            ports, AbstractPort, assert_same_shape=False, assert_same_type=True
+        )
         self.concat_axis = axis
 
     @staticmethod

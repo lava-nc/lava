@@ -54,7 +54,11 @@ def implements(
 
         # Check existing 'implements_protocol' does not get overwritten by a
         # different protocol
-        if cls.implements_protocol and protocol and cls.implements_protocol != protocol:
+        if (
+            cls.implements_protocol
+            and protocol
+            and cls.implements_protocol != protocol
+        ):
             raise AssertionError(
                 f"ProcessModel '{cls.__name__}' already implements a "
                 f"SyncProtocol (perhaps due to sub classing)."
@@ -70,7 +74,11 @@ def implements(
     return decorate_process_model
 
 
-def requires(*args: ty.Union[ty.Type[AbstractResource], ty.List[ty.Type[AbstractResource]]]):
+def requires(
+    *args: ty.Union[
+        ty.Type[AbstractResource], ty.List[ty.Type[AbstractResource]]
+    ]
+):
     """Decorator for ProcessModel classes that adds class variable to
     ProcessModel class that specifies which resources the ProcessModel
     requires.
@@ -86,7 +94,8 @@ def requires(*args: ty.Union[ty.Type[AbstractResource], ty.List[ty.Type[Abstract
     for req in reqs:
         if not isinstance(req, list) and not issubclass(req, AbstractResource):
             raise AssertionError(
-                "'requires' accepts individual or " "lists of 'AbstractResources'."
+                "'requires' accepts individual or "
+                "lists of 'AbstractResources'."
             )
         if isinstance(req, list):
             for r in req:
@@ -99,7 +108,8 @@ def requires(*args: ty.Union[ty.Type[AbstractResource], ty.List[ty.Type[Abstract
     def decorate_process_model(cls: type):
         if not issubclass(cls, AbstractProcessModel):
             raise AssertionError(
-                "Decorated class must be a subclass " "of 'AbstractProcessModel'."
+                "Decorated class must be a subclass "
+                "of 'AbstractProcessModel'."
             )
 
         # Get requirements of parent class
@@ -164,7 +174,8 @@ def tag(*args: ty.Union[str, ty.List[str]]):
     def decorate_process_model(cls: type):
         if not issubclass(cls, AbstractProcessModel):
             raise AssertionError(
-                "Decorated class must be a subclass " "of 'AbstractProcessModel'."
+                "Decorated class must be a subclass "
+                "of 'AbstractProcessModel'."
             )
         # Check existing 'tags' from parent in case of sub-classing
         if hasattr(cls, "tags"):

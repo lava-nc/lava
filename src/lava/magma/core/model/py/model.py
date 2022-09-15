@@ -8,10 +8,19 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSelector, CspSendPort
+from lava.magma.compiler.channels.pypychannel import (
+    CspRecvPort,
+    CspSelector,
+    CspSendPort,
+)
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
-from lava.magma.runtime.mgmt_token_enums import MGMT_COMMAND, MGMT_RESPONSE, enum_equal, enum_to_np
+from lava.magma.runtime.mgmt_token_enums import (
+    MGMT_COMMAND,
+    MGMT_RESPONSE,
+    enum_equal,
+    enum_to_np,
+)
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -336,13 +345,21 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             self._handle_pause_or_stop_req()
             return
         if self.lrn_guard() and self.pre_guard():
-            self.process_to_service.send(PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT
+            )
         elif self.lrn_guard():
-            self.process_to_service.send(PyLoihiProcessModel.Response.REQ_LEARNING)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_LEARNING
+            )
         elif self.post_guard():
-            self.process_to_service.send(PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
         else:
-            self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.STATUS_DONE
+            )
 
     def _pre_mgmt(self):
         """
@@ -379,7 +396,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             self._handle_pause_or_stop_req()
             return
         if self.post_guard():
-            self.process_to_service.send(PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+            self.process_to_service.send(
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
             return
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
@@ -393,7 +412,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Command handler for Stop Command.
         """
-        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_TERMINATED)
+        self.process_to_service.send(
+            PyLoihiProcessModel.Response.STATUS_TERMINATED
+        )
         self.join()
 
     def _pause(self):
@@ -430,9 +451,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Add various ports to poll for communication on ports
         """
-        if enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT) or enum_equal(
-            self.phase, PyLoihiProcessModel.Phase.POST_MGMT
-        ):
+        if enum_equal(
+            self.phase, PyLoihiProcessModel.Phase.PRE_MGMT
+        ) or enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, CspRecvPort):
@@ -440,7 +461,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
 
-                        self._channel_actions.insert(0, (csp_port, func(var_port)))
+                        self._channel_actions.insert(
+                            0, (csp_port, func(var_port))
+                        )
 
 
 class PyAsyncProcessModel(AbstractPyProcessModel):

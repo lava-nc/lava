@@ -9,7 +9,11 @@ import numpy as np
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
-from lava.magma.compiler.utils import PortInitializer, VarInitializer, VarPortInitializer
+from lava.magma.compiler.utils import (
+    PortInitializer,
+    VarInitializer,
+    VarPortInitializer,
+)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import (
     AbstractPyIOPort,
@@ -181,7 +185,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         new_ports = {}
         for p in csp_ports:
-            new_ports.setdefault(p.name, []).extend(p if isinstance(p, list) else [p])
+            new_ports.setdefault(p.name, []).extend(
+                p if isinstance(p, list) else [p]
+            )
 
         # Check that there's a PyPort for each new CspPort
         proc_name = self.proc_model.implements_process.__name__
@@ -213,7 +219,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
             a CSP port
         """
         # Add or update the mapping
-        self._csp_port_map.setdefault(csp_port.name, {}).update({py_port_id: csp_port})
+        self._csp_port_map.setdefault(csp_port.name, {}).update(
+            {py_port_id: csp_port}
+        )
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
         """Set RS CSP Ports
@@ -277,7 +285,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
             if issubclass(port_cls, PyInPort):
                 transformer = (
-                    VirtualPortTransformer(self._csp_port_map[name], p.transform_funcs)
+                    VirtualPortTransformer(
+                        self._csp_port_map[name], p.transform_funcs
+                    )
                     if p.transform_funcs
                     else IdentityTransformer()
                 )
@@ -286,7 +296,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
             elif issubclass(port_cls, PyOutPort):
                 port = port_cls(csp_ports, pm, p.shape, lt.d_type)
             else:
-                raise AssertionError("port_cls must be of type PyInPort or " "PyOutPort")
+                raise AssertionError(
+                    "port_cls must be of type PyInPort or " "PyOutPort"
+                )
 
             # Create dynamic PyPort attribute on ProcModel
             setattr(pm, name, port)
@@ -302,16 +314,28 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = csp_ports[0] if isinstance(csp_ports[0], CspRecvPort) else csp_ports[1]
-                csp_send = csp_ports[0] if isinstance(csp_ports[0], CspSendPort) else csp_ports[1]
+                csp_recv = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspRecvPort)
+                    else csp_ports[1]
+                )
+                csp_send = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspSendPort)
+                    else csp_ports[1]
+                )
 
             transformer = (
-                VirtualPortTransformer(self._csp_port_map[name], p.transform_funcs)
+                VirtualPortTransformer(
+                    self._csp_port_map[name], p.transform_funcs
+                )
                 if p.transform_funcs
                 else IdentityTransformer()
             )
 
-            port = port_cls(csp_send, csp_recv, pm, p.shape, lt.d_type, transformer)
+            port = port_cls(
+                csp_send, csp_recv, pm, p.shape, lt.d_type, transformer
+            )
 
             # Create dynamic RefPort attribute on ProcModel
             setattr(pm, name, port)
@@ -327,16 +351,34 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = csp_ports[0] if isinstance(csp_ports[0], CspRecvPort) else csp_ports[1]
-                csp_send = csp_ports[0] if isinstance(csp_ports[0], CspSendPort) else csp_ports[1]
+                csp_recv = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspRecvPort)
+                    else csp_ports[1]
+                )
+                csp_send = (
+                    csp_ports[0]
+                    if isinstance(csp_ports[0], CspSendPort)
+                    else csp_ports[1]
+                )
 
             transformer = (
-                VirtualPortTransformer(self._csp_port_map[name], p.transform_funcs)
+                VirtualPortTransformer(
+                    self._csp_port_map[name], p.transform_funcs
+                )
                 if p.transform_funcs
                 else IdentityTransformer()
             )
 
-            port = port_cls(p.var_name, csp_send, csp_recv, pm, p.shape, p.d_type, transformer)
+            port = port_cls(
+                p.var_name,
+                csp_send,
+                csp_recv,
+                pm,
+                p.shape,
+                p.d_type,
+                transformer,
+            )
 
             # Create dynamic VarPort attribute on ProcModel
             setattr(pm, name, port)

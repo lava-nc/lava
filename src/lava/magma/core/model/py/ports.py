@@ -110,7 +110,9 @@ class AbstractTransformer(ABC):
     transform data."""
 
     @abstractmethod
-    def transform(self, data: np.ndarray, csp_port: AbstractCspPort) -> np.ndarray:
+    def transform(
+        self, data: np.ndarray, csp_port: AbstractCspPort
+    ) -> np.ndarray:
         """Transforms incoming data in way that is determined by which CSP
         port the data is received.
 
@@ -162,13 +164,19 @@ class VirtualPortTransformer(AbstractTransformer):
         # applied for the transformation.
         for port_id, csp_port in csp_ports.items():
             self._csp_port_to_fp[csp_port] = (
-                transform_funcs[port_id] if port_id in transform_funcs else [lambda x: x]
+                transform_funcs[port_id]
+                if port_id in transform_funcs
+                else [lambda x: x]
             )
 
-    def transform(self, data: np.ndarray, csp_port: AbstractCspPort) -> np.ndarray:
+    def transform(
+        self, data: np.ndarray, csp_port: AbstractCspPort
+    ) -> np.ndarray:
         return self._get_transform(csp_port)(data)
 
-    def _get_transform(self, csp_port: AbstractCspPort) -> ty.Callable[[np.ndarray], np.ndarray]:
+    def _get_transform(
+        self, csp_port: AbstractCspPort
+    ) -> ty.Callable[[np.ndarray], np.ndarray]:
         """For a given CSP port, returns a function that applies, in sequence,
         all the function pointers associated with the incoming virtual
         ports.
@@ -204,7 +212,9 @@ class VirtualPortTransformer(AbstractTransformer):
             )
 
         return ft.reduce(
-            lambda f, g: lambda data: g(f(data)), self._csp_port_to_fp[csp_port], lambda h: h
+            lambda f, g: lambda data: g(f(data)),
+            self._csp_port_to_fp[csp_port],
+            lambda h: h,
         )
 
 
@@ -341,7 +351,8 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, port: acc + self._transformer.transform(port.recv(), port),
+            lambda acc, port: acc
+            + self._transformer.transform(port.recv(), port),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
@@ -358,7 +369,8 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, port: acc + self._transformer.transform(port.recv(), port),
+            lambda acc, port: acc
+            + self._transformer.transform(port.recv(), port),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),
         )
@@ -494,7 +506,9 @@ class PyOutPortVectorSparse(PyOutPort):
         """TBD"""
         data_clone = np.copy(data)
         indices_clone = np.copy(indices)
-        data_length: np.ndarray = np.array([len(data.flatten())], dtype=np.int32)
+        data_length: np.ndarray = np.array(
+            [len(data.flatten())], dtype=np.int32
+        )
         for csp_port in self.csp_ports:
             data_length.resize(csp_port.shape)
             data_clone.resize(csp_port.shape)
@@ -631,7 +645,9 @@ class PyRefPort(AbstractPyPort):
     @abstractmethod
     def read(
         self,
-    ) -> ty.Union[np.ndarray, ty.Tuple[np.ndarray, np.ndarray], int, ty.Tuple[int, int]]:
+    ) -> ty.Union[
+        np.ndarray, ty.Tuple[np.ndarray, np.ndarray], int, ty.Tuple[int, int]
+    ]:
         """Abstract method to request and return data from a VarPort.
         Returns
         -------
@@ -693,7 +709,9 @@ class PyRefPortVectorDense(PyRefPort):
             header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
             self._csp_send_port.send(header)
 
-            return self._transformer.transform(self._csp_recv_port.recv(), self._csp_recv_port)
+            return self._transformer.transform(
+                self._csp_recv_port.recv(), self._csp_recv_port
+            )
 
         return np.zeros(self._shape, self._d_type)
 

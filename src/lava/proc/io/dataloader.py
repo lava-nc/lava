@@ -39,7 +39,9 @@ class AbstractDataloader(AbstractProcess):
         interval: int = 1,
         offset: int = 0,
     ) -> None:
-        super().__init__(gt_shape=gt_shape, dataset=dataset, interval=interval, offset=offset)
+        super().__init__(
+            gt_shape=gt_shape, dataset=dataset, interval=interval, offset=offset
+        )
         self.interval = Var((1,), interval)
         self.offset = Var((1,), offset % interval)
 

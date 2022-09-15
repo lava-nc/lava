@@ -90,4 +90,7 @@ class Dense(AbstractProcess):
     @staticmethod
     def _validate_weights(weights: np.ndarray) -> None:
         if len(np.shape(weights)) != 2:
-            raise ValueError("Dense Process 'weights' expects a 2D matrix, " f"got {weights}.")
+            raise ValueError(
+                "Dense Process 'weights' expects a 2D matrix, "
+                f"got {weights}."
+            )
