@@ -328,11 +328,13 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def _init_randoms(self) -> None:
         """Initialize trace and synaptic variable random generators."""
-        self._x_random = TraceRandom(seed_trace_decay=self._learning_rule._rng_seed,
-                                     seed_impulse_addition=self._learning_rule._rng_seed + 1)
+        self._x_random = \
+            TraceRandom(seed_trace_decay=self._learning_rule._rng_seed,
+                        seed_impulse_addition=self._learning_rule._rng_seed + 1)
 
-        self._y_random = TraceRandom(seed_trace_decay=self._learning_rule._rng_seed + 2,
-                                     seed_impulse_addition=self._learning_rule._rng_seed + 3)
+        self._y_random = \
+            TraceRandom(seed_trace_decay=self._learning_rule._rng_seed + 2,
+                        seed_impulse_addition=self._learning_rule._rng_seed + 3)
 
         self._conn_var_random = ConnVarRandom()
 
