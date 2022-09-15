@@ -11,6 +11,7 @@ from lava.magma.core.learning.utils import saturate
 from lava.magma.core.learning import string_symbols as str_symbols
 from lava.magma.core.learning.constants import *
 
+
 class AbstractLearningRuleApplier:
     """The LearningRuleApplier is a Python-specific representation of learning
     rules. It is associated with a ProductSeries.
