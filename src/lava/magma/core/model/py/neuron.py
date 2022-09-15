@@ -30,38 +30,6 @@ class NeuronModelFixed(NeuronModel):
 
 
 class NeuronModelFloat(NeuronModel):
-    """Floating-point implementation of the Neuron Process
-
-    This ProcessModel constitutes a behavioral implementation of Loihi synapses
-    written in Python, executing on CPU, and operating in floating-point
-    arithmetic.
-
-    To summarize the behavior:
-
-    Spiking phase:
-    run_spk:
-
-        (1) Send activations from past time step to post-synaptic
-        neuron Process.
-        (2) Receive spikes from pre- and post-synaptic neuron Process.
-        (3) Record within-epoch spiking times. Update traces if more than
-        one spike during the epoch.
-        (4) Compute activations to be sent on next time step.
-
-    Learning phase:
-    run_lrn:
-
-        (1) Compute updates for each active synaptic variable,
-        according to associated learning rule,
-        based on the state of Vars representing dependencies and factors.
-        (2) Update traces based on within-epoch spiking times and trace
-        configuration parameters (impulse, decay).
-        (3) Reset within-epoch spiking times and dependency Vars
-
-    Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
-    delay in this connections Process. It can be adapted according to its
-    learning rule (learned), but it will not affect synaptic activity.
-    """
 
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool)

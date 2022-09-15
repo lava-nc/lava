@@ -105,9 +105,12 @@ class TestSTDPSim(unittest.TestCase):
         and compare to the resulting weight from previous runs."""
 
         def trace_callback(neuron):
-            trace_y1 = neuron.v ** 2
-            trace_y2 = np.sqrt(neuron.u)
-            return trace_y1, trace_y2
+            # gets called in the run_spk phase of lif_1.
+            # Can be used to return the trace values of y2 and y3
+            # Here the traces are dependent of the membrane potential / input current
+            trace_y2 = neuron.v ** 2
+            trace_y3 = np.sqrt(neuron.u)
+            return trace_y2, trace_y3
 
         learning_rule = DopaminergicSTDPLoihi(
             learning_rate=1,
@@ -125,8 +128,9 @@ class TestSTDPSim(unittest.TestCase):
 
         dense = Dense(weights=weights_init, learning_rule=learning_rule, name="dense")
 
-        lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15, enable_learning=True,
-                    update_traces=trace_callback)
+        lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15,
+                    enable_learning=True, # set to True to send out traces and bap
+                    update_traces=trace_callback) # pass function to calculate traces
 
         lif_0.s_out.connect(dense.s_in)
         dense.a_out.connect(lif_1.a_in)
@@ -155,9 +159,9 @@ class TestSTDPSim(unittest.TestCase):
         and compare to the resulting weight from previous runs."""
 
         def trace_callback(neuron):
-            trace_y1 = neuron.v
-            trace_y2 = neuron.u
-            return trace_y1, trace_y2
+            trace_y2 = neuron.v
+            trace_y3 = neuron.u
+            return trace_y2, trace_y3
 
         learning_rule = DopaminergicSTDPLoihi(
             learning_rate=1,
