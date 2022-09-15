@@ -46,7 +46,6 @@ int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
     LAVA_LOG_ERR("Cannot allocate shared memory with size %u\n", mem_size);
     exit(-1);
   }
-  LAVA_LOG(LOG_SMMP, "Allocate shared memory.\n");
   shmids_.insert(shmid);
   return shmid;
 }

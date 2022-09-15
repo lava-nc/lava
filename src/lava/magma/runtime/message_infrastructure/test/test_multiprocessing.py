@@ -8,7 +8,6 @@ import os
 from functools import partial
 
 from message_infrastructure import CppMultiProcessing
-from message_infrastructure import SharedMemManager
 from message_infrastructure import ProcessType
 from message_infrastructure import Actor
 from message_infrastructure.multiprocessing import MultiProcessing
@@ -143,9 +142,9 @@ def test_multiprocessing():
         ret = mp.build_actor(bound_target_fn, builder)
         print(ret)
 
-    shmm = mp.smm
-    for i in range(5):
-        print("shared memory id: ", shmm.alloc_mem(8))
+    # shmm = mp.smm
+    # for i in range(5):
+    #     print("shared memory id: ", shmm.alloc_mem(8))
 
     actors = mp.actors
     actor = actors[0]
@@ -153,14 +152,14 @@ def test_multiprocessing():
     actor.stop()
     print("actor status: ", actor.get_status())
 
-    print("stop num: ", shmm.stop())
-    print("stop num: ", shmm.stop())
+    # print("stop num: ", shmm.stop())
+    # print("stop num: ", shmm.stop())
 
     mp.stop()
 
 
 # Run unit tests
 if __name__ == '__main__':
-    # test_multiprocessing()
+    test_multiprocessing()
     print("UNIT TEST BEGINSSSSS")
-    unittest.main()
+    # unittest.main()
