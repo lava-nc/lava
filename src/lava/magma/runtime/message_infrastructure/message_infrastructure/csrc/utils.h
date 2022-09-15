@@ -8,6 +8,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
+#include <vector>
+
 namespace message_infrastructure {
 
 enum ProcessType {
@@ -26,6 +28,16 @@ struct Proto {
   const ssize_t *shape_;
   pybind11::dtype dtype_;
   size_t nbytes_;
+};
+
+struct MetaData {
+  int64_t nd;
+  int64_t type;
+  int64_t elsize;
+  int64_t total_size;
+  std::vector<int64_t> dims;
+  std::vector<int64_t> strides;
+  void* mdata;
 };
 
 }  // namespace message_infrastructure
