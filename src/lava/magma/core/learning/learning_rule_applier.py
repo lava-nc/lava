@@ -77,7 +77,7 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
             applier_sub_str = ""
 
             # derive scaling factor string representation
-            sf_str = f"({product.s_mantissa}) * 2 ** (({product.s_exp}) - 7)"
+            sf_str = f"({product.s_mantissa}) * 2. ** (({product.s_exp}) - 7)"
             # derive dependency string representation
             dep_str = f"{product.dependency}"
 
