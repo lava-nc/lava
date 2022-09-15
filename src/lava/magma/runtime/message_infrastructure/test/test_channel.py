@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import time
 import numpy as np
 from enum import Enum
 
@@ -15,9 +16,9 @@ def nbytes_cal(shape, dtype):
 
 
 def main():
-    data = np.array([6,5,4,3,2,1], dtype = np.int32)
-    size = 2
-    nbytes = 4
+    data = np.array([12,24,36,48,60], dtype = np.int32)
+    size = 5
+    nbytes = 4 * 5
     name = 'test_shmem_channel'
 
     print(data)
@@ -36,12 +37,13 @@ def main():
     recv_port.start()
 
     send_port.send(data)
-    print(recv_port.recv())
+    send_port.send(data)
+    print("Recv data : ",recv_port.recv())
+    print("Recv data : ",recv_port.recv())
 
-    # send_port.join()
-    # recv_port.join()
+    send_port.join()
+    recv_port.join()
 
     print("finish test function.")
-
 
 main()

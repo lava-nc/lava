@@ -70,6 +70,7 @@ class ShmemRecvQueue {
   std::vector<void *> drop_array_;
   std::atomic<uint32_t> read_index_;
   std::atomic<uint32_t> write_index_;
+  std::atomic_bool overlap_;
 };
 
 using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;

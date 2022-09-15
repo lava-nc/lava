@@ -43,7 +43,7 @@ class SharedMemManager {
  private:
   SharedMemManager() {}
   std::set<int> shmids_;
-  std::atomic<key_t> key_ {0x1111};
+  std::atomic<key_t> key_ {0xdead};
   static SharedMemManager smm_;
 };
 

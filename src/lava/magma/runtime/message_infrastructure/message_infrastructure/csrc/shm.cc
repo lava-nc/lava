@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "shm.h"
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
 
@@ -41,17 +42,22 @@ int SharedMemory::GetDataElem(int offset) {
 
 int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
   int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
-  if (shmid < 0)
-    return -1;
-
+  if (shmid < 0) {
+    LAVA_LOG_ERR("Cannot allocate shared memory with size %u\n", mem_size);
+    exit(-1);
+  }
+  LAVA_LOG(LOG_SMMP, "Allocate shared memory.\n");
   shmids_.insert(shmid);
   return shmid;
 }
 SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
-  int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
-  if (shmid < 0)
-    exit(-1); // Log_Error
+  int shmid = shmget(key_++, 120, 0644|IPC_CREAT);
+  if (shmid < 0) {
+    LAVA_LOG_ERR("Cannot allocate shared memory with size %lu, id : %d\n", mem_size, shmid);
 
+    exit(-1);
+  }
+  LAVA_LOG(LOG_SMMP, "Allocate shared memory.\n");
   SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmid);
   shm->InitSemaphore();
 
