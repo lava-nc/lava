@@ -47,14 +47,34 @@ TEST(TestMultiprocessing, ActorForceStop) {
   // Force stops all running actors
   // Checks that actor status returns 1 (StatusStopped)
   GTEST_SKIP() << "Skipping ActorForceStop";
+  MultiProcessing mp;
+  std::vector<ActorPtr>& actorList = mp.GetActors();
+  for (auto actor : actorList){
+    actor->ForceStop();
+    int actorStatus = actor->GetActorStatus();
+    EXPECT_EQ(actorStatus, 1);
+  }
 }
 
 TEST(TestMultiprocessing, ActorRunning) {
   // Checks that acto status returns 0 (StatusRuning)
   // std::vector<ActorPtr>& actor_list = *Multiprocessing()
+  MultiProcessing mp;
+  std::vector<ActorPtr>& actorList = mp.GetActors();
+  for (auto actor : actorList){
+    int actorStatus = actor->GetActorStatus();
+    EXPECT_EQ(actorStatus, 0);
+  }
 }
 
 TEST(TestMultiprocessing, ActorStop) {
   // Stops all running actors
   // Checks that actor status returns 1 (StatusStopped)
+  MultiProcessing mp;
+  std::vector<ActorPtr>& actorList = mp.GetActors();
+  for (auto actor : actorList){
+    actor->Stop();
+    int actorStatus = actor->GetActorStatus();
+    EXPECT_EQ(actorStatus, 1);
+  }
 }
