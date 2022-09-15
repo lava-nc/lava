@@ -526,8 +526,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
             The AbstractRVPort(s) to connect to.
         """
@@ -587,8 +587,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         """Connects this RefPort to Lava Process Var(s) to facilitate shared
         memory access.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         variables: ty.Union[Var, ty.List[Var]]
             Var or list of Vars to connect to.
         """
