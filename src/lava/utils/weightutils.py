@@ -63,8 +63,8 @@ def optimize_weight_bits(
 
     if sign_mode == SignMode.MIXED:
         is_signed = 1
-        pos_scale = 127 / max_weight
-        neg_scale = -128 / min_weight
+        pos_scale = 127 / max_weight if max_weight > 0 else np.inf
+        neg_scale = -128 / min_weight if min_weight < 0 else np.inf
         scale = np.min([pos_scale, neg_scale])
     elif sign_mode == SignMode.INHIBITORY:
         scale = -256 / min_weight
