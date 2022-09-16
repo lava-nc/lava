@@ -9,21 +9,19 @@ if(PY_WRAPPER)
 endif()
 
 set (MESSAGE_INFRASTRUCTURE_SRCS
-    #  "message_infrastructure/csrc/abstract_port_implementation.cc"
      "message_infrastructure/csrc/abstract_port.cc"
      "message_infrastructure/csrc/channel_proxy.cc"
      "message_infrastructure/csrc/multiprocessing.cc"
-     "message_infrastructure/csrc/port_proxy.cc"
      "message_infrastructure/csrc/posix_actor.cc"
      "message_infrastructure/csrc/shm.cc"
      "message_infrastructure/csrc/shmem_channel.cc"
      "message_infrastructure/csrc/shmem_port.cc"
-     "message_infrastructure/csrc/transformer.cc"
      )
 
 set (PY_WRAPPER_SRCS
     "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
     "message_infrastructure/csrc/port_proxy.cc"
+    "message_infrastructure/csrc/abstract_port_implementation.cc"
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
