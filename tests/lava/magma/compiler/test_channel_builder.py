@@ -3,38 +3,32 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 import unittest
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
-from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.compiler.channels.pypychannel import (
-    PyPyChannel,
-    CspSendPort,
-    CspRecvPort,
-)
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import (
+    ChannelTransferType,
+    Channel,
+    SendPort,
+    RecvPort
+)
 
 
 class MockMessageInterface:
-    def __init__(self, smm):
-        self.smm = smm
-
-    def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return PyPyChannel
+    def channel_class(self, channel_type: ChannelTransferType) -> ty.Type:
+        return ChannelTransferType.SHMEMCHANNEL
 
 
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        smm: SharedMemoryManager = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
-                name="mock", shape=(1, 2), d_type=np.int32,
-                port_type='DOESNOTMATTER', size=64)
+                name="mock", shape=(5), d_type=np.int32,
+                port_type='DOESNOTMATTER', size=5)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
                 channel_type=ChannelTransferType.SHMEMCHANNEL,
                 src_port_initializer=port_initializer,
@@ -43,27 +37,30 @@ class TestChannelBuilder(unittest.TestCase):
                 dst_process=None,
             )
 
-            smm.start()
-            mock = MockMessageInterface(smm)
+            mock = MockMessageInterface()
             channel: Channel = channel_builder.build(mock)
-            assert isinstance(channel, PyPyChannel)
-            assert isinstance(channel.src_port, CspSendPort)
-            assert isinstance(channel.dst_port, CspRecvPort)
+            src_port = channel.get_send_port()
+            dst_port = channel.get_recv_port()
+            # assert isinstance(channel, ShmemChannel)
+            assert isinstance(src_port, SendPort)
+            assert isinstance(dst_port, RecvPort)
 
-            channel.src_port.start()
-            channel.dst_port.start()
+            src_port.start()
+            dst_port.start()
 
-            expected_data = np.array([[1, 2]])
-            channel.src_port.send(data=expected_data)
-            data = channel.dst_port.recv()
+            expected_data = np.array([12,34,36,48,60], dtype = np.int32)
+            src_port.send(expected_data)
+            data = dst_port.recv()
             assert np.array_equal(data, expected_data)
+            print("final OK")
 
-            channel.src_port.join()
-            channel.dst_port.join()
+            src_port.join()
+            dst_port.join()
 
         finally:
-            smm.shutdown()
+            print("End Test")
 
 
 if __name__ == "__main__":
+    print("start test channel builder")
     unittest.main()

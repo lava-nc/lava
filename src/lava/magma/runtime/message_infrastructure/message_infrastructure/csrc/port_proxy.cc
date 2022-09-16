@@ -13,6 +13,23 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+void MetaDataDump(MetaDataPtr metadata) {
+  int64_t *dims = metadata->dims;
+  int64_t *strides = metadata->strides;
+  LAVA_DUMP(1, "MetaData Info:\n"
+               "(nd, type, elsize): (%ld, %ld, %ld)\n"
+               "total_size: %ld\n"
+               "dims:[%ld, %ld, %ld, %ld, %ld]\n"
+               "strides:[%ld, %ld, %ld, %ld, %ld]\n",
+               metadata->nd,
+               metadata->type,
+               metadata->elsize,
+               metadata->total_size,
+               dims[0], dims[1], dims[2], dims[3], dims[4],
+               strides[0], strides[1], strides[2], strides[3], strides[4] 
+            );
+}
+
 ChannelType SendPortProxy::GetChannelType() {
   return channel_type_;
 }
