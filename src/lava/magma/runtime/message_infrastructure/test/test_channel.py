@@ -51,4 +51,7 @@ def main():
 
     print("finish test function.")
 
+    send_port.join()
+    recv_port.join()
+
 main()
