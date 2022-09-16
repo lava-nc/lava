@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(message_passing)
 
 set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -lrt")
 
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
@@ -35,7 +36,7 @@ if(PY_WRAPPER)
                                )
 
     pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
-    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
+    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure rt)
 else()
     target_include_directories(message_infrastructure PUBLIC 
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc

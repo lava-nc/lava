@@ -18,24 +18,19 @@ namespace message_infrastructure {
 #define SHM_FLAG O_RDWR | O_CREAT
 #define SHM_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 
-SharedMemory::SharedMemory(const size_t &mem_size, const std::string &shm_str) {
-  shm_str_ = shm_str;
+SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
+  shmfd_ = shmfd;
   size_ = mem_size;
 }
 void SharedMemory::InitSemaphore() {
   sem_init(&req_, 1, 0);
   sem_init(&ack_, 1, 0);
 }
-std::string SharedMemory::GetShmStr() {
-  return shm_str_;
+int SharedMemory::GetShmfd() {
+  return shmfd_;
 }
 void* SharedMemory::MemMap() {
-  int shmfd = shm_open(shm_str_.c_str(), SHM_FLAG, SHM_MODE);
-  if (shmfd == -1) {
-    LAVA_LOG_ERR("Open shared memory failed.\n");
-    exit(-1);
-  }
-  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, 0));
+  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
 }
 sem_t& SharedMemory::GetReqSemaphore() {
   return req_;
@@ -47,7 +42,7 @@ int SharedMemory::GetDataElem(int offset) {
   return static_cast<int> (*(((char*)data_) + offset));
 }
 
-std::string SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
+int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
   std::string str = shm_str_ + std::to_string(key_++);
   int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
   if (shmfd == -1) {
@@ -60,7 +55,7 @@ std::string SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
     exit(-1);
   }
   shm_strs_.insert(str);
-  return str;
+  return shmfd;
 }
 
 SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
@@ -76,7 +71,7 @@ SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_siz
     exit(-1);
   }
   shm_strs_.insert(str);
-  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, str);
+  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmfd);
   shm->InitSemaphore();
 
   return shm;
