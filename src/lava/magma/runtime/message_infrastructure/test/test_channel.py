@@ -17,12 +17,11 @@ def nbytes_cal(shape, dtype):
 
 def main():
     data = np.array([12,24,36,48,60], dtype = np.int32)
-    size = 5
-    nbytes = 4 * 5
-    name = 'test_shmem_channel'
+    print("Send data: ", data)
 
-    print(data)
-    print(type(data))
+    size = 5
+    nbytes = nbytes_cal(data.shape, data.dtype)
+    name = 'test_shmem_channel'
 
     shmem_channel = Channel(
         ChannelTransferType.SHMEMCHANNEL,
@@ -37,9 +36,12 @@ def main():
     recv_port.start()
 
     send_port.send(data)
-    send_port.send(data)
-    print("Recv data : ",recv_port.recv())
-    print("Recv data : ",recv_port.recv())
+    
+    res = recv_port.recv()
+
+    assert res.any() == data.any()
+
+    print("Recv data: ", res)
 
     send_port.join()
     recv_port.join()
