@@ -23,11 +23,11 @@ class SharedMemory {
   void InitSemaphore();
   int GetDataElem(int offset);
  private:
-   int shmfd_;
-   size_t size_;
-   sem_t req_;
-   sem_t ack_;
-   void *data_;
+  int shmfd_;
+  size_t size_;
+  sem_t req_;
+  sem_t ack_;
+  void *data_;
 };
 
 using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
@@ -40,7 +40,7 @@ class SharedMemManager {
   void DeleteSharedMemory(const std::string &shm_str);
   friend SharedMemManager &GetSharedMemManager();
 
-private:
+ private:
   SharedMemManager() {}
   std::set<std::string> shm_strs_;
   std::atomic<key_t> key_ {0xdead};
