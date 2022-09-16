@@ -15,20 +15,27 @@
 
 namespace message_infrastructure {
 
-SharedMemory::SharedMemory(const size_t &mem_size, const int &shmid) {
-  shmid_ = shmid;
+#define SHM_FLAG O_RDWR | O_CREAT
+#define SHM_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
+
+SharedMemory::SharedMemory(const size_t &mem_size, const std::string &shm_str) {
+  shm_str_ = shm_str;
   size_ = mem_size;
-  data_ = shmat(shmid, NULL, 0);
 }
 void SharedMemory::InitSemaphore() {
   sem_init(&req_, 1, 0);
   sem_init(&ack_, 1, 0);
 }
-int SharedMemory::GetShmid() {
-  return shmid_;
+std::string SharedMemory::GetShmStr() {
+  return shm_str_;
 }
 void* SharedMemory::MemMap() {
-  return (data_ = shmat(shmid_, NULL, 0));
+  int shmfd = shm_open(shm_str_.c_str(), SHM_FLAG, SHM_MODE);
+  if (shmfd == -1) {
+    LAVA_LOG_ERR("Open shared memory failed.\n");
+    exit(-1);
+  }
+  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, 0));
 }
 sem_t& SharedMemory::GetReqSemaphore() {
   return req_;
@@ -40,50 +47,57 @@ int SharedMemory::GetDataElem(int offset) {
   return static_cast<int> (*(((char*)data_) + offset));
 }
 
-int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
-  int shmid = shmget(key_++, mem_size, 0644|IPC_CREAT);
-  if (shmid < 0) {
-    LAVA_LOG_ERR("Cannot allocate shared memory with size %u\n", mem_size);
+std::string SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
+  std::string str = shm_str_ + std::to_string(key_++);
+  int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
+  if (shmfd == -1) {
+    LAVA_LOG_ERR("Create shared memory object failed.\n");
     exit(-1);
   }
-  shmids_.insert(shmid);
-  return shmid;
+  int err = ftruncate(shmfd, mem_size);
+  if (err == -1) {
+    LAVA_LOG_ERR("Resize shared memory segment failed.\n");
+    exit(-1);
+  }
+  shm_strs_.insert(str);
+  return str;
 }
-SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
-  int shmid = shmget(key_++, 120, 0644|IPC_CREAT);
-  if (shmid < 0) {
-    LAVA_LOG_ERR("Cannot allocate shared memory with size %lu, id : %d\n", mem_size, shmid);
 
+SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_size) {
+  std::string str = shm_str_ + std::to_string(key_++);
+  int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
+  if (shmfd == -1) {
+    LAVA_LOG_ERR("Create shared memory object failed.\n");
     exit(-1);
   }
-  LAVA_LOG(LOG_SMMP, "Allocate shared memory.\n");
-  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmid);
+  int err = ftruncate(shmfd, mem_size);
+  if (err == -1) {
+    LAVA_LOG_ERR("Resize shared memory segment failed.\n");
+    exit(-1);
+  }
+  shm_strs_.insert(str);
+  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, str);
   shm->InitSemaphore();
 
-  shmids_.insert(shmid);
   return shm;
 }
 
-int SharedMemManager::DeleteSharedMemory(const int &shmid) {
+void SharedMemManager::DeleteSharedMemory(const std::string &shm_str) {
   // Release specific shared memory
-  int result = -1;
-  if (shmids_.find(shmid) != shmids_.end()) {
-    result = shmctl(shmid, IPC_RMID, NULL);
-    shmids_.erase(shmid);
+  if (shm_strs_.find(shm_str) != shm_strs_.end()) {
+    shm_unlink(shm_str.c_str());
+    shm_strs_.erase(shm_str);
   } else {
-    printf("There is no shmem whose id is %i.\n", shmid);
+    LAVA_LOG_WARN(LOG_SMMP,"There is no shmem whose name is %s.\n", shm_str.c_str());
   }
-  return result;
 }
 
 SharedMemManager::~SharedMemManager() {
   int result = 0;
-  for (auto it = shmids_.begin(); it != shmids_.end(); it++) {
-    result = shmctl(*it, IPC_RMID, NULL);
-    if (result)
-      exit(-1);
+  for (auto it = shm_strs_.begin(); it != shm_strs_.end(); it++) {
+    shm_unlink(it->c_str());
   }
-  shmids_.clear();
+  shm_strs_.clear();
 }
 
 SharedMemManager SharedMemManager::smm_;

@@ -15,19 +15,19 @@ namespace message_infrastructure {
 class SharedMemory {
  public:
   SharedMemory() {}
-  SharedMemory(const size_t &mem_size, const int &shmid);
-  int GetShmid();
+  SharedMemory(const size_t &mem_size, const std::string &shm_str);
+  std::string GetShmStr();
   sem_t& GetReqSemaphore();
   sem_t& GetAckSemaphore();
   void* MemMap();
   void InitSemaphore();
   int GetDataElem(int offset);
  private:
-  int shmid_;
-  size_t size_;
-  sem_t req_;
-  sem_t ack_;
-  void* data_;
+   std::string shm_str_;
+   size_t size_;
+   sem_t req_;
+   sem_t ack_;
+   void *data_;
 };
 
 using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
@@ -35,16 +35,17 @@ using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
 class SharedMemManager {
  public:
   ~SharedMemManager();
-  int AllocSharedMemory(const size_t &mem_size);
+  std::string AllocSharedMemory(const size_t &mem_size);
   SharedMemoryPtr AllocChannelSharedMemory(const size_t &mem_size);
-  int DeleteSharedMemory(const int &shmid);
-  friend SharedMemManager& GetSharedMemManager();
+  void DeleteSharedMemory(const std::string &shm_str);
+  friend SharedMemManager &GetSharedMemManager();
 
- private:
+private:
   SharedMemManager() {}
-  std::set<int> shmids_;
+  std::set<std::string> shm_strs_;
   std::atomic<key_t> key_ {0xdead};
   static SharedMemManager smm_;
+  std::string shm_str_ = "shm";
 };
 
 SharedMemManager& GetSharedMemManager();
