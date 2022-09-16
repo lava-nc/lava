@@ -130,13 +130,14 @@ def tag(*args: ty.Union[str, ty.List[str]]):
 
     Examples
     --------
-    @implements(proc=ExampleProcess)
-    @tag('bit-accurate', 'loihi')
-    class ExampleProcModel(AbstractProcessModel):...
-        -> these tags identify a particular ProcessModel as being
-        bit-accurate with Loihi hardware platform. Which means,
-        the numerical output produced by such a ProcessModel on a CPU would be
-        exactly same as that of Loihi.
+    >>> @implements(proc=ExampleProcess)
+    >>> @tag('bit-accurate', 'loihi')
+    >>> class ExampleProcModel(AbstractProcessModel):...
+
+    These tags identify a particular ProcessModel as being
+    bit-accurate with Loihi hardware platform. This means that,
+    the numerical output produced by such a ProcessModel on a CPU would be
+    the same as on Loihi.
     """
 
     arg_list = list(args)

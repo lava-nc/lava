@@ -11,7 +11,6 @@ import typing as ty
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
-from lava.magma.core.model.c.ports import AbstractCPort, CInPort, COutPort
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
@@ -29,6 +28,18 @@ except ImportError:
         pass
 
     class EmbeddedSnip:
+        pass
+
+try:
+    from lava.magma.core.model.c.ports import AbstractCPort, CInPort, COutPort
+except ImportError:
+    class AbstractCPort:
+        pass
+
+    class CInPort:
+        pass
+
+    class COutPort:
         pass
 
 
