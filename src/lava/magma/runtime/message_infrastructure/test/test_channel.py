@@ -9,13 +9,7 @@ import traceback
 from functools import partial
 import time
 
-<<<<<<< HEAD
 from message_infrastructure.multiprocessing import MultiProcessing
-=======
-
-def nbytes_cal(shape, dtype):
-    return np.prod(shape) * np.dtype(dtype).itemsize
->>>>>>> 8ffebb14fd29b0af6792065cd24354c7b7132ac1
 
 from message_infrastructure import (
     ChannelTransferType,
@@ -24,7 +18,6 @@ from message_infrastructure import (
     RecvPort
 )
 
-<<<<<<< HEAD
 def prepare_data():
     data = np.array([12,24,36,48,60], dtype = np.int32)
     return data
@@ -49,12 +42,11 @@ def recv_proc(*args, **kwargs):
         data = port.recv()
         assert np.array_equal(data, prepare_data())
     except Exception as e:
-        print("recv error")
         raise e
 
 class Builder():
     def build(self):
-        print("this is builder")
+        pass
 
 class TestShmemChannel(unittest.TestCase):
     mp = MultiProcessing()
@@ -63,7 +55,6 @@ class TestShmemChannel(unittest.TestCase):
         size = 5
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
-        print("nbytes:", nbytes)
         name = 'test_shmem_channel'
 
         shmem_channel = Channel(
@@ -88,57 +79,4 @@ class TestShmemChannel(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    print("start test shardmemory channel")
     unittest.main()
-=======
-def main():
-    data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
-    print("Send data: ", data)
-
-    size = 5
-    nbytes = nbytes_cal(data.shape, data.dtype)
-    name = 'test_shmem_channel'
-
-    shmem_channel = Channel(
-        ChannelTransferType.SHMEMCHANNEL,
-        size,
-        nbytes,
-        name)
-
-    send_port = shmem_channel.get_send_port()
-    recv_port = shmem_channel.get_recv_port()
-
-    send_port.start()
-    recv_port.start()
-
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-
-    print(recv_port.recv())
-    print(recv_port.recv())
-    print(recv_port.recv())
-    print(recv_port.recv())
-    # print(recv_port.recv())
-
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-    send_port.send(data)
-
-    print(recv_port.recv())
-    print(recv_port.recv())
-
-    print("finish test function.")
-
-    send_port.join()
-    recv_port.join()
-
-
-main()
->>>>>>> 8ffebb14fd29b0af6792065cd24354c7b7132ac1
