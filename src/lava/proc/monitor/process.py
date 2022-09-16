@@ -26,45 +26,29 @@ class Monitor(AbstractProcess):
         Dictionary that is populated by monitoring data once get_data(..)
         method is called, has the following structure:
         data
-          __monitored_process_name
-             __monitored_var_or_out_port_name
+        __monitored_process_name
+        __monitored_var_or_out_port_name
 
     proc_params: dict
         Process parameters that will be transferred to the corresponding
         ProcessModel. It is populated with the names of dynamically
         created port and var names of Monitor process, to be carried to its
         ProcessModel. It is a dictionary of the following structure:
-          "RefPorts": names of RefPorts created to monitor target Vars
-          "VarsData1": names of Vars created to store data from target Vars
-          "InPorts": names of InPorts created to monitor target OutPorts
-          "VarsData2": names of Vars created to store data from target OutPorts
-          "n_ref_ports": number of created RefPorts, also monitored Vars
-          "n_in_ports": number of created InPorts, also monitored OutPorts
+        "RefPorts": names of RefPorts created to monitor target Vars
+        "VarsData1": names of Vars created to store data from target Vars
+        "InPorts": names of InPorts created to monitor target OutPorts
+        "VarsData2": names of Vars created to store data from target OutPorts
+        "n_ref_ports": number of created RefPorts, also monitored Vars
+        "n_in_ports": number of created InPorts, also monitored OutPorts
 
     target_names: dict
         The names of the targeted Processes and Vars/OutPorts to be monitored.
         This is used in get_data(..) method to access the target names
         corresponding to data-storing Vars of Monitor process during readout
         phase. This dict has the follwoing sturcture:
-            key: name of the data-storing Vars, i.e. VarsData1 and VarsData2
-            value: [monitored_process_name, monitored_var_or_out_port_name]
+        key: name of the data-storing Vars, i.e. VarsData1 and VarsData2
+        value: [monitored_process_name, monitored_var_or_out_port_name]
 
-    Methods
-    -------
-    post_init()
-        Create one prototypical RefPort, InPort and two Vars. This ensure
-        coherence and one-to-one correspondence between Monitor process and
-        ProcessModel in terms LavaPyTypes and Ports/Vars. These prototypical
-        ports can later be updated inside `probe()` method.
-
-    probe(target, num_steps)
-        Probe the given target for num_step time steps, where target can be
-        a Var or OutPort of some process.
-
-    get_data()
-        Fetch the monitoring data from the Vars of Monitor process that
-        collected it during the run from probed process, puts into dict form
-        for easier access by user
     """
 
     def __init__(self):
