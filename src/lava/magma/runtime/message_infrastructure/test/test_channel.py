@@ -36,15 +36,18 @@ def main():
     recv_port.start()
 
     send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
     
-    res = recv_port.recv()
-
-    assert res.any() == data.any()
-
-    print("Recv data: ", res)
-
-    send_port.join()
-    recv_port.join()
+    print(recv_port.recv())
+    print(recv_port.recv())
+    print(recv_port.recv())
+    print(recv_port.recv())
+    print(recv_port.recv())
 
     print("finish test function.")
 
