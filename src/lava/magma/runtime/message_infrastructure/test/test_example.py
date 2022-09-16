@@ -5,7 +5,6 @@ import traceback
 from functools import partial
 
 from MessageInfrastructurePywrapper import CppMultiProcessing
-from MessageInfrastructurePywrapper import SharedMemManager
 from MessageInfrastructurePywrapper import ProcessType
 from MessageInfrastructurePywrapper import Actor
 
@@ -53,15 +52,5 @@ def main():
     actors = mp.get_actors()
     print(actors)
     print("actor status: ", actors[0].get_status())
-
-    shm = mp.get_shmm()
-
-    for i in range(5):
-        print("shared id:", shm.alloc_mem(10))
-
-    shm2 = mp.get_shmm()
-    print("stop num: ", shm2.stop())
-    print("stop num: ", shm.stop())
-
 
 main()
