@@ -48,6 +48,15 @@ def main():
     print(recv_port.recv())
     print(recv_port.recv())
     print(recv_port.recv())
+    # print(recv_port.recv())
+
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+    send_port.send(data)
+
+    print(recv_port.recv())
     print(recv_port.recv())
 
     print("finish test function.")
