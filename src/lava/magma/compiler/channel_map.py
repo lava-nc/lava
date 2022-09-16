@@ -12,6 +12,7 @@ from lava.magma.compiler.utils import PortInitializer
 from lava.magma.core.process.ports.ports import AbstractPort
 from lava.magma.core.process.ports.ports import AbstractSrcPort, AbstractDstPort
 
+
 @dataclass(eq=True, frozen=True)
 class PortPair:
     src: AbstractSrcPort

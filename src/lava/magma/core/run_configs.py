@@ -22,7 +22,7 @@ except ImportError:
 
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.compiler.subcompilers.constants import \
-    EMBEDDED_CORE_ALLOCATION_ORDER
+    EMBEDDED_ALLOCATION_ORDER
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -364,6 +364,7 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi1-compatible ProcModel is being found.
     ."""
+
     def __init__(self,
                  custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
                  select_tag: ty.Optional[str] = None,
@@ -374,8 +375,7 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                  loglevel: int = logging.WARNING,
                  pre_run_fxs: ty.List[ty.Callable] = [],
                  post_run_fxs: ty.List[ty.Callable] = [],
-                 embedded_core_allocation_order = \
-                 EMBEDDED_CORE_ALLOCATION_ORDER.NORMAL):
+                 embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
@@ -383,8 +383,8 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                          loglevel)
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
-        self.embedded_core_allocation_order: EMBEDDED_CORE_ALLOCATION_ORDER = \
-            embedded_core_allocation_order
+        self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
+            embedded_allocation_order
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:
@@ -427,6 +427,7 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi2-compatible ProcModel is being found.
     """
+
     def __init__(self,
                  custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
                  select_tag: ty.Optional[str] = None,
@@ -437,8 +438,7 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                  loglevel: int = logging.WARNING,
                  pre_run_fxs: ty.List[ty.Callable] = [],
                  post_run_fxs: ty.List[ty.Callable] = [],
-                 embedded_core_allocation_order = \
-                 EMBEDDED_CORE_ALLOCATION_ORDER.NORMAL):
+                 embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
@@ -446,8 +446,8 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                          loglevel)
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
-        self.embedded_core_allocation_order: EMBEDDED_CORE_ALLOCATION_ORDER = \
-            embedded_core_allocation_order
+        self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
+            embedded_allocation_order
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:

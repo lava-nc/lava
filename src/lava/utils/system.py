@@ -4,12 +4,15 @@
 
 import os
 
+
 class staticproperty(property):
     """Wraps static member function of a class as a static property of that
     class.
     """
+
     def __get__(self, cls, owner):
         return staticmethod(self.fget).__get__(None, owner)()
+
 
 class Loihi2:
     preferred_partition: str = 'kp_stack'

@@ -132,8 +132,9 @@ class Mapper:
                             port_pair].dst_port_initializer.var_model
                         # Checking to see if its ConvInVarModel or not
                         if hasattr(var_model, "address"):
-                            dst_addr: ty.List[LoihiAddress] = channel_map[
-                                port_pair].dst_port_initializer.var_model.address
+                            vm = channel_map[
+                                port_pair].dst_port_initializer.var_model
+                            dst_addr: ty.List[LoihiAddress] = vm.address
                             chips = [addr.physical_chip_id for addr in dst_addr]
                         else:
                             # Will be here for Conv Regions which will have

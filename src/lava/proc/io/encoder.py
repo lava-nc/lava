@@ -66,6 +66,7 @@ class DeltaEncoder(AbstractProcess):
     compression : Compression
         Data compression mode, by default DENSE compression.
     """
+
     def __init__(self,
                  *,
                  shape: Tuple[int, ...],
@@ -136,7 +137,7 @@ class PyDeltaEncoderModelDense(AbstractPyDeltaEncoderModel):
 @tag('sparse_out')
 class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
     """Sparse compression Model of PyDeltaEncoder.
-    
+
     Based on compression mode, it can be
     * SPARSE: 32 bit data and 32 bit index used for messaging sparse data.
     * PACKED_4: Four 8 bit data packed into one 32 bit data for messaging.
@@ -159,7 +160,7 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
                                'Expected SPARSE or PACKED_4 or DELTA_SPARSE_8 '
                                'compression mode. '
                                f'Found {self.compression=}.')
-    
+
     def encode_sparse(self, s_out):
         """Basic sparse encoding."""
         idx = np.argwhere(s_out.flatten() != 0)
@@ -174,10 +175,10 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         padded = np.zeros(int(np.ceil(np.prod(s_out.shape) / 8) * 8))
         padded[:np.prod(s_out.shape)] = np.bitwise_and(s_out.flatten(), 0xFF)
         padded = padded.astype(np.int32)
-        packed = (np.left_shift(padded[3::4], 24) +
-                  np.left_shift(padded[2::4], 16) +
-                  np.left_shift(padded[1::4], 8) +
-                  padded[0::4])
+        packed = (np.left_shift(padded[3::4], 24)
+                  + np.left_shift(padded[2::4], 16)
+                  + np.left_shift(padded[1::4], 8)
+                  + padded[0::4])
         return packed[0::2], packed[1::2]
 
     def encode_delta_sparse_8(self, s_out):
@@ -221,14 +222,14 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         padded_idx = padded_idx.astype(np.int32)
         padded_data = padded_data.astype(np.int32)
 
-        packed_idx = (np.left_shift(padded_idx[3::4], 24) +
-                      np.left_shift(padded_idx[2::4], 16) +
-                      np.left_shift(padded_idx[1::4], 8) +
-                      padded_idx[0::4])
-        packed_data = (np.left_shift(padded_data[3::4], 24) +
-                       np.left_shift(padded_data[2::4], 16) +
-                       np.left_shift(padded_data[1::4], 8) +
-                       padded_data[0::4])
+        packed_idx = (np.left_shift(padded_idx[3::4], 24)
+                      + np.left_shift(padded_idx[2::4], 16)
+                      + np.left_shift(padded_idx[1::4], 8)
+                      + padded_idx[0::4])
+        packed_data = (np.left_shift(padded_data[3::4], 24)
+                       + np.left_shift(padded_data[2::4], 16)
+                       + np.left_shift(padded_data[1::4], 8)
+                       + padded_data[0::4])
         return packed_data, packed_idx
 
     def run_spk(self):
