@@ -11,12 +11,13 @@ from message_infrastructure import RecvPort
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 
+
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
 
 
 def main():
-    data = np.array([12,24,36,48,60], dtype = np.int32)
+    data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
     print("Send data: ", data)
 
     size = 5
@@ -42,7 +43,7 @@ def main():
     send_port.send(data)
     send_port.send(data)
     send_port.send(data)
-    
+
     print(recv_port.recv())
     print(recv_port.recv())
     print(recv_port.recv())
@@ -53,5 +54,6 @@ def main():
 
     send_port.join()
     recv_port.join()
+
 
 main()

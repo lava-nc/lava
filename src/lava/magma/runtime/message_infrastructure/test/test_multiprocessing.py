@@ -5,14 +5,25 @@ import traceback
 import unittest
 import psutil
 import os
+import time
+import numpy as np
 from functools import partial
+from enum import Enum
 
 from message_infrastructure import CppMultiProcessing
 from message_infrastructure import ProcessType
 from message_infrastructure import Actor
 from message_infrastructure.multiprocessing import MultiProcessing
+from message_infrastructure import SendPort
+from message_infrastructure import RecvPort
+from message_infrastructure import ChannelTransferType
+from message_infrastructure import Channel
 
 import time
+
+
+def nbytes_cal(shape, dtype):
+    return np.prod(shape) * np.dtype(dtype).itemsize
 
 
 class Builder():
@@ -122,15 +133,6 @@ class TestMultiprocessing(unittest.TestCase):
             actor_status = actor.get_status()
             # actor status returns 1 if it is stopped
             self.assertEqual(actor_status, 1)
-
-    @unittest.skip
-    def test_get_shared_memory_manager(self):
-        """
-        Gets the Shared Memory Manager
-        Checks that the shared memory manager is of SharedMemManager type
-        """
-        shared_memory_manager = self.mp.smm
-        self.assertIsInstance(shared_memory_manager, SharedMemManager)
 
 
 def test_multiprocessing():
