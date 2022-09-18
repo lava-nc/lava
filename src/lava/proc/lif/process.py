@@ -194,6 +194,10 @@ class LIFReset(LIF):
         Neuron threshold voltage, exceeding which, the neuron will spike.
         Currently, only a single threshold can be set for the entire
         population of neurons.
+    reset_interval : int, optional
+        The interval of neuron state reset. By default 1 timestep.
+    reset_offset : int, optional
+        The phase/offset of neuron reset. By defalt at 0th timestep.
 
 
     See Also
