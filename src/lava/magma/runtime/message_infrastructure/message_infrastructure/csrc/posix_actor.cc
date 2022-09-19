@@ -73,15 +73,20 @@ int PosixActor::Create() {
     LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
     this->pid_ = getpid();
     ReMapActorStatus();
-    this->actor_ctrl_status_->status = ActorStatus::StatusStopped;
+    this->actor_ctrl_status_->status = ActorStatus::StatusRunning;
     int target_ret;
     while(true) {
       target_ret = target_fn_(this);
       if (this->actor_ctrl_status_->status == ActorStatus::StatusStopped)
         break;
       else {
-        LAVA_LOG_ERR("Actor ERROR: target_ret:%d, ActorStatus:%d\n",
-                     target_ret, this->actor_ctrl_status_->status);
+        if (this->actor_ctrl_status_->status == ActorStatus::StatusError){
+          LAVA_LOG_ERR("Actor ERROR: target_ret:%d\n", target_ret);
+        }
+        else {
+          LAVA_LOG_ERR("Control Logic Error\n");
+        }
+        break;
       }
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
@@ -91,58 +96,53 @@ int PosixActor::Create() {
   return ErrorProcess;
 }
 
-int PosixActor::CmdRun() {
+int PosixActor::ActorControl(int actor_cmd) {
+  // The actor has terminated so cannot set lock.
+  if (this->actor_ctrl_status_->status == ActorStatus::StatusStopped)
+    return 0;
+
+  if (this->actor_ctrl_status_->status == ActorStatus::StatusError){
+    LAVA_LOG(LOG_ACTOR, "Error occurred on this actor\n");
+    return 0;
+  }
+
   sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
   if (CheckSemaphore(sem)) {
     LAVA_LOG_ERR("CmdRun Semaphere check error\n");
     return -1;
   }
-  this->actor_ctrl_status_->cmd == ActorCmd::CmdRun;
-  sem_post(sem);
-  
-  sem = this->ctl_status_shm_->GetReqSemaphore();
-  sem_wait(sem);
-  if (this->actor_ctrl_status_->status == ActorStatus::StatusRunning)
-    return 0;
-  else {
-    LAVA_LOG_ERR("CmdRun Setting Error\n");
+  LAVA_LOG(LOG_ACTOR, "set cmd: %d\n", actor_cmd);
+  switch (actor_cmd){
+    case ActorCmd::CmdRun:
+      this->actor_ctrl_status_->cmd = ActorCmd::CmdRun;
+      sem_post(sem);
+      sem = this->ctl_status_shm_->GetReqSemaphore();
+      sem_wait(sem);
+      if (this->actor_ctrl_status_->status == ActorStatus::StatusRunning)
+        return 0;
+    case ActorCmd::CmdPause:
+      this->actor_ctrl_status_->cmd = ActorCmd::CmdPause;
+      sem_post(sem);
+      sem = this->ctl_status_shm_->GetReqSemaphore();
+      sem_wait(sem);
+      if (this->actor_ctrl_status_->status == ActorStatus::StatusPaused)
+        return 0;
+    case ActorCmd::CmdStop:
+      this->actor_ctrl_status_->cmd = ActorCmd::CmdStop;
+      sem_post(sem);
+      sem = this->ctl_status_shm_->GetReqSemaphore();
+      sem_wait(sem);
+      if (this->actor_ctrl_status_->status == ActorStatus::StatusStopped)
+        return 0;
+    default:
+      LAVA_LOG_ERR("None support for cmd %d\n", actor_cmd);
+      break;
   }
+
+  LAVA_LOG_ERR("CmdRun Setting Error\n");
+  return -1;
 }
 
-int PosixActor::CmdPause() {
-  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
-  if (CheckSemaphore(sem)) {
-    LAVA_LOG_ERR("CmdPause Semaphere check error\n");
-    return -1;
-  }
-  this->actor_ctrl_status_->cmd == ActorCmd::CmdPause;
-  
-  sem = this->ctl_status_shm_->GetReqSemaphore();
-  sem_wait(sem);
-  if (this->actor_ctrl_status_->status == ActorStatus::StatusPaused)
-    return 0;
-  else {
-    LAVA_LOG_ERR("CmdPause Setting Error\n");
-  }
-}
-
-int PosixActor::CmdStop() {
-  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
-  if (CheckSemaphore(sem)) {
-    LAVA_LOG_ERR("CmdStop Semaphere check error\n");
-    return -1;
-  }
-  this->actor_ctrl_status_->cmd == ActorCmd::CmdStop;
-  sem_post(sem);
-
-  sem = this->ctl_status_shm_->GetReqSemaphore();
-  sem_wait(sem);
-  if (this->actor_ctrl_status_->status == ActorStatus::StatusStopped)
-    return 0;
-  else {
-    LAVA_LOG_ERR("CmdStop Setting Error\n");
-  }
-}
 
 int PosixActor::GetActorStatus() {
   sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();

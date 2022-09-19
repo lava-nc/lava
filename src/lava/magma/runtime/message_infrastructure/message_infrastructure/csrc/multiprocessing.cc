@@ -23,7 +23,7 @@ int MultiProcessing::Stop() {
   int error_cnts = 0;
 
   for (auto actor : actors_) {
-    error_cnts += actor->CmdStop();
+    error_cnts += actor->ActorControl(ActorCmd::CmdStop);
   }
 
   LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);

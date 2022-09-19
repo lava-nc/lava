@@ -42,9 +42,7 @@ class AbstractActor {
   virtual int GetActorStatus() = 0;
   virtual int GetPid() = 0;
   virtual int Create() = 0;  // parent process only
-  virtual int CmdStop() = 0;  // parent process only
-  virtual int CmdPause() = 0;  // parent process only
-  virtual int CmdRun() = 0;  // parent process only
+  virtual int ActorControl(int) = 0;  // parent process only
   virtual int ErrorOccured() = 0;  // child process only
  protected:
   int ReMapActorStatus() {  // child process only
@@ -78,9 +76,7 @@ class PosixActor : public AbstractActor {
   int Wait();
   int ForceStop();
   int GetActorStatus();
-  int CmdPause();
-  int CmdStop();
-  int CmdRun();
+  int ActorControl(int);
   int ErrorOccured() {
     this->actor_ctrl_status_->status = ActorStatus::StatusError;
     return 0;

@@ -6,3 +6,5 @@ from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import SendPort
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import AbstractTransferPort
+from MessageInfrastructurePywrapper import ActorStatus
+from MessageInfrastructurePywrapper import ActorCmd

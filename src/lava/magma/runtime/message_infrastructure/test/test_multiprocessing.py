@@ -17,6 +17,8 @@ from message_infrastructure.multiprocessing import MultiProcessing
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
 from message_infrastructure import Channel
+from message_infrastructure import ActorStatus
+from message_infrastructure import ActorCmd
 
 import time
 
@@ -28,9 +30,6 @@ def nbytes_cal(shape, dtype):
 class Builder():
     def build(self, i):
         print(f"Builder running build {i}")
-        print(f"Build {i}: sleep for 10s")
-        time.sleep(10)
-        print(f"Build {i}: Builder Achieved")
 
 
 def target_fn(*args, **kwargs):
@@ -45,8 +44,20 @@ def target_fn(*args, **kwargs):
         actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
-        # print("builder", actor.get_status())
+        print("builder", actor.get_status())
         builder.build(idx)
+        i = 0
+        while True:
+            time.sleep(1)
+            i += 1
+            status = actor.get_status()
+            if status == ActorStatus.StatusStopped:
+                print ("actor stopped")
+                break
+            if i == 5:
+                actor.error()
+                print ("error occured")
+                return 1
         return 0
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
@@ -138,7 +149,7 @@ def test_multiprocessing():
     mp = MultiProcessing()
     mp.start()
     builder = Builder()
-    for i in range(5):
+    for i in range(1):
         bound_target_fn = partial(target_fn, idx=i)
         ret = mp.build_actor(bound_target_fn, builder)
         print(ret)
@@ -150,13 +161,14 @@ def test_multiprocessing():
     actors = mp.actors
     actor = actors[0]
     print("actor status: ", actor.get_status())
-    actor.stop()
+    # actor.actor_control(ActorCmd.CmdStop)
     print("actor status: ", actor.get_status())
 
     # print("stop num: ", shmm.stop())
     # print("stop num: ", shmm.stop())
-
-    mp.stop()
+    # mp.stop()
+    for actor in actors:
+        actor.wait()
 
 
 # Run unit tests

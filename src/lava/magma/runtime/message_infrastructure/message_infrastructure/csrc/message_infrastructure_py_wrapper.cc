@@ -30,14 +30,24 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
     .value("ChildProcess", ChildProcess)
-    .value("ParentProcess", ParentProcess);
+    .value("ParentProcess", ParentProcess)
+    .export_values();
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("get_status", &PosixActor::GetActorStatus)
-    .def("pause", &PosixActor::CmdPause)
-    .def("start", &PosixActor::CmdRun)
-    .def("stop", &PosixActor::CmdStop)
+    .def("actor_control", &PosixActor::ActorControl)
     .def("error", &PosixActor::ErrorOccured);
+  py::enum_<ActorStatus> (m, "ActorStatus")
+    .value("StatusError", ActorStatus::StatusError)
+    .value("StatusRunning", ActorStatus::StatusRunning)
+    .value("StatusStopped", ActorStatus::StatusStopped)
+    .value("StatusPaused", ActorStatus::StatusPaused)
+    .export_values();
+  py::enum_<ActorCmd> (m, "ActorCmd")
+    .value("CmdRun", ActorCmd::CmdRun)
+    .value("CmdStop", ActorCmd::CmdStop)
+    .value("CmdPause", ActorCmd::CmdPause)
+    .export_values();
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
