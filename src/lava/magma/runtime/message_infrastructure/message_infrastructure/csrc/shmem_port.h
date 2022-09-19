@@ -39,7 +39,8 @@ private:
   int idx_ = 0;
   std::atomic_bool done_;
   void *array_ = NULL;
-  sem_t *semaphore_ = NULL;
+  sem_t *req_ = NULL;
+  sem_t *ack_ = NULL;
   void *observer = NULL;
   ThreadPtr ack_callback_thread_ = NULL;
 };
@@ -95,6 +96,8 @@ private:
   std::atomic_bool done_;
   void *array_ = NULL;
   void *observer = NULL;
+  sem_t *req_ = NULL;
+  sem_t *ack_ = NULL;
   ShmemRecvQueuePtr queue_ = NULL;
   ThreadPtr req_callback_thread_ = NULL;
   ThreadPtr recv_queue_thread_ = NULL;

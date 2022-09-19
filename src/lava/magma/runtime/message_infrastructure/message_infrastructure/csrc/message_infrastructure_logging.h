@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #define LOG_MP (1)  // log for multiprocessing
+#define LOG_ACTOR (1)
 #define LOG_LAYER (1)
 #define DEBUG_MODE (1)
 #define LOG_SMMP (1)  // log for shmemport

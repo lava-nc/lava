@@ -181,20 +181,22 @@ ShmemSendPort::ShmemSendPort(const std::string &name,
   shm_ = shm;
   done_ = false;
   array_ = shm_->MemMap();
+  req_ = shm_->GetReqSemaphore();
+  ack_ = shm_->GetAckSemaphore();
 }
 
 void ShmemSendPort::Start() {
-  sem_post(&shm_->GetAckSemaphore());
   // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
 void ShmemSendPort::Send(MetaDataPtr metadata) {
   char* cptr = (char*)array_;
-  sem_wait(&shm_->GetAckSemaphore());
+  sem_wait(ack_);
   memcpy(cptr, metadata.get(), sizeof(MetaData));
   cptr+=sizeof(MetaData);
   memcpy(cptr, metadata->mdata, nbytes_);
-  sem_post(&shm_->GetReqSemaphore());
+  sem_post(req_);
+  printf("Send data finish.\n");
 }
 
 bool ShmemSendPort::Probe() {
@@ -203,7 +205,8 @@ bool ShmemSendPort::Probe() {
 
 void ShmemSendPort::Join() {
   done_ = true;
-  // ack_callback_thread_->join();
+  sem_close(req_);
+  sem_close(ack_);
 }
 
 int ShmemSendPort::AckCallback() {
@@ -221,6 +224,8 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   done_ = false;
   array_ = shm_->MemMap();
   queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes_);
+  req_ = shm_->GetReqSemaphore();
+  ack_ = shm_->GetAckSemaphore();
 }
 
 void ShmemRecvPort::Start() {
@@ -230,9 +235,11 @@ void ShmemRecvPort::Start() {
 
 void ShmemRecvPort::QueueRecv() {
   while(!done_) {
-    if(!sem_trywait(&shm_->GetReqSemaphore())) {
+    if (!sem_trywait(req_))
+    {
+      printf("RecvQueue launched.\n");
       queue_->Push(array_);
-      sem_post(&shm_->GetAckSemaphore());
+      sem_post(ack_);
     }
   }
   queue_->Free();
@@ -255,6 +262,8 @@ void ShmemRecvPort::Join() {
   queue_->Stop();
   // req_callback_thread_->join();
   recv_queue_thread_->join();
+  sem_close(req_);
+  sem_close(ack_);
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
