@@ -92,7 +92,7 @@ int PosixActor::Create() {
 }
 
 int PosixActor::CmdRun() {
-  sem_t *sem = &this->ctl_status_shm_->GetAckSemaphore();
+  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
   if (CheckSemaphore(sem)) {
     LAVA_LOG_ERR("CmdRun Semaphere check error\n");
     return -1;
@@ -100,7 +100,7 @@ int PosixActor::CmdRun() {
   this->actor_ctrl_status_->cmd == ActorCmd::CmdRun;
   sem_post(sem);
   
-  sem = &this->ctl_status_shm_->GetReqSemaphore();
+  sem = this->ctl_status_shm_->GetReqSemaphore();
   sem_wait(sem);
   if (this->actor_ctrl_status_->status == ActorStatus::StatusRunning)
     return 0;
@@ -110,14 +110,14 @@ int PosixActor::CmdRun() {
 }
 
 int PosixActor::CmdPause() {
-  sem_t *sem = &this->ctl_status_shm_->GetAckSemaphore();
+  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
   if (CheckSemaphore(sem)) {
     LAVA_LOG_ERR("CmdPause Semaphere check error\n");
     return -1;
   }
   this->actor_ctrl_status_->cmd == ActorCmd::CmdPause;
   
-  sem = &this->ctl_status_shm_->GetReqSemaphore();
+  sem = this->ctl_status_shm_->GetReqSemaphore();
   sem_wait(sem);
   if (this->actor_ctrl_status_->status == ActorStatus::StatusPaused)
     return 0;
@@ -127,7 +127,7 @@ int PosixActor::CmdPause() {
 }
 
 int PosixActor::CmdStop() {
-  sem_t *sem = &this->ctl_status_shm_->GetAckSemaphore();
+  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
   if (CheckSemaphore(sem)) {
     LAVA_LOG_ERR("CmdStop Semaphere check error\n");
     return -1;
@@ -135,7 +135,7 @@ int PosixActor::CmdStop() {
   this->actor_ctrl_status_->cmd == ActorCmd::CmdStop;
   sem_post(sem);
 
-  sem = &this->ctl_status_shm_->GetReqSemaphore();
+  sem = this->ctl_status_shm_->GetReqSemaphore();
   sem_wait(sem);
   if (this->actor_ctrl_status_->status == ActorStatus::StatusStopped)
     return 0;
@@ -145,7 +145,7 @@ int PosixActor::CmdStop() {
 }
 
 int PosixActor::GetActorStatus() {
-  sem_t *sem = &this->ctl_status_shm_->GetAckSemaphore();
+  sem_t *sem = this->ctl_status_shm_->GetAckSemaphore();
   int sem_val;
   LAVA_DEBUG(LOG_ACTOR, "check semaphore\n");
   sem_getvalue(sem, &sem_val);
@@ -175,7 +175,7 @@ int PosixActor::GetActorStatus() {
         break;
     }
   }
-  sem = &this->ctl_status_shm_->GetReqSemaphore();
+  sem = this->ctl_status_shm_->GetReqSemaphore();
   CheckSemaphore(sem);
   sem_post(sem);
 

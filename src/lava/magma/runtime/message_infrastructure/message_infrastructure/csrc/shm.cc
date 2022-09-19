@@ -30,7 +30,7 @@ SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
 }
 void SharedMemory::InitSemaphore() {
   req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
-  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
+  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 0);
 }
 int SharedMemory::GetShmfd() {
   return shmfd_;
