@@ -2,10 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import re
 import numpy as np
 import unittest
-import traceback
 from functools import partial
 import time
 
@@ -18,38 +16,40 @@ from message_infrastructure import (
     RecvPort
 )
 
+
 def prepare_data():
-    data = np.array([12,24,36,48,60], dtype = np.int32)
+    data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
     return data
 
+
 def send_proc(*args, **kwargs):
-    try:
-        actor = args[0]
-        port = kwargs.pop("port")
-        assert isinstance(port, SendPort)
-        port.start()
-        port.send(prepare_data())
-    except Exception as e:
-        print("send error")
-        raise e
+    actor = args[0]
+    port = kwargs.pop("port")
+    if not isinstance(port, SendPort):
+        raise AssertionError()
+    port.start()
+    port.send(prepare_data())
+
 
 def recv_proc(*args, **kwargs):
-    try:
-        actor = args[0]
-        port = kwargs.pop("port")
-        port.start()
-        assert isinstance(port, RecvPort)
-        data = port.recv()
-        assert np.array_equal(data, prepare_data())
-    except Exception as e:
-        raise e
+    actor = args[0]
+    port = kwargs.pop("port")
+    port.start()
+    if not isinstance(port, RecvPort):
+        raise AssertionError()
+    data = port.recv()
+    if not np.array_equal(data, prepare_data()):
+        raise AssertionError()
 
-class Builder():
+
+class Builder:
     def build(self):
         pass
 
+
 class TestShmemChannel(unittest.TestCase):
     mp = MultiProcessing()
+
     def test_shmemchannel(self):
         self.mp.start()
         size = 5
@@ -66,8 +66,8 @@ class TestShmemChannel(unittest.TestCase):
         send_port = shmem_channel.get_send_port()
         recv_port = shmem_channel.get_recv_port()
 
-        recv_port_fn = partial(recv_proc, port = recv_port)
-        send_port_fn = partial(send_proc, port = send_port)
+        recv_port_fn = partial(recv_proc, port=recv_port)
+        send_port_fn = partial(send_proc, port=send_port)
 
         builder1 = Builder()
         builder2 = Builder()

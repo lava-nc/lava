@@ -42,13 +42,13 @@ class TestChannelBuilder(unittest.TestCase):
             src_port = channel.get_send_port()
             dst_port = channel.get_recv_port()
             # assert isinstance(channel, ShmemChannel)
-            assert isinstance(src_port, SendPort)
-            assert isinstance(dst_port, RecvPort)
+            self.assertIsInstance(src_port, SendPort)
+            self.assertIsInstance(dst_port, RecvPort)
 
             src_port.start()
             dst_port.start()
 
-            expected_data = np.array([12,34,36,48,60], dtype = np.int32)
+            expected_data = np.array([12, 34, 36, 48, 60], dtype=np.int32)
             src_port.send(expected_data)
             data = dst_port.recv()
             assert np.array_equal(data, expected_data)
