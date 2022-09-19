@@ -128,9 +128,19 @@ class Mapper:
                     # Checking if the initializers are same
                     if channel_map[port_pair].src_port_initializer == ports[
                             port]:
-                        dst_addr: ty.List[LoihiAddress] = channel_map[
-                            port_pair].dst_port_initializer.var_model.address
-                        chips = [addr.physical_chip_id for addr in dst_addr]
+                        var_model = channel_map[
+                            port_pair].dst_port_initializer.var_model
+                        # Checking to see if its ConvInVarModel or not
+                        if hasattr(var_model, "address"):
+                            vm = channel_map[
+                                port_pair].dst_port_initializer.var_model
+                            dst_addr: ty.List[LoihiAddress] = vm.address
+                            chips = [addr.physical_chip_id for addr in dst_addr]
+                        else:
+                            # Will be here for Conv Regions which will have
+                            # ConvInVarModel
+                            chips = [region.physical_chip_idx for region in
+                                     var_model.regions]
                         address.update(chips)
                         # Set address of c ref_var as that of the var port its
                         # pointing to
