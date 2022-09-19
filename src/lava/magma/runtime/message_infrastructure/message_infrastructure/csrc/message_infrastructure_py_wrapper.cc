@@ -62,7 +62,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("recv", &RecvPortProxy::Recv)
     .def("peek", &RecvPortProxy::Peek)
     .def("join", &RecvPortProxy::Join)
-    .def("name", &RecvPortProxy::Name)
+    .def_property_readonly("name", &RecvPortProxy::Name)
     .def("size", &RecvPortProxy::Size);
   // py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "InPortVectorDense")
   //   .def(py::init<RecvPortProxyList>())

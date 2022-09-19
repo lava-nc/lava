@@ -73,9 +73,9 @@ class RuntimeServiceBuilder:
         """
         for port in csp_ports:
             if isinstance(port, SendPort):
-                self.csp_send_port.update({port.name(): port})
+                self.csp_send_port.update({port.name: port})
             if isinstance(port, RecvPort):
-                self.csp_recv_port.update({port.name(): port})
+                self.csp_recv_port.update({port.name: port})
 
     def set_csp_proc_ports(self, csp_ports: ty.List[AbstractTransferPort]):
         """Set CSP Process Ports
@@ -87,9 +87,9 @@ class RuntimeServiceBuilder:
         """
         for port in csp_ports:
             if isinstance(port, SendPort):
-                self.csp_proc_send_port.update({port.name(): port})
+                self.csp_proc_send_port.update({port.name: port})
             if isinstance(port, RecvPort):
-                self.csp_proc_recv_port.update({port.name(): port})
+                self.csp_proc_recv_port.update({port.name: port})
 
     def build(self) -> AbstractRuntimeService:
         """Build the runtime service
@@ -119,21 +119,21 @@ class RuntimeServiceBuilder:
 
         if not nxsdk_rts:
             for port in self.csp_proc_send_port.values():
-                if "service_to_process" in port.name():
+                if "service_to_process" in port.name:
                     rs.service_to_process.append(port)
 
             for port in self.csp_proc_recv_port.values():
-                if "process_to_service" in port.name():
+                if "process_to_service" in port.name:
                     rs.process_to_service.append(port)
 
             self.log.debug("Setup 'RuntimeService <--> Rrocess; ports")
 
         for port in self.csp_send_port.values():
-            if "service_to_runtime" in port.name():
+            if "service_to_runtime" in port.name:
                 rs.service_to_runtime = port
 
         for port in self.csp_recv_port.values():
-            if "runtime_to_service" in port.name():
+            if "runtime_to_service" in port.name:
                 rs.runtime_to_service = port
 
         self.log.debug("Setup 'Runtime <--> RuntimeService' ports")

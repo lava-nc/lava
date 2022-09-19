@@ -7,7 +7,7 @@ import unittest
 
 from message_infrastructure import get_channel_factory
 from message_infrastructure import SharedMemory
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 from MessageInfrastructurePywrapper import (
     InPortVectorDense,
     OutPortVectorDense,
@@ -25,7 +25,8 @@ def get_channel(data, name):
     shm = SharedMemory()
     size = 2
     nbytes = nbytes_cal(data.shape, data.dtype)
-    return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+    name = 'test_channel'
+    return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
                                        shm,
                                        data,
                                        size,

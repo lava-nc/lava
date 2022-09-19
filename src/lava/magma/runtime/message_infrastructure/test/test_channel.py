@@ -10,7 +10,7 @@ import time
 from message_infrastructure.multiprocessing import MultiProcessing
 
 from message_infrastructure import (
-    ChannelTransferType,
+    ChannelBackend,
     Channel,
     SendPort,
     RecvPort
@@ -58,7 +58,7 @@ class TestShmemChannel(unittest.TestCase):
         name = 'test_shmem_channel'
 
         shmem_channel = Channel(
-            ChannelTransferType.SHMEMCHANNEL,
+            ChannelBackend.SHMEMCHANNEL,
             size,
             nbytes,
             name)

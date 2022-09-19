@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 from message_infrastructure import Channel
 
 """A Message Infrastructure Interface which can create actors which would
@@ -38,7 +38,7 @@ class MessageInfrastructureInterface(ABC):
 
     @abstractmethod
     def channel_class(self,
-                      channel_type: ChannelTransferType) -> ty.Type[Channel]:
+                      channel_type: ChannelBackend) -> ty.Type[Channel]:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
         pass

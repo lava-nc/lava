@@ -68,7 +68,7 @@ from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 
 
 class Compiler:
@@ -730,7 +730,7 @@ class Compiler:
         sync_channel_builders: ty.List[AbstractChannelBuilder] = []
         for sync_domain in rsb:
             runtime_to_service = RuntimeChannelBuilderMp(
-                ChannelTransferType.SHMEMCHANNEL,
+                ChannelBackend.SHMEMCHANNEL,
                 Runtime,
                 rsb[sync_domain],
                 self._create_mgmt_port_initializer(
@@ -740,7 +740,7 @@ class Compiler:
             sync_channel_builders.append(runtime_to_service)
 
             service_to_runtime = RuntimeChannelBuilderMp(
-                ChannelTransferType.SHMEMCHANNEL,
+                ChannelBackend.SHMEMCHANNEL,
                 rsb[sync_domain],
                 Runtime,
                 self._create_mgmt_port_initializer(
@@ -752,7 +752,7 @@ class Compiler:
             for process in sync_domain.processes:
                 if issubclass(process.model_class, AbstractPyProcessModel):
                     service_to_process = ServiceChannelBuilderMp(
-                        ChannelTransferType.SHMEMCHANNEL,
+                        ChannelBackend.SHMEMCHANNEL,
                         rsb[sync_domain],
                         process,
                         self._create_mgmt_port_initializer(
@@ -762,7 +762,7 @@ class Compiler:
                     sync_channel_builders.append(service_to_process)
 
                     process_to_service = ServiceChannelBuilderMp(
-                        ChannelTransferType.SHMEMCHANNEL,
+                        ChannelBackend.SHMEMCHANNEL,
                         process,
                         rsb[sync_domain],
                         self._create_mgmt_port_initializer(

@@ -13,7 +13,8 @@ from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
 from message_infrastructure import (
     Channel,
-    ChannelTransferType,
+    ChannelBackend,
+    get_channel_factory
 )
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
@@ -31,7 +32,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     and multi processing backbone.
     """
 
-    channel_type: ChannelTransferType
+    channel_type: ChannelBackend
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
     src_port_initializer: PortInitializer
@@ -70,7 +71,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     as messaging and multi processing backbone.
     """
 
-    channel_type: ChannelTransferType
+    channel_type: ChannelBackend
     src_process: ty.Union[RuntimeServiceBuilder,
                           ty.Type["AbstractProcessModel"]]
     dst_process: ty.Union[RuntimeServiceBuilder,
@@ -99,7 +100,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         channel_factory = get_channel_factory()
         shm = messaging_infrastructure.smm.alloc_mem(
             self.port_initializer.size)
-        return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+        return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
                                            shm,
                                            self.port_initializer.d_type,
                                            self.port_initializer.size,
@@ -113,7 +114,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     used as messaging and multi processing backbone.
     """
 
-    channel_type: ChannelTransferType
+    channel_type: ChannelBackend
     src_process: ty.Union[RuntimeServiceBuilder, ty.Type["Runtime"]]
     dst_process: ty.Union[RuntimeServiceBuilder, ty.Type["Runtime"]]
     port_initializer: PortInitializer
@@ -140,7 +141,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         channel_factory = get_channel_factory()
         shm = messaging_infrastructure.smm.alloc_mem(
             self.port_initializer.size)
-        return channel_factory.get_channel(ChannelTransferType.SHMEMCHANNEL,
+        return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
                                            shm,
                                            self.port_initializer.d_type,
                                            self.port_initializer.size,
@@ -164,7 +165,7 @@ class ChannelBuilderNx(AbstractChannelBuilder):
     infrastructure.
     """
 
-    channel_type: ChannelTransferType
+    channel_type: ChannelBackend
     src_process: "AbstractProcess"
     dst_process: "AbstractProcess"
     src_port_initializer: PortInitializer

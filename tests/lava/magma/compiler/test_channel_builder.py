@@ -9,8 +9,9 @@ import numpy as np
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.utils import PortInitializer
 
+
 from message_infrastructure import (
-    ChannelTransferType,
+    ChannelBackend,
     Channel,
     SendPort,
     RecvPort
@@ -30,7 +31,7 @@ class TestChannelBuilder(unittest.TestCase):
                 name="mock", shape=(5), d_type=np.int32,
                 port_type='DOESNOTMATTER', size=5)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=ChannelTransferType.SHMEMCHANNEL,
+                channel_type=ChannelBackend.SHMEMCHANNEL,
                 src_port_initializer=port_initializer,
                 dst_port_initializer=port_initializer,
                 src_process=None,

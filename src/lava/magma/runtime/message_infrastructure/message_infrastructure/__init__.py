@@ -1,7 +1,7 @@
 from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import ProcessType
 from MessageInfrastructurePywrapper import Actor
-from MessageInfrastructurePywrapper import ChannelType as ChannelTransferType
+from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import SendPort
 from MessageInfrastructurePywrapper import RecvPort
