@@ -18,13 +18,19 @@ namespace message_infrastructure {
 #define SHM_FLAG O_RDWR | O_CREAT
 #define SHM_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 
+SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd, const int &key) {
+  shmfd_ = shmfd;
+  size_ = mem_size;
+  req_name_ += std::to_string(key);
+  ack_name_ += std::to_string(key);
+}
 SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
   shmfd_ = shmfd;
   size_ = mem_size;
 }
 void SharedMemory::InitSemaphore() {
-  sem_init(&req_, 1, 0);
-  sem_init(&ack_, 1, 0);
+  req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
+  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
 }
 int SharedMemory::GetShmfd() {
   return shmfd_;
@@ -32,14 +38,20 @@ int SharedMemory::GetShmfd() {
 void* SharedMemory::MemMap() {
   return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
 }
-sem_t& SharedMemory::GetReqSemaphore() {
-  return req_;
+sem_t* SharedMemory::GetReqSemaphore() {
+  return sem_open(req_name_.c_str(), 0, 0644, 0);
 }
-sem_t& SharedMemory::GetAckSemaphore() {
-  return ack_;
+sem_t* SharedMemory::GetAckSemaphore() {
+  return sem_open(ack_name_.c_str(), 0, 0644, 0);
 }
 int SharedMemory::GetDataElem(int offset) {
   return static_cast<int> (*(((char*)data_) + offset));
+}
+SharedMemory::~SharedMemory() {
+  sem_close(req_);
+  sem_close(ack_);
+  sem_unlink(req_name_.c_str());
+  sem_unlink(ack_name_.c_str());
 }
 
 int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
@@ -71,7 +83,8 @@ SharedMemoryPtr SharedMemManager::AllocChannelSharedMemory(const size_t &mem_siz
     exit(-1);
   }
   shm_strs_.insert(str);
-  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmfd);
+  int key = key_;
+  SharedMemoryPtr shm = std::make_shared<SharedMemory>(mem_size, shmfd, key);
   shm->InitSemaphore();
 
   return shm;

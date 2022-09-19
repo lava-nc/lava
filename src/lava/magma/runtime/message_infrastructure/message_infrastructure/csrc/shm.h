@@ -15,18 +15,23 @@ namespace message_infrastructure {
 class SharedMemory {
  public:
   SharedMemory() {}
+  SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
   SharedMemory(const size_t &mem_size, const int &shmfd);
   int GetShmfd();
-  sem_t& GetReqSemaphore();
-  sem_t& GetAckSemaphore();
+  sem_t* GetReqSemaphore();
+  sem_t* GetAckSemaphore();
   void* MemMap();
   void InitSemaphore();
   int GetDataElem(int offset);
+  ~SharedMemory();
+
  private:
   int shmfd_;
   size_t size_;
-  sem_t req_;
-  sem_t ack_;
+  std::string req_name_ = "req";
+  std::string ack_name_ = "ack";
+  sem_t *req_;
+  sem_t *ack_;
   void *data_;
 };
 
