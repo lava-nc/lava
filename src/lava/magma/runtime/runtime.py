@@ -11,7 +11,7 @@ import typing as ty
 
 import numpy as np
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
-from lava.magma.compiler.var_model import AbstractVarModel
+from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
@@ -425,7 +425,8 @@ class Runtime:
                 buffer = buffer[idx]
             buffer_shape: ty.Tuple[int, ...] = buffer.shape
             num_items: int = np.prod(buffer_shape).item()
-            buffer = buffer.reshape((1, num_items))
+            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
@@ -476,7 +477,8 @@ class Runtime:
                 buffer[0, i] = data_port.recv()[0]
 
             # 3. Reshape result and return
-            buffer = buffer.reshape(ev.shape)
+            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:

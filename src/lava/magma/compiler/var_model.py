@@ -36,8 +36,14 @@ class LoihiAddress:
 
 @dataclass
 class LoihiNeuronAddress(LoihiAddress):
-    # Which Neuron Group on the core neuron belongs to
+    # To which Neuron Group on the core a neuron belongs
     neuron_group_id: int
+
+
+@dataclass
+class LoihiSynapseAddress(LoihiAddress):
+    # To which SynEntry on the core a synapse belongs
+    syn_entry_id: int
 
 
 @dataclass
@@ -111,6 +117,11 @@ class LoihiVarModel(AbstractVarModel, Mappable):
 
 @dataclass
 class LoihiNeuronVarModel(LoihiVarModel):
+    pass
+
+
+@dataclass
+class LoihiSynapseVarModel(LoihiVarModel):
     pass
 
 
