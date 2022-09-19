@@ -177,14 +177,9 @@ ShmemRecvQueue::~ShmemRecvQueue() {
 ShmemSendPort::ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
-                const size_t &nbytes) {
-  name_ = name;
+                const size_t &nbytes) : AbstractSendPort(name, size, nbytes){
   shm_ = shm;
-  nbytes_ = nbytes;
-  size_ = size;
-
   done_ = false;
-
   array_ = shm_->MemMap();
 }
 
@@ -218,22 +213,11 @@ int ShmemSendPort::AckCallback() {
   return 0;
 }
 
-std::string ShmemSendPort::Name() {
-  return name_;
-}
-
-size_t ShmemSendPort::Size() {
-  return size_;
-}
-
 ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
-                const size_t &nbytes) {
-  name_ = name;
+                const size_t &nbytes): AbstractRecvPort(name, size, nbytes) {
   shm_ = shm;
-  nbytes_ = nbytes;
-  size_ = size;
   done_ = false;
   array_ = shm_->MemMap();
   queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes_);
@@ -283,14 +267,6 @@ int ShmemRecvPort::ReqCallback() {
   // Todo(hexu1) : CspSelector.Observer
   }
   return 0;
-}
-
-std::string ShmemRecvPort::Name() {
-  return name_;
-}
-
-size_t ShmemRecvPort::Size() {
-  return size_;
 }
 
 }  // namespace message_infrastructure

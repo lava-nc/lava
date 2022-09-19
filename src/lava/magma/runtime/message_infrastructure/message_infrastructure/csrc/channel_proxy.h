@@ -10,7 +10,6 @@
 #include <vector>
 #include "abstract_channel.h"
 #include "utils.h"
-#include "channel_factory.h"
 #include "port_proxy.h"
 
 namespace message_infrastructure {

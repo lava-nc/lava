@@ -11,7 +11,6 @@ endif()
 
 set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/abstract_port.cc"
-     "message_infrastructure/csrc/channel_proxy.cc"
      "message_infrastructure/csrc/multiprocessing.cc"
      "message_infrastructure/csrc/posix_actor.cc"
      "message_infrastructure/csrc/shm.cc"
@@ -19,16 +18,17 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/shmem_port.cc"
      )
 
-set (PY_WRAPPER_SRCS
-    "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
-    "message_infrastructure/csrc/port_proxy.cc"
-    "message_infrastructure/csrc/abstract_port_implementation.cc"
-    "message_infrastructure/csrc/ports.cc"
-    )
-
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
 
 if(PY_WRAPPER)
+
+    set (PY_WRAPPER_SRCS
+        "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
+        "message_infrastructure/csrc/channel_proxy.cc"
+        "message_infrastructure/csrc/port_proxy.cc"
+        "message_infrastructure/csrc/abstract_port_implementation.cc"
+        "message_infrastructure/csrc/ports.cc"
+        )
     target_include_directories(message_infrastructure PUBLIC 
                                ${pybind11_INCLUDE_DIRS}
                                ${PYTHON_INCLUDE_DIRS}
