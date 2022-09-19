@@ -11,9 +11,9 @@ namespace message_infrastructure {
 
 int MultiProcessing::BuildActor(std::function<int(ActorPtr)> target_fn) {
   SharedMemManager &actor_shmm = GetSharedMemManager();
-  int shmid = actor_shmm.AllocSharedMemory(sizeof(ActorStatusInfo));
+  int shmid = actor_shmm.AllocSharedMemory(sizeof(ActorCtrlStatus));
   ActorPtr actor = new PosixActor(target_fn, shmid);
-  int ret = actor->Run();
+  int ret = actor->Create();
   actors_.push_back(actor);
   
   return ret;
@@ -23,7 +23,7 @@ int MultiProcessing::Stop() {
   int error_cnts = 0;
 
   for (auto actor : actors_) {
-    error_cnts += actor->Stop();
+    error_cnts += actor->CmdStop();
   }
 
   LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);
@@ -32,7 +32,8 @@ int MultiProcessing::Stop() {
 
 void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
-    LAVA_LOG(LOG_MP, "Actor info %d\n", actor->GetPid());
+    LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)", 
+                     actor->GetPid(), actor->GetActorStatus());
   }
 }
 
