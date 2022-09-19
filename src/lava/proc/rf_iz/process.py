@@ -1,4 +1,4 @@
-from lava.proc.rf.process import AbstractRF
+from lava.proc.rf.process import RF
 
-class RF_IZ(AbstractRF):
+class RF_IZ(RF):
     pass
