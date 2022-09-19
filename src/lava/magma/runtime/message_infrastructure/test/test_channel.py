@@ -29,6 +29,8 @@ def send_proc(*args, **kwargs):
         raise AssertionError()
     port.start()
     port.send(prepare_data())
+    port.join()
+    return 0
 
 
 def recv_proc(*args, **kwargs):
@@ -38,8 +40,11 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     data = port.recv()
+    print(data)
     if not np.array_equal(data, prepare_data()):
         raise AssertionError()
+    port.join()
+    return 0
 
 
 class Builder:
@@ -74,7 +79,7 @@ class TestShmemChannel(unittest.TestCase):
         self.mp.build_actor(recv_port_fn, builder1)
         self.mp.build_actor(send_port_fn, builder2)
 
-        time.sleep(2)
+        time.sleep(5)
         self.mp.stop()
 
 
