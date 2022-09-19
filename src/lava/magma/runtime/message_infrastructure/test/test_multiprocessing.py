@@ -16,7 +16,6 @@ from message_infrastructure import Actor
 from message_infrastructure.multiprocessing import MultiProcessing
 from message_infrastructure import SendPort
 from message_infrastructure import RecvPort
-from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel
 
 import time
