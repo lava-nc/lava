@@ -5,7 +5,6 @@ import typing as ty
 from functools import partial
 
 from message_infrastructure import CppMultiProcessing
-from message_infrastructure import SharedMemManager
 from message_infrastructure import Actor
 from message_infrastructure import ChannelTransferType
 from message_infrastructure import Channel

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#include <xmmintrin.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -30,6 +31,10 @@ ShmemRecvQueue::ShmemRecvQueue(const std::string& name,
   name_ = name;
   nbytes_ = nbytes;
   array_.reserve(size_);
+  done_ = false;
+  overlap_ = false;
+  read_index_.store(0, std::memory_order_release);
+  write_index_.store(0, std::memory_order_release);
 }
 
 void ShmemRecvQueue::Push(void* src) {
@@ -39,15 +44,17 @@ void ShmemRecvQueue::Push(void* src) {
   if (next_write_index == size_) {
       next_write_index = 0;
   }
-  if (next_write_index == curr_read_index) {
+  if(curr_write_index == curr_read_index && overlap_) {
     auto next_read_index = curr_read_index + 1;
     drop_array_.push_back(array_[curr_read_index]);
-    if(next_read_index == size_) {
-      next_read_index = 0;
-    }
+    next_read_index = next_write_index;
     read_index_.store(next_read_index, std::memory_order_release);
     LAVA_LOG_WARN(LOG_SMMP, "Drop data in ShmemChannel %s\n", name_.c_str());
   }
+  if (next_write_index == curr_read_index) {
+    overlap_ = true;
+  }
+
   void *ptr = malloc(nbytes_);
   memcpy(ptr, src, nbytes_);
 
@@ -66,6 +73,7 @@ void ShmemRecvQueue::Pop() {
     next_read_index = 0;
   }
   read_index_.store(next_read_index, std::memory_order_release);
+  overlap_ = false;
   return;
 }
 
@@ -74,24 +82,31 @@ void* ShmemRecvQueue::Front() {
     LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
     return NULL;
   }
-  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
+  auto curr_read_index = read_index_.load(std::memory_order_acquire);
   void *ptr = array_[curr_read_index];
   return ptr;
 }
 
 void* ShmemRecvQueue::FrontPop() {
-  if(Empty()) {
-    LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
-    return NULL;
+  while(Empty()) {
+    _mm_pause();
+    // LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
   }
-  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
+  if(done_)
+    return NULL;
+  auto curr_read_index = read_index_.load(std::memory_order_acquire);
   void *ptr = array_[curr_read_index];
   auto next_read_index = curr_read_index + 1;
   if(next_read_index == size_) {
     next_read_index = 0;
   }
   read_index_.store(next_read_index, std::memory_order_release);
+  overlap_ = false;
   return ptr;
+}
+
+void ShmemRecvQueue::Stop() {
+  done_ = true;
 }
 
 bool ShmemRecvQueue::Probe() {
@@ -100,8 +115,22 @@ bool ShmemRecvQueue::Probe() {
 }
 
 bool ShmemRecvQueue::Empty() {
-  return (write_index_.load(std::memory_order_acquire) ==  \
-                            read_index_.load(std::memory_order_acquire));
+  bool res;
+  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
+  auto const curr_write_index = write_index_.load(std::memory_order_acquire);
+
+  if (curr_read_index == curr_write_index && !overlap_)
+    res = true;
+  else
+    res = false;
+  
+  read_index_.store(curr_read_index, std::memory_order_release);
+  write_index_.store(curr_write_index, std::memory_order_release);
+
+  if(done_)
+    res = false;
+
+  return res;
 }
 
 void ShmemRecvQueue::Free() {
@@ -164,11 +193,17 @@ void ShmemSendPort::Start() {
   // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
-int ShmemSendPort::Send(void* data) {
+void ShmemSendPort::Send(MetaDataPtr metadata) {
+  char* cptr = (char*)array_;
   sem_wait(&shm_->GetAckSemaphore());
-  memcpy(array_, data, nbytes_);
+  memcpy(cptr, metadata.get(), sizeof(MetaData));
+  cptr+=sizeof(MetaData);
+  memcpy(cptr, metadata->mdata, nbytes_);
   sem_post(&shm_->GetReqSemaphore());
-  return 0;
+}
+
+bool ShmemSendPort::Probe() {
+  return false;
 }
 
 void ShmemSendPort::Join() {
@@ -201,7 +236,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
   size_ = size;
   done_ = false;
   array_ = shm_->MemMap();
-  queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes);
+  queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes_);
 }
 
 void ShmemRecvPort::Start() {
@@ -211,9 +246,10 @@ void ShmemRecvPort::Start() {
 
 void ShmemRecvPort::QueueRecv() {
   while(!done_) {
-    sem_wait(&shm_->GetReqSemaphore());
-    queue_->Push(array_);
-    sem_post(&shm_->GetAckSemaphore());
+    if(!sem_trywait(&shm_->GetReqSemaphore())) {
+      queue_->Push(array_);
+      sem_post(&shm_->GetAckSemaphore());
+    }
   }
   queue_->Free();
 }
@@ -222,18 +258,24 @@ bool ShmemRecvPort::Probe() {
   return queue_->Probe();
 }
 
-void* ShmemRecvPort::Recv() {
-  return queue_->FrontPop();
+MetaDataPtr ShmemRecvPort::Recv() {
+  char *cptr = (char *)queue_->FrontPop();
+  MetaDataPtr metadata_res = std::make_shared<MetaData>();
+  memcpy(metadata_res.get(), cptr, sizeof(MetaData));
+  metadata_res->mdata = (void*)(cptr + sizeof(MetaData));
+  return metadata_res;
 }
 
 void ShmemRecvPort::Join() {
   done_ = true;
+  queue_->Stop();
   // req_callback_thread_->join();
   recv_queue_thread_->join();
 }
 
-void* ShmemRecvPort::Peek() {
-  return queue_->Front();
+MetaDataPtr ShmemRecvPort::Peek() {
+  // return queue_->Front();
+  return NULL;
 }
 
 int ShmemRecvPort::ReqCallback() {
@@ -241,6 +283,14 @@ int ShmemRecvPort::ReqCallback() {
   // Todo(hexu1) : CspSelector.Observer
   }
   return 0;
+}
+
+std::string ShmemRecvPort::Name() {
+  return name_;
+}
+
+size_t ShmemRecvPort::Size() {
+  return size_;
 }
 
 }  // namespace message_infrastructure

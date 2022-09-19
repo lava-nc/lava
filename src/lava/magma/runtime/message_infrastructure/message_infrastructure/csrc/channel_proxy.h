@@ -16,30 +16,14 @@
 namespace message_infrastructure {
 class ChannelProxy {
  public:
-  ChannelProxy() {}
   ChannelProxy(const ChannelType &channel_type,
                const size_t &size,
                const size_t &nbytes,
-               const std::string &name = "test_channel") {
-      ChannelFactory &channel_factory = GetChannelFactory();
-      channel_ = channel_factory.GetChannel(channel_type,
-                                            size,
-                                            nbytes,
-                                            name);
-      send_port_ = std::make_shared<SendPortProxy>(channel_type,
-                     channel_->GetSendPort()->GetSendPort());
-      recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
-                     channel_->GetRecvPort()->GetRecvPort());
-  }
-  SendPortProxyPtr GetSendPort() {
-     return send_port_;
-  }
-  RecvPortProxyPtr GetRecvPort() {
-     return recv_port_;
-  }
-
+               const std::string &name = "test_channel");
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
  private:
-  AbstractChannelPtr channel_;
+  AbstractChannelPtr channel_ = NULL;
   SendPortProxyPtr send_port_ = NULL;
   RecvPortProxyPtr recv_port_ = NULL;
 };

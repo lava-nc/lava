@@ -17,7 +17,7 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
-  std::shared_ptr<AbstractChannel> GetChannel(
+  AbstractChannelPtr GetChannel(
       const ChannelType &channel_type,
       const size_t &size,
       const size_t &nbytes,

@@ -25,19 +25,31 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
                            const std::string &dst_name,
                            const size_t &size,
                            const size_t &nbytes) {
-  shm_ = GetSharedMemManager().AllocChannelSharedMemory(nbytes);
+  unsigned long shmem_size = nbytes + sizeof(MetaData);
 
-  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, nbytes);
-  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, nbytes);
+  shm_ = GetSharedMemManager().AllocChannelSharedMemory(shmem_size);
+
+  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, nbytes + sizeof(MetaData));
+  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, nbytes + sizeof(MetaData));
 }
 
 AbstractSendPortPtr ShmemChannel::GetSendPort() {
-  printf("Get send_port.\n");
+  printf("Get shmem send_port.\n");
   return send_port_;
 }
 
 AbstractRecvPortPtr ShmemChannel::GetRecvPort() {
-  printf("Get recv_port.\n");
+  printf("Get shmem recv_port.\n");
   return recv_port_;
+}
+
+std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
+                              const size_t &nbytes,
+                              const std::string &name) {
+  printf("Generate shmem_channel.\n");
+  return (std::make_shared<ShmemChannel>(name,
+                                         name,
+                                         size,
+                                         nbytes));
 }
 }  // namespace message_infrastructure

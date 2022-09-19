@@ -2,38 +2,71 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include "abstract_port.h"
+#include <pybind11/pybind11.h>
 #include <string>
+#include "abstract_port.h"
 
 namespace message_infrastructure {
+namespace py = pybind11;
+
 std::string AbstractPort::Name() {
   return this->name_;
 }
 size_t AbstractPort::Size() {
   return this->size_;
 }
-int AbstractPort::Start() {
+void AbstractPort::Start() {
   printf("AbstractPort Start.\n");
-  return 0;
 }
-int AbstractPort::Probe() {
+bool AbstractPort::Probe() {
   printf("AbstractPort Probe.\n");
-  return 0;
+  return true;
 }
-int AbstractPort::Join() {
+void AbstractPort::Join() {
   printf("AbstractPort Join.\n");
-  return 0;
 }
-int AbstractSendPort::Send(void* data) {
-  printf("AbstractPort Send.\n");
-  return 0;
+
+std::string AbstractSendPort::Name() {
+  return this->name_;
 }
-void* AbstractRecvPort::Recv() {
+size_t AbstractSendPort::Size() {
+  return this->size_;
+}
+void AbstractSendPort::Start() {
+  printf("AbstractSendPort Start.\n");
+}
+bool AbstractSendPort::Probe() {
+  printf("AbstractSendPort Probe.\n");
+  return true;
+}
+void AbstractSendPort::Join() {
+  printf("AbstractSendPort Join.\n");
+}
+void AbstractSendPort::Send(MetaDataPtr data) {
+  printf("AbstractSendPort Send.\n");
+}
+std::string AbstractRecvPort::Name() {
+  return this->name_;
+}
+size_t AbstractRecvPort::Size() {
+  return this->size_;
+}
+void AbstractRecvPort::Start() {
+  printf("AbstractRecvPort Start.\n");
+}
+bool AbstractRecvPort::Probe() {
+  printf("AbstractRecvPort Probe.\n");
+  return true;
+}
+void AbstractRecvPort::Join() {
+  printf("AbstractRecvPort Join.\n");
+}
+MetaDataPtr AbstractRecvPort::Recv() {
   printf("AbstractPort Recv.\n");
   return NULL;
 }
-int AbstractRecvPort::Peek() {
+MetaDataPtr AbstractRecvPort::Peek() {
   printf("AbstractPort Peek.\n");
-  return 0;
+  return NULL;
 }
 }  // namespace message_infrastructure

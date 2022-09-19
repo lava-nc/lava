@@ -3,53 +3,80 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from enum import Enum
+import unittest
+from functools import partial
+import time
 
-from message_infrastructure import ShmemChannel
-from message_infrastructure import SendPort
-from message_infrastructure import RecvPort
-from message_infrastructure import ChannelFactory, get_channel_factory
-from message_infrastructure import ChannelTransferType
-from message_infrastructure import Channel
-from message_infrastructure import Selector
-from message_infrastructure import SharedMemManager
+from message_infrastructure.multiprocessing import MultiProcessing
 
-
-def nbytes_cal(shape, dtype):
-    return np.prod(shape) * np.dtype(dtype).itemsize
+from message_infrastructure import (
+    ChannelTransferType,
+    Channel,
+    SendPort,
+    RecvPort
+)
 
 
-def main():
-    channel_factory = get_channel_factory()
-    data = 12
-    smm = SharedMemManager()
-    size = 2
-    nbytes = 4
-    name = 'test_shmem_channel'
-
-    print(data)
-    print(type(data))
-
-    shmem_channel = Channel(
-        ChannelTransferType.SHMEMCHANNEL,
-        smm,
-        size,
-        nbytes,
-        name)
-
-    send_port = shmem_channel.get_send_port()
-    recv_port = shmem_channel.get_recv_port()
-
-    send_port.start()
-    recv_port.start()
-
-    # selector = Selector()
-    # print(selector.select(recv_port, "cmd"))
-
-    # send_port.send(data)
-    # res = recv_port.recv()
-
-    print("finish test function.")
+def prepare_data():
+    data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
+    return data
 
 
-main()
+def send_proc(*args, **kwargs):
+    actor = args[0]
+    port = kwargs.pop("port")
+    if not isinstance(port, SendPort):
+        raise AssertionError()
+    port.start()
+    port.send(prepare_data())
+
+
+def recv_proc(*args, **kwargs):
+    actor = args[0]
+    port = kwargs.pop("port")
+    port.start()
+    if not isinstance(port, RecvPort):
+        raise AssertionError()
+    data = port.recv()
+    if not np.array_equal(data, prepare_data()):
+        raise AssertionError()
+
+
+class Builder:
+    def build(self):
+        pass
+
+
+class TestShmemChannel(unittest.TestCase):
+    mp = MultiProcessing()
+
+    def test_shmemchannel(self):
+        self.mp.start()
+        size = 5
+        predata = prepare_data()
+        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        name = 'test_shmem_channel'
+
+        shmem_channel = Channel(
+            ChannelTransferType.SHMEMCHANNEL,
+            size,
+            nbytes,
+            name)
+
+        send_port = shmem_channel.get_send_port()
+        recv_port = shmem_channel.get_recv_port()
+
+        recv_port_fn = partial(recv_proc, port=recv_port)
+        send_port_fn = partial(send_proc, port=send_port)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        self.mp.build_actor(recv_port_fn, builder1)
+        self.mp.build_actor(send_port_fn, builder2)
+
+        time.sleep(2)
+        self.mp.stop()
+
+
+if __name__ == "__main__":
+    unittest.main()
