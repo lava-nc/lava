@@ -100,7 +100,7 @@ class CppRefPort : public AbstractPortImplementation {
                         const RecvPortProxyList &recv_ports);
     virtual int Read() = 0;
     virtual int Write() = 0;
-    int Wait() {}
+    int Wait() { return 0; }
 };
 
 
