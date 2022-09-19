@@ -23,6 +23,7 @@ set (PY_WRAPPER_SRCS
     "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
     "message_infrastructure/csrc/port_proxy.cc"
     "message_infrastructure/csrc/abstract_port_implementation.cc"
+    "message_infrastructure/csrc/ports.cc"
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
