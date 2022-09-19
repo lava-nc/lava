@@ -38,22 +38,23 @@ struct ActorCtrlStatus {
 
 class AbstractActor {
  public:
+  AbstractActor();
   virtual int ForceStop() = 0;
   virtual int GetActorStatus() = 0;
   virtual int GetPid() = 0;
+  void Control(ActorCmd cmd);
+  int GetStatus();
+
   virtual int Create() = 0;  // parent process only
   virtual int CmdStop() = 0;  // parent process only
   virtual int CmdPause() = 0;  // parent process only
   virtual int CmdRun() = 0;  // parent process only
   virtual int ErrorOccured() = 0;  // child process only
  protected:
-  int ReMapActorStatus() {  // child process only
-    ctl_status_shm_->MemMap();
-    return 0;
-  }
+  bool HandleCmd();
+  void SetStatus(ActorStatus status);
   int pid_;
-  ActorCtrlStatus *actor_ctrl_status_;
-  SharedMemoryPtr ctl_status_shm_;
+  RwSharedMemoryPtr ctl_status_shm_;
   ActorType actor_type_ = ActorType::ProcessModelActor;
   std::string actor_name_ = "actor";
 };
@@ -63,13 +64,10 @@ using SharedActorPtr = std::shared_ptr<AbstractActor>;
 
 class PosixActor : public AbstractActor {
  public:
-  explicit PosixActor(std::function<int(ActorPtr)> target_fn, int shmid) {
+  explicit PosixActor(std::function<int(ActorPtr)> target_fn, int shmid)
+    : AbstractActor()
+  {
     this->target_fn_ = target_fn;
-    ctl_status_shm_ = GetSharedMemManager().AllocChannelSharedMemory(
-                        sizeof(ActorCtrlStatus));
-    ctl_status_shm_->InitSemaphore();
-    this->actor_ctrl_status_ =
-      reinterpret_cast<ActorCtrlStatus*>(ctl_status_shm_->MemMap());
   }
 
   int GetPid() {
@@ -82,7 +80,7 @@ class PosixActor : public AbstractActor {
   int CmdStop();
   int CmdRun();
   int ErrorOccured() {
-    this->actor_ctrl_status_->status = ActorStatus::StatusError;
+    SetStatus(ActorStatus::StatusError);
     return 0;
   }
   int Create();
