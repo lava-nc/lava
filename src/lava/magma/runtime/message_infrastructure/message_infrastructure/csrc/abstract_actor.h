@@ -65,8 +65,8 @@ class PosixActor : public AbstractActor {
  public:
   explicit PosixActor(std::function<int(ActorPtr)> target_fn, int shmid) {
     this->target_fn_ = target_fn;
-    ctl_status_shm_ = std::make_shared<SharedMemory>
-                      (sizeof(ActorCtrlStatus), shmid);
+    ctl_status_shm_ = GetSharedMemManager().AllocChannelSharedMemory(
+                        sizeof(ActorCtrlStatus));
     ctl_status_shm_->InitSemaphore();
     this->actor_ctrl_status_ =
       reinterpret_cast<ActorCtrlStatus*>(ctl_status_shm_->MemMap());

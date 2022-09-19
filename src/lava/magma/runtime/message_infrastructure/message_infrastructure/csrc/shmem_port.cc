@@ -186,6 +186,7 @@ ShmemSendPort::ShmemSendPort(const std::string &name,
 }
 
 void ShmemSendPort::Start() {
+  sem_post(ack_);
   // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
