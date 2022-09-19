@@ -10,8 +10,7 @@ import numpy as np
 
 from message_infrastructure import (
     RecvPort,
-    SendPort,
-    Selector
+    SendPort
 )
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol

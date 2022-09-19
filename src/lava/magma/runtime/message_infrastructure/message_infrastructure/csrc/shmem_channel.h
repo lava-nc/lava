@@ -14,6 +14,7 @@
 
 #include "abstract_channel.h"
 #include "shm.h"
+#include "shmem_port.h"
 #include "utils.h"
 #include "port_proxy.h"
 
@@ -30,22 +31,13 @@ class ShmemChannel : public AbstractChannel {
   AbstractRecvPortPtr GetRecvPort();
  private:
   SharedMemoryPtr shm_ = NULL;
-  AbstractSendPortPtr send_port_ = NULL;
-  AbstractRecvPortPtr recv_port_ = NULL;
-  size_t size_;
-  size_t nbytes_;
-  size_t name_;
+  ShmemSendPortPtr send_port_ = NULL;
+  ShmemRecvPortPtr recv_port_ = NULL;
 };
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
                               const size_t &nbytes,
-                              const std::string &name) {
-  printf("Generate shmem_channel.\n");
-  return (std::make_shared<ShmemChannel>(name,
-                                         name,
-                                         size,
-                                         nbytes));
-}
+                              const std::string &name);
 
 }  // namespace message_infrastructure
 

@@ -5,15 +5,25 @@ import traceback
 import unittest
 import psutil
 import os
+import time
+import numpy as np
 from functools import partial
+from enum import Enum
 
 from message_infrastructure import CppMultiProcessing
-from message_infrastructure import SharedMemManager
 from message_infrastructure import ProcessType
 from message_infrastructure import Actor
 from message_infrastructure.multiprocessing import MultiProcessing
+from message_infrastructure import SendPort
+from message_infrastructure import RecvPort
+from message_infrastructure import ChannelTransferType
+from message_infrastructure import Channel
 
 import time
+
+
+def nbytes_cal(shape, dtype):
+    return np.prod(shape) * np.dtype(dtype).itemsize
 
 
 class Builder():
@@ -124,15 +134,6 @@ class TestMultiprocessing(unittest.TestCase):
             # actor status returns 1 if it is stopped
             self.assertEqual(actor_status, 1)
 
-    @unittest.skip
-    def test_get_shared_memory_manager(self):
-        """
-        Gets the Shared Memory Manager
-        Checks that the shared memory manager is of SharedMemManager type
-        """
-        shared_memory_manager = self.mp.smm
-        self.assertIsInstance(shared_memory_manager, SharedMemManager)
-
 
 def test_multiprocessing():
     mp = MultiProcessing()
@@ -143,9 +144,9 @@ def test_multiprocessing():
         ret = mp.build_actor(bound_target_fn, builder)
         print(ret)
 
-    shmm = mp.smm
-    for i in range(5):
-        print("shared memory id: ", shmm.alloc_mem(8))
+    # shmm = mp.smm
+    # for i in range(5):
+    #     print("shared memory id: ", shmm.alloc_mem(8))
 
     actors = mp.actors
     actor = actors[0]
@@ -153,14 +154,14 @@ def test_multiprocessing():
     actor.stop()
     print("actor status: ", actor.get_status())
 
-    print("stop num: ", shmm.stop())
-    print("stop num: ", shmm.stop())
+    # print("stop num: ", shmm.stop())
+    # print("stop num: ", shmm.stop())
 
     mp.stop()
 
 
 # Run unit tests
 if __name__ == '__main__':
-    # test_multiprocessing()
+    test_multiprocessing()
     print("UNIT TEST BEGINSSSSS")
-    unittest.main()
+    # unittest.main()

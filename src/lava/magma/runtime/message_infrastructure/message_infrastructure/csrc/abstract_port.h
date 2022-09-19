@@ -5,6 +5,7 @@
 #ifndef ABSTRACT_PORT_H_
 #define ABSTRACT_PORT_H_
 
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -13,15 +14,16 @@
 #include "utils.h"
 
 namespace message_infrastructure {
-
 class AbstractPort {
  public:
-  AbstractPort() {}
-  std::string Name();
-  size_t Size();
-  int Start();
-  int Probe();
-  int Join();
+  AbstractPort() = default;
+  virtual ~AbstractPort() = default;
+
+  virtual std::string Name();
+  virtual size_t Size();
+  virtual void Start();
+  virtual void Join();
+  virtual bool Probe();
 
   std::string name_;
   size_t size_;
@@ -30,16 +32,27 @@ class AbstractPort {
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send(void *data);
+  virtual ~AbstractSendPort() = default;
+  virtual std::string Name();
+  virtual size_t Size();
+  virtual void Start();
+  virtual void Join();
+  virtual bool Probe();
+  virtual void Send(MetaDataPtr data);
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  void *Recv();
-  int Peek();
+  virtual ~AbstractRecvPort() = default;
+  virtual std::string Name();
+  virtual size_t Size();
+  virtual void Start();
+  virtual bool Probe();
+  virtual void Join();
+  virtual MetaDataPtr Recv();
+  virtual MetaDataPtr Peek();
 };
 
-using AbstractPortPtr = std::shared_ptr<AbstractPort>;
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
 using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 
