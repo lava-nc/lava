@@ -14,19 +14,11 @@ class TestConnProcess(unittest.TestCase):
         """Tests instantiation of Dense"""
         shape = (100, 200)
         weights = np.random.randint(100, size=shape)
-        weight_exp = 2
-        num_weight_bits = 7
-        sign_mode = SignMode.MIXED
 
-        conn = Dense(weights=weights, weight_exp=weight_exp,
-                     num_weight_bits=num_weight_bits, sign_mode=sign_mode)
+        conn = Dense(weights=weights)
 
         self.assertEqual(np.shape(conn.weights.init), shape)
-        self.assertIsNone(
-            np.testing.assert_array_equal(conn.weights.init, weights))
-        self.assertEqual(conn.weight_exp.init, weight_exp)
-        self.assertEqual(conn.num_weight_bits.init, num_weight_bits)
-        self.assertEqual(conn.sign_mode.init, sign_mode.value)
+        np.testing.assert_array_equal(conn.weights.init, weights)
 
     def test_input_validation_weights(self):
         """Tests input validation on the dimensions of 'weights'. (Must be

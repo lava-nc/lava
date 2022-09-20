@@ -11,7 +11,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.dense.process import Dense
-from lava.utils.weightutils import truncate_weights, SignMode
+from lava.utils.weightutils import SignMode, determine_sign_mode,\
+    truncate_weights
 
 
 @implements(proc=Dense, protocol=LoihiProtocol)
@@ -29,9 +30,6 @@ class PyDenseModelFloat(PyLoihiProcessModel):
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons)in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
-    weight_exp: float = LavaPyType(float, float)
-    num_weight_bits: float = LavaPyType(float, float)
-    sign_mode: float = LavaPyType(float, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
@@ -62,9 +60,6 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=4)
-    num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
-    sign_mode: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=2)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def __init__(self, proc_params):
@@ -73,17 +68,21 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         self.weights_set = False
 
     def run_spk(self):
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
-            self.weights = truncate_weights(
-                weights=self.weights,
-                sign_mode=SignMode(self.sign_mode[0]),
-                num_weight_bits=self.num_weight_bits[0]
-            )
+            num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
+            sign_mode: SignMode = self.proc_params.get("sign_mode") \
+                or determine_sign_mode(self.weights)
+
+            self.weights = truncate_weights(self.weights,
+                                            sign_mode,
+                                            num_weight_bits)
             self.weights_set = True
 
-        # The a_out sent on a each timestep is a buffered value from dendritic
+        # The a_out sent at each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
