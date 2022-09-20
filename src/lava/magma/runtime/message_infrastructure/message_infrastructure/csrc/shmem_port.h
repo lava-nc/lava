@@ -34,7 +34,7 @@ class ShmemSendPort final : public AbstractSendPort {
   int AckCallback();
   bool Probe();
 
-private:
+ private:
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
@@ -87,7 +87,7 @@ class ShmemRecvPort final : public AbstractRecvPort {
   int ReqCallback();
   void QueueRecv();
 
-private:
+ private:
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;

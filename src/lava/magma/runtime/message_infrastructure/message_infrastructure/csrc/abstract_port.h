@@ -15,7 +15,8 @@
 namespace message_infrastructure {
 class AbstractPort {
  public:
-  AbstractPort(const std::string &name, const size_t &size, const size_t &nbytes);
+  AbstractPort(const std::string &name, const size_t &size,
+    const size_t &nbytes);
   AbstractPort() = default;
   virtual ~AbstractPort() = default;
 
@@ -25,7 +26,7 @@ class AbstractPort {
   virtual void Join() = 0;
   virtual bool Probe() = 0;
 
-protected:
+ protected:
   std::string name_;
   size_t size_;
   size_t nbytes_;

@@ -53,7 +53,7 @@ class SharedMemory {
 };
 
 class RwSharedMemory {
-public:
+ public:
   RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
   ~RwSharedMemory();
   void InitSemaphore();
@@ -61,7 +61,7 @@ public:
   void Handle(HandleFn handle_fn);
   void Close();
 
-private:
+ private:
   size_t size_;
   int shmfd_;
   std::string sem_name_ = "sem";
@@ -97,7 +97,7 @@ class SharedMemManager {
     std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, key);
     shm->InitSemaphore();
     return shm;
-  };
+  }
 
   void DeleteSharedMemory(const std::string &shm_str);
   friend SharedMemManager &GetSharedMemManager();

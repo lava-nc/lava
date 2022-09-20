@@ -8,6 +8,7 @@
 #include <functional>
 #include <string>
 #include <memory>
+#include <utility>
 #include "shm.h"
 
 namespace message_infrastructure {
@@ -41,7 +42,7 @@ class AbstractActor {
   using ActorPtr = AbstractActor *;
   using TargetFn = std::function<int(ActorPtr)>;
 
-  AbstractActor(TargetFn target_fn);
+  explicit AbstractActor(TargetFn target_fn);
   virtual int ForceStop() = 0;
   virtual int Wait() = 0;
   virtual int Create() = 0;
@@ -70,7 +71,7 @@ using SharedActorPtr = std::shared_ptr<AbstractActor>;
 
 class PosixActor final : public AbstractActor {
  public:
-  explicit PosixActor(std::function<int(AbstractActor::ActorPtr)> target_fn, int shmid)
+  explicit PosixActor(AbstractActor::TargetFn target_fn, int shmid)
     : AbstractActor(target_fn)
   {}
 

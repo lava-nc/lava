@@ -149,9 +149,9 @@ def test_multiprocessing():
 
     actors = mp.actors
     actor = actors[0]
-    print("actor status: ", actor.get_status())
+    print("actor status: ", actor.get_status(), actor.get_cmd())
     actor.stop()
-    print("actor status: ", actor.get_status())
+    print("actor status: ", actor.get_status(), actor.get_cmd())
 
     # print("stop num: ", shmm.stop())
     # print("stop num: ", shmm.stop())
