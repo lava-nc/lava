@@ -28,7 +28,6 @@ if(PY_WRAPPER)
         "message_infrastructure/csrc/channel_proxy.cc"
         "message_infrastructure/csrc/port_proxy.cc"
         "message_infrastructure/csrc/abstract_port_implementation.cc"
-        "message_infrastructure/csrc/ports.cc"
         )
     target_include_directories(message_infrastructure PUBLIC 
                                ${pybind11_INCLUDE_DIRS}
