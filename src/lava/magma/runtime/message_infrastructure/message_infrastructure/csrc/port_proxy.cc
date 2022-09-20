@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+//to solve the warning "Using deprecated NumPy API, disable it with " "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
+
 #include <numpy/arrayobject.h>
 #include <Python.h>
 #include <memory>
@@ -81,7 +84,8 @@ size_t RecvPortProxy::Size() {
 }
 
 int trick() {
-    import_array();
+    //import_array();//to solve the warning "converting to non-pointer type 'int' from NULL [-Wconversion-null] import_array()"
+    _import_array();
     return 0;
 }
 

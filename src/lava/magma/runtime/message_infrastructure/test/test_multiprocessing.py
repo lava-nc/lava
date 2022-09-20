@@ -45,7 +45,7 @@ def target_fn(*args, **kwargs):
         actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
-        # print("builder", actor.get_status())
+        print("builder", actor.get_status())
         builder.build(idx)
         return 0
     except Exception as e:
@@ -149,14 +149,14 @@ def test_multiprocessing():
 
     actors = mp.actors
     actor = actors[0]
-    print("actor status: ", actor.get_status())
+    print("actor status: ", actor.get_status(), actor.get_cmd())
     actor.stop()
-    print("actor status: ", actor.get_status())
+    print("actor status: ", actor.get_status(), actor.get_cmd())
 
     # print("stop num: ", shmm.stop())
     # print("stop num: ", shmm.stop())
 
-    mp.stop()
+    mp.stop(True)
 
 
 # Run unit tests

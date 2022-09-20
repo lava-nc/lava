@@ -33,11 +33,20 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("ParentProcess", ParentProcess);
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
-    .def("get_status", &PosixActor::GetActorStatus)
-    .def("pause", &PosixActor::CmdPause)
-    .def("start", &PosixActor::CmdRun)
-    .def("stop", &PosixActor::CmdStop)
-    .def("error", &PosixActor::ErrorOccured);
+    .def("get_status", &PosixActor::GetStatus)
+    .def("get_cmd", &PosixActor::GetCmd)
+    .def("pause", [](PosixActor &actor){
+        actor.Control(ActorCmd::CmdPause);
+      })
+    .def("start", [](PosixActor &actor){
+        actor.Control(ActorCmd::CmdRun);
+      })
+    .def("stop", [](PosixActor &actor){
+        actor.Control(ActorCmd::CmdStop);
+      })
+    .def("error", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusError);
+      });
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)

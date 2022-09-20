@@ -32,12 +32,12 @@
 
 #define LAVA_LOG_WARN(_cond, _fmt, ...) { \
   if ((_cond)) { \
-    printf("[CPP WARNING]" _fmt, __FUNCTION__, ## __VA_ARGS__); \
+    printf("[CPP WARNING] %s " _fmt, __FUNCTION__, ## __VA_ARGS__); \
   } \
 }
 
 #define LAVA_LOG_ERR(_fmt, ...) { \
-  printf("[CPP ERROR]" _fmt, __FUNCTION__, ## __VA_ARGS__); \
+  printf("[CPP ERROR] %s " _fmt, __FUNCTION__, ## __VA_ARGS__); \
 }
 
 #endif  // MESSAGE_INFRASTRUCTURE_LOGGING_H_

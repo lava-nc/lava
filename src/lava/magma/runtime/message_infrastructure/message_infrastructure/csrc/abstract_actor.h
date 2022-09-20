@@ -8,6 +8,7 @@
 #include <functional>
 #include <string>
 #include <memory>
+#include <utility>
 #include "shm.h"
 
 namespace message_infrastructure {
@@ -38,57 +39,48 @@ struct ActorCtrlStatus {
 
 class AbstractActor {
  public:
+  using ActorPtr = AbstractActor *;
+  using TargetFn = std::function<int(ActorPtr)>;
+
+  explicit AbstractActor(TargetFn target_fn);
   virtual int ForceStop() = 0;
-  virtual int GetActorStatus() = 0;
-  virtual int GetPid() = 0;
-  virtual int Create() = 0;  // parent process only
-  virtual int CmdStop() = 0;  // parent process only
-  virtual int CmdPause() = 0;  // parent process only
-  virtual int CmdRun() = 0;  // parent process only
-  virtual int ErrorOccured() = 0;  // child process only
- protected:
-  int ReMapActorStatus() {  // child process only
-    ctl_status_shm_->MemMap();
-    return 0;
+  virtual int Wait() = 0;
+  virtual int Create() = 0;
+  void Control(const ActorCmd cmd);
+  int GetCmd();
+  int GetStatus();
+  void SetStatus(ActorStatus status);
+  int GetPid() {
+    return this->pid_;
   }
+
+ protected:
+  std::pair<bool, bool> HandleCmd();
+  void Run();
   int pid_;
-  ActorCtrlStatus *actor_ctrl_status_;
-  SharedMemoryPtr ctl_status_shm_;
-  ActorType actor_type_ = ActorType::ProcessModelActor;
+
+ private:
+  RwSharedMemoryPtr ctl_status_shm_;
+  // ActorType actor_type_ = ActorType::ProcessModelActor;
   std::string actor_name_ = "actor";
+  TargetFn target_fn_ = NULL;
+  void InitStatus();
 };
 
-using ActorPtr = AbstractActor *;
 using SharedActorPtr = std::shared_ptr<AbstractActor>;
 
-class PosixActor : public AbstractActor {
+class PosixActor final : public AbstractActor {
  public:
-  explicit PosixActor(std::function<int(ActorPtr)> target_fn, int shmid) {
-    this->target_fn_ = target_fn;
-    ctl_status_shm_ = GetSharedMemManager().AllocChannelSharedMemory(
-                        sizeof(ActorCtrlStatus));
-    ctl_status_shm_->InitSemaphore();
-    this->actor_ctrl_status_ =
-      reinterpret_cast<ActorCtrlStatus*>(ctl_status_shm_->MemMap());
-  }
+  explicit PosixActor(AbstractActor::TargetFn target_fn, int shmid)
+    : AbstractActor(target_fn)
+  {}
 
   int GetPid() {
     return this->pid_;
   }
   int Wait();
   int ForceStop();
-  int GetActorStatus();
-  int CmdPause();
-  int CmdStop();
-  int CmdRun();
-  int ErrorOccured() {
-    this->actor_ctrl_status_->status = ActorStatus::StatusError;
-    return 0;
-  }
   int Create();
-  // int Trace();
- private:
-  std::function<int(ActorPtr)> target_fn_ = NULL;
 };
 
 using PosixActorPtr = PosixActor *;

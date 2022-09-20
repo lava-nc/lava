@@ -22,29 +22,24 @@ namespace message_infrastructure {
 
 using ThreadPtr = std::shared_ptr<std::thread>;
 
-class ShmemSendPort : public AbstractSendPort {
+class ShmemSendPort final : public AbstractSendPort {
  public:
-  ShmemSendPort() {}
   ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
-  std::string Name();
-  size_t Size();
   void Start();
   void Send(MetaDataPtr);
   void Join();
   int AckCallback();
   bool Probe();
 
-  SharedMemoryPtr shm_ = NULL;
+ private:
+  SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  void *array_ = NULL;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
   void *observer = NULL;
-  ThreadPtr ack_callback_thread_ = NULL;
+  ThreadPtr ack_callback_thread_ = nullptr;
 };
 
 using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
@@ -78,15 +73,12 @@ class ShmemRecvQueue {
 
 using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
 
-class ShmemRecvPort : public AbstractRecvPort {
+class ShmemRecvPort final : public AbstractRecvPort {
  public:
-  ShmemRecvPort() {}
   ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
-  std::string Name();
-  size_t Size();
   void Start();
   bool Probe();
   MetaDataPtr Recv();
@@ -95,16 +87,14 @@ class ShmemRecvPort : public AbstractRecvPort {
   int ReqCallback();
   void QueueRecv();
 
-  SharedMemoryPtr shm_ = NULL;
+ private:
+  SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  void *array_ = NULL;
   void *observer = NULL;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
-  ShmemRecvQueuePtr queue_ = NULL;
-  ThreadPtr req_callback_thread_ = NULL;
-  ThreadPtr recv_queue_thread_ = NULL;
+  ShmemRecvQueuePtr queue_ = nullptr;
+  ThreadPtr req_callback_thread_ = nullptr;
+  ThreadPtr recv_queue_thread_ = nullptr;
 };
 
 using ShmemRecvPortPtr = std::shared_ptr<ShmemRecvPort>;

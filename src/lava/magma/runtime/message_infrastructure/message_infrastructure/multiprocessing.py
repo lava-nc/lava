@@ -45,9 +45,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         bound_target_fn = partial(target_fn, builder=builder)
         ret = self._mp.build_actor(bound_target_fn)
 
-    def stop(self):
+    def stop(self, block=False):
         """Stops the shared memory manager"""
-        self._mp.stop()
+        self._mp.stop(block)
 
     def channel_class(self,
                       channel_type: ChannelBackend) -> ty.Type[Channel]:
