@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from dataclasses import dataclass
-from message_infrastructure.ports import PyInPort, PyOutPort, PyRefPort
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 
 
 @dataclass

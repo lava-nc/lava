@@ -13,7 +13,6 @@
 #include "multiprocessing.h"
 #include "port_proxy.h"
 #include "utils.h"
-#include "selector.h"
 
 namespace message_infrastructure {
 

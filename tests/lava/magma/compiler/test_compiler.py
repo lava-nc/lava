@@ -17,7 +17,7 @@ from lava.magma.compiler.compiler_graphs import ProcGroup
 from lava.magma.compiler.subcompilers.py.pyproc_compiler import PyProcCompiler
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from message_infrastructure.ports import (PyInPort, PyOutPort, PyRefPort,
+from lava.magma.core.model.py.ports import (PyInPort, PyOutPort, PyRefPort,
                                           PyVarPort)
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
