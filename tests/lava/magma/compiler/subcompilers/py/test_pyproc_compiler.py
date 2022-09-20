@@ -19,7 +19,7 @@ from lava.magma.core.process.ports.ports import (
     RefPort,
     VarPort,
 )
-from message_infrastructure.ports import (
+from lava.magma.core.model.py.ports import (
     PyInPort,
     PyOutPort,
     PyRefPort,

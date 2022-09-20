@@ -14,7 +14,7 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
-from message_infrastructure.ports import PyInPort, PyRefPort
+from lava.magma.core.model.py.ports import PyInPort, PyRefPort
 
 
 # Ring Buffer

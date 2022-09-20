@@ -13,8 +13,6 @@
 #include "multiprocessing.h"
 #include "port_proxy.h"
 #include "utils.h"
-#include "ports.h"
-#include "selector.h"
 
 namespace message_infrastructure {
 
@@ -75,74 +73,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &RecvPortProxy::Join)
     .def_property_readonly("name", &RecvPortProxy::Name)
     .def("size", &RecvPortProxy::Size);
-  py::class_<CppInPortVectorDense, std::shared_ptr<CppInPortVectorDense>> (m, "InPortVectorDense")
-    .def(py::init<RecvPortProxyList>())
-    .def("recv", &CppInPortVectorDense::Recv)
-    .def("peek", &CppInPortVectorDense::Peek);
-  py::class_<CppInPortVectorSparse, std::shared_ptr<CppInPortVectorSparse>> (m, "InPortVectorSparse")
-    .def(py::init<RecvPortProxyList>())
-    .def("recv", &CppInPortVectorSparse::Recv)
-    .def("peek", &CppInPortVectorSparse::Peek);
-  py::class_<CppInPortScalarDense, std::shared_ptr<CppInPortScalarDense>> (m, "InPortScalarDense")
-    .def(py::init<RecvPortProxyList>())
-    .def("recv", &CppInPortScalarDense::Recv)
-    .def("peek", &CppInPortScalarDense::Peek);
-  py::class_<CppInPortScalarSparse, std::shared_ptr<CppInPortScalarSparse>> (m, "InPortScalarSparse")
-    .def(py::init<RecvPortProxyList>())
-    .def("recv", &CppInPortScalarSparse::Recv)
-    .def("peek", &CppInPortScalarSparse::Peek);
-  py::class_<CppOutPortVectorDense, std::shared_ptr<CppOutPortVectorDense>> (m, "OutPortVectorDense")
-    .def(py::init<SendPortProxyList>())
-    .def("send", &CppOutPortVectorDense::Send)
-    .def("flush", &CppOutPortVectorDense::Flush);
-  py::class_<CppOutPortVectorSparse, std::shared_ptr<CppOutPortVectorSparse>> (m, "OutPortVectorSparse")
-    .def(py::init<SendPortProxyList>())
-    .def("send", &CppOutPortVectorSparse::Send)
-    .def("flush", &CppOutPortVectorSparse::Flush);
-  py::class_<CppOutPortScalarDense, std::shared_ptr<CppOutPortScalarDense>> (m, "OutPortScalarDense")
-    .def(py::init<SendPortProxyList>())
-    .def("send", &CppOutPortScalarDense::Send)
-    .def("flush", &CppOutPortScalarDense::Flush);
-  py::class_<CppOutPortScalarSparse, std::shared_ptr<CppOutPortScalarSparse>> (m, "OutPortScalarSparse")
-    .def(py::init<SendPortProxyList>())
-    .def("send", &CppOutPortScalarSparse::Send)
-    .def("flush", &CppOutPortScalarSparse::Flush);
-  py::class_<CppRefPortVectorDense, std::shared_ptr<CppRefPortVectorDense>> (m, "RefPortVectorDense")
-    .def(py::init<SendPortProxyList, RecvPortProxyList>())
-    .def("read", &CppRefPortVectorDense::Read)
-    .def("write", &CppRefPortVectorDense::Write);
-  py::class_<CppRefPortVectorSparse, std::shared_ptr<CppRefPortVectorSparse>> (m, "RefPortVectorSparse")
-    .def(py::init<SendPortProxyList, RecvPortProxyList>())
-    .def("read", &CppRefPortVectorSparse::Read)
-    .def("write", &CppRefPortVectorSparse::Write);
-  py::class_<CppRefPortScalarDense, std::shared_ptr<CppRefPortScalarDense>> (m, "RefPortScalarDense")
-    .def(py::init<SendPortProxyList, RecvPortProxyList>())
-    .def("read", &CppRefPortScalarDense::Read)
-    .def("write", &CppRefPortScalarDense::Write);
-  py::class_<CppRefPortScalarSparse, std::shared_ptr<CppRefPortScalarSparse>> (m, "RefPortScalarSparse")
-    .def(py::init<SendPortProxyList, RecvPortProxyList>())
-    .def("read", &CppRefPortScalarSparse::Read)
-    .def("write", &CppRefPortScalarSparse::Write);
-  py::class_<CppVarPortVectorDense, std::shared_ptr<CppVarPortVectorDense>> (m, "VarPortVectorDense")
-    .def(py::init<std::string, SendPortProxyList, RecvPortProxyList>())
-    .def("service", &CppVarPortVectorDense::Service)
-    .def("recv", &CppVarPortVectorDense::Recv)
-    .def("peek", &CppVarPortVectorDense::Peek);
-  py::class_<CppVarPortVectorSparse, std::shared_ptr<CppVarPortVectorSparse>> (m, "VarPortVectorSparse")
-    .def(py::init<std::string, SendPortProxyList, RecvPortProxyList>())
-    .def("service", &CppVarPortVectorSparse::Service)
-    .def("recv", &CppVarPortVectorSparse::Recv)
-    .def("peek", &CppVarPortVectorSparse::Peek);
-  py::class_<CppVarPortScalarDense, std::shared_ptr<CppVarPortScalarDense>> (m, "VarPortScalarDense")
-    .def(py::init<std::string, SendPortProxyList, RecvPortProxyList>())
-    .def("service", &CppVarPortScalarDense::Service)
-    .def("recv", &CppVarPortScalarDense::Recv)
-    .def("peek", &CppVarPortScalarDense::Peek);
-  py::class_<CppVarPortScalarSparse, std::shared_ptr<CppVarPortScalarSparse>> (m, "VarPortScalarSparse")
-    .def(py::init<std::string, SendPortProxyList, RecvPortProxyList>())
-    .def("service", &CppVarPortScalarSparse::Service)
-    .def("recv", &CppVarPortScalarSparse::Recv)
-    .def("peek", &CppVarPortScalarSparse::Peek);
 }
 
 }  // namespace message_infrastructure

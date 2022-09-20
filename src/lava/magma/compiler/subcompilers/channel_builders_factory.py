@@ -32,7 +32,7 @@ except ImportError:
 from lava.magma.core.process.ports.ports import AbstractPort, InPort
 from lava.magma.core.process.ports.ports import AbstractSrcPort, AbstractDstPort
 from lava.magma.core.process.ports.ports import VarPort, ImplicitVarPort
-from message_infrastructure.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 
 
 class ChannelBuildersFactory:

@@ -9,7 +9,7 @@ from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.variable import Var
-from message_infrastructure.ports import PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag

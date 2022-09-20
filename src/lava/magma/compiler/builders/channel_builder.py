@@ -14,7 +14,6 @@ from lava.magma.compiler.builders. \
 from message_infrastructure import (
     Channel,
     ChannelBackend,
-    get_channel_factory
 )
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
@@ -97,15 +96,12 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        channel_factory = get_channel_factory()
-        shm = messaging_infrastructure.smm.alloc_mem(
-            self.port_initializer.size)
-        return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
-                                           shm,
-                                           self.port_initializer.d_type,
-                                           self.port_initializer.size,
-                                           self.port_initializer.shape,
-                                           self.port_initializer.name)
+        nbytes = np.prod(self.port_initializer.shape) * \
+            self.port_initializer.d_type.itemsize
+        return Channel(ChannelBackend.SHMEMCHANNEL,
+                       self.port_initializer.size,
+                       nbytes,
+                       self.port_initializer.name)
 
 
 @dataclass
@@ -138,25 +134,12 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        channel_factory = get_channel_factory()
-        shm = messaging_infrastructure.smm.alloc_mem(
-            self.port_initializer.size)
-        return channel_factory.get_channel(ChannelBackend.SHMEMCHANNEL,
-                                           shm,
-                                           self.port_initializer.d_type,
-                                           self.port_initializer.size,
-                                           self.port_initializer.shape,
-                                           self.port_initializer.name)
-
-        channel_name: str = self.port_initializer.name
-        return channel_class(
-            messaging_infrastructure,
-            channel_name + "_src",
-            channel_name + "_dst",
-            self.port_initializer.shape,
-            self.port_initializer.d_type,
-            self.port_initializer.size,
-        )
+        nbytes = np.prod(self.port_initializer.shape) * \
+            self.port_initializer.d_type.itemsize
+        return Channel(ChannelBackend.SHMEMCHANNEL,
+                       self.port_initializer.size,
+                       nbytes,
+                       self.port_initializer.name)
 
 
 @dataclass

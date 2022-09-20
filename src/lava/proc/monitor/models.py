@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from message_infrastructure.ports import PyRefPort, PyInPort
+from lava.magma.core.model.py.ports import PyRefPort, PyInPort
 from lava.proc.monitor.process import Monitor
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.model import PyLoihiProcessModel

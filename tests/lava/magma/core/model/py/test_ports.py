@@ -14,7 +14,7 @@ from lava.magma.compiler.channels.interfaces import (
     AbstractCspSendPort,
     AbstractCspRecvPort)
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from message_infrastructure.ports import (
+from lava.magma.core.model.py.ports import (
     PyInPort,
     PyInPortVectorDense,
     PyOutPort,

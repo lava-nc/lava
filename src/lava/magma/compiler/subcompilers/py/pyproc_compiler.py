@@ -22,7 +22,7 @@ from lava.magma.compiler.utils import (
 )
 from lava.magma.compiler.var_model import PyVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from message_infrastructure.ports import RefVarTypeMapping, PyVarPort
+from lava.magma.core.model.py.ports import RefVarTypeMapping, PyVarPort
 from lava.magma.core.process.ports.ports import (
     AbstractPort,
     ImplicitVarPort,

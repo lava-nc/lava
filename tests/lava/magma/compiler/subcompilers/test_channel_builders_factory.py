@@ -20,8 +20,9 @@ from lava.magma.compiler.var_model import LoihiAddress, LoihiVarModel
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from message_infrastructure.ports import (PyInPort, PyOutPort, PyRefPort,
-                                          PyVarPort, AbstractPortImplementation)
+from lava.magma.core.model.py.ports import (PyInPort, PyOutPort, PyRefPort,
+                                            PyVarPort,
+                                            AbstractPortImplementation)
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import (AbstractPort, InPort, OutPort,
