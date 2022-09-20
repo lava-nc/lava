@@ -19,8 +19,8 @@ from message_infrastructure import (
 
 
 class MockMessageInterface:
-    def channel_class(self, channel_type: ChannelTransferType) -> ty.Type:
-        return ChannelTransferType.SHMEMCHANNEL
+    def channel_class(self, channel_type: ChannelBackend) -> ty.Type:
+        return ChannelBackend.SHMEMCHANNEL
 
 
 class TestChannelBuilder(unittest.TestCase):
