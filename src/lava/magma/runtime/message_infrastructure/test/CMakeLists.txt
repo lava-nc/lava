@@ -19,6 +19,8 @@ add_executable(
 target_link_libraries(
   test_multiprocessing
   GTest::gtest_main
+  pybind11::embed
+  message_infrastructure
 )
 
 include(GoogleTest)
