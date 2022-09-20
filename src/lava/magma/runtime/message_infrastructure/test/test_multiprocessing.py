@@ -45,7 +45,7 @@ def target_fn(*args, **kwargs):
         actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
-        # print("builder", actor.get_status())
+        print("builder", actor.get_status())
         builder.build(idx)
         return 0
     except Exception as e:
@@ -156,7 +156,7 @@ def test_multiprocessing():
     # print("stop num: ", shmm.stop())
     # print("stop num: ", shmm.stop())
 
-    mp.stop()
+    mp.stop(True)
 
 
 # Run unit tests

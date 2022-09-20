@@ -32,18 +32,13 @@ class SharedMemory {
   SharedMemory() {}
   SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
   SharedMemory(const size_t &mem_size, const int &shmfd);
+  ~SharedMemory();
   void Start();
   void Load(HandleFn consume_fn);
   void Store(HandleFn store_fn);
   void Close();
-
-  int GetShmfd();
-  sem_t* GetReqSemaphore();
-  sem_t* GetAckSemaphore();
-  void* MemMap();
   void InitSemaphore();
   int GetDataElem(int offset);
-  ~SharedMemory();
 
  private:
   size_t size_;
@@ -53,6 +48,8 @@ class SharedMemory {
   sem_t *req_;
   sem_t *ack_;
   void *data_;
+
+  void* MemMap();
 };
 
 class RwSharedMemory {

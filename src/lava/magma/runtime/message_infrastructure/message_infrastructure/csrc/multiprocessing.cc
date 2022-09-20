@@ -18,15 +18,17 @@ int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
   return ret;
 }
 
-int MultiProcessing::Stop() {
-  int error_cnts = 0;
-
+void MultiProcessing::Stop(bool block) {
   for (auto actor : actors_) {
     actor->Control(ActorCmd::CmdStop);
   }
 
-  LAVA_LOG(LOG_MP, "Stop Actors, error: %d\n", error_cnts);
-  return error_cnts;
+  LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
+  if (block) {
+    for (auto actor: actors_) {
+      actor->Wait();
+    }
+  }
 }
 
 void MultiProcessing::CheckActor() {

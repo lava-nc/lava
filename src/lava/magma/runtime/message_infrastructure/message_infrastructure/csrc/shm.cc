@@ -12,16 +12,15 @@ SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd, const int &
   req_name_ += std::to_string(key);
   ack_name_ += std::to_string(key);
 }
+
 SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
   shmfd_ = shmfd;
   size_ = mem_size;
 }
+
 void SharedMemory::InitSemaphore() {
   req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
   ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 0);
-}
-int SharedMemory::GetShmfd() {
-  return shmfd_;
 }
 
 void SharedMemory::Start() {
@@ -51,13 +50,6 @@ void* SharedMemory::MemMap() {
   return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
 }
 
-sem_t* SharedMemory::GetReqSemaphore() {
-  return sem_open(req_name_.c_str(), 0, 0644, 0);
-}
-
-sem_t* SharedMemory::GetAckSemaphore() {
-  return sem_open(ack_name_.c_str(), 0, 0644, 0);
-}
 
 int SharedMemory::GetDataElem(int offset) {
   return static_cast<int> (*(((char*)data_) + offset));
