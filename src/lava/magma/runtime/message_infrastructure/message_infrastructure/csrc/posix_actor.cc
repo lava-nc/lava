@@ -72,41 +72,11 @@ int PosixActor::Create() {
   if (pid == 0) {
     LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
     this->pid_ = getpid();
-    SetStatus(ActorStatus::StatusRunning);
-    Control(ActorCmd::CmdRun);
-    while(!HandleCmd()) {
-      int target_ret = target_fn_(this);
-      // if (target_ret >= 0) {
-      //   break;
-      //}
-      LAVA_LOG(LOG_MP, "Actor: target_ret:%d, ActorStatus:%d\n",
-                     target_ret, GetStatus());
-    }
-    SetStatus(ActorStatus::StatusStopped);
-    LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
+    Run();
     exit(0);
   }
   LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
   return ErrorProcess;
-}
-
-int PosixActor::CmdRun() {
-  Control(ActorCmd::CmdRun);
-  return 0;
-}
-
-int PosixActor::CmdPause() {
-  Control(ActorCmd::CmdPause);
-  return 0;
-}
-
-int PosixActor::CmdStop() {
-  Control(ActorCmd::CmdStop);
-  return 0;
-}
-
-int PosixActor::GetActorStatus() {
-  return GetStatus();
 }
 
 }

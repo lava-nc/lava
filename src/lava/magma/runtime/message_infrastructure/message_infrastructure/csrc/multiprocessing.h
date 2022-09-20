@@ -16,12 +16,12 @@ namespace message_infrastructure {
 class MultiProcessing {
  public:
   int Stop();
-  int BuildActor(std::function<int(ActorPtr)>);
+  int BuildActor(AbstractActor::TargetFn target_fn);
   void CheckActor();
-  std::vector<ActorPtr>& GetActors();
+  std::vector<AbstractActor::ActorPtr>& GetActors();
 
  private:
-  std::vector<ActorPtr> actors_;
+  std::vector<AbstractActor::ActorPtr> actors_;
 };
 
 }  // namespace message_infrastructure
