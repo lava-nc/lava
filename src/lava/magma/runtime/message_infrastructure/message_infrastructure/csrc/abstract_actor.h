@@ -46,6 +46,7 @@ class AbstractActor {
   virtual int Wait() = 0;
   virtual int Create() = 0;
   void Control(const ActorCmd cmd);
+  int GetCmd();
   int GetStatus();
   void SetStatus(ActorStatus status);
   int GetPid() {

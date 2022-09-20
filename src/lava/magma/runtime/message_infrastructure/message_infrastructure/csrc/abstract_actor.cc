@@ -59,6 +59,15 @@ int AbstractActor::GetStatus() {
     return status;
 }
 
+int AbstractActor::GetCmd() {
+    int cmd;
+    this->ctl_status_shm_->Handle([&cmd](void* data){
+        auto ctrl_status = reinterpret_cast<ActorCtrlStatus*>(data);
+        cmd = static_cast<int>(ctrl_status->cmd);
+    });
+    return cmd;
+}
+
 void AbstractActor::Run() {
     InitStatus();
     while(true) {
