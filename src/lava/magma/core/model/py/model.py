@@ -10,7 +10,7 @@ import numpy as np
 from message_infrastructure import SendPort, RecvPort
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
-from lava.magma.core.model.py.ports import PyVarPort
+from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,
