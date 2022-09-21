@@ -9,11 +9,6 @@ import numpy as np
 import typing as ty
 import functools as ft
 
-from lava.magma.compiler.channels.interfaces import (
-    AbstractCspPort,
-    AbstractCspSendPort,
-    AbstractCspRecvPort)
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
 from lava.magma.core.model.py.ports import (
     PyInPort,
     PyInPortVectorDense,
@@ -23,13 +18,7 @@ from lava.magma.core.model.py.ports import (
     IdentityTransformer)
 
 
-class MockInterface:
-    def __init__(self, smm):
-        self.smm = smm
-
-
-def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
-    mock = MockInterface(smm)
+def get_channel(data, size, name="test_channel") -> PyPyChannel:
     return PyPyChannel(
         message_infrastructure=mock,
         src_name=name,
