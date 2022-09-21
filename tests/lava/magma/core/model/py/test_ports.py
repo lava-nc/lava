@@ -8,6 +8,12 @@ from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 import typing as ty
 import functools as ft
+from message_infrastructure import (
+    ChannelBackend,
+    Channel,
+    AbstractTransferPort,
+    ChannelQueueSize
+)
 
 from lava.magma.core.model.py.ports import (
     PyInPort,
@@ -18,14 +24,16 @@ from lava.magma.core.model.py.ports import (
     IdentityTransformer)
 
 
-def get_channel(data, size, name="test_channel") -> PyPyChannel:
-    return PyPyChannel(
-        message_infrastructure=mock,
-        src_name=name,
-        dst_name=name,
-        shape=data.shape,
-        dtype=data.dtype,
-        size=size
+def nbytes_cal(shape, dtype):
+    return np.prod(shape) * np.dtype(dtype).itemsize
+
+
+def get_channel(data, name="test_channel") -> Channel:
+    return Channel(
+        ChannelBackend.SHMEMCHANNEL,
+        ChannelQueueSize,
+        nbytes_cal(data.shape, data.dtype),
+        name
     )
 
 
@@ -33,33 +41,30 @@ class TestPyPorts(unittest.TestCase):
     def probe_test_routine(self, cls):
         """Routine that tests probe method on one implementation of PyInPorts.
         """
-        smm = SharedMemoryManager()
+
+        data = np.ones((4, 4))
+
+        channel_1 = get_channel(data)
+        send_csp_port_1: AbstractTransferPort = channel_1.get_send_port()
+        recv_csp_port_1: AbstractTransferPort = channel_1.get_recv_port()
+
+        channel_2 = get_channel(data)
+        send_csp_port_2: AbstractTransferPort = channel_2.get_send_port()
+        recv_csp_port_2: AbstractTransferPort = channel_2.get_recv_port()
+
+        # Create two different PyOutPort
+        send_py_port_1: PyOutPort = \
+            PyOutPortVectorDense([send_csp_port_1], None, data.shape,
+                                 data.dtype)
+        send_py_port_2: PyOutPort = \
+            PyOutPortVectorDense([send_csp_port_2], None, data.shape,
+                                 data.dtype)
+        # Create PyInPort with current implementation
+        recv_py_port: PyInPort = \
+            cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
+                data.dtype)
 
         try:
-            smm.start()
-
-            data = np.ones((4, 4))
-
-            channel_1 = get_channel(smm, data, data.size)
-            send_csp_port_1: AbstractCspSendPort = channel_1.src_port
-            recv_csp_port_1: AbstractCspRecvPort = channel_1.dst_port
-
-            channel_2 = get_channel(smm, data, data.size)
-            send_csp_port_2: AbstractCspSendPort = channel_2.src_port
-            recv_csp_port_2: AbstractCspRecvPort = channel_2.dst_port
-
-            # Create two different PyOutPort
-            send_py_port_1: PyOutPort = \
-                PyOutPortVectorDense([send_csp_port_1], None, data.shape,
-                                     data.dtype)
-            send_py_port_2: PyOutPort = \
-                PyOutPortVectorDense([send_csp_port_2], None, data.shape,
-                                     data.dtype)
-            # Create PyInPort with current implementation
-            recv_py_port: PyInPort = \
-                cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
-                    data.dtype)
-
             recv_py_port.start()
             send_py_port_1.start()
             send_py_port_2.start()
@@ -69,7 +74,7 @@ class TestPyPorts(unittest.TestCase):
             # Send data through second PyOutPort
             send_py_port_2.send(data)
             # Sleep to let message reach the PyInPort
-            time.sleep(0.001)
+            time.sleep(0.01)
             # Probe PyInPort
             probe_value = recv_py_port.probe()
 
@@ -84,7 +89,10 @@ class TestPyPorts(unittest.TestCase):
             # probe_value should be False since PyInPort's buffer was emptied
             self.assertFalse(probe_value)
         finally:
-            smm.shutdown()
+            send_csp_port_1.join()
+            recv_csp_port_1.join()
+            send_py_port_1.join()
+            recv_csp_port_2.join()
 
     def test_py_in_port_probe(self):
         """Tests PyInPort probe method on all implementations of PyInPorts."""
@@ -94,8 +102,8 @@ class TestPyPorts(unittest.TestCase):
             self.probe_test_routine(cls)
 
 
-class MockCspPort(AbstractCspPort):
-    @property
+class MockCspPort:
+
     def name(self) -> str:
         return "mock_csp_port"
 
@@ -154,7 +162,7 @@ class TestVirtualPortTransformer(unittest.TestCase):
     def test_transformation_defaults_to_identity(self) -> None:
         """Tests whether the transformation defaults to the identity
         transformation when no transformation functions are specified."""
-        del(self.transform_funcs["id0"])
+        del (self.transform_funcs["id0"])
         vpt = VirtualPortTransformer(self.csp_ports,
                                      self.transform_funcs)
         data = np.array(5)

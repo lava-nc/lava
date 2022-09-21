@@ -110,8 +110,7 @@ void ShmemRecvQueue::Stop() {
 }
 
 bool ShmemRecvQueue::Probe() {
-  return ((write_index_.load(std::memory_order_acquire) + 1) % size_ ==  \
-           read_index_.load(std::memory_order_acquire));
+  return !Empty();
 }
 
 bool ShmemRecvQueue::Empty() {
