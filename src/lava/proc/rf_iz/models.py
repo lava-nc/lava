@@ -34,10 +34,10 @@ class PyRF_IZModelBitAcc(AbstractPyRFModelFixed):
         super(PyRF_IZModelBitAcc, self).__init__(proc_params)
 
     def run_spk(self):
-        raise(Exception("Not implemented error"))
-        # self.scale_threshold()
-        # self.sub_thresh_dynamics()
-        # s_out = self.real >= self.effective_vth
-        # self.real = self.real * (1 - s_out)  # reset dynamics
-        # self.imag = s_out * (self.effective_vth -1) + (1 - s_out) * self.imag  # the 1e-5 insures we don't spike again
-        # self.s_out.send(s_out)
+        self.scale_threshold()
+        self.sub_thresh_dynamics()
+        s_out = self.imag >= self.effective_vth
+
+        self.real = self.real * (1 - s_out)  # reset dynamics
+        self.imag = s_out * (self.effective_vth-1) + (1 - s_out) * self.imag  # the 1e-5 insures we don't spike again
+        self.s_out.send(s_out) 

@@ -31,7 +31,7 @@ class AbstractPyRFModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         old_imag = deepcopy(self.imag)
         self.sub_thresh_dynamics()
-        s_out = (self.real >= self.vth)   (self.imag >= 0) * (old_imag < 0)
+        s_out = (self.real >= self.vth)  * (self.imag >= 0) * (old_imag < 0)
         self.s_out.send(s_out)
 
 
