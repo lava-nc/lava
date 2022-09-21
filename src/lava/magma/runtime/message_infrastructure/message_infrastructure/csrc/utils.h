@@ -15,10 +15,6 @@
 
 #define MAX_ARRAY_DIMS (5)
 
-#include <vector>
-
-#include <vector>
-
 namespace message_infrastructure {
 
 enum ProcessType {
