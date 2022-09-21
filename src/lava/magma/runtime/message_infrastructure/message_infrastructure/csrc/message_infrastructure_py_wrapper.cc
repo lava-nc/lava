@@ -54,6 +54,15 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("stop", [](PosixActor &actor){
         actor.Control(ActorCmd::CmdStop);
       })
+    .def("status_stopped", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusStopped);
+      })
+    .def("status_running", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusRunning);
+      })
+    .def("status_paused", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusPaused);
+      })
     .def("error", [](PosixActor &actor){
         actor.SetStatus(ActorStatus::StatusError);
       });

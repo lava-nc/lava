@@ -12,6 +12,7 @@ from message_infrastructure import (SendPort,
                                     Actor,
                                     ActorStatus,
                                     ActorCmd)
+from message_infrastructure.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
@@ -20,18 +21,6 @@ from lava.magma.runtime.mgmt_token_enums import (
     enum_equal,
     MGMT_COMMAND,
     MGMT_RESPONSE, )
-
-class Selector:
-    def select(
-            self,
-            *args: ty.Tuple[
-                ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
-            ],
-    ):
-        for channel, action in args:
-            if channel.probe():
-                return action
-        return None
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -59,7 +48,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._actor: Actor = None
         self._action: str = 'cmd'
-        self._status: ActorStatus = ActorStatus.StatusRunning
         self._ctlcmd: ActorCmd = None
         self._control_handlers: ty.Dict[ActorCmd, ty.Callable] = {
             ActorCmd.CmdRun: self._run,
@@ -104,24 +92,22 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         for p in self.py_ports:
             p.start()
         self.run()
-        return self._status
 
     def _run(self):
-        self._status = ActorStatus.StatusRunning
+        self._actor.status_running()
         
     def _stop(self):
         """
         Command handler for Stop command.
         """
-        self._status = ActorStatus.StatusStopped
-        self._stopped = True
+        self._actor.status_stopped()
         self.join()
 
     def _pause(self):
         """
         Command handler for Pause command.
         """
-        self._status = ActorStatus.StatusPaused
+        self._actor.status_paused()
 
     def _get_var(self):
         """Handles the get Var command from runtime service."""
@@ -190,25 +176,30 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
+            # Check Actor Status and ActorCmd
+            actor_status = self._actor.get_status()
+            if actor_status in [ActorStatus.StatusStopped, ActorStatus.StatusError]:
+                return
+            elif actor_status == ActorStatus.StatusPaused:
+                continue
             self._ctlcmd = self._actor.get_cmd()
             try:
                 if self._ctlcmd in self._control_handlers:
                     self._control_handlers[self._ctlcmd]()
-                    if self._status == ActorStatus.StatusStopped:
-                        return
-                    if self._status == ActorStatus.StatusPaused:
-                        continue
                 else:
+                    self._actor.error()
                     raise ValueError(
                         f"Illegal control command! ProcessModels of "
                         f"type {self.__class__.__qualname__} "
                         f"{self.model_id} cannot handle "
                         f"command: {self._ctlcmd} ")
             except Exception as inst:
-                self._status = ActorStatus.StatusError
                 self.join()
                 self._actor.error()
                 raise inst
+                # If here should return to cpplib
+
+            # Check Action in model
             if self._action == None:
                 continue
             elif self._action == 'cmd':
