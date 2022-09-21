@@ -80,8 +80,8 @@ class TestCspScifModels(unittest.TestCase):
         volts_lif_sig = []
         for j in range(num_steps):
             if j + 1 in t_inj_spk:
-                spk_src.data.set(np.array([[t_inj_spk[j + 1]] *
-                                           num_neurons]).astype(int))
+                spk_src.data.set(np.array(
+                    [[t_inj_spk[j + 1]] * num_neurons]).astype(int))
             csp_scif.run(condition=run_condition, run_cfg=run_config)
             spk_src.data.set(np.array([[0] * num_neurons]).astype(int))
             volts_scif.append(csp_scif.state.get())
@@ -190,9 +190,9 @@ class TestCspScifModels(unittest.TestCase):
         self.assertTrue(np.all(v_lif_wta[wta_neg_spk_rfct_interrupt] == -1))
         self.assertTrue(np.all(v_lif_sig[sig_neg_spk_rfct_interrupt] == -1))
         # Test post-inhibitory-injection SCIF voltage and spiking
-        spk_idxs_post_inj = np.array([inj_times[1] + (theta // step_size) - 1 +
-                                      j * total_period for j in range(
-            num_epochs)]).astype(int)
+        idx_lst = [inj_times[1] + (theta // step_size) - 1 + j * total_period
+                   for j in range(num_epochs)]
+        spk_idxs_post_inj = np.array(idx_lst).astype(int)
         wta_pos_spk_idxs = spk_idxs_post_inj + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
         wta_neg_spk_idxs = wta_pos_spk_idxs - neg_tau_ref
@@ -246,9 +246,9 @@ class TestCspScifModels(unittest.TestCase):
         self.assertTrue(np.all(v_scif[inh_inj] == 0))
 
         # Test post-inhibitory-injection SCIF voltage and spiking
-        spk_idxs_post_inj = np.array([inj_times[1] + (theta // step_size) - 1 +
-                                      j * total_period for j in range(
-            num_epochs)]).astype(int)
+        idx_lst = [inj_times[1] + (theta // step_size) - 1 + j * total_period
+                   for j in range(num_epochs)]
+        spk_idxs_post_inj = np.array(idx_lst).astype(int)
         wta_pos_spk_idxs = spk_idxs_post_inj + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
         wta_neg_spk_idxs = wta_pos_spk_idxs - neg_tau_ref
@@ -314,8 +314,8 @@ class TestQuboScifModels(unittest.TestCase):
         volts_lif_sig = []
         for j in range(num_steps):
             if j + 1 in t_inj_spk:
-                spk_src.data.set(np.array([[t_inj_spk[j + 1]] *
-                                           num_neurons]).astype(int))
+                spk_src.data.set(
+                    np.array([[t_inj_spk[j + 1]] * num_neurons]).astype(int))
             qubo_scif.run(condition=run_condition, run_cfg=run_config)
             spk_src.data.set(np.array([[0] * num_neurons]).astype(int))
             volts_scif.append(qubo_scif.state.get())
@@ -421,24 +421,24 @@ class TestQuboScifModels(unittest.TestCase):
         wta_pos_spk_pre_inj = spk_idxs_pre_inj + 1
         sig_pos_spk_pre_inj = wta_pos_spk_pre_inj + 1
         inh_inj = inj_times[0]
-        wta_spk_rfct_interrupt = inh_inj + 1
+        wta_spk_rfct_interrupt = inh_inj
         sig_spk_rfct_interrupt = wta_spk_rfct_interrupt + 1
         self.assertTrue(np.all(v_scif[spk_idxs_pre_inj] == neg_tau_ref))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_pre_inj] == 1))
-        self.assertTrue(np.all(v_lif_sig[sig_pos_spk_pre_inj] ==
-                               cost_diag + wt * step_size))
+        self.assertTrue(np.all(
+            v_lif_sig[sig_pos_spk_pre_inj] == cost_diag + wt * step_size))
         v_gt_inh_inj = (inh_inj - spk_idxs_pre_inj + 1) - t_inj_spk[inh_inj]
         self.assertTrue(np.all(v_scif[inh_inj] == v_gt_inh_inj))
         self.assertTrue(np.all(v_lif_wta[wta_spk_rfct_interrupt] == 1))
-        self.assertTrue(np.all(v_lif_sig[sig_spk_rfct_interrupt] ==
-                               cost_diag + wt * step_size))
+        self.assertTrue(np.all(
+            v_lif_sig[sig_spk_rfct_interrupt] == cost_diag + wt * step_size))
         # Test post-inhibitory-injection SCIF voltage and spiking
-        spk_idxs_post_inj = np.array([inj_times[2] + (theta // step_size) - 1 +
-                                      j * total_period for j in range(
-            num_epochs)]).astype(int)
+        idx_lst = [inj_times[2] + (theta // step_size) - 1 + j * total_period
+                   for j in range(num_epochs)]
+        spk_idxs_post_inj = np.array(idx_lst).astype(int)
         wta_pos_spk_idxs = spk_idxs_post_inj + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
         self.assertTrue(np.all(v_scif[spk_idxs_post_inj] == neg_tau_ref))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_idxs] == 1))
-        self.assertTrue(np.all(v_lif_sig[sig_pos_spk_idxs] ==
-                               cost_diag + wt * step_size))
+        self.assertTrue(np.all(
+            v_lif_sig[sig_pos_spk_idxs] == cost_diag))
