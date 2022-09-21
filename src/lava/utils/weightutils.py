@@ -62,12 +62,10 @@ def optimize_weight_bits(
                          f"weights between {np.min(weights)} and "
                          f"{np.max(weights)}.")
 
-    # Determine the exponent required to represent the weight matrix with a
-    # weight-matissa of up to 8 bits.
     weight_exp = _determine_weight_exp(weights, sign_mode)
-    weights = np.left_shift(weights.astype(np.int32), -weight_exp)
-
     num_weight_bits = _determine_num_weight_bits(weights, weight_exp, sign_mode)
+
+    weights = np.left_shift(weights.astype(np.int32), int(-weight_exp))
 
     if loihi2:
         weights = weights // (1 << (8 - num_weight_bits))
