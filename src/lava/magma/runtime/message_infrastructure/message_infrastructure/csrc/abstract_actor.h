@@ -40,7 +40,7 @@ struct ActorCtrlStatus {
 class AbstractActor {
  public:
   using ActorPtr = AbstractActor *;
-  using TargetFn = std::function<int(ActorPtr)>;
+  using TargetFn = std::function<void(ActorPtr)>;
 
   explicit AbstractActor(TargetFn target_fn);
   virtual int ForceStop() = 0;

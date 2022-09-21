@@ -7,7 +7,7 @@
 
 namespace message_infrastructure {
 
-AbstractActor::AbstractActor(std::function<int(ActorPtr)> target_fn)
+AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
     : target_fn_(target_fn)
 {
     this->ctl_status_shm_ = GetSharedMemManager().AllocChannelSharedMemory<RwSharedMemory>(
@@ -76,11 +76,8 @@ void AbstractActor::Run() {
         break;
       }
       if (!handle.second) {
-        int target_ret = target_fn_(this);
-        LAVA_LOG(LOG_MP, "Actor: target_ret:%d, ActorStatus:%d\n", target_ret, GetStatus());
-        if (target_ret == static_cast<int>(ActorStatus::StatusStopped)) {
-            break;
-        }
+        target_fn_(this);
+        LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
       } else {
         // waiting
         _mm_pause();
