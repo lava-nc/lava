@@ -9,75 +9,110 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/shm.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <unistd.h>
-
 #include <memory>
-#include <vector>
+#include <set>
+#include <string>
+#include <atomic>
+#include <functional>
+
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
 
+#define SHM_FLAG O_RDWR | O_CREAT
+#define SHM_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
+
+using HandleFn = std::function<void(void *)>;
+
 class SharedMemory {
  public:
-  SharedMemory(size_t mem_size, int shmid) {
-    data_ = reinterpret_cast<char*> (shmat(shmid, NULL, 0));
-    shmid_ = shmid;
-  }
-  int GetDataElem(int offset) {
-    return static_cast<int> (data_[offset]);
-  }
-  void* MemMap() {
-    data_ = reinterpret_cast<char*> (shmat(shmid_, NULL, 0));
-    return data_;
-  }
+  SharedMemory() {}
+  SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
+  SharedMemory(const size_t &mem_size, const int &shmfd);
+  ~SharedMemory();
+  void Start();
+  void Load(HandleFn consume_fn);
+  void Store(HandleFn store_fn);
+  void Close();
+  void InitSemaphore();
+  int GetDataElem(int offset);
+
  private:
-  int shmid_;
-  char* data_;
+  size_t size_;
+  int shmfd_;
+  std::string req_name_ = "req";
+  std::string ack_name_ = "ack";
+  sem_t *req_;
+  sem_t *ack_;
+  void *data_;
+
+  void* MemMap();
 };
 
-using SharedMemoryPtr = SharedMemory*;
+class RwSharedMemory {
+ public:
+  RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
+  ~RwSharedMemory();
+  void InitSemaphore();
+  void Start();
+  void Handle(HandleFn handle_fn);
+  void Close();
+
+ private:
+  size_t size_;
+  int shmfd_;
+  std::string sem_name_ = "sem";
+  sem_t *sem_;
+  void *data_;
+
+  void *GetData();
+};
+
+using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
+using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
 class SharedMemManager {
  public:
-  SharedMemManager() {
-    this->key_ = 0x5555;
-  }
-  explicit SharedMemManager(int key) {
-    this->key_ = key;
-  }
-  int AllocSharedMemory(size_t mem_size) {
-    int shmid = shmget(key_, mem_size, 0644|IPC_CREAT);
-    if (shmid < 0)
-      return -1;
+  ~SharedMemManager();
+  int AllocSharedMemory(const size_t &mem_size);
 
-    shms_.push_back(shmid);
-    key_++;
-    return shmid;
-  }
-
-  int DeleteSharedMemory(int shmid) {
-    // Release specific shared memory
-    int del_cnt = 0;
-    for (auto it = shms_.begin(); it != shms_.end(); it++) {
-      if ((*it) == shmid) {
-        shms_.erase(it);
-        del_cnt++;
-      }
+  template<typename T>
+  std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
+    std::string str = shm_str_ + std::to_string(key_++);
+    int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
+    if (shmfd == -1) {
+      LAVA_LOG_ERR("Create shared memory object failed.\n");
+      exit(-1);
     }
-    return del_cnt;
+    int err = ftruncate(shmfd, mem_size);
+    if (err == -1) {
+      LAVA_LOG_ERR("Resize shared memory segment failed.\n");
+      exit(-1);
+    }
+    shm_strs_.insert(str);
+    int key = key_;
+    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, key);
+    shm->InitSemaphore();
+    return shm;
   }
 
-  int Stop() {
-    int stop_cnt = shms_.size();
-    shms_.clear();
-    return stop_cnt;
-  }
+  void DeleteSharedMemory(const std::string &shm_str);
+  friend SharedMemManager &GetSharedMemManager();
 
  private:
-  key_t key_ = 0;
-  std::vector<int> shms_;
+  SharedMemManager() {}
+  std::set<std::string> shm_strs_;
+  std::atomic<key_t> key_ {0xdead};
+  static SharedMemManager smm_;
+  std::string shm_str_ = "shm";
 };
+
+SharedMemManager& GetSharedMemManager();
+
+using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure
 

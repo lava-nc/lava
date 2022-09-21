@@ -12,6 +12,7 @@ pybind11 = {extras = ["global"], version = "^2.10.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+psutil = "^5.9.2"
 
 [tool.poetry.build]
 script = "setup.py"

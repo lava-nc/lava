@@ -20,7 +20,7 @@ from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from message_infrastructure.ports import PyInPort, PyOutPort, PyRefPort, \
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort, \
     PyVarPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
@@ -29,7 +29,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 
 
 class MockMessageInterface:
@@ -49,7 +49,7 @@ class TestChannelBuilder(unittest.TestCase):
                 name="mock", shape=(1, 2), d_type=np.int32,
                 port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=ChannelTransferType.SHMEMCHANNEL,
+                channel_type=ChannelBackend.SHMEMCHANNEL,
                 src_port_initializer=port_initializer,
                 dst_port_initializer=port_initializer,
                 src_process=None,

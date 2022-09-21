@@ -8,9 +8,9 @@ import logging
 import numpy as np
 
 from message_infrastructure import SendPort, RecvPort
-from message_infrastructure import Selector
 from lava.magma.core.model.model import AbstractProcessModel
-from message_infrastructure.ports import AbstractPortImplementation, PyVarPort
+from lava.magma.core.model.interfaces import AbstractPortImplementation
+from lava.magma.core.model.py.ports import PyVarPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,

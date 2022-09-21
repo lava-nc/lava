@@ -5,9 +5,8 @@ import typing as ty
 from functools import partial
 
 from message_infrastructure import CppMultiProcessing
-from message_infrastructure import SharedMemManager
 from message_infrastructure import Actor
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 from message_infrastructure import Channel
 
 from message_infrastructure.message_infrastructure_interface \
@@ -46,11 +45,11 @@ class MultiProcessing(MessageInfrastructureInterface):
         bound_target_fn = partial(target_fn, builder=builder)
         ret = self._mp.build_actor(bound_target_fn)
 
-    def stop(self):
+    def stop(self, block=False):
         """Stops the shared memory manager"""
-        self._mp.stop()
+        self._mp.stop(block)
 
     def channel_class(self,
-                      channel_type: ChannelTransferType) -> ty.Type[Channel]:
+                      channel_type: ChannelBackend) -> ty.Type[Channel]:
         """TODO: depricated. Return None"""
         return None

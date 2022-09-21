@@ -20,8 +20,9 @@ from lava.magma.compiler.var_model import LoihiAddress, LoihiVarModel
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from message_infrastructure.ports import (PyInPort, PyOutPort, PyRefPort,
-                                          PyVarPort, AbstractPortImplementation)
+from lava.magma.core.model.py.ports import (PyInPort, PyOutPort, PyRefPort,
+                                            PyVarPort,
+                                            AbstractPortImplementation)
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import (AbstractPort, InPort, OutPort,
@@ -33,7 +34,7 @@ from lava.magma.core.resources import CPU, LMT, NeuroCore
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
-from message_infrastructure import ChannelTransferType
+from message_infrastructure import ChannelBackend
 
 
 # A minimal process (A) with an InPort, OutPort and RefPort
@@ -301,7 +302,7 @@ class TestChannelBuildersFactory(unittest.TestCase):
         builders = self.channel_builder_factory.from_channel_map(
             self.channel_map, self.cfg
         )
-        channel_types = {ChannelTransferType.SHMEMCHANNEL}
+        channel_types = {ChannelBackend.SHMEMCHANNEL}
         outcome = {builder.channel_type for builder in builders}
         self.assertEqual(outcome, channel_types)
 
@@ -369,7 +370,7 @@ class TestChannelBuildersMp(unittest.TestCase):
         # process and port
         # Let's check the first one in detail
         self.assertEqual(channel_builders[0].channel_type,
-                         ChannelTransferType.SHMEMCHANNEL)
+                         ChannelBackend.SHMEMCHANNEL)
         self.assertEqual(channel_builders[0].src_process, p1)
         self.assertEqual(channel_builders[0].src_port_initializer.name, "out")
         self.assertEqual(channel_builders[0].src_port_initializer.shape, (1,))

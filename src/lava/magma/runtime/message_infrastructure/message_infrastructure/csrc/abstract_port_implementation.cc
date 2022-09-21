@@ -24,6 +24,7 @@ int AbstractPortImplementation::Start() {
   for (auto port : this->recv_ports_){
     port->Start();
   }
+  return 0;
 }
 
 int AbstractPortImplementation::Join() {
@@ -33,12 +34,6 @@ int AbstractPortImplementation::Join() {
   for (auto port : this->recv_ports_){
     port->Join();
   }
+  return 0;
 }
-
-/*
-std::vector<int> AbstractPortImplementation::GetShape() {
-  return this->shape_;
-}
-*/
-
-}  // namespace message_infrastrature
+}  // namespace message_infrastructure

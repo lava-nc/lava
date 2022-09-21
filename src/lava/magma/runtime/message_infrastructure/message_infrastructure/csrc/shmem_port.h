@@ -5,11 +5,14 @@
 #ifndef SHMEM_PORT_H_
 #define SHMEM_PORT_H_
 
-#include <pybind11/numpy.h>
-
-#include <thread>  // NOLINT [build/c++11]
 #include <queue>
 #include <string>
+#include <vector>
+#include <memory>
+#include <atomic>
+#include <mutex>  // NOLINT
+#include <condition_variable>  // NOLINT
+#include <thread>  // NOLINT
 
 #include "abstract_port.h"
 #include "shm.h"
@@ -17,72 +20,84 @@
 
 namespace message_infrastructure {
 
-template<class T>
-class ShmemRecvQueue {
- public:
-  T get(bool block = true, time_t timeout = 0, bool peek = false);
- private:
-  std::queue<T> queue_;
-};
-template<class T>
-class ShmemSendPort : public AbstractSendPort {
+using ThreadPtr = std::shared_ptr<std::thread>;
+
+class ShmemSendPort final : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
-                Proto *proto,
                 const size_t &size,
-                sem_t *req,
-                sem_t *ack);
-  std::string Name();
-  pybind11::dtype Dtype();
-  ssize_t* Shape();
-  size_t Size();
-  int Start();
-  int Probe();
-  int Send();
-  int Join();
+                const size_t &nbytes);
+  void Start();
+  void Send(MetaDataPtr);
+  void Join();
   int AckCallback();
+  bool Probe();
 
-  SharedMemoryPtr shm_ = NULL;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
+ private:
+  SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
-  bool done_ = false;
-  void *array_ = NULL;
-  sem_t *semaphore_ = NULL;
+  std::atomic_bool done_;
   void *observer = NULL;
-  std::thread *thread_ = NULL;
+  ThreadPtr ack_callback_thread_ = nullptr;
 };
-template<class T>
-class ShmemRecvPort : public AbstractRecvPort {
+
+using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
+
+class ShmemRecvQueue {
+ public:
+  ShmemRecvQueue(const std::string& name,
+                 const size_t &size,
+                 const size_t &nbytes);
+  ~ShmemRecvQueue();
+  void Push(void* src);
+  void Pop();
+  void* Front();
+  void* FrontPop();
+  bool Probe();
+  bool Empty();
+  void Free();
+  void Stop();
+
+ private:
+  std::string name_;
+  size_t nbytes_;
+  size_t size_;
+  std::vector<void *> array_;
+  std::vector<void *> drop_array_;
+  std::atomic<uint32_t> read_index_;
+  std::atomic<uint32_t> write_index_;
+  std::atomic_bool done_;
+  std::atomic_bool overlap_;
+};
+
+using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
+
+class ShmemRecvPort final : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
-                Proto *proto,
                 const size_t &size,
-                sem_t *req,
-                sem_t *ack);
-  std::string Name();
-  pybind11::dtype Dtype();
-  ssize_t* Shape();
-  size_t Size();
-  int Start();
-  int Probe();
-  int Recv();
-  int Join();
-  int Peek();
+                const size_t &nbytes);
+  void Start();
+  bool Probe();
+  MetaDataPtr Recv();
+  void Join();
+  MetaDataPtr Peek();
   int ReqCallback();
+  void QueueRecv();
 
-  SharedMemoryPtr shm_ = NULL;
-  sem_t *req_ = NULL;
-  sem_t *ack_ = NULL;
+ private:
+  SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
-  bool done_ = false;
-  void *array_ = NULL;
+  std::atomic_bool done_;
   void *observer = NULL;
-  std::thread *thread_ = NULL;
-  ShmemRecvQueue<pybind11::array_t<T>> *queue = NULL;
+  ShmemRecvQueuePtr queue_ = nullptr;
+  ThreadPtr req_callback_thread_ = nullptr;
+  ThreadPtr recv_queue_thread_ = nullptr;
 };
+
+using ShmemRecvPortPtr = std::shared_ptr<ShmemRecvPort>;
 
 }  // namespace message_infrastructure
 

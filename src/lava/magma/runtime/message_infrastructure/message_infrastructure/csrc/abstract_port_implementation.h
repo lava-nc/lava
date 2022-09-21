@@ -23,12 +23,10 @@ class AbstractPortImplementation {
   explicit AbstractPortImplementation(const SendPortProxyList &send_ports);
   int Start();
   int Join();
-  // std::vector<int> GetShape();
 
  protected:
   SendPortProxyList send_ports_;
   RecvPortProxyList recv_ports_;
-  Proto proto_;
 };
 
 }  // namespace message_infrastructure

@@ -5,8 +5,17 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <semaphore.h>
+
+#include <memory>
+#include <vector>
+
+#define MAX_ARRAY_DIMS (5)
+
+#include <vector>
 
 #include <vector>
 
@@ -24,21 +33,22 @@ enum ChannelType {
   DDSCHANNEL = 2
 };
 
-struct Proto {
-  const ssize_t *shape_;
-  pybind11::dtype dtype_;
-  size_t nbytes_;
-};
+#define ACC_MODE (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | \
+  S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)
+
+#define CREAT_FLAG (O_CREAT | O_RDWR)
 
 struct MetaData {
   int64_t nd;
   int64_t type;
   int64_t elsize;
   int64_t total_size;
-  std::vector<int64_t> dims;
-  std::vector<int64_t> strides;
+  int64_t dims[MAX_ARRAY_DIMS] = {0};
+  int64_t strides[MAX_ARRAY_DIMS] = {0};
   void* mdata;
 };
+
+using MetaDataPtr = std::shared_ptr<MetaData>;
 
 }  // namespace message_infrastructure
 

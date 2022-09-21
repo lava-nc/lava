@@ -13,6 +13,21 @@
 
 namespace message_infrastructure {
 
+int CheckSemaphore(sem_t *sem) {
+  int sem_val;
+  sem_getvalue(sem, &sem_val);
+  if(sem_val < 0) {
+    LAVA_LOG_ERR("get the negtive sem value: %d\n", sem_val);
+    return -1;
+  }
+  if(sem_val == 1) {
+    LAVA_LOG_ERR("There is a semaphere not used\n");
+    return 1;
+  }
+  
+  return 0;
+}
+
 int PosixActor::Wait() {
   int status;
   // TODO: Add the options can be as args of the function
@@ -23,8 +38,8 @@ int PosixActor::Wait() {
     LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
     return -1;
   }
-  this->actor_status_->ctl_status = StatusStopped;
 
+  LAVA_DEBUG(LOG_ACTOR, "current actor status: %d\n", GetStatus());
   // Check the status
   return 0;
 
@@ -42,15 +57,14 @@ int PosixActor::ForceStop() {
       LAVA_LOG(LOG_MP, "The Actor child was ended with signal %d\n", status);
     }
   }
-  this->actor_status_->ctl_status = StatusStopped;
+  SetStatus(ActorStatus::StatusStopped);
   return 0;
 }
 
-int PosixActor::Run() {
+int PosixActor::Create() {
   pid_t pid = fork();
   if (pid > 0) {
     LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
-    this->actor_status_->ctl_status = StatusRunning;
     this->pid_ = pid;
     return ParentProcess;
   }
@@ -58,12 +72,7 @@ int PosixActor::Run() {
   if (pid == 0) {
     LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
     this->pid_ = getpid();
-    ReMapActorStatus();
-    int target_ret;
-    do {
-      target_ret = target_fn_(this);
-    } while (target_ret && (this->actor_status_->ctl_status != StatusStopped));
-    LAVA_LOG(LOG_MP, "child exist\n");
+    Run();
     exit(0);
   }
   LAVA_LOG_ERR("Cannot allocate new pid for the process\n");

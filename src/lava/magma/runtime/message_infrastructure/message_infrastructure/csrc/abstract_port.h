@@ -5,9 +5,6 @@
 #ifndef ABSTRACT_PORT_H_
 #define ABSTRACT_PORT_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -16,61 +13,40 @@
 #include "utils.h"
 
 namespace message_infrastructure {
-
 class AbstractPort {
  public:
-  AbstractPort() {}
-  std::string Name() {
-    return name_;
-  }
-  pybind11::dtype Dtype() {
-    return dtype_;
-  }
-  ssize_t* Shape() {
-    return shape_;
-  }
-  size_t Size() {
-    return size_;
-  }
+  AbstractPort(const std::string &name, const size_t &size,
+    const size_t &nbytes);
+  AbstractPort() = default;
+  virtual ~AbstractPort() = default;
 
-  int Start() {
-    return 0;
-  }
-  int Probe() {
-    return 0;
-  }
-  int Recv() {
-    return 0;
-  }
-  int Join() {
-    return 0;
-  }
+  std::string Name();
+  size_t Size();
+  virtual void Start() = 0;
+  virtual void Join() = 0;
+  virtual bool Probe() = 0;
 
- private:
+ protected:
   std::string name_;
-  pybind11::dtype dtype_;
-  ssize_t *shape_ = NULL;
   size_t size_;
+  size_t nbytes_;
 };
 
 class AbstractSendPort : public AbstractPort {
  public:
-  int Send() {
-    return 0;
-  }
+  using AbstractPort::AbstractPort;
+  virtual ~AbstractSendPort() = default;
+  virtual void Send(MetaDataPtr data) = 0;
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
-  int Recv() {
-    return 0;
-  }
-  int Peek() {
-    return 0;
-  }
+  using AbstractPort::AbstractPort;
+  virtual ~AbstractRecvPort() = default;
+  virtual MetaDataPtr Recv() = 0;
+  virtual MetaDataPtr Peek() = 0;
 };
 
-using AbstractPortPtr = std::shared_ptr<AbstractPort>;
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
 using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 
