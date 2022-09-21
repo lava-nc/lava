@@ -28,10 +28,10 @@ class Selector:
                 ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
             ],
     ):
-        while True:
-            for channel, action in args:
-                if channel.probe():
-                    return action
+        for channel, action in args:
+            if channel.probe():
+                return action
+        return None
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -209,8 +209,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 self.join()
                 self._actor.error()
                 raise inst
-
-            if self._action == 'cmd':
+            if self._action == None:
+                continue
+            elif self._action == 'cmd':
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
@@ -229,6 +230,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             else:
                 # Handle VarPort requests from RefPorts
                 self._handle_var_port(self._action)
+            self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
 
