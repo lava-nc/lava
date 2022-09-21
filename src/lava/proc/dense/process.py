@@ -22,7 +22,7 @@ class Dense(AbstractProcess):
                  name: ty.Optional[str] = None,
                  log_config: ty.Optional[LogConfig] = None) -> None:
         """Dense connections between neurons. Realizes the following abstract
-        behavior: a_out = weights * s_in '
+        behavior: a_out = weights * s_in
 
         Parameters
         ----------
