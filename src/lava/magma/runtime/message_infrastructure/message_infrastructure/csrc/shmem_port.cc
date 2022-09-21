@@ -78,9 +78,11 @@ void ShmemRecvQueue::Pop() {
 }
 
 void* ShmemRecvQueue::Front() {
-  if(Empty()) {
-    LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
-    return NULL;
+  while(Empty()) {
+    _mm_pause();
+    // LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
+    if(done_)
+      return NULL;
   }
   auto curr_read_index = read_index_.load(std::memory_order_acquire);
   void *ptr = array_[curr_read_index];
@@ -224,8 +226,11 @@ void ShmemRecvPort::Join() {
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
-  // return queue_->Front();
-  return NULL;
+  char *cptr = (char *)queue_->Front();
+  MetaDataPtr metadata_res = std::make_shared<MetaData>();
+  memcpy(metadata_res.get(), cptr, sizeof(MetaData));
+  metadata_res->mdata = (void*)(cptr + sizeof(MetaData));
+  return metadata_res;
 }
 
 int ShmemRecvPort::ReqCallback() {

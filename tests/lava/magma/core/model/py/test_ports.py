@@ -4,7 +4,6 @@
 
 import unittest
 import time
-from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 import typing as ty
 import functools as ft
