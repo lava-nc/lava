@@ -52,6 +52,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string>())
+    .def_property_readonly("src_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference)
     .def("get_send_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
     .def("get_recv_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
   py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
@@ -61,7 +63,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("probe", &SendPortProxy::Probe)
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
-    .def("name", &SendPortProxy::Name)
+    .def_property_readonly("name", &SendPortProxy::Name)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
     .def(py::init<>())
