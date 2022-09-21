@@ -706,6 +706,8 @@ class Compiler:
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
                     rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
                     rs_kwargs["post_run_fxs"] = run_cfg.post_run_fxs
+                    rs_kwargs["embedded_allocation_order"] = \
+                        run_cfg.embedded_allocation_order
 
                 rs_builder = RuntimeServiceBuilder(
                     rs_class,

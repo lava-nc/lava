@@ -15,17 +15,20 @@ if ty.TYPE_CHECKING:
     pass
 from lava.magma.core.process.variable import Var
 
+ChipIdx: int
+CoreIdx: int
+
 
 @dataclass
 class LoihiAddress:
     # physical chip id of the var
-    physical_chip_id: int
+    physical_chip_id: ChipIdx
     # physical core id of the nc var or lmt_id of the spike counter
-    physical_core_id: int
+    physical_core_id: CoreIdx
     # logical chip id used in compilation, before mapping to hardware addresses
-    logical_chip_id: int
+    logical_chip_id: ChipIdx
     # logical core id used in compilation, before mapping to hardware addresses
-    logical_core_id: int
+    logical_core_id: CoreIdx
     # logical address/index of the var; used with nodesets for get/set
     logical_idx_addr: int
     # length of the contiguous addresses of var on core_id on chip_id
@@ -122,3 +125,62 @@ class CVarModel(LoihiVarModel):
 @dataclass
 class NcVarModel(LoihiVarModel):
     pass
+
+
+@dataclass
+class Region:
+    x_min: int
+    x_max: int
+    y_min: int
+    y_max: int
+    logical_chip_idx: ChipIdx
+    logical_core_idx: CoreIdx
+    physical_chip_idx: ChipIdx = None
+    physical_core_idx: CoreIdx = None
+
+
+@dataclass
+class ConvInVarModel(AbstractVarModel, Mappable):
+    x_dim: int = 0
+    y_dim: int = 0
+    f_dim: int = 0
+    x_split: int = 0
+    f_split: int = 0
+    regions: ty.List[Region] = None
+
+    def get_logical(self) -> ty.List[NcLogicalAddress]:
+        """
+
+        Returns
+        -------
+        Returns logical address of the port initializer.
+        """
+        return [NcLogicalAddress(chip_id=region.logical_chip_idx,
+                                 core_id=region.logical_core_idx) for region in
+                self.regions]
+
+    def set_virtual(self, addrs: ty.List[NcVirtualAddress]):
+        """
+        Sets physical address of the port initializer
+        Parameters
+        ----------
+        addrs: List of address
+
+        Returns
+        -------
+
+        """
+        if len(addrs) != len(self.regions):
+            raise ValueError("Length of list of address provided doesn't "
+                             "match size of the regions list of the port "
+                             "initializer.")
+        for idx, addr in enumerate(addrs):
+            self.regions[idx].physical_chip_idx = addr.chip_id
+            self.regions[idx].physical_core_idx = addr.core_id
+
+
+@dataclass
+class ConvNeuronVarModel(LoihiNeuronVarModel):
+    alloc_dims: ty.List[ty.Tuple[int, int, int]] = None
+    valid_dims: ty.List[ty.Tuple[int, int, int]] = None
+    var_shape: ty.Tuple[int, int, int] = None
