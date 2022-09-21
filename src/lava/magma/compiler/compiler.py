@@ -46,7 +46,6 @@ from lava.magma.compiler.builders.channel_builder import (
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
-from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.compiler_graphs import ProcGroup, ProcGroupDiGraphs
 from lava.magma.compiler.compiler_utils import split_proc_builders_by_type
 from lava.magma.compiler.executable import Executable
