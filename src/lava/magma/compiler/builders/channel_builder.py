@@ -14,6 +14,7 @@ from lava.magma.compiler.builders. \
 from message_infrastructure import (
     Channel,
     ChannelBackend,
+    ChannelQueueSize,
 )
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
@@ -59,7 +60,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         itemsize = np.dtype(self.src_port_initializer.d_type).itemsize
         nbytes = np.prod(self.src_port_initializer.shape) * itemsize
         return Channel(self.channel_type,
-                       self.src_port_initializer.size,
+                       ChannelQueueSize,
                        nbytes,
                        self.src_port_initializer.name)
 
@@ -99,7 +100,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         nbytes = np.prod(self.port_initializer.shape) * \
             self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       self.port_initializer.size,
+                       ChannelQueueSize,
                        nbytes,
                        self.port_initializer.name)
 
@@ -137,7 +138,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         nbytes = np.prod(self.port_initializer.shape) * \
             self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       self.port_initializer.size,
+                       ChannelQueueSize,
                        nbytes,
                        self.port_initializer.name)
 
