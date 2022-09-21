@@ -91,9 +91,9 @@ void* ShmemRecvQueue::FrontPop() {
   while(Empty()) {
     _mm_pause();
     // LAVA_LOG_WARN(LOG_SMMP, "ShmemChannel is empty.\n");
+    if(done_)
+      return NULL;
   }
-  if(done_)
-    return NULL;
   auto curr_read_index = read_index_.load(std::memory_order_acquire);
   void *ptr = array_[curr_read_index];
   auto next_read_index = curr_read_index + 1;
@@ -115,22 +115,9 @@ bool ShmemRecvQueue::Probe() {
 }
 
 bool ShmemRecvQueue::Empty() {
-  bool res;
   auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   auto const curr_write_index = write_index_.load(std::memory_order_acquire);
-
-  if (curr_read_index == curr_write_index && !overlap_)
-    res = true;
-  else
-    res = false;
-  
-  read_index_.store(curr_read_index, std::memory_order_release);
-  write_index_.store(curr_write_index, std::memory_order_release);
-
-  if(done_)
-    res = false;
-
-  return res;
+  return curr_read_index == curr_write_index && !overlap_;
 }
 
 void ShmemRecvQueue::Free() {
@@ -156,22 +143,7 @@ void ShmemRecvQueue::Free() {
 }
 
 ShmemRecvQueue::~ShmemRecvQueue() {
-  if(!Empty()) {
-    auto const curr_read_index = read_index_.load(std::memory_order_acquire);
-    auto const curr_write_index = write_index_.load(std::memory_order_acquire);
-    int max, min;
-    if(curr_read_index < curr_write_index) {
-      max = curr_write_index;
-      min = curr_read_index;
-    } else {
-      min = curr_write_index + 1;
-      max = curr_read_index + 1;
-    }
-    for(int i = min; i < max; i++)
-      if(array_[i]) free(array_[i]);
-  }
-  for(auto i = 0; i < drop_array_.size(); i++)
-    free(drop_array_[i]);
+  Free();
 }
 
 ShmemSendPort::ShmemSendPort(const std::string &name,
@@ -201,7 +173,6 @@ bool ShmemSendPort::Probe() {
 
 void ShmemSendPort::Join() {
   done_ = true;
-  shm_->Close();
 }
 
 int ShmemSendPort::AckCallback() {
@@ -225,12 +196,14 @@ void ShmemRecvPort::Start() {
 }
 
 void ShmemRecvPort::QueueRecv() {
-  while(!done_) {
-    shm_->Load([this](void* data){
+  while(!done_.load()) {
+    auto ret = shm_->Load([this](void* data){
       this->queue_->Push(data);
     });
+    if (!ret) {
+      _mm_pause();
+    }
   }
-  queue_->Free();
 }
 
 bool ShmemRecvPort::Probe() {
@@ -247,10 +220,8 @@ MetaDataPtr ShmemRecvPort::Recv() {
 
 void ShmemRecvPort::Join() {
   done_ = true;
-  queue_->Stop();
-  // req_callback_thread_->join();
   recv_queue_thread_->join();
-  shm_->Close();
+  queue_->Stop();
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {

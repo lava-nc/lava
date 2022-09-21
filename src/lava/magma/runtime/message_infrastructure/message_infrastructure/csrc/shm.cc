@@ -33,12 +33,14 @@ void SharedMemory::Store(HandleFn store_fn) {
   sem_post(req_);
 }
 
-void SharedMemory::Load(HandleFn consume_fn) {
+bool SharedMemory::Load(HandleFn consume_fn) {
   if (!sem_trywait(req_))
   {
       consume_fn(MemMap());
       sem_post(ack_);
+      return true;
   }
+  return false;
 }
 
 void SharedMemory::Close() {
