@@ -13,8 +13,7 @@ from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
 from message_infrastructure import (
     Channel,
-    ChannelBackend,
-    ChannelQueueSize,
+    ChannelBackend
 )
 from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
@@ -60,7 +59,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         itemsize = np.dtype(self.src_port_initializer.d_type).itemsize
         nbytes = np.prod(self.src_port_initializer.shape) * itemsize
         return Channel(self.channel_type,
-                       ChannelQueueSize,
+                       self.src_port_initializer.size,
                        nbytes,
                        self.src_port_initializer.name)
 
@@ -97,10 +96,10 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
+        itemsize = np.dtype(self.port_initializer.d_type).itemsize
+        nbytes = np.prod(self.port_initializer.shape) * itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       ChannelQueueSize,
+                       self.port_initializer.size,
                        nbytes,
                        self.port_initializer.name)
 
@@ -135,10 +134,10 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
+        itemsize = np.dtype(self.port_initializer.d_type).itemsize
+        nbytes = np.prod(self.port_initializer.shape) * itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       ChannelQueueSize,
+                       self.port_initializer.size,
                        nbytes,
                        self.port_initializer.name)
 
