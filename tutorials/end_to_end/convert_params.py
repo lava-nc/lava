@@ -1,3 +1,6 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 import numpy as np
 import warnings
 from scipy.optimize import fsolve
@@ -5,7 +8,6 @@ from scipy.special import zetac
 from scipy.special import erf
 
 
-# Method to convert parameters from rate to LIF
 def convert_rate_to_lif_params(**kwargs):
     '''Convert rate parameters to LIF parameters.
     The mapping is based on A unified view on weakly correlated recurrent
@@ -87,13 +89,13 @@ def convert_rate_to_lif_params(**kwargs):
     # Define auxiliary functions for weight conversion
     def _mean_input(weight):
         '''
-        Calculate mean input to single neuron given mean exciatory weight
+        Calculate mean input to single neuron given mean excitatory weight
         '''
         return num_neurons_exc * (1 - gamma * g_factor) * weight * rate + bias
 
     def _std_input(weight):
         '''
-        Calculate mean input to single neuron given mean exciatory weight
+        Calculate mean input to single neuron given mean excitatory weight
         '''
         return num_neurons_exc * (1 + gamma * g_factor**2) * weight ** 2 * rate
 
