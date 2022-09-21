@@ -15,7 +15,6 @@ from message_infrastructure import (
     Channel,
     ChannelBackend
 )
-from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)

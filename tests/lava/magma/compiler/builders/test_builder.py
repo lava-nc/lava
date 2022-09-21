@@ -9,13 +9,7 @@ import numpy as np
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import Channel, ChannelType, \
-    AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import (
-    PyPyChannel,
-    CspSendPort,
-    CspRecvPort,
-)
+from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
@@ -29,53 +23,52 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 
-from message_infrastructure import ChannelBackend
+from message_infrastructure import (
+    ChannelBackend,
+    Channel,
+    AbstractTransferPort,
+)
 
 
 class MockMessageInterface:
-    def __init__(self, smm):
-        self.smm = smm
+    def __init__(self):
+        pass
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return PyPyChannel
+        return Channel
 
 
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        smm: SharedMemoryManager = SharedMemoryManager()
+        port_initializer: PortInitializer = PortInitializer(
+            name="mock", shape=(1, 2), d_type=np.int32,
+            port_type='DOESNOTMATTER', size=64)
+        channel_builder: ChannelBuilderMp = ChannelBuilderMp(
+            channel_type=ChannelBackend.SHMEMCHANNEL,
+            src_port_initializer=port_initializer,
+            dst_port_initializer=port_initializer,
+            src_process=None,
+            dst_process=None,
+        )
+
+        mock = MockMessageInterface()
+        channel: Channel = channel_builder.build(mock)
+        assert isinstance(channel, Channel)
+        assert isinstance(channel.get_send_port(), AbstractTransferPort)
+        assert isinstance(channel.get_recv_port(), AbstractTransferPort)
         try:
-            port_initializer: PortInitializer = PortInitializer(
-                name="mock", shape=(1, 2), d_type=np.int32,
-                port_type='DOESNOTMATTER', size=64)
-            channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=ChannelBackend.SHMEMCHANNEL,
-                src_port_initializer=port_initializer,
-                dst_port_initializer=port_initializer,
-                src_process=None,
-                dst_process=None,
-            )
+            channel.get_send_port().start()
+            channel.get_recv_port().start()
 
-            smm.start()
-            mock = MockMessageInterface(smm)
-            channel: Channel = channel_builder.build(mock)
-            assert isinstance(channel, PyPyChannel)
-            assert isinstance(channel.src_port, CspSendPort)
-            assert isinstance(channel.dst_port, CspRecvPort)
-
-            channel.src_port.start()
-            channel.dst_port.start()
-
-            expected_data = np.array([[1, 2]])
-            channel.src_port.send(data=expected_data)
-            data = channel.dst_port.recv()
+            expected_data = np.array([[1, 2]], dtype=np.int32)
+            channel.get_send_port().send(expected_data)
+            data = channel.get_recv_port().recv()
+            print(data)
             assert np.array_equal(data, expected_data)
-
-            channel.src_port.join()
-            channel.dst_port.join()
-
         finally:
-            smm.shutdown()
+            channel.get_send_port().join()
+            channel.get_recv_port().join()
 
 
 # A test Process with a variety of Ports and Vars of different shapes,
@@ -117,11 +110,10 @@ class ProcModel(AbstractPyProcessModel):
 
 
 # A fake CspPort just to test ProcBuilder
-class FakeCspPort(AbstractCspPort):
+class FakeCspPort:
     def __init__(self, name="mock"):
         self._name = name
 
-    @property
     def name(self) -> str:
         return self._name
 

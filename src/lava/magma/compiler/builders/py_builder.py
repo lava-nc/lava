@@ -185,7 +185,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         new_ports = {}
         for p in csp_ports:
-            new_ports.setdefault(p.name(), []).extend(
+            new_ports.setdefault(p.name, []).extend(
                 p if isinstance(p, list) else [p]
             )
 
@@ -217,7 +217,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         # Add or update the mapping
         self._csp_port_map.setdefault(
-            csp_port.name, {}
+            csp_port.name(), {}
         ).update({py_port_id: csp_port})
 
     def set_rs_csp_ports(self, csp_ports: ty.List[AbstractTransferPort]):

@@ -85,7 +85,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("probe", &SendPortProxy::Probe)
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
-    .def("name", &SendPortProxy::Name)
     .def_property_readonly("name", &SendPortProxy::Name)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
