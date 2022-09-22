@@ -185,7 +185,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         """
         new_ports = {}
         for p in csp_ports:
-            new_ports.setdefault(p.name(), []).extend(
+            new_ports.setdefault(p.name, []).extend(
                 p if isinstance(p, list) else [p]
             )
 

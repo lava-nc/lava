@@ -12,6 +12,7 @@ from message_infrastructure import (
     RecvPort,
     SendPort
 )
+from lava.magma.compiler.channels.selector import Selector
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
@@ -64,9 +65,10 @@ class PyRuntimeService(AbstractRuntimeService):
         self.service_to_process: ty.Iterable[SendPort] = []
         self.process_to_service: ty.Iterable[RecvPort] = []
 
-    def start(self):
+    def start(self, actor):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
+        self._actor = actor
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
@@ -84,6 +86,7 @@ class PyRuntimeService(AbstractRuntimeService):
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
+        self._actor.status_stopped()
         self.runtime_to_service.join()
         self.service_to_runtime.join()
 

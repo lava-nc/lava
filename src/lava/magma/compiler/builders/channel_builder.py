@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-import numpy as np
 from dataclasses import dataclass
 
 from lava.magma.compiler.builders.interfaces import \
@@ -14,9 +13,8 @@ from lava.magma.compiler.builders. \
 from message_infrastructure import (
     Channel,
     ChannelBackend,
-    ChannelQueueSize,
+    ChannelQueueSize
 )
-from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer
 from message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
@@ -57,11 +55,9 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        itemsize = np.dtype(self.src_port_initializer.d_type).itemsize
-        nbytes = np.prod(self.src_port_initializer.shape) * itemsize
         return Channel(self.channel_type,
                        ChannelQueueSize,
-                       nbytes,
+                       self.src_port_initializer.bytes,
                        self.src_port_initializer.name)
 
 
@@ -97,11 +93,9 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       nbytes,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 
@@ -135,11 +129,9 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       nbytes,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 

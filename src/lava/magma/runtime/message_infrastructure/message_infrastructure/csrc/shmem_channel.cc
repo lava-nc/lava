@@ -34,19 +34,16 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
 }
 
 AbstractSendPortPtr ShmemChannel::GetSendPort() {
-  printf("Get shmem send_port.\n");
   return send_port_;
 }
 
 AbstractRecvPortPtr ShmemChannel::GetRecvPort() {
-  printf("Get shmem recv_port.\n");
   return recv_port_;
 }
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
                               const size_t &nbytes,
                               const std::string &name) {
-  printf("Generate shmem_channel.\n");
   return (std::make_shared<ShmemChannel>(name,
                                          name,
                                          size,
