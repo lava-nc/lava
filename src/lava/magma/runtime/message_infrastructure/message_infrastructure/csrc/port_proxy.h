@@ -27,9 +27,7 @@ class SendPortProxy : public PortProxy {
   SendPortProxy() {}
   SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
                                           channel_type_(channel_type),
-                                          send_port_(send_port) {
-    printf("Create SendPortProxy\n");
-  }
+                                          send_port_(send_port) {}
   ChannelType GetChannelType();
   void Start();
   bool Probe();
@@ -50,9 +48,7 @@ class RecvPortProxy : public PortProxy {
   RecvPortProxy() {}
   RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
                                             channel_type_(channel_type),
-                                            recv_port_(recv_port) {
-    printf("Create RecvPortProxy\n");
-  }
+                                            recv_port_(recv_port) {}
 
   ChannelType GetChannelType();
   void Start();

@@ -165,7 +165,6 @@ void ShmemSendPort::Send(MetaDataPtr metadata) {
     cptr += sizeof(MetaData);
     memcpy(cptr, metadata->mdata, this->nbytes_);
   });
-  printf("Send data finish.\n");
 }
 
 bool ShmemSendPort::Probe() {
