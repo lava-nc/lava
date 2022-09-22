@@ -181,34 +181,40 @@ def _beta(vth, mean, std, dv_exc, du_exc):
 
     return val
 
-def convert_rate_to_lif_params(**kwargs):
+def convert_rate_to_lif_params(shape_exc, dr_exc, bias_exc, shape_inh, dr_inh,
+                              bias_inh, g_factor, q_factor, weights, **kwargs):
     '''Convert rate parameters to LIF parameters.
     The mapping is based on A unified view on weakly correlated recurrent
     network, Grytskyy et al. 2013.
 
     Parameters
     ----------
-    kwargs : dict
-        Parameter dictionary for rate network
+    shape_exc : int
+        Number of excitatory neurons in rate network
+    dr_exc : float
+        Integration constant for excitatory neurons in rate network
+    bias_exc : float
+        Bias for excitatory neurons in rate network
+    shape_inh : int
+        Number of inhibitory neurons in rate network
+    dr_inh : float
+        Integration constant for inhibitory neurons in rate network
+    bias_inh : float
+        Bias for inhibitory neurons in rate network
+    g_factor : float
+        Factor controlling inhibition-excitation balance
+    q_factor : float
+        Factor controlling response properties of rate network
+    weights : np.ndarray
+        Recurrent weights of rate network
 
     Returns
     -------
     lif_network_dict : dict
         Parameter dictionary for LIF network
     '''
-    # Fetch rate parameters.
-    shape_exc = kwargs['shape_exc']
-    dr_exc = kwargs['dr_exc']
-    bias_exc = kwargs['bias_exc']
-
-    shape_inh = kwargs['shape_inh']
-    dr_inh = kwargs['dr_inh']
-    bias_inh = kwargs['bias_inh']
-
-    g_factor = kwargs['g_factor']
-    q_factor = kwargs['q_factor']
-
-    weights = kwargs['weights'].copy()
+    # Copy weight parameters.
+    weights_local = weights.copy()
 
     num_neurons_exc = shape_exc
     num_neurons_inh = shape_inh
@@ -246,7 +252,7 @@ def convert_rate_to_lif_params(**kwargs):
     bias_inh = 5 * vth_inh * dv_inh * rel_inh_exc_bias
 
     # Get the mean excitatory weight.
-    exc_weights = weights[:, :num_neurons_exc]
+    exc_weights = weights_local[:, :num_neurons_exc]
     mean_exc_weight = np.mean(exc_weights)
 
     # Perform weight conversion.
@@ -289,13 +295,13 @@ def convert_rate_to_lif_params(**kwargs):
 
     # Scale weights.
     if weight_scale > 0:
-        weights *= weight_scale
+        weights_local *= weight_scale
     else:
         print('Weigh scaling factor not positive: No weight scaling possible')
 
     # Scale weights with integration time step.
-    weights[:, :num_neurons_exc] *= du_exc
-    weights[:, num_neurons_exc:] *= du_inh
+    weights_local[:, :num_neurons_exc] *= du_exc
+    weights_local[:, num_neurons_exc:] *= du_inh
 
     # Single neuron paramters.
     # Bias_mant is set to make the neuron spike.
@@ -320,6 +326,6 @@ def convert_rate_to_lif_params(**kwargs):
     network_params_lif.update(lif_params_inh)
     network_params_lif['g_factor'] = g_factor
     network_params_lif['q_factor'] = q_factor
-    network_params_lif['weights'] = weights
+    network_params_lif['weights'] = weights_local
 
     return network_params_lif
