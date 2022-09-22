@@ -13,7 +13,8 @@ from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
 from message_infrastructure import (
     Channel,
-    ChannelBackend
+    ChannelBackend,
+    ChannelQueueSize
 )
 from lava.magma.compiler.utils import PortInitializer
 from message_infrastructure \
@@ -95,11 +96,10 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        itemsize = np.dtype(self.port_initializer.d_type).itemsize
-        nbytes = np.prod(self.port_initializer.shape) * itemsize
+
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       self.port_initializer.size,
-                       nbytes,
+                       ChannelQueueSize,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 
@@ -133,11 +133,10 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        itemsize = np.dtype(self.port_initializer.d_type).itemsize
-        nbytes = np.prod(self.port_initializer.shape) * itemsize
+
         return Channel(ChannelBackend.SHMEMCHANNEL,
-                       self.port_initializer.size,
-                       nbytes,
+                       ChannelQueueSize,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 

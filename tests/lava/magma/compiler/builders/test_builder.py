@@ -62,13 +62,12 @@ class TestChannelBuilder(unittest.TestCase):
             channel.get_recv_port().start()
 
             expected_data = np.array([[1, 2]], dtype=np.int32)
-            channel.get_send_port().send(expected_data)
-            data = channel.get_recv_port().recv()
-            print(data)
+            channel.src_port.send(expected_data)
+            data = channel.dst_port.recv()
             assert np.array_equal(data, expected_data)
         finally:
-            channel.get_send_port().join()
-            channel.get_recv_port().join()
+            channel.src_port.join()
+            channel.dst_port.join()
 
 
 # A test Process with a variety of Ports and Vars of different shapes,
@@ -114,6 +113,7 @@ class FakeCspPort:
     def __init__(self, name="mock"):
         self._name = name
 
+    @property
     def name(self) -> str:
         return self._name
 

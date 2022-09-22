@@ -44,12 +44,12 @@ class TestPyPorts(unittest.TestCase):
         data = np.ones((4, 4))
 
         channel_1 = get_channel(data)
-        send_csp_port_1: AbstractTransferPort = channel_1.get_send_port()
-        recv_csp_port_1: AbstractTransferPort = channel_1.get_recv_port()
+        send_csp_port_1: AbstractTransferPort = channel_1.src_port
+        recv_csp_port_1: AbstractTransferPort = channel_1.dst_port
 
         channel_2 = get_channel(data)
-        send_csp_port_2: AbstractTransferPort = channel_2.get_send_port()
-        recv_csp_port_2: AbstractTransferPort = channel_2.get_recv_port()
+        send_csp_port_2: AbstractTransferPort = channel_2.src_port
+        recv_csp_port_2: AbstractTransferPort = channel_2.dst_port
 
         # Create two different PyOutPort
         send_py_port_1: PyOutPort = \
@@ -103,6 +103,7 @@ class TestPyPorts(unittest.TestCase):
 
 class MockCspPort:
 
+    @property
     def name(self) -> str:
         return "mock_csp_port"
 

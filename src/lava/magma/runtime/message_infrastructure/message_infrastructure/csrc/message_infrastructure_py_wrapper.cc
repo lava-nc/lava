@@ -75,9 +75,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string>())
     .def_property_readonly("src_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
-    .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference)
-    .def("get_send_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
-    .def("get_recv_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
+    .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
   py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)

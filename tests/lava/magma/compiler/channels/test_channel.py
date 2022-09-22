@@ -29,43 +29,43 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         data = np.ones((2, 2, 2))
         channel = get_channel(data)
         try:
-            channel.get_send_port().start()
-            channel.get_recv_port().start()
+            channel.src_port.start()
+            channel.dst_port.start()
 
-            channel.get_send_port().send(data)
-            result = channel.get_recv_port().recv()
+            channel.src_port.send(data)
+            result = channel.dst_port.recv()
             assert np.array_equal(result, data)
         finally:
-            channel.get_send_port().join()
-            channel.get_recv_port().join()
+            channel.src_port.join()
+            channel.dst_port.join()
 
     def test_send_recv_single_process_2d_data(self):
         data = np.random.randint(100, size=(100, 100), dtype=np.int32)
         channel = get_channel(data)
         try:
-            channel.get_send_port().start()
-            channel.get_recv_port().start()
+            channel.src_port.start()
+            channel.dst_port.start()
 
-            channel.get_send_port().send(data)
-            result = channel.get_recv_port().recv()
+            channel.src_port.send(data)
+            result = channel.dst_port.recv()
             assert np.array_equal(result, data)
         finally:
-            channel.get_send_port().join()
-            channel.get_recv_port().join()
+            channel.src_port.join()
+            channel.dst_port.join()
 
     def test_send_recv_single_process_1d_data(self):
         data = np.random.randint(1000, size=100, dtype=np.int16)
         channel = get_channel(data)
         try:
-            channel.get_send_port().start()
-            channel.get_recv_port().start()
+            channel.src_port.start()
+            channel.dst_port.start()
 
-            channel.get_send_port().send(data)
-            result = channel.get_recv_port().recv()
+            channel.src_port.send(data)
+            result = channel.dst_port.recv()
             assert np.array_equal(result, data)
         finally:
-            channel.get_send_port().join()
-            channel.get_recv_port().join()
+            channel.src_port.join()
+            channel.dst_port.join()
 
 
 class DummyProcess(Process):
@@ -127,31 +127,31 @@ class TestPyPyChannelMultiProcess(unittest.TestCase):
         )
         jobs = [
             DummyProcess(
-                ports=(channel_source_to_buffer.get_send_port(),),
+                ports=(channel_source_to_buffer.src_port,),
                 target=source,
                 args=(
                     data.shape,
-                    channel_source_to_buffer.get_send_port(),
+                    channel_source_to_buffer.src_port,
                 ),
             ),
             DummyProcess(
                 ports=(
-                    channel_source_to_buffer.get_recv_port(),
-                    channel_buffer_to_sink.get_send_port(),
+                    channel_source_to_buffer.dst_port,
+                    channel_buffer_to_sink.src_port,
                 ),
                 target=buffer,
                 args=(
                     data.shape,
-                    channel_source_to_buffer.get_recv_port(),
-                    channel_buffer_to_sink.get_send_port(),
+                    channel_source_to_buffer.dst_port,
+                    channel_buffer_to_sink.src_port,
                 ),
             ),
             DummyProcess(
-                ports=(channel_buffer_to_sink.get_recv_port(),),
+                ports=(channel_buffer_to_sink.dst_port,),
                 target=sink,
                 args=(
                     data.shape,
-                    channel_buffer_to_sink.get_recv_port(),
+                    channel_buffer_to_sink.dst_port,
                 ),
             ),
         ]
