@@ -96,11 +96,9 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       nbytes,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 
@@ -134,11 +132,9 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        nbytes = np.prod(self.port_initializer.shape) * \
-            self.port_initializer.d_type.itemsize
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       nbytes,
+                       self.port_initializer.bytes,
                        self.port_initializer.name)
 
 

@@ -1,5 +1,6 @@
 import functools as ft
 import typing as ty
+import numpy as np
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -26,6 +27,10 @@ class PortInitializer:
     port_type: str
     size: int
     transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
+
+    @property
+    def bytes(self) -> int:
+        return np.prod(self.shape) * np.dtype(self.d_type).itemsize
 
 
 # check if can be a subclass of PortInitializer
