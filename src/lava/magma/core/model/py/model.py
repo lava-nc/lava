@@ -12,7 +12,7 @@ from message_infrastructure import (SendPort,
                                     Actor,
                                     ActorStatus,
                                     ActorCmd)
-from message_infrastructure.selector import Selector
+from lava.magma.compiler.channels.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
