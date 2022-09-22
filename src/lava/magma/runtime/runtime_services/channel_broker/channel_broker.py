@@ -106,8 +106,8 @@ class ChannelBroker(AbstractChannelBroker):
                 np.dtype(np.int32).itemsize,
                 "mgmt_channel"
             )
-            self.mgmt_channel.get_send_port().start()
-            self.mgmt_channel.get_recv_port().start()
+            self.mgmt_channel.src_port.start()
+            self.mgmt_channel.dst_port.start()
             self.port_poller = threading.Thread(target=self.poll_c_inports)
             self.grpc_stopping_event = threading.Event()
             self.grpc_poller = threading.Thread(target=self.poll_c_outports)
@@ -121,8 +121,8 @@ class ChannelBroker(AbstractChannelBroker):
             self.mgmt_channel.get_send_port().send(np.array([0]))
             self.grpc_poller.join()
             self.port_poller.join()
-            self.mgmt_channel.get_recv_port().join()
-            self.mgmt_channel.get_send_port().join()
+            self.mgmt_channel.dst_port.join()
+            self.mgmt_channel.src_port.join()
             self.has_started = False
             self.smm.shutdown()
 
@@ -142,7 +142,7 @@ class ChannelBroker(AbstractChannelBroker):
                 result = (cport, channel)
                 channel_actions.append((cport.csp_ports[0], lambda: result))
 
-            channel_actions.append((self.mgmt_channel.get_send_port(),
+            channel_actions.append((self.mgmt_channel.src_port,
                                     lambda: ('stop', None)))
             action, channel = selector.select(*channel_actions)
             if action == "stop":
