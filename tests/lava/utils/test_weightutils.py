@@ -7,7 +7,7 @@ import numpy as np
 
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     optimize_weight_bits, _determine_weight_exp, \
-    _determine_num_weight_bits, truncate_weights
+    _determine_num_weight_bits, truncate_weights, clip_weights
 
 
 class TestDetermineSignMode(unittest.TestCase):
@@ -252,66 +252,134 @@ class TestOptimizeWeightBits(unittest.TestCase):
 class TestTruncateWeights(unittest.TestCase):
     def test_truncate_weights_excitatory_8(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([253, 254, 255, 256]),
+            weights=np.array([253, 254, 255]),
             sign_mode=SignMode.EXCITATORY,
             num_weight_bits=8
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([253, 254, 255, 255])
+            np.array([253, 254, 255])
         )
 
     def test_truncate_weights_excitatory_7(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([252, 253, 253, 254, 255, 256]),
+            weights=np.array([252, 253, 253, 254, 255]),
             sign_mode=SignMode.EXCITATORY,
             num_weight_bits=7
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([252, 252, 252, 254, 254, 254])
+            np.array([252, 252, 252, 254, 254])
         )
 
     def test_truncate_weights_inhibitory_8(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([-257, -256, -255, -254, -1]),
+            weights=np.array([-256, -255, -254, -1]),
             sign_mode=SignMode.INHIBITORY,
             num_weight_bits=8
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([-256, -256, -255, -254, -1])
+            np.array([-256, -255, -254, -1])
         )
 
     def test_truncate_weights_inhibitory_7(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([-257, -256, -255, -254, -253, -252]),
+            weights=np.array([-256, -255, -254, -253, -252]),
             sign_mode=SignMode.INHIBITORY,
             num_weight_bits=7
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([-256, -256, -256, -254, -254, -252])
+            np.array([-256, -256, -254, -254, -252])
         )
 
     def test_truncate_weights_mixed_8(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([-257, -256, -255, -254, 253, 254, 255, 256]),
+            weights=np.array([-256, -255, -254, 253, 254, 255]),
             sign_mode=SignMode.MIXED,
             num_weight_bits=8
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([-256, -256, -256, -254, 252, 254, 254, 254])
+            np.array([-256, -256, -254, 252, 254, 254])
         )
 
     def test_truncate_weights_mixed_7(self) -> None:
         truncated_weights = truncate_weights(
-            weights=np.array([-257, -256, -255, -254, 253, 254, 255, 256]),
+            weights=np.array([-256, -255, -254, 253, 254, 255]),
             sign_mode=SignMode.MIXED,
             num_weight_bits=7
         )
         np.testing.assert_array_equal(
             truncated_weights,
-            np.array([-256, -256, -256, -256, 252, 252, 252, 252])
+            np.array([-256, -256, -256, 252, 252, 252])
+        )
+
+
+class TestClipWeights(unittest.TestCase):
+    def test_clip_weights_excitatory_8(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-1, 0, 255, 256]),
+            sign_mode=SignMode.EXCITATORY,
+            num_bits=8
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([0, 0, 255, 255])
+        )
+
+    def test_clip_weights_excitatory_7(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-1, 0, 127, 128]),
+            sign_mode=SignMode.EXCITATORY,
+            num_bits=7
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([0, 0, 127, 127])
+        )
+
+    def test_clip_weights_inhibitory_8(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-257, -256, -1, 0, 1]),
+            sign_mode=SignMode.INHIBITORY,
+            num_bits=8
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([-256, -256, -1, 0, 0])
+        )
+
+    def test_clip_weights_inhibitory_7(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-129, -128, -1, 0, 1]),
+            sign_mode=SignMode.INHIBITORY,
+            num_bits=7
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([-128, -128, -1, 0, 0])
+        )
+
+    def test_clip_weights_mixed_8(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-257, -256, 255, 256]),
+            sign_mode=SignMode.MIXED,
+            num_bits=8
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([-256, -256, 255, 255])
+        )
+
+    def test_clip_weights_mixed_7(self) -> None:
+        clipped_weights = clip_weights(
+            weights=np.array([-129, -128, 127, 128]),
+            sign_mode=SignMode.MIXED,
+            num_bits=7
+        )
+        np.testing.assert_array_equal(
+            clipped_weights,
+            np.array([-128, -128, 127, 127])
         )

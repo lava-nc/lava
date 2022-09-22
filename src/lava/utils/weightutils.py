@@ -10,8 +10,7 @@ from dataclasses import dataclass
 
 @unique
 class SignMode(Enum):
-    """Enumeration of sign mode of weights.
-    """
+    """Enumeration of sign mode of weights."""
     NULL = 0
     MIXED = 1
     EXCITATORY = 2
@@ -19,6 +18,20 @@ class SignMode(Enum):
 
 
 def determine_sign_mode(weights: np.ndarray) -> SignMode:
+    """Determines the sign mode that describes the values in the given
+    weight matrix.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix
+
+    Returns
+    -------
+    SignMode
+        The sign mode that best describes the values in the given weight
+        matrix.
+    """
     if np.max(weights) < 0:
         sign_mode = SignMode.INHIBITORY
     elif np.min(weights) >= 0:
@@ -80,6 +93,21 @@ def optimize_weight_bits(
 
 def _determine_weight_exp(weights: np.ndarray,
                           sign_mode: SignMode) -> int:
+    """Determines the weight exponent to be used to optimally represent the
+    given weight values and sign mode on Loihi.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix
+    sign_mode : SignMode
+        The sign mode describing the range of values in the weight matrix.
+
+    Returns
+    -------
+    int
+        Optimal weight exponent for representing the weights on Loihi.
+    """
     max_weight = np.max(weights)
     min_weight = np.min(weights)
 
@@ -106,6 +134,23 @@ def _determine_weight_exp(weights: np.ndarray,
 def _determine_num_weight_bits(weights: np.ndarray,
                                weight_exp: int,
                                sign_mode: SignMode) -> int:
+    """Determines the number of bits required to optimally represent the
+    given weight matrix on Loihi.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix
+    weight_exp : int
+        Weight exponent
+    sign_mode : SignMode
+        Sign mode that describes the values in the weight matrix.
+
+    Returns
+    -------
+    int
+        Optimal number of bits to represent the weight matrix on Loihi.
+    """
     precision_found = False
     n = 8
     while (precision_found is False) and (n > 0):
@@ -127,7 +172,8 @@ def _determine_num_weight_bits(weights: np.ndarray,
 
 def truncate_weights(weights: np.ndarray,
                      sign_mode: SignMode,
-                     num_weight_bits: int) -> np.ndarray:
+                     num_weight_bits: int,
+                     max_num_weight_bits: ty.Optional[int] = 8) -> np.ndarray:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
@@ -140,30 +186,57 @@ def truncate_weights(weights: np.ndarray,
         correct values.
     num_weight_bits : int
         Number of bits to use for the weight matrix.
+    max_num_weight_bits : int, optional
+        Maximum number of bits that can be used to represent weights. Default
+        is 8.
 
     Returns
     -------
     numpy.ndarray
         Truncated weight matrix.
-
     """
     weights = np.copy(weights).astype(np.int32)
 
-    mixed_flag = 1 if sign_mode == SignMode.MIXED else 0
-    num_truncate_bits = 8 - num_weight_bits + mixed_flag
+    mixed_flag = int(sign_mode == SignMode.MIXED)
+    num_truncate_bits = max_num_weight_bits - num_weight_bits + mixed_flag
 
-    # Saturate the weights according to the sign_mode.
+    truncated_weights = np.left_shift(
+        np.right_shift(weights, num_truncate_bits),
+        num_truncate_bits).astype(np.int32)
+
+    return truncated_weights
+
+
+def clip_weights(weights: np.ndarray,
+                 sign_mode: SignMode,
+                 num_bits: int) -> np.ndarray:
+    """Truncate the least significant bits of the weight matrix given the
+    sign mode and number of weight bits.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix that is to be truncated.
+    sign_mode : SignMode
+        Sign mode to use for truncation. See SignMode class for the
+        correct values.
+    num_bits : int
+        Number of bits to use to clip the weights to.
+
+    Returns
+    -------
+    numpy.ndarray
+        Truncated weight matrix.
+    """
+    weights = np.copy(weights).astype(np.int32)
+
     mixed_flag = int(sign_mode == SignMode.MIXED)
     excitatory_flag = int(sign_mode == SignMode.EXCITATORY)
     inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
 
-    min_wgt = (-2 ** 8) * (mixed_flag + inhibitory_flag)
-    max_wgt = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)
+    min_wgt = (-2 ** num_bits) * (mixed_flag + inhibitory_flag)
+    max_wgt = (2 ** num_bits - 1) * (mixed_flag + excitatory_flag)
 
     clipped_weights = np.clip(weights, min_wgt, max_wgt)
 
-    truncated_weights = np.left_shift(
-        np.right_shift(clipped_weights, num_truncate_bits),
-        num_truncate_bits).astype(np.int32)
-
-    return truncated_weights
+    return clipped_weights
