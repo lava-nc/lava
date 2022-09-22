@@ -6,6 +6,7 @@ import lava.magma.core.learning.string_symbols as str_symbols
 
 # ---------------------------------------------------------------------------
 # Width constants (only for fixed-point implementation)
+W_EPOCH_TIME = 6
 
 W_WEIGHTS_U = 8
 W_WEIGHTS_S = W_WEIGHTS_U + 1
@@ -27,6 +28,7 @@ W_SYN_VAR_S = {
 }
 
 W_TRACE = 7
+W_TRACE_FRACTIONAL_PART = 8
 W_CONST = 8
 
 W_S_MANT = 4
@@ -53,7 +55,6 @@ DEP_TO_IDX_DICT = {
     str_symbols.Y0: 1,
     str_symbols.U: 2
 }
-
 
 TRACE_TO_IDX_DICT = {
     str_symbols.X1: 0,

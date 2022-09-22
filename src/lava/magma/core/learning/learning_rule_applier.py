@@ -271,7 +271,8 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
         When called from the PyFixedLearningDenseProcessModel, applier_args
         contains variables with the following names :
-        {"shape", "x0", "y0", "u", "weights", "tag_2", "tag_1", "traces"}
+        {"shape", "x0", "y0", "u", "weights", "tag_2", "tag_1",
+        "x_traces", "y_traces"}
 
         All variables apart from "shape", "u" are numpy arrays.
         "shape" is a tuple.
@@ -296,9 +297,6 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
         # for each Product in ProductSeries
         for product in self._product_series.products:
-            # if not applier_args[product.dependency]:
-            #     continue
-
             # initialize multiplication accumulator (MAC)
             current_result = np.ones(applier_args["shape"], dtype=np.int32)
 
@@ -339,7 +337,7 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
             shift = np.maximum(0, factor_width_sum - W_ACCUMULATOR_U)
             current_result = np.right_shift(current_result, shift)
 
-            # TODO (GK) : put this before right_shift (?)
+            # left-shift by the exponent of scaling factor
             current_result = np.left_shift(current_result, product.s_exp)
 
             # saturate current_result
