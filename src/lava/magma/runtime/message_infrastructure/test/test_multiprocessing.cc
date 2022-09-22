@@ -28,7 +28,7 @@ void Builder::Build(int i) {
   std::cout << "Build " << i << "... Builder complete" << std::endl;
 }
 
-std::function<int(ActorPtr)> TargetFunction(Builder builder, int idx) {
+AbstractActor::TargetFn TargetFunction(Builder builder, int idx) {
   std::cout << "Target Function running" << std::endl;
   builder.Build(idx);
 }
@@ -37,11 +37,12 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   // Spawns an actor
   // Checks that actor is spawned successfully
   Builder *builder = new Builder();
+  MultiProcessing mp;
 
   for (int i = 0; i < 5; i++) {
+    std::cout << "Loop " << i << std::endl;
     auto bound_fn = std::bind(TargetFunction, std::placeholders::_1, i);
-    // TODO: Add multiprocessing BuildActor
-    // bound_fn(*builder);
+    mp.BuildActor(bound_fn(*builder));
   }
 }
 
@@ -56,10 +57,10 @@ TEST(TestMultiprocessing, ActorForceStop) {
   // Checks that actor status returns 1 (StatusStopped)
   GTEST_SKIP() << "Skipping ActorForceStop";
   MultiProcessing mp;
-  std::vector<ActorPtr>& actorList = mp.GetActors();
+  std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   for (auto actor : actorList){
     actor->ForceStop();
-    int actorStatus = actor->GetActorStatus();
+    int actorStatus = actor->GetStatus();
     EXPECT_EQ(actorStatus, 1);
   }
 }
@@ -68,21 +69,9 @@ TEST(TestMultiprocessing, ActorRunning) {
   // Checks that acto status returns 0 (StatusRuning)
   // std::vector<ActorPtr>& actor_list = *Multiprocessing()
   MultiProcessing mp;
-  std::vector<ActorPtr>& actorList = mp.GetActors();
+  std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   for (auto actor : actorList){
-    int actorStatus = actor->GetActorStatus();
+    int actorStatus = actor->GetStatus();
     EXPECT_EQ(actorStatus, 0);
-  }
-}
-
-TEST(TestMultiprocessing, ActorStop) {
-  // Stops all running actors
-  // Checks that actor status returns 1 (StatusStopped)
-  MultiProcessing mp;
-  std::vector<ActorPtr>& actorList = mp.GetActors();
-  for (auto actor : actorList){
-    actor->Stop();
-    int actorStatus = actor->GetActorStatus();
-    EXPECT_EQ(actorStatus, 1);
   }
 }
