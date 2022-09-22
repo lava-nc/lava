@@ -20,7 +20,7 @@ class ConnectionProcess(AbstractProcess):
     Attributes
     ----------
     s_in_bap: InPort
-        Input port to receive back-propagating actionpotentials (BAP)
+        Input port to receive back-propagating action potentials (BAP)
     x0: Var
         Conditional for pre-synaptic spike times (is 1 if pre-synaptic neurons
         spiked in this time-step).

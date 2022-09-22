@@ -13,6 +13,7 @@ from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
 
 class TestSTDPSim(unittest.TestCase):
+
     def test_stdp_fixed_point(self):
         """Known value test. Run a simple learning dense layer between two LIF
         and compare to the resulting weight from previous runs."""
@@ -53,7 +54,6 @@ class TestSTDPSim(unittest.TestCase):
         lif_0.stop()
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
-        # np.testing.assert_almost_equal(weight_after_run, np.array([[48]]))
         np.testing.assert_almost_equal(weight_after_run, np.array([[60]]))
 
     def test_stdp_floating_point(self):

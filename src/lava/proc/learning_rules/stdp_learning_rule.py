@@ -1,4 +1,3 @@
-
 # INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
 #
 # Copyright © 2021-2022 Intel Corporation.
@@ -31,18 +30,22 @@ class STDPLoihi(LoihiLearningRule):
             **kwargs
     ):
         """
-        STDP as defined in TODO add link to resource
+        Spike-timing dependent plasticity (STDP) as defined in Gerstner and al. 1996.
 
         Parameters
         ==========
 
-        learning_rate:
+        learning_rate: float
+            Overall learning rate scaling the intensity of weight changes.
         A_plus:
+            Scaling the weight change on pre-synaptic spike times.
         A_minus:
+            Sclaing the weight change on post-synaptic spike times.
         tau_plus:
+            Time constant of the pre-synaptic activity trace.
         tau_minus:
-        args:
-        kwargs:
+            Time constant of the post-synaptic activity trace.
+
         """
 
         self.learning_rate = learning_rate
@@ -57,8 +60,8 @@ class STDPLoihi(LoihiLearningRule):
 
         # Other learning-related parameters
         # Trace impulse values
-        x1_impulse = 16
-        y1_impulse = 16
+        x1_impulse = kwargs.get("x1_impulse", 16)
+        y1_impulse = kwargs.get("y1_impulse", 16)
 
         # Trace decay constants
         x1_tau = tau_plus
