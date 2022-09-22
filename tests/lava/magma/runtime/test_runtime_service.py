@@ -1,5 +1,4 @@
 import unittest
-from xml.dom import NotFoundErr
 
 import numpy as np
 from message_infrastructure import (
