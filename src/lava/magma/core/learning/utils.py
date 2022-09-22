@@ -47,3 +47,24 @@ def stochastic_round(values: np.ndarray,
         Stochastically rounded values.
     """
     return (values + (random_numbers < probabilities).astype(int)).astype(int)
+
+
+def apply_mask(int_number: int, nb_bits: int) -> int:
+    """Get nb_bits least-significant bits.
+
+    Parameters
+    ----------
+    int_number : int
+        Integer number.
+    nb_bits : int
+        Number of LSBs to keep.
+
+    Returns
+    ----------
+    result : int
+        Least-significant bits.
+    """
+
+    mask = ~(~0 << nb_bits)
+
+    return int_number & mask
