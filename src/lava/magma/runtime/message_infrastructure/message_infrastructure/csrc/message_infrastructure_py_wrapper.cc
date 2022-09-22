@@ -28,7 +28,19 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
     .value("ChildProcess", ChildProcess)
-    .value("ParentProcess", ParentProcess);
+    .value("ParentProcess", ParentProcess)
+    .export_values();
+  py::enum_<ActorStatus> (m, "ActorStatus")
+    .value("StatusError", ActorStatus::StatusError)
+    .value("StatusRunning", ActorStatus::StatusRunning)
+    .value("StatusStopped", ActorStatus::StatusStopped)
+    .value("StatusPaused", ActorStatus::StatusPaused)
+    .export_values();
+  py::enum_<ActorCmd> (m, "ActorCmd")
+    .value("CmdRun", ActorCmd::CmdRun)
+    .value("CmdStop", ActorCmd::CmdStop)
+    .value("CmdPause", ActorCmd::CmdPause)
+    .export_values();
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("get_status", &PosixActor::GetStatus)
@@ -42,13 +54,23 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("stop", [](PosixActor &actor){
         actor.Control(ActorCmd::CmdStop);
       })
+    .def("status_stopped", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusStopped);
+      })
+    .def("status_running", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusRunning);
+      })
+    .def("status_paused", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusPaused);
+      })
     .def("error", [](PosixActor &actor){
         actor.SetStatus(ActorStatus::StatusError);
       });
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
-    .value("DDSCHANNEL", DDSCHANNEL);
+    .value("DDSCHANNEL", DDSCHANNEL)
+    .export_values();
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string>())

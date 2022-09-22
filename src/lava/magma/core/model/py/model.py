@@ -7,7 +7,12 @@ from abc import ABC, abstractmethod
 import logging
 import numpy as np
 
-from message_infrastructure import SendPort, RecvPort
+from message_infrastructure import (SendPort,
+                                    RecvPort,
+                                    Actor,
+                                    ActorStatus,
+                                    ActorCmd)
+from lava.magma.compiler.channels.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
@@ -41,14 +46,17 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
         self._selector: Selector = Selector()
+        self._actor: Actor = None
         self._action: str = 'cmd'
-        self._stopped: bool = False
+        self._control_handlers: ty.Dict[ActorCmd, ty.Callable] = {
+            ActorCmd.CmdRun: self._run,
+            ActorCmd.CmdStop: self._stop,
+            ActorCmd.CmdPause: self._pause
+        }
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
                                                          RecvPort],
                                                 ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
-            MGMT_COMMAND.STOP[0]: self._stop,
-            MGMT_COMMAND.PAUSE[0]: self._pause,
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
             MGMT_COMMAND.SET_DATA[0]: self._set_var
         }
@@ -72,30 +80,33 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             if isinstance(value, PyVarPort):
                 self.var_ports.append(value)
 
-    def start(self):
+    def start(self, actor):
         """
         Starts the process model, by spinning up all the ports (mgmt and
         py_ports) and calls the run function.
         """
+        self._actor = actor
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
             p.start()
         self.run()
 
+    def _run(self):
+        self._actor.status_running()
+
     def _stop(self):
         """
         Command handler for Stop command.
         """
-        self.process_to_service.send(MGMT_RESPONSE.TERMINATED)
-        self._stopped = True
+        self._actor.status_stopped()
         self.join()
 
     def _pause(self):
         """
         Command handler for Pause command.
         """
-        self.process_to_service.send(MGMT_RESPONSE.PAUSED)
+        self._actor.status_paused()
 
     def _get_var(self):
         """Handles the get Var command from runtime service."""
@@ -164,13 +175,38 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
-            if self._action == 'cmd':
+            # Check Actor Status and ActorCmd
+            actor_status = self._actor.get_status()
+            if actor_status in [ActorStatus.StatusStopped,
+                                ActorStatus.StatusError]:
+                return
+            elif actor_status == ActorStatus.StatusPaused:
+                continue
+            actor_cmd = self._actor.get_cmd()
+            try:
+                if actor_cmd in self._control_handlers:
+                    self._control_handlers[actor_cmd]()
+                else:
+                    self._actor.error()
+                    raise ValueError(
+                        f"Illegal control command! ProcessModels of "
+                        f"type {self.__class__.__qualname__} "
+                        f"{self.model_id} cannot handle "
+                        f"command: {actor_cmd} ")
+            except Exception as inst:
+                self.join()
+                self._actor.error()
+                raise inst
+                # If here should return to cpplib
+
+            # Check Action in model
+            if self._action is None:
+                continue
+            elif self._action == 'cmd':
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
-                        if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
-                            return
                     else:
                         raise ValueError(
                             f"Illegal RuntimeService command! ProcessModels of "

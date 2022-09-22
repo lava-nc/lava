@@ -1,6 +1,8 @@
 from MessageInfrastructurePywrapper import CppMultiProcessing
 from MessageInfrastructurePywrapper import ProcessType
 from MessageInfrastructurePywrapper import Actor
+from MessageInfrastructurePywrapper import ActorStatus
+from MessageInfrastructurePywrapper import ActorCmd
 from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import Channel
 from MessageInfrastructurePywrapper import SendPort

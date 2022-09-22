@@ -10,7 +10,12 @@ import typing
 import typing as ty
 
 import numpy as np
-from message_infrastructure import RecvPort, SendPort, Channel
+from message_infrastructure import (RecvPort,
+                                    SendPort,
+                                    ActorStatus,
+                                    Actor,
+                                    Channel)
+
 from lava.magma.compiler.var_model import AbstractVarModel
 from message_infrastructure.message_interface_enum import ActorType
 from message_infrastructure.factory import MessageInfrastructureFactory
@@ -269,11 +274,9 @@ class Runtime:
                         error_cnt = 0
                         for actors in \
                                 self._messaging_infrastructure.actors:
-                            actors.join()
-                            if actors.exception:
-                                _, traceback = actors.exception
-                                self.log.info(traceback)
+                            if actors.get_status() == ActorStatus.StatusError:
                                 error_cnt += 1
+                            actors.stop()
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
@@ -334,45 +337,20 @@ class Runtime:
     def pause(self):
         """Pauses the execution"""
         if self._is_running:
-            for send_port in self.runtime_to_service:
-                send_port.send(MGMT_COMMAND.PAUSE)
-            for recv_port in self.service_to_runtime:
-                data = recv_port.recv()
-                if not enum_equal(data, MGMT_RESPONSE.PAUSED):
-                    if enum_equal(data, MGMT_RESPONSE.ERROR):
-                        # Receive all errors from the ProcessModels
-                        error_cnt = 0
-                        for actors in \
-                                self._messaging_infrastructure.actors:
-                            actors.join()
-                            if actors.exception:
-                                _, traceback = actors.exception
-                                self.log.info(traceback)
-                                error_cnt += 1
-                        self.stop()
-                        raise RuntimeError(
-                            f"{error_cnt} Exception(s) occurred. See "
-                            f"output above for details.")
+            for actor in self._messaging_infrastructure.actors:
+                actor.pause()
             self._is_running = False
 
     def stop(self):
         """Stops an ongoing or paused run."""
-        try:
-            if self._is_started:
-                for send_port in self.runtime_to_service:
-                    send_port.send(MGMT_COMMAND.STOP)
-                for recv_port in self.service_to_runtime:
-                    data = recv_port.recv()
-                    if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
-                        raise RuntimeError(f"Runtime Received {data}")
-                self.join()
-                self._is_running = False
-                self._is_started = False
-                # Send messages to RuntimeServices to stop as soon as possible.
-            else:
-                self.log.info("Runtime not started yet.")
-        finally:
-            self._messaging_infrastructure.stop()
+        if self._is_started:
+            self._messaging_infrastructure.stop(True)
+            self.join()
+            self._is_running = False
+            self._is_started = False
+            # Send messages to RuntimeServices to stop as soon as possible.
+        else:
+            self.log.info("Runtime not started yet.")
 
     def join(self):
         """Join all ports and processes"""
