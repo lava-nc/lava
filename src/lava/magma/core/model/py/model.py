@@ -544,12 +544,10 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         Checks if the RS has sent a STOP command.
         """
-        if self.service_to_process.probe():
-            cmd = self.service_to_process.peek()
-            if enum_equal(cmd, MGMT_COMMAND.STOP):
-                self.service_to_process.recv()
-                self._stop()
-                return True
+        actor_cmd = self._actor.get_cmd()
+        if actor_cmd == ActorCmd.CmdRun:
+            self._stop()
+            return True
         return False
 
     def run_async(self):

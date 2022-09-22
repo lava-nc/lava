@@ -10,7 +10,9 @@ import numpy as np
 
 from message_infrastructure import (
     RecvPort,
-    SendPort
+    SendPort,
+    ActorCmd,
+    ActorStatus
 )
 from lava.magma.compiler.channels.selector import Selector
 
@@ -93,6 +95,24 @@ class PyRuntimeService(AbstractRuntimeService):
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
+
+    def handle_cmd(self):
+        actor_cmd = self._actor.get_cmd()
+        if actor_cmd == ActorCmd.CmdRun:
+            self._actor.status_running()
+        elif actor_cmd == ActorCmd.CmdPause:
+            self._actor.status_paused()
+        elif actor_cmd == ActorCmd.CmdStop:
+            self._actor.status_stopped()
+
+    def check_status(self):
+        actor_status = self._actor.get_status()
+        if actor_status in [ActorStatus.StatusStopped,
+                            ActorStatus.StatusError]:
+            return True, False
+        if actor_status == ActorStatus.StatusPaused:
+            return False, True
+        return False, False
 
 
 class LoihiPyRuntimeService(PyRuntimeService):
@@ -446,10 +466,19 @@ class AsyncPyRuntimeService(PyRuntimeService):
         selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
+            self.handle_cmd()
+            stop, pause = self.check_status()
+            if stop:
+                self.join()
+                break
+            if pause:
+                continue
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             channel_actions = []
-            if action == "cmd":
+            if action is None:
+                continue
+            elif action == "cmd":
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
