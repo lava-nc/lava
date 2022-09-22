@@ -55,11 +55,11 @@ class TestChannelBuilder(unittest.TestCase):
         mock = MockMessageInterface()
         channel: Channel = channel_builder.build(mock)
         assert isinstance(channel, Channel)
-        assert isinstance(channel.get_send_port(), AbstractTransferPort)
-        assert isinstance(channel.get_recv_port(), AbstractTransferPort)
+        assert isinstance(channel.src_port, AbstractTransferPort)
+        assert isinstance(channel.dst_port, AbstractTransferPort)
         try:
-            channel.get_send_port().start()
-            channel.get_recv_port().start()
+            channel.src_port.start()
+            channel.dst_port.start()
 
             expected_data = np.array([[1, 2]], dtype=np.int32)
             channel.src_port.send(expected_data)
