@@ -23,11 +23,10 @@ class MockInterface:
 
 def create_channel(name: str):
     mock = MockInterface()
-    return Channel(
-    ChannelBackend.SHMEMCHANNEL,
-    8,
-    4,
-    name)
+    return Channel(ChannelBackend.SHMEMCHANNEL,
+                   8,
+                   4,
+                   name)
 
 
 class SimpleSyncProtocol(AbstractSyncProtocol):

@@ -5,6 +5,7 @@
 import typing as ty
 from message_infrastructure import SendPort, RecvPort
 
+
 class Selector:
     def select(
             self,

@@ -95,7 +95,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
     def _run(self):
         self._actor.status_running()
-        
+
     def _stop(self):
         """
         Command handler for Stop command.
@@ -178,7 +178,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         while True:
             # Check Actor Status and ActorCmd
             actor_status = self._actor.get_status()
-            if actor_status in [ActorStatus.StatusStopped, ActorStatus.StatusError]:
+            if actor_status in [ActorStatus.StatusStopped,
+                                ActorStatus.StatusError]:
                 return
             elif actor_status == ActorStatus.StatusPaused:
                 continue
@@ -200,7 +201,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # If here should return to cpplib
 
             # Check Action in model
-            if self._action == None:
+            if self._action is None:
                 continue
             elif self._action == 'cmd':
                 cmd = self.service_to_process.recv()[0]

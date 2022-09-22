@@ -10,7 +10,7 @@ import typing
 import typing as ty
 
 import numpy as np
-from message_infrastructure import (RecvPort, 
+from message_infrastructure import (RecvPort,
                                     SendPort,
                                     ActorStatus,
                                     Actor)
