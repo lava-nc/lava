@@ -30,7 +30,8 @@ class STDPLoihi(LoihiLearningRule):
             **kwargs
     ):
         """
-        Spike-timing dependent plasticity (STDP) as defined in Gerstner and al. 1996.
+        Spike-timing dependent plasticity (STDP) as defined in
+        Gerstner and al. 1996.
 
         Parameters
         ==========

@@ -19,6 +19,7 @@ class LearningRule:
     lava.magma.core.learning.learning_rule.LoihiLearningRule
 
     """
+
     pass
 
 
@@ -87,6 +88,7 @@ class LoihiLearningRule(LearningRule):
         chosen randomly. Only used in fixed point implementations.
 
     """
+
     def __init__(
         self,
         dw: ty.Optional[str] = None,
@@ -143,7 +145,11 @@ class LoihiLearningRule(LearningRule):
         self._t_epoch = self._validate_t_epoch(t_epoch)
 
         # set seed or generate by time
-        self._rng_seed = rng_seed if rng_seed is not None else np.random.randint(1, 2**32)
+        self._rng_seed = (
+            rng_seed
+            if rng_seed is not None
+            else np.random.randint(1, np.iinfo(np.int32).max)
+        )
 
         # generate ProductSeries for all learning rules that were provided in
         # string format
