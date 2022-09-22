@@ -48,7 +48,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._actor: Actor = None
         self._action: str = 'cmd'
-        self._ctlcmd: ActorCmd = None
         self._control_handlers: ty.Dict[ActorCmd, ty.Callable] = {
             ActorCmd.CmdRun: self._run,
             ActorCmd.CmdStop: self._stop,
@@ -183,17 +182,17 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 return
             elif actor_status == ActorStatus.StatusPaused:
                 continue
-            self._ctlcmd = self._actor.get_cmd()
+            actor_cmd = self._actor.get_cmd()
             try:
-                if self._ctlcmd in self._control_handlers:
-                    self._control_handlers[self._ctlcmd]()
+                if actor_cmd in self._control_handlers:
+                    self._control_handlers[actor_cmd]()
                 else:
                     self._actor.error()
                     raise ValueError(
                         f"Illegal control command! ProcessModels of "
                         f"type {self.__class__.__qualname__} "
                         f"{self.model_id} cannot handle "
-                        f"command: {self._ctlcmd} ")
+                        f"command: {actor_cmd} ")
             except Exception as inst:
                 self.join()
                 self._actor.error()

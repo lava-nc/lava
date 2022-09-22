@@ -8,8 +8,6 @@ from message_infrastructure import (
     RecvPort,
     SendPort,
     Actor,
-    ActorCmd,
-    ActorStatus
 )
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 

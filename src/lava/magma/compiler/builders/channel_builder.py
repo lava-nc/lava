@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-import numpy as np
 from dataclasses import dataclass
 
 from lava.magma.compiler.builders.interfaces import \
@@ -56,11 +55,9 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        itemsize = np.dtype(self.src_port_initializer.d_type).itemsize
-        nbytes = np.prod(self.src_port_initializer.shape) * itemsize
         return Channel(self.channel_type,
-                       self.src_port_initializer.size,
-                       nbytes,
+                       ChannelQueueSize,
+                       self.src_port_initializer.bytes,
                        self.src_port_initializer.name)
 
 
@@ -96,7 +93,6 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
                        self.port_initializer.bytes,
@@ -133,7 +129,6 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
                        self.port_initializer.bytes,
