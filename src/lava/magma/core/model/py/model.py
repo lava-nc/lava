@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 # from functools import partial
 import logging
 import numpy as np
+import time
 
 from message_infrastructure import (SendPort,
                                     RecvPort,
@@ -49,11 +50,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._actor: Actor = None
         self._action: str = None
-        self._control_handlers: ty.Dict[ActorCmd, ty.Callable] = {
-            ActorCmd.CmdRun: self._run,
-            ActorCmd.CmdStop: self._stop,
-            ActorCmd.CmdPause: self._pause
-        }
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
                                                          RecvPort],
                                                 ty.Callable]] = []
@@ -89,7 +85,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._actor = actor
         # inject actor stop funtion to actor controller
         # self._actor.start_controller(partial(self._stop, self))
-        self._actor.set_stop_fn(self.stop)
+        self._actor.set_stop_fn(self._stop)
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
@@ -100,6 +96,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         Command handler for Stop command.
         """
+        print("process join")
         self.join()
 
     def _pause(self):
@@ -176,16 +173,18 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         received."""
         self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
         self.add_ports_for_polling()
-        self._action = self._selector.select(*self._channel_actions)
+        self._action = self._selector.select(*self._channel_actions)       
+        self._actor.start()
         while True:
             # Check Actor Status and ActorCmd
             actor_status = self._actor.get_status()
-            if actor_status in [ActorStatus.StatusStopped,
-                                ActorStatus.StatusError]:
+            if actor_status in [int(ActorStatus.StatusStopped),
+                                int(ActorStatus.StatusError)]:
                 return
             # Check Action in model
 
             if self._action == 'cmd':
+                print("modle recv cmd")
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
@@ -209,6 +208,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     continue
                 # Handle VarPort requests from RefPorts
                 # Handle exception here?
+                print("port service")
                 try:
                     self._handle_var_port(self._action)
                 except Exception:
@@ -535,9 +535,8 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         Checks if the RS has sent a STOP command.
         """
-        actor_cmd = self._actor.get_cmd()
-        if actor_cmd == ActorCmd.CmdRun:
-            self._stop()
+        actor_status = self._actor.get_status()
+        if actor_status == ActorStatus.StatusStopped:
             return True
         return False
 

@@ -61,12 +61,13 @@ class AbstractActor {
 
  protected:
   void HandleCmd();
-  bool HandleStatus();
-  int ActorMonitor_();
+  std::pair<bool, bool> HandleStatus();
+  void ActorMonitor_();
   void Run();
   int pid_;
   StopFn stop_fn_;
   ThreadPtr actor_monitor_ = nullptr;
+  ActorCtrlStatus ctl_status_backup;
 
  private:
   RwSharedMemoryPtr ctl_status_shm_;
