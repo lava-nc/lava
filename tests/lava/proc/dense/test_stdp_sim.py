@@ -8,7 +8,7 @@ import numpy as np
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.proc.lif.process import LIF
-from lava.proc.dense.process import LearningDense as Dense
+from lava.proc.dense.process import LearningDense
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 from lava.proc.io.source import RingBuffer, PySendModelFixed, PySendModelFloat
 
@@ -34,7 +34,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
 
-        dense = Dense(weights=weights_init, learning_rule=learning_rule)
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=20000)
 
@@ -124,7 +124,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_0 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.1)
 
-        dense = Dense(weights=weights_init, learning_rule=learning_rule)
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
 
