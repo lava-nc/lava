@@ -80,7 +80,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         if not self.weights_set:
             num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
             sign_mode: SignMode = self.proc_params.get("sign_mode") \
-                                  or determine_sign_mode(self.weights)
+                or determine_sign_mode(self.weights)
 
             self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
             self.weights = truncate_weights(self.weights,
@@ -171,7 +171,7 @@ class PyLearningDenseModelBitApproximate(ConnectionModelBitApproximate):
         if not self.weights_set:
             num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
             sign_mode: SignMode = self.proc_params.get("sign_mode") \
-                                  or determine_sign_mode(self.weights)
+                or determine_sign_mode(self.weights)
 
             self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
             self.weights = truncate_weights(self.weights,
