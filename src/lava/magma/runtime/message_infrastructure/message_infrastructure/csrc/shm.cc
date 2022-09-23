@@ -24,7 +24,7 @@ void SharedMemory::InitSemaphore() {
 }
 
 void SharedMemory::Start() {
-  sem_post(ack_);
+  // RecvPort will post init sem.
 }
 
 void SharedMemory::Store(HandleFn store_fn) {
@@ -33,12 +33,19 @@ void SharedMemory::Store(HandleFn store_fn) {
   sem_post(req_);
 }
 
-bool SharedMemory::Load(HandleFn consume_fn) {
+bool SharedMemory::Load(HandleFn consume_fn, bool available) {
+  bool ret = false;
   if (!sem_trywait(req_))
   {
       consume_fn(MemMap());
+      ret = true;
+  }
+  if (available) {
+    int val;
+    sem_getvalue(ack_, &val);
+    if (val == 0) {
       sem_post(ack_);
-      return true;
+    }
   }
   return false;
 }
