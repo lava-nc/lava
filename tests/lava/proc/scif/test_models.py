@@ -29,7 +29,7 @@ verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False
 
 
 class TestCspScifModels(unittest.TestCase):
-    """Tests for sigma delta neuron"""
+    """Tests for CspScif neuron"""
 
     def run_test(
         self,
