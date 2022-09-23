@@ -99,10 +99,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Scale bias with bias exponent by taking into account sign of the
         exponent.
         """
+        # Create local copy of bias_mant with promoted dtype to prevent
+        # overflow when applying shift of bias_exp.
+        bias_mant = self.bias_mant.copy().astype(np.int32)
         self.effective_bias = np.where(
             self.bias_exp >= 0,
-            np.left_shift(self.bias_mant, self.bias_exp),
-            np.right_shift(self.bias_mant, -self.bias_exp)
+            np.left_shift(bias_mant, self.bias_exp),
+            np.right_shift(bias_mant, -self.bias_exp)
         )
         self.isbiasscaled = True
 
