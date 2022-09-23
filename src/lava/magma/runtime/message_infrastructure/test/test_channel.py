@@ -82,7 +82,6 @@ class TestShmemChannel(unittest.TestCase):
         time.sleep(5)
         self.mp.stop(True)
 
-
     def test_single_process_shmemchannel(self):
         size = 5
         predata = prepare_data()

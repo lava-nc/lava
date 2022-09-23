@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <memory>
@@ -81,7 +82,8 @@ class SharedMemManager {
 
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    int random = rand();
+    unsigned int local_seed = time(NULL);
+    int random = rand_r(&local_seed);
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {

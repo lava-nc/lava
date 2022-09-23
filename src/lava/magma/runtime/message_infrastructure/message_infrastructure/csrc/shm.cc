@@ -97,7 +97,8 @@ RwSharedMemory::~RwSharedMemory() {
 }
 
 int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
-  int random = rand();
+  unsigned int local_seed = time(NULL);
+  int random = rand_r(&local_seed);
   std::string str = shm_str_ + std::to_string(random);
   int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
   if (shmfd == -1) {
