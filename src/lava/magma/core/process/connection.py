@@ -1,10 +1,9 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.learning.learning_rule import LearningRule
 
 # base class for all connection processes.
 from lava.magma.core.process.variable import Var
@@ -50,13 +49,13 @@ class ConnectionProcess(AbstractProcess):
     ----------
     shape: tuple, ndarray
         Shape of the connection in format (post, pre) order.
-    learning_rule: LearningRule
+    learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
     """
     def __init__(
         self,
         shape: tuple = (1, 1),
-        learning_rule: LearningRule = None,
+        learning_rule: LoihiLearningRule = None,
         *args,
         **kwargs,
     ):
