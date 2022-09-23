@@ -11,19 +11,7 @@ from lava.magma.core.learning.symbolic_equation import SymbolicEquation
 from lava.magma.core.learning.product_series import ProductSeries
 
 
-class LearningRule:
-    """Base class for learning rules.
-
-    See also
-    --------
-    lava.magma.core.learning.learning_rule.LoihiLearningRule
-
-    """
-
-    pass
-
-
-class LoihiLearningRule(LearningRule):
+class LoihiLearningRule:
     """Encapsulation of learning-related information according to Loihi.
 
     A LoihiLearningRule object has the following main objectives:
