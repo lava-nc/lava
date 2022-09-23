@@ -144,8 +144,12 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # when decayed_curr is 0, we don't care about its sign. But np.mod
         # needs something non-zero to avoid the divide-by-zero warning
         sign_of_curr[sign_of_curr == 0] = 1
-        wrapped_curr = np.mod(decayed_curr,
-                              sign_of_curr * self.max_uv_val)
+        wrapped_curr = np.where(decayed_curr > self.max_uv_val, 
+                                decayed_curr - 2 * self.max_uv_val,
+                                decayed_curr)
+        wrapped_curr = np.where(wrapped_curr <= -self.max_uv_val, 
+                                decayed_curr + 2 * self.max_uv_val,
+                                wrapped_curr)
         self.u[:] = wrapped_curr
         # Update voltage
         # --------------
