@@ -79,7 +79,7 @@ class TestSTDPSim(unittest.TestCase):
         lif_0 = LIF(shape=(num_pre_neurons,), du=0, dv=0, vth=10000,
                     bias_mant=np.array([22000, 25000, 26000]))
 
-        dense = Dense(weights=weights_init, learning_rule=learning_rule)
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(num_post_neurons,), du=0, dv=0, vth=10000,
                     bias_mant=np.array([20000, 23000]))
@@ -169,7 +169,7 @@ class TestSTDPSim(unittest.TestCase):
         lif_0 = LIF(shape=(num_pre_neurons,), du=0, dv=0, vth=1,
                     bias_mant=np.array([0.08, 0.1, 0.11]))
 
-        dense = Dense(weights=weights_init, learning_rule=learning_rule)
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(num_post_neurons,), du=0, dv=0, vth=1,
                     bias_mant=np.array([0.12, 0.15]))
