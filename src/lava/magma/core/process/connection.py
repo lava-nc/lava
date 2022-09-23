@@ -56,7 +56,6 @@ class ConnectionProcess(AbstractProcess):
         self,
         shape: tuple = (1, 1),
         learning_rule: LoihiLearningRule = None,
-        *args,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
@@ -82,4 +81,4 @@ class ConnectionProcess(AbstractProcess):
         self.tag_2 = Var(shape=shape, init=0)
         self.tag_1 = Var(shape=shape, init=0)
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)

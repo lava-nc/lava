@@ -5,37 +5,7 @@
 import unittest
 import numpy as np
 
-from lava.magma.core.learning.utils import saturate, stochastic_round
-
-
-class TestSaturate(unittest.TestCase):
-    def test_saturate_float(self) -> None:
-        """Tests saturate method with values being float."""
-        min_value = 0
-        values = np.array([-1, 5, 15], dtype=float)
-        max_value = 10
-        target_saturated_values = np.array([0, 5, 10], dtype=float)
-
-        saturated_values = saturate(min_value, values, max_value)
-
-        self.assertIsInstance(saturated_values, np.ndarray)
-        self.assertEqual(saturated_values.dtype, float)
-        np.testing.assert_almost_equal(saturated_values,
-                                       target_saturated_values)
-
-    def test_saturate_integer(self) -> None:
-        """Tests saturate method with values being int."""
-        min_value = 0
-        values = np.array([-1, 5, 15], dtype=int)
-        max_value = 10
-        target_saturated_values = np.array([0, 5, 10], dtype=int)
-
-        saturated_values = saturate(min_value, values, max_value)
-
-        self.assertIsInstance(saturated_values, np.ndarray)
-        self.assertEqual(saturated_values.dtype, int)
-        np.testing.assert_almost_equal(saturated_values,
-                                       target_saturated_values)
+from lava.magma.core.learning.utils import stochastic_round
 
 
 class TestStochasticRound(unittest.TestCase):

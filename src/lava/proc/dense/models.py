@@ -136,7 +136,7 @@ class PyLearningDenseModelFloat(ConnectionModelFloat):
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
         if self._learning_rule is not None:
-            self._record_pre_spike_times(s_in)
+           self._record_pre_spike_times(s_in)
 
         super().run_spk()
 
@@ -162,6 +162,7 @@ class PyLearningDenseModelBitApproximate(ConnectionModelBitApproximate):
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
+        self.num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
 
     def run_spk(self):
         self.weight_exp: int = self.proc_params.get("weight_exp", 0)
@@ -169,14 +170,11 @@ class PyLearningDenseModelBitApproximate(ConnectionModelBitApproximate):
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
-            num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
-            sign_mode: SignMode = self.proc_params.get("sign_mode") \
-                                  or determine_sign_mode(self.weights)
-
-            self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
-            self.weights = truncate_weights(self.weights,
-                                            sign_mode,
-                                            num_weight_bits)
+            self.weights = truncate_weights(
+                self.weights,
+                sign_mode=self.sign_mode,
+                num_weight_bits=self.num_weight_bits
+            )
             self.weights_set = True
 
         # The a_out sent at each timestep is a buffered value from dendritic

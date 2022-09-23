@@ -4,7 +4,8 @@
 
 import unittest
 import numpy as np
-from lava.proc.dense.process import Dense, SignMode, LearningDense
+
+from lava.proc.dense.process import Dense, LearningDense
 
 
 class TestDenseProcess(unittest.TestCase):

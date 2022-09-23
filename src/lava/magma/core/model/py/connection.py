@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import numpy as np
+import typing
+
 from lava.magma.core.learning.learning_rule_applier import (
     LearningRuleApplierFloat,
     LearningRuleApplierBitApprox,
@@ -13,10 +16,8 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.learning.constants import *
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 import lava.magma.core.learning.string_symbols as str_symbols
-from lava.utils.weightutils import SignMode
-from lava.magma.core.learning.utils import saturate, stochastic_round
-import numpy as np
-import typing
+from lava.utils.weightutils import SignMode, clip_weights
+from lava.magma.core.learning.utils import stochastic_round
 
 NUM_DEPENDENCIES = len(str_symbols.DEPENDENCIES)
 NUM_X_TRACES = len(str_symbols.PRE_TRACES)
@@ -310,6 +311,8 @@ class ConnectionModelBitApproximate(Connection):
         self._learning_rule = proc_params["learning_rule"]
         self._shape = proc_params["shape"]
 
+        self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
+
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
 
@@ -474,7 +477,7 @@ class ConnectionModelBitApproximate(Connection):
     def lrn_guard(self) -> bool:
         if self._learning_rule is not None:
             return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
+        return False
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
@@ -701,11 +704,11 @@ class ConnectionModelBitApproximate(Connection):
         """
         # Weights
         if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
+            if self.sign_mode == SignMode.MIXED:
                 return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+            elif self.sign_mode == SignMode.EXCITATORY:
                 return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+            elif self.sign_mode == SignMode.INHIBITORY:
                 return np.minimum(0, synaptic_variable_values)
         # Delays
         elif synaptic_variable_name == "tag_2":
@@ -714,10 +717,9 @@ class ConnectionModelBitApproximate(Connection):
         elif synaptic_variable_name == "tag_1":
             return synaptic_variable_values
         else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
+            raise ValueError(f"synaptic_variable_name can be 'weights', "
+                             f"'tag_1', or 'tag_2'."
+                             f"Got {synaptic_variable_name=}.")
 
     def _saturate_synaptic_variable(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
@@ -741,35 +743,23 @@ class ConnectionModelBitApproximate(Connection):
         """
         # Weights
         if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return saturate(
-                    -(2**W_WEIGHTS_U) - 1,
-                    synaptic_variable_values,
-                    2**W_WEIGHTS_U - 1,
-                )
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return saturate(
-                    0, synaptic_variable_values, 2**W_WEIGHTS_U - 1
-                )
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return saturate(
-                    -(2**W_WEIGHTS_U) - 1, synaptic_variable_values, 0
-                )
+            return clip_weights(synaptic_variable_values,
+                                sign_mode=self.sign_mode,
+                                num_bits=W_WEIGHTS_U)
         # Delays
         elif synaptic_variable_name == "tag_2":
-            return saturate(0, synaptic_variable_values, 2**W_TAG_2_U - 1)
+            return np.clip(synaptic_variable_values,
+                           a_min=0,
+                           a_max=2 ** W_TAG_2_U - 1)
         # Tags
         elif synaptic_variable_name == "tag_1":
-            return saturate(
-                -(2**W_TAG_1_U) - 1,
-                synaptic_variable_values,
-                2**W_TAG_1_U - 1,
-            )
+            return np.clip(synaptic_variable_values,
+                           a_min=-(2 ** W_TAG_1_U) - 1,
+                           a_max=2 ** W_TAG_1_U - 1)
         else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
+            raise ValueError(f"synaptic_variable_name can be 'weights', "
+                             f"'tag_1', or 'tag_2'."
+                             f"Got {synaptic_variable_name=}.")
 
     def _apply_learning_rules(self) -> None:
         """Update all synaptic variables according to the
@@ -826,7 +816,7 @@ class ConnectionModelBitApproximate(Connection):
         """
         trace_new = trace_values + impulses_int
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-        trace_new = saturate(0, trace_new, 2**W_TRACE - 1)
+        trace_new = np.clip(trace_new, a_min=0, a_max=2 ** W_TRACE - 1)
 
         return trace_new
 
@@ -1170,7 +1160,7 @@ class ConnectionModelFloat(Connection):
     def lrn_guard(self) -> bool:
         if self._learning_rule is not None:
             return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
+        return False
 
     def run_lrn(self) -> None:
         self._apply_learning_rules()
@@ -1343,25 +1333,16 @@ class ConnectionModelFloat(Connection):
         result : ndarray
             Saturated synaptic variable values.
         """
-        # Weights
-        if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return np.minimum(0, synaptic_variable_values)
+        # Weights and Tags
+        if synaptic_variable_name in ["weights", "tag_1"]:
+            return synaptic_variable_values
         # Delays
         elif synaptic_variable_name == "tag_2":
             return np.maximum(0, synaptic_variable_values)
-        # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
         else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
+            raise ValueError(f"synaptic_variable_name can be 'weights', "
+                             f"'tag_1', or 'tag_2'."
+                             f"Got {synaptic_variable_name=}.")
 
     @staticmethod
     def _decay_trace(

@@ -7,8 +7,6 @@ from abc import abstractmethod
 import asteval
 
 from lava.magma.core.learning.product_series import ProductSeries, Factor
-from lava.magma.core.learning.utils import saturate
-from lava.magma.core.learning import string_symbols as str_symbols
 from lava.magma.core.learning.constants import *
 
 
@@ -318,9 +316,9 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
                 )
 
                 # saturate value of factor (after constant addition)
-                factor_val = saturate(
-                    -(2**factor_width), factor_val, 2**factor_width - 1
-                )
+                factor_val = np.clip(factor_val,
+                                     a_min=-(2 ** factor_width),
+                                     a_max=2 ** factor_width - 1)
 
                 # multiply MAC with value of factor
                 current_result *= factor_val.astype(np.int32)
@@ -341,16 +339,14 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
             current_result = np.left_shift(current_result, product.s_exp)
 
             # saturate current_result
-            current_result = saturate(
-                -(2 ** W_ACCUMULATOR_U) - 1,
-                current_result,
-                2 ** W_ACCUMULATOR_U - 1,
-            )
+            current_result = np.clip(current_result,
+                                     a_min=-(2 ** W_ACCUMULATOR_U) - 1,
+                                     a_max=2 ** W_ACCUMULATOR_U - 1)
 
             # accumulate and saturate result
             result = result + current_result
-            result = saturate(
-                -(2 ** W_ACCUMULATOR_U) - 1, result, 2 ** W_ACCUMULATOR_U - 1
-            )
+            result = np.clip(result,
+                             a_min=-(2 ** W_ACCUMULATOR_U) - 1,
+                             a_max=2 ** W_ACCUMULATOR_U - 1)
 
         return result
