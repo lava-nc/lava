@@ -10,7 +10,8 @@ import typing
 import typing as ty
 
 import numpy as np
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
+from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
+    CspSelector
 from lava.magma.compiler.var_model import AbstractVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
@@ -260,12 +261,23 @@ class Runtime:
         Gets response from RuntimeServices
         """
         if self._is_running:
-            for recv_port in self.service_to_runtime:
+            selector = CspSelector()
+            # Poll on all responses
+            channel_actions = [(recv_port, (lambda y: (lambda: y))(
+                recv_port)) for
+                               recv_port in
+                               self.service_to_runtime]
+            rsps = []
+            while True:
+                recv_port = selector.select(*channel_actions)
                 data = recv_port.recv()
+                rsps.append(data)
                 if enum_equal(data, MGMT_RESPONSE.REQ_PAUSE):
-                    self._req_paused = True
+                    self.pause()
+                    return
                 elif enum_equal(data, MGMT_RESPONSE.REQ_STOP):
-                    self._req_stop = True
+                    self.stop()
+                    return
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
@@ -282,13 +294,10 @@ class Runtime:
                             f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
-            if self._req_paused:
-                self._req_paused = False
-                self.pause()
-            if self._req_stop:
-                self._req_stop = False
-                self.stop()
-            self._is_running = False
+
+                if len(rsps) == len(self.service_to_runtime):
+                    self._is_running = False
+                    return
 
     def start(self, run_condition: AbstractRunCondition):
         """
@@ -337,6 +346,7 @@ class Runtime:
     def pause(self):
         """Pauses the execution"""
         if self._is_running:
+            print("Calling Pause")
             for send_port in self.runtime_to_service:
                 send_port.send(MGMT_COMMAND.PAUSE)
             for recv_port in self.service_to_runtime:
@@ -356,6 +366,13 @@ class Runtime:
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
+                    else:
+                        if recv_port.probe():
+                            data = recv_port.recv()
+                        if not enum_equal(data, MGMT_RESPONSE.PAUSED):
+                            raise RuntimeError(
+                                f"{data} Got Wrong Response for Pause.")
+
             self._is_running = False
 
     def stop(self):
@@ -367,7 +384,10 @@ class Runtime:
                 for recv_port in self.service_to_runtime:
                     data = recv_port.recv()
                     if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
-                        raise RuntimeError(f"Runtime Received {data}")
+                        if recv_port.probe():
+                            data = recv_port.recv()
+                        if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                            raise RuntimeError(f"Runtime Received {data}")
                 self.join()
                 self._is_running = False
                 self._is_started = False
