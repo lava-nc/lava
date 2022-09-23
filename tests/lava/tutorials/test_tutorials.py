@@ -255,11 +255,17 @@ class TestTutorials(unittest.TestCase):
 
     @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_08_stdp(self):
-        """Test tutorial in depth remote memory access."""
+        """Test tutorial stdp."""
         self._run_notebook(
             "tutorial08_stdp.ipynb"
         )
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_09_custom_learning_rules(self):
+        """Test tutorial custom leing rules."""
+        self._run_notebook(
+            "tutorial09_custom_learning_rules.ipynb"
+        )
 
 if __name__ == '__main__':
     support.run_unittest(TestTutorials)
