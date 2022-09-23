@@ -81,7 +81,8 @@ class SharedMemManager {
 
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    std::string str = shm_str_ + std::to_string(key_++);
+    int random = rand();
+    std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {
       LAVA_LOG_ERR("Create shared memory object failed.\n");
@@ -93,8 +94,7 @@ class SharedMemManager {
       exit(-1);
     }
     shm_strs_.insert(str);
-    int key = key_;
-    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, key);
+    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
     shm->InitSemaphore();
     return shm;
   }
@@ -105,7 +105,6 @@ class SharedMemManager {
  private:
   SharedMemManager() {}
   std::set<std::string> shm_strs_;
-  std::atomic<key_t> key_ {0xdead};
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
 };

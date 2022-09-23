@@ -40,7 +40,6 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     data = port.recv()
-    print(data)
     if not np.array_equal(data, prepare_data()):
         raise AssertionError()
     port.join()
@@ -55,6 +54,7 @@ class Builder:
 class TestShmemChannel(unittest.TestCase):
     mp = MultiProcessing()
 
+    @unittest.skip
     def test_shmemchannel(self):
         self.mp.start()
         size = 5
@@ -68,8 +68,8 @@ class TestShmemChannel(unittest.TestCase):
             nbytes,
             name)
 
-        send_port = shmem_channel.get_send_port()
-        recv_port = shmem_channel.get_recv_port()
+        send_port = shmem_channel.src_port
+        recv_port = shmem_channel.dst_port
 
         recv_port_fn = partial(recv_proc, port=recv_port)
         send_port_fn = partial(send_proc, port=send_port)
@@ -80,7 +80,35 @@ class TestShmemChannel(unittest.TestCase):
         self.mp.build_actor(send_port_fn, builder2)
 
         time.sleep(5)
-        self.mp.stop()
+        self.mp.stop(True)
+
+
+    def test_single_process_shmemchannel(self):
+        size = 5
+        predata = prepare_data()
+        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        name = 'test_single_process_shmem_channel'
+
+        shmem_channel = Channel(
+            ChannelBackend.SHMEMCHANNEL,
+            size,
+            nbytes,
+            name)
+
+        send_port = shmem_channel.src_port
+        recv_port = shmem_channel.dst_port
+
+        send_port.start()
+        recv_port.start()
+
+        send_port.send(predata)
+        resdata = recv_port.recv()
+
+        if not np.array_equal(resdata, predata):
+            raise AssertionError()
+
+        send_port.join()
+        recv_port.join()
 
 
 if __name__ == "__main__":
