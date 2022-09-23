@@ -60,7 +60,7 @@ class AbstractActor {
   }
 
  protected:
-  std::pair<bool, bool> HandleCmd();
+  void HandleCmd();
   bool HandleStatus();
   int ActorMonitor_();
   void Run();

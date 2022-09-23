@@ -37,25 +37,21 @@ bool AbstractActor::HandleStatus() {
     return stop;
 }
 
-std::pair<bool, bool> AbstractActor::HandleCmd() {
-    bool stop = false;
-    bool wait = false;
-    this->ctl_status_shm_->Handle([&stop, &wait](void* data){
+void AbstractActor::HandleCmd() {
+    this->ctl_status_shm_->Handle([](void* data){
         auto ctrl_status = reinterpret_cast<ActorCtrlStatus*>(data);
         if(ctrl_status->cmd == ActorCmd::CmdStop) {
-            stop = true;
+            ctrl_status->status = ActorStatus::StatusStopped;
         }
         else if (ctrl_status->cmd == ActorCmd::CmdPause)
         {
             ctrl_status->status = ActorStatus::StatusPaused;
-            wait = true;
         }
         else if (ctrl_status->cmd == ActorCmd::CmdRun)
         {
             ctrl_status->status = ActorStatus::StatusRunning;
         }
     });
-    return std::make_pair(stop, wait);
 }
 
 void AbstractActor::SetStatus(ActorStatus status) {
@@ -105,11 +101,8 @@ int AbstractActor::GetCmd() {
 void AbstractActor::Run() {
     InitStatus();
     while(true) {
-      auto handle = HandleCmd();
-      if (handle.first) {
-        break;
-      }
-      if (!handle.second) {
+      auto is_stop = HandleStatus();
+      if (is_stop) {
         target_fn_(this);
         LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
       } else {
