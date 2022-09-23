@@ -4,6 +4,7 @@
 
 import typing as ty
 from numpy import typing as npty
+
 import numpy as np
 
 from lava.magma.core.process.process import AbstractProcess
