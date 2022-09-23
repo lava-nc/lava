@@ -9,7 +9,7 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include <thread>
+#include <thread>  // NOLINT
 #include "shm.h"
 
 namespace message_infrastructure {

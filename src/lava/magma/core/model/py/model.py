@@ -211,7 +211,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # Handle exception here?
                 try:
                     self._handle_var_port(self._action)
-                except:
+                except Exception:
                     print("handle var port error")
                     self._actor.error()
                     return
