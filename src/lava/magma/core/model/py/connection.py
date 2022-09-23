@@ -22,6 +22,7 @@ NUM_DEPENDENCIES = len(str_symbols.DEPENDENCIES)
 NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
+
 class Connection(PyLoihiProcessModel):
 
     # Learning Ports
@@ -103,8 +104,8 @@ class Connection(PyLoihiProcessModel):
             dtype=bool,
         )
         for (
-                dependency,
-                traces,
+            dependency,
+            traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -133,13 +134,13 @@ class Connection(PyLoihiProcessModel):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-                                               :, :2
-                                               ]
+            :, :2
+        ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-                                               :, 2:
-                                               ]
+            :, 2:
+        ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -239,6 +240,7 @@ class Connection(PyLoihiProcessModel):
         self.tx = np.zeros_like(self.tx)
         self.ty = np.zeros_like(self.ty)
 
+
 class ConnectionModelBitApproximate(Connection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
@@ -330,9 +332,6 @@ class ConnectionModelBitApproximate(Connection):
             self._init_randoms()
 
         super().__init__(proc_params)
-
-
-
 
     @staticmethod
     def _decompose_impulses(
@@ -483,7 +482,6 @@ class ConnectionModelBitApproximate(Connection):
         self._update_traces()
         self._reset_dependencies_and_spike_times()
 
-
     def _update_trace_randoms(self) -> None:
         """Update trace random generators."""
         self._x_random.advance()
@@ -492,7 +490,6 @@ class ConnectionModelBitApproximate(Connection):
     def _update_synaptic_variable_random(self) -> None:
         """Update synaptic variable random generators."""
         self._conn_var_random.advance()
-
 
     def _extract_applier_args(self) -> typing.Dict[str, np.ndarray]:
         """Extracts arguments for the LearningRuleApplierFloat.
@@ -1005,10 +1002,6 @@ class ConnectionModelBitApproximate(Connection):
         )
 
 
-
-
-
-
 class ConnectionModelFloat(Connection):
     """Floating-point implementation of the Connection Process
 
@@ -1508,5 +1501,3 @@ class ConnectionModelFloat(Connection):
                 self._y_taus[:, np.newaxis],
             )
         )
-
-
