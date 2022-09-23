@@ -41,7 +41,7 @@ class STDPLoihi(LoihiLearningRule):
         A_plus:
             Scaling the weight change on pre-synaptic spike times.
         A_minus:
-            Sclaing the weight change on post-synaptic spike times.
+            Scaling the weight change on post-synaptic spike times.
         tau_plus:
             Time constant of the pre-synaptic activity trace.
         tau_minus:
