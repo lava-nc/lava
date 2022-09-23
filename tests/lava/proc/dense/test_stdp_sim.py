@@ -6,9 +6,9 @@ import unittest
 
 import numpy as np
 from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.run_configs import Loihi2HwCfg, Loihi1SimCfg
+from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.proc.lif.process import LIF
-from lava.proc.dense.process import Dense
+from lava.proc.dense.process import LearningDense as Dense
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
 

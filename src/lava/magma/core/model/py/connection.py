@@ -67,6 +67,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
     proc_params: dict
         Parameters from the ProcessModel
     """
+
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
 
@@ -126,8 +127,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
         inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
 
-        min_wgt = -(2 ** 8) * (mixed_idx + inhibitory_idx)
-        max_wgt = (2 ** 8 - 1) * (mixed_idx + excitatory_idx)
+        min_wgt = -(2**8) * (mixed_idx + inhibitory_idx)
+        max_wgt = (2**8 - 1) * (mixed_idx + excitatory_idx)
 
         saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
 
@@ -178,8 +179,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         )
 
     @staticmethod
-    def _decompose_impulses(impulses: np.ndarray) \
-            -> typing.Tuple[np.ndarray, np.ndarray]:
+    def _decompose_impulses(
+        impulses: np.ndarray,
+    ) -> typing.Tuple[np.ndarray, np.ndarray]:
         """Decompose float impulse values into integer and fractional parts.
 
         Parameters
@@ -195,27 +197,35 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             Impulse fractional values.
         """
         impulses_int = np.floor(impulses)
-        impulses_frac = \
-            np.round((impulses - impulses_int) * 2 ** W_TRACE_FRACTIONAL_PART)
+        impulses_frac = np.round(
+            (impulses - impulses_int) * 2**W_TRACE_FRACTIONAL_PART
+        )
 
         return impulses_int.astype(int), impulses_frac.astype(int)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
         impulses and taus."""
-        x_impulses = np.array([self._learning_rule.x1_impulse,
-                               self._learning_rule.x2_impulse])
-        self._x_impulses_int, self._x_impulses_frac = \
-            self._decompose_impulses(x_impulses)
+        x_impulses = np.array(
+            [self._learning_rule.x1_impulse, self._learning_rule.x2_impulse]
+        )
+        self._x_impulses_int, self._x_impulses_frac = self._decompose_impulses(
+            x_impulses
+        )
         self._x_taus = np.array(
             [self._learning_rule.x1_tau, self._learning_rule.x2_tau]
         )
 
-        y_impulses = np.array([self._learning_rule.y1_impulse,
-                               self._learning_rule.y2_impulse,
-                               self._learning_rule.y3_impulse])
-        self._y_impulses_int, self._y_impulses_frac = \
-            self._decompose_impulses(y_impulses)
+        y_impulses = np.array(
+            [
+                self._learning_rule.y1_impulse,
+                self._learning_rule.y2_impulse,
+                self._learning_rule.y3_impulse,
+            ]
+        )
+        self._y_impulses_int, self._y_impulses_frac = self._decompose_impulses(
+            y_impulses
+        )
         self._y_taus = np.array(
             [
                 self._learning_rule.y1_tau,
@@ -251,8 +261,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             dtype=bool,
         )
         for (
-                dependency,
-                traces,
+            dependency,
+            traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -281,13 +291,13 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-                                               :, :2
-                                               ]
+            :, :2
+        ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-                                               :, 2:
-                                               ]
+            :, 2:
+        ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -318,13 +328,15 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     def _init_randoms(self) -> None:
         """Initialize trace and synaptic variable random generators."""
-        self._x_random = \
-            TraceRandom(seed_trace_decay=self._learning_rule._rng_seed,
-                        seed_impulse_addition=self._learning_rule._rng_seed + 1)
+        self._x_random = TraceRandom(
+            seed_trace_decay=self._learning_rule._rng_seed,
+            seed_impulse_addition=self._learning_rule._rng_seed + 1,
+        )
 
-        self._y_random = \
-            TraceRandom(seed_trace_decay=self._learning_rule._rng_seed + 2,
-                        seed_impulse_addition=self._learning_rule._rng_seed + 3)
+        self._y_random = TraceRandom(
+            seed_trace_decay=self._learning_rule._rng_seed + 2,
+            seed_impulse_addition=self._learning_rule._rng_seed + 3,
+        )
 
         self._conn_var_random = ConnVarRandom()
 
@@ -474,8 +486,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(
-                    self.time_step / self._learning_rule.t_epoch) % 2 ^ k == 0
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                == 0
                 else 0
             )
 
@@ -567,9 +579,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     @staticmethod
     def _stochastic_round_synaptic_variable(
-            synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray,
-            random: float,
+        synaptic_variable_name: str,
+        synaptic_variable_values: np.ndarray,
+        random: float,
     ) -> np.ndarray:
         """Stochastically round synaptic variable after learning rule
         application.
@@ -600,8 +612,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         return result
 
     def _saturate_synaptic_variable_accumulator(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable accumulator.
 
@@ -640,8 +651,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             )
 
     def _saturate_synaptic_variable(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable.
 
@@ -664,27 +674,27 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         if synaptic_variable_name == "weights":
             if np.equal(self.sign_mode, SignMode.MIXED.value):
                 return saturate(
-                    -(2 ** W_WEIGHTS_U) - 1,
+                    -(2**W_WEIGHTS_U) - 1,
                     synaptic_variable_values,
-                    2 ** W_WEIGHTS_U - 1,
+                    2**W_WEIGHTS_U - 1,
                 )
             elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
                 return saturate(
-                    0, synaptic_variable_values, 2 ** W_WEIGHTS_U - 1
+                    0, synaptic_variable_values, 2**W_WEIGHTS_U - 1
                 )
             elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
                 return saturate(
-                    -(2 ** W_WEIGHTS_U) - 1, synaptic_variable_values, 0
+                    -(2**W_WEIGHTS_U) - 1, synaptic_variable_values, 0
                 )
         # Delays
         elif synaptic_variable_name == "tag_2":
-            return saturate(0, synaptic_variable_values, 2 ** W_TAG_2_U - 1)
+            return saturate(0, synaptic_variable_values, 2**W_TAG_2_U - 1)
         # Tags
         elif synaptic_variable_name == "tag_1":
             return saturate(
-                -(2 ** W_TAG_1_U) - 1,
+                -(2**W_TAG_1_U) - 1,
                 synaptic_variable_values,
-                2 ** W_TAG_1_U - 1,
+                2**W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
@@ -721,10 +731,10 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
     @staticmethod
     def _add_impulse(
-            trace_values: np.ndarray,
-            random: int,
-            impulses_int: np.ndarray,
-            impulses_frac: np.ndarray,
+        trace_values: np.ndarray,
+        random: int,
+        impulses_int: np.ndarray,
+        impulses_frac: np.ndarray,
     ) -> np.ndarray:
         """Add trace impulse impulse value and stochastically round
         the result.
@@ -747,14 +757,13 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         """
         trace_new = trace_values + impulses_int
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-        trace_new = saturate(0, trace_new, 2 ** W_TRACE - 1)
+        trace_new = saturate(0, trace_new, 2**W_TRACE - 1)
 
         return trace_new
 
     @staticmethod
     def _decay_trace(
-            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray,
-            random: float
+        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray, random: float
     ) -> np.ndarray:
         """Stochastically decay trace to a given within-epoch time step.
 
@@ -783,14 +792,14 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         return result
 
     def _evaluate_trace(
-            self,
-            trace_values: np.ndarray,
-            t_spikes: np.ndarray,
-            t_eval: np.ndarray,
-            trace_impulses_int: np.ndarray,
-            trace_impulses_frac: np.ndarray,
-            trace_taus: np.ndarray,
-            trace_random: TraceRandom,
+        self,
+        trace_values: np.ndarray,
+        t_spikes: np.ndarray,
+        t_eval: np.ndarray,
+        trace_impulses_int: np.ndarray,
+        trace_impulses_frac: np.ndarray,
+        trace_taus: np.ndarray,
+        trace_random: TraceRandom,
     ) -> np.ndarray:
         """Evaluate a trace at given within-epoch time steps, given
         within-epoch spike timings.
@@ -1168,8 +1177,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             dtype=bool,
         )
         for (
-                dependency,
-                traces,
+            dependency,
+            traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -1198,13 +1207,13 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-                                               :, :2
-                                               ]
+            :, :2
+        ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-                                               :, 2:
-                                               ]
+            :, 2:
+        ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -1363,8 +1372,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(
-                    self.time_step / self._learning_rule.t_epoch) % 2 ^ k == 0
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                == 0
                 else 0
             )
 
@@ -1428,14 +1437,12 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             np.concatenate((x_traces, y_traces), axis=1),
             np.concatenate((t_spikes_x, t_spikes_y), axis=1),
             t_eval,
-            np.concatenate(
-                (self._x_impulses,
-                 self._y_impulses),
-                axis=0)[np.newaxis, :, np.newaxis, np.newaxis],
-            np.concatenate(
-                (self._x_taus,
-                 self._y_taus),
-                axis=0)[np.newaxis, :, np.newaxis, np.newaxis]
+            np.concatenate((self._x_impulses, self._y_impulses), axis=0)[
+                np.newaxis, :, np.newaxis, np.newaxis
+            ],
+            np.concatenate((self._x_taus, self._y_taus), axis=0)[
+                np.newaxis, :, np.newaxis, np.newaxis
+            ],
         )
 
         # Shape: (3, 5, num_post_neurons, num_pre_neurons)
@@ -1444,8 +1451,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         return applier_args
 
     def _saturate_synaptic_variable(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable.
 
@@ -1495,7 +1501,7 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     @staticmethod
     def _decay_trace(
-            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
+        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
     ) -> np.ndarray:
         """Decay trace to a given within-epoch time step.
 
@@ -1517,12 +1523,12 @@ class ConnectionModelFloat(PyLoihiProcessModel):
         return np.exp(-t / taus) * trace_values
 
     def _evaluate_trace(
-            self,
-            trace_values: np.ndarray,
-            t_spikes: np.ndarray,
-            t_eval: np.ndarray,
-            trace_impulses: np.ndarray,
-            trace_taus: np.ndarray,
+        self,
+        trace_values: np.ndarray,
+        t_spikes: np.ndarray,
+        t_eval: np.ndarray,
+        trace_impulses: np.ndarray,
+        trace_taus: np.ndarray,
     ) -> np.ndarray:
         """Evaluate a trace at given within-epoch time steps, given
         within-epoch spike timings.
