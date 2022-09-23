@@ -131,7 +131,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyDenseModelFloat(ConnectionModelFloat):
+class PyLearningDenseModelFloat(ConnectionModelFloat):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -170,7 +170,7 @@ class PyDenseModelFloat(ConnectionModelFloat):
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
-class PyDenseModelBitApproximate(ConnectionModelBitApproximate):
+class PyLearningDenseModelBitApproximate(ConnectionModelBitApproximate):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.

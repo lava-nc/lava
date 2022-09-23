@@ -22,8 +22,224 @@ NUM_DEPENDENCIES = len(str_symbols.DEPENDENCIES)
 NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
+class Connection(PyLoihiProcessModel):
 
-class ConnectionModelBitApproximate(PyLoihiProcessModel):
+    # Learning Ports
+    s_in_bap = None
+
+    # Learning Vars
+    x0 = None
+    tx = None
+    x1 = None
+    x2 = None
+
+    y0 = None
+    ty = None
+    y1 = None
+    y2 = None
+    y3 = None
+
+    tag_2 = None
+    tag_1 = None
+
+    def _store_shapes(self) -> None:
+        """Build and store several shapes that are needed in several
+        computation stages of this ProcessModel."""
+        num_pre_neurons = self._shape[1]
+        num_post_neurons = self._shape[0]
+
+        # Shape: (2, num_pre_neurons)
+        self._shape_x_traces = (NUM_X_TRACES, num_pre_neurons)
+        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
+        self._shape_x_traces_per_dep_broad = (
+            NUM_DEPENDENCIES,
+            NUM_X_TRACES,
+            num_post_neurons,
+            num_pre_neurons,
+        )
+
+        # Shape: (3, num_post_neurons)
+        self._shape_y_traces = (NUM_Y_TRACES, num_post_neurons)
+        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
+        self._shape_y_traces_per_dep_broad = (
+            NUM_DEPENDENCIES,
+            NUM_Y_TRACES,
+            num_post_neurons,
+            num_pre_neurons,
+        )
+
+        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
+        self._shape_traces_per_dep_broad = (
+            NUM_DEPENDENCIES,
+            NUM_X_TRACES + NUM_Y_TRACES,
+            num_post_neurons,
+            num_pre_neurons,
+        )
+
+    def _build_active_traces_per_dependency(self) -> None:
+        """Build and store boolean numpy arrays specifying which x and y
+        traces are active, per dependency.
+
+        First dimension:
+        index 0 -> x0 dependency
+        index 1 -> y0 dependency
+        index 2 -> u dependency
+
+        Second dimension (for x_traces):
+        index 0 -> x1 trace
+        index 1 -> x2 trace
+
+        Second dimension (for y_traces):
+        index 0 -> y1 trace
+        index 1 -> y2 trace
+        index 2 -> y3 trace
+        """
+        # Shape : (3, 5)
+        active_traces_per_dependency = np.zeros(
+            (
+                len(str_symbols.DEPENDENCIES),
+                len(str_symbols.PRE_TRACES) + len(str_symbols.POST_TRACES),
+            ),
+            dtype=bool,
+        )
+        for (
+                dependency,
+                traces,
+        ) in self._learning_rule.active_traces_per_dependency.items():
+            if dependency == str_symbols.X0:
+                dependency_idx = 0
+            elif dependency == str_symbols.Y0:
+                dependency_idx = 1
+            elif dependency == str_symbols.U:
+                dependency_idx = 2
+            else:
+                raise ValueError("Unknown Dependency in ProcessModel.")
+
+            for trace in traces:
+                if trace == str_symbols.X1:
+                    trace_idx = 0
+                elif trace == str_symbols.X2:
+                    trace_idx = 1
+                elif trace == str_symbols.Y1:
+                    trace_idx = 2
+                elif trace == str_symbols.Y2:
+                    trace_idx = 3
+                elif trace == str_symbols.Y3:
+                    trace_idx = 4
+                else:
+                    raise ValueError("Unknown Trace in ProcessModel")
+
+                active_traces_per_dependency[dependency_idx, trace_idx] = True
+
+        # Shape : (3, 2)
+        self._active_x_traces_per_dependency = active_traces_per_dependency[
+                                               :, :2
+                                               ]
+
+        # Shape : (3, 3)
+        self._active_y_traces_per_dependency = active_traces_per_dependency[
+                                               :, 2:
+                                               ]
+
+    def _build_active_traces(self) -> None:
+        """Build and store boolean numpy arrays specifying which x and y
+        traces are active."""
+        # Shape : (2, )
+        self._active_x_traces = np.logical_or(
+            self._active_x_traces_per_dependency[0],
+            self._active_x_traces_per_dependency[1],
+            self._active_x_traces_per_dependency[2],
+        )
+
+        # Shape : (3, )
+        self._active_y_traces = np.logical_or(
+            self._active_y_traces_per_dependency[0],
+            self._active_y_traces_per_dependency[1],
+            self._active_y_traces_per_dependency[2],
+        )
+
+    # Shape: (2, num_pre_neurons)
+    @property
+    def _x_traces(self) -> np.ndarray:
+        """Get x traces.
+
+        Returns
+        ----------
+        x_traces : np.ndarray
+            X traces.
+        """
+        return np.concatenate(
+            (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
+        )
+
+    def _set_x_traces(self, x_traces: np.ndarray) -> None:
+        """Set x traces.
+
+        Parameters
+        ----------
+        x_traces : np.ndarray
+            X traces.
+        """
+        self.x1 = x_traces[0]
+        self.x2 = x_traces[1]
+
+    # Shape: (3, num_post_neurons)
+    @property
+    def _y_traces(self) -> np.ndarray:
+        """Get y traces.
+
+        Returns
+        ----------
+        y_traces : np.ndarray
+            Y traces.
+        """
+        return np.concatenate(
+            (
+                self.y1[np.newaxis, :],
+                self.y2[np.newaxis, :],
+                self.y3[np.newaxis, :],
+            ),
+            axis=0,
+        )
+
+    def _set_y_traces(self, y_traces: np.ndarray) -> None:
+        """Set y traces.
+
+        Parameters
+        ----------
+        y_traces : np.ndarray
+            Y traces.
+        """
+        self.y1 = y_traces[0]
+        self.y2 = y_traces[1]
+        self.y3 = y_traces[2]
+
+    def _within_epoch_time_step(self) -> int:
+        """Compute index of current time step within the epoch.
+
+        Result ranges from 1 to t_epoch.
+
+        Returns
+        ----------
+        within_epoch_ts : int
+            Within-epoch time step.
+        """
+        within_epoch_ts = self.time_step % self._learning_rule.t_epoch
+
+        if within_epoch_ts == 0:
+            within_epoch_ts = self._learning_rule.t_epoch
+
+        return within_epoch_ts
+
+    def _reset_dependencies_and_spike_times(self) -> None:
+        """Reset all dependencies and within-epoch spike times."""
+        self.x0 = np.zeros_like(self.x0)
+        self.y0 = np.zeros_like(self.y0)
+
+        self.tx = np.zeros_like(self.tx)
+        self.ty = np.zeros_like(self.ty)
+
+class ConnectionModelBitApproximate(Connection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
 
@@ -115,68 +331,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         super().__init__(proc_params)
 
-    def _set_wgts(self) -> np.ndarray:
-        wgt_vals = np.copy(self.weights)
 
-        # Saturate the weights according to the sign_mode:
-        # 0 : null
-        # 1 : mixed
-        # 2 : excitatory
-        # 3 : inhibitory
-        mixed_idx = np.equal(self.sign_mode, 1).astype(np.int32)
-        excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
-        inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
 
-        min_wgt = -(2**8) * (mixed_idx + inhibitory_idx)
-        max_wgt = (2**8 - 1) * (mixed_idx + excitatory_idx)
-
-        saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
-
-        # Truncate least significant bits given sign_mode and num_wgt_bits.
-        num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
-
-        truncated_wgts = np.left_shift(
-            np.right_shift(saturated_wgts, num_truncate_bits), num_truncate_bits
-        )
-
-        wgt_vals = truncated_wgts.astype(np.int32)
-        wgts_scaled = np.copy(wgt_vals)
-        self.weights_set = True
-        return wgts_scaled
-
-    def _store_shapes(self) -> None:
-        """Build and store several shapes that are needed in several
-        computation stages of this ProcessModel."""
-        num_pre_neurons = self._shape[1]
-        num_post_neurons = self._shape[0]
-
-        # Shape: (2, num_pre_neurons)
-        self._shape_x_traces = (NUM_X_TRACES, num_pre_neurons)
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        self._shape_x_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, num_post_neurons)
-        self._shape_y_traces = (NUM_Y_TRACES, num_post_neurons)
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        self._shape_y_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        self._shape_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES + NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
 
     @staticmethod
     def _decompose_impulses(
@@ -234,88 +390,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             ]
         )
 
-    def _build_active_traces_per_dependency(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active, per dependency.
-
-        First dimension:
-        index 0 -> x0 dependency
-        index 1 -> y0 dependency
-        index 2 -> u dependency
-
-        Second dimension (for x_traces):
-        index 0 -> x1 trace
-        index 1 -> x2 trace
-
-        Second dimension (for y_traces):
-        index 0 -> y1 trace
-        index 1 -> y2 trace
-        index 2 -> y3 trace
-        """
-        # Shape : (3, 5)
-        active_traces_per_dependency = np.zeros(
-            (
-                len(str_symbols.DEPENDENCIES),
-                len(str_symbols.PRE_TRACES) + len(str_symbols.POST_TRACES),
-            ),
-            dtype=bool,
-        )
-        for (
-            dependency,
-            traces,
-        ) in self._learning_rule.active_traces_per_dependency.items():
-            if dependency == str_symbols.X0:
-                dependency_idx = 0
-            elif dependency == str_symbols.Y0:
-                dependency_idx = 1
-            elif dependency == str_symbols.U:
-                dependency_idx = 2
-            else:
-                raise ValueError("Unknown Dependency in ProcessModel.")
-
-            for trace in traces:
-                if trace == str_symbols.X1:
-                    trace_idx = 0
-                elif trace == str_symbols.X2:
-                    trace_idx = 1
-                elif trace == str_symbols.Y1:
-                    trace_idx = 2
-                elif trace == str_symbols.Y2:
-                    trace_idx = 3
-                elif trace == str_symbols.Y3:
-                    trace_idx = 4
-                else:
-                    raise ValueError("Unknown Trace in ProcessModel")
-
-                active_traces_per_dependency[dependency_idx, trace_idx] = True
-
-        # Shape : (3, 2)
-        self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
-
-        # Shape : (3, 3)
-        self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
-
-    def _build_active_traces(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active."""
-        # Shape : (2, )
-        self._active_x_traces = np.logical_or(
-            self._active_x_traces_per_dependency[0],
-            self._active_x_traces_per_dependency[1],
-            self._active_x_traces_per_dependency[2],
-        )
-
-        # Shape : (3, )
-        self._active_y_traces = np.logical_or(
-            self._active_y_traces_per_dependency[0],
-            self._active_y_traces_per_dependency[1],
-            self._active_y_traces_per_dependency[2],
-        )
-
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplierBitApprox for each active learning
         rule in a dict mapped by the learning rule's target."""
@@ -340,6 +414,76 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
         self._conn_var_random = ConnVarRandom()
 
+    def run_spk(self) -> None:
+        s_in_bap = self.s_in_bap.recv().astype(bool)
+        if self._learning_rule is not None:
+            self._record_post_spike_times(s_in_bap)
+            self._update_trace_randoms()
+
+    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+
+        If more a single pre- or post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
+
+        Parameters
+        ----------
+        s_in : ndarray
+            Pre-synaptic spikes.
+        """
+        self.x0[s_in] = True
+        multi_spike_x = np.logical_and(self.tx > 0, s_in)
+
+        x_traces = self._x_traces
+        x_traces[:, multi_spike_x] = self._add_impulse(
+            x_traces[:, multi_spike_x],
+            self._x_random.random_impulse_addition,
+            self._x_impulses_int[:, np.newaxis],
+            self._x_impulses_frac[:, np.newaxis],
+        )
+        self._set_x_traces(x_traces)
+
+        ts_offset = self._within_epoch_time_step()
+        self.tx[s_in] = ts_offset
+
+    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+
+        If more a single pre- or post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
+
+        Parameters
+        ----------
+        s_in_bap : ndarray
+            Post-synaptic spikes.
+        """
+        self.y0[s_in_bap] = True
+        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
+
+        y_traces = self._y_traces
+        y_traces[:, multi_spike_y] = self._add_impulse(
+            y_traces[:, multi_spike_y],
+            self._y_random.random_impulse_addition,
+            self._y_impulses_int[:, np.newaxis],
+            self._y_impulses_frac[:, np.newaxis],
+        )
+        self._set_y_traces(y_traces)
+
+        ts_offset = self._within_epoch_time_step()
+        self.ty[s_in_bap] = ts_offset
+
+    def lrn_guard(self) -> bool:
+        if self._learning_rule is not None:
+            return self.time_step % self._learning_rule.t_epoch == 0
+        return 0
+
+    def run_lrn(self) -> None:
+        self._update_synaptic_variable_random()
+        self._apply_learning_rules()
+        self._update_traces()
+        self._reset_dependencies_and_spike_times()
+
+
     def _update_trace_randoms(self) -> None:
         """Update trace random generators."""
         self._x_random.advance()
@@ -349,78 +493,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         """Update synaptic variable random generators."""
         self._conn_var_random.advance()
 
-    # Shape: (2, num_pre_neurons)
-    @property
-    def _x_traces(self) -> np.ndarray:
-        """Get x traces.
-
-        Returns
-        ----------
-        x_traces : np.ndarray
-            X traces.
-        """
-        return np.concatenate(
-            (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
-        )
-
-    def _set_x_traces(self, x_traces: np.ndarray) -> None:
-        """Set x traces.
-
-        Parameters
-        ----------
-        x_traces : np.ndarray
-            X traces.
-        """
-        self.x1 = x_traces[0]
-        self.x2 = x_traces[1]
-
-    # Shape: (3, num_post_neurons)
-    @property
-    def _y_traces(self) -> np.ndarray:
-        """Get y traces.
-
-        Returns
-        ----------
-        y_traces : np.ndarray
-            Y traces.
-        """
-        return np.concatenate(
-            (
-                self.y1[np.newaxis, :],
-                self.y2[np.newaxis, :],
-                self.y3[np.newaxis, :],
-            ),
-            axis=0,
-        )
-
-    def _set_y_traces(self, y_traces: np.ndarray) -> None:
-        """Set y traces.
-
-        Parameters
-        ----------
-        y_traces : np.ndarray
-            Y traces.
-        """
-        self.y1 = y_traces[0]
-        self.y2 = y_traces[1]
-        self.y3 = y_traces[2]
-
-    def _within_epoch_time_step(self) -> int:
-        """Compute index of current time step within the epoch.
-
-        Result ranges from 1 to t_epoch.
-
-        Returns
-        ----------
-        within_epoch_ts : int
-            Within-epoch time step.
-        """
-        within_epoch_ts = self.time_step % self._learning_rule.t_epoch
-
-        if within_epoch_ts == 0:
-            within_epoch_ts = self._learning_rule.t_epoch
-
-        return within_epoch_ts
 
     def _extract_applier_args(self) -> typing.Dict[str, np.ndarray]:
         """Extracts arguments for the LearningRuleApplierFloat.
@@ -932,85 +1004,12 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             )
         )
 
-    def _reset_dependencies_and_spike_times(self) -> None:
-        """Reset all dependencies and within-epoch spike times."""
-        self.x0 = np.zeros_like(self.x0)
-        self.y0 = np.zeros_like(self.y0)
-
-        self.tx = np.zeros_like(self.tx)
-        self.ty = np.zeros_like(self.ty)
-
-    def lrn_guard(self) -> bool:
-        if self._learning_rule is not None:
-            return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
-
-    def run_lrn(self) -> None:
-        self._update_synaptic_variable_random()
-        self._apply_learning_rules()
-        self._update_traces()
-        self._reset_dependencies_and_spike_times()
-
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
-
-        If more a single pre- or post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in_bap : ndarray
-            Post-synaptic spikes.
-        """
-        self.y0[s_in_bap] = True
-        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[:, multi_spike_y] = self._add_impulse(
-            y_traces[:, multi_spike_y],
-            self._y_random.random_impulse_addition,
-            self._y_impulses_int[:, np.newaxis],
-            self._y_impulses_frac[:, np.newaxis],
-        )
-        self._set_y_traces(y_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.ty[s_in_bap] = ts_offset
-
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
-
-        If more a single pre- or post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in : ndarray
-            Pre-synaptic spikes.
-        """
-        self.x0[s_in] = True
-        multi_spike_x = np.logical_and(self.tx > 0, s_in)
-
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] = self._add_impulse(
-            x_traces[:, multi_spike_x],
-            self._x_random.random_impulse_addition,
-            self._x_impulses_int[:, np.newaxis],
-            self._x_impulses_frac[:, np.newaxis],
-        )
-        self._set_x_traces(x_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
-
-    def run_spk(self) -> None:
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)
-            self._update_trace_randoms()
 
 
-class ConnectionModelFloat(PyLoihiProcessModel):
+
+
+
+class ConnectionModelFloat(Connection):
     """Floating-point implementation of the Connection Process
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
@@ -1091,40 +1090,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             # generate LearningRuleApplierFloat from ProductSeries
             self._build_learning_rule_appliers()
 
-    def _store_shapes(self) -> None:
-        """Build and store several shapes that are needed in several
-        computation stages of this ProcessModel."""
-        num_pre_neurons = self._shape[1]
-        num_post_neurons = self._shape[0]
-
-        # Shape: (2, num_pre_neurons)
-        self._shape_x_traces = (NUM_X_TRACES, num_pre_neurons)
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        self._shape_x_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, num_post_neurons)
-        self._shape_y_traces = (NUM_Y_TRACES, num_post_neurons)
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        self._shape_y_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        self._shape_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES + NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
         impulses and taus."""
@@ -1150,88 +1115,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             ]
         )
 
-    def _build_active_traces_per_dependency(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active, per dependency.
-
-        First dimension:
-        index 0 -> x0 dependency
-        index 1 -> y0 dependency
-        index 2 -> u dependency
-
-        Second dimension (for x_traces):
-        index 0 -> x1 trace
-        index 1 -> x2 trace
-
-        Second dimension (for y_traces):
-        index 0 -> y1 trace
-        index 1 -> y2 trace
-        index 2 -> y3 trace
-        """
-        # Shape : (3, 5)
-        active_traces_per_dependency = np.zeros(
-            (
-                len(str_symbols.DEPENDENCIES),
-                len(str_symbols.PRE_TRACES) + len(str_symbols.POST_TRACES),
-            ),
-            dtype=bool,
-        )
-        for (
-            dependency,
-            traces,
-        ) in self._learning_rule.active_traces_per_dependency.items():
-            if dependency == str_symbols.X0:
-                dependency_idx = 0
-            elif dependency == str_symbols.Y0:
-                dependency_idx = 1
-            elif dependency == str_symbols.U:
-                dependency_idx = 2
-            else:
-                raise ValueError("Unknown Dependency in ProcessModel.")
-
-            for trace in traces:
-                if trace == str_symbols.X1:
-                    trace_idx = 0
-                elif trace == str_symbols.X2:
-                    trace_idx = 1
-                elif trace == str_symbols.Y1:
-                    trace_idx = 2
-                elif trace == str_symbols.Y2:
-                    trace_idx = 3
-                elif trace == str_symbols.Y3:
-                    trace_idx = 4
-                else:
-                    raise ValueError("Unknown Trace in ProcessModel")
-
-                active_traces_per_dependency[dependency_idx, trace_idx] = True
-
-        # Shape : (3, 2)
-        self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
-
-        # Shape : (3, 3)
-        self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
-
-    def _build_active_traces(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active."""
-        # Shape : (2, )
-        self._active_x_traces = np.logical_or(
-            self._active_x_traces_per_dependency[0],
-            self._active_x_traces_per_dependency[1],
-            self._active_x_traces_per_dependency[2],
-        )
-
-        # Shape : (3, )
-        self._active_y_traces = np.logical_or(
-            self._active_y_traces_per_dependency[0],
-            self._active_y_traces_per_dependency[1],
-            self._active_y_traces_per_dependency[2],
-        )
-
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplierFloat for each active learning
         rule in a dict mapped by the learning rule's target."""
@@ -1242,78 +1125,78 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             for target, ps in self._learning_rule.active_product_series.items()
         }
 
-    # Shape: (2, num_pre_neurons)
-    @property
-    def _x_traces(self) -> np.ndarray:
-        """Get x traces.
+    def run_spk(self) -> None:
+        s_in_bap = self.s_in_bap.recv().astype(bool)
+        if self._learning_rule is not None:
+            self._record_post_spike_times(s_in_bap)
 
-        Returns
-        ----------
-        x_traces : np.ndarray
-            X traces.
-        """
-        return np.concatenate(
-            (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
-        )
+    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre-synaptic neurons.
 
-    def _set_x_traces(self, x_traces: np.ndarray) -> None:
-        """Set x traces.
+        If more a single pre-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
 
         Parameters
         ----------
-        x_traces : np.ndarray
-            X traces.
+        s_in : ndarray
+            Pre-synaptic spikes.
         """
-        self.x1 = x_traces[0]
-        self.x2 = x_traces[1]
 
-    # Shape: (3, num_post_neurons)
-    @property
-    def _y_traces(self) -> np.ndarray:
-        """Get y traces.
+        self.x0[s_in] = True
+        multi_spike_x = np.logical_and(self.tx > 0, s_in)
 
-        Returns
-        ----------
-        y_traces : np.ndarray
-            Y traces.
-        """
-        return np.concatenate(
-            (
-                self.y1[np.newaxis, :],
-                self.y2[np.newaxis, :],
-                self.y3[np.newaxis, :],
-            ),
-            axis=0,
-        )
+        x_traces = self._x_traces
+        x_traces[:, multi_spike_x] += self._x_impulses[:, np.newaxis]
+        self._set_x_traces(x_traces)
 
-    def _set_y_traces(self, y_traces: np.ndarray) -> None:
-        """Set y traces.
+        ts_offset = self._within_epoch_time_step()
+        self.tx[s_in] = ts_offset
+
+    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+        """Record within-epoch spiking times of post-synaptic neurons.
+
+        If more a single post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
 
         Parameters
         ----------
-        y_traces : np.ndarray
-            Y traces.
+        s_in_bap : ndarray
+            Post-synaptic spikes.
         """
-        self.y1 = y_traces[0]
-        self.y2 = y_traces[1]
-        self.y3 = y_traces[2]
 
-    def _within_epoch_time_step(self) -> int:
-        """Compute index of current time step within the epoch.
+        self.y0[s_in_bap] = True
+        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
 
-        Result ranges from 1 to t_epoch.
+        y_traces = self._y_traces
+        y_traces[:, multi_spike_y] += self._y_impulses[:, np.newaxis]
+        self._set_y_traces(y_traces)
 
-        Returns
-        ----------
-        within_epoch_ts : int
-            Within-epoch time step.
-        """
-        within_epoch_ts = self.time_step % self._learning_rule.t_epoch
+        ts_offset = self._within_epoch_time_step()
+        self.ty[s_in_bap] = ts_offset
 
-        if within_epoch_ts == 0:
-            within_epoch_ts = self._learning_rule.t_epoch
+    def lrn_guard(self) -> bool:
+        if self._learning_rule is not None:
+            return self.time_step % self._learning_rule.t_epoch == 0
+        return 0
 
-        return within_epoch_ts
+    def run_lrn(self) -> None:
+        self._apply_learning_rules()
+
+        self._update_traces()
+
+        self._reset_dependencies_and_spike_times()
+
+    def _apply_learning_rules(self) -> None:
+        """Update all synaptic variables according to the
+        LearningRuleApplier representation of their corresponding
+        learning rule."""
+        applier_args = self._extract_applier_args()
+
+        for syn_var_name, lr_applier in self._learning_rule_appliers.items():
+            syn_var = getattr(self, syn_var_name).copy()
+            syn_var = lr_applier.apply(syn_var, **applier_args)
+            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
+            setattr(self, syn_var_name, syn_var)
 
     def _extract_applier_args(self) -> dict:
         """Extracts arguments for the LearningRuleApplierFloat.
@@ -1487,18 +1370,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
                 "saturate_synaptic_variable"
             )
 
-    def _apply_learning_rules(self) -> None:
-        """Update all synaptic variables according to the
-        LearningRuleApplier representation of their corresponding
-        learning rule."""
-        applier_args = self._extract_applier_args()
-
-        for syn_var_name, lr_applier in self._learning_rule_appliers.items():
-            syn_var = getattr(self, syn_var_name).copy()
-            syn_var = lr_applier.apply(syn_var, **applier_args)
-            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
-            setattr(self, syn_var_name, syn_var)
-
     @staticmethod
     def _decay_trace(
         trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
@@ -1638,71 +1509,4 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             )
         )
 
-    def _reset_dependencies_and_spike_times(self) -> None:
-        """Reset all dependencies and within-epoch spike times."""
-        self.x0 = np.zeros_like(self.x0)
-        self.y0 = np.zeros_like(self.y0)
 
-        self.tx = np.zeros_like(self.tx)
-        self.ty = np.zeros_like(self.ty)
-
-    def lrn_guard(self) -> bool:
-        if self._learning_rule is not None:
-            return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
-
-    def run_lrn(self) -> None:
-        self._apply_learning_rules()
-
-        self._update_traces()
-
-        self._reset_dependencies_and_spike_times()
-
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre-synaptic neurons.
-
-        If more a single pre-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in : ndarray
-            Pre-synaptic spikes.
-        """
-
-        self.x0[s_in] = True
-        multi_spike_x = np.logical_and(self.tx > 0, s_in)
-
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] += self._x_impulses[:, np.newaxis]
-        self._set_x_traces(x_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
-
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of post-synaptic neurons.
-
-        If more a single post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in_bap : ndarray
-            Post-synaptic spikes.
-        """
-
-        self.y0[s_in_bap] = True
-        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[:, multi_spike_y] += self._y_impulses[:, np.newaxis]
-        self._set_y_traces(y_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.ty[s_in_bap] = ts_offset
-
-    def run_spk(self) -> None:
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)
