@@ -4,6 +4,7 @@
 
 import typing as ty
 from abc import ABC, abstractmethod
+# from functools import partial
 import logging
 import numpy as np
 
@@ -47,7 +48,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
         self._selector: Selector = Selector()
         self._actor: Actor = None
-        self._action: str = 'cmd'
+        self._action: str = None
         self._control_handlers: ty.Dict[ActorCmd, ty.Callable] = {
             ActorCmd.CmdRun: self._run,
             ActorCmd.CmdStop: self._stop,
@@ -86,27 +87,26 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         py_ports) and calls the run function.
         """
         self._actor = actor
+        # inject actor stop funtion to actor controller
+        # self._actor.start_controller(partial(self._stop, self))
+        self._actor.set_stop_fn(self.stop)
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
             p.start()
         self.run()
 
-    def _run(self):
-        self._actor.status_running()
-
     def _stop(self):
         """
         Command handler for Stop command.
         """
-        self._actor.status_stopped()
         self.join()
 
     def _pause(self):
         """
         Command handler for Pause command.
         """
-        self._actor.status_paused()
+        pass
 
     def _get_var(self):
         """Handles the get Var command from runtime service."""
@@ -174,35 +174,18 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         After calling the method of the ProcessModels, the runtime service
         is informed about completion. The loop ends when the STOP command is
         received."""
+        self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
+        self.add_ports_for_polling()
+        self._action = self._selector.select(*self._channel_actions)
         while True:
             # Check Actor Status and ActorCmd
             actor_status = self._actor.get_status()
             if actor_status in [ActorStatus.StatusStopped,
                                 ActorStatus.StatusError]:
                 return
-            elif actor_status == ActorStatus.StatusPaused:
-                continue
-            actor_cmd = self._actor.get_cmd()
-            try:
-                if actor_cmd in self._control_handlers:
-                    self._control_handlers[actor_cmd]()
-                else:
-                    self._actor.error()
-                    raise ValueError(
-                        f"Illegal control command! ProcessModels of "
-                        f"type {self.__class__.__qualname__} "
-                        f"{self.model_id} cannot handle "
-                        f"command: {actor_cmd} ")
-            except Exception as inst:
-                self.join()
-                self._actor.error()
-                raise inst
-                # If here should return to cpplib
-
             # Check Action in model
-            if self._action is None:
-                continue
-            elif self._action == 'cmd':
+
+            if self._action == 'cmd':
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
@@ -216,14 +199,22 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 except Exception as inst:
                     # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
-                    self.join()
-                    raise inst
+                    self._actor.error()
+                    # raise inst
+                    return
+            elif self._action is None:
+                continue
             else:
+                if actor_status == ActorStatus.StatusPaused:
+                    continue
                 # Handle VarPort requests from RefPorts
-                self._handle_var_port(self._action)
-            self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
-            self.add_ports_for_polling()
-            self._action = self._selector.select(*self._channel_actions)
+                # Handle exception here?
+                try:
+                    self._handle_var_port(self._action)
+                except:
+                    print("handle var port error")
+                    self._actor.error()
+                    return
 
     @abstractmethod
     def add_ports_for_polling(self):

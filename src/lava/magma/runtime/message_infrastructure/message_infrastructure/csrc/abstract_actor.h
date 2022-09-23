@@ -9,9 +9,12 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <thread>
 #include "shm.h"
 
 namespace message_infrastructure {
+
+using ThreadPtr = std::shared_ptr<std::thread>;
 
 enum ActorType {
   RuntimeActor = 0,
@@ -41,6 +44,7 @@ class AbstractActor {
  public:
   using ActorPtr = AbstractActor *;
   using TargetFn = std::function<void(ActorPtr)>;
+  using StopFn = std::function<void(void)>;
 
   explicit AbstractActor(TargetFn target_fn);
   virtual int ForceStop() = 0;
@@ -50,14 +54,19 @@ class AbstractActor {
   int GetCmd();
   int GetStatus();
   void SetStatus(ActorStatus status);
+  int SetStopFn(StopFn stop_fn);
   int GetPid() {
     return this->pid_;
   }
 
  protected:
   std::pair<bool, bool> HandleCmd();
+  bool HandleStatus();
+  int ActorMonitor_();
   void Run();
   int pid_;
+  StopFn stop_fn_;
+  ThreadPtr actor_monitor_ = nullptr;
 
  private:
   RwSharedMemoryPtr ctl_status_shm_;

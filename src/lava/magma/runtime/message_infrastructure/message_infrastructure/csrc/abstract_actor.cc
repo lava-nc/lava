@@ -22,6 +22,21 @@ void AbstractActor::Control(const ActorCmd cmd) {
     });
 }
 
+bool AbstractActor::HandleStatus() {
+    bool stop = false;
+    int status = GetStatus();
+    switch (status){
+        case ActorStatus::StatusError:
+        case ActorStatus::StatusStopped:
+            stop = true;
+            stop_fn_();
+            break;
+        default:
+            break;
+    }
+    return stop;
+}
+
 std::pair<bool, bool> AbstractActor::HandleCmd() {
     bool stop = false;
     bool wait = false;
@@ -48,6 +63,25 @@ void AbstractActor::SetStatus(ActorStatus status) {
         auto ctrl_status = reinterpret_cast<ActorCtrlStatus*>(data);
         ctrl_status->status = status;
     });
+}
+
+int AbstractActor::SetStopFn(StopFn stop_fn) {
+    stop_fn_ = stop_fn;
+    if(stop_fn_ == nullptr) {
+        LAVA_LOG_ERR("Set None Function\n");
+        return -1;
+    }
+    actor_monitor_ = std::make_shared<std::thread>(&message_infrastructure::AbstractActor::ActorMonitor_, this);
+    return 0;
+}
+
+int AbstractActor::ActorMonitor_() {
+    while(true) {
+        if(HandleStatus())
+            break;
+        HandleCmd();
+    }
+    return 0;
 }
 
 int AbstractActor::GetStatus() {
@@ -84,6 +118,7 @@ void AbstractActor::Run() {
       }
     }
     SetStatus(ActorStatus::StatusStopped);
+    actor_monitor_->join();
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
 }
 
