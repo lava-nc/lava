@@ -143,10 +143,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Check if value of current is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
-        sign_of_curr = np.sign(decayed_curr)
-        # when decayed_curr is 0, we don't care about its sign. But np.mod
-        # needs something non-zero to avoid the divide-by-zero warning
-        sign_of_curr[sign_of_curr == 0] = 1
         wrapped_curr = np.where(decayed_curr > self.max_uv_val,
                                 decayed_curr - 2 * self.max_uv_val,
                                 decayed_curr)
