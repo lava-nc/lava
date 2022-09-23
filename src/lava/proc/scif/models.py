@@ -37,19 +37,18 @@ class AbstractPyModelScifFixed(PyLoihiProcessModel):
         super(AbstractPyModelScifFixed, self).__init__(proc_params)
         self.a_in_data = np.zeros(proc_params['shape'])
 
-    def _prng(self, shape_like):
+    def _prng(self, intg_idx_):
         """Pseudo-random number generator
         """
 
         # ToDo: Choosing a 16-bit signed random integer. For bit-accuracy,
         #   need to replace it with Loihi-conformant LFSR function
-        prand = np.zeros_like(shape_like)
+        prand = np.zeros(shape=(len(intg_idx_),))
         if prand.size > 0:
             rand_nums = \
                 np.random.randint(-2 ** 15, 2 ** 15 - 1, size=prand.size)
             # Assign random numbers only to neurons, for which noise is enabled
-            prand = rand_nums * self.noise_ampl
-
+            prand = rand_nums * self.noise_ampl[intg_idx_]
         return prand
 
     def _update_buffers(self):
@@ -71,7 +70,7 @@ class AbstractPyModelScifFixed(PyLoihiProcessModel):
         spk_hist_to_intg = self.spk_hist[intg_idx]  # beta to be integrated
         step_size_to_intg = self.step_size[intg_idx]  # bias to be integrated
 
-        lfsr = self._prng(shape_like=state_to_intg)
+        lfsr = self._prng(intg_idx_=intg_idx)
 
         state_to_intg = state_to_intg + lfsr + cnstr_to_intg + step_size_to_intg
         np.clip(state_to_intg, a_min=0, a_max=2 ** 23 - 1, out=state_to_intg)

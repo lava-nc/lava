@@ -128,12 +128,6 @@ class TestCspScifModels(unittest.TestCase):
                                                      neg_tau_ref=neg_tau_ref,
                                                      wt=wt,
                                                      t_inj_spk={})
-        # voltages = np.hstack((np.arange(num_steps).reshape(num_steps, 1),
-        #                      v_scif,
-        #                      v_lif_wta,
-        #                      v_lif_sig))
-        # np.set_printoptions(linewidth=np.inf, threshold=np.inf)
-        # print(voltages)
         spk_idxs = np.array([theta // step_size - 1 + j * total_period for j in
                              range(num_epochs)]).astype(int)
         wta_pos_spk_idxs = spk_idxs + 1
@@ -364,12 +358,6 @@ class TestQuboScifModels(unittest.TestCase):
                                                      neg_tau_ref=neg_tau_ref,
                                                      wt=wt,
                                                      t_inj_spk={})
-        # voltages = np.hstack((np.arange(num_steps).reshape(num_steps, 1),
-        #                      v_scif,
-        #                      v_lif_wta,
-        #                      v_lif_sig))
-        # np.set_printoptions(linewidth=np.inf, threshold=np.inf)
-        # print(voltages)
         spk_idxs = np.array([theta // step_size - 1 + j * total_period for j in
                              range(num_epochs)]).astype(int)
         wta_pos_spk_idxs = spk_idxs + 1
@@ -410,12 +398,6 @@ class TestQuboScifModels(unittest.TestCase):
                                                      neg_tau_ref=neg_tau_ref,
                                                      wt=wt,
                                                      t_inj_spk=t_inj_spk)
-        # voltages = np.hstack((np.arange(num_steps).reshape(num_steps, 1),
-        #                       v_scif,
-        #                       v_lif_wta,
-        #                       v_lif_sig))
-        # np.set_printoptions(linewidth=np.inf, threshold=np.inf)
-        # print(voltages)
         # Test pre-inhibitory-injection SCIF voltage and spiking
         spk_idxs_pre_inj = np.array([theta // step_size]).astype(int) - 1
         wta_pos_spk_pre_inj = spk_idxs_pre_inj + 1
