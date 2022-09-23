@@ -103,7 +103,9 @@ class SharedMemManager {
   friend SharedMemManager &GetSharedMemManager();
 
  private:
-  SharedMemManager() {}
+  SharedMemManager() {
+    srand(time(NULL));
+  }
   std::set<std::string> shm_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
