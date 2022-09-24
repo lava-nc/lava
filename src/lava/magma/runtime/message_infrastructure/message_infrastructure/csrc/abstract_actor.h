@@ -42,6 +42,7 @@ class AbstractActor {
  public:
   using ActorPtr = AbstractActor *;
   using TargetFn = std::function<void(ActorPtr)>;
+  using StopFn = std::function<void(void)>;
 
   explicit AbstractActor(TargetFn target_fn);
   virtual int ForceStop() = 0;
@@ -50,6 +51,7 @@ class AbstractActor {
   void Control(const ActorCmd cmd);
   int GetStatus();
   void SetStatus(ActorStatus status);
+  void SetStopFn(StopFn stop_fn);
   int GetPid() {
     return this->pid_;
   }
@@ -64,6 +66,7 @@ class AbstractActor {
   std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
   std::string actor_name_ = "actor";
   TargetFn target_fn_ = NULL;
+  StopFn stop_fn_ = NULL;
   void InitStatus();
   void HandleCmd();
 };

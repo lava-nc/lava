@@ -21,9 +21,12 @@ def prepare_data():
     data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
     return data
 
+def actor_stop(name):
+    print(f"{name} stop")
 
 def send_proc(*args, **kwargs):
     actor = args[0]
+    actor.set_stop_fn(partial(actor_stop, "send"))
     port = kwargs.pop("port")
     if not isinstance(port, SendPort):
         raise AssertionError()
@@ -34,6 +37,7 @@ def send_proc(*args, **kwargs):
 
 def recv_proc(*args, **kwargs):
     actor = args[0]
+    actor.set_stop_fn(partial(actor_stop, "recv"))
     port = kwargs.pop("port")
     port.start()
     if not isinstance(port, RecvPort):

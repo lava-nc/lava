@@ -52,6 +52,10 @@ int AbstractActor::GetStatus() {
     return actore_status_.load();
 }
 
+void AbstractActor::SetStopFn(StopFn stop_fn) {
+    stop_fn_ = stop_fn;
+}
+
 void AbstractActor::Run() {
     InitStatus();
     while(true) {
@@ -68,6 +72,9 @@ void AbstractActor::Run() {
     }
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
+    }
+    if (stop_fn_ != NULL) {
+        stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
 }
