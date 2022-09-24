@@ -78,12 +78,10 @@ using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 class SharedMemManager {
  public:
   ~SharedMemManager();
-  int AllocSharedMemory(const size_t &mem_size);
 
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    unsigned int local_seed = time(NULL);
-    int random = rand_r(&local_seed);
+    int random = rand();
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {

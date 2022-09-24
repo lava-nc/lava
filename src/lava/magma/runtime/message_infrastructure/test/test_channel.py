@@ -29,8 +29,7 @@ def send_proc(*args, **kwargs):
         raise AssertionError()
     port.start()
     port.send(prepare_data())
-    actor.pause()
-    return 0
+    actor.status_paused()
 
 
 def recv_proc(*args, **kwargs):
@@ -43,8 +42,7 @@ def recv_proc(*args, **kwargs):
     print("recved data ", data)
     if not np.array_equal(data, prepare_data()):
         raise AssertionError()
-    actor.pause()
-    return 0
+    actor.status_paused()
 
 
 class Builder:
@@ -79,7 +77,7 @@ class TestShmemChannel(unittest.TestCase):
         self.mp.build_actor(recv_port_fn, builder1)
         self.mp.build_actor(send_port_fn, builder2)
 
-        time.sleep(5)
+        time.sleep(2)
         self.mp.stop(True)
 
     def test_single_process_shmemchannel(self):

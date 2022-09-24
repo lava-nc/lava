@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <thread>
 #include "shm.h"
 
 namespace message_infrastructure {
@@ -47,7 +48,6 @@ class AbstractActor {
   virtual int Wait() = 0;
   virtual int Create() = 0;
   void Control(const ActorCmd cmd);
-  int GetCmd();
   int GetStatus();
   void SetStatus(ActorStatus status);
   int GetPid() {
@@ -55,26 +55,24 @@ class AbstractActor {
   }
 
  protected:
-  std::pair<bool, bool> HandleCmd();
   void Run();
   int pid_;
 
  private:
-  RwSharedMemoryPtr ctl_status_shm_;
-  // ActorType actor_type_ = ActorType::ProcessModelActor;
+  SharedMemoryPtr ctl_shm_;
+  std::atomic<int> actore_status_;
+  std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
   std::string actor_name_ = "actor";
   TargetFn target_fn_ = NULL;
   void InitStatus();
+  void HandleCmd();
 };
 
 using SharedActorPtr = std::shared_ptr<AbstractActor>;
 
 class PosixActor final : public AbstractActor {
  public:
-  explicit PosixActor(AbstractActor::TargetFn target_fn, int shmid)
-    : AbstractActor(target_fn)
-  {}
-
+  using AbstractActor::AbstractActor;
   int GetPid() {
     return this->pid_;
   }

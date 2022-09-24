@@ -84,9 +84,9 @@ void RwSharedMemory::Start() {
   sem_post(sem_);
 }
 
-void RwSharedMemory::Handle(HandleFn consume_fn) {
+void RwSharedMemory::Handle(HandleFn handle_fn) {
   sem_wait(sem_);
-  consume_fn(GetData());
+  handle_fn(GetData());
   sem_post(sem_);
 }
 
@@ -101,24 +101,6 @@ void* RwSharedMemory::GetData() {
 RwSharedMemory::~RwSharedMemory() {
   Close();
   sem_unlink(sem_name_.c_str());
-}
-
-int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
-  unsigned int local_seed = time(NULL);
-  int random = rand_r(&local_seed);
-  std::string str = shm_str_ + std::to_string(random);
-  int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
-  if (shmfd == -1) {
-    LAVA_LOG_ERR("Create shared memory object failed.\n");
-    exit(-1);
-  }
-  int err = ftruncate(shmfd, mem_size);
-  if (err == -1) {
-    LAVA_LOG_ERR("Resize shared memory segment failed.\n");
-    exit(-1);
-  }
-  shm_strs_.insert(str);
-  return shmfd;
 }
 
 void SharedMemManager::DeleteSharedMemory(const std::string &shm_str) {

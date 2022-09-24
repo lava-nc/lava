@@ -87,6 +87,9 @@ bool ShmemRecvQueue::Probe() {
 int ShmemRecvQueue::AvailableCount() {
   auto const curr_read_index = read_index_.load(std::memory_order_acquire);
   auto const curr_write_index = write_index_.load(std::memory_order_acquire);
+  if (curr_read_index == curr_write_index) {
+    return size_;
+  }
   return curr_write_index > curr_read_index ? curr_write_index - curr_read_index : curr_read_index - curr_write_index;
 }
 

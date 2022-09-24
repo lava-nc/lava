@@ -44,7 +44,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<PosixActor> (m, "Actor")
     .def("wait", &PosixActor::Wait)
     .def("get_status", &PosixActor::GetStatus)
-    .def("get_cmd", &PosixActor::GetCmd)
     .def("pause", [](PosixActor &actor){
         actor.Control(ActorCmd::CmdPause);
       })
