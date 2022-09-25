@@ -21,8 +21,10 @@ def prepare_data():
     data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
     return data
 
+
 def actor_stop(name):
     print(f"{name} stop")
+
 
 def send_proc(*args, **kwargs):
     actor = args[0]
