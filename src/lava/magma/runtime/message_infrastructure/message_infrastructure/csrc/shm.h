@@ -18,6 +18,8 @@
 #include <string>
 #include <atomic>
 #include <functional>
+#include <cstdlib>
+#include <ctime>
 
 #include "message_infrastructure_logging.h"
 
@@ -81,7 +83,7 @@ class SharedMemManager {
 
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    int random = rand();
+    int random = std::rand();
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {
@@ -104,7 +106,7 @@ class SharedMemManager {
 
  private:
   SharedMemManager() {
-    srand(time(NULL));
+    std::srand(std::time(nullptr));
   }
   std::set<std::string> shm_strs_;
   static SharedMemManager smm_;
