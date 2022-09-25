@@ -47,7 +47,7 @@ bool SharedMemory::Load(HandleFn consume_fn, bool available) {
       sem_post(ack_);
     }
   }
-  return false;
+  return ret;
 }
 
 void SharedMemory::Close() {
