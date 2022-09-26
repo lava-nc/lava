@@ -48,7 +48,7 @@ class TestOptimizeWeightBits(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             optimize_weight_bits(weights=np.array([257]),
-                                 sign_mode=SignMode.INHIBITORY)
+                                 sign_mode=SignMode.MIXED)
 
     def test_optimize_weight_bits_excitatory_8bit(self) -> None:
         weights = np.arange(0, 255, 1, dtype=int)
