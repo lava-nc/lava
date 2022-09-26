@@ -28,6 +28,9 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 class Connection(PyLoihiProcessModel, ABC):
 
+    # Common connectivity parameters
+    weights = None
+
     # Learning Ports
     s_in_bap = None
 
@@ -53,6 +56,8 @@ class Connection(PyLoihiProcessModel, ABC):
         # add all necessary ports get access to all learning params
         self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
         self._shape: typing.Tuple[int, ...] = proc_params["shape"]
+
+        self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
         if self._learning_rule is not None:
             # store shapes that useful throughout the lifetime of this PM
@@ -193,7 +198,7 @@ class Connection(PyLoihiProcessModel, ABC):
         )
 
     def _build_learning_rule_appliers(self) -> None:
-        """Build and store LearningRuleApplierBitApprox for each active learning
+        """Build and store LearningRuleApplier for each active learning
         rule in a dict mapped by the learning rule's target."""
         self._learning_rule_appliers = {
             str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
@@ -288,6 +293,12 @@ class Connection(PyLoihiProcessModel, ABC):
             return self.time_step % self._learning_rule.t_epoch == 0
         return False
 
+    def run_lrn(self) -> None:
+        self._update_synaptic_variable_random()
+        self._apply_learning_rules()
+        self._update_traces()
+        self._reset_dependencies_and_spike_times()
+
     def run_spk(self) -> None:
         s_in_bap = self.s_in_bap.recv().astype(bool)
         if self._learning_rule is not None:
@@ -302,11 +313,6 @@ class Connection(PyLoihiProcessModel, ABC):
     def _update_trace_randoms(self) -> None:
         pass
 
-    def run_lrn(self) -> None:
-        self._update_synaptic_variable_random()
-        self._apply_learning_rules()
-        self._update_traces()
-        self._reset_dependencies_and_spike_times()
 
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
@@ -393,7 +399,6 @@ class ConnectionModelBitApproximate(Connection):
     tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
     def __init__(self, proc_params: dict) -> None:
-        self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
@@ -590,8 +595,6 @@ class ConnectionModelBitApproximate(Connection):
             "shape": self._shape,
             "x0": np.broadcast_to(self.x0[np.newaxis, :], self._shape),
             "y0": np.broadcast_to(self.y0[:, np.newaxis], self._shape),
-            # TODO (MR): This is a design flaw as self.weights is not accessible
-            #  at this class level.
             "weights": self.weights,
             "tag_2": self.tag_2,
             "tag_1": self.tag_1,
@@ -1435,9 +1438,16 @@ class ConnectionModelFloat(Connection):
             Saturated synaptic variable values.
         """
         # Weights and Tags
-        if synaptic_variable_name in ["weights", "tag_1"]:
-            return synaptic_variable_values
+        if synaptic_variable_name == "weights":
+            if self.sign_mode == SignMode.MIXED:
+                return synaptic_variable_values
+            elif self.sign_mode == SignMode.EXCITATORY:
+                return np.maximum(0, synaptic_variable_values)
+            elif self.sign_mode == SignMode.INHIBITORY:
+                return np.minimum(0, synaptic_variable_values)
         # Delays
+        elif synaptic_variable_name == "tag_1":
+            return synaptic_variable_values
         elif synaptic_variable_name == "tag_2":
             return np.maximum(0, synaptic_variable_values)
         else:
