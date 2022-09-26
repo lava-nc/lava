@@ -8,7 +8,6 @@ from collections import OrderedDict
 
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.process.process import AbstractProcess
-from dataclasses import is_dataclass, fields
 
 
 class AbstractSubProcessModel(AbstractProcessModel):
@@ -59,12 +58,6 @@ class AbstractSubProcessModel(AbstractProcessModel):
         procs = OrderedDict()
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
-            if isinstance(attr, AbstractProcess) and \
-                    not attr is self.implements_process:
+            if isinstance(attr, AbstractProcess):
                 procs[attr_name] = attr
-            if is_dataclass(attr):
-                for data in fields(attr):
-                    sub_attr = getattr(attr, data.name)
-                    if isinstance(sub_attr, AbstractProcess):
-                        procs[type(sub_attr).__name__] = sub_attr
         return procs
