@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import logging
+import time
 import typing as ty
 from abc import abstractmethod
 
@@ -476,6 +477,8 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.join()
                 break
             if pause:
+                # print("Runtime service get pause")
+                time.sleep(0.01)
                 continue
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
