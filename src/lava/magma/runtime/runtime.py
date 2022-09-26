@@ -345,7 +345,6 @@ class Runtime:
     def pause(self):
         """Pauses the execution"""
         if self._is_running:
-            print("Calling Pause")
             for send_port in self.runtime_to_service:
                 send_port.send(MGMT_COMMAND.PAUSE)
             for recv_port in self.service_to_runtime:
