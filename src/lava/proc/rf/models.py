@@ -65,13 +65,6 @@ class AbstractPyRFModelFixed(PyLoihiProcessModel):
         self.c_offset = 1
         self.s_offset = 1
 
-    def scale_threshold(self):
-        """Scale threshold according to the way Loihi hardware scales it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
-        with other state variables of higher precision.
-        """
-        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
-
     def sub_thresh_dynamics(self):
 
         decay_const_cos = self.cos_decay + self.c_offset
@@ -120,3 +113,10 @@ class PyRFModelBitAcc(AbstractPyRFModelFixed):
 
     def __init__(self, proc_params):
         super(PyRFModelBitAcc, self).__init__(proc_params)
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
