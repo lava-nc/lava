@@ -286,10 +286,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
             action = selector.select(*channel_actions)
             if action == "cmd":
                 command = self.runtime_to_service.recv()
+                print(f"{command=}")
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
                     return
                 elif enum_equal(command, MGMT_COMMAND.PAUSE):
+                    print("Requested Pause: ", curr_time_step)
                     self._handle_pause()
                     self.paused = True
                 elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
