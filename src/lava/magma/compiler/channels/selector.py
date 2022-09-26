@@ -15,5 +15,5 @@ class Selector:
     ):
         for channel, action in args:
             if channel.probe():
-                return action
+                return action()
         return None
