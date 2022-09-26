@@ -35,18 +35,6 @@ void TargetFunction(Builder builder, int idx, AbstractActor* actor_ptr) {
   builder.Build(idx);
 }
 
-void CreateActors (MultiProcessing mp, Builder *builder) {
-  AbstractActor::TargetFn target_fn;
-
-  for (int i = 0; i < 5; i++) {
-    std::cout << "Loop " << i << std::endl;
-    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
-    target_fn = bound_fn;
-    int return_value = mp.BuildActor(bound_fn);
-    std::cout << "Return Value --> " << return_value << std::endl;
-  }
-}
-
 TEST(TestMultiprocessing, MultiprocessingSpawn) {
   // Spawns an actor
   // Checks that actor is spawned successfully
@@ -65,11 +53,9 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   }
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
-  std::cout << "------------------------------------------" << std::endl;
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
   for (auto actor : actorList){
     int actorStatus = actor->GetStatus();
-    std::cout << "Actor Status --> " << actorStatus << std::endl;
     EXPECT_EQ(actorStatus, 0);
   }
   
@@ -86,8 +72,20 @@ TEST(TestMultiprocessing, MultiprocessingShutdown) {
 TEST(TestMultiprocessing, ActorForceStop) {
   // Force stops all running actors
   // Checks that actor status returns 1 (StatusStopped)
-  GTEST_SKIP() << "Skipping ActorForceStop";
   MultiProcessing mp;
+  Builder *builder = new Builder();
+  AbstractActor::TargetFn target_fn;
+
+  for (int i = 0; i < 5; i++) {
+    std::cout << "Loop " << i << std::endl;
+    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
+    target_fn = bound_fn;
+    int return_value = mp.BuildActor(bound_fn);
+    std::cout << "Return Value --> " << return_value << std::endl;
+  }
+
+  sleep(1);
+
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
   for (auto actor : actorList){
