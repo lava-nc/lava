@@ -14,9 +14,11 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.learning.constants import *
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 from lava.magma.core.learning.product_series import ProductSeries
-from lava.magma.core.learning.learning_rule_applier import \
-    AbstractLearningRuleApplier, LearningRuleApplierFloat, \
-    LearningRuleApplierBitApprox
+from lava.magma.core.learning.learning_rule_applier import (
+    AbstractLearningRuleApplier,
+    LearningRuleApplierFloat,
+    LearningRuleApplierBitApprox,
+)
 import lava.magma.core.learning.string_symbols as str_symbols
 from lava.utils.weightutils import SignMode, clip_weights
 from lava.magma.core.learning.utils import stochastic_round
@@ -208,9 +210,9 @@ class Connection(PyLoihiProcessModel, ABC):
         }
 
     @abstractmethod
-    def _create_learning_rule_applier(self,
-                                      product_series: ProductSeries
-                                      ) -> AbstractLearningRuleApplier:
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
         pass
 
     @abstractmethod
@@ -312,7 +314,6 @@ class Connection(PyLoihiProcessModel, ABC):
     @abstractmethod
     def _update_trace_randoms(self) -> None:
         pass
-
 
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
@@ -461,9 +462,9 @@ class ConnectionModelBitApproximate(Connection):
 
         return impulses_int.astype(int), impulses_frac.astype(int)
 
-    def _create_learning_rule_applier(self,
-                                      product_series: ProductSeries
-                                      ) -> AbstractLearningRuleApplier:
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
         return LearningRuleApplierBitApprox(product_series)
 
     def _init_randoms(self) -> None:
@@ -764,9 +765,11 @@ class ConnectionModelBitApproximate(Connection):
         elif synaptic_variable_name == "tag_1":
             return synaptic_variable_values
         else:
-            raise ValueError(f"synaptic_variable_name can be 'weights', "
-                             f"'tag_1', or 'tag_2'."
-                             f"Got {synaptic_variable_name=}.")
+            raise ValueError(
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
+            )
 
     def _saturate_synaptic_variable(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
@@ -790,23 +793,29 @@ class ConnectionModelBitApproximate(Connection):
         """
         # Weights
         if synaptic_variable_name == "weights":
-            return clip_weights(synaptic_variable_values,
-                                sign_mode=self.sign_mode,
-                                num_bits=W_WEIGHTS_U)
+            return clip_weights(
+                synaptic_variable_values,
+                sign_mode=self.sign_mode,
+                num_bits=W_WEIGHTS_U,
+            )
         # Delays
         elif synaptic_variable_name == "tag_2":
-            return np.clip(synaptic_variable_values,
-                           a_min=0,
-                           a_max=2 ** W_TAG_2_U - 1)
+            return np.clip(
+                synaptic_variable_values, a_min=0, a_max=2**W_TAG_2_U - 1
+            )
         # Tags
         elif synaptic_variable_name == "tag_1":
-            return np.clip(synaptic_variable_values,
-                           a_min=-(2 ** W_TAG_1_U) - 1,
-                           a_max=2 ** W_TAG_1_U - 1)
+            return np.clip(
+                synaptic_variable_values,
+                a_min=-(2**W_TAG_1_U) - 1,
+                a_max=2**W_TAG_1_U - 1,
+            )
         else:
-            raise ValueError(f"synaptic_variable_name can be 'weights', "
-                             f"'tag_1', or 'tag_2'."
-                             f"Got {synaptic_variable_name=}.")
+            raise ValueError(
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
+            )
 
     def _apply_learning_rules(self) -> None:
         """Update all synaptic variables according to the
@@ -863,7 +872,7 @@ class ConnectionModelBitApproximate(Connection):
         """
         trace_new = trace_values + impulses_int
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-        trace_new = np.clip(trace_new, a_min=0, a_max=2 ** W_TRACE - 1)
+        trace_new = np.clip(trace_new, a_min=0, a_max=2**W_TRACE - 1)
 
         return trace_new
 
@@ -1127,9 +1136,9 @@ class ConnectionModelFloat(Connection):
     def _init_randoms(self):
         pass
 
-    def _create_learning_rule_applier(self,
-                                      product_series: ProductSeries
-                                      ) -> AbstractLearningRuleApplier:
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
         return LearningRuleApplierFloat(product_series)
 
     def _update_trace_randoms(self) -> None:
@@ -1451,9 +1460,11 @@ class ConnectionModelFloat(Connection):
         elif synaptic_variable_name == "tag_2":
             return np.maximum(0, synaptic_variable_values)
         else:
-            raise ValueError(f"synaptic_variable_name can be 'weights', "
-                             f"'tag_1', or 'tag_2'."
-                             f"Got {synaptic_variable_name=}.")
+            raise ValueError(
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
+            )
 
     def _update_traces(self) -> None:
         """Update all traces at the end of the learning epoch."""
