@@ -41,7 +41,7 @@ void AbstractActor::HandleCmd() {
             {
                 this->actore_status_.store(static_cast<int>(ActorStatus::StatusRunning));
             }
-            }, true);
+            });
         if (!ret) {
             _mm_pause();
         }
@@ -84,6 +84,10 @@ void AbstractActor::Run() {
     }
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
+    }
+    if (stop_fn_ != NULL) {
+        LAVA_LOG_ERR("stop_fn didn't release, pid:%d\n", this->pid_);
+        stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
 }
