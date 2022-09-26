@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import logging
+from re import L
 import typing as ty
 from abc import abstractmethod
+import time
 
 
 import numpy as np
@@ -66,11 +68,14 @@ class PyRuntimeService(AbstractRuntimeService):
         super(PyRuntimeService, self).__init__(protocol=protocol)
         self.service_to_process: ty.Iterable[SendPort] = []
         self.process_to_service: ty.Iterable[RecvPort] = []
+        self._stop = False
 
     def start(self, actor):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
         self._actor = actor
+        print ("insert stop function")
+        self._actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
@@ -88,22 +93,17 @@ class PyRuntimeService(AbstractRuntimeService):
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
-        self._actor.status_stopped()
+        print("join rs")
         self.runtime_to_service.join()
         self.service_to_runtime.join()
 
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
+        self._stop = True
 
     def handle_cmd(self):
-        actor_cmd = self._actor.get_cmd()
-        if actor_cmd == ActorCmd.CmdRun:
-            self._actor.status_running()
-        elif actor_cmd == ActorCmd.CmdPause:
-            self._actor.status_paused()
-        elif actor_cmd == ActorCmd.CmdStop:
-            self._actor.status_stopped()
+        pass
 
     def check_status(self):
         actor_status = self._actor.get_status()
@@ -267,31 +267,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
         ack_relay_port = self.service_to_runtime
         ack_relay_port.send(ack_recv_port.recv())
 
-    def _handle_pause(self):
-        # Inform all ProcessModels about the PAUSE command
-        self._send_pm_cmd(MGMT_COMMAND.PAUSE)
-        rsps = self._get_pm_resp()
-        for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED
-            ):
-                raise ValueError(f"Wrong Response Received : {rsp}")
-        # Inform the runtime about successful pausing
-        self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
-
-    def _handle_stop(self):
-        # Inform all ProcessModels about the STOP command
-        self._send_pm_cmd(MGMT_COMMAND.STOP)
-        rsps = self._get_pm_resp()
-        for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-            ):
-                raise ValueError(f"Wrong Response Received : {rsp}")
-        # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
-        self.join()
-
     def run(self):
         """Retrieves commands from the runtime. On STOP or PAUSE commands all
         ProcessModels are notified and expected to TERMINATE or PAUSE,
@@ -443,55 +418,42 @@ class AsyncPyRuntimeService(PyRuntimeService):
             rcv_msgs.append(ptos_recv_port.recv())
         return rcv_msgs
 
-    def _handle_pause(self):
-        # Inform the runtime about successful pausing
-        self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
-
-    def _handle_stop(self):
-        self._send_pm_cmd(MGMT_COMMAND.STOP)
-        rsps = self._get_pm_resp()
-        for rsp in rsps:
-            if not enum_equal(
-                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
-            ):
-                self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
-                raise ValueError(f"Wrong Response Received : {rsp}")
-        # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
-        self.join()
-
     def run(self):
         """Retrieves commands from the runtime and relays them to the process
         models. Also send the acknowledgement back to runtime."""
         selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
+        for ptos_recv_port in self.process_to_service:
+            channel_actions.append((ptos_recv_port, lambda: "resp"))
+        
         while True:
-            self.handle_cmd()
             stop, pause = self.check_status()
             if stop:
-                self.join()
-                break
+                print("rs run stop")
+                if self._stop:
+                    break
+                else:
+                    time.sleep(2)
+                    continue
             if pause:
-                continue
+                time.sleep(2)
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
-            channel_actions = []
             if action is None:
                 continue
             elif action == "cmd":
+                print("get cmd data")
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
-                    self._handle_stop()
-                    return
+                    print("cmd stop")
                 elif enum_equal(command, MGMT_COMMAND.PAUSE):
-                    self._handle_pause()
+                    print("cmd pause")
+                elif enum_equal(command, MGMT_COMMAND.RUN):
+                    print("cmd run")
                 else:
-                    self._send_pm_cmd(MGMT_COMMAND.RUN)
-                    for ptos_recv_port in self.process_to_service:
-                        channel_actions.append(
-                            (ptos_recv_port, lambda: "resp")
-                        )
+                    print("cmd what?")
             elif action == "resp":
+                print("get respond")
                 resps = self._get_pm_resp()
                 done: bool = True
                 for resp in resps:
@@ -520,6 +482,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
             else:
+                print("runtime service error")
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                self._actor.error()
                 raise ValueError(f"Wrong type of channel action : {action}")
-            channel_actions.append((self.runtime_to_service, lambda: "cmd"))
