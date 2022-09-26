@@ -70,31 +70,32 @@ class TestMultiprocessing(unittest.TestCase):
         for i in range(5):
             bound_target_fn = partial(target_fn, idx=i)
             return_type = self.mp.build_actor(bound_target_fn, builder)
+            self.assertIsInstance(return_type, int)
+        self.mp.stop(True)
 
         # Wait 10 seconds
         time.sleep(10)
-
-    @unittest.skip
     def test_multiprocessing_shutdown(self):
         """
         Spawns an actor and sends a stop signal.
         Checks that actor is stopped successfully.
         """
-        self.test_multiprocessing_spawn()
+        self.mp = self.test_multiprocessing_spawn()
+        self.mp.stop(True)
 
-        actor_list = self.mp.actor_pids
-        self.mp.stop()
+        # actor_list = self.mp.actor_pids
+        # self.mp.stop()
 
         # Check that all actor PIDs no longer exist
-        for actor_pid in actor_list:
-            self.assertFalse(psutil.pid_exists(actor_pid))
+        # for actor_pid in actor_list:
+        #     self.assertFalse(psutil.pid_exists(actor_pid))
 
-    @unittest.skip
     def test_actor_force_stop(self):
         """
         Stops all running actors
         Checks that actor status returns 1 (StatusStopped)
         """
+      
         actor_list = self.mp.actors
         for actor in actor_list:
             actor.force_stop()
@@ -117,9 +118,8 @@ class TestMultiprocessing(unittest.TestCase):
         """
         actor_list = self.mp.actors
         for actor in actor_list:
-            actor_status = actor.get_status()
-            # actor status returns 0 if it is running
-            self.assertEqual(actor_status, 0)
+            self.assertEqual(actor.get_status(), 0)
+            #print("actor status0: ", actor.get_status(), actor.get_cmd())
 
     def test_actor_stop(self):
         """
@@ -129,9 +129,9 @@ class TestMultiprocessing(unittest.TestCase):
         actor_list = self.mp.actors
         for actor in actor_list:
             actor.stop()
-            actor_status = actor.get_status()
+            #print("actor status1: ", actor.get_status(), actor.get_cmd())
             # actor status returns 1 if it is stopped
-            self.assertEqual(actor_status, 1)
+            self.assertEqual(actor.get_status, 1)
 
 
 def test_multiprocessing():
@@ -141,7 +141,7 @@ def test_multiprocessing():
     for i in range(5):
         bound_target_fn = partial(target_fn, idx=i)
         ret = mp.build_actor(bound_target_fn, builder)
-        print(ret)
+        #print(ret)
 
     # shmm = mp.smm
     # for i in range(5):
@@ -149,9 +149,9 @@ def test_multiprocessing():
 
     actors = mp.actors
     actor = actors[0]
-    print("actor status: ", actor.get_status(), actor.get_cmd())
+    print("actor status0: ", actor.get_status(), actor.get_cmd())
     actor.stop()
-    print("actor status: ", actor.get_status(), actor.get_cmd())
+    print("actor status1: ", actor.get_status(), actor.get_cmd())
 
     # print("stop num: ", shmm.stop())
     # print("stop num: ", shmm.stop())
@@ -161,6 +161,5 @@ def test_multiprocessing():
 
 # Run unit tests
 if __name__ == '__main__':
-    test_multiprocessing()
-    print("UNIT TEST BEGINSSSSS")
-    # unittest.main()
+    #test_multiprocessing()
+    unittest.main()
