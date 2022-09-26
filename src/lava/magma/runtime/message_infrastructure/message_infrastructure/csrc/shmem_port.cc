@@ -90,7 +90,10 @@ int ShmemRecvQueue::AvailableCount() {
   if (curr_read_index == curr_write_index) {
     return size_;
   }
-  return curr_write_index > curr_read_index ? curr_write_index - curr_read_index : curr_read_index - curr_write_index;
+  if (curr_write_index > curr_read_index) {
+    return size_ - curr_write_index + curr_read_index - 1;
+  }
+  return curr_read_index - curr_write_index - 1;
 }
 
 bool ShmemRecvQueue::Empty() {
