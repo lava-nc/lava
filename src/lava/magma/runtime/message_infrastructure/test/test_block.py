@@ -20,7 +20,7 @@ QUEUE_SIZE = 10
 
 
 def generate_data():
-    return np.random.random_sample((2,4))
+    return np.random.random_sample((2, 4))
 
 
 def actor_stop(port, name):
