@@ -259,20 +259,17 @@ def clip_weights(weights: np.ndarray,
     weights = np.copy(weights).astype(np.int32)
 
     mixed_flag = int(sign_mode == SignMode.MIXED)
-    excitatory_flag = int(sign_mode == SignMode.EXCITATORY)
     inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
 
     if inhibitory_flag:
         weights = -weights
 
-    min_wgt = (-2 ** num_bits) * (mixed_flag)# + inhibitory_flag)
-    max_wgt = (2 ** num_bits - 1)# * (mixed_flag + excitatory_flag)
+    min_wgt = (-2 ** num_bits) * mixed_flag
+    max_wgt = 2 ** num_bits - 1
 
     clipped_weights = np.clip(weights, min_wgt, max_wgt)
 
     if inhibitory_flag:
         clipped_weights = -clipped_weights
-
-    #clipped_weights = np.left_shift(clipped_weights, num_scale_bits)
 
     return clipped_weights
