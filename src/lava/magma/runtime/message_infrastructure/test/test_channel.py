@@ -34,7 +34,8 @@ def send_proc(*args, **kwargs):
         raise AssertionError()
     port.start()
     port.send(prepare_data())
-    actor.status_paused()
+    port.join()
+    actor.status_stopped()
 
 
 def recv_proc(*args, **kwargs):
@@ -45,10 +46,10 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     data = port.recv()
-    print("recved data ", data)
     if not np.array_equal(data, prepare_data()):
         raise AssertionError()
-    actor.status_paused()
+    port.join()
+    actor.status_stopped()
 
 
 class Builder:
@@ -57,10 +58,10 @@ class Builder:
 
 
 class TestShmemChannel(unittest.TestCase):
-    mp = MultiProcessing()
 
     def test_shmemchannel(self):
-        self.mp.start()
+        mp = MultiProcessing()
+        mp.start()
         size = 5
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
@@ -80,11 +81,11 @@ class TestShmemChannel(unittest.TestCase):
 
         builder1 = Builder()
         builder2 = Builder()
-        self.mp.build_actor(recv_port_fn, builder1)
-        self.mp.build_actor(send_port_fn, builder2)
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
 
         time.sleep(2)
-        self.mp.stop(True)
+        mp.stop(True)
 
     def test_single_process_shmemchannel(self):
         size = 5
