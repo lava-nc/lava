@@ -23,8 +23,9 @@ enum ActorType {
 enum ActorStatus {
   StatusError = -1,
   StatusRunning = 0,
-  StatusStopped = 1,
-  StatusPaused = 2
+  StatusPaused = 1,
+  StatusStopped = 2,
+  StatusTerminated = 3,
 };
 
 enum ActorCmd {

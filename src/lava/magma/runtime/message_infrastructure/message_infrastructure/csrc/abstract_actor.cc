@@ -27,7 +27,7 @@ void AbstractActor::Control(const ActorCmd cmd) {
 }
 
 void AbstractActor::HandleCmd() {
-    while(actore_status_.load() != static_cast<int>(ActorStatus::StatusStopped)) {
+    while(actore_status_.load() < static_cast<int>(ActorStatus::StatusStopped)) {
         auto ret = ctl_shm_->Load([this](void *data){
             auto ctrl_status = reinterpret_cast<int *>(data);
             if(*ctrl_status == static_cast<int>(ActorCmd::CmdStop)) {
@@ -63,7 +63,7 @@ void AbstractActor::SetStopFn(StopFn stop_fn) {
 void AbstractActor::Run() {
     InitStatus();
     while(true) {
-      if (actore_status_.load() == static_cast<int>(ActorStatus::StatusStopped)) {
+      if (actore_status_.load() >= static_cast<int>(ActorStatus::StatusStopped)) {
         break;
       }
       if (actore_status_.load() == static_cast<int>(ActorStatus::StatusRunning)) {
@@ -77,7 +77,7 @@ void AbstractActor::Run() {
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
     }
-    if (stop_fn_ != NULL) {
+    if (stop_fn_ != NULL && actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
         stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);

@@ -71,6 +71,7 @@ class PyRuntimeService(AbstractRuntimeService):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
         self._actor = actor
+        self._actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
@@ -95,6 +96,7 @@ class PyRuntimeService(AbstractRuntimeService):
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
+        self._actor.status_terminated()
 
     def handle_cmd(self):
         actor_cmd = self._actor.get_cmd()
@@ -108,6 +110,7 @@ class PyRuntimeService(AbstractRuntimeService):
     def check_status(self):
         actor_status = self._actor.get_status()
         if actor_status in [ActorStatus.StatusStopped,
+                            ActorStatus.StatusTerminated,
                             ActorStatus.StatusError]:
             return True, False
         if actor_status == ActorStatus.StatusPaused:
@@ -268,6 +271,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         ack_relay_port.send(ack_recv_port.recv())
 
     def _handle_pause(self):
+        self._actor.status_paused()
         # Inform all ProcessModels about the PAUSE command
         self._send_pm_cmd(MGMT_COMMAND.PAUSE)
         rsps = self._get_pm_resp()
@@ -444,6 +448,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         return rcv_msgs
 
     def _handle_pause(self):
+        self._actor.status_paused()
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
@@ -466,7 +471,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
         selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
-            self.handle_cmd()
             stop, pause = self.check_status()
             if stop:
                 self.join()

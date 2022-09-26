@@ -35,6 +35,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("StatusRunning", ActorStatus::StatusRunning)
     .value("StatusStopped", ActorStatus::StatusStopped)
     .value("StatusPaused", ActorStatus::StatusPaused)
+    .value("StatusTerminated", ActorStatus::StatusTerminated)
     .export_values();
   py::enum_<ActorCmd> (m, "ActorCmd")
     .value("CmdRun", ActorCmd::CmdRun)
@@ -62,6 +63,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
       })
     .def("status_paused", [](PosixActor &actor){
         actor.SetStatus(ActorStatus::StatusPaused);
+      })
+    .def("status_terminated", [](PosixActor &actor){
+        actor.SetStatus(ActorStatus::StatusTerminated);
       })
     .def("error", [](PosixActor &actor){
         actor.SetStatus(ActorStatus::StatusError);
