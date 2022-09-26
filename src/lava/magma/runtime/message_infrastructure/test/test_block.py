@@ -57,10 +57,10 @@ def recv_proc(actor, **kwargs):
 
 
 class TestChannelBlock(unittest.TestCase):
-    mp = MultiProcessing()
 
     def test_block(self):
-        self.mp.start()
+        mp = MultiProcessing()
+        mp.start()
         predata = generate_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         shmem_channel = Channel(
@@ -75,12 +75,12 @@ class TestChannelBlock(unittest.TestCase):
         recv_port_fn = partial(recv_proc, port=recv_port)
         send_port_fn = partial(send_proc, port=send_port)
 
-        self.mp.build_actor(recv_port_fn, None)
-        self.mp.build_actor(send_port_fn, None)
+        mp.build_actor(recv_port_fn, None)
+        mp.build_actor(send_port_fn, None)
 
         time.sleep(2)
         print("Send stop")
-        self.mp.stop(True)
+        mp.stop(True)
 
 
 if __name__ == "__main__":
