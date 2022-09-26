@@ -50,6 +50,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._actor: Actor = None
         self._action: str = None
+        self._stopped = False
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
                                                          RecvPort],
                                                 ty.Callable]] = []
@@ -84,7 +85,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         self._actor = actor
         # inject actor stop funtion to actor controller
-        # self._actor.start_controller(partial(self._stop, self))
+        print("insert stop function")
         self._actor.set_stop_fn(self._stop)
         self.service_to_process.start()
         self.process_to_service.start()
@@ -98,6 +99,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         print("process join")
         self.join()
+        self._stopped = True
+        print("set model self.stop true")
 
     def _pause(self):
         """
@@ -173,14 +176,18 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         received."""
         self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
         self.add_ports_for_polling()
-        self._action = self._selector.select(*self._channel_actions)       
-        self._actor.start()
+        self._action = self._selector.select(*self._channel_actions)
         while True:
             # Check Actor Status and ActorCmd
             actor_status = self._actor.get_status()
             if actor_status in [int(ActorStatus.StatusStopped),
                                 int(ActorStatus.StatusError)]:
-                return
+                if self._stopped:
+                    return
+                else:
+                    print("wait model for join")
+                    time.sleep(5)
+                    continue
             # Check Action in model
 
             if self._action == 'cmd':

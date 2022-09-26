@@ -68,11 +68,13 @@ class PyRuntimeService(AbstractRuntimeService):
         super(PyRuntimeService, self).__init__(protocol=protocol)
         self.service_to_process: ty.Iterable[SendPort] = []
         self.process_to_service: ty.Iterable[RecvPort] = []
+        self._stop = False
 
     def start(self, actor):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
         self._actor = actor
+        print ("insert stop function")
         self._actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
@@ -98,6 +100,7 @@ class PyRuntimeService(AbstractRuntimeService):
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
+        self._stop = True
 
     def handle_cmd(self):
         pass
@@ -423,12 +426,17 @@ class AsyncPyRuntimeService(PyRuntimeService):
         for ptos_recv_port in self.process_to_service:
             channel_actions.append((ptos_recv_port, lambda: "resp"))
         
-        self._actor.start()
         while True:
             stop, pause = self.check_status()
             if stop:
-                print("rv run stop")
-                break
+                print("rs run stop")
+                if self._stop:
+                    break
+                else:
+                    time.sleep(2)
+                    continue
+            if pause:
+                time.sleep(2)
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             if action is None:

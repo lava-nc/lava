@@ -8,7 +8,7 @@ import sys
 import traceback
 import typing
 import typing as ty
-
+import time
 import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
@@ -141,7 +141,9 @@ class Runtime:
         self._build_message_infrastructure()
         self._build_channels()
         self._build_sync_channels()
+        print("build process")
         self._build_processes()
+        print("build service")
         self._build_runtime_services()
         self._start_ports()
         self.log.debug("Runtime Initialization Complete")
@@ -311,17 +313,22 @@ class Runtime:
         :param run_condition: AbstractRunCondition
         :return: None
         """
+        print("Check Actors status")
+        print("All actor has ready to run")
         if self._is_started:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
                 self.num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
                     send_port.send(enum_to_np(self.num_steps))
+                    print("send num steps")
                 if run_condition.blocking:
+                    print("get respond for run")
                     self._get_resp_for_run()
             elif isinstance(run_condition, RunContinuous):
                 self.num_steps = sys.maxsize
                 for send_port in self.runtime_to_service:
+                    print("no blocking to run")
                     send_port.send(enum_to_np(self.num_steps))
             else:
                 raise ValueError(f"Wrong type of run_condition : "
@@ -335,6 +342,7 @@ class Runtime:
         self._get_resp_for_run()
 
     def pause(self):
+        print("runtime pause")
         """Pauses the execution"""
         if self._is_running:
             for actor in self._messaging_infrastructure.actors:
@@ -343,6 +351,7 @@ class Runtime:
 
     def stop(self):
         """Stops an ongoing or paused run."""
+        print("runtime stop")
         if self._is_started:
             self._messaging_infrastructure.stop(True)
             self.join()

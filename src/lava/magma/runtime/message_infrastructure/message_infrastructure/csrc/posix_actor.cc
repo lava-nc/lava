@@ -64,7 +64,8 @@ int PosixActor::ForceStop() {
 int PosixActor::Create() {
   pid_t pid = fork();
   if (pid > 0) {
-    LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
+    pid_ = getpid();
+    LAVA_LOG(LOG_MP, "Parent Process %d, create child process %d\n", pid_, pid);
     this->pid_ = pid;
     return ParentProcess;
   }

@@ -6,10 +6,10 @@
 #define MESSAGE_INFRASTRUCTURE_LOGGING_H_
 
 #include <stdio.h>
-#define LOG_MP (0)  // log for multiprocessing
-#define LOG_ACTOR (0)
+#define LOG_MP (1)  // log for multiprocessing
+#define LOG_ACTOR (1)
 #define LOG_LAYER (0)
-#define DEBUG_MODE (0)
+#define DEBUG_MODE (1)
 #define LOG_SMMP (0)  // log for shmemport
 
 #define LAVA_LOG(_cond, _fmt, ...) { \

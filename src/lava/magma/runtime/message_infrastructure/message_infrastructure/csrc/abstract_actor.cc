@@ -16,10 +16,12 @@ AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
 }
 
 void AbstractActor::Control(const ActorCmd cmd) {
+    LAVA_DEBUG(LOG_ACTOR, "set cmd %d, pid:%d\n", cmd, pid_);
     this->ctl_shm_->Store([cmd](void* data){
         auto ctrl_cmd = reinterpret_cast<int *>(data);
         *ctrl_cmd = static_cast<int>(cmd);
     });
+    LAVA_DEBUG(LOG_ACTOR, "setted cmd %d, pid:%d\n", cmd, pid_);
 }
 
 void AbstractActor::HandleCmd() {
@@ -28,10 +30,12 @@ void AbstractActor::HandleCmd() {
             auto ctrl_status = reinterpret_cast<int *>(data);
             if(*ctrl_status == static_cast<int>(ActorCmd::CmdStop)) {
                 this->actore_status_.store(static_cast<int>(ActorStatus::StatusStopped));
+                LAVA_DEBUG(LOG_ACTOR, "stop cmd triggered, pid:%d\n", pid_);
             }
             else if (*ctrl_status == static_cast<int>(ActorCmd::CmdPause))
             {
                 this->actore_status_.store(static_cast<int>(ActorStatus::StatusPaused));
+                LAVA_DEBUG(LOG_ACTOR, "pause cmd triggered, pid:%d\n", pid_);
             }
             else if (*ctrl_status == ActorCmd::CmdRun)
             {
@@ -41,6 +45,14 @@ void AbstractActor::HandleCmd() {
         if (!ret) {
             _mm_pause();
         }
+    }
+    if (stop_fn_ != nullptr) {
+        LAVA_DEBUG(LOG_ACTOR, "The port function has been joined, pid:%d\n", pid_);
+        stop_fn_();
+        stop_fn_ = NULL;
+    }
+    else {
+        LAVA_LOG_ERR ("the stop function has no injected in to cpplib\n");
     }
 }
 
@@ -72,9 +84,6 @@ void AbstractActor::Run() {
     }
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
-    }
-    if (stop_fn_ != NULL) {
-        stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
 }
