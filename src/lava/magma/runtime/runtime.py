@@ -8,7 +8,6 @@ import sys
 import traceback
 import typing
 import typing as ty
-import time
 import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
