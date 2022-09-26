@@ -28,6 +28,8 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     dilation: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     groups: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=8)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
+    weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
     def run_spk(self) -> None:
         if self.num_message_bits.item() > 0:
@@ -71,8 +73,6 @@ class PyConvModelFixed(AbstractPyConvModel):
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     a_buf: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     weight: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    weight_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
     def clamp_precision(self, x: np.ndarray) -> np.ndarray:
         return utils.signed_clamp(x, bits=24)

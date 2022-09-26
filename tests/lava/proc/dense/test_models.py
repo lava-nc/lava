@@ -15,7 +15,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.dense.process import Dense, SignMode
+from lava.proc.dense.process import Dense
+from lava.utils.weightutils import SignMode
 
 
 class DenseRunConfig(RunConfig):
