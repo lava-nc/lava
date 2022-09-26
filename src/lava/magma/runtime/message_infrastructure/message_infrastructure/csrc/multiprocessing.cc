@@ -40,4 +40,10 @@ std::vector<AbstractActor::ActorPtr>& MultiProcessing::GetActors() {
   return this->actors_;
 }
 
+MultiProcessing::~MultiProcessing() {
+  for (auto actor : actors_) {
+    delete actor;
+  }
+}
+
 }  // namespace message_infrastructure

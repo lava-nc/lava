@@ -45,6 +45,7 @@ class AbstractActor {
   using StopFn = std::function<void(void)>;
 
   explicit AbstractActor(TargetFn target_fn);
+  ~AbstractActor();
   virtual int ForceStop() = 0;
   virtual int Wait() = 0;
   virtual int Create() = 0;
