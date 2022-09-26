@@ -407,6 +407,9 @@ class TestQuboScifModels(unittest.TestCase):
         sig_spk_rfct_interrupt = wta_spk_rfct_interrupt + 1
         self.assertTrue(np.all(v_scif[spk_idxs_pre_inj] == neg_tau_ref))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_pre_inj] == 1))
+
+        print(f"{cost_diag + wt * step_size=}")
+        print(f"{v_lif_sig[sig_pos_spk_pre_inj]=}")
         self.assertTrue(np.all(
             v_lif_sig[sig_pos_spk_pre_inj] == cost_diag + wt * step_size))
         v_gt_inh_inj = (inh_inj - spk_idxs_pre_inj + 1) - t_inj_spk[inh_inj]
