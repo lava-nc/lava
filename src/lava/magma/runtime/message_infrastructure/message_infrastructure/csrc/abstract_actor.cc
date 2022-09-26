@@ -72,12 +72,16 @@ void AbstractActor::Run() {
     InitStatus();
     while(true) {
       auto handle = HandleCmd();
+
+      // HandleCmd.stop
       if (handle.first) {
         break;
       }
-      if (!handle.second) {
+      // HandleCmd.wait
+      else if (!handle.second) {
         target_fn_(this);
-        LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
+        LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d ActorCommand: %d\n", GetStatus(), GetCmd());
+        break;
       } else {
         // waiting
         _mm_pause();
