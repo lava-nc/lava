@@ -73,6 +73,7 @@ class TestProcess(unittest.TestCase):
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunContinuous(), run_cfg=run_config)
         process.pause()
+        time.sleep(0.1)
         process.stop()
 
 
