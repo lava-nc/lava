@@ -14,8 +14,6 @@
 
 namespace message_infrastructure {
 
-using ThreadPtr = std::shared_ptr<std::thread>;
-
 enum ActorType {
   RuntimeActor = 0,
   RuntimeServiceActor = 1,
@@ -51,40 +49,33 @@ class AbstractActor {
   virtual int Wait() = 0;
   virtual int Create() = 0;
   void Control(const ActorCmd cmd);
-  int GetCmd();
   int GetStatus();
   void SetStatus(ActorStatus status);
-  int SetStopFn(StopFn stop_fn);
+  void SetStopFn(StopFn stop_fn);
   int GetPid() {
     return this->pid_;
   }
 
  protected:
-  void HandleCmd();
-  std::pair<bool, bool> HandleStatus();
-  void ActorMonitor_();
   void Run();
   int pid_;
-  StopFn stop_fn_;
-  ThreadPtr actor_monitor_ = nullptr;
-  ActorCtrlStatus ctl_status_backup;
 
  private:
-  RwSharedMemoryPtr ctl_status_shm_;
-  // ActorType actor_type_ = ActorType::ProcessModelActor;
+  SharedMemoryPtr ctl_shm_;
+  std::atomic<int> actore_status_;
+  std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
   std::string actor_name_ = "actor";
   TargetFn target_fn_ = NULL;
+  StopFn stop_fn_ = NULL;
   void InitStatus();
+  void HandleCmd();
 };
 
 using SharedActorPtr = std::shared_ptr<AbstractActor>;
 
 class PosixActor final : public AbstractActor {
  public:
-  explicit PosixActor(AbstractActor::TargetFn target_fn, int shmid)
-    : AbstractActor(target_fn)
-  {}
-
+  using AbstractActor::AbstractActor;
   int GetPid() {
     return this->pid_;
   }

@@ -5,13 +5,10 @@
 #ifndef SHMEM_PORT_H_
 #define SHMEM_PORT_H_
 
-#include <queue>
 #include <string>
 #include <vector>
 #include <memory>
 #include <atomic>
-#include <mutex>  // NOLINT
-#include <condition_variable>  // NOLINT
 #include <thread>  // NOLINT
 
 #include "abstract_port.h"
@@ -38,7 +35,6 @@ class ShmemSendPort final : public AbstractSendPort {
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  void *observer = NULL;
   ThreadPtr ack_callback_thread_ = nullptr;
 };
 
@@ -51,24 +47,22 @@ class ShmemRecvQueue {
                  const size_t &nbytes);
   ~ShmemRecvQueue();
   void Push(void* src);
-  void Pop();
+  void* Pop(bool block);
   void* Front();
-  void* FrontPop();
   bool Probe();
   bool Empty();
+  int AvailableCount();
   void Free();
   void Stop();
 
  private:
   std::string name_;
-  size_t nbytes_;
   size_t size_;
+  size_t nbytes_;
   std::vector<void *> array_;
-  std::vector<void *> drop_array_;
   std::atomic<uint32_t> read_index_;
   std::atomic<uint32_t> write_index_;
   std::atomic_bool done_;
-  std::atomic_bool overlap_;
 };
 
 using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
@@ -91,7 +85,6 @@ class ShmemRecvPort final : public AbstractRecvPort {
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  void *observer = NULL;
   ShmemRecvQueuePtr queue_ = nullptr;
   ThreadPtr req_callback_thread_ = nullptr;
   ThreadPtr recv_queue_thread_ = nullptr;

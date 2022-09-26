@@ -10,9 +10,7 @@
 namespace message_infrastructure {
 
 int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
-  SharedMemManager &actor_shmm = GetSharedMemManager();
-  int shmid = actor_shmm.AllocSharedMemory(sizeof(ActorCtrlStatus));
-  AbstractActor::ActorPtr actor = new PosixActor(target_fn, shmid);
+  AbstractActor::ActorPtr actor = new PosixActor(target_fn);
   int ret = actor->Create();
   actors_.push_back(actor);
   return ret;

@@ -24,7 +24,7 @@ void SharedMemory::InitSemaphore() {
 }
 
 void SharedMemory::Start() {
-  sem_post(ack_);
+  // RecvPort will post init sem.
 }
 
 void SharedMemory::Store(HandleFn store_fn) {
@@ -33,14 +33,21 @@ void SharedMemory::Store(HandleFn store_fn) {
   sem_post(req_);
 }
 
-bool SharedMemory::Load(HandleFn consume_fn) {
+bool SharedMemory::Load(HandleFn consume_fn, bool available) {
+  bool ret = false;
   if (!sem_trywait(req_))
   {
       consume_fn(MemMap());
-      sem_post(ack_);
-      return true;
+      ret = true;
   }
-  return false;
+  if (available) {
+    int val;
+    sem_getvalue(ack_, &val);
+    if (val == 0) {
+      sem_post(ack_);
+    }
+  }
+  return ret;
 }
 
 void SharedMemory::Close() {
@@ -77,9 +84,9 @@ void RwSharedMemory::Start() {
   sem_post(sem_);
 }
 
-void RwSharedMemory::Handle(HandleFn consume_fn) {
+void RwSharedMemory::Handle(HandleFn handle_fn) {
   sem_wait(sem_);
-  consume_fn(GetData());
+  handle_fn(GetData());
   sem_post(sem_);
 }
 
@@ -94,22 +101,6 @@ void* RwSharedMemory::GetData() {
 RwSharedMemory::~RwSharedMemory() {
   Close();
   sem_unlink(sem_name_.c_str());
-}
-
-int SharedMemManager::AllocSharedMemory(const size_t &mem_size) {
-  std::string str = shm_str_ + std::to_string(key_++);
-  int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
-  if (shmfd == -1) {
-    LAVA_LOG_ERR("Create shared memory object failed.\n");
-    exit(-1);
-  }
-  int err = ftruncate(shmfd, mem_size);
-  if (err == -1) {
-    LAVA_LOG_ERR("Resize shared memory segment failed.\n");
-    exit(-1);
-  }
-  shm_strs_.insert(str);
-  return shmfd;
 }
 
 void SharedMemManager::DeleteSharedMemory(const std::string &shm_str) {
