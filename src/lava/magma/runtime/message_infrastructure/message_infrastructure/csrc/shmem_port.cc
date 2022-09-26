@@ -175,10 +175,14 @@ void ShmemRecvPort::Start() {
 
 void ShmemRecvPort::QueueRecv() {
   while(!done_.load()) {
-    auto ret = shm_->Load([this](void* data){
-      this->queue_->Push(data);
-    }, this->queue_->AvailableCount() >= 1);
+    bool ret = false;
+    if (this->queue_->AvailableCount() > 0) {
+      ret = shm_->Load([this](void* data){
+        this->queue_->Push(data);
+      });
+    }
     if (!ret) {
+      // sleep
       _mm_pause();
     }
   }

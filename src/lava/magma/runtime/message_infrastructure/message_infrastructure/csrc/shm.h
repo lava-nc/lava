@@ -37,7 +37,7 @@ class SharedMemory {
   SharedMemory(const size_t &mem_size, const int &shmfd);
   ~SharedMemory();
   void Start();
-  bool Load(HandleFn consume_fn, bool available);
+  bool Load(HandleFn consume_fn);
   void Store(HandleFn store_fn);
   void Close();
   void InitSemaphore();

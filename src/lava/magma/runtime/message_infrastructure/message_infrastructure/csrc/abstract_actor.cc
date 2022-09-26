@@ -37,7 +37,7 @@ void AbstractActor::HandleCmd() {
             {
                 this->actore_status_.store(static_cast<int>(ActorStatus::StatusRunning));
             }
-            }, true);
+            });
         if (!ret) {
             _mm_pause();
         }
