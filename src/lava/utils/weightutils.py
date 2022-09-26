@@ -32,10 +32,10 @@ def determine_sign_mode(weights: np.ndarray) -> SignMode:
         The sign mode that best describes the values in the given weight
         matrix.
     """
-    if np.max(weights) < 0:
-        sign_mode = SignMode.INHIBITORY
-    elif np.min(weights) >= 0:
+    if np.min(weights) >= 0:
         sign_mode = SignMode.EXCITATORY
+    elif np.max(weights) <= 0:
+        sign_mode = SignMode.INHIBITORY
     else:
         sign_mode = SignMode.MIXED
 
@@ -70,10 +70,7 @@ def optimize_weight_bits(
     OptimizedWeights
         An object that wraps the optimized weight matrix and weight parameters.
     """
-    if np.any(weights > 255) or np.any(weights < -256):
-        raise ValueError(f"weights have to be between -256 and 255. Got "
-                         f"weights between {np.min(weights)} and "
-                         f"{np.max(weights)}.")
+    _validate_weights(weights, sign_mode)
 
     weight_exp = _determine_weight_exp(weights, sign_mode)
     num_weight_bits = _determine_num_weight_bits(weights, weight_exp, sign_mode)
@@ -89,6 +86,32 @@ def optimize_weight_bits(
                                          num_weight_bits=num_weight_bits,
                                          weight_exp=weight_exp)
     return optimized_weights
+
+
+def _validate_weights(weights: np.ndarray,
+                      sign_mode: SignMode) -> None:
+    """Validate the weight values against the given sign mode.
+
+    Parameters
+    ----------
+    weights : numpy.ndarray
+        Weight matrix
+    sign_mode : SignMode
+        Sign mode specified for the weight matrix
+    """
+    mixed_flag = int(sign_mode == SignMode.MIXED)
+    excitatory_flag = int(sign_mode == SignMode.EXCITATORY)
+    inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
+
+    min_weight = (-2 ** 8) * (mixed_flag + inhibitory_flag)
+    min_weight += inhibitory_flag
+    max_weight = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)
+
+    if np.any(weights > max_weight) or np.any(weights < min_weight):
+        raise ValueError(f"weights have to be between {min_weight} and "
+                         f"{max_weight} for {sign_mode=}. Got "
+                         f"weights between {np.min(weights)} and "
+                         f"{np.max(weights)}.")
 
 
 def _determine_weight_exp(weights: np.ndarray,
@@ -118,7 +141,7 @@ def _determine_weight_exp(weights: np.ndarray,
         neg_scale = -128 / min_weight if min_weight < 0 else np.inf
         scale = np.min([pos_scale, neg_scale])
     elif sign_mode == SignMode.INHIBITORY:
-        scale = -256 / min_weight
+        scale = -255 / min_weight
     elif sign_mode == SignMode.EXCITATORY:
         scale = 255 / max_weight
 
@@ -197,12 +220,18 @@ def truncate_weights(weights: np.ndarray,
     """
     weights = np.copy(weights).astype(np.int32)
 
+    if sign_mode == SignMode.INHIBITORY:
+        weights = -weights
+
     mixed_flag = int(sign_mode == SignMode.MIXED)
     num_truncate_bits = max_num_weight_bits - num_weight_bits + mixed_flag
 
     truncated_weights = np.left_shift(
         np.right_shift(weights, num_truncate_bits),
         num_truncate_bits).astype(np.int32)
+
+    if sign_mode == SignMode.INHIBITORY:
+        truncated_weights = -truncated_weights
 
     return truncated_weights
 
@@ -218,8 +247,7 @@ def clip_weights(weights: np.ndarray,
     weights : numpy.ndarray
         Weight matrix that is to be truncated.
     sign_mode : SignMode
-        Sign mode to use for truncation. See SignMode class for the
-        correct values.
+        Sign mode to use for truncation.
     num_bits : int
         Number of bits to use to clip the weights to.
 
@@ -231,12 +259,17 @@ def clip_weights(weights: np.ndarray,
     weights = np.copy(weights).astype(np.int32)
 
     mixed_flag = int(sign_mode == SignMode.MIXED)
-    excitatory_flag = int(sign_mode == SignMode.EXCITATORY)
     inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
 
-    min_wgt = (-2 ** num_bits) * (mixed_flag + inhibitory_flag)
-    max_wgt = (2 ** num_bits - 1) * (mixed_flag + excitatory_flag)
+    if inhibitory_flag:
+        weights = -weights
+
+    min_wgt = (-2 ** num_bits) * mixed_flag
+    max_wgt = 2 ** num_bits - 1
 
     clipped_weights = np.clip(weights, min_wgt, max_wgt)
+
+    if inhibitory_flag:
+        clipped_weights = -clipped_weights
 
     return clipped_weights
