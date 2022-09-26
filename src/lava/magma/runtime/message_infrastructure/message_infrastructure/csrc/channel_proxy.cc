@@ -28,11 +28,11 @@ ChannelProxy::ChannelProxy(const ChannelType &channel_type,
   recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
                   channel_->GetRecvPort());
 }
-SendPortProxy* ChannelProxy::GetSendPort() {
-    return send_port_.get();
+SendPortProxyPtr ChannelProxy::GetSendPort() {
+    return send_port_;
 }
-RecvPortProxy* ChannelProxy::GetRecvPort() {
-    return recv_port_.get();
+RecvPortProxyPtr ChannelProxy::GetRecvPort() {
+    return recv_port_;
 }
 
 }  // namespace message_infrastructure

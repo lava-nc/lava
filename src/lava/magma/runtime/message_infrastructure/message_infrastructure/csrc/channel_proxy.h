@@ -19,8 +19,8 @@ class ChannelProxy {
                const size_t &size,
                const size_t &nbytes,
                const std::string &name = "test_channel");
-  SendPortProxy* GetSendPort();
-  RecvPortProxy* GetRecvPort();
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
  private:
   AbstractChannelPtr channel_ = NULL;
   SendPortProxyPtr send_port_ = NULL;
