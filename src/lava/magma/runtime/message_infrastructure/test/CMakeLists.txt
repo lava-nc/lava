@@ -21,6 +21,7 @@ target_link_libraries(
   GTest::gtest_main
   pybind11::embed
   message_infrastructure
+  lt
 )
 
 include(GoogleTest)
