@@ -182,12 +182,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             actor_status = self._actor.get_status()
             if actor_status in [int(ActorStatus.StatusStopped),
                                 int(ActorStatus.StatusError)]:
-                if self._stopped:
-                    return
-                else:
-                    print("wait model for join")
-                    time.sleep(5)
-                    continue
+                return
             # Check Action in model
 
             if self._action == 'cmd':

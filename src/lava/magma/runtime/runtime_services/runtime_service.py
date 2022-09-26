@@ -429,14 +429,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         while True:
             stop, pause = self.check_status()
             if stop:
-                print("rs run stop")
-                if self._stop:
-                    break
-                else:
-                    time.sleep(2)
-                    continue
-            if pause:
-                time.sleep(2)
+                return
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             if action is None:
