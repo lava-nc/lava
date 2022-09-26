@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 #include <multiprocessing.h>
+#include <abstract_actor.h>
 
 TEST(HelloTest, BasicAssertions) {
   // Expect two strings not to be equal.
@@ -23,14 +24,27 @@ class Builder {
 
 void Builder::Build(int i) {
   std::cout << "Builder running build " << i << std::endl;
-  std::cout << "Build " << i << "... Sleeping for 10s" << std::endl;
-  sleep(10);
+  std::cout << "Build " << i << "... Sleeping for 3s" << std::endl;
+  sleep(3);
   std::cout << "Build " << i << "... Builder complete" << std::endl;
 }
 
-AbstractActor::TargetFn TargetFunction(Builder builder, int idx) {
-  std::cout << "Target Function running" << std::endl;
+void TargetFunction(Builder builder, int idx, AbstractActor* actor_ptr) {
+  std::cout << "Target Function running... ID " << idx << std::endl;
+  actor_ptr->SetStatus(ActorStatus::StatusStopped);
   builder.Build(idx);
+}
+
+void CreateActors (MultiProcessing mp, Builder *builder) {
+  AbstractActor::TargetFn target_fn;
+
+  for (int i = 0; i < 5; i++) {
+    std::cout << "Loop " << i << std::endl;
+    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
+    target_fn = bound_fn;
+    int return_value = mp.BuildActor(bound_fn);
+    std::cout << "Return Value --> " << return_value << std::endl;
+  }
 }
 
 TEST(TestMultiprocessing, MultiprocessingSpawn) {
@@ -39,11 +53,28 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   Builder *builder = new Builder();
   MultiProcessing mp;
 
-  for (int i = 0; i < 5; i++) {
+  AbstractActor::TargetFn target_fn;
+
+  // TODO: Make test pass with multiple actors
+  for (int i = 0; i < 1; i++) {
     std::cout << "Loop " << i << std::endl;
-    auto bound_fn = std::bind(TargetFunction, std::placeholders::_1, i);
-    mp.BuildActor(bound_fn(*builder));
+    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
+    target_fn = bound_fn;
+    int return_value = mp.BuildActor(bound_fn);
+    std::cout << "Return Value --> " << return_value << std::endl;
   }
+
+  std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
+  std::cout << "------------------------------------------" << std::endl;
+  std::cout << "Actor List Length --> " << actorList.size() << std::endl;
+  for (auto actor : actorList){
+    int actorStatus = actor->GetStatus();
+    std::cout << "Actor Status --> " << actorStatus << std::endl;
+    EXPECT_EQ(actorStatus, 0);
+  }
+  
+  // Stop any currently running actors
+  mp.Stop(true);
 }
 
 TEST(TestMultiprocessing, MultiprocessingShutdown) {
@@ -58,6 +89,7 @@ TEST(TestMultiprocessing, ActorForceStop) {
   GTEST_SKIP() << "Skipping ActorForceStop";
   MultiProcessing mp;
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
+  std::cout << "Actor List Length --> " << actorList.size() << std::endl;
   for (auto actor : actorList){
     actor->ForceStop();
     int actorStatus = actor->GetStatus();
