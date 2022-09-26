@@ -45,6 +45,8 @@ class TestCspScifModels(unittest.TestCase):
 
         spk_src = SpikeSource(data=np.array([[0] * num_neurons]).reshape(
             num_neurons, 1).astype(int))
+        # TODO (MR): The weight of -1 is now being correctly encoded as -1.
+        #  It was written assuming the weight would be truncated to -2.
         dense_in = Dense(weights=(-1) * np.eye(num_neurons),
                          num_message_bits=16)
         csp_scif = CspScif(shape=(num_neurons,),
@@ -408,12 +410,12 @@ class TestQuboScifModels(unittest.TestCase):
         self.assertTrue(np.all(v_scif[spk_idxs_pre_inj] == neg_tau_ref))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_pre_inj] == 1))
         self.assertTrue(np.all(
-            v_lif_sig[sig_pos_spk_pre_inj] == cost_diag + wt * step_size))
-        v_gt_inh_inj = (inh_inj - spk_idxs_pre_inj + 1) - t_inj_spk[inh_inj]
+            v_lif_sig[sig_pos_spk_pre_inj] == cost_diag + 1))
+        v_gt_inh_inj = step_size - t_inj_spk[inh_inj]
         self.assertTrue(np.all(v_scif[inh_inj] == v_gt_inh_inj))
         self.assertTrue(np.all(v_lif_wta[wta_spk_rfct_interrupt] == 1))
         self.assertTrue(np.all(
-            v_lif_sig[sig_spk_rfct_interrupt] == cost_diag + wt * step_size))
+            v_lif_sig[sig_spk_rfct_interrupt] == cost_diag + 1))
         # Test post-inhibitory-injection SCIF voltage and spiking
         idx_lst = [inj_times[2] + (theta // step_size) - 1 + j * total_period
                    for j in range(num_epochs)]
