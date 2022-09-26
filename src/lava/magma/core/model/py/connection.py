@@ -590,6 +590,8 @@ class ConnectionModelBitApproximate(Connection):
             "shape": self._shape,
             "x0": np.broadcast_to(self.x0[np.newaxis, :], self._shape),
             "y0": np.broadcast_to(self.y0[:, np.newaxis], self._shape),
+            # TODO (MR): This is a design flaw as self.weights is not accessible
+            #  at this class level.
             "weights": self.weights,
             "tag_2": self.tag_2,
             "tag_1": self.tag_1,
