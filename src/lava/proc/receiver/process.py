@@ -13,10 +13,13 @@ class Receiver(AbstractProcess):
 
     Parameters
     ----------
-    shape: Shape of the population of process units.
-    name: Name of the Process. Default is 'Process_ID', where ID is an
-    integer value that is determined automatically.
-    log_config: Configuration options for logging.
+    shape : tuple(int)
+        Shape of the population of process units.
+    name : str
+        Name of the Process. Default is 'Process_ID', where ID is an
+        integer value that is determined automatically.
+    log_config : LogConfig
+        Configuration options for logging.
     """
 
     def __init__(self, *,

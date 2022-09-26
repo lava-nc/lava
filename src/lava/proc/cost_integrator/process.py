@@ -14,24 +14,31 @@ class CostIntegrator(AbstractProcess):
 
     Parameters
     ----------
-    shape: The expected shape of the input cost components.
-    name: Name of the Process. Default is 'Process_ID', where ID is an
+    shape : tuple(int)
+        The expected number and topology of the input cost components.
+    name : str, optional
+        Name of the Process. Default is 'Process_ID', where ID is an
         integer value that is determined automatically.
         log_config: Configuration options for logging.
 
     InPorts
     -------
-    cost_in: input to be additively integrated.
+    cost_in
+        input to be additively integrated.
 
     OutPorts
     --------
-    update_buffer: OutPort which notifies the next process about the
+    update_buffer
+        OutPort which notifies the next process about the
         detection of a better cost.
 
     Vars
     ----
-    min_cost: Current minimum cost, i.e., the lowest reported cost so far.
+    cost
+        Holds current cost as addition of input spikes' payloads
 
+    min_cost
+        Current minimum cost, i.e., the lowest reported cost so far.
     """
 
     def __init__(self, *, shape: ty.Tuple[int, ...] = (1,),
