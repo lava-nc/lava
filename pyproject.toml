@@ -8,7 +8,7 @@ name = "lava-nc"
 packages = [
     {include = "lava", from = "src"}
 ]
-version = "0.4.0"
+version = "0.5.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
