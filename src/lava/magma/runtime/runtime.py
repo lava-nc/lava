@@ -265,8 +265,8 @@ class Runtime:
             # Poll on all responses
             channel_actions = [(recv_port, (lambda y: (lambda: y))(
                 recv_port)) for
-                               recv_port in
-                               self.service_to_runtime]
+                recv_port in
+                self.service_to_runtime]
             rsps = []
             while True:
                 recv_port = selector.select(*channel_actions)
