@@ -9,19 +9,16 @@ from lava.magma.core.process.connection import ConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.utils.weightutils import SignMode
 
 
 class Dense(AbstractProcess):
     def __init__(self,
                  *,
                  weights: np.ndarray,
-                 weight_exp: ty.Optional[int] = 0,
-                 num_weight_bits: ty.Optional[int] = 8,
-                 sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
-                 num_message_bits: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
+                 num_message_bits: ty.Optional[int] = 0,
+                 log_config: ty.Optional[LogConfig] = None,
+                 **kwargs) -> None:
         """Dense connections between neurons. Realizes the following abstract
         behavior: a_out = weights * s_in
 
@@ -56,17 +53,17 @@ class Dense(AbstractProcess):
             w_scale = 8 - num_weight_bits + weight_exp + isMixed()
             weights = weights * (2 ** w_scale)
 
-        use_graded_spike: bool, optional
-            Flag to indicate graded spike. Default is False.
+        num_message_bits : int, optional
+            Determines whether the Dense Process deals with the incoming
+            spikes as binary spikes (num_message_bits = 0) or as graded
+            spikes (num_message_bits > 0). Default is 0.
         """
 
         super().__init__(weights=weights,
-                         weight_exp=weight_exp,
-                         num_weight_bits=num_weight_bits,
-                         sign_mode=sign_mode,
                          num_message_bits=num_message_bits,
                          name=name,
-                         log_config=log_config)
+                         log_config=log_config,
+                         **kwargs)
 
         self._validate_weights(weights)
         shape = weights.shape
@@ -77,9 +74,6 @@ class Dense(AbstractProcess):
 
         # Variables
         self.weights = Var(shape=shape, init=weights)
-        self.weight_exp = Var(shape=(1,), init=weight_exp)
-        self.num_weight_bits = Var(shape=(1,), init=num_weight_bits)
-        self.sign_mode = Var(shape=(1,), init=sign_mode.value)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
@@ -125,17 +119,16 @@ class LearningDense(ConnectionProcess):
         w_scale = 8 - num_weight_bits + weight_exp + isMixed()
         weights = weights * (2 ** w_scale)
 
-    use_graded_spike: bool, optional
-        Flag to indicate graded spike. Default is False.
+        num_message_bits : int, optional
+            Determines whether the LearningDense Process deals with the incoming
+            spikes as binary spikes (num_message_bits = 0) or as graded
+            spikes (num_message_bits > 0). Default is 0.
     """
 
     def __init__(
         self,
         *,
         weights: np.ndarray,
-        weight_exp: ty.Optional[int] = 0,
-        num_weight_bits: ty.Optional[int] = 8,
-        sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
         num_message_bits: ty.Optional[int] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
@@ -145,9 +138,6 @@ class LearningDense(ConnectionProcess):
         super().__init__(
             shape=weights.shape,
             weights=weights,
-            weight_exp=weight_exp,
-            num_weight_bits=num_weight_bits,
-            sign_mode=sign_mode,
             num_message_bits=num_message_bits,
             name=name,
             log_config=log_config,
@@ -163,9 +153,6 @@ class LearningDense(ConnectionProcess):
 
         # Variables
         self.weights = Var(shape=shape, init=weights)
-        self.weight_exp = Var(shape=(1,), init=weight_exp)
-        self.num_weight_bits = Var(shape=(1,), init=num_weight_bits)
-        self.sign_mode = Var(shape=(1,), init=sign_mode.value)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
