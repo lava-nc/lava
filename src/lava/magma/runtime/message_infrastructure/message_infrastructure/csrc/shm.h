@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <memory>
@@ -17,6 +18,8 @@
 #include <string>
 #include <atomic>
 #include <functional>
+#include <cstdlib>
+#include <ctime>
 
 #include "message_infrastructure_logging.h"
 
@@ -77,11 +80,11 @@ using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 class SharedMemManager {
  public:
   ~SharedMemManager();
-  int AllocSharedMemory(const size_t &mem_size);
 
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    std::string str = shm_str_ + std::to_string(key_++);
+    int random = std::rand();
+    std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {
       LAVA_LOG_ERR("Create shared memory object failed.\n");
@@ -93,8 +96,7 @@ class SharedMemManager {
       exit(-1);
     }
     shm_strs_.insert(str);
-    int key = key_;
-    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, key);
+    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
     shm->InitSemaphore();
     return shm;
   }
@@ -103,9 +105,10 @@ class SharedMemManager {
   friend SharedMemManager &GetSharedMemManager();
 
  private:
-  SharedMemManager() {}
+  SharedMemManager() {
+    std::srand(std::time(nullptr));
+  }
   std::set<std::string> shm_strs_;
-  std::atomic<key_t> key_ {0xdead};
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
 };
