@@ -33,7 +33,6 @@ void SharedMemory::Store(HandleFn store_fn) {
   sem_post(req_);
 }
 
-
 bool SharedMemory::Load(HandleFn consume_fn) {
   bool ret = false;
   int val;
