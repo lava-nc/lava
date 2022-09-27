@@ -60,7 +60,7 @@ class AbstractSubProcessModel(AbstractProcessModel):
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if isinstance(attr, AbstractProcess) and \
-                    not attr is self.implements_process:
+                    attr is not self.implements_process:
                 procs[attr_name] = attr
             if is_dataclass(attr):
                 for data in fields(attr):
