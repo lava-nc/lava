@@ -45,17 +45,16 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
 
-matplotlib = "^3.5.1"
 numpy = "^1.22.2"
-pytest = "^7.0.1"
 scipy = "^1.8.0"
-unittest2 = "^1.1.0"
 networkx = "<=2.8"
+asteval = "^0.9.27"
+
+[tool.poetry.dev-dependencies]
+matplotlib = "^3.5.1"
 nbformat = "^5.3.0"
 nbconvert = "^6.5.1"
 pandas = "^1.4.2"
-
-[tool.poetry.dev-dependencies]
 bandit = "1.7.2"
 coverage = "^6.3.2"
 darglint = "^1.8.1"
@@ -73,12 +72,12 @@ flake8-spellcheck = "^0.25.0"
 flakeheaven = "^0.11.1"
 pep8-naming = "^0.12.1"
 poetry = "^1.1.13"
+unittest2 = "^1.1.0"
 pytest = "^7.0.1"
 pytest-cov = "^3.0.0"
 sphinx = { extras = ["toml"], version = "^4.4.0" }
 sphinx-tabs = { extras = ["toml"], version = "^3.2.0" }
 sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
-unittest2 = "^1.1.0"
 autopep8 = "^1.6.0"
 ipykernel = "^6.15.0"
 
