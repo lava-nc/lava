@@ -58,7 +58,6 @@ class AbstractScif(AbstractProcess):
         self.theta = Var(shape=(1,), init=int(theta))
         self.neg_tau_ref = Var(shape=(1,), init=int(neg_tau_ref))
 
-
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         return self.proc_params['shape']
