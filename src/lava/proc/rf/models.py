@@ -93,7 +93,13 @@ class AbstractPyRFModelFixed(PyLoihiProcessModel):
 
         self.real[:] = np.clip(decayed_real, neg_voltage_limit, pos_voltage_limit)
         self.imag[:] = np.clip(decayed_imag, neg_voltage_limit, pos_voltage_limit)
-
+        
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
 
     def run_spk(self):
         old_imag = deepcopy(self.imag)
@@ -113,10 +119,3 @@ class PyRFModelBitAcc(AbstractPyRFModelFixed):
 
     def __init__(self, proc_params):
         super(PyRFModelBitAcc, self).__init__(proc_params)
-
-    def scale_threshold(self):
-        """Scale threshold according to the way Loihi hardware scales it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
-        with other state variables of higher precision.
-        """
-        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
