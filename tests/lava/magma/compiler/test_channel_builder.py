@@ -40,8 +40,8 @@ class TestChannelBuilder(unittest.TestCase):
 
             mock = MockMessageInterface()
             channel: Channel = channel_builder.build(mock)
-            src_port = channel.get_send_port()
-            dst_port = channel.get_recv_port()
+            src_port = channel.src_port
+            dst_port = channel.dst_port
             # assert isinstance(channel, ShmemChannel)
             self.assertIsInstance(src_port, SendPort)
             self.assertIsInstance(dst_port, RecvPort)

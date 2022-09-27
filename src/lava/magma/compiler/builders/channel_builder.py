@@ -58,7 +58,9 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         return Channel(self.channel_type,
                        ChannelQueueSize,
                        self.src_port_initializer.bytes,
-                       self.src_port_initializer.name)
+                       self.src_port_initializer.name,
+                       self.dst_port_initializer.name
+                       )
 
 
 @dataclass
@@ -96,6 +98,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
                        self.port_initializer.bytes,
+                       self.port_initializer.name,
                        self.port_initializer.name)
 
 
@@ -132,6 +135,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
                        self.port_initializer.bytes,
+                       self.port_initializer.name,
                        self.port_initializer.name)
 
 
