@@ -992,7 +992,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         proc_map = OrderedDict()
         for proc in procs:
             # Select a specific ProcessModel
-            if proc in run_cfg.exception_proc_model_map:
+            if hasattr(run_cfg, "exception_proc_model_map") and \
+                    proc in run_cfg.exception_proc_model_map:
                 model_cls = run_cfg.exception_proc_model_map[proc]
             else:
                 models_cls = ProcGroupDiGraphs._find_proc_models(proc=proc)
