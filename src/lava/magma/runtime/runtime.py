@@ -8,6 +8,7 @@ import sys
 import traceback
 import typing
 import typing as ty
+
 import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
@@ -336,7 +337,8 @@ class Runtime:
     def pause(self):
         """Pauses the execution"""
         if self._is_running:
-            self._messaging_infrastructure.pause()
+            for actor in self._messaging_infrastructure.actors:
+                actor.pause()
             self._is_running = False
 
     def stop(self):

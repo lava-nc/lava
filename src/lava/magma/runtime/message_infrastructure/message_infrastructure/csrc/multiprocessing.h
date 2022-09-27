@@ -15,7 +15,6 @@ namespace message_infrastructure {
 
 class MultiProcessing {
  public:
-  ~MultiProcessing();
   void Stop(bool block);
   int BuildActor(AbstractActor::TargetFn target_fn);
   void CheckActor();
