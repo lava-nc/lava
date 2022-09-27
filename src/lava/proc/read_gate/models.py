@@ -30,6 +30,9 @@ class ReadGatePyModel(PyLoihiProcessModel):
     solution_out: PyOutPort = LavaPyType(
         PyOutPort.VEC_DENSE, np.int32, precision=32
     )
+    send_pause_request: PyOutPort = LavaPyType(
+        PyOutPort.VEC_DENSE, np.int32, precision=32
+    )
     solution_reader = LavaPyType(PyRefPort.VEC_DENSE, np.int32,
                                  precision=32)
     min_cost: int = None
