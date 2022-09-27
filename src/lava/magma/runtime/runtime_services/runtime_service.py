@@ -511,7 +511,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 continue
             # Probe if there is a new command from the runtime
             action = self._selector.select(*self._channel_actions)
-            self._channel_actions = []
             if action == "cmd":
                 command = self.runtime_to_service.recv()[0]
                 if command in self._cmd_handlers:
@@ -523,8 +522,9 @@ class AsyncPyRuntimeService(PyRuntimeService):
             elif action == "resp":
                 resps = self._get_pm_resp()
                 for resp in resps:
-                    if resp in self._resp_handlers:
-                        self._resp_handlers[resp] = True
+                    # print("respond from process", resp)
+                    if resp[0] in self._resp_handlers:
+                        self._resp_handlers[resp[0]] = True
                 self._channel_actions = [(self.runtime_to_service, lambda: "cmd")]
                 self._pm_resp_report()
             else:
