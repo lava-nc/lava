@@ -7,7 +7,6 @@
 
 #include <memory>
 
-#include "utils.h"
 #include "port_proxy.h"
 
 namespace message_infrastructure {

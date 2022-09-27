@@ -5,18 +5,13 @@
 #ifndef SHMEM_CHANNEL_H_
 #define SHMEM_CHANNEL_H_
 
-// #include <pybind11/pybind11.h>
-// #include <pybind11/numpy.h>
-#include <semaphore.h>
-
 #include <memory>
 #include <string>
 
 #include "abstract_channel.h"
+#include "abstract_port.h"
 #include "shm.h"
 #include "shmem_port.h"
-#include "utils.h"
-#include "port_proxy.h"
 
 namespace message_infrastructure {
 

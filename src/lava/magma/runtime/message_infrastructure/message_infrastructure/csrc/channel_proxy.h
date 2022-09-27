@@ -5,12 +5,10 @@
 #ifndef CHANNEL_PROXY_H_
 #define CHANNEL_PROXY_H_
 
-#include <memory>
 #include <string>
-#include <vector>
 #include "abstract_channel.h"
-#include "utils.h"
 #include "port_proxy.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 class ChannelProxy {
@@ -22,9 +20,9 @@ class ChannelProxy {
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:
-  AbstractChannelPtr channel_ = NULL;
-  SendPortProxyPtr send_port_ = NULL;
-  RecvPortProxyPtr recv_port_ = NULL;
+  AbstractChannelPtr channel_ = nullptr;
+  SendPortProxyPtr send_port_ = nullptr;
+  RecvPortProxyPtr recv_port_ = nullptr;
 };
 }  // namespace message_infrastructure
 

@@ -3,7 +3,8 @@
 // See: https://spdx.org/licenses/
 
 #include "abstract_actor.h"
-#include <xmmintrin.h>
+#include "utils.h"
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
 
@@ -43,7 +44,7 @@ void AbstractActor::HandleCmd() {
             }
             });
         if (!ret) {
-            _mm_pause();
+            helper::Sleep();
         }
     }
 }
@@ -76,7 +77,7 @@ void AbstractActor::Run() {
         LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
       } else {
         // pause status
-        _mm_pause();
+        helper::Sleep();
       }
     }
     if (handle_cmd_thread_->joinable()) {

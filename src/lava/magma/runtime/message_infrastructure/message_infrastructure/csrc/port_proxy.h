@@ -6,14 +6,11 @@
 #define PORT_PROXY_H_
 
 #include <pybind11/pybind11.h>
-
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "abstract_port.h"
-#include "message_infrastructure_logging.h"
-#include "shmem_port.h"
 #include "utils.h"
 
 namespace message_infrastructure {

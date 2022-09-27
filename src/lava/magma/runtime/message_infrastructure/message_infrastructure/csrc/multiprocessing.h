@@ -9,7 +9,6 @@
 #include <functional>
 
 #include "abstract_actor.h"
-#include "shm.h"
 
 namespace message_infrastructure {
 

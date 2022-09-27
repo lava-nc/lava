@@ -84,7 +84,7 @@ size_t RecvPortProxy::Size() {
 }
 
 int trick() {
-    //import_array();//to solve the warning "converting to non-pointer type 'int' from NULL [-Wconversion-null] import_array()"
+    //to solve the warning "converting to non-pointer type 'int' from NULL [-Wconversion-null] import_array()"
     _import_array();
     return 0;
 }

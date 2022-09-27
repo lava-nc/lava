@@ -2,22 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include <unistd.h>
-#include <thread>
-#include <mutex>
-#include <string>
-
 #include "shmem_channel.h"
-#include "shmem_port.h"
 #include "port_proxy.h"
 #include "utils.h"
-#include "shm.h"
 
 namespace message_infrastructure {
 

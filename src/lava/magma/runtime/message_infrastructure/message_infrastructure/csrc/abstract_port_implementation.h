@@ -5,13 +5,9 @@
 #ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
 #define ABSTRACT_PORT_IMPLEMENTATION_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include <vector>
 
 #include "port_proxy.h"
-#include "utils.h"
 
 namespace message_infrastructure {
 

@@ -13,7 +13,6 @@
 
 #include "abstract_port.h"
 #include "shm.h"
-#include "utils.h"
 
 namespace message_infrastructure {
 

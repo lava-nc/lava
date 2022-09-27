@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <string>
 #include "abstract_port.h"
 
 namespace message_infrastructure {

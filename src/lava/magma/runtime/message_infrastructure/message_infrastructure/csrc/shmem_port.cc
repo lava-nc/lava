@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <xmmintrin.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -20,7 +19,6 @@
 #include <cassert>
 
 #include "shmem_port.h"
-#include "shm.h"
 #include "utils.h"
 #include "message_infrastructure_logging.h"
 
@@ -50,7 +48,7 @@ void ShmemRecvQueue::Push(void* src) {
 
 void* ShmemRecvQueue::Pop(bool block) {
   while(block && Empty()) {
-    _mm_pause();
+    helper::Sleep();
     if(done_)
       return NULL;
   }
@@ -67,7 +65,7 @@ void* ShmemRecvQueue::Pop(bool block) {
 
 void* ShmemRecvQueue::Front() {
   while(Empty()) {
-    _mm_pause();
+    helper::Sleep();
     if(done_)
       return NULL;
   }
@@ -183,7 +181,7 @@ void ShmemRecvPort::QueueRecv() {
     }
     if (!ret) {
       // sleep
-      _mm_pause();
+      helper::Sleep();
     }
   }
 }

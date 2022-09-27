@@ -57,7 +57,7 @@ int PosixActor::ForceStop() {
       LAVA_LOG(LOG_MP, "The Actor child was ended with signal %d\n", status);
     }
   }
-  SetStatus(ActorStatus::StatusStopped);
+  SetStatus(ActorStatus::StatusTerminated);
   return 0;
 }
 

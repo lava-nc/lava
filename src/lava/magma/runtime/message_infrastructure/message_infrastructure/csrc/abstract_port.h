@@ -9,7 +9,6 @@
 #include <vector>
 #include <memory>
 
-#include "shm.h"
 #include "utils.h"
 
 namespace message_infrastructure {

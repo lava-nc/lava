@@ -4,8 +4,6 @@
 
 #include "multiprocessing.h"
 #include "message_infrastructure_logging.h"
-#include "utils.h"
-
 
 namespace message_infrastructure {
 
