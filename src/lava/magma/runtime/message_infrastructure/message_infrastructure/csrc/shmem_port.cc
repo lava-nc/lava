@@ -141,7 +141,7 @@ void ShmemSendPort::Send(MetaDataPtr metadata) {
     char* cptr = (char*)data;
     memcpy(cptr, metadata.get(), sizeof(MetaData));
     cptr += sizeof(MetaData);
-    memcpy(cptr, metadata->mdata, this->nbytes_);
+    memcpy(cptr, metadata->mdata, this->nbytes_ - sizeof(MetaData));
   });
 }
 

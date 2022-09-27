@@ -29,8 +29,8 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
 
   shm_ = GetSharedMemManager().AllocChannelSharedMemory<SharedMemory>(shmem_size);
 
-  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, nbytes + sizeof(MetaData));
-  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, nbytes + sizeof(MetaData));
+  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, shmem_size);
+  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, shmem_size);
 }
 
 AbstractSendPortPtr ShmemChannel::GetSendPort() {

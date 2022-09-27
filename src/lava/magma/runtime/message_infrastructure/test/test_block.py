@@ -35,9 +35,11 @@ def send_proc(actor, **kwargs):
     port.start()
     for i in range(QUEUE_SIZE + 1):
         start_ts = time.time()
-        port.send(generate_data())
+        data = generate_data()
+        port.send(data)
         end_ts = time.time()
         print(f"Send {i}, duration: {end_ts - start_ts}")
+        print(f"Send {i} data: ", data)
     actor.status_paused()
 
 
