@@ -48,8 +48,13 @@ void AbstractActor::HandleCmd() {
     }
 }
 
-void AbstractActor::SetStatus(ActorStatus status) {
+bool AbstractActor::SetStatus(ActorStatus status) {
+    auto const curr_status = actore_status_.load();
+    if (curr_status >= static_cast<int>(ActorStatus::StatusStopped) && static_cast<int>(status) < curr_status) {
+        return false;
+    }
     actore_status_.store(static_cast<int>(status));
+    return true;
 }
 
 int AbstractActor::GetStatus() {

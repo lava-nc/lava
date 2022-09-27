@@ -56,19 +56,19 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
         actor.Control(ActorCmd::CmdStop);
       })
     .def("status_stopped", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusStopped);
+        return actor.SetStatus(ActorStatus::StatusStopped);
       })
     .def("status_running", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusRunning);
+        return actor.SetStatus(ActorStatus::StatusRunning);
       })
     .def("status_paused", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusPaused);
+        return actor.SetStatus(ActorStatus::StatusPaused);
       })
     .def("status_terminated", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusTerminated);
+        return actor.SetStatus(ActorStatus::StatusTerminated);
       })
     .def("error", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusError);
+        return actor.SetStatus(ActorStatus::StatusError);
       });
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)

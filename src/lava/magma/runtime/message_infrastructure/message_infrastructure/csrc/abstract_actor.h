@@ -52,7 +52,7 @@ class AbstractActor {
   virtual int Create() = 0;
   void Control(const ActorCmd cmd);
   int GetStatus();
-  void SetStatus(ActorStatus status);
+  bool SetStatus(ActorStatus status);
   void SetStopFn(StopFn stop_fn);
   int GetPid() {
     return this->pid_;
