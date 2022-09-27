@@ -31,11 +31,6 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Returns a list of actors"""
         return self._mp.get_actors()
 
-    @property
-    def smm(self):
-        """Returns the underlying shared memory manager"""
-        return self._mp.get_shmm()
-
     def start(self):
         """Init the MultiProcessing"""
         pass
@@ -43,11 +38,15 @@ class MultiProcessing(MessageInfrastructureInterface):
     def build_actor(self, target_fn: ty.Callable, builder) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
         bound_target_fn = partial(target_fn, builder=builder)
-        ret = self._mp.build_actor(bound_target_fn)
+        self._mp.build_actor(bound_target_fn)
 
     def stop(self, block=False):
         """Stops the shared memory manager"""
         self._mp.stop(block)
+
+    def pause(self):
+        for actor in self._mp.get_actors():
+            actor.pause()
 
     def channel_class(self,
                       channel_type: ChannelBackend) -> ty.Type[Channel]:

@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from lava.magma.core.decorator import implements, requires
@@ -59,6 +60,7 @@ class TestProcess(unittest.TestCase):
         simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunContinuous(), run_cfg=run_config)
+        time.sleep(0.1)
         process.stop()
 
     def test_async_process_model_pause(self):
@@ -71,6 +73,7 @@ class TestProcess(unittest.TestCase):
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         process.run(condition=RunContinuous(), run_cfg=run_config)
         process.pause()
+        time.sleep(0.1)
         process.stop()
 
 
