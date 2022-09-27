@@ -6,8 +6,8 @@
 #define UTILS_H_
 
 #include <memory>
-#include <chrono>
-#include <thread>
+#include <chrono>  // NOLINT
+#include <thread>  // NOLINT
 
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_US (1)
@@ -41,7 +41,7 @@ using MetaDataPtr = std::shared_ptr<MetaData>;
 namespace helper {
 
 static void Sleep() {
-  std::this_thread::sleep_for (std::chrono::milliseconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 }
 }  // namespace message_infrastructure
