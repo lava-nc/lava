@@ -30,9 +30,10 @@ AbstractRecvPortPtr ShmemChannel::GetRecvPort() {
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
                               const size_t &nbytes,
-                              const std::string &name) {
-  return (std::make_shared<ShmemChannel>(name,
-                                         name,
+                              const std::string &src_name,
+                              const std::string &dst_name) {
+  return (std::make_shared<ShmemChannel>(src_name,
+                                         dst_name,
                                          size,
                                          nbytes));
 }

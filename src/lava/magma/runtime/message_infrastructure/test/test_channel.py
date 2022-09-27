@@ -71,6 +71,7 @@ class TestShmemChannel(unittest.TestCase):
             ChannelBackend.SHMEMCHANNEL,
             size,
             nbytes,
+            name,
             name)
 
         send_port = shmem_channel.src_port
@@ -97,6 +98,7 @@ class TestShmemChannel(unittest.TestCase):
             ChannelBackend.SHMEMCHANNEL,
             size,
             nbytes,
+            name,
             name)
 
         send_port = shmem_channel.src_port

@@ -69,6 +69,7 @@ class TestChannelBlock(unittest.TestCase):
             ChannelBackend.SHMEMCHANNEL,
             QUEUE_SIZE,
             nbytes,
+            "test-block",
             "test-block")
 
         send_port = shmem_channel.src_port

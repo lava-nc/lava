@@ -21,14 +21,15 @@ class ChannelFactory {
       const ChannelType &channel_type,
       const size_t &size,
       const size_t &nbytes,
-      const std::string &name) {
+      const std::string &src_name,
+      const std::string &dst_name) {
     switch (channel_type) {
       case RPCCHANNEL:
         break;
       case DDSCHANNEL:
         break;
       default:
-        return GetShmemChannel(size, nbytes, name);
+        return GetShmemChannel(size, nbytes, src_name, dst_name);
     }
     return NULL;
   }

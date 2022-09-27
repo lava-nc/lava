@@ -32,7 +32,8 @@ class ShmemChannel : public AbstractChannel {
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
                               const size_t &nbytes,
-                              const std::string &name);
+                              const std::string &src_name,
+                              const std::string &dst_name);
 
 }  // namespace message_infrastructure
 

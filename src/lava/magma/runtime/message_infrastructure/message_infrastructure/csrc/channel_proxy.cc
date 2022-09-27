@@ -14,12 +14,14 @@ namespace message_infrastructure {
 ChannelProxy::ChannelProxy(const ChannelType &channel_type,
                            const size_t &size,
                            const size_t &nbytes,
-                           const std::string &name) {
+                           const std::string &src_name,
+                           const std::string &dst_name) {
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetChannel(channel_type,
                                         size,
                                         nbytes,
-                                        name);
+                                        src_name,
+                                        dst_name);
   send_port_ = std::make_shared<SendPortProxy>(channel_type,
                   channel_->GetSendPort());
   recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
