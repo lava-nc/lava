@@ -164,6 +164,10 @@ class LoihiLearningRule:
         ) = self._get_active_traces_from_active_product_series()
 
     @property
+    def rng_seed(self) -> int:
+        return self._rng_seed
+
+    @property
     def x1_impulse(self) -> float:
         """Get the impulse value for x1 trace.
 
