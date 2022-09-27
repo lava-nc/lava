@@ -228,7 +228,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 self._handle_var_port(self._action)
             self._action = self._selector.select(*self._channel_actions)
 
-
     @abstractmethod
     def add_ports_for_polling(self):
         """
