@@ -4,10 +4,17 @@
 
 import typing as ty
 from abc import ABC, abstractmethod
+# from functools import partial
 import logging
 import numpy as np
+import time
 
-from message_infrastructure import SendPort, RecvPort
+from message_infrastructure import (SendPort,
+                                    RecvPort,
+                                    Actor,
+                                    ActorStatus,
+                                    ActorCmd)
+from lava.magma.compiler.channels.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
@@ -43,12 +50,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._action: str = 'cmd'
         self._stopped: bool = False
+        self._actor: Actor = None
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
                                                          RecvPort],
                                                 ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
-            MGMT_COMMAND.STOP[0]: self._stop,
-            MGMT_COMMAND.PAUSE[0]: self._pause,
+            MGMT_COMMAND.RUN[0]: self._unlock,
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
             MGMT_COMMAND.SET_DATA[0]: self._set_var
         }
@@ -72,22 +79,28 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             if isinstance(value, PyVarPort):
                 self.var_ports.append(value)
 
-    def start(self):
+    def start(self, actor):
         """
         Starts the process model, by spinning up all the ports (mgmt and
         py_ports) and calls the run function.
         """
+        self._actor = actor
+        # print("insert stop function")
+        self._actor.set_stop_fn(self._stop)
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
             p.start()
         self.run()
 
+    def _unlock(self):
+        print("mgmt used to unlock process")
+
     def _stop(self):
         """
         Command handler for Stop command.
         """
-        self.process_to_service.send(MGMT_RESPONSE.TERMINATED)
+        # print("process stopping")
         self._stopped = True
         self.join()
 
@@ -95,7 +108,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         Command handler for Pause command.
         """
-        self.process_to_service.send(MGMT_RESPONSE.PAUSED)
+        print("pause")
+        pass
 
     def _get_var(self):
         """Handles the get Var command from runtime service."""
@@ -163,31 +177,39 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         After calling the method of the ProcessModels, the runtime service
         is informed about completion. The loop ends when the STOP command is
         received."""
+        self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
+        self.add_ports_for_polling()
         while True:
+            # Check Actor Status and ActorCmd
+            actor_status = self._actor.get_status()
+            if actor_status in [ActorStatus.StatusStopped,
+                                ActorStatus.StatusError]:
+                break
+            # Check Action in model
+            self._action = self._selector.select(*self._channel_actions)
             if self._action == 'cmd':
+                # print("process recv cmd")
                 cmd = self.service_to_process.recv()[0]
-                try:
-                    if cmd in self._cmd_handlers:
-                        self._cmd_handlers[cmd]()
-                        if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
-                            return
-                    else:
-                        raise ValueError(
-                            f"Illegal RuntimeService command! ProcessModels of "
-                            f"type {self.__class__.__qualname__} "
-                            f"{self.model_id} cannot handle "
-                            f"command: {cmd} ")
-                except Exception as inst:
-                    # Inform runtime service about termination
+                # print("cmd recieved", cmd)
+                if cmd in self._cmd_handlers:
+                    self._cmd_handlers[cmd]()
+                else:
+                    # print("cmd error")
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()
-                    raise inst
-            else:
-                # Handle VarPort requests from RefPorts
-                self._handle_var_port(self._action)
-            self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
-            self.add_ports_for_polling()
-            self._action = self._selector.select(*self._channel_actions)
+                    self._actor.error()
+                    # raise inst
+                    break
+
+            elif self._action != None:
+                if actor_status == ActorStatus.StatusPaused:
+                    continue
+                try:
+                    self._handle_var_port(self._action)
+                except Exception:
+                    self._actor.error()
+                    break
+        # print("mode terminated")    
 
     @abstractmethod
     def add_ports_for_polling(self):
@@ -402,12 +424,14 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.join()
 
     def _pause(self):
+        # depricated
         """
         Command handler for Pause Command.
         """
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
 
     def _handle_pause_or_stop_req(self):
+        # depricated
         """
         Helper function that checks if stop or pause is being requested by the
         user and handles it.
@@ -508,12 +532,9 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         Checks if the RS has sent a STOP command.
         """
-        if self.service_to_process.probe():
-            cmd = self.service_to_process.peek()
-            if enum_equal(cmd, MGMT_COMMAND.STOP):
-                self.service_to_process.recv()
-                self._stop()
-                return True
+        actor_status = self._actor.get_status()
+        if actor_status == ActorStatus.StatusStopped:
+            return True
         return False
 
     def run_async(self):
