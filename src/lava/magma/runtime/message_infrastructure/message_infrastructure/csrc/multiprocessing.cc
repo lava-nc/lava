@@ -10,7 +10,9 @@
 namespace message_infrastructure {
 
 int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
-  AbstractActor::ActorPtr actor = new PosixActor(target_fn);
+  SharedMemManager &actor_shmm = GetSharedMemManager();
+  int shmid = actor_shmm.AllocSharedMemory(sizeof(ActorCtrlStatus));
+  AbstractActor::ActorPtr actor = new PosixActor(target_fn, shmid);
   int ret = actor->Create();
   actors_.push_back(actor);
   return ret;
@@ -38,12 +40,6 @@ void MultiProcessing::CheckActor() {
 
 std::vector<AbstractActor::ActorPtr>& MultiProcessing::GetActors() {
   return this->actors_;
-}
-
-MultiProcessing::~MultiProcessing() {
-  for (auto actor : actors_) {
-    delete actor;
-  }
 }
 
 }  // namespace message_infrastructure
