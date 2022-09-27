@@ -65,6 +65,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
     def check_status(self):
         actor_status = self._actor.get_status()
         if actor_status in [ActorStatus.StatusStopped,
+                            ActorStatus.StatusTerminated,
                             ActorStatus.StatusError]:
             return True, False
         if actor_status == ActorStatus.StatusPaused:
@@ -192,7 +193,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         while True:
             stop, pause = self.check_status()
             if stop:
-                return  # let cpplib join
+                self.join()
+                break
             if pause:
                 # print("Runtime service get pause")
                 time.sleep(0.01)
@@ -203,9 +205,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
-                        # print("cmd in cmd handles")
                         self._cmd_handlers[cmd]()
                         if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
+                            self.join()
                             break  # join by itself
                     else:
                         raise ValueError(
@@ -226,7 +228,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 self._handle_var_port(self._action)
             self._action = self._selector.select(*self._channel_actions)
 
-        self._actor.status_terminated()
 
     @abstractmethod
     def add_ports_for_polling(self):
@@ -243,6 +244,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.process_to_service.join()
         for p in self.py_ports:
             p.join()
+        self._actor.status_terminated()
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):

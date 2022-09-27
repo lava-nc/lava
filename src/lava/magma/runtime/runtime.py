@@ -271,7 +271,7 @@ class Runtime:
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
                         print("Error Received")
-                        self._messaging_infrastructure.stop()
+                        self._messaging_infrastructure.stop(True)
                         raise RuntimeError(
                             f"Exception(s) occurred. See "
                             f"output above for details.")
