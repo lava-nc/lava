@@ -492,7 +492,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                 else:
-                    print("send run command")
+                    # print("send run command")
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
                     for ptos_recv_port in self.process_to_service:
                         channel_actions.append(
@@ -528,7 +528,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 # After handle resp, reset channel_actions
                 channel_actions = [(self.runtime_to_service, lambda: "cmd")]
-                
             elif action is None:
                 continue
             else:

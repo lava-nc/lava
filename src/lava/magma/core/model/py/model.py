@@ -165,7 +165,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         elif isinstance(var, np.ndarray):
             # First item is number of items
             num_items = data_port.recv()[0]
-            print("number items", num_items)
             var_iter = np.nditer(var, op_flags=['readwrite'])
             # Set data one by one
             for i in var_iter:
@@ -173,7 +172,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     break
                 num_items -= 1
                 i[...] = data_port.recv()[0]
-            print(var)
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         else:
             self.process_to_service.send(MGMT_RESPONSE.ERROR)
