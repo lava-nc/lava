@@ -377,16 +377,14 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 # stop all other pm
                                 self._send_pm_cmd(MGMT_COMMAND.STOP)
                                 return
-                        # Check if pause or stop received from Runtime
-                        if self.runtime_to_service.probe():
-                            cmd = self.runtime_to_service.peek()
-                            if enum_equal(cmd, MGMT_COMMAND.STOP):
-                                self.stopping = True
-                                self.req_stop = True
-                            if enum_equal(cmd, MGMT_COMMAND.PAUSE):
-                                self.pausing = True
-                                self.req_pause = True
-
+                        # Check if pause or stop received from actor status
+                        stop, pause = self.check_status()
+                        if stop:
+                            self.stopping = True
+                            self.req_stop = True
+                        if pause:
+                            self.pausing = True
+                            self.req_pause = True
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(phase, LoihiPhase.HOST):
                             break
