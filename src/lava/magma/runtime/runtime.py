@@ -270,14 +270,10 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        error_cnt = 0
-                        for actors in \
-                                self._messaging_infrastructure.actors:
-                            if actors.get_status() == ActorStatus.StatusError:
-                                error_cnt += 1
-                            actors.stop()
+                        print("Error Received")
+                        self._messaging_infrastructure.stop(True)
                         raise RuntimeError(
-                            f"{error_cnt} Exception(s) occurred. See "
+                            f"Exception(s) occurred. See "
                             f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")

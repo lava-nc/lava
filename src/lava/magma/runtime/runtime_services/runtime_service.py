@@ -311,6 +311,14 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
         while True:
             # Probe if there is a new command from the runtime
+            stop, pause = self.check_status()
+            if stop:
+                self.join()
+                break
+            if pause:
+                # print("Runtime service get pause")
+                time.sleep(0.01)
+                continue
             action = selector.select(*channel_actions)
             if action == "cmd":
                 command = self.runtime_to_service.recv()
@@ -389,6 +397,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     # Inform the runtime that last time step was reached
                     if is_last_ts:
                         self.service_to_runtime.send(MGMT_RESPONSE.DONE)
+            elif action is None:
+                continue
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
 
@@ -484,6 +494,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
             action = selector.select(*channel_actions)
             channel_actions = []
             if action is None:
+                channel_actions = [(self.runtime_to_service, lambda: "cmd")]
                 continue
             elif action == "cmd":
                 command = self.runtime_to_service.recv()
@@ -528,5 +539,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                self.join()
+                self._actor.error()
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))
