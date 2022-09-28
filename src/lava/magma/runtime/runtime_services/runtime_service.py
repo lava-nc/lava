@@ -303,13 +303,10 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
         while True:
             # Probe if there is a new command from the runtime
-            stop, pause = self.check_status()
+            stop, _ = self.check_status()
             if stop:
                 self.join()
                 break
-            if pause:
-                # time.sleep(0.001)
-                continue
             action = selector.select(*channel_actions)
             if action == "cmd":
                 # print(f"LoihiPyRuntimeService before command")
