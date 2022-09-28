@@ -23,7 +23,7 @@ class AbstractRuntimeService(ABC):
 
         self.model_ids: ty.List[int] = []
 
-        self._actor: Actor = None
+        self.actor: Actor = None
 
     def __repr__(self):
         return f"Synchronizer : {self.__class__}, \
@@ -31,7 +31,7 @@ class AbstractRuntimeService(ABC):
                  Protocol: {self.protocol}"
 
     def start(self, actor):
-        self._actor = actor
+        self.actor = actor
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         self.run()

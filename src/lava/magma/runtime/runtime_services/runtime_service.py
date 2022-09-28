@@ -12,7 +12,6 @@ import numpy as np
 from message_infrastructure import (
     RecvPort,
     SendPort,
-    ActorCmd,
     ActorStatus
 )
 from lava.magma.compiler.channels.selector import Selector
@@ -65,19 +64,22 @@ class PyRuntimeService(AbstractRuntimeService):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
         super(PyRuntimeService, self).__init__(protocol=protocol)
-        self.service_to_process: ty.Iterable[SendPort] = []
-        self.process_to_service: ty.Iterable[RecvPort] = []
+        self.service_to_process: ty.List[SendPort] = []
+        self.process_to_service: ty.List[RecvPort] = []
+        self.actor_status: ActorStatus = ActorStatus.StatusRunning
+        self.process_paused: ty.List[bool] = []
 
     def start(self, actor):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
-        self._actor = actor
-        self._actor.set_stop_fn(self.join)
+        self.actor = actor
+        self.actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].start()
             self.process_to_service[i].start()
+        self.process_paused = [False * len(self.service_to_process)]
         self.run()
 
     @abstractmethod
@@ -90,33 +92,34 @@ class PyRuntimeService(AbstractRuntimeService):
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
-        self._actor.status_stopped()
+        self.actor.status_stopped()
         self.runtime_to_service.join()
         self.service_to_runtime.join()
 
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
-        self._actor.status_terminated()
-
-    def handle_cmd(self):
-        actor_cmd = self._actor.get_cmd()
-        if actor_cmd == ActorCmd.CmdRun:
-            self._actor.status_running()
-        elif actor_cmd == ActorCmd.CmdPause:
-            self._actor.status_paused()
-        elif actor_cmd == ActorCmd.CmdStop:
-            self._actor.status_stopped()
+        self.actor.status_terminated()
 
     def check_status(self):
-        actor_status = self._actor.get_status()
+        need_stop = False
+        need_pause = False
+        actor_status = self.actor.get_status()
         if actor_status in [ActorStatus.StatusStopped,
                             ActorStatus.StatusTerminated,
                             ActorStatus.StatusError]:
-            return True, False
-        if actor_status == ActorStatus.StatusPaused:
-            return False, True
-        return False, False
+            need_stop = True
+        elif actor_status == ActorStatus.StatusPaused:
+            if self.actor_status == ActorStatus.StatusRunning:
+                self._handle_pause()
+            need_pause = True
+        elif actor_status == ActorStatus.StatusRunning:
+            self.process_paused = [False * len(self.service_to_process)]
+        self.actor_status = actor_status
+        return need_stop, need_pause
+
+    def _handle_pause(self):
+        pass
 
 
 class LoihiPyRuntimeService(PyRuntimeService):
@@ -129,7 +132,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self.req_lrn = False
         self.req_stop = False
         self.req_pause = False
-        self.paused = False
         self._error = False
         self.pausing = False
         self.stopping = False
@@ -198,15 +200,16 @@ class LoihiPyRuntimeService(PyRuntimeService):
         for request in requests:
             req_port.send(request)
 
-    def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
+    def _get_pm_resp(self, skip_list: ty.List[int] = None) -> ty.Iterable[MGMT_RESPONSE]:
         """Retrieves responses of all ProcessModels."""
         rcv_msgs = []
         num_responses_expected = len(self.model_ids)
-        counter = 0
-        while counter < num_responses_expected:
-            ptos_recv_port = self.process_to_service[counter]
+        for idx in range(num_responses_expected):
+            if skip_list and idx in skip_list:
+                continue
+            ptos_recv_port = self.process_to_service[idx]
             rcv_msgs.append(ptos_recv_port.recv())
-            counter += 1
+
         for idx, recv_msg in enumerate(rcv_msgs):
             if enum_equal(
                     recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_ERROR
@@ -232,6 +235,10 @@ class LoihiPyRuntimeService(PyRuntimeService):
             if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.REQ_STOP):
                 self.log.info(f"Process : {idx} has requested Stop")
                 self.req_stop = True
+            if enum_equal(recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED):
+                self.process_paused[idx] = True
+                # self.pausing = True
+                self.req_pause = True
         return rcv_msgs
 
     def _relay_to_runtime_data_given_model_id(self, model_id: int):
@@ -272,10 +279,8 @@ class LoihiPyRuntimeService(PyRuntimeService):
         ack_relay_port.send(ack_recv_port.recv())
 
     def _handle_pause(self):
-        self._actor.status_paused()
-        # Inform all ProcessModels about the PAUSE command
-        self._send_pm_cmd(MGMT_COMMAND.PAUSE)
-        rsps = self._get_pm_resp()
+        # Wait pause status from process
+        rsps = self._get_pm_resp([idx for idx, v in enumerate(self.process_paused) if v])
         for rsp in rsps:
             if not enum_equal(
                     rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED
@@ -285,8 +290,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_stop(self):
-        # Inform all ProcessModels about the STOP command
-        self._send_pm_cmd(MGMT_COMMAND.STOP)
+        # Wait stop status from process
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -310,30 +314,14 @@ class LoihiPyRuntimeService(PyRuntimeService):
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
 
         while True:
-            # Probe if there is a new command from the runtime
-            stop, pause = self.check_status()
-            if stop:
-                self.join()
-                break
-            if pause:
-                # print("Runtime service get pause")
-                time.sleep(0.01)
-                continue
             action = selector.select(*channel_actions)
             if action == "cmd":
                 command = self.runtime_to_service.recv()
-                if enum_equal(command, MGMT_COMMAND.STOP):
-                    self._handle_stop()
-                    return
-                elif enum_equal(command, MGMT_COMMAND.PAUSE):
-                    self._handle_pause()
-                    self.paused = True
-                elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
+                if enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
                         command, MGMT_COMMAND.SET_DATA
                 ):
                     self._handle_get_set(phase, command)
                 else:
-                    self.paused = False
                     # The number of time steps was received ("command")
                     # Start iterating through Loihi phases
                     curr_time_step = 0
@@ -382,23 +370,29 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         if stop:
                             self.stopping = True
                             self.req_stop = True
+                            break
                         if pause:
                             self.pausing = True
                             self.req_pause = True
+                        else:
+                            self.pausing = False
+                            self.req_pause = False
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(phase, LoihiPhase.HOST):
                             break
-                    if self.pausing or self.stopping or enum_equal(
-                            phase, MGMT_COMMAND.STOP) or enum_equal(
-                            phase, MGMT_COMMAND.PAUSE):
+                    if self.pausing or enum_equal(phase, MGMT_COMMAND.PAUSE):
                         continue
                     # Inform the runtime that last time step was reached
                     if is_last_ts:
                         self.service_to_runtime.send(MGMT_RESPONSE.DONE)
-            elif action is None:
-                continue
-            else:
+            elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+            # Probe if there is a new command from the runtime
+            stop, pause = self.check_status()
+            if stop:
+                break
+            if pause:
+                time.sleep(0.01)
 
     def _handle_get_set(self, phase, command):
         if enum_equal(phase, LoihiPhase.HOST):
@@ -457,7 +451,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         return rcv_msgs
 
     def _handle_pause(self):
-        self._actor.status_paused()
+        self.actor.status_paused()
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
@@ -538,6 +532,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
             else:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.join()
-                self._actor.error()
+                self.actor.error()
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))

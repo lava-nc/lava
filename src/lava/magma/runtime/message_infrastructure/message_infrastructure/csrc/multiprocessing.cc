@@ -27,6 +27,12 @@ void MultiProcessing::Stop(bool block) {
   }
 }
 
+void MultiProcessing::Pause() {
+  for (auto actor : actors_) {
+    actor->Control(ActorCmd::CmdPause);
+  }
+}
+
 void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
     LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)", 

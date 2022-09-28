@@ -24,7 +24,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("get_actors", &MultiProcessing::GetActors, py::return_value_policy::reference)
-    .def("stop", &MultiProcessing::Stop);
+    .def("stop", &MultiProcessing::Stop)
+    .def("pause", &MultiProcessing::Pause);
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
     .value("ChildProcess", ChildProcess)

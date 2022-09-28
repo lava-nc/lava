@@ -32,8 +32,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         return self._mp.get_actors()
 
     def start(self):
-        """Init the MultiProcessing"""
-        pass
+        """Start all actors"""
+        for actor in self._mp.get_actors():
+            actor.start()
 
     def build_actor(self, target_fn: ty.Callable, builder) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
@@ -45,8 +46,7 @@ class MultiProcessing(MessageInfrastructureInterface):
         self._mp.stop(block)
 
     def pause(self):
-        for actor in self._mp.get_actors():
-            actor.pause()
+        self._mp.pause()
 
     def channel_class(self,
                       channel_type: ChannelBackend) -> ty.Type[Channel]:

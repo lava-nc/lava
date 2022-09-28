@@ -16,6 +16,7 @@ class MultiProcessing {
  public:
   ~MultiProcessing();
   void Stop(bool block);
+  void Pause();
   int BuildActor(AbstractActor::TargetFn target_fn);
   void CheckActor();
   std::vector<AbstractActor::ActorPtr>& GetActors();
