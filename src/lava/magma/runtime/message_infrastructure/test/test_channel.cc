@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <multiprocessing.h>
 #include <abstract_actor.h>
+#include <channel_proxy.h>
 
 using namespace message_infrastructure;
 
@@ -21,11 +22,11 @@ void TargetFunction(Builder builder, AbstractActor* actor_ptr) {
   builder.Build();
 }
 
-void SendPort() {
+void SendProc() {
 
 }
 
-void RecvPort() {
+void RecvProc() {
   
 }
 
@@ -37,7 +38,31 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   Builder *builder_recv = new Builder();
 
   AbstractActor::TargetFn target_fn;
+
+  ChannelProxy(ChannelProxy.SHMEMCHANNEL ) ShmemChannel;
+
+  RecvPortProxyPtr SendPort = ShmemChannel.GetSendPort();
+  RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
+
+  auto send_port_fn = std::bind(&SendProc, (*builder_send), SendPort);
+  auto recv_port_fn = std::bind(&RecvProc, (*builder_recv), RecvPort);
+  mp.BuildActor(send_port_fn);
+  mp.BuildActor(recv_port_fn);
   
   // Stop any currently running actors
   mp.Stop(true);
+}
+
+TEST(TestSharedMemory, SharedMemSingleProcess){
+  ChannelProxy() ShmemChannel;
+
+  RecvPortProxyPtr SendPort = ShmemChannel.GetSendPort();
+  RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
+
+  SendPort.Start();
+  RecvPort.Start();
+
+  SendPort.Send(data);
+  ResData = RecvPort.Recv();
+  EXPECT_EQ(SendPort.Send(data);, ResData)
 }
