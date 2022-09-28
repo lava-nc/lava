@@ -65,10 +65,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         if actor_status in [ActorStatus.StatusStopped,
                             ActorStatus.StatusTerminated,
                             ActorStatus.StatusError]:
-            return True, False
-        if actor_status == ActorStatus.StatusPaused:
-            return False, True
-        return False, False
+            return True
+        return False
 
     def __setattr__(self, key: str, value: ty.Any):
         """
@@ -95,7 +93,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         py_ports) and calls the run function.
         """
         self._actor = actor
-        self._actor.set_stop_fn(self.join)
+        self._actor.set_stop_fn(self._stop)
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
@@ -184,13 +182,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
-            stop, pause = self.check_status()
-            if stop:
-                self.join()
-                break
-            if pause:
-                # time.sleep(0.001)
-                continue
             # Check Action in model
             if self._action == 'cmd':
                 # print("process recv cmd")
@@ -217,6 +208,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
+            stop = self.check_status()
+            if stop:
+                self._stop()
+                break
 
     @abstractmethod
     def add_ports_for_polling(self):

@@ -198,6 +198,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ptos_recv_port = self.process_to_service[counter]
             rcv_msgs.append(ptos_recv_port.recv())
             counter += 1
+        # print(f"_get_pm_resp: {rcv_msgs}")
         for idx, recv_msg in enumerate(rcv_msgs):
             if enum_equal(
                     recv_msg, LoihiPyRuntimeService.PMResponse.STATUS_ERROR
@@ -311,9 +312,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 continue
             action = selector.select(*channel_actions)
             if action == "cmd":
-                print(f"LoihiPyRuntimeService before command")
+                # print(f"LoihiPyRuntimeService before command")
                 command = self.runtime_to_service.recv()
-                print(f"LoihiPyRuntimeService command: {command}")
+                # print(f"LoihiPyRuntimeService command: {command}")
                 # if enum_equal(command, MGMT_COMMAND.STOP):
                 #    self._handle_stop()
                 #    return
@@ -338,7 +339,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         )
                         # Advance to the next phase
                         phase = self._next_phase(is_last_ts)
-                        print(f"LoihiPyRuntimeService phase: {phase}")
+                        # print(f"LoihiPyRuntimeService phase: {phase}")
                         if enum_equal(phase, MGMT_COMMAND.STOP):
                             if not self.stopping:
                                 self.service_to_runtime.send(
@@ -361,9 +362,9 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         if not enum_equal(
                                 phase, LoihiPyRuntimeService.Phase.HOST
                         ):
-                            print("LoihiPyRuntimeService _get_pm_resp before")
+                            # print("LoihiPyRuntimeService _get_pm_resp before")
                             self._get_pm_resp()
-                            print("LoihiPyRuntimeService _get_pm_resp done")
+                            # print("LoihiPyRuntimeService _get_pm_resp done")
                             if self._error:
                                 # Forward error to runtime
                                 self.service_to_runtime.send(
@@ -372,7 +373,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 # stop all other pm
                                 self._send_pm_cmd(MGMT_COMMAND.STOP)
                                 return
-                        print(f"LoihiPyRuntimeService before probe")
+                        # print(f"LoihiPyRuntimeService before probe")
                         # Check if pause or stop received from Runtime
                         if self.runtime_to_service.probe():
                             cmd = self.runtime_to_service.peek()
@@ -381,7 +382,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                                 self.req_pause = True
                         # Check if pause or stop received from actor status
                         stop, _ = self.check_status()
-                        print(f"inter loop: {stop}")
+                        # print(f"inter loop: {stop}")
                         if stop:
                             self.stopping = True
                             self.req_stop = True
