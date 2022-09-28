@@ -33,7 +33,8 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def start(self):
         """Init the MultiProcessing"""
-        pass
+        for actor in self._mp.get_actors():
+            actor.start()
 
     def build_actor(self, target_fn: ty.Callable, builder) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
