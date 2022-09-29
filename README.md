@@ -183,7 +183,7 @@ pip install lava-nc-0.4.0.tar.gz
 
 ```bash
 # Install poetry
-pip install "poetry>=1.1.13"
+curl -sSL https://install.python-poetry.org | python3 -
 poetry config virtualenvs.in-project true
 poetry install
 poetry shell
