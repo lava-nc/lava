@@ -199,9 +199,11 @@ MetaDataPtr ShmemRecvPort::Recv() {
 }
 
 void ShmemRecvPort::Join() {
-  done_ = true;
-  recv_queue_thread_->join();
-  queue_->Stop();
+  if (!done_) {
+    done_ = true;
+    recv_queue_thread_->join();
+    queue_->Stop();
+  }
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
