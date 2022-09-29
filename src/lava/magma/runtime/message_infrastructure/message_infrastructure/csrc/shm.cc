@@ -50,6 +50,14 @@ void SharedMemory::Close() {
   sem_close(ack_);
 }
 
+std::string SharedMemory::GetReq() {
+  return req_name_;
+}
+
+std::string SharedMemory::GetAck() {
+  return ack_name_;
+}
+
 void* SharedMemory::MemMap() {
   return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
 }
@@ -61,8 +69,6 @@ int SharedMemory::GetDataElem(int offset) {
 
 SharedMemory::~SharedMemory() {
   Close();
-  sem_unlink(req_name_.c_str());
-  sem_unlink(ack_name_.c_str());
 }
 
 RwSharedMemory::RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key)
@@ -113,6 +119,10 @@ SharedMemManager::~SharedMemManager() {
   for (auto it = shm_strs_.begin(); it != shm_strs_.end(); it++) {
     shm_unlink(it->c_str());
   }
+  for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
+    sem_unlink(it->c_str());
+  }
+  sem_strs_.clear();
   shm_strs_.clear();
 }
 
