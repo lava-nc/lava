@@ -458,7 +458,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_stop(self):
-        self._send_pm_cmd(MGMT_COMMAND.STOP)
+        # self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -476,26 +476,21 @@ class AsyncPyRuntimeService(PyRuntimeService):
         selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
-            stop, pause = self.check_status()
+            stop, _ = self.check_status()
             if stop:
                 self.join()
                 break
-            if pause:
-                # print("Runtime service get pause")
-                time.sleep(0.01)
-                continue
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             channel_actions = []
-            if action is None:
-                channel_actions = [(self.runtime_to_service, lambda: "cmd")]
-                continue
-            elif action == "cmd":
+            # print(f"AsyncPyRuntimeService action: {action}")
+            if action == "cmd":
                 command = self.runtime_to_service.recv()
-                if enum_equal(command, MGMT_COMMAND.STOP):
-                    self._handle_stop()
-                    return
-                elif enum_equal(command, MGMT_COMMAND.PAUSE):
+                # print(f"AsyncPyRuntimeService command {command}")
+                #if enum_equal(command, MGMT_COMMAND.STOP):
+                #    self._handle_stop()
+                #    return
+                if enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                 else:
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
@@ -531,7 +526,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_PAUSE)
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
-            else:
+            elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.join()
                 self._actor.error()

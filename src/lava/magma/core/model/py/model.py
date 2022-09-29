@@ -532,6 +532,10 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         pass
 
+    def _stop(self):
+        self._stopped = True
+        self.join()
+
     def check_for_stop_cmd(self) -> bool:
         """
         Checks if the RS has sent a STOP command.
