@@ -35,7 +35,6 @@ void SharedMemory::Store(HandleFn store_fn) {
 
 bool SharedMemory::Load(HandleFn consume_fn) {
   bool ret = false;
-  int val;
   if (!sem_trywait(req_))
   {
       consume_fn(MemMap());
