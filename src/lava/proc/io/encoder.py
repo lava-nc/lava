@@ -22,7 +22,7 @@ from lava.proc.sdn.models import AbstractDeltaModel
 class Compression(Enum):
     """Enumeration of message compression mode.
 
-    Atrributes
+    Attributes
     ----------
     DENSE:
         No compression. Raw 32 bit data is communicated as it is.
