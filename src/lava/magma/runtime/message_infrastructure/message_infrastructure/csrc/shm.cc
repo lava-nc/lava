@@ -20,7 +20,7 @@ SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
 
 void SharedMemory::InitSemaphore() {
   req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
-  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 0);
+  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
 }
 
 void SharedMemory::Start() {
@@ -39,11 +39,8 @@ bool SharedMemory::Load(HandleFn consume_fn) {
   if (!sem_trywait(req_))
   {
       consume_fn(MemMap());
+      sem_post(ack_);
       ret = true;
-  }
-  sem_getvalue(ack_, &val);
-  if (val == 0) {
-    sem_post(ack_);
   }
   return ret;
 }
