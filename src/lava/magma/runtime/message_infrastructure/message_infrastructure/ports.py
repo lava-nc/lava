@@ -3,8 +3,9 @@ from MessageInfrastructurePywrapper import Channel as CppChannel
 import numpy as np
 
 
-class SendPort:
+class SendPort(CppSendPort):
     def __init__(self, send_port):
+        super().__init__()
         self._cpp_send_port = send_port
 
     def send(self, data):
