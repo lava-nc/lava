@@ -1,9 +1,10 @@
 from MessageInfrastructurePywrapper import SendPort as CppSendPort
 from MessageInfrastructurePywrapper import Channel as CppChannel
+from MessageInfrastructurePywrapper import AbstractTransferPort
 import numpy as np
 
 
-class SendPort(CppSendPort):
+class SendPort(AbstractTransferPort):
     def __init__(self, send_port):
         super().__init__()
         self._cpp_send_port = send_port
