@@ -94,7 +94,6 @@ pytest
 ```powershell
 # Commands using PowerShell
 cd $HOME
-curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
 git checkout v0.4.0
