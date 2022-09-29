@@ -94,14 +94,13 @@ pytest
 ```powershell
 # Commands using PowerShell
 cd $HOME
-curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
 git checkout v0.4.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
-pip install "poetry>=1.1.13"
+curl -sSL https://install.python-poetry.org | python3 -
 poetry config virtualenvs.in-project true
 poetry install
 pytest
