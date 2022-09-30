@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -25,9 +25,8 @@ class ShmemSendPort final : public AbstractSendPort {
                 const size_t &size,
                 const size_t &nbytes);
   void Start();
-  void Send(MetaDataPtr);
+  void Send(MetaDataPtr metadata);
   void Join();
-  int AckCallback();
   bool Probe();
 
  private:
@@ -77,7 +76,6 @@ class ShmemRecvPort final : public AbstractRecvPort {
   MetaDataPtr Recv();
   void Join();
   MetaDataPtr Peek();
-  int ReqCallback();
   void QueueRecv();
 
  private:
@@ -85,7 +83,6 @@ class ShmemRecvPort final : public AbstractRecvPort {
   int idx_ = 0;
   std::atomic_bool done_;
   ShmemRecvQueuePtr queue_ = nullptr;
-  ThreadPtr req_callback_thread_ = nullptr;
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 

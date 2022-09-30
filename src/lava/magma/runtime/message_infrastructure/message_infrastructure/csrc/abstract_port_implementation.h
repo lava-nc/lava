@@ -1,11 +1,9 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
 #define ABSTRACT_PORT_IMPLEMENTATION_H_
-
-#include <vector>
 
 #include "port_proxy.h"
 

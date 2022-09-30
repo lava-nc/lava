@@ -18,12 +18,11 @@ from message_infrastructure import (
 
 
 def prepare_data():
-    data = np.array([12, 24, 36, 48, 60], dtype=np.int32)
-    return data
+    return np.random.random_sample((2, 4))
 
 
 def actor_stop(name):
-    print(f"{name} stop")
+    pass
 
 
 def send_proc(*args, **kwargs):
@@ -85,7 +84,7 @@ class TestShmemChannel(unittest.TestCase):
         mp.build_actor(recv_port_fn, builder1)
         mp.build_actor(send_port_fn, builder2)
 
-        time.sleep(2)
+        time.sleep(0.1)
         mp.stop(True)
 
     def test_single_process_shmemchannel(self):

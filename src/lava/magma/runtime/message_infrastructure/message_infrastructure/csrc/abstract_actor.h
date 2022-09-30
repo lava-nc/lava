@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -67,8 +67,8 @@ class AbstractActor {
   std::atomic<int> actore_status_;
   std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
   std::string actor_name_ = "actor";
-  TargetFn target_fn_ = NULL;
-  StopFn stop_fn_ = NULL;
+  TargetFn target_fn_ = nullptr;
+  StopFn stop_fn_ = nullptr;
   void InitStatus();
   void HandleCmd();
 };

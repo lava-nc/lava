@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -83,7 +83,7 @@ void AbstractActor::Run() {
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
     }
-    if (stop_fn_ != NULL && actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
+    if (stop_fn_ != nullptr && actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
         stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);

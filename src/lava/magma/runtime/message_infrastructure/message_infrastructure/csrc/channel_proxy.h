@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -6,11 +6,13 @@
 #define CHANNEL_PROXY_H_
 
 #include <string>
+
 #include "abstract_channel.h"
 #include "port_proxy.h"
 #include "utils.h"
 
 namespace message_infrastructure {
+
 class ChannelProxy {
  public:
   ChannelProxy(const ChannelType &channel_type,
@@ -25,6 +27,7 @@ class ChannelProxy {
   SendPortProxyPtr send_port_ = nullptr;
   RecvPortProxyPtr recv_port_ = nullptr;
 };
+
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_PROXY_H_
