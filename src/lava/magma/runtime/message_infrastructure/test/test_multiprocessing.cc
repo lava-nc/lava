@@ -85,6 +85,7 @@ TEST(TestMultiprocessing, ActorForceStop) {
   for (auto actor : actorList){
     actor->ForceStop();
     int actorStatus = actor->GetStatus();
-    EXPECT_EQ(actorStatus, 1);
+    // std::cout << actorStatus;
+    EXPECT_EQ(actorStatus, 2);
   }
 }
