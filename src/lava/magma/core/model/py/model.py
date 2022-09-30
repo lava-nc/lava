@@ -7,13 +7,11 @@ from abc import ABC, abstractmethod
 # from functools import partial
 import logging
 import numpy as np
-import time
 
 from message_infrastructure import (SendPort,
                                     RecvPort,
                                     Actor,
-                                    ActorStatus,
-                                    ActorCmd)
+                                    ActorStatus,)
 from lava.magma.compiler.channels.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
@@ -182,16 +180,14 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
-            # Check Action in model
             if self._action == 'cmd':
-                # print("process recv cmd")
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
                         if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
                             self.join()
-                            break  # join by itself
+                            break
                     else:
                         raise ValueError(
                             f"Illegal RuntimeService command! ProcessModels of "
@@ -430,10 +426,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Command handler for Pause Command.
         """
-        print("Model _pause")
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
         self._actor.status_paused()
-        print("Model send STATUS_PAUSED done")
 
     def _handle_pause_or_stop_req(self):
         """

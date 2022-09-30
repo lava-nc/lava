@@ -28,8 +28,8 @@ class TestChannelBuilder(unittest.TestCase):
         """Tests Channel Builder creation"""
         try:
             port_initializer: PortInitializer = PortInitializer(
-                name="mock", shape=(5), d_type=np.int32,
-                port_type='DOESNOTMATTER', size=5)
+                name="mock", shape=(1, 2), d_type=np.int32,
+                port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
                 channel_type=ChannelBackend.SHMEMCHANNEL,
                 src_port_initializer=port_initializer,
@@ -40,28 +40,23 @@ class TestChannelBuilder(unittest.TestCase):
 
             mock = MockMessageInterface()
             channel: Channel = channel_builder.build(mock)
-            src_port = channel.src_port
-            dst_port = channel.dst_port
-            # assert isinstance(channel, ShmemChannel)
-            self.assertIsInstance(src_port, SendPort)
-            self.assertIsInstance(dst_port, RecvPort)
+            self.assertIsInstance(channel.src_port, SendPort)
+            self.assertIsInstance(channel.dst_port, RecvPort)
 
-            src_port.start()
-            dst_port.start()
+            channel.src_port.start()
+            channel.dst_port.start()
 
-            expected_data = np.array([12, 34, 36, 48, 60], dtype=np.int32)
-            src_port.send(expected_data)
-            data = dst_port.recv()
+            expected_data = np.array([[1, 2]], dtype=np.int32)
+            channel.src_port.send(expected_data)
+            data = channel.dst_port.recv()
             assert np.array_equal(data, expected_data)
-            print("final OK")
 
-            src_port.join()
-            dst_port.join()
+            channel.src_port.join()
+            channel.dst_port.join()
 
         finally:
-            print("End Test")
+            pass
 
 
 if __name__ == "__main__":
-    print("start test channel builder")
     unittest.main()

@@ -11,7 +11,6 @@ import typing as ty
 import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
-                                    ActorStatus,
                                     Actor,
                                     Channel)
 
@@ -269,7 +268,6 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        print("Error Received")
                         self._messaging_infrastructure.stop(True)
                         raise RuntimeError(
                             f"Exception(s) occurred. See "
