@@ -45,6 +45,10 @@ class VarPortInitializer:
     port_cls: type
     transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
 
+    @property
+    def bytes(self) -> int:
+        return np.prod(self.shape) * np.dtype(self.d_type).itemsize
+
 
 @dataclass
 class LoihiVarInitializer(VarInitializer):

@@ -136,6 +136,13 @@ jobs:
     - name: Install Lava
       run: poetry install --no-interaction
 
+    - name: Run message infrastructure unit tests
+      if: runner.os == 'Linux'
+      run: |
+        source $VENV
+        python3 -m pip install ipykernel
+        pytest src/lava/magma/runtime/message_infrastructure
+
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
@@ -151,11 +158,3 @@ jobs:
         .venv\Scripts\activate.ps1
         python3 -m pip install ipykernel
         pytest
-
-    - name: Run message infrastructure unit tests
-      if: runner.os == 'Linux'
-      run: |
-        source $VENV
-        python3 -m pip install ipykernel
-        pytest src/lava/magma/runtime/message_infrastructure
-        

@@ -552,3 +552,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         rcfg = DenseRunConfig(select_tag='fixed_pt')
         dense.run(condition=rcnd, run_cfg=rcfg)
         dense.stop()
+
+
+if __name__ == '__main__':
+    unittest.main()
