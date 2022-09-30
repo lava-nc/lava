@@ -188,8 +188,7 @@ class TestTutorials(unittest.TestCase):
         finally:
             os.chdir(cwd)
 
-    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
-    @unittest.skip("Hang issue")
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_end_to_end_00_tour_through_lava(self):
         """Test tutorial end to end 00 tour through lava."""
         self._run_notebook(
@@ -197,7 +196,8 @@ class TestTutorials(unittest.TestCase):
             e2e_tutorial=True
         )
 
-    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    @unittest.skip("Dead issue?")
     def test_end_to_end_01_mnist(self):
         """Test tutorial end to end 01 mnist."""
         self._run_notebook(
@@ -205,7 +205,8 @@ class TestTutorials(unittest.TestCase):
             e2e_tutorial=True
         )
 
-    @unittest.skip("Tutorial is text only and does not contain code")
+    # @unittest.skip("Tutorial is text only and does not contain code")
+    @unittest.skip("Dead issue?")
     def test_in_depth_01_install_lava(self):
         """Test tutorial in depth install lava."""
         self._run_notebook(
@@ -226,7 +227,8 @@ class TestTutorials(unittest.TestCase):
             "tutorial03_process_models.ipynb"
         )
 
-    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    @unittest.skip("Dead issue?")
     def test_in_depth_04__execution(self):
         """Test tutorial in depth execution."""
         self._run_notebook(
