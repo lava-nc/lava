@@ -17,9 +17,11 @@ Objective of issue:
 
 **Lava version:**
 <!-- remove versions not chosen below -->
-- [ ] **0.5.0** (feature release)
-- [ ] **0.4.1** (bug fixes)
-- [x] **0.4.0** (current version)
+- [ ] **0.6.0** (feature release)
+- [ ] **0.5.1** (bug fixes)
+- [x] **0.5.0** (current version)
+- [ ] **0.4.1**
+- [ ] **0.4.0**
 - [ ] **0.3.0**
 - [ ] **0.1.2**
 
