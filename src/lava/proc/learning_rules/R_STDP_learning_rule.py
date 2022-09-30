@@ -27,9 +27,9 @@ class R_STDPLoihi(LoihiLearningRule):
         self.tau_plus = tau_plus
         self.tau_minus = tau_minus
 
-        #string learning rule for dt : ELIGIBILITY TRACE represented as tag_1
+        #string learning rule for dt : ELIGIBILITY TRACE represented as tag_1 #Implement the decay! 
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1"
+             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - tag_1 * tau_e"
 
         # String learning rule for dw
         #the weights are updated at every-timestep and the magnitude is a product of y2 (R) and de (tag_1)
