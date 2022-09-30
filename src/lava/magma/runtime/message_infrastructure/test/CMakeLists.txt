@@ -12,12 +12,13 @@ FetchContent_MakeAvailable(googletest)
 include_directories(../message_infrastructure/csrc)
 
 add_executable(
-  test_multiprocessing
+  test_messaging_infrastructure
   test_multiprocessing.cc
+  test_channel.cc
 )
 
 target_link_libraries(
-  test_multiprocessing
+  test_messaging_infrastructure
   GTest::gtest_main
   pybind11::embed
   message_infrastructure
@@ -25,4 +26,4 @@ target_link_libraries(
 )
 
 include(GoogleTest)
-gtest_discover_tests(test_multiprocessing)
+gtest_discover_tests(test_messaging_infrastructure)
