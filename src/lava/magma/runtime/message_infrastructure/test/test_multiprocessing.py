@@ -44,8 +44,6 @@ def target_fn(*args, **kwargs):
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
         builder.build(idx)
-        assert((actor.get_status() == ActorStatus.StatusRunning)
-               | (actor.get_status() == ActorStatus.StatusStopped))
         return 0
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
