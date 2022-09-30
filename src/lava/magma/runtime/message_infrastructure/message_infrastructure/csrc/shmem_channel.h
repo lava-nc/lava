@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -25,9 +25,9 @@ class ShmemChannel : public AbstractChannel {
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:
-  SharedMemoryPtr shm_ = NULL;
-  ShmemSendPortPtr send_port_ = NULL;
-  ShmemRecvPortPtr recv_port_ = NULL;
+  SharedMemoryPtr shm_ = nullptr;
+  ShmemSendPortPtr send_port_ = nullptr;
+  ShmemRecvPortPtr recv_port_ = nullptr;
 };
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,

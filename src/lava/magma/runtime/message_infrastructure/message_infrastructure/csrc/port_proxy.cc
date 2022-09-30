@@ -7,8 +7,6 @@
 
 #include <numpy/arrayobject.h>
 #include <Python.h>
-#include <memory>
-#include <vector>
 #include "port_proxy.h"
 #include "message_infrastructure_logging.h"
 
