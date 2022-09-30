@@ -483,13 +483,8 @@ class AsyncPyRuntimeService(PyRuntimeService):
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             channel_actions = []
-            # print(f"AsyncPyRuntimeService action: {action}")
             if action == "cmd":
                 command = self.runtime_to_service.recv()
-                # print(f"AsyncPyRuntimeService command {command}")
-                #if enum_equal(command, MGMT_COMMAND.STOP):
-                #    self._handle_stop()
-                #    return
                 if enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                 else:

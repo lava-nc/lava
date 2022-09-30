@@ -19,8 +19,8 @@ def create_channel(name: str):
     return Channel(ChannelBackend.SHMEMCHANNEL,
                    8,
                    4,
-                   name+"src",
-                   name+"dst")
+                   name + "src",
+                   name + "dst")
 
 
 class MockActorInterface:

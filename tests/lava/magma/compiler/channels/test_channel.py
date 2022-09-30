@@ -20,8 +20,8 @@ def get_channel(data, name="test_channel") -> Channel:
         ChannelBackend.SHMEMCHANNEL,
         ChannelQueueSize,
         nbytes_cal(data.shape, data.dtype),
-        name+"src",
-        name+"dst")
+        name + "src",
+        name + "dst")
 
 
 class TestPyPyChannelSingleProcess(unittest.TestCase):
