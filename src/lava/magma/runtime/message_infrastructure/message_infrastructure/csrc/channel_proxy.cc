@@ -3,8 +3,6 @@
 // See: https://spdx.org/licenses/
 
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "channel_proxy.h"
 #include "channel_factory.h"
