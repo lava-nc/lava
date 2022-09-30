@@ -3,8 +3,6 @@ import unittest
 from message_infrastructure import (
     ChannelBackend,
     Channel,
-    SendPort,
-    RecvPort,
     ActorStatus
 )
 from lava.magma.core.decorator import implements

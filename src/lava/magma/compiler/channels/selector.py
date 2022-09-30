@@ -3,17 +3,15 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-from message_infrastructure import SendPort, RecvPort
+from message_infrastructure import RecvPort
 
 
 class Selector:
     def select(
             self,
-            *args: ty.Tuple[
-                ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
-            ],
+            *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
     ):
-        for channel, action in args:
-            if channel.probe():
+        for recv_port, action in args:
+            if recv_port.probe():
                 return action()
         return None
