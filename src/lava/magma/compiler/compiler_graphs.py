@@ -232,8 +232,7 @@ class DiGraphBase(ntx.DiGraph):
         graph.annotate_digraph_by_degree()
 
         leaves = [node for node, nodeattr in graph.nodes.items() if
-                  nodeattr['degdef'] == NodeAnnotation.PUREOUT or nodeattr[
-                      'degdef'] == NodeAnnotation.PUREIN]
+                  nodeattr['degdef'] == NodeAnnotation.PUREIN]
         num_leaves = len(leaves)
 
         if num_leaves > 0:
@@ -242,6 +241,11 @@ class DiGraphBase(ntx.DiGraph):
             _, graph = self.is_dag(graph)
 
         if len(list(graph.nodes)) > 1:
+            isolated_nodes = \
+                [node for node, nodeattr in graph.nodes.items() if nodeattr[
+                    'degdef'] == NodeAnnotation.ISOLATED]
+            if len(list(graph.nodes)) == len(isolated_nodes):
+                return True, graph
             return False, graph
         else:
             return True, graph
