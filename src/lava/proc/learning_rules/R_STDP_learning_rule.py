@@ -1,20 +1,37 @@
+# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
+#
+# Copyright © 2021-2022 Intel Corporation.
+#
+# This software and the related documents are Intel copyrighted
+# materials, and your use of them is governed by the express
+# license under which they were provided to you (License). Unless
+# the License provides otherwise, you may not use, modify, copy,
+# publish, distribute, disclose or transmit  this software or the
+# related documents without Intel's prior written permission.
+#
+# This software and the related documents are provided as is, with
+# no express or implied warranties, other than those that are
+# expressly stated in the License.
+# See: https://spdx.org/licenses/
+
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
+
 class R_STDPLoihi(LoihiLearningRule):
     def __init__(
             self,
             learning_rate: float,
             tau_plus: float,
             tau_minus: float,
+            tag_tau: float,
             *args,
             **kwargs
     ):
         """
-        UPDATE: 
-
-        R-STDP learning rule.
+        R-STDP learning rule:
 
         de = STDP(pre, post) - e/ tau_e
 
-        dw = R * de
+        dw = R * e
         
         Reference: https://www.frontiersin.org/articles/10.3389/fncir.2015.00085/full
 
@@ -26,13 +43,14 @@ class R_STDPLoihi(LoihiLearningRule):
         self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
         self.tau_plus = tau_plus
         self.tau_minus = tau_minus
+        self.tag_tau = tag_tau
 
-        #string learning rule for dt : ELIGIBILITY TRACE represented as tag_1 #Implement the decay! 
+        #string learning rule for dt : ELIGIBILITY TRACE represented as tag_1 
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - tag_1 * tau_e"
+             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - tag_1 * tag_tau"
 
         # String learning rule for dw
-        #the weights are updated at every-timestep and the magnitude is a product of y2 (R) and de (tag_1)
+        # The weights are updated at every-timestep and the magnitude is a product of y2 (R) and de (tag_1)
         dw = " u0 * tag_1 * y2 "
 
         # Other learning-related parameters
