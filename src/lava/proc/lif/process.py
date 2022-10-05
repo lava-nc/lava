@@ -139,7 +139,7 @@ class LearningLIF(LIF):
             dv: ty.Optional[float] = 0,
             bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
             bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10,
+            vth: ty.Optional[float] = 10, 
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
             **kwargs) -> None:
@@ -148,7 +148,6 @@ class LearningLIF(LIF):
                          bias_exp=bias_exp, name=name,
                          log_config=log_config, **kwargs)
 
-        self.vth = Var(shape=(1,), init=vth)
 
 
 

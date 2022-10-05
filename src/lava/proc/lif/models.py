@@ -219,6 +219,25 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
         return self.v > self.vth
 
 
+class PyLearningLifModelFloat(PyLifModelFloat):
+    """Implementation of Leaky-Integrate-and-Fire neural process in floating
+    point precision with learning enabled. 
+    """
+    #s_target : Generate a target input port for error-based third-factor
+
+    def run_spk(self):
+        super().run_spk()
+        
+        if self._enable_learning:
+            y2 = np.sin(np.pi/2) #Change
+            y3 = self.u * 2
+            self.s_out_y2.send(y2)
+            self.s_out_y3.send(y3)
+    
+
+        
+        
+
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')

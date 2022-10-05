@@ -1050,8 +1050,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool)
-    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
-    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float) 
+    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float) 
 
     # Learning Vars
     x0: np.ndarray = LavaPyType(np.ndarray, bool)
