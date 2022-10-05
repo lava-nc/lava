@@ -223,21 +223,29 @@ class PyLearningLifModelFloat(PyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
-    #s_target : Generate a target input port for error-based third-factor
+    # s_target : Generate a target input port for error-based third-factor
+    s_target: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
-    def run_spk(self):
+    # Graded reward input spikes
+    a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
+    def calculate_third_factor_trace(self, s_graded_in: float) -> float: # VERIFY 
+        """Generate's a third factor Reward traces based on 
+        Graded input spikes to the Learning LIF process. 
+
+        Currently, the third factor resembles the input graded spike
+        """
+        return self.a_graded_reward_in
+
+    def run_spk(self) -> None:
         super().run_spk()
-        
-        if self._enable_learning:
-            y2 = np.sin(np.pi/2) #Change
-            y3 = self.u * 2
-            self.s_out_y2.send(y2)
-            self.s_out_y3.send(y3)
-    
+        y2 = self.calculate_third_factor_trace(self.a_graded_reward_in)
+        y3 = self.u * 2
+        self.s_out_y2.send(y2)
+        self.s_out_y3.send(y3) 
 
         
         
-
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')

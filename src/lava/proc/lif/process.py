@@ -147,6 +147,11 @@ class LearningLIF(LIF):
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
                          log_config=log_config, **kwargs)
+        
+        # To calculate training error : supervised signal 
+        self.s_target = InPort(shape=shape)
+
+        self.a_graded_reward_in = InPort(shape=shape)
 
 
 
