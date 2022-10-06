@@ -63,14 +63,20 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     leaky-integrate-and-fire neuron model. Implementations like those
     bit-accurate with Loihi hardware inherit from here.
     """
-    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
+    a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
+                                precision='s:16:6')
     s_out: None  # This will be an OutPort of different LavaPyTypes
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    du: int = LavaPyType(int, np.uint16, precision=12)
-    dv: int = LavaPyType(int, np.uint16, precision=12)
-    bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
-    bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision='s:24:0')
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision='s:24:0')
+    du: int = LavaPyType(int, np.uint16, precision='u:12:0', scale_domain=1,
+                         domain=np.array([0, 1]), constant=True)
+    dv: int = LavaPyType(int, np.uint16, precision='u:12:0', scale_domain=1,
+                         domain=np.array([0, 1]), constant=True)
+    bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, constant=True,
+                                       precision='s:13:0', num_bits_exp=3,
+                                       exp_var='bias_exp')
+    bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16,
+                                      meta_parameter=True)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -237,8 +243,9 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     - vth: unsigned 17-bit integer (0 to 131071).
 
     """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32,
+                                  precision='s:24:0')
+    vth: int = LavaPyType(int, np.int32, precision='u:17:6', constant=True)
 
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)

@@ -28,6 +28,7 @@ class AbstractLIF(AbstractProcess):
                          bias_mant=bias_mant, bias_exp=bias_exp, name=name,
                          log_config=log_config)
 
+        self.shape = shape
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
         self.u = Var(shape=shape, init=u)
