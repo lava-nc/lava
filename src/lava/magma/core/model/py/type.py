@@ -24,12 +24,12 @@ class LavaPyType:
     domain: np.ndarray = None  # If None, no a-priori knowledge of Var domain.
     constant: bool = False  # If True, indicates that Var is constant.
     meta_parameter: bool = False  # If True, indicates that Var is config var
-    # Indicate to which scale domain Var belongs, i.e. with which
+    # Indicate to which scale domain Var belongs, i.e., with which
     # Vars scaling needs to be consistent. Scale domains are identified by
     # integers: '0' indicates the global scale domain shared between all
     # Processes. Other integers are reserved for scale domains local to one
     # Process.
-    # By default all Vars are assumend to be in same scale domain.
+    # By default all Vars are assumed to be in same scale domain.
     scale_domain: int = 0
 
     @staticmethod
