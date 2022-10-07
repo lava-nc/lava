@@ -21,6 +21,8 @@ except ImportError:
         pass
 
 from lava.magma.core.sync.domain import SyncDomain
+from lava.magma.compiler.subcompilers.constants import \
+    EMBEDDED_ALLOCATION_ORDER
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -28,7 +30,7 @@ if ty.TYPE_CHECKING:
 
 
 class RunConfig(ABC):
-    """    Basic run configuration and base class for other run configurations.
+    """Basic run configuration and base class for other run configurations.
 
     A RunConfig specifies how to execute Processes on a specific hardware
     backend. Its main purpose is to select the appropriate ProcessModels
@@ -55,7 +57,7 @@ class RunConfig(ABC):
     custom_sync_domains : List[SyncDomain]
         List of user-specified synchronization domains.
     loglevel: int
-              sets level of event logging, as defined by Python's 'logging'
+              Sets level of event logging, as defined by Python's 'logging'
               facility. Default: logging.WARNING
     """
 
@@ -98,28 +100,31 @@ class AbstractLoihiRunCfg(RunConfig):
     `ProcessModel` is returned.
 
     2. If there is only 1 `ProcessModel` available:
-        (a) If the user does not specifically ask for any tags,
-            the `ProcessModel` is returned
-        (b) If the user asks for a specific tag, then the `ProcessModel` is
-            returned only if the tag is found in its list of tags.
+
+        - If the user does not specifically ask for any tags,
+          the `ProcessModel` is returned
+        - If the user asks for a specific tag, then the `ProcessModel` is
+          returned only if the tag is found in its list of tags.
 
     3. If there are multiple `ProcessModel`s available:
-        (a) If the user asks specifically to look for `SubProcessModel`s and
-            they are available,
-            (i)   If there is only 1 `SubProcessModel` available,
-                  it is returned
-            (ii)  If the user did not ask for any specific tags, the first
-                  available `SubProcessModel` is returned
-            (iii) If user asked for a specific tag, the first valid
-                 `SubProcessModel` is returned, which has the tag in its
-                 tag-list
-        (b) If user did not explicitly ask for `SubProcessModel`s
-            (i)   If the user did not also ask for any specific tag, then the
-                  first available ProcessModel is returned that requires the
-                  correct computing hardware.
-            (ii)  If the user asked for a specific tag,
-                  the hardware-specific ProcessModel which has the tag in its
-                  tag-list is returned
+
+        - If the user asks specifically to look for `SubProcessModel`s and
+          they are available:
+
+             - If there is only 1 `SubProcessModel` available, it is returned
+             - If the user did not ask for any specific tags, the first
+               available `SubProcessModel` is returned
+             - If user asked for a specific tag, the first valid
+               `SubProcessModel` is returned, which has the tag in its tag-list
+
+        - If user did not explicitly ask for `SubProcessModel`s:
+
+            - If the user did not also ask for any specific tag, then the
+              first available ProcessModel is returned that requires the
+              correct computing hardware.
+            - If the user asked for a specific tag,
+              the hardware-specific ProcessModel which has the tag in its
+              tag-list is returned
 
     Parameters
     ----------
@@ -140,8 +145,8 @@ class AbstractLoihiRunCfg(RunConfig):
         dict are respected over any logic. For example, {Dense: PyDenseModel}.
         Note that this is a dict mapping classnames to classnames.
     loglevel: int
-              sets level of event logging, as defined by Python's 'logging'
-              facility. Default: logging.WARNING
+        sets level of event logging, as defined by Python's 'logging'
+        facility. Default: logging.WARNING
     """
 
     def __init__(self,
@@ -362,6 +367,7 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi1-compatible ProcModel is being found.
     ."""
+
     def __init__(self,
                  custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
                  select_tag: ty.Optional[str] = None,
@@ -371,7 +377,8 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
                  pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = []):
+                 post_run_fxs: ty.List[ty.Callable] = [],
+                 embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
@@ -379,6 +386,8 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                          loglevel)
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
+        self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
+            embedded_allocation_order
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:
@@ -421,6 +430,7 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
     a tag provided by the user. This RunConfig will default to a PyProcModel
     if no Loihi2-compatible ProcModel is being found.
     """
+
     def __init__(self,
                  custom_sync_domains: ty.Optional[ty.List[SyncDomain]] = None,
                  select_tag: ty.Optional[str] = None,
@@ -430,7 +440,8 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
                  pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = []):
+                 post_run_fxs: ty.List[ty.Callable] = [],
+                 embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
@@ -438,6 +449,8 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                          loglevel)
         self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
         self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
+        self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
+            embedded_allocation_order
 
     def _order_according_to_resources(self, proc_models: ty.List[ty.Type[
             AbstractProcessModel]]) -> ty.List[int]:

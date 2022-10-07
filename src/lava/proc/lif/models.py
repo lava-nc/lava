@@ -99,10 +99,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Scale bias with bias exponent by taking into account sign of the
         exponent.
         """
+        # Create local copy of bias_mant with promoted dtype to prevent
+        # overflow when applying shift of bias_exp.
+        bias_mant = self.bias_mant.copy().astype(np.int32)
         self.effective_bias = np.where(
             self.bias_exp >= 0,
-            np.left_shift(self.bias_mant, self.bias_exp),
-            np.right_shift(self.bias_mant, -self.bias_exp)
+            np.left_shift(bias_mant, self.bias_exp),
+            np.right_shift(bias_mant, -self.bias_exp)
         )
         self.isbiasscaled = True
 
@@ -140,12 +143,12 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Check if value of current is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
-        sign_of_curr = np.sign(decayed_curr)
-        # when decayed_curr is 0, we don't care about its sign. But np.mod
-        # needs something non-zero to avoid the divide-by-zero warning
-        sign_of_curr[sign_of_curr == 0] = 1
-        wrapped_curr = np.mod(decayed_curr,
-                              sign_of_curr * self.max_uv_val)
+        wrapped_curr = np.where(decayed_curr > self.max_uv_val,
+                                decayed_curr - 2 * self.max_uv_val,
+                                decayed_curr)
+        wrapped_curr = np.where(wrapped_curr <= -self.max_uv_val,
+                                decayed_curr + 2 * self.max_uv_val,
+                                wrapped_curr)
         self.u[:] = wrapped_curr
         # Update voltage
         # --------------
@@ -220,17 +223,19 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     behaviour bit-by-bit.
 
     Currently missing features (compared to Loihi 1 hardware):
-        - refractory period after spiking
-        - axonal delays
+
+    - refractory period after spiking
+    - axonal delays
 
     Precisions of state variables
-    -----------------------------
-    du: unsigned 12-bit integer (0 to 4095)
-    dv: unsigned 12-bit integer (0 to 4095)
-    bias_mant: signed 13-bit integer (-4096 to 4095).
-        Mantissa part of neuron bias.
-    bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    vth: unsigned 17-bit integer (0 to 131071).
+
+    - du: unsigned 12-bit integer (0 to 4095)
+    - dv: unsigned 12-bit integer (0 to 4095)
+    - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
+      bias.
+    - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
+    - vth: unsigned 17-bit integer (0 to 131071).
+
     """
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     vth: int = LavaPyType(int, np.int32, precision=17)
