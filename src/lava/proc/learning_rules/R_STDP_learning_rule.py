@@ -47,17 +47,19 @@ class R_STDPLoihi(LoihiLearningRule):
 
         #string learning rule for dt : ELIGIBILITY TRACE represented as tag_1 
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - tag_1 * tag_tau"
+             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - t * {tag_tau}"
 
         # String learning rule for dw
         # The weights are updated at every-timestep and the magnitude is a product of y2 (R) and de (tag_1)
-        dw = " u0 * tag_1 * y2 "
+        dw = " u0 * t * y2 "
 
         # Other learning-related parameters
         # Trace impulse values
         x1_impulse = 16
         y1_impulse = 16
-        y2_impulse = 0  #Reward : R 
+
+        #Reward : R 
+        y2_impulse = 0  
 
         # Trace decay constants
         x1_tau = tau_plus

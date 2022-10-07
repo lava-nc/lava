@@ -218,8 +218,10 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
-
-class PyLearningLifModelFloat(PyLifModelFloat):
+@implements(proc=LearningLIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyLearningLifModelFloat(AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
@@ -228,6 +230,14 @@ class PyLearningLifModelFloat(PyLifModelFloat):
 
     # Graded reward input spikes
     a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    vth: float = LavaPyType(float, float)
+
+    def spiking_activation(self):
+        """Spiking activation function for Learning LIF.
+        """
+        return self.v > self.vth
 
     def calculate_third_factor_trace(self, s_graded_in: float) -> float: 
         """Generate's a third factor Reward traces based on 

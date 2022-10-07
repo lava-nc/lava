@@ -101,7 +101,7 @@ class LIF(AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
 
 
-class LearningLIF(LIF):
+class LearningLIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process with learning enabled.
 
     Parameters
@@ -147,6 +147,7 @@ class LearningLIF(LIF):
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
                          log_config=log_config, **kwargs)
+        self.vth = Var(shape=(1,), init=vth)
         
         # To calculate training error : supervised signal 
         self.s_target = InPort(shape=shape)

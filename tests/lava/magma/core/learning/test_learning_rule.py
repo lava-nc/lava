@@ -4,13 +4,13 @@
 
 import unittest
 
-from lava.magma.core.learning.learning_rule import Loihi1LearningRule
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.learning.product_series import ProductSeries
 
 
-class TestLoihi1LearningRule(unittest.TestCase):
+class TestLoihiLearningRule(unittest.TestCase):
     def test_learning_rule_dw(self) -> None:
-        """Tests that a Loihi1LearningRule is instantiable with string
+        """Tests that a LoihiLearningRule is instantiable with string
         learning rule for dw, impulse and tau values for x1 and y1,
         and t_epoch."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
@@ -18,12 +18,12 @@ class TestLoihi1LearningRule(unittest.TestCase):
         tau = 10
         t_epoch = 1
 
-        learning_rule = Loihi1LearningRule(dw=dw,
+        learning_rule = LoihiLearningRule(dw=dw,
                                            x1_impulse=impulse, x1_tau=tau,
                                            y1_impulse=impulse, y1_tau=tau,
                                            t_epoch=t_epoch)
 
-        self.assertIsInstance(learning_rule, Loihi1LearningRule)
+        self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
         self.assertEqual(learning_rule.dd, None)
         self.assertEqual(learning_rule.dt, None)
@@ -41,7 +41,7 @@ class TestLoihi1LearningRule(unittest.TestCase):
         })
 
     def test_learning_rule_dw_dd(self) -> None:
-        """Tests that a Loihi1LearningRule is instantiable with string
+        """Tests that a LoihiLearningRule is instantiable with string
         learning rule for dw and dd, impulse and tau values for x1 and y1,
         and t_epoch."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
@@ -50,12 +50,12 @@ class TestLoihi1LearningRule(unittest.TestCase):
         tau = 10
         t_epoch = 1
 
-        learning_rule = Loihi1LearningRule(dw=dw, dd=dd,
+        learning_rule = LoihiLearningRule(dw=dw, dd=dd,
                                            x1_impulse=impulse, x1_tau=tau,
                                            y1_impulse=impulse, y1_tau=tau,
                                            t_epoch=t_epoch)
 
-        self.assertIsInstance(learning_rule, Loihi1LearningRule)
+        self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
         self.assertIsInstance(learning_rule.dd, ProductSeries)
         self.assertEqual(learning_rule.dt, None)
@@ -73,7 +73,7 @@ class TestLoihi1LearningRule(unittest.TestCase):
         })
 
     def test_learning_rule_dw_dd_dt(self) -> None:
-        """Tests that a Loihi1LearningRule is instantiable with string
+        """Tests that a LoihiLearningRule is instantiable with string
         learning rule for dw, dd and dt, impulse and tau values for x1 and y1,
         and t_epoch."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
@@ -83,12 +83,12 @@ class TestLoihi1LearningRule(unittest.TestCase):
         tau = 10
         t_epoch = 1
 
-        learning_rule = Loihi1LearningRule(dw=dw, dd=dd, dt=dt,
+        learning_rule = LoihiLearningRule(dw=dw, dd=dd, dt=dt,
                                            x1_impulse=impulse, x1_tau=tau,
                                            y1_impulse=impulse, y1_tau=tau,
                                            t_epoch=t_epoch)
 
-        self.assertIsInstance(learning_rule, Loihi1LearningRule)
+        self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
         self.assertIsInstance(learning_rule.dd, ProductSeries)
         self.assertIsInstance(learning_rule.dt, ProductSeries)
@@ -107,7 +107,7 @@ class TestLoihi1LearningRule(unittest.TestCase):
         })
 
     def test_learning_rule_uk_dependency(self) -> None:
-        """Tests that a Loihi1LearningRule is instantiable with a string
+        """Tests that a LoihiLearningRule is instantiable with a string
         learning rule containing a uk dependency."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
         dd = 'u0*x2*y2'
@@ -115,12 +115,12 @@ class TestLoihi1LearningRule(unittest.TestCase):
         tau = 10
         t_epoch = 1
 
-        learning_rule = Loihi1LearningRule(dw=dw, dd=dd,
+        learning_rule = LoihiLearningRule(dw=dw, dd=dd,
                                            x1_impulse=impulse, x1_tau=tau,
                                            y1_impulse=impulse, y1_tau=tau,
                                            t_epoch=t_epoch)
 
-        self.assertIsInstance(learning_rule, Loihi1LearningRule)
+        self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
         self.assertIsInstance(learning_rule.dd, ProductSeries)
         self.assertEqual(learning_rule.dt, None)
@@ -140,7 +140,7 @@ class TestLoihi1LearningRule(unittest.TestCase):
         })
 
     def test_invalid_impulse(self) -> None:
-        """Tests that instantiating a Loihi1LearningRule throws error when
+        """Tests that instantiating a LoihiLearningRule throws error when
         impulse is negative."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
         impulse = -16
@@ -148,13 +148,13 @@ class TestLoihi1LearningRule(unittest.TestCase):
         t_epoch = 1
 
         with self.assertRaises(ValueError):
-            Loihi1LearningRule(dw=dw,
+            LoihiLearningRule(dw=dw,
                                x1_impulse=impulse, x1_tau=tau,
                                y1_impulse=impulse, y1_tau=tau,
                                t_epoch=t_epoch)
 
     def test_invalid_tau(self) -> None:
-        """Tests that instantiating a Loihi1LearningRule throws error when
+        """Tests that instantiating a LoihiLearningRule throws error when
         tau is negative."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
         impulse = 16
@@ -162,13 +162,13 @@ class TestLoihi1LearningRule(unittest.TestCase):
         t_epoch = 1
 
         with self.assertRaises(ValueError):
-            Loihi1LearningRule(dw=dw,
+            LoihiLearningRule(dw=dw,
                                x1_impulse=impulse, x1_tau=tau,
                                y1_impulse=impulse, y1_tau=tau,
                                t_epoch=t_epoch)
 
     def test_invalid_t_epoch(self) -> None:
-        """Tests that instantiating a Loihi1LearningRule throws error when
+        """Tests that instantiating a LoihiLearningRule throws error when
         t_epoch is negative."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1'
         impulse = 16
@@ -176,13 +176,13 @@ class TestLoihi1LearningRule(unittest.TestCase):
         t_epoch = -1
 
         with self.assertRaises(ValueError):
-            Loihi1LearningRule(dw=dw,
+            LoihiLearningRule(dw=dw,
                                x1_impulse=impulse, x1_tau=tau,
                                y1_impulse=impulse, y1_tau=tau,
                                t_epoch=t_epoch)
 
     def test_different_decimate_exponent_same_learning_rule(self) -> None:
-        """Tests that instantiating a Loihi1LearningRule throws error when
+        """Tests that instantiating a LoihiLearningRule throws error when
         providing a learning rule with uk dependencies with different
         decimate exponents."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1 + u0*x2*y2 + u1*y3'
@@ -191,13 +191,13 @@ class TestLoihi1LearningRule(unittest.TestCase):
         t_epoch = 1
 
         with self.assertRaises(ValueError):
-            Loihi1LearningRule(dw=dw,
+            LoihiLearningRule(dw=dw,
                                x1_impulse=impulse, x1_tau=tau,
                                y1_impulse=impulse, y1_tau=tau,
                                t_epoch=t_epoch)
 
     def test_different_decimate_exponent_different_learning_rule(self) -> None:
-        """Tests that instantiating a Loihi1LearningRule throws error when
+        """Tests that instantiating a LoihiLearningRule throws error when
         providing different learning rules with uk dependencies with different
         decimate exponents."""
         dw = 'x0*(-1)*2^-1*y1 + y0*1*2^1*x1 + u1*y3'
@@ -207,7 +207,7 @@ class TestLoihi1LearningRule(unittest.TestCase):
         t_epoch = 1
 
         with self.assertRaises(ValueError):
-            Loihi1LearningRule(dw=dw, dd=dd,
+            LoihiLearningRule(dw=dw, dd=dd,
                                x1_impulse=impulse, x1_tau=tau,
                                y1_impulse=impulse, y1_tau=tau,
                                t_epoch=t_epoch)

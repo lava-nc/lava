@@ -252,6 +252,119 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         self.assertListEqual(expected_v_timeseries, lif_v)
 
 
+class TestLearningLIFProcessModelsFloat(unittest.TestCase):
+    """Tests for floating point ProcessModels of Learning LIF"""
+    def test_float_pm_no_decay(self):
+        """
+        Tests floating point Learning LIF ProcessModel with no current or voltage
+        decay and neurons driven by internal biases.
+        """
+        shape = (10,)
+        num_steps = 10
+        # Set up external input to 0
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=np.zeros(shape, dtype=float),
+                             send_at_times=np.ones((num_steps,), dtype=bool))
+        # Set up bias = 1 * 2**1 = 2. and threshold = 4.
+        # du and dv = 0 => bias driven neurons spike at every 2nd time-step.
+        lif = LearningLIF(shape=shape,
+                  du=0.,
+                  dv=0.,
+                  bias_mant=np.ones(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
+                  vth=4.)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(lif.a_in)
+        lif.s_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        lif.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        lif.stop()
+        # Gold standard for the test
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[4:10:5, :] = 1.
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+
+    def test_float_pm_impulse_du(self):
+        """
+        Tests floating point Learning LIF ProcessModel's impulse response with no
+        voltage decay and input activation at the very first time-step.
+        """
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of 128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(2 ** 7) * np.ones(shape,
+                                                            dtype=float),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no voltage decay. Current decay = 0.5
+        # Set up threshold high, such that there are no output spikes
+        lif = LearningLIF(shape=shape,
+                  du=0.5, dv=0,
+                  bias_mant=np.zeros(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
+                  vth=256.)
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(lif.a_in)
+        lif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        lif_u = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            lif.run(condition=rcnd, run_cfg=rcfg)
+            lif_u.append(lif.u.get()[0])
+        lif.stop()
+        # Gold standard for testing: current decay of 0.5 should halve the
+        # current every time-step
+        expected_u_timeseries = [2. ** (7 - j) for j in range(8)]
+        self.assertListEqual(expected_u_timeseries, lif_u)
+
+    def test_float_pm_impulse_dv(self):
+        """
+        Tests floating point Learning LIF ProcessModel's impulse response with no
+        current decay and input activation at the very first time-step.
+        """
+        shape = (1,)  # a single neuron
+        num_steps = 8
+        # send activation of 128. at timestep = 1
+        sps = VecSendProcess(shape=shape, num_steps=num_steps,
+                             vec_to_send=(2 ** 7) * np.ones(shape,
+                                                            dtype=float),
+                             send_at_times=np.array([True, False, False,
+                                                     False, False, False,
+                                                     False, False]))
+        # Set up no bias, no current decay. Voltage decay = 0.5
+        # Set up threshold high, such that there are no output spikes
+        lif = LearningLIF(shape=shape,
+                  du=0, dv=0.5,
+                  bias_mant=np.zeros(shape, dtype=float),
+                  bias_exp=np.ones(shape, dtype=float),
+                  vth=256.)
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(lif.a_in)
+        lif.s_out.connect(spr.s_in)
+        # Configure to run 1 step at a time
+        rcnd = RunSteps(num_steps=1)
+        rcfg = LifRunConfig(select_tag='floating_pt')
+        lif_v = []
+        # Run 1 timestep at a time and collect state variable u
+        for j in range(num_steps):
+            lif.run(condition=rcnd, run_cfg=rcfg)
+            lif_v.append(lif.v.get()[0])
+        lif.stop()
+        # Gold standard for testing: voltage decay of 0.5 should integrate
+        # the voltage from 128. to 255., with steps of 64., 32., 16., etc.
+        expected_v_timeseries = [128., 192., 224., 240., 248., 252., 254., 255.]
+        self.assertListEqual(expected_v_timeseries, lif_v)
+
 class TestLIFProcessModelsFixed(unittest.TestCase):
     """Tests for fixed point, ProcessModels of LIF, which are bit-accurate
     with Loihi hardware"""
