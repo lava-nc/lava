@@ -8,7 +8,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.lif.process import LIF, TernaryLIF
+from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
 from lava.magma.core.model.py.neuron import NeuronModelFloat, NeuronModelFixed
 
 

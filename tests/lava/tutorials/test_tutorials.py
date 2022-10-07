@@ -260,6 +260,13 @@ class TestTutorials(unittest.TestCase):
             "tutorial08_stdp.ipynb"
         )
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_10_three_factor_learning(self):
+        """Test tutorial in depth remote memory access."""
+        self._run_notebook(
+            "tutorial10_three_factor_learning.ipynb"
+        )
+
 
 if __name__ == '__main__':
     support.run_unittest(TestTutorials)
