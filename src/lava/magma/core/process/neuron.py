@@ -17,7 +17,7 @@ class NeuronProcess(AbstractProcess):
 
         # Learning Ports
         self.s_out_bap = OutPort(shape=(shape[0],)) # Port for backprop action potentials
-        self.s_out_y2 = OutPort(shape=(shape[0],)) # Port for arbitrary trace using graded spikes
+        self.s_out_y2 = OutPort(shape=(shape[0],)) # Port for arbitrary trace using graded spikes {shape=shape?}
         self.s_out_y3 = OutPort(shape=(shape[0],)) # Port for arbitrary trace using graded spikes
 
         super().__init__(*args, **kwargs)
