@@ -236,19 +236,18 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
     description of the different phases.
 
     Example
-    =======
+    -------
+    >>> @implements(proc=RingBuffer, protocol=LoihiProtocol)
+    >>> @requires(CPU)
+    >>> @tag('floating_pt')
+    >>> class PySendModel(AbstractPyRingBuffer):
+    >>>     # Ring buffer send process model.
+    >>>     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    >>>     data: np.ndarray = LavaPyType(np.ndarray, float)
 
-        @implements(proc=RingBuffer, protocol=LoihiProtocol)
-        @requires(CPU)
-        @tag('floating_pt')
-        class PySendModel(AbstractPyRingBuffer):
-            # Ring buffer send process model.
-            s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-            data: np.ndarray = LavaPyType(np.ndarray, float)
-
-            def run_spk(self) -> None:
-                buffer = self.data.shape[-1]
-                self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
+    >>>     def run_spk(self) -> None:
+    >>>         buffer = self.data.shape[-1]
+    >>>         self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
 
     """
 
@@ -482,19 +481,18 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     Example
     =======
 
-        @implements(proc=SimpleProcess, protocol=AsyncProtocol)
-        @requires(CPU)
-        class SimpleProcessModel(PyAsyncProcessModel):
-            u = LavaPyType(int, int)
-            v = LavaPyType(int, int)
+    >>> @implements(proc=SimpleProcess, protocol=AsyncProtocol)
+    >>> @requires(CPU)
+    >>> class SimpleProcessModel(PyAsyncProcessModel):
+    >>>     u = LavaPyType(int, int)
+    >>>     v = LavaPyType(int, int)
 
-            def run_async(self):
-                while True:
-                    self.u = self.u + 10
-                    self.v = self.v + 1000
-                    if self.check_for_stop_cmd():
-                        return
-
+    >>>     def run_async(self):
+    >>>         while True:
+    >>>             self.u = self.u + 10
+    >>>             self.v = self.v + 1000
+    >>>         if self.check_for_stop_cmd():
+    >>>             return
     """
 
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):

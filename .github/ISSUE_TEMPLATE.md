@@ -16,11 +16,13 @@ Objective of issue:
 <!-- Lava Version bug found in or Lava Version feature is targeting-->
 
 **Lava version:**
-<!-- remove version not chosen below -->
-- [ ] **0.4.0** (feature release)
-- [ ] **0.3.1** (bug fixes)
-- [x] **0.3.0** (current version)
-- [ ] **0.2.0**
+<!-- remove versions not chosen below -->
+- [ ] **0.6.0** (feature release)
+- [ ] **0.5.1** (bug fixes)
+- [x] **0.5.0** (current version)
+- [ ] **0.4.1**
+- [ ] **0.4.0**
+- [ ] **0.3.0**
 - [ ] **0.1.2**
 
 **I'm submitting a ...** 

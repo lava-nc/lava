@@ -28,10 +28,10 @@ class RuntimeServiceBuilder:
     """RuntimeService builders instantiate and initialize a RuntimeService.
 
     Parameters
-        ----------
-        rs_class: AbstractRuntimeService class of the runtime service to build.
-        sync_protocol: AbstractSyncProtocol Synchronizer class that
-            implements a protocol in a domain.
+    ----------
+    rs_class: AbstractRuntimeService class of the runtime service to build.
+    sync_protocol: AbstractSyncProtocol Synchronizer class that
+                   implements a protocol in a domain.
     """
 
     def __init__(
