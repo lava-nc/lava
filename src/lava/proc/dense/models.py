@@ -91,6 +91,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
         # The a_out sent at each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
+        self.a_buff = self.a_buff.astype(np.int32)
         self.a_out.send(self.a_buff)
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
