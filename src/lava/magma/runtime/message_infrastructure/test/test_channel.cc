@@ -21,64 +21,48 @@ class Builder {
     void Build() {};
 };
 
-void TargetFunction(Builder builder, AbstractActor* actor_ptr) {
-  std::cout << "Target Function running..." << std::endl;
-  actor_ptr->SetStatus(ActorStatus::StatusStopped);
-  builder.Build();
+void ActorStop() {
+  std::cout << " STOP" << std::endl;
 }
 
-void ActorStop(std::string actor_name) {
-  std::cout << actor_name << " STOP" << std::endl;
+py::array_t<int32_t> Data() {
+  py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4});
+  return data;
 }
 
-int* DataInteger() {
-  int data = 42;
-  int *data_ptr;
-  data_ptr = &data;
-  return data_ptr;
-}
+void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
+  AbstractActor::StopFn stop_fn;
+  actor_ptr->SetStopFn(stop_fn);
 
-void SendProc(ShmemSendPort send_port, MetaDataPtr data) {
   // Sends data
   send_port.Start();
   send_port.Send(data);
   send_port.Join();
+
+  actor_ptr->SetStatus(ActorStatus::StatusStopped);
 }
 
-auto RecvProc(ShmemRecvPort recv_port) {
+void RecvProc(ShmemRecvPort recv_port, AbstractActor* actor_ptr) {
+  AbstractActor::StopFn stop_fn;
+  actor_ptr->SetStopFn(stop_fn);
+
   // Returns received data
   recv_port.Start();
   auto recv_data = recv_port.Recv();
   recv_port.Join();
 
-  return recv_data;
+  actor_ptr->SetStatus(ActorStatus::StatusStopped);
+
+  if (recv_data != Data()) {
+    std::cout << "Received Data is incorrect" << std::endl;
+  }
 }
 
 TEST(TestSharedMemory, SharedMemSendReceive) {
   // Creates a pair of send and receive ports
   // TODO: Define success criteria
-  MultiProcessing mp;
-  Builder *builder = new Builder();
 
-  AbstractActor::TargetFn target_fn;
-
-  auto bound_fn = std::bind(&TargetFunction, (*builder),  std::placeholders::_1);
-  target_fn = bound_fn;
-
-  AbstractActor::StopFn stop_fn;
-  AbstractActor::StopFn stop_fn2;
-
-  auto actor_stop_fn = std::bind(&ActorStop, std::placeholders::_1);
-  stop_fn = actor_stop_fn("Send");
-  
-  AbstractActor* send_actor_ptr;
-  send_actor_ptr->SetStopFn(stop_fn);
-  send_actor_ptr->SetStatus(ActorStatus::StatusStopped);
-
-  AbstractActor* recv_actor_ptr;
-  recv_actor_ptr->SetStopFn(stop_fn2);
-  recv_actor_ptr->SetStatus(ActorStatus::StatusStopped);
-
+  // Create Shared Memory Channel
   int size = 1;
   int nbytes = sizeof(int);
   std::string name = "test_shmem_channel";
@@ -90,29 +74,42 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
     size,
     nbytes);
 
-  // AbstractSendPortPtr send_port = *shmem_channel.GetSendPort();
-  // AbstractRecvPortPtr recv_port = *shmem_channel->GetRecvPort();
+  AbstractSendPortPtr send_port = shmem_channel.GetSendPort();
+  AbstractRecvPortPtr recv_port = shmem_channel.GetRecvPort();
 
-  // auto send_port_fn = std::bind(&SendProc, send_port);
-  // auto send_port_fn = std::bind(&SendProc, (*builder_send), SendPort);
-  // auto recv_port_fn = std::bind(&RecvProc, (*builder_recv), RecvPort);
-  // mp.BuildActor(send_port_fn);
-  // mp.BuildActor(recv_port_fn);
-  
+  MultiProcessing mp;
+  Builder *builder = new Builder();
+
+  AbstractActor::TargetFn send_target_fn;
+  AbstractActor::TargetFn recv_target_fn;
+
+  // TODO: convert data into python to pass into function
+  MetaDataPtr data;
+  auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
+  send_target_fn = send_bound_fn;
+
+  auto recv_bound_fn = std::bind(&RecvProc, recv_port, std::placeholders::_1);
+  recv_target_fn = recv_bound_fn;
+
+  mp.BuildActor(send_target_fn);
+  mp.BuildActor(recv_target_fn);
+
+  sleep(2);
+
   // Stop any currently running actors
-  // mp.Stop(true);
+  mp.Stop(true);
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess){
-  ChannelProxy ShmemChannel;
+  // ChannelProxy ShmemChannel;
 
-  SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();
-  RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
+  // SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();
+  // RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
 
-  SendPort.Start();
-  RecvPort.Start();
-  auto data = DataInteger();
-  SendPort.Send(data);
-  auto received_data = RecvPort.Recv();
-  EXPECT_EQ(data, received_data)
+  // SendPort.Start();
+  // RecvPort.Start();
+  // auto data = DataInteger();
+  // SendPort.Send(data);
+  // auto received_data = RecvPort.Recv();
+  // EXPECT_EQ(data, received_data)
 }
