@@ -60,9 +60,6 @@ class TestSigmaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error == 0)
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_sigma_decoding_float(self) -> None:
         """Test sigma decoding with cumulative sum."""
         num_steps = 100
@@ -122,9 +119,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
 
         return input, output
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction. The max absolute
         error must be smaller than threshold.
@@ -148,9 +142,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_float(self) -> None:
         """Tests floating point sigma delta reconstruction. The max absolute
         error must be smaller than threshold.
@@ -175,9 +166,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_cum_error_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction with cumulative error.
         The max absolute error must be smaller than threshold.
@@ -201,9 +189,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_cum_error_float(self) -> None:
         """Tests floating point sigma delta reconstruction with cumulative
         error. The max absolute error must be smaller than threshold.
@@ -228,9 +213,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_relu_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction with RELU.
         The max absolute error must be smaller than threshold.
@@ -254,9 +236,6 @@ class TestSigmaDeltaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_reconstruction_relu_float(self) -> None:
         """Tests floating point sigma delta reconstruction with RELU.
         The max absolute error must be smaller than threshold.
