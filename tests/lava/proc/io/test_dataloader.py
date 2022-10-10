@@ -91,7 +91,7 @@ class TestStateDataloader(unittest.TestCase):
         shape = (5, 7)
         interval = 5
         offset = 2
-        dtype=np.int32
+        dtype = np.int32
 
         proc = DummyProc(shape)
         dataloader = StateDataloader(dataset=DummyDataset(shape, dtype),

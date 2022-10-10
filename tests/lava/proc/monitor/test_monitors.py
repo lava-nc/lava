@@ -49,6 +49,7 @@ class PyProcModel1(PyLoihiProcessModel):
             self.u = 2 * np.array([self.time_step])
             self.v = np.array([[1, 2], [3, 4]], dtype=np.int32)
 
+
 class Monitors(unittest.TestCase):
 
     def test_monitor_constructor(self):
