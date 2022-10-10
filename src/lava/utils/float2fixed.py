@@ -14,6 +14,7 @@ from lava.magma.compiler.compiler_graphs import (
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import AbstractSrcPort
 from lava.proc.monitor.process import Monitor
+from lava.proc.io.sink import RingBuffer
 from lava.magma.core.process.ports.ports import OutPort
 
 import numpy as np
@@ -33,6 +34,7 @@ class Float2FixedConverter:
         self.num_steps = None
         self.quantiles = None
         self.scale_domains = set()
+        self.ignored_procs = [Monitor, RingBuffer]
 
     def set_run_cfg(self, floating_pt_rcfg, fixed_pt_rcfg) -> None:
         """Set run config for floating- and fixed-point ProcessModels
@@ -135,7 +137,7 @@ class Float2FixedConverter:
         # Get the factor/ for the scaling functions for parameter conversion.
         self.scaling_factors = self._find_scaling_factors()
         # Scale parameter from a floating- to a fixed-point representation.
-        self.scaled_params = self.scale_parameters()
+        self.scaled_params = self._scale_parameters()
 
     def _set_procs(self, proc, find_connected_procs=True) -> None:
         """Set list of Lava Processes for conversion. Either pass a Lava
@@ -180,10 +182,12 @@ class Float2FixedConverter:
         hierarchical_procs_set = set(proc_list) - set(proc_list_w_sub)
 
         # Updated Processes used for covnersion and set member storing
-        # hierarchical Processes.
-        self.procs = dict([(p.id, p) for p in proc_list_w_sub])
+        # hierarchical Processes. Get rid of Processes that are to be ignored.
+        self.procs = dict([(p.id, p) for p in proc_list_w_sub if type(p) not
+                          in self.ignored_procs])
         self.hierarchical_procs = dict([(p.id, p) for p in
-                                        hierarchical_procs_set])
+                                        hierarchical_procs_set if type(p) not
+                                        in self.ignored_procs])
 
         self.run_proc = proc_list[0]
 
@@ -391,7 +395,7 @@ class Float2FixedConverter:
                     # Get precision information of target Port
                     try:
                         t_port_conv_data = t_port_py_type.conversion_data()
-                    except (TypeError, ValueError):
+                    except (TypeError, ValueError, AttributeError):
                         raise ValueError(f'Error in {t_port} of Proc {p_id}')
                     t_port_impl_shift = t_port_conv_data['implicit_shift']
                     # If there has been not implicit shift set so far set one.
@@ -414,7 +418,7 @@ class Float2FixedConverter:
                 # Retrieve conversion data.
                 try:
                     conv_data[p_id][var] = var_py_type.conversion_data()
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, AttributeError):
                     raise ValueError(f'Error in {var} of Proc {p_id}')
 
                 # Update implicit shift if Variable is on global scale domain.
@@ -621,7 +625,7 @@ class Float2FixedConverter:
 
         return scaling_factors
 
-    def scale_parameters(self) -> dict:
+    def _scale_parameters(self) -> dict:
         """Scale the initial values of the passed Processes given the slopes
         for the scale domain in 'scaling_factors' from a floating-point to
         a fixed-point representation. The parameters are stored in a nested
@@ -656,12 +660,10 @@ class Float2FixedConverter:
                     param = self.procs[p_id].__getattribute__(var).init
                     impl_shift = scale_data['implicit_shift']
                     num_exp_bits = scale_data['num_bits_exp']
-                    # Convert floating- to fixed-point representation.
-                    scaled_param = np.round(scaling_factor
-                                            * param).astype(int)
-
-                    # Apply implicit shift.
-                    scaled_param = np.right_shift(scaled_param, impl_shift)
+                    # Apply implicit shift and convert floating- to fixed-point
+                    # representation.
+                    scaled_param = np.round(scaling_factor * param
+                                            / 2 ** impl_shift).astype(int)
 
                     if not num_exp_bits:
                         scaled_params[p_id][var] = scaled_param
@@ -677,8 +679,12 @@ class Float2FixedConverter:
                         eff_mantissa_bits = (scale_data['precision_bits']
                                              - sign_bit)
 
-                        exp = (np.ceil(np.log2(np.max(np.abs(scaled_param))))
-                               - eff_mantissa_bits).astype(int)
+                        if np.any(scaled_param):
+                            exp = (np.log2(np.max(np.abs(scaled_param)))
+                                   - eff_mantissa_bits)
+                            exp = np.ceil(exp).astype(int)
+                        else:
+                            exp = 0
                         exp = np.max([exp, 0])
 
                         scaled_param = np.right_shift(scaled_param, exp)
@@ -689,7 +695,7 @@ class Float2FixedConverter:
         return scaled_params
 
     def _update_target_ports(self, target_ports: list) -> list:
-        """Update target Port of OutPort. If target Port is Port of
+        """Recursively update target Port of OutPort. If target Port is Port of
         hierarchical Process trace Ports to first (Sub)Process that is
         connected.
 

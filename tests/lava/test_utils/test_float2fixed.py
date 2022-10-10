@@ -17,6 +17,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.decorator import implements, requires, tag
 from lava.proc.monitor.process import Monitor
+from lava.proc.io.sink import RingBuffer
 from lava.proc.lif.process import LIF
 from lava.proc.dense.process import Dense
 from lava.magma.compiler import compiler_graphs
@@ -579,6 +580,44 @@ class Float2Fixed(unittest.TestCase):
 
         #  Check if hierarchical_procs gets filled correctly.
         self.assertDictEqual(hierarchical_procs, true_hierarchical_procs)
+
+    def test_set_procs_ignores_monitor(self):
+        """Check if a Monitor Process is ignored by _set_procs."""
+        proc1 = Monitor()
+
+        # True procs is empty becasue Monitors Processes are disregarded.
+        true_procs = {}
+
+        converter = Float2FixedConverter()
+
+        converter.set_run_cfg(floating_pt_rcfg=Loihi1SimCfg(),
+                              fixed_pt_rcfg=Loihi1SimCfg())
+
+        converter._set_procs(proc=[proc1])
+
+        procs = converter.procs
+
+        self.assertDictEqual(procs, true_procs)
+
+    def test_set_procs_ignores_ringbuffer(self):
+        """Check if a sink RingBuffer Process is ignored by _set_procs."""
+        proc1 = RingBuffer(shape=(1,), buffer=0)
+        proc2 = Proc()
+
+        # True procs only contains proc2 because sink RingBuffers are
+        # disregarded.
+        true_procs = {proc2.id: proc2}
+
+        converter = Float2FixedConverter()
+
+        converter.set_run_cfg(floating_pt_rcfg=Loihi1SimCfg(),
+                              fixed_pt_rcfg=Loihi1SimCfg())
+
+        converter._set_procs(proc=[proc1, proc2])
+
+        procs = converter.procs
+
+        self.assertDictEqual(procs, true_procs)
 
     def test_get_var_ports_outports(self):
         """Check if Float2Fixed Converter correctly identifies Vars and
@@ -1407,8 +1446,8 @@ class Float2Fixed(unittest.TestCase):
         # For v we have to choose the initial value for the parameter mapping.
         true_scaled_params[proc1.id]['v'] = np.round(scaling_factor * 1)
         true_scaled_params[proc1.id]['u'] = 1
-        true_scaled_params[proc2.id]['w'] = np.right_shift(
-            np.round(scaling_factor * 3).astype(int), 9)
+        true_scaled_params[proc2.id]['w'] = np.round(scaling_factor
+                                                     * 3 / 2 ** 9).astype(int)
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel only v of proc1 is a dynamic variables and
@@ -1428,7 +1467,71 @@ class Float2Fixed(unittest.TestCase):
         converter.scale_domains = scale_domains
         converter.quantiles = [0, 1]
         converter.scaling_factors = converter._find_scaling_factors()
-        scaled_params = converter.scale_parameters()
+        scaled_params = converter._scale_parameters()
+
+        # Test scaled parameter dictionary.
+        self.assertDictEqual(scaled_params, true_scaled_params)
+
+    def test_scale_parameters_exp_var_exp_val_zero(self):
+        """Test scaling and storing of the parameters of the Processes that
+        need to be converted from floating- to fixed-point representation. In
+        this test a variable with a split in exponent and mantissa is zero,
+        which triggers a separates case in the scale_parameters function.
+        """
+        proc1 = Proc(u=20, v=1)
+        proc2 = ProcDense(w=0)
+        proc_list = [proc1, proc2]
+
+        proc2.outport.connect(proc1.inport)
+
+        scale_domains = {0: {proc1.id: {},
+                             proc2.id: {}}}
+
+        scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
+                                           'precision_bits': 24,
+                                           'implicit_shift': 0,
+                                           'domain': np.array([1]),
+                                           'num_bits_exp': 0}
+
+        scale_domains[0][proc2.id]['w'] = {'signedness': 's',
+                                           'precision_bits': 16,
+                                           'implicit_shift': 1,
+                                           'domain': 0,
+                                           'num_bits_exp': 2}
+
+        scaling_factor = (2 ** 24 - 1) / 1
+
+        true_scaled_params = {proc1.id: {},
+                              proc2.id: {}}
+
+        # For v we have to choose the initial value for the parameter mapping.
+        true_scaled_params[proc1.id]['v'] = int(np.round(scaling_factor * 1))
+        true_scaled_params[proc1.id]['u'] = 20
+
+        # Split w in mantissa and exponent, both are zero and determined as
+        # special case.
+        true_scaled_params[proc2.id]['w'] = 0
+        true_scaled_params[proc2.id]['exp_w'] = 0
+
+        # Set up Float2FixedPoint Converter.
+        # In tagged ProcModel only v of proc1 is a dynamic variables and
+        # belongs to the global scale domain, together with w of proc2.
+        # The variable u is a meta-parameter.
+        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_6')
+
+        converter = Float2FixedConverter()
+        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
+                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter._set_procs(proc_list)
+        converter.var_ports = converter._get_var_ports()
+        converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
+        converter.conv_data = converter._get_conv_data()
+        converter.monitors = converter._create_monitoring_infrastructure()
+        converter.scale_domains = scale_domains
+        converter.quantiles = [0, 1]
+        converter.scaling_factors = converter._find_scaling_factors()
+        scaled_params = converter._scale_parameters()
 
         # Test scaled parameter dictionary.
         self.assertDictEqual(scaled_params, true_scaled_params)
@@ -1467,8 +1570,8 @@ class Float2Fixed(unittest.TestCase):
         # For v we have to choose the inital value for the parameter mapping.
         true_scaled_params[proc1.id]['v'] = np.round(scaling_factor * 1)
         true_scaled_params[proc1.id]['u'] = 20
-        true_scaled_params[proc2.id]['w'] = np.right_shift(
-            np.round(scaling_factor * 3).astype(int), 9)
+        true_scaled_params[proc2.id]['w'] = np.round(scaling_factor
+                                                     * 3 / 2 ** 9).astype(int)
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel only v of proc1 is a dynamic variables and
