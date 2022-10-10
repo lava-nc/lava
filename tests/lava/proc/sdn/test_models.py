@@ -60,9 +60,6 @@ class TestSigmaModels(unittest.TestCase):
             print(f'Max abs error = {error}')
         self.assertTrue(error == 0)
 
-    @unittest.skip("When running multi-tests,"
-                   "it calls segmentation fault by pytest."
-                   "but no error with python.")
     def test_sigma_decoding_float(self) -> None:
         """Test sigma decoding with cumulative sum."""
         num_steps = 100
