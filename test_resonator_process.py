@@ -1,4 +1,4 @@
-from lava.proc.rf.models import RF
+from lava.proc.rf_iz.models import RF_IZ
 import numpy as np
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from lava.proc.io.source import RingBuffer as RingBufferSend
 from lava.proc.io.sink import RingBuffer as RingBufferReceive, PyReceiveModelFloat
+# from lava.proc.rf_iz.process import RF_IZ
 
 def process_spikes(time_range: np.array, spikes: np.array):
     spike_mask = np.argwhere(spikes)
@@ -42,25 +43,28 @@ if __name__ == "__main__":
     fixed_point = True
     sin_decay = (1 - alpha) * np.sin(radians_per_second)
     cos_decay = (1 - alpha) * np.cos(radians_per_second)
-
+    state_exp = 6
     p_scale = 1 << 12
     if fixed_point:
-        sin_decay = int(sin_decay * (1 << 12)) - 1
-        cos_decay = int(cos_decay * (1 << 12)) - 1
+        state_exp = 6
+        sin_decay = int(sin_decay * (1 << 12)) 
+        cos_decay = int(cos_decay * (1 << 12)) 
+    else:
+        state_exp = 0
 
     vth = 1
     num_steps = 100
 
     # create lava neuron
-    neuron = RF(shape=(n_neurons,), sin_decay = sin_decay, cos_decay = cos_decay, vth = vth) # create a single neuron
+    neuron = RF_IZ(shape=(n_neurons,), sin_decay = sin_decay, cos_decay = cos_decay, vth = vth, state_exp=state_exp) # create a single neuron
 
-    # create spiking data that just spikes at timestep 1
+    # create spiking data that just spike at regular intervals
     incoming_spike_data = np.zeros((n_neurons, num_steps))  
-    incoming_spike_data[:, [10, 20, 30, 40]] = 1  # neuron recieves input spikes at timestep 10, 20, 30, and 40
+    incoming_spike_data[:, [10, 20, 30]] = 1  # neuron recieves input spikes at timestep 10, 20, 30, and 40
     incoming_data_process = RingBufferSend(data=incoming_spike_data)
     incoming_data_process.out_ports.s_out.connect(neuron.a_real_in) # connect incoming spikes to neuron
 
-    # Create a recepticle for the neurons output spikes
+    # Create a receptacle for the neurons output spikes
     outgoing_data_process = RingBufferReceive(shape=(n_neurons,), buffer =num_steps)
     neuron.s_out.connect(outgoing_data_process.a_in)
 
@@ -91,4 +95,4 @@ if __name__ == "__main__":
     if fixed_point:
         plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten() > 0, probe_data_spike.flatten() > 0, probe_data_real.flatten()/(1 << 6), vth, "Rf Neuron in Lava Fixed point", "rf_lava.png")
     else:
-        plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten(), probe_data_spike.flatten(), probe_data_real.flatten(), vth, "Rf Neuron in Lava float point", "rf_lava.png")        
+        plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten() > 0, probe_data_spike.flatten() > 0, probe_data_real.flatten(), vth, "Rf Neuron in Lava float point", "rf_lava.png")        
