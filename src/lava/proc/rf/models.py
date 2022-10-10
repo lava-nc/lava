@@ -104,7 +104,6 @@ class AbstractPyRFModelFixed(PyLoihiProcessModel):
 
     def run_spk(self):
         old_imag = self.imag.copy()
-        print(old_imag)
         self.sub_thresh_dynamics()
         s_out = (self.real >= self.vth) * (self.imag >= 0) * (old_imag < 0)
         self.s_out.send(s_out)
