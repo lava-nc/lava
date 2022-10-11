@@ -61,7 +61,8 @@ class ChannelMap(dict):
         return self._lmt_allocation_dict
 
     @classmethod
-    def from_proc_groups(self, proc_groups: ty.List[ProcGroup]) -> "ChannelMap":
+    def from_proc_groups(self,
+                         proc_groups: ty.List[ProcGroup]) -> "ChannelMap":
         """Initializes a ChannelMap from a list of process ProcGroups
         extracting the ports from every process group.
 

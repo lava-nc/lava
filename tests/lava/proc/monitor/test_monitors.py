@@ -47,7 +47,7 @@ class PyProcModel1(PyLoihiProcessModel):
         if self.time_step > 1:
             self.s = np.array([self.time_step])
             self.u = 2 * np.array([self.time_step])
-            self.v = np.array([[1, 2], [3, 4]])
+            self.v = np.array([[1, 2], [3, 4]], dtype=np.int32)
 
 
 class Monitors(unittest.TestCase):

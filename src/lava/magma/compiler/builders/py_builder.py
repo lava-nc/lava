@@ -43,9 +43,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
     instead of on a remote node. For pure atomic unit testing a ProcessModel
     locally, PyInPorts and PyOutPorts must be fed manually with data.
 
-    Contract
-    --------
-    - Inherit from AbstractProcessBuilder for consistency.
+
     """
 
     def __init__(
@@ -247,6 +245,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
         At deployment to a node, the Builder.build(..) gets executed
         resulting in the following:
+
           1. ProcModel gets instantiated
           2. Vars are initialized and assigned to ProcModel
           3. PyPorts are initialized (with CSP ports) and assigned to ProcModel

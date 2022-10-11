@@ -34,6 +34,9 @@ class Mapper:
     Assigns virtual addresses to different processes, mappable by mapping
     logical addresses to virtual addresses.
     """
+    def __init__(self):
+        self.mapper_core_offset: LogicalCoreId = 0
+        self.mapper_core_dict: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
 
     def _set_virtual_address_nc(self, mappable: Mappable, num_cores: int) \
             -> None:
@@ -50,6 +53,12 @@ class Mapper:
         l_addrs: ty.List[NcLogicalAddress] = mappable.get_logical()
         p_addrs: ty.List[NcVirtualAddress] = []
         for l_addr in l_addrs:
+            if l_addr.core_id not in self.mapper_core_dict:
+                self.mapper_core_dict[l_addr.core_id] = self.mapper_core_offset
+                l_addr.core_id = self.mapper_core_offset
+                self.mapper_core_offset += 1
+            else:
+                l_addr.core_id = self.mapper_core_dict[l_addr.core_id]
             chip_idx = l_addr.core_id // num_cores
             core_idx = l_addr.core_id % num_cores
             p_addrs.append(
@@ -80,6 +89,13 @@ class Mapper:
             p_addrs: ty.List[ResourceAddress] = []
             for resource in ncb.compiled_resources:
                 l_addr: ResourceAddress = resource.l_address
+                if l_addr.core_id not in self.mapper_core_dict:
+                    self.mapper_core_dict[
+                        l_addr.core_id] = self.mapper_core_offset
+                    l_addr.core_id = self.mapper_core_offset
+                    self.mapper_core_offset += 1
+                else:
+                    l_addr.core_id = self.mapper_core_dict[l_addr.core_id]
                 chip_idx = l_addr.core_id // num_cores
                 core_idx = l_addr.core_id % num_cores
                 p_addrs.append(
@@ -96,6 +112,7 @@ class Mapper:
 
             for var_port_initializer in ncb.var_ports.values():
                 self._set_virtual_address_nc(var_port_initializer, num_cores)
+            self.mapper_core_dict.clear()
 
         # Iterate over all the cbuilder and map them
         for cb in c_builders.values():
@@ -111,9 +128,19 @@ class Mapper:
                     # Checking if the initializers are same
                     if channel_map[port_pair].src_port_initializer == ports[
                             port]:
-                        dst_addr: ty.List[LoihiAddress] = channel_map[
-                            port_pair].dst_port_initializer.var_model.address
-                        chips = [addr.physical_chip_id for addr in dst_addr]
+                        var_model = channel_map[
+                            port_pair].dst_port_initializer.var_model
+                        # Checking to see if its ConvInVarModel or not
+                        if hasattr(var_model, "address"):
+                            vm = channel_map[
+                                port_pair].dst_port_initializer.var_model
+                            dst_addr: ty.List[LoihiAddress] = vm.address
+                            chips = [addr.physical_chip_id for addr in dst_addr]
+                        else:
+                            # Will be here for Conv Regions which will have
+                            # ConvInVarModel
+                            chips = [region.physical_chip_idx for region in
+                                     var_model.regions]
                         address.update(chips)
                         # Set address of c ref_var as that of the var port its
                         # pointing to

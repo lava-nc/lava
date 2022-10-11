@@ -250,8 +250,6 @@ class PyInPort(AbstractPyIOPort):
         Enables transforming the received data in accordance with the
         virtual ports on the path to the PyVarPort.
 
-    Class attributes
-    ----------------
     VEC_DENSE : PyInPortVectorDense, default=None
         Type of PyInPort. CSP Port sends data as dense vector.
 
@@ -436,31 +434,24 @@ class PyOutPort(AbstractPyIOPort):
     ----------
     csp_ports : list
         A list of CSP Ports used by this IO Port.
-
     process_model : AbstractProcessModel
         The process model used by the process of the Port.
-
     shape : tuple
         The shape of the Port.
-
     d_type: type
         The data type of the Port.
 
-
-    Class attributes
+    Attributes
     ----------------
     VEC_DENSE : PyOutPortVectorDense, default=None
         Type of PyInPort. CSP Port sends data as dense vector.
-
     VEC_SPARSE : PyOutPortVectorSparse, default=None
         Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
         so only entries which have changed in a vector need to be communicated.
-
     SCALAR_DENSE : PyOutPortScalarDense, default=None
         Type of PyInPort. CSP Port sends data element by element for the whole
         data structure. So the CSP channel does need less memory to transfer
         data.
-
     SCALAR_SPARSE : PyOutPortScalarSparse, default=None
         Type of PyInPort. CSP Port sends data element by element, but after each
         element the index of the data entry is also given. So only entries which
@@ -590,28 +581,21 @@ class PyRefPort(AbstractPyPort):
     ----------
     _csp_send_port : CspSendPort
         Used to send data to the referenced Port PyVarPort (target).
-
     _csp_recv_port : CspRecvPort
         Used to receive data from the referenced Port PyVarPort (source).
-
     _transformer : AbstractTransformer
         Enables transforming the received data in accordance with the
         virtual ports on the path to the PyRefPort.
 
-    Class attributes
-    ----------------
     VEC_DENSE : PyRefPortVectorDense, default=None
         Type of PyInPort. CSP Port sends data as dense vector.
-
     VEC_SPARSE : PyRefPortVectorSparse, default=None
         Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
         so only entries which have changed in a vector need to be communicated.
-
     SCALAR_DENSE : PyRefPortScalarDense, default=None
         Type of PyInPort. CSP Port sends data element by element for the whole
         data structure. So the CSP channel does need less memory to transfer
         data.
-
     SCALAR_SPARSE : PyRefPortScalarSparse, default=None
         Type of PyInPort. CSP Port sends data element by element, but after each
         element the index of the data entry is also given. So only entries which
@@ -823,31 +807,23 @@ class PyVarPort(AbstractPyPort):
     ----------
     var_name : str
         The name of the Var linked to this VarPort.
-
     _csp_send_port : CspSendPort
         Used to send data to the referenced Port PyRefPort (target).
-
     _csp_recv_port : CspRecvPort
         Used to receive data from the referenced Port PyRefPort (source).
-
     _transformer : AbstractTransformer
         Enables transforming the received data in accordance with the
         virtual ports on the path to the PyVarPort.
 
-    Class attributes
-    ----------------
     VEC_DENSE : PyVarPortVectorDense, default=None
        Type of PyInPort. CSP Port sends data as dense vector.
-
     VEC_SPARSE : PyVarPortVectorSparse, default=None
         Type of PyInPort. CSP Port sends data as sparse vector (data + indices),
         so only entries which have changed in a vector need to be communicated.
-
     SCALAR_DENSE : PyVarPortScalarDense, default=None
         Type of PyInPort. CSP Port sends data element by element for the whole
         data structure. So the CSP channel does need less memory to transfer
         data.
-
     SCALAR_SPARSE : PyVarPortScalarSparse, default=None
         Type of PyInPort. CSP Port sends data element by element, but after each
         element the index of the data entry is also given. So only entries which
@@ -994,7 +970,7 @@ class RefVarTypeMapping:
     need to have a compatible data format.
     This class maps the fitting data format between PyRefPorts and PyVarPorts.
 
-    Class attributes
+    Attributes
     ----------------
     mapping : dict
         Dictionary containing the mapping of compatible PyRefPort types to

@@ -16,7 +16,6 @@ from message_infrastructure import (
 )
 from message_infrastructure import Channel as MsgChannel
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
-from lava.magma.core.model.c.ports import AbstractCPort, CInPort, COutPort
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
@@ -34,6 +33,18 @@ except ImportError:
         pass
 
     class EmbeddedSnip:
+        pass
+
+try:
+    from lava.magma.core.model.c.ports import AbstractCPort, CInPort, COutPort
+except ImportError:
+    class AbstractCPort:
+        pass
+
+    class CInPort:
+        pass
+
+    class COutPort:
         pass
 
 
@@ -140,7 +151,8 @@ class ChannelBroker(AbstractChannelBroker):
             channel_actions = []
             for cport, channel in self.c_inports_to_poll.items():
                 result = (cport, channel)
-                channel_actions.append((cport.csp_ports[0], lambda: result))
+                channel_actions.append((cport.csp_ports[0],
+                                        (lambda y: (lambda: y))(result)))
 
             channel_actions.append((self.mgmt_channel.src_port,
                                     lambda: ('stop', None)))

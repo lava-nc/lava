@@ -7,7 +7,7 @@ from enum import IntEnum
 from lava.magma.compiler.mappable_interface import Mappable
 from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
-from lava.magma.compiler.var_model import LoihiVarModel
+from lava.magma.compiler.var_model import LoihiVarModel, ConvInVarModel
 from lava.magma.core.model.spike_type import SpikeType
 
 
@@ -67,6 +67,10 @@ class LoihiPortInitializer(PortInitializer, Mappable):
         -------
         Returns logical address of the port initializer.
         """
+        # TODO: Need to clean this
+        if isinstance(self.var_model, ConvInVarModel):
+            return self.var_model.get_logical()
+
         return [NcLogicalAddress(chip_id=addr.logical_chip_id,
                                  core_id=addr.logical_core_id) for addr in
                 self.var_model.address]
@@ -82,6 +86,11 @@ class LoihiPortInitializer(PortInitializer, Mappable):
         -------
 
         """
+        # TODO: Need to clean this
+        if isinstance(self.var_model, ConvInVarModel):
+            self.var_model.set_virtual(addrs)
+            return
+
         if len(addrs) != len(self.var_model.address):
             raise ValueError("Length of list of address provided doesn't "
                              "match size of the address list of the port "
