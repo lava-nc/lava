@@ -185,7 +185,7 @@ lif_post.s_out_y2.connect(plast_conn.s_in_y2)
 
 # NOT USED : lif_post.s_out_y3.connect(plast_conn.s_in_y3)
 
-"""
+
 # Create monitors
 mon_pre_trace = Monitor()
 mon_post_trace = Monitor()
@@ -197,11 +197,11 @@ mon_weight = Monitor()
 # Connect monitors
 mon_pre_trace.probe(plast_conn.x1, num_steps)
 mon_post_trace.probe(plast_conn.y1, num_steps)
-mon_reward_trace.probe(plast_conn.s_in_y2, num_steps)
+mon_reward_trace.probe(lif_post.s_out_y2, num_steps)
 mon_pre_spikes.probe(lif_pre.s_out, num_steps)
 mon_post_spikes.probe(lif_post.s_out, num_steps)
-mon_weight.probe(plast_conn.weights, num_steps)
-"""
+#mon_weight.probe(plast_conn.weights, num_steps)
+
 
 # Running
 pattern_pre.run(condition=RunSteps(num_steps=num_steps), run_cfg=Loihi2SimCfg(select_tag=SELECT_TAG))
