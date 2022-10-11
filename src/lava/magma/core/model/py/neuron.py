@@ -22,12 +22,6 @@ class NeuronModelFixed(NeuronModel):
     def __init__(self, proc_params: dict) -> None:
          super().__init__(proc_params)
 
-    def run_spk(self):
-        if self._enable_learning and self._update_traces is not None:
-            y2, y3 = self._update_traces(self)
-            self.s_out_y2.send(y2)
-            self.s_out_y3.send(y3)
-
 
 class NeuronModelFloat(NeuronModel):
 
@@ -38,17 +32,5 @@ class NeuronModelFloat(NeuronModel):
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
-
-    """
-    def run_spk(self):
-        if self._enable_learning:
-            if self._update_traces is not None:
-                y2, y3 = self._update_traces(self)
-                self.s_out_y2.send(y2)
-                self.s_out_y3.send(y3)
-            else:
-                self.s_out_y2.send(np.array([0]))
-                self.s_out_y3.send(np.array([0]))
-    """
 
 

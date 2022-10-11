@@ -19,9 +19,9 @@ class TestLoihiLearningRule(unittest.TestCase):
         t_epoch = 1
 
         learning_rule = LoihiLearningRule(dw=dw,
-                                           x1_impulse=impulse, x1_tau=tau,
-                                           y1_impulse=impulse, y1_tau=tau,
-                                           t_epoch=t_epoch)
+                                          x1_impulse=impulse, x1_tau=tau,
+                                          y1_impulse=impulse, y1_tau=tau,
+                                          t_epoch=t_epoch)
 
         self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
@@ -51,9 +51,9 @@ class TestLoihiLearningRule(unittest.TestCase):
         t_epoch = 1
 
         learning_rule = LoihiLearningRule(dw=dw, dd=dd,
-                                           x1_impulse=impulse, x1_tau=tau,
-                                           y1_impulse=impulse, y1_tau=tau,
-                                           t_epoch=t_epoch)
+                                          x1_impulse=impulse, x1_tau=tau,
+                                          y1_impulse=impulse, y1_tau=tau,
+                                          t_epoch=t_epoch)
 
         self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
@@ -84,9 +84,9 @@ class TestLoihiLearningRule(unittest.TestCase):
         t_epoch = 1
 
         learning_rule = LoihiLearningRule(dw=dw, dd=dd, dt=dt,
-                                           x1_impulse=impulse, x1_tau=tau,
-                                           y1_impulse=impulse, y1_tau=tau,
-                                           t_epoch=t_epoch)
+                                          x1_impulse=impulse, x1_tau=tau,
+                                          y1_impulse=impulse, y1_tau=tau,
+                                          t_epoch=t_epoch)
 
         self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
@@ -116,9 +116,9 @@ class TestLoihiLearningRule(unittest.TestCase):
         t_epoch = 1
 
         learning_rule = LoihiLearningRule(dw=dw, dd=dd,
-                                           x1_impulse=impulse, x1_tau=tau,
-                                           y1_impulse=impulse, y1_tau=tau,
-                                           t_epoch=t_epoch)
+                                          x1_impulse=impulse, x1_tau=tau,
+                                          y1_impulse=impulse, y1_tau=tau,
+                                          t_epoch=t_epoch)
 
         self.assertIsInstance(learning_rule, LoihiLearningRule)
         self.assertIsInstance(learning_rule.dw, ProductSeries)
@@ -149,9 +149,9 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             LoihiLearningRule(dw=dw,
-                               x1_impulse=impulse, x1_tau=tau,
-                               y1_impulse=impulse, y1_tau=tau,
-                               t_epoch=t_epoch)
+                              x1_impulse=impulse, x1_tau=tau,
+                              y1_impulse=impulse, y1_tau=tau,
+                              t_epoch=t_epoch)
 
     def test_invalid_tau(self) -> None:
         """Tests that instantiating a LoihiLearningRule throws error when
@@ -163,9 +163,9 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             LoihiLearningRule(dw=dw,
-                               x1_impulse=impulse, x1_tau=tau,
-                               y1_impulse=impulse, y1_tau=tau,
-                               t_epoch=t_epoch)
+                              x1_impulse=impulse, x1_tau=tau,
+                              y1_impulse=impulse, y1_tau=tau,
+                              t_epoch=t_epoch)
 
     def test_invalid_t_epoch(self) -> None:
         """Tests that instantiating a LoihiLearningRule throws error when
@@ -177,9 +177,9 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             LoihiLearningRule(dw=dw,
-                               x1_impulse=impulse, x1_tau=tau,
-                               y1_impulse=impulse, y1_tau=tau,
-                               t_epoch=t_epoch)
+                              x1_impulse=impulse, x1_tau=tau,
+                              y1_impulse=impulse, y1_tau=tau,
+                              t_epoch=t_epoch)
 
     def test_different_decimate_exponent_same_learning_rule(self) -> None:
         """Tests that instantiating a LoihiLearningRule throws error when
@@ -192,9 +192,9 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             LoihiLearningRule(dw=dw,
-                               x1_impulse=impulse, x1_tau=tau,
-                               y1_impulse=impulse, y1_tau=tau,
-                               t_epoch=t_epoch)
+                              x1_impulse=impulse, x1_tau=tau,
+                              y1_impulse=impulse, y1_tau=tau,
+                              t_epoch=t_epoch)
 
     def test_different_decimate_exponent_different_learning_rule(self) -> None:
         """Tests that instantiating a LoihiLearningRule throws error when
@@ -208,9 +208,9 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             LoihiLearningRule(dw=dw, dd=dd,
-                               x1_impulse=impulse, x1_tau=tau,
-                               y1_impulse=impulse, y1_tau=tau,
-                               t_epoch=t_epoch)
+                              x1_impulse=impulse, x1_tau=tau,
+                              y1_impulse=impulse, y1_tau=tau,
+                              t_epoch=t_epoch)
 
 
 if __name__ == "__main__":

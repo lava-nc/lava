@@ -18,7 +18,7 @@ from lava.magma.core.learning.learning_rule import LoihiLearningRule
 import numpy as np
 from lava.proc.lif.process import LIF, LearningLIF
 from lava.proc.io.source import RingBuffer as SpikeIn
-from lava.proc.dense.process import Dense
+from lava.proc.dense.process import LearningDense as Dense
 from lava.proc.monitor.process import Monitor
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
@@ -207,5 +207,13 @@ mon_post_spikes.probe(lif_post.s_out, num_steps)
 pattern_pre.run(condition=RunSteps(num_steps=num_steps), run_cfg=Loihi2SimCfg(select_tag=SELECT_TAG))
 
 print("DONE")
+
+# Get data from monitors
+pre_trace = mon_pre_trace.get_data()['plastic_dense']['x1']
+post_trace = mon_post_trace.get_data()['plastic_dense']['y1']
+reward_trace = mon_reward_trace.get_data()['lif_post']['s_out_y2']
+pre_spikes = mon_pre_spikes.get_data()['lif_pre']['s_out']
+post_spikes = mon_post_spikes.get_data()['lif_post']['s_out']
+# TO FIX : weights = mon_weight.get_data()['plastic_dense']['weights'][:, :, 0]
 
 pattern_pre.stop()

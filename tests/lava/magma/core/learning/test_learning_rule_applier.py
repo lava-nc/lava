@@ -68,8 +68,6 @@ class TestLearningRuleFloatApplier(unittest.TestCase):
                       + u * np.broadcast_to(x2_u[np.newaxis, :], conn_shape)
                       + u * np.sign(w + 4))
 
-        # TODO (GK): Check this! asteval made learning rule evaluation with
-        #  LearningRuleApplier different than with eval()
         np.testing.assert_array_equal(
             learning_rule_applier.apply(w, **applier_args), result)
 

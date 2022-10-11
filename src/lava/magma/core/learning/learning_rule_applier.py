@@ -7,9 +7,8 @@ from abc import abstractmethod
 import asteval
 
 from lava.magma.core.learning.product_series import ProductSeries, Factor
-from lava.magma.core.learning.utils import saturate
-from lava.magma.core.learning import string_symbols as str_symbols
 from lava.magma.core.learning.constants import *
+
 
 class AbstractLearningRuleApplier:
     """The LearningRuleApplier is a Python-specific representation of learning
@@ -77,7 +76,7 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
             applier_sub_str = ""
 
             # derive scaling factor string representation
-            sf_str = f"({product.s_mantissa}) * 2 ** (({product.s_exp}) - 7)"
+            sf_str = f"({product.s_mantissa}) * 2. ** (({product.s_exp}) - 7)"
             # derive dependency string representation
             dep_str = f"{product.dependency}"
 
@@ -270,7 +269,8 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
         When called from the PyFixedLearningDenseProcessModel, applier_args
         contains variables with the following names :
-        {"shape", "x0", "y0", "u", "weights", "tag_2", "tag_1", "traces"}
+        {"shape", "x0", "y0", "u", "weights", "tag_2", "tag_1",
+        "x_traces", "y_traces"}
 
         All variables apart from "shape", "u" are numpy arrays.
         "shape" is a tuple.
@@ -295,9 +295,6 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
         # for each Product in ProductSeries
         for product in self._product_series.products:
-            # if not applier_args[product.dependency]:
-            #     continue
-
             # initialize multiplication accumulator (MAC)
             current_result = np.ones(applier_args["shape"], dtype=np.int32)
 
@@ -319,9 +316,9 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
                 )
 
                 # saturate value of factor (after constant addition)
-                factor_val = saturate(
-                    -(2**factor_width), factor_val, 2**factor_width - 1
-                )
+                factor_val = np.clip(factor_val,
+                                     a_min=-(2 ** factor_width),
+                                     a_max=2 ** factor_width - 1)
 
                 # multiply MAC with value of factor
                 current_result *= factor_val.astype(np.int32)
@@ -338,20 +335,18 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
             shift = np.maximum(0, factor_width_sum - W_ACCUMULATOR_U)
             current_result = np.right_shift(current_result, shift)
 
-            # TODO (GK) : put this before right_shift (?)
+            # left-shift by the exponent of scaling factor
             current_result = np.left_shift(current_result, product.s_exp)
 
             # saturate current_result
-            current_result = saturate(
-                -(2 ** W_ACCUMULATOR_U) - 1,
-                current_result,
-                2 ** W_ACCUMULATOR_U - 1,
-            )
+            current_result = np.clip(current_result,
+                                     a_min=-(2 ** W_ACCUMULATOR_U) - 1,
+                                     a_max=2 ** W_ACCUMULATOR_U - 1)
 
             # accumulate and saturate result
             result = result + current_result
-            result = saturate(
-                -(2 ** W_ACCUMULATOR_U) - 1, result, 2 ** W_ACCUMULATOR_U - 1
-            )
+            result = np.clip(result,
+                             a_min=-(2 ** W_ACCUMULATOR_U) - 1,
+                             a_max=2 ** W_ACCUMULATOR_U - 1)
 
         return result

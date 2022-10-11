@@ -2,103 +2,67 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from lava.magma.core.learning.learning_rule_applier import (
-    LearningRuleApplierFloat,
-    LearningRuleApplierBitApprox,
-)
+from abc import ABC, abstractmethod
+import numpy as np
+import typing
+
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 
 from lava.magma.core.learning.constants import *
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
+from lava.magma.core.learning.product_series import ProductSeries
+from lava.magma.core.learning.learning_rule_applier import (
+    AbstractLearningRuleApplier,
+    LearningRuleApplierFloat,
+    LearningRuleApplierBitApprox,
+)
 import lava.magma.core.learning.string_symbols as str_symbols
-from lava.utils.weightutils import SignMode
-from lava.magma.core.learning.utils import saturate, stochastic_round
-import numpy as np
-import typing
-import math
+from lava.utils.weightutils import SignMode, clip_weights
+from lava.magma.core.learning.utils import stochastic_round
 
 NUM_DEPENDENCIES = len(str_symbols.DEPENDENCIES)
 NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
-class ConnectionModelBitApproximate(PyLoihiProcessModel):
-    """Fixed-point, bit-approximate implementation of the Connection base
-    class.
+class Connection(PyLoihiProcessModel, ABC):
 
-    This class implements the learning simulation with integer and fixed
-    point arithmetic but does not implement the exact behavior of Loihi.
-    Nevertheless, the results are comparable to those by Loihi.
+    # Common connectivity parameters
+    weights = None
 
-    To summarize the behavior:
-
-    Spiking phase:
-    run_spk:
-
-        (1) (Dense) Send activations from past time step to post-synaptic
-        neuron Process.
-        (2) (Dense) Compute activations to be sent on next time step.
-        (3) (Dense) Receive spikes from pre-synaptic neuron Process.
-        (4) (Dense) Record within-epoch pre-synaptic spiking time.
-        Update pre-synaptic traces if more than one spike during the epoch.
-        (5) Receive spikes from post-synaptic neuron Process.
-        (6) Record within-epoch pre-synaptic spiking time.
-        Update pre-synaptic traces if more than one spike during the epoch.
-        (7) Advance trace random generators.
-
-    Learning phase:
-    run_lrn:
-
-        (1) Advance synaptic variable random generators.
-        (2) Compute updates for each active synaptic variable,
-        according to associated learning rule,
-        based on the state of Vars representing dependencies and factors.
-        (3) Update traces based on within-epoch spiking times and trace
-        configuration parameters (impulse, decay).
-        (4) Reset within-epoch spiking times and dependency Vars
-
-    Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
-    delay in this connections Process. It can be adapted according to its
-    learning rule (learned), but it will not affect synaptic activity.
-
-    Parameters
-    ----------
-    proc_params: dict
-        Parameters from the ProcessModel
-    """
     # Learning Ports
-    s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
-    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    s_in_bap = None
 
     # Learning Vars
-    x0: np.ndarray = LavaPyType(np.ndarray, bool)
-    tx: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
-    x1: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
-    x2: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+    x0 = None
+    tx = None
+    x1 = None
+    x2 = None
 
-    y0: np.ndarray = LavaPyType(np.ndarray, bool)
-    ty: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
-    y1: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
-    y2: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
-    y3: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+    y0 = None
+    ty = None
+    y1 = None
+    y2 = None
+    y3 = None
 
-    tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
-    tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    tag_2 = None
+    tag_1 = None
 
     def __init__(self, proc_params: dict) -> None:
+        super().__init__(proc_params)
+
         # If there is a plasticity rule attached to the corresponding process,
         # add all necessary ports get access to all learning params
-        self._learning_rule = proc_params["learning_rule"]
-        self._shape = proc_params["shape"]
+        self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
+        self._shape: typing.Tuple[int, ...] = proc_params["shape"]
 
-        # Flag to determine whether weights have already been scaled.
-        self.weights_set = False
+        self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
         if self._learning_rule is not None:
-            # store shapes that useful throught the lifetime of this PM
+            # store shapes that useful throughout the lifetime of this PM
             self._store_shapes()
             # store impulses and taus in ndarrays with the right shapes
             self._store_impulses_and_taus()
@@ -114,37 +78,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
 
             # initialize TraceRandoms and ConnVarRandom
             self._init_randoms()
-
-        super().__init__(proc_params)
-
-    def _set_wgts(self) -> np.ndarray:
-        wgt_vals = np.copy(self.weights)
-
-        # Saturate the weights according to the sign_mode:
-        # 0 : null
-        # 1 : mixed
-        # 2 : excitatory
-        # 3 : inhibitory
-        mixed_idx = np.equal(self.sign_mode, 1).astype(np.int32)
-        excitatory_idx = np.equal(self.sign_mode, 2).astype(np.int32)
-        inhibitory_idx = np.equal(self.sign_mode, 3).astype(np.int32)
-
-        min_wgt = -(2**8) * (mixed_idx + inhibitory_idx)
-        max_wgt = (2**8 - 1) * (mixed_idx + excitatory_idx)
-
-        saturated_wgts = np.clip(wgt_vals, min_wgt, max_wgt)
-
-        # Truncate least significant bits given sign_mode and num_wgt_bits.
-        num_truncate_bits = 8 - self.num_weight_bits + mixed_idx
-
-        truncated_wgts = np.left_shift(
-            np.right_shift(saturated_wgts, num_truncate_bits), num_truncate_bits
-        )
-
-        wgt_vals = truncated_wgts.astype(np.int32)
-        wgts_scaled = np.copy(wgt_vals)
-        self.weights_set = True
-        return wgts_scaled
 
     def _store_shapes(self) -> None:
         """Build and store several shapes that are needed in several
@@ -180,61 +113,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             num_pre_neurons,
         )
 
-    @staticmethod
-    def _decompose_impulses(
-        impulses: typing.List[float],
-    ) -> typing.Tuple[np.ndarray, np.ndarray]:
-        """Decompose float impulse values into integer and fractional parts.
-
-        Parameters
-        ----------
-        impulses : list
-            Impulse values.
-
-        Returns
-        ----------
-        impulses_int : int
-            Impulse integer values.
-        impulses_frac : int
-            Impulse fractional values.
-        """
-        impulses_int = []
-        impulses_frac = []
-
-        for impulse in impulses:
-            impulse_int = math.floor(impulse)
-
-            impulse_frac = round((impulse - impulse_int) * 2**W_TRACE)
-
-            impulses_int.append(impulse_int)
-            impulses_frac.append(impulse_frac)
-
-        return np.array(impulses_int, int), np.array(impulses_frac, int)
-
-    def _store_impulses_and_taus(self) -> None:
-        """Build and store integer ndarrays representing x and y
-        impulses and taus."""
-        self._x_impulses_int, self._x_impulses_frac = self._decompose_impulses(
-            [self._learning_rule.x1_impulse, self._learning_rule.x2_impulse]
-        )
-        self._x_taus = np.array(
-            [self._learning_rule.x1_tau, self._learning_rule.x2_tau]
-        )
-
-        self._y_impulses_int, self._y_impulses_frac = self._decompose_impulses(
-            [
-                self._learning_rule.y1_impulse,
-                self._learning_rule.y2_impulse,
-                self._learning_rule.y3_impulse,
-            ]
-        )
-        self._y_taus = np.array(
-            [
-                self._learning_rule.y1_tau,
-                self._learning_rule.y2_tau,
-                self._learning_rule.y3_tau,
-            ]
-        )
+    @abstractmethod
+    def _store_impulses_and_taus(self):
+        pass
 
     def _build_active_traces_per_dependency(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
@@ -319,35 +200,25 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         )
 
     def _build_learning_rule_appliers(self) -> None:
-        """Build and store LearningRuleApplierBitApprox for each active learning
+        """Build and store LearningRuleApplier for each active learning
         rule in a dict mapped by the learning rule's target."""
         self._learning_rule_appliers = {
             str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
                 target[1:]
-            ]: LearningRuleApplierBitApprox(ps)
+            ]: self._create_learning_rule_applier(ps)
             for target, ps in self._learning_rule.active_product_series.items()
         }
 
-    def _init_randoms(self) -> None:
-        """Initialize trace and synaptic variable random generators."""
-        self._x_random = TraceRandom(seed_trace_decay=self._learning_rule._rng_seed,
-                                     seed_impulse_addition=self._learning_rule._rng_seed + 1)
+    @abstractmethod
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
+        pass
 
-        self._y_random = TraceRandom(seed_trace_decay=self._learning_rule._rng_seed + 2,
-                                     seed_impulse_addition=self._learning_rule._rng_seed + 3)
+    @abstractmethod
+    def _init_randoms(self):
+        pass
 
-        self._conn_var_random = ConnVarRandom()
-
-    def _update_trace_randoms(self) -> None:
-        """Update trace random generators."""
-        self._x_random.advance()
-        self._y_random.advance()
-
-    def _update_synaptic_variable_random(self) -> None:
-        """Update synaptic variable random generators."""
-        self._conn_var_random.advance()
-
-    # Shape: (2, num_pre_neurons)
     @property
     def _x_traces(self) -> np.ndarray:
         """Get x traces.
@@ -355,7 +226,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         Returns
         ----------
         x_traces : np.ndarray
-            X traces.
+            X traces (shape: (2, num_pre_neurons)).
         """
         return np.concatenate(
             (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
@@ -372,7 +243,6 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         self.x1 = x_traces[0]
         self.x2 = x_traces[1]
 
-    # Shape: (3, num_post_neurons)
     @property
     def _y_traces(self) -> np.ndarray:
         """Get y traces.
@@ -380,7 +250,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         Returns
         ----------
         y_traces : np.ndarray
-            Y traces.
+            Y traces (shape: (3, num_post_neurons)).
         """
         return np.concatenate(
             (
@@ -419,6 +289,261 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             within_epoch_ts = self._learning_rule.t_epoch
 
         return within_epoch_ts
+
+    def lrn_guard(self) -> bool:
+        if self._learning_rule is not None:
+            return self.time_step % self._learning_rule.t_epoch == 0
+        return False
+
+    def run_lrn(self) -> None:
+        self._update_synaptic_variable_random()
+        self._apply_learning_rules()
+        self._update_traces()
+        self._reset_dependencies_and_spike_times()
+
+    def run_spk(self) -> None:
+        s_in_bap = self.s_in_bap.recv().astype(bool)
+
+        if self._learning_rule is not None:
+            self._record_post_spike_times(s_in_bap)
+            self._update_trace_randoms()
+
+    @abstractmethod
+    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+        pass
+
+    @abstractmethod
+    def _update_trace_randoms(self) -> None:
+        pass
+
+    @abstractmethod
+    def _update_synaptic_variable_random(self) -> None:
+        pass
+
+    @abstractmethod
+    def _apply_learning_rules(self) -> None:
+        pass
+
+    @abstractmethod
+    def _update_traces(self) -> None:
+        pass
+
+    def _reset_dependencies_and_spike_times(self) -> None:
+        """Reset all dependencies and within-epoch spike times."""
+        self.x0 = np.zeros_like(self.x0)
+        self.y0 = np.zeros_like(self.y0)
+
+        self.tx = np.zeros_like(self.tx)
+        self.ty = np.zeros_like(self.ty)
+
+
+class ConnectionModelBitApproximate(Connection):
+    """Fixed-point, bit-approximate implementation of the Connection base
+    class.
+
+    This class implements the learning simulation with integer and fixed
+    point arithmetic but does not implement the exact behavior of Loihi.
+    Nevertheless, the results are comparable to those by Loihi.
+
+    To summarize the behavior:
+
+    Spiking phase:
+    run_spk:
+
+        (1) (Dense) Send activations from past time step to post-synaptic
+        neuron Process.
+        (2) (Dense) Compute activations to be sent on next time step.
+        (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+        (4) (Dense) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (5) Receive spikes from post-synaptic neuron Process.
+        (6) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (7) Advance trace random generators.
+
+    Learning phase:
+    run_lrn:
+
+        (1) Advance synaptic variable random generators.
+        (2) Compute updates for each active synaptic variable,
+        according to associated learning rule,
+        based on the state of Vars representing dependencies and factors.
+        (3) Update traces based on within-epoch spiking times and trace
+        configuration parameters (impulse, decay).
+        (4) Reset within-epoch spiking times and dependency Vars
+
+    Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
+    delay in this connections Process. It can be adapted according to its
+    learning rule (learned), but it will not affect synaptic activity.
+
+    Parameters
+    ----------
+    proc_params: dict
+        Parameters from the ProcessModel
+    """
+
+    # Learning Ports
+    s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+
+    # Learning Vars
+    x0: np.ndarray = LavaPyType(np.ndarray, bool)
+    tx: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
+    x1: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+    x2: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+
+    y0: np.ndarray = LavaPyType(np.ndarray, bool)
+    ty: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
+    y1: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+    y2: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+    y3: np.ndarray = LavaPyType(np.ndarray, int, precision=7)
+
+    tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
+    tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+
+    def __init__(self, proc_params: dict) -> None:
+
+        # Flag to determine whether weights have already been scaled.
+        self.weights_set = False
+
+        super().__init__(proc_params)
+
+    def _store_impulses_and_taus(self) -> None:
+        """Build and store integer ndarrays representing x and y
+        impulses and taus."""
+        x_impulses = np.array(
+            [self._learning_rule.x1_impulse, self._learning_rule.x2_impulse]
+        )
+        self._x_impulses_int, self._x_impulses_frac = self._decompose_impulses(
+            x_impulses
+        )
+        self._x_taus = np.array(
+            [self._learning_rule.x1_tau, self._learning_rule.x2_tau]
+        )
+
+        y_impulses = np.array(
+            [
+                self._learning_rule.y1_impulse,
+                self._learning_rule.y2_impulse,
+                self._learning_rule.y3_impulse,
+            ]
+        )
+        self._y_impulses_int, self._y_impulses_frac = self._decompose_impulses(
+            y_impulses
+        )
+        self._y_taus = np.array(
+            [
+                self._learning_rule.y1_tau,
+                self._learning_rule.y2_tau,
+                self._learning_rule.y3_tau,
+            ]
+        )
+
+    @staticmethod
+    def _decompose_impulses(
+        impulses: np.ndarray,
+    ) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Decompose float impulse values into integer and fractional parts.
+
+        Parameters
+        ----------
+        impulses : ndarray
+            Impulse values.
+
+        Returns
+        ----------
+        impulses_int : int
+            Impulse integer values.
+        impulses_frac : int
+            Impulse fractional values.
+        """
+        impulses_int = np.floor(impulses)
+        impulses_frac = np.round(
+            (impulses - impulses_int) * 2**W_TRACE_FRACTIONAL_PART
+        )
+
+        return impulses_int.astype(int), impulses_frac.astype(int)
+
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
+        return LearningRuleApplierBitApprox(product_series)
+
+    def _init_randoms(self) -> None:
+        """Initialize trace and synaptic variable random generators."""
+        self._x_random = TraceRandom(
+            seed_trace_decay=self._learning_rule.rng_seed,
+            seed_impulse_addition=self._learning_rule.rng_seed + 1,
+        )
+
+        self._y_random = TraceRandom(
+            seed_trace_decay=self._learning_rule.rng_seed + 2,
+            seed_impulse_addition=self._learning_rule.rng_seed + 3,
+        )
+
+        self._conn_var_random = ConnVarRandom()
+
+    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+
+        If more a single pre- or post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
+
+        Parameters
+        ----------
+        s_in : ndarray
+            Pre-synaptic spikes.
+        """
+        self.x0[s_in] = True
+        multi_spike_x = np.logical_and(self.tx > 0, s_in)
+
+        x_traces = self._x_traces
+        x_traces[:, multi_spike_x] = self._add_impulse(
+            x_traces[:, multi_spike_x],
+            self._x_random.random_impulse_addition,
+            self._x_impulses_int[:, np.newaxis],
+            self._x_impulses_frac[:, np.newaxis],
+        )
+        self._set_x_traces(x_traces)
+
+        ts_offset = self._within_epoch_time_step()
+        self.tx[s_in] = ts_offset
+
+    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+
+        If more a single pre- or post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
+
+        Parameters
+        ----------
+        s_in_bap : ndarray
+            Post-synaptic spikes.
+        """
+        self.y0[s_in_bap] = True
+        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
+
+        y_traces = self._y_traces
+        y_traces[:, multi_spike_y] = self._add_impulse(
+            y_traces[:, multi_spike_y],
+            self._y_random.random_impulse_addition,
+            self._y_impulses_int[:, np.newaxis],
+            self._y_impulses_frac[:, np.newaxis],
+        )
+        self._set_y_traces(y_traces)
+
+        ts_offset = self._within_epoch_time_step()
+        self.ty[s_in_bap] = ts_offset
+
+    def _update_trace_randoms(self) -> None:
+        """Update trace random generators."""
+        self._x_random.advance()
+        self._y_random.advance()
+
+    def _update_synaptic_variable_random(self) -> None:
+        """Update synaptic variable random generators."""
+        self._conn_var_random.advance()
 
     def _extract_applier_args(self) -> typing.Dict[str, np.ndarray]:
         """Extracts arguments for the LearningRuleApplierFloat.
@@ -630,11 +755,11 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         """
         # Weights
         if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
+            if self.sign_mode == SignMode.MIXED:
                 return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
+            elif self.sign_mode == SignMode.EXCITATORY:
                 return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
+            elif self.sign_mode == SignMode.INHIBITORY:
                 return np.minimum(0, synaptic_variable_values)
         # Delays
         elif synaptic_variable_name == "tag_2":
@@ -644,8 +769,9 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             return synaptic_variable_values
         else:
             raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
             )
 
     def _saturate_synaptic_variable(
@@ -670,34 +796,28 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         """
         # Weights
         if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return saturate(
-                    -(2**W_WEIGHTS_U) - 1,
-                    synaptic_variable_values,
-                    2**W_WEIGHTS_U - 1,
-                )
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return saturate(
-                    0, synaptic_variable_values, 2**W_WEIGHTS_U - 1
-                )
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return saturate(
-                    -(2**W_WEIGHTS_U) - 1, synaptic_variable_values, 0
-                )
+            return clip_weights(
+                synaptic_variable_values,
+                sign_mode=self.sign_mode,
+                num_bits=W_WEIGHTS_U,
+            )
         # Delays
         elif synaptic_variable_name == "tag_2":
-            return saturate(0, synaptic_variable_values, 2**W_TAG_2_U - 1)
+            return np.clip(
+                synaptic_variable_values, a_min=0, a_max=2**W_TAG_2_U - 1
+            )
         # Tags
         elif synaptic_variable_name == "tag_1":
-            return saturate(
-                -(2**W_TAG_1_U) - 1,
+            return np.clip(
                 synaptic_variable_values,
-                2**W_TAG_1_U - 1,
+                a_min=-(2**W_TAG_1_U) - 1,
+                a_max=2**W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
             )
 
     def _apply_learning_rules(self) -> None:
@@ -755,7 +875,7 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
         """
         trace_new = trace_values + impulses_int
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-        trace_new = saturate(0, trace_new, 2**W_TRACE - 1)
+        trace_new = np.clip(trace_new, a_min=0, a_max=2**W_TRACE - 1)
 
         return trace_new
 
@@ -821,6 +941,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             Trace impulse values, fractional part.
         trace_taus: ndarray
             Trace decay time constants.
+        trace_random: TraceRandom
+            Trace random generator.
 
         Returns
         ----------
@@ -928,85 +1050,8 @@ class ConnectionModelBitApproximate(PyLoihiProcessModel):
             )
         )
 
-    def _reset_dependencies_and_spike_times(self) -> None:
-        """Reset all dependencies and within-epoch spike times."""
-        self.x0 = np.zeros_like(self.x0)
-        self.y0 = np.zeros_like(self.y0)
 
-        self.tx = np.zeros_like(self.tx)
-        self.ty = np.zeros_like(self.ty)
-
-    def lrn_guard(self) -> bool:
-        if self._learning_rule is not None:
-            return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
-
-    def run_lrn(self) -> None:
-        self._update_synaptic_variable_random()
-        self._apply_learning_rules()
-        self._update_traces()
-        self._reset_dependencies_and_spike_times()
-
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
-
-        If more a single pre- or post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in_bap : ndarray
-            Post-synaptic spikes.
-        """
-        self.y0[s_in_bap] = True
-        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[:, multi_spike_y] = self._add_impulse(
-            y_traces[:, multi_spike_y],
-            self._y_random.random_impulse_addition,
-            self._y_impulses_int[:, np.newaxis],
-            self._y_impulses_frac[:, np.newaxis],
-        )
-        self._set_y_traces(y_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.ty[s_in_bap] = ts_offset
-
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
-
-        If more a single pre- or post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in : ndarray
-            Pre-synaptic spikes.
-        """
-        self.x0[s_in] = True
-        multi_spike_x = np.logical_and(self.tx > 0, s_in)
-
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] = self._add_impulse(
-            x_traces[:, multi_spike_x],
-            self._x_random.random_impulse_addition,
-            self._x_impulses_int[:, np.newaxis],
-            self._x_impulses_frac[:, np.newaxis],
-        )
-        self._set_x_traces(x_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
-
-    def run_spk(self) -> None:
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)
-            self._update_trace_randoms()
-
-
-class ConnectionModelFloat(PyLoihiProcessModel):
+class ConnectionModelFloat(Connection):
     """Floating-point implementation of the Connection Process
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
@@ -1050,8 +1095,8 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool)
-    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float) 
-    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float) 
+    s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     # Learning Vars
     x0: np.ndarray = LavaPyType(np.ndarray, bool)
@@ -1067,61 +1112,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     tag_2: np.ndarray = LavaPyType(np.ndarray, float)
     tag_1: np.ndarray = LavaPyType(np.ndarray, float)
-
-    def __init__(self, proc_params: dict) -> None:
-        super().__init__(proc_params)
-
-        self._shape = self.proc_params["shape"]
-        self._learning_rule = self.proc_params["learning_rule"]
-
-        if self._learning_rule is not None:
-            # store shapes that useful throught the lifetime of this PM
-            self._store_shapes()
-            # store impulses and taus in ndarrays with the right shapes
-            self._store_impulses_and_taus()
-
-            # store active traces per dependency from learning_rule in ndarrays
-            # with the right shapes
-            self._build_active_traces_per_dependency()
-            # store active traces from learning_rule in ndarrays
-            # with the right shapes
-            self._build_active_traces()
-            # generate LearningRuleApplierFloat from ProductSeries
-            self._build_learning_rule_appliers()
-
-    def _store_shapes(self) -> None:
-        """Build and store several shapes that are needed in several
-        computation stages of this ProcessModel."""
-        num_pre_neurons = self._shape[1]
-        num_post_neurons = self._shape[0]
-
-        # Shape: (2, num_pre_neurons)
-        self._shape_x_traces = (NUM_X_TRACES, num_pre_neurons)
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        self._shape_x_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, num_post_neurons)
-        self._shape_y_traces = (NUM_Y_TRACES, num_post_neurons)
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        self._shape_y_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
-
-        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        self._shape_traces_per_dep_broad = (
-            NUM_DEPENDENCIES,
-            NUM_X_TRACES + NUM_Y_TRACES,
-            num_post_neurons,
-            num_pre_neurons,
-        )
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
@@ -1148,170 +1138,75 @@ class ConnectionModelFloat(PyLoihiProcessModel):
             ]
         )
 
-    def _build_active_traces_per_dependency(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active, per dependency.
+    def _init_randoms(self):
+        pass
 
-        First dimension:
-        index 0 -> x0 dependency
-        index 1 -> y0 dependency
-        index 2 -> u dependency
+    def _create_learning_rule_applier(
+        self, product_series: ProductSeries
+    ) -> AbstractLearningRuleApplier:
+        return LearningRuleApplierFloat(product_series)
 
-        Second dimension (for x_traces):
-        index 0 -> x1 trace
-        index 1 -> x2 trace
+    def _update_trace_randoms(self) -> None:
+        pass
 
-        Second dimension (for y_traces):
-        index 0 -> y1 trace
-        index 1 -> y2 trace
-        index 2 -> y3 trace
-        """
-        # Shape : (3, 5)
-        active_traces_per_dependency = np.zeros(
-            (
-                len(str_symbols.DEPENDENCIES),
-                len(str_symbols.PRE_TRACES) + len(str_symbols.POST_TRACES),
-            ),
-            dtype=bool,
-        )
-        for (
-            dependency,
-            traces,
-        ) in self._learning_rule.active_traces_per_dependency.items():
-            if dependency == str_symbols.X0:
-                dependency_idx = 0
-            elif dependency == str_symbols.Y0:
-                dependency_idx = 1
-            elif dependency == str_symbols.U:
-                dependency_idx = 2
-            else:
-                raise ValueError("Unknown Dependency in ProcessModel.")
+    def _update_synaptic_variable_random(self) -> None:
+        pass
 
-            for trace in traces:
-                if trace == str_symbols.X1:
-                    trace_idx = 0
-                elif trace == str_symbols.X2:
-                    trace_idx = 1
-                elif trace == str_symbols.Y1:
-                    trace_idx = 2
-                elif trace == str_symbols.Y2:
-                    trace_idx = 3
-                elif trace == str_symbols.Y3:
-                    trace_idx = 4
-                else:
-                    raise ValueError("Unknown Trace in ProcessModel")
+    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+        """Record within-epoch spiking times of pre-synaptic neurons.
 
-                active_traces_per_dependency[dependency_idx, trace_idx] = True
-
-        # Shape : (3, 2)
-        self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
-
-        # Shape : (3, 3)
-        self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
-
-    def _build_active_traces(self) -> None:
-        """Build and store boolean numpy arrays specifying which x and y
-        traces are active."""
-        # Shape : (2, )
-        self._active_x_traces = np.logical_or(
-            self._active_x_traces_per_dependency[0],
-            self._active_x_traces_per_dependency[1],
-            self._active_x_traces_per_dependency[2],
-        )
-
-        # Shape : (3, )
-        self._active_y_traces = np.logical_or(
-            self._active_y_traces_per_dependency[0],
-            self._active_y_traces_per_dependency[1],
-            self._active_y_traces_per_dependency[2],
-        )
-
-    def _build_learning_rule_appliers(self) -> None:
-        """Build and store LearningRuleApplierFloat for each active learning
-        rule in a dict mapped by the learning rule's target."""
-        self._learning_rule_appliers = {
-            str_symbols.SYNAPTIC_VARIABLE_VAR_MAPPING[
-                target[1:]
-            ]: LearningRuleApplierFloat(ps)
-            for target, ps in self._learning_rule.active_product_series.items()
-        }
-
-    # Shape: (2, num_pre_neurons)
-    @property
-    def _x_traces(self) -> np.ndarray:
-        """Get x traces.
-
-        Returns
-        ----------
-        x_traces : np.ndarray
-            X traces.
-        """
-        return np.concatenate(
-            (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
-        )
-
-    def _set_x_traces(self, x_traces: np.ndarray) -> None:
-        """Set x traces.
+        If more a single pre-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
 
         Parameters
         ----------
-        x_traces : np.ndarray
-            X traces.
+        s_in : ndarray
+            Pre-synaptic spikes.
         """
-        self.x1 = x_traces[0]
-        self.x2 = x_traces[1]
 
-    # Shape: (3, num_post_neurons)
-    @property
-    def _y_traces(self) -> np.ndarray:
-        """Get y traces.
+        self.x0[s_in] = True
+        multi_spike_x = np.logical_and(self.tx > 0, s_in)
 
-        Returns
-        ----------
-        y_traces : np.ndarray
-            Y traces.
-        """
-        return np.concatenate(
-            (
-                self.y1[np.newaxis, :],
-                self.y2[np.newaxis, :],
-                self.y3[np.newaxis, :],
-            ),
-            axis=0,
-        )
+        x_traces = self._x_traces
+        x_traces[:, multi_spike_x] += self._x_impulses[:, np.newaxis]
+        self._set_x_traces(x_traces)
 
-    def _set_y_traces(self, y_traces: np.ndarray) -> None:
-        """Set y traces.
+        ts_offset = self._within_epoch_time_step()
+        self.tx[s_in] = ts_offset
+
+    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+        """Record within-epoch spiking times of post-synaptic neurons.
+
+        If more a single post-synaptic neuron spikes more than once,
+        the corresponding trace is updated by its trace impulse value.
 
         Parameters
         ----------
-        y_traces : np.ndarray
-            Y traces.
+        s_in_bap : ndarray
+            Post-synaptic spikes.
         """
-        self.y1 = y_traces[0]
-        self.y2 = y_traces[1]
-        self.y3 = y_traces[2]
 
-    def _within_epoch_time_step(self) -> int:
-        """Compute index of current time step within the epoch.
+        self.y0[s_in_bap] = True
+        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
 
-        Result ranges from 1 to t_epoch.
+        y_traces = self._y_traces
+        y_traces[:, multi_spike_y] += self._y_impulses[:, np.newaxis]
+        self._set_y_traces(y_traces)
 
-        Returns
-        ----------
-        within_epoch_ts : int
-            Within-epoch time step.
-        """
-        within_epoch_ts = self.time_step % self._learning_rule.t_epoch
+        ts_offset = self._within_epoch_time_step()
+        self.ty[s_in_bap] = ts_offset
 
-        if within_epoch_ts == 0:
-            within_epoch_ts = self._learning_rule.t_epoch
+    def _apply_learning_rules(self) -> None:
+        """Update all synaptic variables according to the
+        LearningRuleApplier representation of their corresponding
+        learning rule."""
+        applier_args = self._extract_applier_args()
 
-        return within_epoch_ts
+        for syn_var_name, lr_applier in self._learning_rule_appliers.items():
+            syn_var = getattr(self, syn_var_name).copy()
+            syn_var = lr_applier.apply(syn_var, **applier_args)
+            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
+            setattr(self, syn_var_name, syn_var)
 
     def _extract_applier_args(self) -> dict:
         """Extracts arguments for the LearningRuleApplierFloat.
@@ -1448,78 +1343,6 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
         return applier_args
 
-    def _saturate_synaptic_variable(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
-    ) -> np.ndarray:
-        """Saturate synaptic variable.
-
-        Parameters
-        ----------
-        synaptic_variable_name: str
-            Synaptic variable name.
-        synaptic_variable_values: ndarray
-            Synaptic variable values to saturate.
-
-        Returns
-        ----------
-        result : ndarray
-            Saturated synaptic variable values.
-        """
-        # Weights
-        if synaptic_variable_name == "weights":
-            if np.equal(self.sign_mode, SignMode.MIXED.value):
-                return synaptic_variable_values
-            elif np.equal(self.sign_mode, SignMode.EXCITATORY.value):
-                return np.maximum(0, synaptic_variable_values)
-            elif np.equal(self.sign_mode, SignMode.INHIBITORY.value):
-                return np.minimum(0, synaptic_variable_values)
-        # Delays
-        elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
-        # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
-        else:
-            raise ValueError(
-                "Invalid synaptic_variable_name in "
-                "saturate_synaptic_variable"
-            )
-
-    def _apply_learning_rules(self) -> None:
-        """Update all synaptic variables according to the
-        LearningRuleApplier representation of their corresponding
-        learning rule."""
-        applier_args = self._extract_applier_args()
-
-        for syn_var_name, lr_applier in self._learning_rule_appliers.items():
-            syn_var = getattr(self, syn_var_name).copy()
-            syn_var = lr_applier.apply(syn_var, **applier_args)
-            syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
-            setattr(self, syn_var_name, syn_var)
-
-    @staticmethod
-    def _decay_trace(
-        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
-    ) -> np.ndarray:
-        """Decay trace to a given within-epoch time step.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values to decay.
-        t : np.ndarray
-            Time steps to advance.
-        taus : int
-            Trace decay time constant
-
-        Returns
-        ----------
-        result : ndarray
-            Decayed trace values.
-
-        """
-        return np.exp(-t / taus) * trace_values
-
     def _evaluate_trace(
         self,
         trace_values: np.ndarray,
@@ -1588,6 +1411,66 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
         return result
 
+    @staticmethod
+    def _decay_trace(
+        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
+    ) -> np.ndarray:
+        """Decay trace to a given within-epoch time step.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values to decay.
+        t : np.ndarray
+            Time steps to advance.
+        taus : int
+            Trace decay time constant
+
+        Returns
+        ----------
+        result : ndarray
+            Decayed trace values.
+
+        """
+        return np.exp(-t / taus) * trace_values
+
+    def _saturate_synaptic_variable(
+        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
+    ) -> np.ndarray:
+        """Saturate synaptic variable.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to saturate.
+
+        Returns
+        ----------
+        result : ndarray
+            Saturated synaptic variable values.
+        """
+        # Weights and Tags
+        if synaptic_variable_name == "weights":
+            if self.sign_mode == SignMode.MIXED:
+                return synaptic_variable_values
+            elif self.sign_mode == SignMode.EXCITATORY:
+                return np.maximum(0, synaptic_variable_values)
+            elif self.sign_mode == SignMode.INHIBITORY:
+                return np.minimum(0, synaptic_variable_values)
+        # Delays
+        elif synaptic_variable_name == "tag_1":
+            return synaptic_variable_values
+        elif synaptic_variable_name == "tag_2":
+            return np.maximum(0, synaptic_variable_values)
+        else:
+            raise ValueError(
+                f"synaptic_variable_name can be 'weights', "
+                f"'tag_1', or 'tag_2'."
+                f"Got {synaptic_variable_name=}."
+            )
+
     def _update_traces(self) -> None:
         """Update all traces at the end of the learning epoch."""
         # Shape: (2, num_pre_neurons)
@@ -1635,82 +1518,21 @@ class ConnectionModelFloat(PyLoihiProcessModel):
                 self._y_taus[:, np.newaxis],
             )
         )
-
-    def _reset_dependencies_and_spike_times(self) -> None:
-        """Reset all dependencies and within-epoch spike times."""
-        self.x0 = np.zeros_like(self.x0)
-        self.y0 = np.zeros_like(self.y0)
-
-        self.tx = np.zeros_like(self.tx)
-        self.ty = np.zeros_like(self.ty)
-
-    def lrn_guard(self) -> bool:
-        if self._learning_rule is not None:
-            return self.time_step % self._learning_rule.t_epoch == 0
-        return 0
-
-    def run_lrn(self) -> None:
-        self._apply_learning_rules()
-
-        self._update_traces()
-
-        self._reset_dependencies_and_spike_times()
-
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre-synaptic neurons.
-
-        If more a single pre-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in : ndarray
-            Pre-synaptic spikes.
-        """
-
-        self.x0[s_in] = True
-        multi_spike_x = np.logical_and(self.tx > 0, s_in)
-
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] += self._x_impulses[:, np.newaxis]
-        self._set_x_traces(x_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
-
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of post-synaptic neurons.
-
-        If more a single post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        Parameters
-        ----------
-        s_in_bap : ndarray
-            Post-synaptic spikes.
-        """
-
-        self.y0[s_in_bap] = True
-        multi_spike_y = np.logical_and(self.ty > 0, s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[:, multi_spike_y] += self._y_impulses[:, np.newaxis]
-        self._set_y_traces(y_traces)
-
-        ts_offset = self._within_epoch_time_step()
-        self.ty[s_in_bap] = ts_offset
-
+    
     def run_spk(self) -> None:
+        """Overrides the Connection Model run_spk function to 
+        receive and update y2 and y3 traces.
+        """
         s_in_bap = self.s_in_bap.recv().astype(bool)
         y2 = self.s_in_y2.recv()
         y3 = self.s_in_y3.recv()
 
         if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)           
-            
+            self._record_post_spike_times(s_in_bap)
+
         y_traces = self._y_traces
         y_traces[1, :] = y2
         y_traces[2, :] = y3
-
         self._set_y_traces(y_traces)
-
+        
+        

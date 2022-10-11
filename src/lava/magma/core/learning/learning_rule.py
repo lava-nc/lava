@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-import time
+import numpy as np
 import re
 
 import lava.magma.core.learning.string_symbols as str_symbols
@@ -11,18 +11,7 @@ from lava.magma.core.learning.symbolic_equation import SymbolicEquation
 from lava.magma.core.learning.product_series import ProductSeries
 
 
-class LearningRule:
-    """Base class for learning rules.
-
-    See also
-    --------
-    lava.magma.core.learning.learning_rule.LoihiLearningRule
-
-    """
-    pass
-
-
-class LoihiLearningRule(LearningRule):
+class LoihiLearningRule:
     """Encapsulation of learning-related information according to Loihi.
 
     A LoihiLearningRule object has the following main objectives:
@@ -84,27 +73,27 @@ class LoihiLearningRule(LearningRule):
         Duration of learning epoch.
     rng_seed: int
         Seed for the random number generators. If None, seed will be
-        set to current unix timestamp. Only used in fixed point
-        implementations.
+        chosen randomly. Only used in fixed point implementations.
 
     """
+
     def __init__(
         self,
         dw: ty.Optional[str] = None,
         dd: ty.Optional[str] = None,
         dt: ty.Optional[str] = None,
-        x1_impulse: float = 0.0,
-        x1_tau: int = 0,
-        x2_impulse: float = 0.0,
-        x2_tau: int = 0,
-        y1_impulse: float = 0.0,
-        y1_tau: int = 0,
-        y2_impulse: float = 0.0,
-        y2_tau: int = 0,
-        y3_impulse: float = 0.0,
-        y3_tau: int = 0,
-        t_epoch: int = 1,
-        rng_seed: int = None,
+        x1_impulse: ty.Optional[float] = 0.0,
+        x1_tau: ty.Optional[float] = 0.0,
+        x2_impulse: ty.Optional[float] = 0.0,
+        x2_tau: ty.Optional[float] = 0.0,
+        y1_impulse: ty.Optional[float] = 0.0,
+        y1_tau: ty.Optional[float] = 0.0,
+        y2_impulse: ty.Optional[float] = 0.0,
+        y2_tau: ty.Optional[float] = 0.0,
+        y3_impulse: ty.Optional[float] = 0.0,
+        y3_tau: ty.Optional[float] = 0.0,
+        t_epoch: ty.Optional[int] = 1,
+        rng_seed: ty.Optional[int] = None,
     ) -> None:
         # dict of string learning rules
         str_learning_rules = {
@@ -144,7 +133,11 @@ class LoihiLearningRule(LearningRule):
         self._t_epoch = self._validate_t_epoch(t_epoch)
 
         # set seed or generate by time
-        self._rng_seed = rng_seed if rng_seed is not None else int(time.time())
+        self._rng_seed = (
+            rng_seed
+            if rng_seed is not None
+            else np.random.randint(1, np.iinfo(np.int32).max)
+        )
 
         # generate ProductSeries for all learning rules that were provided in
         # string format
@@ -169,6 +162,10 @@ class LoihiLearningRule(LearningRule):
             self._active_traces,
             self._active_traces_per_dependency,
         ) = self._get_active_traces_from_active_product_series()
+
+    @property
+    def rng_seed(self) -> int:
+        return self._rng_seed
 
     @property
     def x1_impulse(self) -> float:

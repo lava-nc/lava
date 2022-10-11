@@ -20,6 +20,8 @@ class R_STDPLoihi(LoihiLearningRule):
     def __init__(
             self,
             learning_rate: float,
+            A_plus: float,
+            A_minus: float,
             tau_plus: float,
             tau_minus: float,
             tag_tau: float,
@@ -55,8 +57,8 @@ class R_STDPLoihi(LoihiLearningRule):
 
         # Other learning-related parameters
         # Trace impulse values
-        x1_impulse = 16
-        y1_impulse = 16
+        x1_impulse = kwargs.get("x1_impulse", 16)
+        y1_impulse = kwargs.get("y1_impulse", 16)
 
         #Reward : R 
         y2_impulse = 0  

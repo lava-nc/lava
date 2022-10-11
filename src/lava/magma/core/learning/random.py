@@ -34,9 +34,9 @@ class TraceRandom(AbstractRandomGenerator):
     """
 
     def __init__(
-        self,
-        seed_trace_decay: ty.Optional[int] = 0,
-        seed_impulse_addition: ty.Optional[int] = 1,
+            self,
+            seed_trace_decay: ty.Optional[int] = 0,
+            seed_impulse_addition: ty.Optional[int] = 1,
     ) -> None:
         self._rng_trace_decay = np.random.default_rng(
             seed=seed_trace_decay
@@ -47,7 +47,7 @@ class TraceRandom(AbstractRandomGenerator):
 
         self._random_trace_decay = self._rng_trace_decay.random(1)[0]
         self._random_impulse_addition = self._rng_impulse_addition.integers(
-            0, 2**W_TRACE, size=1, dtype=int
+            0, 2 ** W_TRACE, size=1, dtype=int
         )[0]
 
     @property
@@ -84,7 +84,7 @@ class TraceRandom(AbstractRandomGenerator):
         """Generate new random number for stochastic rounding
         after impulse addition."""
         self._random_impulse_addition = self._rng_impulse_addition.integers(
-            0, 2**W_TRACE, size=1, dtype=int
+            0, 2 ** W_TRACE, size=1, dtype=int
         )[0]
 
     def advance(self) -> None:
@@ -110,8 +110,8 @@ class ConnVarRandom(AbstractRandomGenerator):
         application.
     """
 
-    def __init__(self, seed: ty.Optional[int] = 2) -> None:
-        self._rng = np.random.default_rng(seed=seed)
+    def __init__(self, seed_stochastic_rounding: ty.Optional[int] = 2) -> None:
+        self._rng = np.random.default_rng(seed=seed_stochastic_rounding)
 
         self._random_stochastic_round = self._rng.random(1)[0]
 

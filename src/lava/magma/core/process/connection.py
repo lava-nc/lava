@@ -1,10 +1,9 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.learning.learning_rule import LearningRule
 
 # base class for all connection processes.
 from lava.magma.core.process.variable import Var
@@ -20,7 +19,7 @@ class ConnectionProcess(AbstractProcess):
     Attributes
     ----------
     s_in_bap: InPort
-        Input port to receive back-propagating actionpotentials (BAP)
+        Input port to receive back-propagating action potentials (BAP)
     x0: Var
         Conditional for pre-synaptic spike times (is 1 if pre-synaptic neurons
         spiked in this time-step).
@@ -50,14 +49,13 @@ class ConnectionProcess(AbstractProcess):
     ----------
     shape: tuple, ndarray
         Shape of the connection in format (post, pre) order.
-    learning_rule: LearningRule
+    learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
     """
     def __init__(
         self,
         shape: tuple = (1, 1),
-        learning_rule: LearningRule = None,
-        *args,
+        learning_rule: LoihiLearningRule = None,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
@@ -85,4 +83,4 @@ class ConnectionProcess(AbstractProcess):
         self.tag_2 = Var(shape=shape, init=0)
         self.tag_1 = Var(shape=shape, init=0)
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
