@@ -257,7 +257,7 @@ class PyLearningLifModelFloat(AbstractPyLifModelFloat):
         a_graded_in = self.a_graded_reward_in.recv()
 
         y2 = self.calculate_third_factor_trace(a_graded_in)
-        y3 = self.u * 2
+        y3 = self.calculate_third_factor_trace(a_graded_in)
 
         self.s_out_y2.send(y2)
         self.s_out_y3.send(y3)

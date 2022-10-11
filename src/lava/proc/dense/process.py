@@ -70,6 +70,7 @@ class Dense(AbstractProcess):
 
         # Ports
         self.s_in = InPort(shape=(shape[1],))
+        self.s_graded_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
 
         # Variables
@@ -149,6 +150,7 @@ class LearningDense(ConnectionProcess):
 
         # Ports
         self.s_in = InPort(shape=(shape[1],))
+        self.s_graded_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
 
         # Variables

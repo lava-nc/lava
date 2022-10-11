@@ -35,6 +35,8 @@ class Connection(PyLoihiProcessModel, ABC):
 
     # Learning Ports
     s_in_bap = None
+    s_in_y2 = None
+    s_in_y3 = None
 
     # Learning Vars
     x0 = None
@@ -58,6 +60,7 @@ class Connection(PyLoihiProcessModel, ABC):
         # add all necessary ports get access to all learning params
         self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
         self._shape: typing.Tuple[int, ...] = proc_params["shape"]
+        self._graded_input: typing.Optional[bool] = proc_params["graded_input"]
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
@@ -1147,7 +1150,13 @@ class ConnectionModelFloat(Connection):
         return LearningRuleApplierFloat(product_series)
 
     def _update_trace_randoms(self) -> None:
-        pass
+        y2 = self.s_in_y2.recv()
+        y3 = self.s_in_y3.recv()
+
+        y_traces = self._y_traces
+        y_traces[1, :] = y2
+        y_traces[2, :] = y3
+        self._set_y_traces(y_traces)
 
     def _update_synaptic_variable_random(self) -> None:
         pass
@@ -1518,11 +1527,11 @@ class ConnectionModelFloat(Connection):
                 self._y_taus[:, np.newaxis],
             )
         )
-    
+    """
     def run_spk(self) -> None:
-        """Overrides the Connection Model run_spk function to 
+        Overrides the Connection Model run_spk function to 
         receive and update y2 and y3 traces.
-        """
+        
         s_in_bap = self.s_in_bap.recv().astype(bool)
         y2 = self.s_in_y2.recv()
         y3 = self.s_in_y3.recv()
@@ -1534,5 +1543,6 @@ class ConnectionModelFloat(Connection):
         y_traces[1, :] = y2
         y_traces[2, :] = y3
         self._set_y_traces(y_traces)
-        
+    """
+
         

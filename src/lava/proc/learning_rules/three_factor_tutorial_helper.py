@@ -34,7 +34,7 @@ x1_tau = 10
 y1_tau = 10
 
 # Eligibility trace decay constant
-tag_tau = 10 # Verify
+tag_tau = "2^-1"
 
 # High reward decay constant for negligible decay
 y2_tau = 2 ** 32-1
@@ -50,15 +50,16 @@ y2_impulse = 0
 t_epoch = 2
 
 # String learning rule for dt : eligibility trace represented as t
-dt = f"{learning_rate} * {A_plus} * x0 * y1 +" \
-     f"{learning_rate} * {A_minus} * y0 * x1 - t * {tag_tau}"
+dt = f"{learning_rate} * ({A_plus}) * x0 * y1 +" \
+     f"{learning_rate} * {A_minus} * y0 * x1 - t * {tag_tau} * u0"
 
 # String learning rule for dw
-dw = " u0 * t * y2 "
+dw = " u0 * t * y3 "
 
 
 # Create custom LearningRule
 R_STDP = LoihiLearningRule(dw=dw,
+                           dt=dt,
                          x1_impulse=x1_impulse,
                          x1_tau=x1_tau,
                          y1_impulse=y1_impulse,
@@ -96,6 +97,9 @@ wgt_inp_pre = np.eye(num_neurons_pre) * 250
 # SpikePattern -> LIF connection weight : POST-synaptic
 wgt_inp_post = np.eye(num_neurons_post) * 250
 
+# Graded SpikePattern -> LIF connection weight : REWARD
+wgt_inp_reward = np.eye(num_neurons_post) * 250
+
 # LIF -> LIF connection initial weight (learning-enabled)
 wgt_plast_conn = np.full(shape_conn_post, 50)
     
@@ -117,10 +121,10 @@ np.place(spike_raster_post, np.random.rand(num_neurons_post, num_steps) < spike_
 # Create graded reward spikes
 graded_reward_spikes = np.zeros((num_neurons_post, num_steps)) 
 for index in range(num_steps):
-    if index in range(75, 100):
-        graded_reward_spikes[0][index] = 10
-    elif index in range(150, 175):
-        graded_reward_spikes[1][index] = 10
+    if index in range(0, 150):
+        graded_reward_spikes[0][index] = 2
+    if index in range(150, 200):
+        graded_reward_spikes[1][index] = 2
 
 
 # Create input devices
@@ -128,12 +132,12 @@ pattern_pre = SpikeIn(data=spike_raster_pre.astype(int))
 pattern_post = SpikeIn(data=spike_raster_post.astype(int))
 
 # Create graded reward input device
-reward_pattern_post = SpikeIn(data=graded_reward_spikes.astype(float))
+reward_pattern_post = SpikeIn(data=graded_reward_spikes.astype(int))
 
 # Create input connectivity
 conn_inp_pre = Dense(weights=wgt_inp_pre)
 conn_inp_post = Dense(weights=wgt_inp_post)
-conn_inp_reward = Dense(weights=wgt_inp_post)
+conn_inp_reward = Dense(weights=wgt_inp_reward, graded_input=True)
 
 # Create pre-synaptic neurons
 lif_pre = LIF(u=0,
@@ -171,7 +175,7 @@ pattern_post.s_out.connect(conn_inp_post.s_in)
 conn_inp_post.a_out.connect(lif_post.a_in)
 
 # Reward ports
-reward_pattern_post.s_out.connect(conn_inp_reward.s_in)
+reward_pattern_post.s_out.connect(conn_inp_reward.s_graded_in)
 conn_inp_reward.a_out.connect(lif_post.a_graded_reward_in)
 
 lif_pre.s_out.connect(plast_conn.s_in)
@@ -193,6 +197,7 @@ mon_reward_trace = Monitor()
 mon_pre_spikes = Monitor()
 mon_post_spikes = Monitor()
 mon_weight = Monitor()
+mon_tag = Monitor()
 
 # Connect monitors
 mon_pre_trace.probe(plast_conn.x1, num_steps)
@@ -200,7 +205,8 @@ mon_post_trace.probe(plast_conn.y1, num_steps)
 mon_reward_trace.probe(lif_post.s_out_y2, num_steps)
 mon_pre_spikes.probe(lif_pre.s_out, num_steps)
 mon_post_spikes.probe(lif_post.s_out, num_steps)
-#mon_weight.probe(plast_conn.weights, num_steps)
+mon_weight.probe(plast_conn.weights, num_steps)
+mon_tag.probe(plast_conn.tag_1, num_steps)
 
 
 # Running
@@ -214,6 +220,11 @@ post_trace = mon_post_trace.get_data()['plastic_dense']['y1']
 reward_trace = mon_reward_trace.get_data()['lif_post']['s_out_y2']
 pre_spikes = mon_pre_spikes.get_data()['lif_pre']['s_out']
 post_spikes = mon_post_spikes.get_data()['lif_post']['s_out']
-# TO FIX : weights = mon_weight.get_data()['plastic_dense']['weights'][:, :, 0]
+weights_neuron_A = mon_weight.get_data()['plastic_dense']['weights'][:, 0, 0]
+weights_neuron_B = mon_weight.get_data()['plastic_dense']['weights'][:, 1, 0]
+tag_neuron_A = mon_tag.get_data()['plastic_dense']['tag_1'][:, 0, 0]
+tag_neuron_B = mon_tag.get_data()['plastic_dense']['tag_1'][:, 1, 0]
+
+print(weights_neuron_B)
 
 pattern_pre.stop()
