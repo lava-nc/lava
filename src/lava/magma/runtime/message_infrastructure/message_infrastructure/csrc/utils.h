@@ -1,19 +1,16 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <semaphore.h>
-
 #include <memory>
-#include <vector>
+#include <chrono>  // NOLINT
+#include <thread>  // NOLINT
 
 #define MAX_ARRAY_DIMS (5)
+#define SLEEP_US (1)
 
 namespace message_infrastructure {
 
@@ -29,11 +26,6 @@ enum ChannelType {
   DDSCHANNEL = 2
 };
 
-#define ACC_MODE (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | \
-  S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)
-
-#define CREAT_FLAG (O_CREAT | O_RDWR)
-
 struct MetaData {
   int64_t nd;
   int64_t type;
@@ -46,6 +38,12 @@ struct MetaData {
 
 using MetaDataPtr = std::shared_ptr<MetaData>;
 
+namespace helper {
+
+static void Sleep() {
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+}
 }  // namespace message_infrastructure
 
 #endif  // UTILS_H_

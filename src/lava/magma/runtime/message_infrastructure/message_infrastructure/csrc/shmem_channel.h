@@ -1,22 +1,17 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #ifndef SHMEM_CHANNEL_H_
 #define SHMEM_CHANNEL_H_
 
-// #include <pybind11/pybind11.h>
-// #include <pybind11/numpy.h>
-#include <semaphore.h>
-
 #include <memory>
 #include <string>
 
 #include "abstract_channel.h"
+#include "abstract_port.h"
 #include "shm.h"
 #include "shmem_port.h"
-#include "utils.h"
-#include "port_proxy.h"
 
 namespace message_infrastructure {
 
@@ -30,14 +25,15 @@ class ShmemChannel : public AbstractChannel {
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:
-  SharedMemoryPtr shm_ = NULL;
-  ShmemSendPortPtr send_port_ = NULL;
-  ShmemRecvPortPtr recv_port_ = NULL;
+  SharedMemoryPtr shm_ = nullptr;
+  ShmemSendPortPtr send_port_ = nullptr;
+  ShmemRecvPortPtr recv_port_ = nullptr;
 };
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
                               const size_t &nbytes,
-                              const std::string &name);
+                              const std::string &src_name,
+                              const std::string &dst_name);
 
 }  // namespace message_infrastructure
 

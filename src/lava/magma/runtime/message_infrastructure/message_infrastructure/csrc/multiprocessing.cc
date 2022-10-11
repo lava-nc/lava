@@ -1,11 +1,9 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #include "multiprocessing.h"
 #include "message_infrastructure_logging.h"
-#include "utils.h"
-
 
 namespace message_infrastructure {
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -6,14 +6,11 @@
 #define PORT_PROXY_H_
 
 #include <pybind11/pybind11.h>
-
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "abstract_port.h"
-#include "message_infrastructure_logging.h"
-#include "shmem_port.h"
 #include "utils.h"
 
 namespace message_infrastructure {

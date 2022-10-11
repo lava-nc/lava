@@ -11,6 +11,7 @@ from functools import partial
 from enum import Enum
 
 from message_infrastructure import Actor
+from message_infrastructure import ActorStatus
 from message_infrastructure.multiprocessing import MultiProcessing
 
 import time
@@ -22,10 +23,7 @@ def nbytes_cal(shape, dtype):
 
 class Builder():
     def build(self, i):
-        print(f"Builder running build {i}")
-        print(f"Build {i}: sleep for 10s")
-        time.sleep(10)
-        print(f"Build {i}: Builder Achieved")
+        time.sleep(0.0001)
 
 
 def target_fn(*args, **kwargs):
@@ -40,7 +38,6 @@ def target_fn(*args, **kwargs):
         actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
-        print("builder", actor.get_status())
         builder.build(idx)
         return 0
     except Exception as e:
@@ -56,7 +53,6 @@ def multiprocessing_spawn(builder, target_fn):
         mp = MultiProcessing()
         mp.start()
         #builder = Builder()
-
         # Build 5 actors
         for i in range(5):
             bound_target_fn = partial(target_fn, idx=i)

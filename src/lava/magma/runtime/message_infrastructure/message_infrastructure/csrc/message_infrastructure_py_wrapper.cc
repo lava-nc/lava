@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -56,28 +56,29 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
         actor.Control(ActorCmd::CmdStop);
       })
     .def("status_stopped", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusStopped);
+        return actor.SetStatus(ActorStatus::StatusStopped);
       })
     .def("status_running", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusRunning);
+        return actor.SetStatus(ActorStatus::StatusRunning);
       })
     .def("status_paused", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusPaused);
+        return actor.SetStatus(ActorStatus::StatusPaused);
       })
     .def("status_terminated", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusTerminated);
+        return actor.SetStatus(ActorStatus::StatusTerminated);
       })
     .def("error", [](PosixActor &actor){
-        actor.SetStatus(ActorStatus::StatusError);
+        return actor.SetStatus(ActorStatus::StatusError);
       });
   py::enum_<ChannelType> (m, "ChannelType")
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL)
     .export_values();
-  py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort");
+  py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort")
+    .def(py::init<>());
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
-    .def(py::init<ChannelType, size_t, size_t, std::string>())
+    .def(py::init<ChannelType, size_t, size_t, std::string, std::string>())
     .def_property_readonly("src_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
   py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")

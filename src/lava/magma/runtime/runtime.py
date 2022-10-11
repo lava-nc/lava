@@ -11,7 +11,6 @@ import typing as ty
 import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
-                                    ActorStatus,
                                     Actor,
                                     Channel)
 
@@ -164,7 +163,6 @@ class Runtime:
         _messaging_infrastructure_type and Start it"""
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
             self._messaging_infrastructure_type)
-        self._messaging_infrastructure.start()
 
     def _get_process_builder_for_process(self, process: AbstractProcess) -> \
             AbstractProcessBuilder:
@@ -270,14 +268,9 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        error_cnt = 0
-                        for actors in \
-                                self._messaging_infrastructure.actors:
-                            if actors.get_status() == ActorStatus.StatusError:
-                                error_cnt += 1
-                            actors.stop()
+                        self._messaging_infrastructure.stop(True)
                         raise RuntimeError(
-                            f"{error_cnt} Exception(s) occurred. See "
+                            f"Exception(s) occurred. See "
                             f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
@@ -312,6 +305,7 @@ class Runtime:
         """
         if self._is_started:
             self._is_running = True
+            self._messaging_infrastructure.start()
             if isinstance(run_condition, RunSteps):
                 self.num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
@@ -336,7 +330,25 @@ class Runtime:
     def pause(self):
         """Pauses the execution"""
         if self._is_running:
-            self._messaging_infrastructure.pause()
+            for send_port in self.runtime_to_service:
+                send_port.send(MGMT_COMMAND.PAUSE)
+            for recv_port in self.service_to_runtime:
+                data = recv_port.recv()
+                if not enum_equal(data, MGMT_RESPONSE.PAUSED):
+                    if enum_equal(data, MGMT_RESPONSE.ERROR):
+                        # Receive all errors from the ProcessModels
+                        error_cnt = 0
+                        for actors in \
+                                self._messaging_infrastructure.actors:
+                            actors.join()
+                            if actors.exception:
+                                _, traceback = actors.exception
+                                self.log.info(traceback)
+                                error_cnt += 1
+                        self.stop()
+                        raise RuntimeError(
+                            f"{error_cnt} Exception(s) occurred. See "
+                            f"output above for details.")
             self._is_running = False
 
     def stop(self):

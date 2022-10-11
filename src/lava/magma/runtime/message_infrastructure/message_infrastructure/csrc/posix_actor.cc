@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -57,7 +57,7 @@ int PosixActor::ForceStop() {
       LAVA_LOG(LOG_MP, "The Actor child was ended with signal %d\n", status);
     }
   }
-  SetStatus(ActorStatus::StatusStopped);
+  SetStatus(ActorStatus::StatusTerminated);
   return 0;
 }
 

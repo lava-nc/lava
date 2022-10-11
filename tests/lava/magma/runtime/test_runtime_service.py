@@ -1,11 +1,9 @@
 import unittest
 
-import numpy as np
 from message_infrastructure import (
     ChannelBackend,
     Channel,
-    SendPort,
-    RecvPort
+    ActorStatus
 )
 from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -15,17 +13,27 @@ from lava.magma.runtime.runtime_services.runtime_service import \
     PyRuntimeService
 
 
-class MockInterface:
-    def __init__(self):
-        pass
-
-
 def create_channel(name: str):
-    mock = MockInterface()
     return Channel(ChannelBackend.SHMEMCHANNEL,
                    8,
                    4,
-                   name)
+                   name + "src",
+                   name + "dst")
+
+
+class MockActorInterface:
+
+    def set_stop_fn(self, fn):
+        pass
+
+    def get_status(self):
+        return ActorStatus.StatusRunning
+
+    def status_stopped(self):
+        pass
+
+    def status_terminated(self):
+        pass
 
 
 class SimpleSyncProtocol(AbstractSyncProtocol):
@@ -68,17 +76,16 @@ class TestRuntimeService(unittest.TestCase):
         service_to_runtime = create_channel(name="service_to_runtime")
         service_to_process = [create_channel(name="service_to_process")]
         process_to_service = [create_channel(name="process_to_service")]
-        runtime_to_service.dst_port.start()
-        service_to_runtime.src_port.start()
 
         pm.service_to_process = service_to_process[0].dst_port
         pm.process_to_service = process_to_service[0].src_port
         pm.py_ports = []
-        # pm.start()
+        pm.start(MockActorInterface())
         rs.runtime_to_service = runtime_to_service.src_port
         rs.service_to_runtime = service_to_runtime.dst_port
         rs.service_to_process = [service_to_process[0].src_port]
         rs.process_to_service = [process_to_service[0].dst_port]
+        rs.start(MockActorInterface())
         rs.join()
         pm.join()
 

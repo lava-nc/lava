@@ -35,9 +35,9 @@ def send_proc(actor, **kwargs):
     port.start()
     for i in range(QUEUE_SIZE + 1):
         start_ts = time.time()
-        port.send(generate_data())
+        data = generate_data()
+        port.send(data)
         end_ts = time.time()
-        print(f"Send {i}, duration: {end_ts - start_ts}")
     actor.status_paused()
 
 
@@ -48,11 +48,8 @@ def recv_proc(actor, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     time.sleep(1)
-    print("Recv sleep done")
     for i in range(QUEUE_SIZE + 1):
         data = port.recv()
-        print(f"Recv {i} data: ", data)
-        # time.sleep(0.001)
     actor.status_paused()
 
 
@@ -67,7 +64,8 @@ class TestChannelBlock(unittest.TestCase):
             ChannelBackend.SHMEMCHANNEL,
             QUEUE_SIZE,
             nbytes,
-            "test-block")
+            "test_block",
+            "test_block")
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
@@ -78,8 +76,7 @@ class TestChannelBlock(unittest.TestCase):
         mp.build_actor(recv_port_fn, None)
         mp.build_actor(send_port_fn, None)
 
-        time.sleep(2)
-        print("Send stop")
+        time.sleep(1)
         mp.stop(True)
 
 

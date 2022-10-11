@@ -1,9 +1,10 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #include "abstract_actor.h"
-#include <xmmintrin.h>
+#include "utils.h"
+#include "message_infrastructure_logging.h"
 
 namespace message_infrastructure {
 
@@ -43,13 +44,18 @@ void AbstractActor::HandleCmd() {
             }
             });
         if (!ret) {
-            _mm_pause();
+            helper::Sleep();
         }
     }
 }
 
-void AbstractActor::SetStatus(ActorStatus status) {
+bool AbstractActor::SetStatus(ActorStatus status) {
+    auto const curr_status = actore_status_.load();
+    if (curr_status >= static_cast<int>(ActorStatus::StatusStopped) && static_cast<int>(status) < curr_status) {
+        return false;
+    }
     actore_status_.store(static_cast<int>(status));
+    return true;
 }
 
 int AbstractActor::GetStatus() {
@@ -71,13 +77,13 @@ void AbstractActor::Run() {
         LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
       } else {
         // pause status
-        _mm_pause();
+        helper::Sleep();
       }
     }
     if (handle_cmd_thread_->joinable()) {
         handle_cmd_thread_->join();
     }
-    if (stop_fn_ != NULL && actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
+    if (stop_fn_ != nullptr && actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
         stop_fn_();
     }
     LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);

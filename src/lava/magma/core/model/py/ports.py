@@ -633,6 +633,7 @@ class PyRefPort(AbstractPyPort):
             transformer: ty.Optional[
                 AbstractTransformer] = IdentityTransformer()
     ):
+        self._shape = shape
         self._transformer = transformer
         self._csp_recv_port = csp_recv_port
         self._csp_send_port = csp_send_port
@@ -718,7 +719,7 @@ class PyRefPortVectorDense(PyRefPort):
             The value of the referenced Var.
         """
         if self._csp_send_port and self._csp_recv_port:
-            header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
+            header = np.ones(self._shape) * VarPortCmd.GET
             self._csp_send_port.send(header)
 
             return self._transformer.transform(self._csp_recv_port.recv(),
@@ -736,7 +737,7 @@ class PyRefPortVectorDense(PyRefPort):
             The data to send via _csp_send_port.
         """
         if self._csp_send_port:
-            header = np.ones(self._csp_send_port.shape) * VarPortCmd.SET
+            header = np.ones(self._shape) * VarPortCmd.SET
             self._csp_send_port.send(header)
             self._csp_send_port.send(data)
 

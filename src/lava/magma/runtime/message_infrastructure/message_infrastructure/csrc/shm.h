@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -42,6 +42,8 @@ class SharedMemory {
   void Close();
   void InitSemaphore();
   int GetDataElem(int offset);
+  std::string GetReq();
+  std::string GetAck();
 
  private:
   size_t size_;
@@ -97,6 +99,8 @@ class SharedMemManager {
     }
     shm_strs_.insert(str);
     std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
+    sem_strs_.insert(shm->GetReq());
+    sem_strs_.insert(shm->GetAck());
     shm->InitSemaphore();
     return shm;
   }
@@ -109,6 +113,7 @@ class SharedMemManager {
     std::srand(std::time(nullptr));
   }
   std::set<std::string> shm_strs_;
+  std::set<std::string> sem_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
 };

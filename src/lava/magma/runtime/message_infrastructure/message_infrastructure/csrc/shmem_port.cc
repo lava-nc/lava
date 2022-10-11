@@ -1,15 +1,7 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <xmmintrin.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <memory.h>
-#include <fcntl.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <thread>
@@ -18,9 +10,9 @@
 #include <string>
 #include <condition_variable>
 #include <cassert>
+#include <cstring>
 
 #include "shmem_port.h"
-#include "shm.h"
 #include "utils.h"
 #include "message_infrastructure_logging.h"
 
@@ -42,7 +34,7 @@ void ShmemRecvQueue::Push(void* src) {
 
   if (next_write_index != read_index_.load(std::memory_order_acquire)) {
     void *ptr = malloc(nbytes_);
-    memcpy(ptr, src, nbytes_);
+    std::memcpy(ptr, src, nbytes_);
     array_[curr_write_index] = ptr;
     write_index_.store(next_write_index, std::memory_order_release);
   }
@@ -50,7 +42,7 @@ void ShmemRecvQueue::Push(void* src) {
 
 void* ShmemRecvQueue::Pop(bool block) {
   while(block && Empty()) {
-    _mm_pause();
+    helper::Sleep();
     if(done_)
       return NULL;
   }
@@ -67,7 +59,7 @@ void* ShmemRecvQueue::Pop(bool block) {
 
 void* ShmemRecvQueue::Front() {
   while(Empty()) {
-    _mm_pause();
+    helper::Sleep();
     if(done_)
       return NULL;
   }
@@ -128,20 +120,20 @@ ShmemRecvQueue::~ShmemRecvQueue() {
 ShmemSendPort::ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
-                const size_t &nbytes) : AbstractSendPort(name, size, nbytes), shm_(shm), done_(false)
+                const size_t &nbytes)
+  : AbstractSendPort(name, size, nbytes), shm_(shm), done_(false)
 {}
 
 void ShmemSendPort::Start() {
   shm_->Start();
-  // ack_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemSendPort::AckCallback, this);
 }
 
 void ShmemSendPort::Send(MetaDataPtr metadata) {
   shm_->Store([this, &metadata](void* data){
     char* cptr = (char*)data;
-    memcpy(cptr, metadata.get(), sizeof(MetaData));
+    std::memcpy(cptr, metadata.get(), sizeof(MetaData));
     cptr += sizeof(MetaData);
-    memcpy(cptr, metadata->mdata, this->nbytes_);
+    std::memcpy(cptr, metadata->mdata, this->nbytes_ - sizeof(MetaData));
   });
 }
 
@@ -153,23 +145,16 @@ void ShmemSendPort::Join() {
   done_ = true;
 }
 
-int ShmemSendPort::AckCallback() {
-  while(!done_) {
-  // Todo(hexu1) : CspSelector.Observer
-  }
-  return 0;
-}
-
 ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
-                const size_t &nbytes): AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false)
+                const size_t &nbytes)
+  : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false)
 {
   queue_ = std::make_shared<ShmemRecvQueue>(name_, size_, nbytes_);
 }
 
 void ShmemRecvPort::Start() {
-  // req_callback_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemRecvPort::ReqCallback, this);
   recv_queue_thread_ = std::make_shared<std::thread>(&message_infrastructure::ShmemRecvPort::QueueRecv, this);
 }
 
@@ -183,7 +168,7 @@ void ShmemRecvPort::QueueRecv() {
     }
     if (!ret) {
       // sleep
-      _mm_pause();
+      helper::Sleep();
     }
   }
 }
@@ -195,30 +180,25 @@ bool ShmemRecvPort::Probe() {
 MetaDataPtr ShmemRecvPort::Recv() {
   char *cptr = (char *)queue_->Pop(true);
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
-  memcpy(metadata_res.get(), cptr, sizeof(MetaData));
+  std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
   metadata_res->mdata = (void*)(cptr + sizeof(MetaData));
   return metadata_res;
 }
 
 void ShmemRecvPort::Join() {
-  done_ = true;
-  recv_queue_thread_->join();
-  queue_->Stop();
+  if (!done_) {
+    done_ = true;
+    recv_queue_thread_->join();
+    queue_->Stop();
+  }
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
   char *cptr = (char *)queue_->Front();
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
-  memcpy(metadata_res.get(), cptr, sizeof(MetaData));
+  std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
   metadata_res->mdata = (void*)(cptr + sizeof(MetaData));
   return metadata_res;
-}
-
-int ShmemRecvPort::ReqCallback() {
-  while(!done_) {
-  // Todo(hexu1) : CspSelector.Observer
-  }
-  return 0;
 }
 
 }  // namespace message_infrastructure

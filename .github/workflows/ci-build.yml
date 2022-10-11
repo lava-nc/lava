@@ -158,4 +158,3 @@ jobs:
         source $VENV
         python3 -m pip install ipykernel
         pytest src/lava/magma/runtime/message_infrastructure
-        

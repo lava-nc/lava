@@ -41,6 +41,5 @@ class AbstractRuntimeService(ABC):
         pass
 
     def join(self):
-        self._actor.status_stopped()
         self.runtime_to_service.join()
         self.service_to_runtime.join()
