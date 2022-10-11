@@ -74,8 +74,7 @@ Open a **python 3** terminal and run based on the OS you are on:
 
 ```bash
 cd $HOME
-pip install -U pip
-pip install "poetry>=1.1.13"
+curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
 git checkout v0.4.0
@@ -101,7 +100,7 @@ git checkout v0.4.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
-pip install "poetry>=1.1.13"
+curl -sSL https://install.python-poetry.org | python3 -
 poetry config virtualenvs.in-project true
 poetry install
 pytest
@@ -152,6 +151,15 @@ via:
 conda install lava -c conda-forge
 ```
 
+Alternatively with intel numpy and scipy:
+
+```bash
+conda create -n lava python=3.9 -c intel
+conda activate lava
+conda install -n lava -c intel numpy scipy
+conda install -n lava -c conda-forge lava --freeze-installed
+```
+
 ## [Alternative] Installing Lava from binaries
 
 If you only need to install Lava as a user in your python environment, we will
@@ -174,7 +182,7 @@ pip install lava-nc-0.4.0.tar.gz
 
 ```bash
 # Install poetry
-pip install "poetry>=1.1.13"
+curl -sSL https://install.python-poetry.org | python3 -
 poetry config virtualenvs.in-project true
 poetry install
 poetry shell

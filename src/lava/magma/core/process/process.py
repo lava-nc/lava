@@ -51,24 +51,27 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     neuromorphic cores.
 
     Lava Processes consist of the following key components:
-      1. State: A Lava Process has internal state that is realized through
-      Lava Vars (variables). Vars can be initialized by the user
-      and are mutable during execution either as a result of Process code or
-      user interaction.
-      2. Ports: Lava Processes communicate with their environment or other
-      Processes solely via messages. Messages are sent between ports via
-      channels. Processes may have one or more input, output, or reference
-      ports.
-      - OutPorts can only be connected to one or more InPorts and
-        communication is uni-directional.
-      - InPorts can receive inputs from one or more OutPorts.
-      - RefPorts can be connected to Vars of remote Processes and allow the
-        Process with the RefPort to access another Process' internal state
-        directly and bi-directionally. This type of shared-memory interaction
-        is potentially unsafe and should be used with caution!
-      3. API: A Lava Process can expose a public API to configure it or interact
-      with it at setup or during execution interactively. In general,
-      the public state Vars can be considered part of a Process' API.
+
+    1. State: A Lava Process has internal state that is realized through
+       Lava Vars (variables). Vars can be initialized by the user
+       and are mutable during execution either as a result of Process code or
+       user interaction.
+    2. Ports: Lava Processes communicate with their environment or other
+       Processes solely via messages. Messages are sent between ports via
+       channels. Processes may have one or more input, output, or reference
+       ports.
+
+       - OutPorts can only be connected to one or more InPorts and
+         communication is uni-directional.
+       - InPorts can receive inputs from one or more OutPorts.
+       - RefPorts can be connected to Vars of remote Processes and allow the
+         Process with the RefPort to access another Process' internal state
+         directly and bi-directionally. This type of shared-memory interaction
+         is potentially unsafe and should be used with caution!
+
+    3. API: A Lava Process can expose a public API to configure it or interact
+       with it at setup or during execution interactively. In general,
+       the public state Vars can be considered part of a Process' API.
 
     Crucially, the behavior of a Process is not specified by the Process itself
     but by separate ProcessModels that implement the behavior
@@ -81,15 +84,15 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     Developers creating new Processes need to inherit from the
     AbstractProcess interface. Any internal Vars or Ports must be initialized
     within its init method:
-    ```
-    class NewProcess(AbstractProcess):
-        def __init__(self, shape, name):
-            super().__init__(shape=shape, name=name)
-            self.var1 = Var(shape=shape)
-            self.in_port1 = InPort(shape=shape)
-            self.out_port1 = OutPort(shape=shape)
-            ...
-    ```
+
+    >>> class NewProcess(AbstractProcess):
+    >>>     def __init__(self, shape, name):
+    >>>         super().__init__(shape=shape, name=name)
+    >>>         self.var1 = Var(shape=shape)
+    >>>         self.in_port1 = InPort(shape=shape)
+    >>>         self.out_port1 = OutPort(shape=shape)
+    >>>         ...
+
     Vars should only be used for dynamic state parameters that play a role in
     the behavioral model of the Process or for static configuration parameters
     that affect the behavior of the Process (e.g., the membrane potential of a
@@ -307,11 +310,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         immediately while the Processes are executed. In this case,
         the methods wait(), pause(), and stop() can be used to
         interact with the Runtime:
-          - wait() blocks execution for as long as the RunCondition is
+
+        - wait() blocks execution for as long as the RunCondition is
           satisfied.
-          - pause() pauses execution as soon as possible and returns
+        - pause() pauses execution as soon as possible and returns
           control back to the user.
-          - stop() terminates execution and releases control of all
+        - stop() terminates execution and releases control of all
           involved compute nodes.
 
         If a run has been suspended by either pause() or a RunCondition
@@ -393,6 +397,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     @property
     def model(self) -> "AbstractProcessModel":
+        """ Return model """
         return self._model
 
     @model.setter
@@ -401,6 +406,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     @property
     def model_class(self) -> ty.Type["AbstractProcessModel"]:
+        """ Return model class """
         return self._model_class
 
     @property

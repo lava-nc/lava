@@ -14,7 +14,7 @@ from message_infrastructure import (RecvPort,
                                     Actor,
                                     Channel)
 
-from lava.magma.compiler.var_model import AbstractVarModel
+from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from message_infrastructure.message_interface_enum import ActorType
 from message_infrastructure.factory import MessageInfrastructureFactory
 from message_infrastructure.message_infrastructure_interface import \
@@ -26,7 +26,6 @@ from lava.magma.runtime.runtime_services.runtime_service import \
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-
 from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
@@ -349,6 +348,13 @@ class Runtime:
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
+                    else:
+                        if recv_port.probe():
+                            data = recv_port.recv()
+                        if not enum_equal(data, MGMT_RESPONSE.PAUSED):
+                            raise RuntimeError(
+                                f"{data} Got Wrong Response for Pause.")
+
             self._is_running = False
 
     def stop(self):
@@ -410,7 +416,8 @@ class Runtime:
                 buffer = buffer[idx]
             buffer_shape: ty.Tuple[int, ...] = buffer.shape
             num_items: int = np.prod(buffer_shape).item()
-            buffer = buffer.reshape((1, num_items))
+            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: SendPort = self.runtime_to_service[runtime_srv_id]
@@ -461,7 +468,8 @@ class Runtime:
                 buffer[0, i] = data_port.recv()[0]
 
             # 3. Reshape result and return
-            buffer = buffer.reshape(ev.shape)
+            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:

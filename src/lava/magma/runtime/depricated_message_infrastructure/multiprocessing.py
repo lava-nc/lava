@@ -55,6 +55,7 @@ class SystemProcess(mp.Process):
 
     @property
     def exception(self):
+        """Exception property."""
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
