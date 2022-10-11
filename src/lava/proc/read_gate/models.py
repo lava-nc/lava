@@ -24,6 +24,8 @@ class ReadGatePyModel(PyLoihiProcessModel):
     target_cost: int = LavaPyType(int, np.int32, 32)
     cost_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32,
                                    precision=32)
+    acknowledgemet: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32,
+                                          precision=32)
     cost_out: PyOutPort = LavaPyType(
         PyOutPort.VEC_DENSE, np.int32, precision=32
     )
