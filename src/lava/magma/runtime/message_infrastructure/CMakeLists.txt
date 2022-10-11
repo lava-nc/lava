@@ -43,3 +43,7 @@ else()
                                ${PROJECT_SOURCE_DIR}/message_infrastructure/csrc
                                )
 endif()
+
+# Cpp unit tests using GoogleTest
+enable_testing()
+add_subdirectory(test)

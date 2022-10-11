@@ -2,7 +2,7 @@
 
 *Welcome to the messaging refactory project, and this will show how an example run*
 
-```
+```shell
 mkdir build
 cd build
 cmake ..
@@ -10,4 +10,12 @@ make
 cd ..
 source setenv.sh
 python test/test_example.py
+```
+
+## Running Unit Tests (C++ / GoogleTest)
+```shell
+ctest
+
+# For printing outputs
+ctest --verbose
 ```
