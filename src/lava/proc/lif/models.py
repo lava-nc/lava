@@ -220,7 +220,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("floating_pt")
+@tag('floating_pt')
 class PyLearningLifModelFloat(AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
@@ -248,12 +248,19 @@ class PyLearningLifModelFloat(AbstractPyLifModelFloat):
         return s_graded_in
 
     def run_spk(self) -> None:
-        super().run_spk()
+        """Calculates the third factor trace and sends it to the 
+        Dense process for learning.
+        """
         a_graded_in = self.a_graded_reward_in.recv()
+
         y2 = self.calculate_third_factor_trace(a_graded_in)
         y3 = self.u * 2
+
         self.s_out_y2.send(y2)
-        self.s_out_y3.send(y3) 
+        self.s_out_y3.send(y3)
+    
+        super().run_spk()
+
 
         
         

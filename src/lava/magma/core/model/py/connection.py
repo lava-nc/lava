@@ -1702,14 +1702,16 @@ class ConnectionModelFloat(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         s_in_bap = self.s_in_bap.recv().astype(bool)
-        y2 = self.s_in_y2.recv()
-        y3 = self.s_in_y3.recv()
-
 
         if self._learning_rule is not None:
             self._record_post_spike_times(s_in_bap)
+            
+            y2 = self.s_in_y2.recv()
+            y3 = self.s_in_y3.recv()    
+            
+            y_traces = self._y_traces
+            y_traces[1, :] = y2
+            y_traces[2, :] = y3
 
-        y_traces = self._y_traces
-        y_traces[1, :] = y2
-        y_traces[2, :] = y3
-        self._set_y_traces(y_traces)
+            self._set_y_traces(y_traces)
+

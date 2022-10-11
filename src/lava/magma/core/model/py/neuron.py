@@ -39,6 +39,7 @@ class NeuronModelFloat(NeuronModel):
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
 
+    """
     def run_spk(self):
         if self._enable_learning:
             if self._update_traces is not None:
@@ -48,6 +49,6 @@ class NeuronModelFloat(NeuronModel):
             else:
                 self.s_out_y2.send(np.array([0]))
                 self.s_out_y3.send(np.array([0]))
-
+    """
 
 
