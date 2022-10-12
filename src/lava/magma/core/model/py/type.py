@@ -8,10 +8,6 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 import numpy as np
 import warnings
 
-# Members of LavaPyType needed for float- to fixed-point conversion.
-CONST_CONV_VARS = ('num_bits_exp', 'domain', 'constant', 'scale_domain',
-                   'exp_var', 'is_signed', 'num_bits', 'implicit_shift')
-
 
 @dataclass
 class LavaPyType:
@@ -32,6 +28,10 @@ class LavaPyType:
     # Process.
     # By default all Vars are assumed to be in same scale domain.
     scale_domain: int = 0
+
+    # Members of LavaPyType needed for float- to fixed-point conversion.
+    conv_vars: tuple = ('num_bits_exp', 'domain', 'constant', 'scale_domain',
+                        'exp_var', 'is_signed', 'num_bits', 'implicit_shift')
 
     @staticmethod
     def _validate_precision(precision):
@@ -103,7 +103,7 @@ class LavaPyType:
 
         conv_data = {}
 
-        for key in CONST_CONV_VARS:
+        for key in self.conv_vars:
             if key in ['is_signed', 'num_bits', 'implicit_shift']:
                 conv_data[key] = self.precision.__getattribute__(key)
             else:
