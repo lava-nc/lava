@@ -1326,7 +1326,6 @@ class ConnectionModelFloat(Connection):
             self._y_traces[np.newaxis, :, :, np.newaxis],
             0.0,
         )
-
         # Shape: (3, 5, num_post_neurons, num_pre_neurons)
         # Shape of concat(x_traces, y_traces):
         # (3, 5, num_post_neurons, num_pre_neurons)
