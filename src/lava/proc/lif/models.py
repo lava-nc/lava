@@ -5,6 +5,7 @@ import numpy as np
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.model.precision import Precision
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -64,17 +65,35 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     bit-accurate with Loihi hardware inherit from here.
     """
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                precision='s:16:6')
+                                precision=Precision(is_signed=True,
+                                                    num_bits=16,
+                                                    implicit_shift=6))
     s_out: None  # This will be an OutPort of different LavaPyTypes
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision='s:24:0')
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision='s:24:0')
-    du: int = LavaPyType(int, np.uint16, precision='u:12:0', scale_domain=1,
-                         domain=np.array([0, 1]), constant=True)
-    dv: int = LavaPyType(int, np.uint16, precision='u:12:0', scale_domain=1,
-                         domain=np.array([0, 1]), constant=True)
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=24,
+                                                   implicit_shift=0))
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=24,
+                                                   implicit_shift=0))
+    du: int = LavaPyType(int, np.uint16,
+                         precision=Precision(is_signed=False,
+                                             num_bits=12,
+                                             implicit_shift=0),
+                         scale_domain=1, domain=np.array([0, 1]),
+                         constant=True)
+    dv: int = LavaPyType(int, np.uint16,
+                         precision=Precision(is_signed=False,
+                                             num_bits=12,
+                                             implicit_shift=0),
+                         scale_domain=1, domain=np.array([0, 1]),
+                         constant=True)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, constant=True,
-                                       precision='s:13:0', num_bits_exp=3,
-                                       exp_var='bias_exp')
+                                       precision=Precision(is_signed=True,
+                                                           num_bits=13,
+                                                           implicit_shift=0),
+                                       num_bits_exp=3, exp_var='bias_exp')
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16,
                                       meta_parameter=True)
 
@@ -244,8 +263,13 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     """
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32,
-                                  precision='s:24:0')
-    vth: int = LavaPyType(int, np.int32, precision='u:17:6', constant=True)
+                                  precision=Precision(is_signed=True,
+                                                      num_bits=24,
+                                                      implicit_shift=0))
+    vth: int = LavaPyType(int, np.int32, constant=True,
+                          precision=Precision(is_signed=False,
+                                              num_bits=17,
+                                              implicit_shift=6))
 
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)
