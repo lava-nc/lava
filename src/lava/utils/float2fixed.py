@@ -28,14 +28,15 @@ class Float2FixedConverter:
 
     A simple usage example looks like
     ```converter = Float2FixedConverter()
-       converter.set_run_cfg(fixed_pt_rcfg=Loihi1SimCfg(select_tag='fixed_pt'),
-                             floating_pt_rcfg=Loihi1SimCfg())
+       converter.set_run_cfg(fixed_pt_run_cfg=Loihi1SimCfg(
+                                            select_tag='fixed_pt'),
+                             floating_pt_run_cfg=Loihi1SimCfg())
        converter.convert(procs, num_steps=200)```
     """
 
     def __init__(self):
-        self.floating_pt_rcfg = None
-        self.fixed_pt_rcfg = None
+        self.floating_pt_run_cfg = None
+        self.fixed_pt_run_cfg = None
         self.procs = None
         self.hierarchical_procs = None
         self.run_proc = None
@@ -47,25 +48,25 @@ class Float2FixedConverter:
         self.ignored_procs = [Monitor, io.sink.RingBuffer,
                               io.source.RingBuffer]
 
-    def set_run_cfg(self, floating_pt_rcfg, fixed_pt_rcfg) -> None:
+    def set_run_cfg(self, floating_pt_run_cfg, fixed_pt_run_cfg) -> None:
         """Set run config for floating- and fixed-point ProcessModels
         Parameters.
         ----------
 
-        floating_pt_rcfg : RunConfig
+        floating_pt_run_cfg : RunConfig
             RunConfig for floating-point ProcessModel
-        fixed_pt_rcfg : RunConfig
+        fixed_pt_run_cfg : RunConfig
             RunConfig for fixed-point ProcessModel
         """
 
-        if not issubclass(type(floating_pt_rcfg), RunConfig):
-            raise TypeError("'floating_pt_rcfg' must be RunConfig")
+        if not issubclass(type(floating_pt_run_cfg), RunConfig):
+            raise TypeError("'floating_pt_run_cfg' must be RunConfig")
 
-        if not issubclass(type(fixed_pt_rcfg), RunConfig):
-            raise TypeError("'fixed_pt_rcfg' must be RunConfig")
+        if not issubclass(type(fixed_pt_run_cfg), RunConfig):
+            raise TypeError("'fixed_pt_run_cfg' must be RunConfig")
 
-        self.floating_pt_rcfg = floating_pt_rcfg
-        self.fixed_pt_rcfg = fixed_pt_rcfg
+        self.floating_pt_run_cfg = floating_pt_run_cfg
+        self.fixed_pt_run_cfg = fixed_pt_run_cfg
 
     def convert(self, proc, num_steps=100, quantiles=[0, 1],
                 find_connected_procs=True):
@@ -180,7 +181,7 @@ class Float2FixedConverter:
         # Get ProcessModel classes of Processes with fixed-point RunConfig.
         p_model_cls = ProcGroupDiGraphs._map_proc_to_model(
             proc_list,
-            self.floating_pt_rcfg)
+            self.floating_pt_run_cfg)
 
         # Instantiate fixed-point ProcessModel of Processes and put them into
         # dictionary. Moreover we update the self.procs from a new proc list
@@ -325,7 +326,7 @@ class Float2FixedConverter:
         # Get ProcessModel classes of Processes with fixed-point RunConfig.
         p_model_cls = ProcGroupDiGraphs._map_proc_to_model(
             list(self.procs.values()),
-            self.fixed_pt_rcfg)
+            self.fixed_pt_run_cfg)
 
         # Instantiate fixed-point ProcessModel of Processes and put them into
         # dictionary. Moreover we update the self.procs from a new proc list
@@ -492,12 +493,13 @@ class Float2FixedConverter:
     def _run_procs(self) -> None:
         """Run Processes passed to converter with given number of steps, get
         and store data of monitored Variables in conversion data dictionary.
-        The needed 'run_config' is taken from the passed 'floating_pt_rcfg'."""
-        rcfg = self.floating_pt_rcfg
+        The needed 'run_config' is taken from the passed 'floating_pt_run_cfg'.
+        """
+        run_cfg = self.floating_pt_run_cfg
         run_cond = RunSteps(num_steps=self.num_steps)
 
         # Run Processes from designated Process.
-        self.run_proc.run(condition=run_cond, run_cfg=rcfg)
+        self.run_proc.run(condition=run_cond, run_cfg=run_cfg)
         # Get monitored variables.
         for p_id, monitor_dict in self.monitors.items():
             p = self.procs[p_id]

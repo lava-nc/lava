@@ -503,15 +503,15 @@ class Float2Fixed(unittest.TestCase):
         """Check if set_run_cfg correctly sets run configs."""
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_1')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_1')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         # Check if run configs are set correctly.
-        self.assertEqual(converter.floating_pt_rcfg, floating_pt_rcfg)
-        self.assertEqual(converter.fixed_pt_rcfg, fixed_pt_rcfg)
+        self.assertEqual(converter.floating_pt_run_cfg, floating_pt_run_cfg)
+        self.assertEqual(converter.fixed_pt_run_cfg, fixed_pt_run_cfg)
 
     def test_set_run_cfg_raise_error(self):
         """Check if set_run_cfg method raises error provided wrong parameters,
@@ -521,13 +521,13 @@ class Float2Fixed(unittest.TestCase):
 
         # Check if TypeError is raised for first argument.
         with self.assertRaises(TypeError):
-            converter.set_run_cfg(floating_pt_rcfg='floating_point_1',
-                                  fixed_pt_rcfg=run_cfg)
+            converter.set_run_cfg(floating_pt_run_cfg='floating_point_1',
+                                  fixed_pt_run_cfg=run_cfg)
 
         # Check if TypeError is raised for second argument.
         with self.assertRaises(TypeError):
-            converter.set_run_cfg(floating_pt_rcfg=run_cfg,
-                                  fixed_pt_rcfg='fixed_point')
+            converter.set_run_cfg(floating_pt_run_cfg=run_cfg,
+                                  fixed_pt_run_cfg='fixed_point')
 
     def test_set_procs_no_find_connected_procs(self):
         """Check if _set_procs sets processes correctly when passing single
@@ -545,11 +545,11 @@ class Float2Fixed(unittest.TestCase):
         true_procs = {proc1.id: proc1}
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs(proc=proc1,
                              find_connected_procs=find_connected_procs)
@@ -576,11 +576,11 @@ class Float2Fixed(unittest.TestCase):
                       proc3.id: proc3}
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs(proc=proc1,
                              find_connected_procs=find_connected_procs)
@@ -609,11 +609,11 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs(proc=proc_list,
                              find_connected_procs=find_connected_procs)
@@ -641,11 +641,11 @@ class Float2Fixed(unittest.TestCase):
                       proc3.id: proc3}
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs(proc=proc_list,
                              find_connected_procs=find_connected_procs)
@@ -690,12 +690,12 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_1',
-                                        select_sub_proc_model=True)
-        fixed_pt_rcfg = Loihi1SimCfg()
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_1',
+                                           select_sub_proc_model=True)
+        fixed_pt_run_cfg = Loihi1SimCfg()
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs(proc=[proc1, proc2])
 
@@ -720,8 +720,8 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        converter.set_run_cfg(floating_pt_rcfg=Loihi1SimCfg(),
-                              fixed_pt_rcfg=Loihi1SimCfg())
+        converter.set_run_cfg(floating_pt_run_cfg=Loihi1SimCfg(),
+                              fixed_pt_run_cfg=Loihi1SimCfg())
 
         converter._set_procs(proc=[proc1])
 
@@ -741,8 +741,8 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        converter.set_run_cfg(floating_pt_rcfg=Loihi1SimCfg(),
-                              fixed_pt_rcfg=Loihi1SimCfg())
+        converter.set_run_cfg(floating_pt_run_cfg=Loihi1SimCfg(),
+                              fixed_pt_run_cfg=Loihi1SimCfg())
 
         converter._set_procs(proc=[proc1, proc2])
 
@@ -767,11 +767,11 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_1')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_1')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs([proc1, proc2])
 
@@ -791,11 +791,11 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs([proc1])
 
@@ -818,12 +818,12 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_1',
-                                        select_sub_proc_model=True)
-        fixed_pt_rcfg = Loihi1SimCfg()
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_1',
+                                           select_sub_proc_model=True)
+        fixed_pt_run_cfg = Loihi1SimCfg()
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs([proc1, proc2, proc3])
         converter.var_ports = converter._get_var_ports()
@@ -857,12 +857,12 @@ class Float2Fixed(unittest.TestCase):
 
         converter = Float2FixedConverter()
 
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_1',
-                                        select_sub_proc_model=True)
-        fixed_pt_rcfg = Loihi1SimCfg()
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_1',
+                                           select_sub_proc_model=True)
+        fixed_pt_run_cfg = Loihi1SimCfg()
 
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
 
         converter._set_procs([proc1, proc2, proc3])
         converter.var_ports = converter._get_var_ports()
@@ -897,12 +897,12 @@ class Float2Fixed(unittest.TestCase):
         true_fixed_pt_proc_models[proc2.id] = fixed_proc_model_2
 
         # Set up converter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_1')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_1')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2])
         fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
 
@@ -937,12 +937,12 @@ class Float2Fixed(unittest.TestCase):
                                          'exp_var': None}
 
         # Set up Float2FixedPoint Converter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_1')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_1')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -967,12 +967,12 @@ class Float2Fixed(unittest.TestCase):
         proc1.outport.connect(proc2.inport)
 
         # Set up Float2FixedPoint Converter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_pytype_target_err')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_pytype_target_err')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -991,12 +991,12 @@ class Float2Fixed(unittest.TestCase):
         proc1.outport.connect(proc2.inport)
 
         # Set up Float2FixedPoint Converter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_pytype_var_err')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_pytype_var_err')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1024,12 +1024,12 @@ class Float2Fixed(unittest.TestCase):
         # Set up Float2FixedPoint Converter.
         # In tagged fixed-point ProcessModel Var u is meta parameter and should
         # be skipped bet _get_conv_data.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_2')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_2')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1073,12 +1073,12 @@ class Float2Fixed(unittest.TestCase):
         # Set up Float2FixedPoint Converter.
         # In tagged fixed-point ProcessModel Var u is meta parameter and should
         # be skipped bet _get_conv_data.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_2')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_2')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1135,12 +1135,12 @@ class Float2Fixed(unittest.TestCase):
                                          'exp_var': None}
 
         # Set up Float2FixedPoint Converter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1163,12 +1163,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u is meta parameter.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_2')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_2')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1, proc2, proc3])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1198,12 +1198,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u and v are both dynamic variables.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_4')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_4')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1238,12 +1238,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u and v are both dynamic variables.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_4')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_4')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1277,12 +1277,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u is constant.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_1')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_1')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1312,12 +1312,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u has predefined domain.
-        floating_pt_rcfg = Loihi1SimCfg()
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_3')
+        floating_pt_run_cfg = Loihi1SimCfg()
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_3')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs([proc1])
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1357,12 +1357,12 @@ class Float2Fixed(unittest.TestCase):
 
         # Set up Float2FixedPoint Converter.
         # In tagged ProcModel u and v are both dynamic variables.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_1')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_4')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_1')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_4')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1412,14 +1412,14 @@ class Float2Fixed(unittest.TestCase):
         # In tagged ProcModel only v of proc1 is a dynamic variables and
         # belongs to the global scale domain, together with w of proc2.
         # The variable u of proc1 belongs to a different scale domain.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_5')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_5')
 
         num_steps = 2
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1601,12 +1601,12 @@ class Float2Fixed(unittest.TestCase):
         # In tagged ProcModel only v of proc1 is a dynamic variables and
         # belongs to the global scale domain, together with w of proc2.
         # The variable u is a meta-parameter.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_2')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_2')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1665,12 +1665,12 @@ class Float2Fixed(unittest.TestCase):
         # In tagged ProcModel only v of proc1 is a dynamic variables and
         # belongs to the global scale domain, together with w of proc2.
         # The variable u is a meta-parameter.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_6')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_6')
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter._set_procs(proc_list)
         converter.var_ports = converter._get_var_ports()
         converter.fixed_pt_proc_models = converter._get_fixed_pt_proc_models()
@@ -1726,14 +1726,14 @@ class Float2Fixed(unittest.TestCase):
         # In tagged ProcModel only v of proc1 is a dynamic variables and
         # belongs to the global scale domain, together with w of proc2.
         # The variable u is a meta-parameter.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_2')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_2')
 
         num_steps = 2
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter.convert(proc_list, num_steps=num_steps)
         scaled_params = converter.scaled_params
 
@@ -1788,14 +1788,14 @@ class Float2Fixed(unittest.TestCase):
         # In tagged ProcModel only v of proc1 is a dynamic variables and
         # belongs to the global scale domain, together with w of proc2.
         # The variable u is a meta-parameter.
-        floating_pt_rcfg = Loihi1SimCfg(select_tag='floating_pt_2')
-        fixed_pt_rcfg = Loihi1SimCfg(select_tag='fixed_pt_6')
+        floating_pt_run_cfg = Loihi1SimCfg(select_tag='floating_pt_2')
+        fixed_pt_run_cfg = Loihi1SimCfg(select_tag='fixed_pt_6')
 
         num_steps = 2
 
         converter = Float2FixedConverter()
-        converter.set_run_cfg(floating_pt_rcfg=floating_pt_rcfg,
-                              fixed_pt_rcfg=fixed_pt_rcfg)
+        converter.set_run_cfg(floating_pt_run_cfg=floating_pt_run_cfg,
+                              fixed_pt_run_cfg=fixed_pt_run_cfg)
         converter.convert(proc_list, num_steps=num_steps)
         scaled_params = converter.scaled_params
         # Test scaled parameter dictionary.
