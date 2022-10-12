@@ -84,6 +84,14 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   AbstractActor::TargetFn send_target_fn;
   AbstractActor::TargetFn recv_target_fn;
 
+  // Test Channel Proxy
+  auto shmem_channel_proxy = ChannelProxy(
+    ChannelType::SHMEMCHANNEL,
+    size,
+    nbytes,
+    src_name,
+    dst_name);
+
   // TODO: convert data into python to pass into function
   // MetaDataPtr data;
   // auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);

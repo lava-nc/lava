@@ -17,6 +17,7 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/shm.cc"
      "message_infrastructure/csrc/shmem_channel.cc"
      "message_infrastructure/csrc/shmem_port.cc"
+     "message_infrastructure/csrc/channel_proxy.cc"
      )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
