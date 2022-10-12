@@ -1,6 +1,6 @@
-# Copyright (C) 2021-22 Intel Corporation
-# SPDX-License-Identifier: BSD-3-Clause
-# See: https://spdx.org/licenses/
+# copyright (c) 2021-22 intel corporation
+# spdx-license-identifier: bsd-3-clause
+# see: https://spdx.org/licenses/
 """
 This module containx a tool to perform automated float- to fixed-point
 conversion of Lava Processes.
