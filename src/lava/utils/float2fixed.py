@@ -1,10 +1,6 @@
 # copyright (c) 2021-22 intel corporation
 # spdx-license-identifier: bsd-3-clause
 # see: https://spdx.org/licenses/
-"""
-This module containx a tool to perform automated float- to fixed-point
-conversion of Lava Processes.
-"""
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.process.process import AbstractProcess
@@ -22,6 +18,24 @@ import inspect
 
 
 class Float2FixedConverter:
+    """
+    Tool to perform automated floating- to fixed-point conversion of
+    Lava Processes. To be able to perform the conversion, a floating- and
+    fixed-point ProcessModel of the used Processes need to be provided.
+    The converter runs the passed processes and maps the values optimally to a
+    predefined fixed-point domain respecting the dynamical range of the
+    variables as well as the representation constraints.
+
+    A simple usage example looks like
+    ```converter = Float2FixedConverter()
+       converter.set_run_cfg(fixed_pt_rcfg=Loihi1SimCfg(select_tag='fixed_pt'),
+                             floating_pt_rcfg=Loihi1SimCfg())
+       converter.convert(procs, num_steps=200)```
+    """
+
+    import numpy as np
+
+    np.linalg.cholesky
 
     def __init__(self):
         self.floating_pt_rcfg = None
