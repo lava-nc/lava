@@ -33,10 +33,6 @@ class Float2FixedConverter:
        converter.convert(procs, num_steps=200)```
     """
 
-    import numpy as np
-
-    np.linalg.cholesky
-
     def __init__(self):
         self.floating_pt_rcfg = None
         self.fixed_pt_rcfg = None
