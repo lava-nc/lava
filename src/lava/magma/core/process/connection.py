@@ -9,7 +9,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class ConnectionProcess(AbstractProcess):
+class PlasticConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
@@ -62,11 +62,11 @@ class ConnectionProcess(AbstractProcess):
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
-        kwargs["graded_input"] = graded_input
+        #kwargs["graded_input"] = graded_input
         kwargs["shape"] = shape
 
         self.learning_rule = learning_rule
-        self.graded_input = graded_input
+        #TODO move that somewhere else if needed self.graded_input = graded_input
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))

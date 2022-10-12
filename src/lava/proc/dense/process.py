@@ -5,7 +5,8 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.process.connection import ConnectionProcess
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.process.connection import PlasticConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
@@ -70,7 +71,6 @@ class Dense(AbstractProcess):
 
         # Ports
         self.s_in = InPort(shape=(shape[1],))
-        self.s_graded_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
 
         # Variables
@@ -85,7 +85,7 @@ class Dense(AbstractProcess):
                              f"got {weights}.")
 
 
-class LearningDense(ConnectionProcess):
+class LearningDense(PlasticConnectionProcess, Dense):
     """Dense connections between neurons. Realizes the following abstract
     behavior: a_out = weights * s_in '
 
@@ -124,44 +124,22 @@ class LearningDense(ConnectionProcess):
             Determines whether the LearningDense Process deals with the incoming
             spikes as binary spikes (num_message_bits = 0) or as graded
             spikes (num_message_bits > 0). Default is 0.
+
+        TODO add learning rule parameter to docstring
     """
 
-    def __init__(
-        self,
-        *,
-        weights: np.ndarray,
-        num_message_bits: ty.Optional[int] = 0,
-        name: ty.Optional[str] = None,
-        log_config: ty.Optional[LogConfig] = None,
-        **kwargs,
-    ) -> None:
+    def __init__(self,
+                 *,
+                 weights: np.ndarray,
+                 name: ty.Optional[str] = None,
+                 num_message_bits: ty.Optional[int] = 0,
+                 log_config: ty.Optional[LogConfig] = None,
+                 learning_rule: LoihiLearningRule = None,
+                 **kwargs) -> None:
 
-        super().__init__(
-            shape=weights.shape,
-            weights=weights,
-            num_message_bits=num_message_bits,
-            name=name,
-            log_config=log_config,
-            **kwargs,
-        )
-
-        self._validate_weights(weights)
-        shape = weights.shape
-
-        # Ports
-        self.s_in = InPort(shape=(shape[1],))
-        self.s_graded_in = InPort(shape=(shape[1],))
-        self.a_out = OutPort(shape=(shape[0],))
-
-        # Variables
-        self.weights = Var(shape=shape, init=weights)
-        self.a_buff = Var(shape=(shape[0],), init=0)
-        self.num_message_bits = Var(shape=(1,), init=num_message_bits)
-
-    @staticmethod
-    def _validate_weights(weights: np.ndarray) -> None:
-        if len(np.shape(weights)) != 2:
-            raise ValueError(
-                "Dense Process 'weights' expects a 2D matrix, "
-                f"got {weights}."
-            )
+        super().__init__(weights=weights,
+                         name=name,
+                         num_message_bits=num_message_bits,
+                         log_config=log_config,
+                         learning_rule=learning_rule,
+                         **kwargs)
