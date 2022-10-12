@@ -89,12 +89,12 @@ class SharedMemManager {
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
     if (shmfd == -1) {
-      LAVA_LOG_ERR("Create shared memory object failed.\n");
+      LAVA_LOG_ERR(LOG_SMMP, "Create shared memory object failed.\n");
       exit(-1);
     }
     int err = ftruncate(shmfd, mem_size);
     if (err == -1) {
-      LAVA_LOG_ERR("Resize shared memory segment failed.\n");
+      LAVA_LOG_ERR(LOG_SMMP, "Resize shared memory segment failed.\n");
       exit(-1);
     }
     shm_strs_.insert(str);

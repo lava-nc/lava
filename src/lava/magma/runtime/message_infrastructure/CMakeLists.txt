@@ -17,9 +17,14 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/shm.cc"
      "message_infrastructure/csrc/shmem_channel.cc"
      "message_infrastructure/csrc/shmem_port.cc"
+     "message_infrastructure/csrc/message_infrastructure_logging.cc"
      )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+
+target_compile_definitions(message_infrastructure PRIVATE
+    $<$<CONFIG:Debug>:CMAKE_DEBUG>
+)
 
 if(PY_WRAPPER)
 
