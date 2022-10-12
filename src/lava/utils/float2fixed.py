@@ -68,12 +68,12 @@ class Float2FixedConverter:
         self.floating_pt_run_cfg = floating_pt_run_cfg
         self.fixed_pt_run_cfg = fixed_pt_run_cfg
 
-    def convert(self, proc, num_steps=100, quantiles=[0, 1],
+    def convert(self, proc, num_steps=100, quantiles=(0, 1),
                 find_connected_procs=True):
         """Convert Processes passed from floating-point to fixed-point model.
         The floating- and fixed-point ProcessModels to be used must be
         specificed via setting the run configurations.
-        After conversion has been executed, the converter parameter are stored
+        After conversion has been executed, the converted parameters are stored
         in the member 'scaled_params' of the class, a dictionary with keys
         Process id and Variable name.
 
@@ -89,14 +89,15 @@ class Float2FixedConverter:
             5. Retrieving the information needed for conversion from the
                fixed-point ProcessModels chosen via the provided fixed-point
                run configuration.
-            5. Creating monitors for recording the activation statistics of the
-            6  dynamical variables of Processes. With this, the domain of the
+            6. Creating monitors for recording the activation statistics of the
+               dynamical variables of Processes. With this, the domain of the
                variable can be determined to constrain the floating- to
                fixed-point conversion.
             7. Execution of the floating-point model chosen via run
-               configuration. If non-default quantile information is passed the
-               domain of the dynamical variables will be smaller than taking
-               just the minimum and maximum of the recorded data.
+               configuration. If quantile information is passed, the domain of
+               the dynamical variables will in general be smaller than taking
+               just the minimum and maximum of the recorded data. The default
+               value ((0, 1)) will not lead to shrinkage of domain.
             8. Updating the scale_domains, i.e. the collection of variables
                that need to be scaled identically.
             9. Finally, scale the parameters so that no over/underflow occurs
@@ -112,14 +113,13 @@ class Float2FixedConverter:
             number of steps will lead to better statistics of the monitored
             variables which is needed for the conversion but also will lead to
             a longer run time
-        quantiles : list
-            List of two numbers both in the interval [0,1] determining the
+        quantiles : tuple
+            Tuple of two numbers both in the interval [0,1] determining the
             p-quantile of the domain of a monitored variable to set largest and
             smallest value of the dynamic rep_range of that variable. The
             dynamic range will be used to determine the optimal floating- to
             fixed-point conversion. The first entry must be smaller than the
-            second. 0 resp. 1 correspond to the minimum resp. maximum of the
-            domain.
+            second.
         find_connected_procs : bool
             Find all Processes connected to passed Process
         """
@@ -134,8 +134,6 @@ class Float2FixedConverter:
             self._explicate_hierarchical_procs()
         else:
             pass
-        # Get fixed-point ProcessModels of Processes.
-        self.fixed_pt_proc_models = self._get_fixed_pt_proc_models()
         # Get fixed-point ProcessModels of Processes.
         self.fixed_pt_proc_models = self._get_fixed_pt_proc_models()
         # Fetch conversion data from fixed-point ProcessModel.
@@ -173,10 +171,13 @@ class Float2FixedConverter:
         elif isinstance(proc, list):
             for p in proc:
                 if not issubclass(type(p), AbstractProcess):
-                    raise TypeError("list 'proc' must contains Processes")
+                    raise TypeError("list 'proc' must contain Processes."
+                                    + f" 'proc' contains {p} with type"
+                                    + f" {type(p)}.")
                 proc_list = proc
         else:
-            raise TypeError("'proc' must be Process of list of Processes")
+            raise TypeError("'proc' must be Process of list of Processes."
+                            + f"'proc' {proc} and has type {type(proc)}")
 
         # Get ProcessModel classes of Processes with fixed-point RunConfig.
         p_model_cls = ProcGroupDiGraphs._map_proc_to_model(
@@ -186,9 +187,7 @@ class Float2FixedConverter:
         # Instantiate fixed-point ProcessModel of Processes and put them into
         # dictionary. Moreover we update the self.procs from a new proc list
         # containing Subprocesses but not their Hierarchical Processes anymore.
-        proc_list_w_sub = []
-        for p, model_cls in p_model_cls.items():
-            proc_list_w_sub.append(p)
+        proc_list_w_sub = list(p_model_cls.keys())
 
         # Find hierarchical Processes
         hierarchical_procs_set = set(proc_list) - set(proc_list_w_sub)
@@ -205,7 +204,7 @@ class Float2FixedConverter:
 
     def _explicate_hierarchical_procs(self):
         """Given a Model with hierarchical Processes, set up an equivalent
-        model with only first-order Processes, i.e. not hierarchical Processes.
+        model with only leaf Processes, i.e. not hierarchical Processes.
         This is needed for the subsequent monitoring of Process Variables and
         Conversion. The newly created Processes are instantiated with the same
         intial values as all (Sub)Processes in the original model."""
