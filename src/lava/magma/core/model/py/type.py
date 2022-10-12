@@ -73,7 +73,7 @@ class LavaPyType:
                                  + " must be int.")
 
     def _validate_exp_data(self):
-        """Validates if data regarding in a split of the variable in mantissa
+        """Validates if data considered in a split of the variable in mantissa
         and exponent is complete.
 
         Raises
@@ -91,7 +91,7 @@ class LavaPyType:
 
     def conversion_data(self):
         """Get data for variables needed for float- to fixed-point conversion
-        defined in CONST_CONV_VARS.
+        defined in conv_vars.
 
         Returns
         -------
