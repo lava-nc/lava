@@ -27,7 +27,8 @@ from collections import OrderedDict
 
 
 class Proc(AbstractProcess):
-    """A dummy proc with two Vars, one dynamic, one constant."""
+    """A dummy Process with two Vars. Behavior will be implemented with various
+    ProcessModels to check converter."""
 
     def __init__(self, shape=(1,), **kwargs):
         u = kwargs.get('u', 0)
@@ -41,7 +42,7 @@ class Proc(AbstractProcess):
 
 
 class ProcDense(AbstractProcess):
-    """A dummy dense process with only a weight."""
+    """A dummy dense Process with only a weight."""
 
     def __init__(self, **kwargs):
         w = kwargs.get('w', 0)
@@ -53,7 +54,7 @@ class ProcDense(AbstractProcess):
 
 class HierProc(AbstractProcess):
     """A dummy hierarchical Process with In- and OutPorts. Will wrap around a
-    Proc Process."""
+    Proc (see above) Process."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -513,7 +514,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertEqual(converter.fixed_pt_rcfg, fixed_pt_rcfg)
 
     def test_set_run_cfg_raise_error(self):
-        """Check if set_run_cfg method raises error provided wrong args."""
+        """Check if set_run_cfg method raises error provided wrong parameters,
+        here a string instead of a run config object."""
         converter = Float2FixedConverter()
         run_cfg = Loihi1SimCfg()
 
@@ -528,8 +530,9 @@ class Float2Fixed(unittest.TestCase):
                                   fixed_pt_rcfg='fixed_point')
 
     def test_set_procs_no_find_connected_procs(self):
-        """"Check if _set_procs sets processes correctly when passing single
-        Process and disable find_connected_procs."""
+        """Check if _set_procs sets processes correctly when passing single
+        Process and disable find_connected_procs. Output should be only passed
+        Process."""
         proc1 = LIF(shape=(1,))
         proc2 = Dense(weights=np.array([[1]]))
         proc3 = LIF(shape=(1,))
@@ -556,8 +559,9 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(procs, true_procs)
 
     def test_set_procs_find_connected_procs(self):
-        """"Check if _set_procs sets processes correctly when passing single
-        Process and enabled find_connected_procs."""
+        """Check if _set_procs sets processes correctly when passing single
+        Process and enabled find_connected_procs. Output should be a dictionary
+        constructed from Processes connected to passed Processes."""
         proc1 = LIF(shape=(1,))
         proc2 = Dense(weights=np.array([[1]]))
         proc3 = LIF(shape=(1,))
@@ -586,8 +590,9 @@ class Float2Fixed(unittest.TestCase):
         self.assertSetEqual(set(procs), set(true_procs))
 
     def test_set_procs_procs_list_find_connected_procs(self):
-        """"Check if _set_procs sets processes correctly when passing list of
-        Processes. 'find_connected_procs' should be ignored."""
+        """Check if _set_procs sets processes correctly when passing list of
+        Processes. 'find_connected_procs' should be ignored here and the output
+        should be dictionary constructed from passed Processes."""
         proc1 = LIF(shape=(1,))
         proc2 = Dense(weights=np.array([[1]]))
         proc3 = LIF(shape=(1,))
@@ -618,7 +623,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(procs, true_procs)
 
     def test_set_procs_procs_list_no_find_connected_procs(self):
-        """"Check if _set_procs sets processes correctly when passing list of
+        """Check if _set_procs sets processes correctly when passing list of
+        Processes. Output should be a dictionary constructed from passed
         Processes."""
         proc1 = LIF(shape=(1,))
         proc2 = Dense(weights=np.array([[1]]))
@@ -649,8 +655,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(procs, true_procs)
 
     def test_set_procs_procs_raise_error_wrong_argument(self):
-        """"Check if _set_procs sets processes correctly when passing list of
-        Processes."""
+        """Check if _set_procs raises an error when passed argument is not a
+        list and not a Process."""
         proc = LIF(shape=(1,))
         converter = Float2FixedConverter()
 
@@ -660,7 +666,7 @@ class Float2Fixed(unittest.TestCase):
             converter._set_procs(proc=proc.id)
 
     def test_set_procs_procs_raise_error_wrong_list_member(self):
-        """"Check if _set_procs sets processes correctly when passing list of
+        """Check if _set_procs raises error when list passed is not list of
         Processes."""
         proc = LIF(shape=(1,))
         converter = Float2FixedConverter()
@@ -670,8 +676,10 @@ class Float2Fixed(unittest.TestCase):
             converter._set_procs(proc=[proc.id])
 
     def test_set_procs_hierarchical_process(self):
-        """Check if _set_procs sets processes correctly when hierarchcical
-        Process is passed."""
+        """Check if _set_procs sets procs and hierarchical_procs correctly when
+        passing an hierarchical Process, that is, the hierarchical Process
+        should be stored in hierarchical_procs, the Subprocesses on the proc.
+        """
         proc1 = HierProc()
         proc2 = ProcDense()
 
@@ -703,7 +711,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(hierarchical_procs, true_hierarchical_procs)
 
     def test_set_procs_ignores_monitor(self):
-        """Check if a Monitor Process is ignored by _set_procs."""
+        """Check if a Monitor Process is ignored by _set_procs, i.e. the
+        Process does not appear in procs."""
         proc1 = Monitor()
 
         # True procs is empty becasue Monitors Processes are disregarded.
@@ -721,7 +730,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(procs, true_procs)
 
     def test_set_procs_ignores_ringbuffer(self):
-        """Check if a sink RingBuffer Process is ignored by _set_procs."""
+        """Check if a sink RingBuffer Process is ignored by _set_procs, i.e.
+        the Process does not appear in procs."""
         proc1 = RingBuffer(shape=(1,), buffer=0)
         proc2 = Proc()
 
@@ -742,7 +752,10 @@ class Float2Fixed(unittest.TestCase):
 
     def test_get_var_ports_outports(self):
         """Check if Float2Fixed Converter correctly identifies Vars and
-        OutPorts needed for conversion."""
+        SourcePorts needed for conversion, that is writing all Variables and
+        Ports which inherits from AbstractSrcPort in a nested dictionary
+        structured by the Process ID and the type (Var, Port) and the
+        respective Name."""
         proc1 = Proc()
         proc2 = ProcDense()
 
@@ -825,7 +838,11 @@ class Float2Fixed(unittest.TestCase):
 
     def test_explicate_hierarchical_procs(self):
         """Check if _explicate_hierarchical_procs correctly sets up an
-        equivalent model with only first-order Processes."""
+        equivalent model with only first-order Processes, i.e. if an
+        hierarchical Process consists of only Proc Process, instantiate a Proc
+        process instead. If the hierarchical Process contains multiple
+        Subprocesses which are not hierarchical Processes, all of them need to
+        be instantiated and connected correctly."""
         proc1 = HierProc()
         proc2 = ProcDense()
         proc3 = HierProc()
@@ -868,7 +885,7 @@ class Float2Fixed(unittest.TestCase):
 
     def test_get_fixed_pt_proc_models(self):
         """Check if Float2Fixed Converter correctly fetches fixed-point
-        ProcModels correctly."""
+        ProcModels correctly based on the set fixed-point run configuration."""
         proc1 = Proc()
         proc2 = ProcDense()
 
@@ -895,8 +912,10 @@ class Float2Fixed(unittest.TestCase):
                              type(true_fixed_pt_proc_models[proc_id]))
 
     def test_get_conv_data(self):
-        """Check if Float2Fixed Converter correctly fetches precision
-        needed for conversion."""
+        """Check if Float2Fixed Converter correctly fetches conversion data
+        needed for conversion of all Processes that need to be converterd and
+        stores them in nested dictionary structured by Process ID and Variable
+        name."""
         proc1 = Proc()
 
         true_conv_data = {proc1.id: {}}
@@ -941,8 +960,7 @@ class Float2Fixed(unittest.TestCase):
 
     def test_get_conv_data_target_port_error(self):
         """Check if error is caught correctly in function getting the
-        conversion data if the target port of a Process has wrong precision
-        format."""
+        conversion data if the target port of a Process has wrong precision."""
         proc1 = Proc()
         proc2 = Proc()
 
@@ -966,8 +984,7 @@ class Float2Fixed(unittest.TestCase):
 
     def test_get_conv_data_var_error(self):
         """Check if error is caught correctly in function getting the
-        conversion data if the Variable of a Process has wrong precision
-        format."""
+        conversion data if the Variable of a Process has wrong precision."""
         proc1 = Proc()
         proc2 = Proc()
 
@@ -990,8 +1007,8 @@ class Float2Fixed(unittest.TestCase):
             conv_data = converter._get_conv_data()
 
     def test_get_conv_data_skip_meta_parameter(self):
-        """Check if Float2Fixed Converter correctly fetches precision
-        needed for conversion."""
+        """Check if Float2Fixed Converter correctly fetches conversion data for
+        conversion. Variable u is meta_parameter here and should be ignored."""
         proc1 = Proc()
 
         true_conv_data = {proc1.id: {}}
@@ -1024,7 +1041,10 @@ class Float2Fixed(unittest.TestCase):
 
     def test_update_implicit_shift_conv_data_outport(self):
         """Check if Float2Fixed Converter correctly fetches updates implicit
-        shift due to out connections of OutPort."""
+        shift due to out connections via OutPort. Variable u in proc1 is a meta
+        parameters and thus does not appear in the conversion data. Implicit
+        shift of w in proc2 is increased du to connection from proc2 to proc1
+        via OutPort."""
         proc1 = Proc()
         proc2 = ProcDense()
 
@@ -1070,7 +1090,10 @@ class Float2Fixed(unittest.TestCase):
 
     def test_update_implicit_shift_conv_data_refport(self):
         """Check if Float2Fixed Converter correctly fetches updates implicit
-        shift due to out connections of RefPort."""
+        shift due to out connections via RefPort. Variables u and v in proc1
+        need to be updated since the inherit the implicit scaling from Variable
+        v of Process proc2. Variables w of proc1 needs to stay the same since
+        it is on other scale domain.."""
         proc1 = ProcRef(u=1, v=2, w=3)
         proc2 = ProcVar(v=4)
 
@@ -1246,8 +1269,8 @@ class Float2Fixed(unittest.TestCase):
 
     def test_monitoring_infrastructure_w_constant(self):
         """Check if Float2Fixed Converter correctly sets up monitoring
-        infrastructure for recording dynamic range of variables. One variable
-        is a constant."""
+        infrastructure for recording dynamic range of variables. Variable u is
+        a constant. For this Variable no Monitor should be instantiated."""
         proc1 = Proc()
 
         true_monitors = {proc1.id: {'v': None}}
@@ -1280,8 +1303,9 @@ class Float2Fixed(unittest.TestCase):
 
     def test_monitoring_infrastructure_w_domain(self):
         """Check if Float2Fixed Converter correctly sets up monitoring
-        infrastructure for recording dynamic range of variables. One variable
-        has a predefined domain."""
+        infrastructure for recording dynamic range of variables. Varaible u has
+        pre-defined domain and thus no Monitor should be instantiated for this
+        variable."""
         proc1 = Proc()
 
         true_monitors = {proc1.id: {'v': None}}
@@ -1314,7 +1338,8 @@ class Float2Fixed(unittest.TestCase):
 
     def test_run_procs(self):
         """Check if Processes are run for correct number of time steps and the
-        correct output is stored."""
+        correct output is stored in nested dictionary with keys Process ID,
+        Variable names."""
         proc1 = Proc(u=0, v=0)
         proc2 = Proc(u=1, v=2)
         proc_list = [proc1, proc2]
@@ -1353,7 +1378,8 @@ class Float2Fixed(unittest.TestCase):
                                               conv_data_p_id[var]['domain'])
 
     def test_get_scale_domains(self):
-        """Check if scale domain dictionaries are created correctly."""
+        """Check if scale domain dictionaries are created correctly. Here
+        Variable u of proc1 has own scale domain and must stored seperately."""
         proc1 = Proc(u=1, v=0)
         proc2 = ProcDense(w=0)
         proc_list = [proc1, proc2]
@@ -1413,7 +1439,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(true_scale_domains, scale_domains)
 
     def test_find_scaling_factors(self):
-        """Check if correct scaling functions are found correctly."""
+        """Check if scaling functions are determined correctly for the scale
+        domains from the conversion data and the dynamic range."""
 
         # Construct scale domains to test finding of scaling functions.
         scale_domains = {0: {1: {},
@@ -1471,8 +1498,8 @@ class Float2Fixed(unittest.TestCase):
         self.assertDictEqual(scaling_factors, true_scaling_factors)
 
     def test_find_scaling_factors_quantiles(self):
-        """Check if correct scaling functions are found correctly if dynamic
-        range is determined via quantiles from domain."""
+        """Check if scaling functions are determined correctly if dynamic range
+        is determined via quantiles from domain."""
 
         # Construct scale domains to test finding of scaling functions.
         scale_domains = {0: {1: {},
@@ -1660,6 +1687,7 @@ class Float2Fixed(unittest.TestCase):
     def test_converter_no_exp_var(self):
         """Test scaling and storing of the parameters of the Processes that
         need to be converted from floating- to fixed-point representation.
+        Here, no Variable has a split in mantissa and exponent.
         """
         proc1 = Proc(u=20, v=1)
         proc2 = ProcDense(w=3)
@@ -1714,7 +1742,8 @@ class Float2Fixed(unittest.TestCase):
 
     def test_converter_exp_var(self):
         """Test scaling and storing of the parameters of the Processes that
-        need to be converted from floating- to fixed-point representation.
+        need to be converted from floating- to fixed-point representation. Here
+        a Variable in split in mantissa and exponent (Variable w of proc2).
         """
         proc1 = Proc(u=20, v=1)
         proc2 = ProcDense(w=3)
