@@ -3,13 +3,14 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from dataclasses import dataclass
+from lava.magma.core.model.precision import Precision
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 import numpy as np
 import warnings
 
 # Members of LavaPyType needed for float- to fixed-point conversion.
 CONST_CONV_VARS = ('num_bits_exp', 'domain', 'constant', 'scale_domain',
-                   'exp_var', 'signedness', 'precision_bits', 'implicit_shift')
+                   'exp_var', 'is_signed', 'num_bits', 'implicit_shift')
 
 
 @dataclass
@@ -36,11 +37,6 @@ class LavaPyType:
     def _validate_precision(precision):
         """Validates the format of the precision passed to the LavaPyType.
 
-        Parameters
-        ----------
-        precision : string
-            Specific precision in format '{u, s}:x:y', x, y ints
-
         Raises
         ------
         Warning
@@ -54,28 +50,27 @@ class LavaPyType:
 
         if precision is None:
             warnings.warn("'precision' is None: This might cause an error in"
-                          + " the Float2FixedPoint conversion")
-        elif type(precision) is not str:
-            raise TypeError("'precision' must be of type str or None")
+                          + " the Float2FixedPoint conversion.")
+        elif type(precision) is not Precision:
+            raise TypeError("'precision' must be of type Precision or None"
+                            + f" but has type {type(precision)}.")
         else:
-            split_precision = precision.split(sep=":")
-
-            # Check if signed or unsigned was correctly assigned".
-            if not split_precision[0] in ['u', 's']:
-                raise ValueError("First string literal of precision string"
-                                 + " must be 'u' (unsigned) or 's' (signed)")
+            # Check if is_signed was correctly assigned".
+            if not type(precision.is_signed) is bool:
+                raise ValueError("'is_signed' has type"
+                                 + f"{type(precision.is_signed)}, but must"
+                                 + " be bool.")
 
             # Check if number of bits and implicit shift was set correctly.
-            try:
-                int(split_precision[1])
-            except ValueError:
-                raise ValueError("Second string literal of precision (number"
-                                 + " of  bits) must be interpretable as int")
-            try:
-                int(split_precision[2])
-            except ValueError:
-                raise ValueError("Thirds string literal of precision (implicit"
-                                 + " shift) must be interpretable as int")
+            if not type(precision.num_bits) is int:
+                raise ValueError("'num_bits' has type"
+                                 + f"{type(precision.num_bits)}, but must"
+                                 + " be int.")
+
+            if not type(precision.implicit_shift) is int:
+                raise ValueError("'num_bits' has type"
+                                 + f"{type(precision.implicit_shift)}, but"
+                                 + " must be int.")
 
     def _validate_exp_data(self):
         """Validates if data regarding in a split of the variable in mantissa
@@ -109,12 +104,8 @@ class LavaPyType:
         conv_data = {}
 
         for key in CONST_CONV_VARS:
-            if key == 'signedness':
-                conv_data[key] = self.precision.split(":")[0]
-            elif key == 'precision_bits':
-                conv_data[key] = int(self.precision.split(":")[1])
-            elif key == 'implicit_shift':
-                conv_data[key] = int(self.precision.split(":")[2])
+            if key in ['is_signed', 'num_bits', 'implicit_shift']:
+                conv_data[key] = self.precision.__getattribute__(key)
             else:
                 conv_data[key] = self.__getattribute__(key)
 

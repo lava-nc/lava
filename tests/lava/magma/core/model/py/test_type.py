@@ -4,6 +4,7 @@
 
 import unittest
 from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.model.precision import Precision
 import numpy as np
 
 
@@ -30,19 +31,28 @@ class TestLavaPyType(unittest.TestCase):
 
         # Incorrect setting for first literal.
         with self.assertRaises(ValueError):
-            LavaPyType._validate_precision(precision='a:24:16')
+            LavaPyType._validate_precision(precision=Precision(
+                is_signed=1,
+                num_bits=24,
+                implicit_shift=1))
 
     def test_validate_precision_wrong_second_literal(self):
 
         # Incorrect setting for second literal.
         with self.assertRaises(ValueError):
-            LavaPyType._validate_precision(precision='u:24.1:10')
+            LavaPyType._validate_precision(precision=Precision(
+                is_signed=False,
+                num_bits=24.1,
+                implicit_shift=10))
 
     def test_validate_precision_wrong_third_literal(self):
 
         # Incorrect setting for third literal.
         with self.assertRaises(ValueError):
-            LavaPyType._validate_precision(precision='u:24:10.1')
+            LavaPyType._validate_precision(precision=Precision(
+                is_signed=False,
+                num_bits=24,
+                implicit_shift=10.1))
 
     def test_validate_exp_data_no_exp_var(self):
         # Instantiate LavaPyType with 'num_bits_exp' but no 'exp_var'.
@@ -63,12 +73,15 @@ class TestLavaPyType(unittest.TestCase):
         # Instantiate LavaPyType with information needed for float- to
         # fixed-point conversion.
         lava_py_type = LavaPyType(cls=None, d_type=np.ndarray,
-                                  precision="u:24:0", domain=np.array([0, 1]),
-                                  constant=True, num_bits_exp=8, exp_var="var",
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=24,
+                                                      implicit_shift=0),
+                                  domain=np.array([0, 1]), constant=True,
+                                  num_bits_exp=8, exp_var="var",
                                   scale_domain=1, meta_parameter=False)
 
-        true_conv_data = {"signedness": "u",
-                          "precision_bits": 24,
+        true_conv_data = {"is_signed": False,
+                          "num_bits": 24,
                           "implicit_shift": 0,
                           "scale_domain" : 1,
                           "domain": np.array([0, 1]),

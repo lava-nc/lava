@@ -6,6 +6,7 @@ import unittest
 
 from lava.utils.float2fixed import Float2FixedConverter
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.precision import Precision
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyOutPort, PyInPort, PyRefPort
 from lava.magma.core.process.process import AbstractProcess
@@ -86,10 +87,13 @@ class ProcVar(AbstractProcess):
 @tag('fixed_pt_pytype_target_err')
 class ProcPyProcModelTargetErr(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=17,
-                               domain=None, constant=True, num_bits_exp=4,
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32, domain=None,
+                               precision=17, constant=True, num_bits_exp=4,
                                meta_parameter=False)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False,
                                num_bits_exp=None, meta_parameter=False)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
@@ -103,16 +107,26 @@ class ProcPyProcModelTargetErr(PyLoihiProcessModel):
 @tag('fixed_pt_pytype_var_err')
 class ProcPyProcModelVarErr(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:24:0",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=True, num_bits_exp=4,
                                meta_parameter=False)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False,
                                num_bits_exp=None, meta_parameter=False)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:3.5")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=3.5))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -121,16 +135,26 @@ class ProcPyProcModelVarErr(PyLoihiProcessModel):
 class ProcPyProcModel1(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6),
                                domain=None, constant=True, num_bits_exp=4,
                                exp_var='exp_var', meta_parameter=False)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False,
                                num_bits_exp=None, meta_parameter=False)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:3")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=3))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -139,16 +163,26 @@ class ProcPyProcModel1(PyLoihiProcessModel):
 class ProcPyProcModel2(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6),
                                domain=None, constant=True, num_bits_exp=4,
                                meta_parameter=True)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False,
                                num_bits_exp=None, meta_parameter=False)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:6")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=6,
+                                                      implicit_shift=6))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -157,13 +191,23 @@ class ProcPyProcModel2(PyLoihiProcessModel):
 class ProcPyProcModel3(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6),
                                domain=[0, 1])
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0")
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0))
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:6")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=6))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -172,12 +216,22 @@ class ProcPyProcModel3(PyLoihiProcessModel):
 class ProcPyProcModel4(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6")
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0")
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6))
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0))
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -186,17 +240,27 @@ class ProcPyProcModel4(PyLoihiProcessModel):
 class ProcPyProcModel5(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6),
                                domain=None, constant=True, num_bits_exp=4,
                                meta_parameter=False, scale_domain=1,
                                exp_var='exp_var_u')
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False, scale_domain=0,
                                num_bits_exp=None)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:6")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=6))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -205,16 +269,26 @@ class ProcPyProcModel5(PyLoihiProcessModel):
 class ProcPyProcModel6(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing Proc."""
 
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:17:6",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=17,
+                                                   implicit_shift=6),
                                domain=None, constant=True, num_bits_exp=4,
                                meta_parameter=True)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:24:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=24,
+                                                   implicit_shift=0),
                                domain=None, constant=False,
                                num_bits_exp=None, meta_parameter=False)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=Proc, protocol=LoihiProtocol)
@@ -268,12 +342,19 @@ class SubProcPyProcModelHierProc(AbstractSubProcessModel):
 class ProcDensePyProcModel1(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcDense."""
 
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:16:0",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=16,
+                                                   implicit_shift=0),
                                constant=True)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:16:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=ProcDense, protocol=LoihiProtocol)
@@ -282,12 +363,19 @@ class ProcDensePyProcModel1(PyLoihiProcessModel):
 class ProcDensePyProcModel2(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcDense."""
 
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:3",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=3),
                                constant=True)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="s:16:0")
+                                  precision=Precision(is_signed=True,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="s:16:0")
+                                    precision=Precision(is_signed=True,
+                                                        num_bits=16,
+                                                        implicit_shift=0))
 
 
 @implements(proc=ProcDense, protocol=LoihiProtocol)
@@ -296,12 +384,19 @@ class ProcDensePyProcModel2(PyLoihiProcessModel):
 class ProcDensePyProcModel3(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcDense."""
 
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:0",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=0),
                                constant=True)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:15:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=15,
+                                                        implicit_shift=0))
 
 
 @implements(proc=ProcDense, protocol=LoihiProtocol)
@@ -310,12 +405,19 @@ class ProcDensePyProcModel3(PyLoihiProcessModel):
 class ProcDensePyProcModel5(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcDense."""
 
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:0",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=0),
                                constant=True, scale_domain=0)
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:15:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=15,
+                                                        implicit_shift=0))
 
 
 @implements(proc=ProcDense, protocol=LoihiProtocol)
@@ -324,12 +426,19 @@ class ProcDensePyProcModel5(PyLoihiProcessModel):
 class ProcDensePyProcModel6(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcDense."""
 
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:1",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=1),
                                constant=True, num_bits_exp=2, exp_var="exp_w")
     inport: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16,
-                                  precision="u:16:0")
+                                  precision=Precision(is_signed=False,
+                                                      num_bits=16,
+                                                      implicit_shift=0))
     outport: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16,
-                                    precision="u:15:0")
+                                    precision=Precision(is_signed=False,
+                                                        num_bits=15,
+                                                        implicit_shift=0))
 
 
 @implements(proc=ProcDense, protocol=LoihiProtocol)
@@ -350,11 +459,20 @@ class ProcRefPyProcModelFixed(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcRef."""
 
     refport : PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:0",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=0),
                                constant=False, scale_domain=0)
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:3",
+    u: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=3),
                                constant=False, scale_domain=0)
-    w: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="u:12:0",
+    w: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=False,
+                                                   num_bits=12,
+                                                   implicit_shift=0),
                                constant=True, scale_domain=1)
 
 
@@ -364,7 +482,10 @@ class ProcRefPyProcModelFixed(PyLoihiProcessModel):
 class ProcVarPyProcModelFixed(PyLoihiProcessModel):
     """A minimal fixed-point PyProcModel implementing ProcVar."""
 
-    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision="s:16:3",
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32,
+                               precision=Precision(is_signed=True,
+                                                   num_bits=16,
+                                                   implicit_shift=3),
                                constant=False, scale_domain=0)
 
 
@@ -779,16 +900,16 @@ class Float2Fixed(unittest.TestCase):
         proc1 = Proc()
 
         true_conv_data = {proc1.id: {}}
-        true_conv_data[proc1.id]['u'] = {'signedness': 's',
-                                         'precision_bits': 17,
+        true_conv_data[proc1.id]['u'] = {'is_signed': True,
+                                         'num_bits': 17,
                                          'implicit_shift': 6,
                                          'scale_domain': 0,
                                          'domain': 0,
                                          'constant': True,
                                          'num_bits_exp': 4,
                                          'exp_var': 'exp_var'}
-        true_conv_data[proc1.id]['v'] = {'signedness': 'u',
-                                         'precision_bits': 24,
+        true_conv_data[proc1.id]['v'] = {'is_signed': False,
+                                         'num_bits': 24,
                                          'implicit_shift': 0,
                                          'scale_domain': 0,
                                          'domain': None,
@@ -874,8 +995,8 @@ class Float2Fixed(unittest.TestCase):
         proc1 = Proc()
 
         true_conv_data = {proc1.id: {}}
-        true_conv_data[proc1.id]['v'] = {'signedness': 'u',
-                                         'precision_bits': 24,
+        true_conv_data[proc1.id]['v'] = {'is_signed': False,
+                                         'num_bits': 24,
                                          'implicit_shift': 0,
                                          'scale_domain': 0,
                                          'domain': None,
@@ -911,8 +1032,8 @@ class Float2Fixed(unittest.TestCase):
 
         true_conv_data = {proc1.id: {},
                           proc2.id: {}}
-        true_conv_data[proc1.id]['v'] = {'signedness': 'u',
-                                         'precision_bits': 24,
+        true_conv_data[proc1.id]['v'] = {'is_signed': False,
+                                         'num_bits': 24,
                                          'implicit_shift': 0,
                                          'scale_domain': 0,
                                          'domain': None,
@@ -920,8 +1041,8 @@ class Float2Fixed(unittest.TestCase):
                                          'num_bits_exp': None,
                                          'exp_var': None}
 
-        true_conv_data[proc2.id]['w'] = {'signedness': 's',
-                                         'precision_bits': 16,
+        true_conv_data[proc2.id]['w'] = {'is_signed': True,
+                                         'num_bits': 16,
                                          'implicit_shift': 9,
                                          'scale_domain': 0,
                                          'domain': 0,
@@ -957,32 +1078,32 @@ class Float2Fixed(unittest.TestCase):
 
         true_conv_data = {proc1.id: {},
                           proc2.id: {}}
-        true_conv_data[proc1.id]['v'] = {'signedness': 's',
-                                         'precision_bits': 16,
+        true_conv_data[proc1.id]['v'] = {'is_signed': True,
+                                         'num_bits': 16,
                                          'implicit_shift': 3,
                                          'scale_domain': 0,
                                          'domain': None,
                                          'constant': False,
                                          'num_bits_exp': None,
                                          'exp_var': None}
-        true_conv_data[proc1.id]['u'] = {'signedness': 's',
-                                         'precision_bits': 16,
+        true_conv_data[proc1.id]['u'] = {'is_signed': True,
+                                         'num_bits': 16,
                                          'implicit_shift': 6,
                                          'scale_domain': 0,
                                          'domain': None,
                                          'constant': False,
                                          'num_bits_exp': None,
                                          'exp_var': None}
-        true_conv_data[proc1.id]['w'] = {'signedness': 'u',
-                                         'precision_bits': 12,
+        true_conv_data[proc1.id]['w'] = {'is_signed': False,
+                                         'num_bits': 12,
                                          'implicit_shift': 0,
                                          'scale_domain': 1,
                                          'domain': 3,
                                          'constant': True,
                                          'num_bits_exp': None,
                                          'exp_var': None}
-        true_conv_data[proc2.id]['v'] = {'signedness': 's',
-                                         'precision_bits': 16,
+        true_conv_data[proc2.id]['v'] = {'is_signed': True,
+                                         'num_bits': 16,
                                          'implicit_shift': 3,
                                          'scale_domain': 0,
                                          'domain': None,
@@ -1243,20 +1364,20 @@ class Float2Fixed(unittest.TestCase):
                                   proc2.id: {}},
                               1: {proc1.id: {}}}
 
-        true_scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
-                                                'precision_bits': 24,
+        true_scale_domains[0][proc1.id]['v'] = {'is_signed': False,
+                                                'num_bits': 24,
                                                 'implicit_shift': 0,
                                                 'domain': np.array([2, 4]),
                                                 'num_bits_exp': 0}
 
-        true_scale_domains[0][proc2.id]['w'] = {'signedness': 's',
-                                                'precision_bits': 16,
+        true_scale_domains[0][proc2.id]['w'] = {'is_signed': True,
+                                                'num_bits': 16,
                                                 'implicit_shift': 6,
                                                 'domain': 0,
                                                 'num_bits_exp': 0}
 
-        true_scale_domains[1][proc1.id]['u'] = {'signedness': 's',
-                                                'precision_bits': 17,
+        true_scale_domains[1][proc1.id]['u'] = {'is_signed': True,
+                                                'num_bits': 17,
                                                 'implicit_shift': 6,
                                                 'domain': 1,
                                                 'num_bits_exp': 4}
@@ -1300,28 +1421,28 @@ class Float2Fixed(unittest.TestCase):
                          1: {1: {},
                              3 : {}}}
 
-        scale_domains[0][1]['v'] = {'signedness': 'u',
-                                    'precision_bits': 24,
+        scale_domains[0][1]['v'] = {'is_signed': False,
+                                    'num_bits': 24,
                                     'implicit_shift': 0,
                                     'domain': np.array([2, 4]),
                                     'num_bits_exp': 0}
-        scale_domains[0][3]['w'] = {'signedness': 's',
-                                    'precision_bits': 16,
+        scale_domains[0][3]['w'] = {'is_signed': True,
+                                    'num_bits': 16,
                                     'implicit_shift': 6,
                                     'domain': 3,
                                     'num_bits_exp': 0}
-        scale_domains[1][1]['u'] = {'signedness': 's',
-                                    'precision_bits': 17,
+        scale_domains[1][1]['u'] = {'is_signed': True,
+                                    'num_bits': 17,
                                     'implicit_shift': 0,
                                     'domain': 2.5,
                                     'num_bits_exp': 2}
-        scale_domains[1][1]['x'] = {'signedness': 'u',
-                                    'precision_bits': 6,
+        scale_domains[1][1]['x'] = {'is_signed': False,
+                                    'num_bits': 6,
                                     'implicit_shift': 1,
                                     'domain': 0.5,
                                     'num_bits_exp': 0}
-        scale_domains[1][3]['w'] = {'signedness': 's',
-                                    'precision_bits': 16,
+        scale_domains[1][3]['w'] = {'is_signed': True,
+                                    'num_bits': 16,
                                     'implicit_shift': 2,
                                     'domain': 30,
                                     'num_bits_exp': 2}
@@ -1359,28 +1480,28 @@ class Float2Fixed(unittest.TestCase):
                          1: {1: {},
                              3 : {}}}
 
-        scale_domains[0][1]['v'] = {'signedness': 'u',
-                                    'precision_bits': 24,
+        scale_domains[0][1]['v'] = {'is_signed': False,
+                                    'num_bits': 24,
                                     'implicit_shift': 0,
                                     'domain': np.array([0, 1, 2, 3, 4, 5]),
                                     'num_bits_exp': 0}
-        scale_domains[0][3]['w'] = {'signedness': 's',
-                                    'precision_bits': 16,
+        scale_domains[0][3]['w'] = {'is_signed': True,
+                                    'num_bits': 16,
                                     'implicit_shift': 6,
                                     'domain': 0.1,
                                     'num_bits_exp': 0}
-        scale_domains[1][1]['u'] = {'signedness': 's',
-                                    'precision_bits': 17,
+        scale_domains[1][1]['u'] = {'is_signed': True,
+                                    'num_bits': 17,
                                     'implicit_shift': 0,
                                     'domain': 2.5,
                                     'num_bits_exp': 2}
-        scale_domains[1][1]['x'] = {'signedness': 'u',
-                                    'precision_bits': 6,
+        scale_domains[1][1]['x'] = {'is_signed': False,
+                                    'num_bits': 6,
                                     'implicit_shift': 1,
                                     'domain': 0.5,
                                     'num_bits_exp': 0}
-        scale_domains[1][3]['w'] = {'signedness': 's',
-                                    'precision_bits': 16,
+        scale_domains[1][3]['w'] = {'is_signed': True,
+                                    'num_bits': 16,
                                     'implicit_shift': 2,
                                     'domain': 30,
                                     'num_bits_exp': 2}
@@ -1425,14 +1546,14 @@ class Float2Fixed(unittest.TestCase):
         scale_domains = {0: {proc1.id: {},
                              proc2.id: {}}}
 
-        scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
-                                           'precision_bits': 24,
+        scale_domains[0][proc1.id]['v'] = {'is_signed': False,
+                                           'num_bits': 24,
                                            'implicit_shift': 0,
                                            'domain': np.array([3, 5]),
                                            'num_bits_exp': 0}
 
-        scale_domains[0][proc2.id]['w'] = {'signedness': 's',
-                                           'precision_bits': 16,
+        scale_domains[0][proc2.id]['w'] = {'is_signed': True,
+                                           'num_bits': 16,
                                            'implicit_shift': 9,
                                            'domain': 3,
                                            'num_bits_exp': 0}
@@ -1487,14 +1608,14 @@ class Float2Fixed(unittest.TestCase):
         scale_domains = {0: {proc1.id: {},
                              proc2.id: {}}}
 
-        scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
-                                           'precision_bits': 24,
+        scale_domains[0][proc1.id]['v'] = {'is_signed': False,
+                                           'num_bits': 24,
                                            'implicit_shift': 0,
                                            'domain': np.array([1]),
                                            'num_bits_exp': 0}
 
-        scale_domains[0][proc2.id]['w'] = {'signedness': 's',
-                                           'precision_bits': 16,
+        scale_domains[0][proc2.id]['w'] = {'is_signed': True,
+                                           'num_bits': 16,
                                            'implicit_shift': 1,
                                            'domain': 0,
                                            'num_bits_exp': 2}
@@ -1549,14 +1670,14 @@ class Float2Fixed(unittest.TestCase):
         scale_domains = {0: {proc1.id: {},
                              proc2.id: {}}}
 
-        scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
-                                           'precision_bits': 24,
+        scale_domains[0][proc1.id]['v'] = {'is_signed': False,
+                                           'num_bits': 24,
                                            'implicit_shift': 0,
                                            'domain': np.array([3, 5]),
                                            'num_bits_exp': 0}
 
-        scale_domains[0][proc2.id]['w'] = {'signedness': 's',
-                                           'precision_bits': 16,
+        scale_domains[0][proc2.id]['w'] = {'is_signed': True,
+                                           'num_bits': 16,
                                            'implicit_shift': 9,
                                            'domain': 3,
                                            'num_bits_exp': 0}
@@ -1604,14 +1725,14 @@ class Float2Fixed(unittest.TestCase):
         scale_domains = {0: {proc1.id: {},
                              proc2.id: {}}}
 
-        scale_domains[0][proc1.id]['v'] = {'signedness': 'u',
-                                           'precision_bits': 24,
+        scale_domains[0][proc1.id]['v'] = {'is_signed': False,
+                                           'num_bits': 24,
                                            'implicit_shift': 0,
                                            'domain': np.array([3, 5]),
                                            'num_bits_exp': 0}
 
-        scale_domains[0][proc2.id]['w'] = {'signedness': 's',
-                                           'precision_bits': 16,
+        scale_domains[0][proc2.id]['w'] = {'is_signed': True,
+                                           'num_bits': 16,
                                            'implicit_shift': 1,
                                            'domain': 3,
                                            'num_bits_exp': 2}

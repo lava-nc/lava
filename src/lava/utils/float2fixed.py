@@ -14,7 +14,7 @@ from lava.magma.compiler.compiler_graphs import (
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import AbstractSrcPort
 from lava.proc.monitor.process import Monitor
-from lava.proc.io.sink import RingBuffer
+from lava.proc import io
 from lava.magma.core.process.ports.ports import OutPort
 
 import numpy as np
@@ -34,7 +34,8 @@ class Float2FixedConverter:
         self.num_steps = None
         self.quantiles = None
         self.scale_domains = set()
-        self.ignored_procs = [Monitor, RingBuffer]
+        self.ignored_procs = [Monitor, io.sink.RingBuffer,
+                              io.source.RingBuffer]
 
     def set_run_cfg(self, floating_pt_rcfg, fixed_pt_rcfg) -> None:
         """Set run config for floating- and fixed-point ProcessModels
@@ -566,16 +567,16 @@ class Float2FixedConverter:
             for p_id, scale_data_p_id in scale_data_domain.items():
                 for var, scale_data in scale_data_p_id.items():
 
-                    bits = scale_data['precision_bits']
+                    bits = scale_data['num_bits']
                     impl_shift = scale_data['implicit_shift']
                     num_bits_exp = scale_data['num_bits_exp']
 
-                    # Get range representable given bit constraints and
-                    # signedness.
-                    if scale_data['signedness'] == 's':
+                    # Get range representable given bit constraints and whether
+                    # representation is signed..
+                    if scale_data['is_signed']:
                         rep_range = np.array([-1 * 2 ** (bits - 1),
                                               2 ** (bits - 1) - 1])
-                    elif scale_data['signedness'] == 'u':
+                    else:
                         rep_range = np.array([0, 2 ** bits - 1])
 
                     # Apply implicit shift.
@@ -671,12 +672,12 @@ class Float2FixedConverter:
                         # Calculate mantissa and exponent and store them
                         # separately.
                         exp_var = self.conv_data[p_id][var]['exp_var']
-                        if scale_data['signedness'] == 's':
+                        if scale_data['is_signed']:
                             sign_bit = 1
                         else:
                             sign_bit = 0
 
-                        eff_mantissa_bits = (scale_data['precision_bits']
+                        eff_mantissa_bits = (scale_data['num_bits']
                                              - sign_bit)
 
                         if np.any(scaled_param):
