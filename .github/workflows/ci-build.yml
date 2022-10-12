@@ -126,11 +126,20 @@ jobs:
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-01-${{ hashFiles('**/poetry.lock') }}
 
     - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true' && ( runner.os == 'Linux' || runner.os == 'macOS' )
       run: poetry install --no-interaction --no-root
 
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true' && ( runner.os == 'Windows' )
+      run:  C:\Users\runneradmin\.local\bin\poetry install --no-interaction --no-root
+
     - name: Install Lava
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: poetry install --no-interaction
+
+    - name: Install Lava
+      if: runner.os == 'Windows'
+      run: C:\Users\runneradmin\.local\bin\poetry install --no-interaction
 
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
