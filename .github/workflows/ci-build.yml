@@ -167,6 +167,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         lfs: true
+        DEBUG: 1
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -190,15 +191,19 @@ jobs:
     - name: Install dependencies
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
+      run: |
+        env
+        poetry install --no-interaction --no-root
 
     - name: Install Lava
       working-directory: ./src/lava/magma/runtime/message_infrastructure
-      run: poetry install --no-interaction
+      run: |
+        env
+        poetry install --no-interaction
 
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && DEBUG == '1'
       run: ./build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
