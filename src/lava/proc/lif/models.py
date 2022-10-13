@@ -54,6 +54,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """
         super().run_spk()
         a_in_data = self.a_in.recv()
+        
         self.subthr_dynamics(activation_in=a_in_data)
         s_out = self.spiking_activation()
         self.reset_voltage(spike_vector=s_out)
@@ -182,7 +183,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
-
+        
         self.scale_bias()
         # # Compute effective bias and threshold only once, not every time-step
         # if not self.isbiasscaled:
@@ -251,7 +252,8 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """Calculates the third factor trace and sends it to the 
         Dense process for learning.
         """
-
+        #super().run_spk()
+        
         a_in_data = self.a_in.recv()
         self.subthr_dynamics(activation_in=a_in_data)
         s_out = self.spiking_activation()
@@ -267,7 +269,7 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_out_y3.send(y3)
         self.s_out_bap.send(s_out)
 
-        super().run_spk()
+        
 
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)

@@ -121,12 +121,12 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
     """
-
+    
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
 
-
+    # NEVER USES THIS RUN_SPK
     def run_spk(self):
         # The a_out sent at each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in

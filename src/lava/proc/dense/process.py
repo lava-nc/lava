@@ -68,7 +68,7 @@ class Dense(AbstractProcess):
 
         self._validate_weights(weights)
         shape = weights.shape
-
+        
         # Ports
         self.s_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
@@ -139,8 +139,9 @@ class LearningDense(PlasticConnectionProcess, Dense):
                  **kwargs) -> None:
 
         super().__init__(weights=weights,
+                         shape=weights.shape,
                          name=name,
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
-                         **kwargs)
+                         **kwargs) 

@@ -28,7 +28,6 @@ class DopaminergicSTDPLoihi(LoihiLearningRule):
             *args,
             **kwargs
     ):
-   
         self.learning_rate = learning_rate
         self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
         self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
@@ -77,8 +76,9 @@ class GatedHebbianLoihi(LoihiLearningRule):
 
         dw = learning_rate * e * x * y
 
-        x and y are the pre- resp. post-synaptic low-pass filtered spike trains. 
-        The error signal e is provided by the post-synaptic neuron as second trace (y2).
+        x and y are the pre- resp. post-synaptic low-pass filtered 
+        spike trains. The error signal e is provided by the 
+        post-synaptic neuron as second trace (y2).
 
         Parameters
         ==========
