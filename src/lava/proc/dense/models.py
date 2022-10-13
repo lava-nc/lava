@@ -123,9 +123,6 @@ class PyLearningDenseModelFloat(ConnectionModelFloat):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
-    # input port for receiving graded input spikes
-    s_graded_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons)in C-order (row major).
@@ -140,15 +137,9 @@ class PyLearningDenseModelFloat(ConnectionModelFloat):
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
             self.a_buff = self.weights.dot(s_in)
-            if self._graded_input:
-                s_graded_in = self.s_graded_in.recv()
-                self.a_buff = self.weights.dot(s_graded_in)
         else:
             s_in = self.s_in.recv().astype(bool)
             self.a_buff = self.weights[:, s_in].sum(axis=1)
-            if self._graded_input:
-                s_graded_in = self.s_graded_in.recv()
-                self.a_buff = self.weights.dot(s_graded_in)
 
         if self._learning_rule is not None:
             self._record_pre_spike_times(s_in)

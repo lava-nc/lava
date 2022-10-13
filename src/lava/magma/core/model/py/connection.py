@@ -60,7 +60,6 @@ class Connection(PyLoihiProcessModel, ABC):
         # add all necessary ports get access to all learning params
         self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
         self._shape: typing.Tuple[int, ...] = proc_params["shape"]
-        self._graded_input: typing.Optional[bool] = proc_params["graded_input"]
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
