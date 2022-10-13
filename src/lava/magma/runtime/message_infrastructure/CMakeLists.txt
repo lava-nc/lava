@@ -46,5 +46,10 @@ else()
 endif()
 
 # Cpp unit tests using GoogleTest
-enable_testing()
-add_subdirectory(test)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message("debug mode and enable cpp unit test")
+    enable_testing()
+    add_subdirectory(test)
+else()
+    message("not debug mode and disable cpp unit test")
+endif()
