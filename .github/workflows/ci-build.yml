@@ -203,7 +203,7 @@ jobs:
 
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      if: runner.os == 'Linux' && DEBUG == '1'
+      if: runner.os == 'Linux'
       run: ./build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
