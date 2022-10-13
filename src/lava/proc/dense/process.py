@@ -128,6 +128,7 @@ class LearningDense(PlasticConnectionProcess, Dense):
         TODO add learning rule parameter to docstring
     """
 
+
     def __init__(self,
                  *,
                  weights: np.ndarray,

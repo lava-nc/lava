@@ -122,8 +122,10 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
     fixed point implementation.
     """
 
+
     def __init__(self, proc_params):
         super().__init__(proc_params)
+
 
     def run_spk(self):
         # The a_out sent at each timestep is a buffered value from dendritic
@@ -133,15 +135,9 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
             self.a_buff = self.weights.dot(s_in)
-            # if self._graded_input:
-            #     s_graded_in = self.s_graded_in.recv()
-            #     self.a_buff = self.weights.dot(s_graded_in)
         else:
             s_in = self.s_in.recv().astype(bool)
             self.a_buff = self.weights[:, s_in].sum(axis=1)
-            # if self._graded_input:
-            #     s_graded_in = self.s_graded_in.recv()
-            #     self.a_buff = self.weights.dot(s_graded_in)
 
         super().run_spk(s_in)
 

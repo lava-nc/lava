@@ -54,7 +54,7 @@ dt = f"{learning_rate} * ({A_plus}) * x0 * y1 +" \
      f"{learning_rate} * {A_minus} * y0 * x1 - t * {tag_tau} * u0"
 
 # String learning rule for dw
-dw = " u0 * t * y3 "
+dw = " x0 * t * y2 "
 
 
 # Create custom LearningRule
