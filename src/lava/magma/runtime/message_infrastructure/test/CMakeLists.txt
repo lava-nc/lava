@@ -14,7 +14,7 @@ include_directories(../message_infrastructure/csrc)
 add_executable(
   test_messaging_infrastructure
   test_multiprocessing.cc
-  test_channel.cc
+  #  test_channel.cc
 )
 
 target_link_libraries(
