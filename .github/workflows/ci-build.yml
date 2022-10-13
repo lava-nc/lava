@@ -97,7 +97,7 @@ jobs:
       with:
         targets: |
           src/lava/.      
-        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+        options: "-r --exclude build --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
 
   unit-tests:
     name: Unit Test Code + Coverage
