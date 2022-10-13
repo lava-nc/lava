@@ -28,10 +28,7 @@ NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
-class Connection(PyLoihiProcessModel, ABC):
-
-    # Common connectivity parameters
-    weights = None
+class PlasticConnection:
 
     # Learning Ports
     s_in_bap = None
@@ -289,9 +286,7 @@ class Connection(PyLoihiProcessModel, ABC):
         return within_epoch_ts
 
     def lrn_guard(self) -> bool:
-        if self._learning_rule is not None:
-            return self.time_step % self._learning_rule.t_epoch == 0
-        return False
+        return self.time_step % self._learning_rule.t_epoch == 0
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
@@ -299,12 +294,12 @@ class Connection(PyLoihiProcessModel, ABC):
         self._update_traces()
         self._reset_dependencies_and_spike_times()
 
-    def run_spk(self) -> None:
-        s_in_bap = self.s_in_bap.recv().astype(bool)
+    #def run_spk(self) -> None:
+    #    s_in_bap = self.s_in_bap.recv().astype(bool)
 
-        if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)
-            self._update_trace_randoms()
+    #    if self._learning_rule is not None:
+    #        self._record_post_spike_times(s_in_bap)
+    #        self._update_trace_randoms()
 
     @abstractmethod
     def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
@@ -335,7 +330,7 @@ class Connection(PyLoihiProcessModel, ABC):
         self.ty = np.zeros_like(self.ty)
 
 
-class ConnectionModelBitApproximate(Connection):
+class PlasticConnectionModelBitApproximate(PlasticConnection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
 
@@ -400,12 +395,12 @@ class ConnectionModelBitApproximate(Connection):
     tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
     tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
-    def __init__(self, proc_params: dict) -> None:
-
-        # Flag to determine whether weights have already been scaled.
-        self.weights_set = False
-
-        super().__init__(proc_params)
+    # def __init__(self, proc_params: dict) -> None:
+    #
+    #     # Flag to determine whether weights have already been scaled.
+    #     self.weights_set = False
+    #
+    #     super().__init__(proc_params)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
@@ -1044,8 +1039,26 @@ class ConnectionModelBitApproximate(Connection):
             )
         )
 
+    def run_spk(self, s_in) -> None:
+        """
+        Overrides the Connection Model run_spk function to
+        receive and update y2 and y3 traces.
+        """
+        self._record_pre_spike_times(s_in)
 
-class ConnectionModelFloat(Connection):
+        s_in_bap = self.s_in_bap.recv().astype(bool)
+        y2 = self.s_in_y2.recv()
+        y3 = self.s_in_y3.recv()
+
+        self._record_post_spike_times(s_in_bap)
+
+        y_traces = self._y_traces
+        y_traces[1, :] = y2
+        y_traces[2, :] = y3
+        self._set_y_traces(y_traces)
+
+
+class PlasticConnectionModelFloat(PlasticConnection):
     """Floating-point implementation of the Connection Process
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
@@ -1513,22 +1526,23 @@ class ConnectionModelFloat(Connection):
                 self._y_taus[:, np.newaxis],
             )
         )
-    """
-    def run_spk(self) -> None:
-        Overrides the Connection Model run_spk function to 
+
+    def run_spk(self, s_in) -> None:
+        """
+        Overrides the Connection Model run_spk function to
         receive and update y2 and y3 traces.
-        
+        """
+        self._record_pre_spike_times(s_in)
+
         s_in_bap = self.s_in_bap.recv().astype(bool)
         y2 = self.s_in_y2.recv()
         y3 = self.s_in_y3.recv()
 
-        if self._learning_rule is not None:
-            self._record_post_spike_times(s_in_bap)
+        self._record_post_spike_times(s_in_bap)
 
         y_traces = self._y_traces
         y_traces[1, :] = y2
         y_traces[2, :] = y3
         self._set_y_traces(y_traces)
-    """
 
         
