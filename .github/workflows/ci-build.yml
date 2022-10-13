@@ -167,8 +167,10 @@ jobs:
     - uses: actions/checkout@v2
       with:
         lfs: true
-        DEBUG: 1
 
+    - name: Set msg lib build type
+      run: echo "DEBUG=1" >> $GITHUB_ENV
+      
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
