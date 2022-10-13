@@ -36,15 +36,19 @@ class AbstractSendPort : public AbstractPort {
  public:
   using AbstractPort::AbstractPort;
   virtual ~AbstractSendPort() = default;
+  virtual void Start() = 0;
   virtual void Send(MetaDataPtr data) = 0;
+  virtual void Join() = 0;
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
   using AbstractPort::AbstractPort;
   virtual ~AbstractRecvPort() = default;
+  virtual void Start() = 0;
   virtual MetaDataPtr Recv() = 0;
   virtual MetaDataPtr Peek() = 0;
+  virtual void Join() = 0;
 };
 
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
