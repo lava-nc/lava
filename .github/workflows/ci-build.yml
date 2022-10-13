@@ -170,7 +170,7 @@ jobs:
 
     - name: Set msg lib build type
       run: echo "DEBUG=1" >> $GITHUB_ENV
-      
+
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
@@ -193,20 +193,16 @@ jobs:
     - name: Install dependencies
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: |
-        env
-        poetry install --no-interaction --no-root
+      run: poetry install --no-interaction --no-root
 
     - name: Install Lava
       working-directory: ./src/lava/magma/runtime/message_infrastructure
-      run: |
-        env
-        poetry install --no-interaction
+      run: poetry install --no-interaction
 
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      if: runner.os == 'Linux'
-      run: ./build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
+      if: env.DEBUG == '1'
+      run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure
