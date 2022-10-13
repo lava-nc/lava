@@ -30,26 +30,26 @@ py::array_t<int32_t> Data() {
   return data;
 }
 
-void SendProc(ShmemSendPort send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
+void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
 
   // Sends data
-  send_port.Start();
-  send_port.Send(data);
-  send_port.Join();
+  send_port->Start();
+  send_port->Send(data);
+  send_port->Join();
 
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
 }
 
-void RecvProc(ShmemRecvPort recv_port, AbstractActor* actor_ptr) {
+void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
 
   // Returns received data
-  recv_port.Start();
-  auto recv_data = recv_port.Recv();
-  recv_port.Join();
+  recv_port->Start();
+  auto recv_data = recv_port->Recv();
+  recv_port->Join();
 
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
 
@@ -84,29 +84,22 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   AbstractActor::TargetFn send_target_fn;
   AbstractActor::TargetFn recv_target_fn;
 
-  // Test Channel Proxy
-  auto shmem_channel_proxy = ChannelProxy(
-    ChannelType::SHMEMCHANNEL,
-    size,
-    nbytes,
-    src_name,
-    dst_name);
 
   // TODO: convert data into python to pass into function
-  // MetaDataPtr data;
-  // auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
-  // send_target_fn = send_bound_fn;
+  MetaDataPtr data;
+  auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
+  send_target_fn = send_bound_fn;
 
-  // auto recv_bound_fn = std::bind(&RecvProc, recv_port, std::placeholders::_1);
-  // recv_target_fn = recv_bound_fn;
+  auto recv_bound_fn = std::bind(&RecvProc, recv_port, std::placeholders::_1);
+  recv_target_fn = recv_bound_fn;
 
-  // mp.BuildActor(send_target_fn);
-  // mp.BuildActor(recv_target_fn);
+  mp.BuildActor(send_target_fn);
+  mp.BuildActor(recv_target_fn);
 
-  // sleep(2);
+  sleep(2);
 
-  // // Stop any currently running actors
-  // mp.Stop(true);
+  // Stop any currently running actors
+  mp.Stop(true);
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess){
