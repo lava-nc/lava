@@ -9,11 +9,14 @@ cmake ..
 make
 cd ..
 source setenv.sh
-python test/test_example.py
+pytest test
 ```
 
 ## Running Unit Tests (C++ / GoogleTest)
 ```shell
+cd build
+cmake -DCMAKE_BUILD_TYPE="Debug" ..
+make
 ctest
 
 # For printing outputs
