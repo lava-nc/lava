@@ -232,8 +232,7 @@ class DiGraphBase(ntx.DiGraph):
         graph.annotate_digraph_by_degree()
 
         leaves = [node for node, nodeattr in graph.nodes.items() if
-                  nodeattr['degdef'] == NodeAnnotation.PUREOUT or nodeattr[
-                      'degdef'] == NodeAnnotation.PUREIN]
+                  nodeattr['degdef'] == NodeAnnotation.PUREIN]
         num_leaves = len(leaves)
 
         if num_leaves > 0:
@@ -242,6 +241,11 @@ class DiGraphBase(ntx.DiGraph):
             _, graph = self.is_dag(graph)
 
         if len(list(graph.nodes)) > 1:
+            isolated_nodes = \
+                [node for node, nodeattr in graph.nodes.items() if nodeattr[
+                    'degdef'] == NodeAnnotation.ISOLATED]
+            if len(list(graph.nodes)) == len(isolated_nodes):
+                return True, graph
             return False, graph
         else:
             return True, graph
@@ -746,7 +750,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         """
 
         proc_models = []
-        for name, cls in module.__dict__.items():
+        classes = [m[1] for m in inspect.getmembers(module, inspect.isclass)
+                   if m[1].__module__ == module.__name__]
+        for cls in classes:
             if (
                     hasattr(cls, "implements_process")
                     and issubclass(cls, AbstractProcessModel)
