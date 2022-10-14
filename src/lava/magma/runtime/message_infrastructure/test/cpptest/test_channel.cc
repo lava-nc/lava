@@ -21,10 +21,6 @@ class Builder {
     void Build() {};
 };
 
-void ActorStop() {
-  std::cout << " STOP" << std::endl;
-}
-
 py::array_t<int32_t> Data() {
   py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4});
   return data;
@@ -33,6 +29,7 @@ py::array_t<int32_t> Data() {
 void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
+  std::cout << "Here I am" << std::endl;
 
   // Sends data
   send_port->Start();
@@ -40,11 +37,13 @@ void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* ac
   send_port->Join();
 
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
+  std::cout << "Status STOPPED" << std::endl;
 }
 
 void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
+  std::cout << "Here I am (RECV)" << std::endl;
 
   // Returns received data
   recv_port->Start();
@@ -54,6 +53,8 @@ void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
 
   // TODO: Check data value
+  recv_data->mdata;
+  std::cout << "Mdata" << std::endl;
   // if (recv_data != Data()) {
   //   std::cout << "Received Data is incorrect" << std::endl;
   // }
@@ -83,7 +84,6 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
 
   AbstractActor::TargetFn send_target_fn;
   AbstractActor::TargetFn recv_target_fn;
-
 
   // TODO: convert data into python to pass into function
   MetaDataPtr data;
