@@ -149,10 +149,8 @@ class LearningLIF(PlasticNeuronProcess, AbstractLIF):
                          log_config=log_config, **kwargs)
         self.vth = Var(shape=(1,), init=vth)
         
-        # To calculate training error : supervised signal 
-        self.s_target = InPort(shape=shape)
-
-        self.a_graded_reward_in = InPort(shape=shape)
+        # Third factor input
+        self.a_third_factor_in = InPort(shape=shape)
 
 
 

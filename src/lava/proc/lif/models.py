@@ -226,13 +226,9 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
-    # Generate a target input port for error-based third-factor : NOT-USED
-    s_target: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    # third factor input
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
-    # Graded reward input spikes
-    a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
 
     def spiking_activation(self):
@@ -240,13 +236,31 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
-    def calculate_third_factor_trace(self, s_graded_in: float) -> float: 
+    def calculate_third_factor_trace_y2(self, s_error_in: float) -> float: 
         """Generate's a third factor Reward traces based on 
         Graded input spikes to the Learning LIF process. 
 
-        Currently, the third factor resembles the input graded spike
+        For SuperSpike:
+        This is the error signal propogated from the input 
         """
-        return s_graded_in
+        s_error_out = s_error_in - self.s_out_buff
+        print("y2", s_error_out)
+
+        return s_error_out
+    
+    def calculate_third_factor_trace_y3(self): 
+        """Generate's a third factor Reward traces based on 
+        Graded input spikes to the Learning LIF process. 
+
+        For SuperSpike:
+        This is calculating the sigmoid of the membrane potential. 
+        Ex: 1/(1 + np.exp(-self.u))
+        """
+        
+        surrogate_u = 1/(1 + np.exp(-(self.u)))
+        print("y3 :", surrogate_u)
+
+        return surrogate_u
 
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the 
@@ -254,10 +268,11 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """
         super().run_spk()
         
-        a_graded_in = self.a_graded_reward_in.recv()
+        a_third_factor_in = self.a_third_factor_in.recv()
 
-        y2 = self.calculate_third_factor_trace(a_graded_in)
-        y3 = self.calculate_third_factor_trace(a_graded_in)
+        y2 = self.calculate_third_factor_trace_y2(a_third_factor_in)
+        y3 = self.calculate_third_factor_trace_y3()
+    
 
         self.s_out_y2.send(y2)
         self.s_out_y3.send(y3)
