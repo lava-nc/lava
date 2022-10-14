@@ -1,6 +1,8 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import typing as ty
+
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
@@ -9,7 +11,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class ConnectionProcess(AbstractProcess):
+class PlasticConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
@@ -51,22 +53,18 @@ class ConnectionProcess(AbstractProcess):
         Shape of the connection in format (post, pre) order.
     learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
-    graded_input: bool
-        To receive graded input spikes to the Dense Proc
     """
     def __init__(
         self,
         shape: tuple = (1, 1),
         learning_rule: LoihiLearningRule = None,
-        graded_input: bool = False,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
-        kwargs["graded_input"] = graded_input
+
         kwargs["shape"] = shape
 
         self.learning_rule = learning_rule
-        self.graded_input = graded_input
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
