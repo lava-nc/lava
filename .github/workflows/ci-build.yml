@@ -99,6 +99,9 @@ jobs:
     strategy:
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v2
@@ -144,6 +147,6 @@ jobs:
     - name: Run unit tests
       if: runner.os == 'Windows'
       run: |
-        .venv\Scripts\activate.ps1
+        .venv\Scripts\activate
         python3 -m pip install ipykernel
         pytest
