@@ -27,17 +27,18 @@ class TestLIFProcess(unittest.TestCase):
         self.assertEqual(lif.vth.init, 1.)
         self.assertEqual(lif.proc_params["shape"], (100,))
 
+
 class TestLearningLIFProcess(unittest.TestCase):
     """Tests for Learning LIF class"""
     def test_init(self):
         """Tests instantiation of Learning LIF"""
         lif = LearningLIF(shape=(100,),
-                  du=100.,
-                  dv=1.,
-                  bias_mant=2 * np.ones((100,), dtype=float),
-                  bias_exp=np.ones((100,), dtype=float),
-                  vth=1.,
-                  name="LearningLIF")
+                          du=100.,
+                          dv=1.,
+                          bias_mant=2 * np.ones((100,), dtype=float),
+                          bias_exp=np.ones((100,), dtype=float),
+                          vth=1.,
+                          name="LearningLIF")
 
         self.assertEqual(lif.name, "LearningLIF")
         self.assertEqual(lif.du.init, 100.)

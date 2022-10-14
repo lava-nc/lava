@@ -9,7 +9,10 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
-from lava.magma.core.model.py.neuron import PlasticNeuronModelFloat, PlasticNeuronModelFixed
+from lava.magma.core.model.py.neuron import (
+    PlasticNeuronModelFloat, 
+    PlasticNeuronModelFixed,
+)
 
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
@@ -59,7 +62,6 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         self.s_out_buff = self.spiking_activation()
         self.reset_voltage(spike_vector=self.s_out_buff)
         self.s_out.send(self.s_out_buff)
-
 
 
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
@@ -201,7 +203,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.s_out.send(s_out)
 
 
-
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
@@ -219,16 +220,14 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
+
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
 class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
-    """Implementation of Leaky-Integrate-and-Fire neural process in floating
-    point precision with learning enabled. 
+    """Implementation of Leaky-Integrate-and-Fire neural 
+    process in floating point precision with learning enabled. 
     """
-    # Generate a target input port for error-based third-factor : NOT-USED
-    s_target: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
     # Graded reward input spikes
     a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
@@ -244,7 +243,7 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """Generate's a third factor Reward traces based on 
         Graded input spikes to the Learning LIF process. 
 
-        Currently, the third factor resembles the input graded spike
+        Currently, the third factor resembles the input graded spike.
         """
         return s_graded_in
 
@@ -264,7 +263,6 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_out_bap.send(self.s_out_buff)
 
         
-
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
@@ -307,6 +305,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
         """Spike when voltage exceeds threshold.
         """
         return self.v > self.effective_vth
+
 
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)

@@ -9,8 +9,6 @@ class PlasticNeuronModel(PyLoihiProcessModel):
         super().__init__(proc_params)
 
         self._shape = self.proc_params["shape"]
-        self._enable_learning = self.proc_params["enable_learning"]
-        self._update_traces = self.proc_params['update_traces']
 
 
 class PlasticNeuronModelFixed(PlasticNeuronModel):
@@ -20,7 +18,7 @@ class PlasticNeuronModelFixed(PlasticNeuronModel):
     s_out_y3: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
 
     def __init__(self, proc_params: dict) -> None:
-         super().__init__(proc_params)
+        super().__init__(proc_params)
 
 
 class PlasticNeuronModelFloat(PlasticNeuronModel):
@@ -32,5 +30,3 @@ class PlasticNeuronModelFloat(PlasticNeuronModel):
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
-
-

@@ -47,12 +47,12 @@ class PyDenseModelFloat(PyLoihiProcessModel):
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
 
-
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class StaticPyDenseModelFloat(PyDenseModelFloat):
     pass
+
 
 class PyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
@@ -112,6 +112,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 class StaticPyDenseModelBitAcc(PyDenseModelBitAcc):
     pass
 
+
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
@@ -121,7 +122,6 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
     """
-    
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -141,17 +141,17 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
         super().run_spk(s_in)
 
 
-
-
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
-class PyLearningDenseModelBitApproximate(PlasticConnectionModelBitApproximate, PyDenseModelBitAcc):
+class PyLearningDenseModelBitApproximate(
+    PlasticConnectionModelBitApproximate, 
+    PyDenseModelBitAcc
+    ):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.
     """
-
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -188,7 +188,4 @@ class PyLearningDenseModelBitApproximate(PlasticConnectionModelBitApproximate, P
             else np.right_shift(a_accum, -self.weight_exp)
         )
 
-        #self._record_pre_spike_times(s_in)
-
         super().run_spk(s_in)
-

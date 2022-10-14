@@ -139,7 +139,7 @@ class LearningLIF(PlasticNeuronProcess, AbstractLIF):
             dv: ty.Optional[float] = 0,
             bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
             bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10, 
+            vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
             **kwargs) -> None:
@@ -148,13 +148,8 @@ class LearningLIF(PlasticNeuronProcess, AbstractLIF):
                          bias_exp=bias_exp, name=name,
                          log_config=log_config, **kwargs)
         self.vth = Var(shape=(1,), init=vth)
-        
-        # To calculate training error : supervised signal 
-        self.s_target = InPort(shape=shape)
 
         self.a_graded_reward_in = InPort(shape=shape)
-
-
 
 
 class TernaryLIF(AbstractLIF):

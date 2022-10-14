@@ -67,8 +67,7 @@ class Dense(AbstractProcess):
                          **kwargs)
 
         self._validate_weights(weights)
-        shape = weights.shape
-        
+        shape = weights.shape        
         # Ports
         self.s_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
@@ -128,7 +127,6 @@ class LearningDense(PlasticConnectionProcess, Dense):
         TODO add learning rule parameter to docstring
     """
 
-
     def __init__(self,
                  *,
                  weights: np.ndarray,
@@ -144,4 +142,4 @@ class LearningDense(PlasticConnectionProcess, Dense):
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
-                         **kwargs) 
+                         **kwargs)
