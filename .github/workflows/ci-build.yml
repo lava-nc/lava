@@ -147,6 +147,6 @@ jobs:
     - name: Run unit tests
       if: runner.os == 'Windows'
       run: |
-        .venv\scripts\activate
+        .venv\Scripts\activate.ps1
         python3 -m pip install ipykernel
         pytest
