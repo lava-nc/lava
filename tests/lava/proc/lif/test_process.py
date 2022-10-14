@@ -4,7 +4,7 @@
 
 import unittest
 import numpy as np
-from lava.proc.lif.process import LIF, TernaryLIF
+from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
 
 
 class TestLIFProcess(unittest.TestCase):
