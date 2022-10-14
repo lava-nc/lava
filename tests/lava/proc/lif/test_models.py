@@ -12,10 +12,11 @@ from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.run_configs import Loihi1SimCfg, Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF, TernaryLIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF
+from lava.proc import io
 
 
 class LifRunConfig(RunConfig):
@@ -732,3 +733,93 @@ class TestTLIFProcessModelsFixed(unittest.TestCase):
         lif_v_float = np.right_shift(np.array(lif_v), 6)
         self.assertListEqual(expected_v_timeseries, lif_v)
         self.assertListEqual(expected_float_v, lif_v_float.tolist())
+
+
+class TestTLIFReset(unittest.TestCase):
+    """Test LIF reset process models"""
+
+    def test_float_model(self):
+        """Test float model"""
+        num_neurons = 10
+        num_steps = 16
+        reset_interval = 4
+        reset_offset = 3
+
+        lif_reset = LIFReset(shape=(num_neurons,),
+                             u=np.arange(num_neurons),
+                             du=0,
+                             dv=0,
+                             vth=100,
+                             bias_mant=np.arange(num_neurons) + 1,
+                             reset_interval=reset_interval,
+                             reset_offset=reset_offset)
+
+        u_logger = io.sink.Read(buffer=num_steps)
+        v_logger = io.sink.Read(buffer=num_steps)
+
+        u_logger.connect_var(lif_reset.u)
+        v_logger.connect_var(lif_reset.v)
+
+        lif_reset.run(condition=RunSteps(num_steps),
+                      run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+        u = u_logger.data.get()
+        v = v_logger.data.get()
+        lif_reset.stop()
+
+        # Lava timesteps start from t=0. So the first reset offset is missed.
+        u_gt_pre = np.vstack([np.arange(num_neurons)] * 2).T
+        u_gt_post = np.zeros((num_neurons, num_steps - reset_offset + 1))
+
+        dt = (1 + np.arange(reset_offset - 1)).reshape(1, -1)
+        v_gt_pre = np.arange(num_neurons).reshape(-1, 1) * dt \
+            + (1 + np.arange(num_neurons)).reshape(-1, 1) * dt
+        dt = (1 + np.arange(num_steps - reset_offset + 1) % 4).reshape(1, -1)
+        v_gt_post = (1 + np.arange(num_neurons)).reshape(-1, 1) * dt
+
+        self.assertTrue(np.array_equal(u[:, :reset_offset - 1], u_gt_pre))
+        self.assertTrue(np.array_equal(u[:, reset_offset - 1:], u_gt_post))
+        self.assertTrue(np.array_equal(v[:, :reset_offset - 1], v_gt_pre))
+        self.assertTrue(np.array_equal(v[:, reset_offset - 1:], v_gt_post))
+
+    def test_fixed_model(self):
+        """Test fixed model"""
+        num_neurons = 10
+        num_steps = 16
+        reset_interval = 4
+        reset_offset = 3
+
+        lif_reset = LIFReset(shape=(num_neurons,),
+                             u=np.arange(num_neurons),
+                             du=-1,
+                             dv=0,
+                             vth=100,
+                             bias_mant=np.arange(num_neurons) + 1,
+                             reset_interval=reset_interval,
+                             reset_offset=reset_offset)
+
+        u_logger = io.sink.Read(buffer=num_steps)
+        v_logger = io.sink.Read(buffer=num_steps)
+
+        u_logger.connect_var(lif_reset.u)
+        v_logger.connect_var(lif_reset.v)
+
+        lif_reset.run(condition=RunSteps(num_steps),
+                      run_cfg=Loihi2SimCfg(select_tag='fixed_pt'))
+        u = u_logger.data.get()
+        v = v_logger.data.get()
+        lif_reset.stop()
+
+        # Lava timesteps start from t=0. So the first reset offset is missed.
+        u_gt_pre = np.vstack([np.arange(num_neurons)] * 2).T
+        u_gt_post = np.zeros((num_neurons, num_steps - reset_offset + 1))
+
+        dt = (1 + np.arange(reset_offset - 1)).reshape(1, -1)
+        v_gt_pre = np.arange(num_neurons).reshape(-1, 1) * dt \
+            + (1 + np.arange(num_neurons)).reshape(-1, 1) * dt
+        dt = (1 + np.arange(num_steps - reset_offset + 1) % 4).reshape(1, -1)
+        v_gt_post = (1 + np.arange(num_neurons)).reshape(-1, 1) * dt
+
+        self.assertTrue(np.array_equal(u[:, :reset_offset - 1], u_gt_pre))
+        self.assertTrue(np.array_equal(u[:, reset_offset - 1:], u_gt_post))
+        self.assertTrue(np.array_equal(v[:, :reset_offset - 1], v_gt_pre))
+        self.assertTrue(np.array_equal(v[:, reset_offset - 1:], v_gt_post))
