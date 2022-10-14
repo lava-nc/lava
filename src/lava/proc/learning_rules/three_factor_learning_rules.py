@@ -79,17 +79,6 @@ class GatedHebbianLoihi(LoihiLearningRule):
         x and y are the pre- resp. post-synaptic low-pass filtered 
         spike trains. The error signal e is provided by the 
         post-synaptic neuron as second trace (y2).
-
-        Parameters
-        ==========
-
-        learning_rate:
-        A_plus:
-        A_minus:
-        tau_plus:
-        tau_minus:
-        args:
-        kwargs:
         """
 
         self.learning_rate = learning_rate

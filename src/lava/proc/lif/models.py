@@ -10,7 +10,7 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
 from lava.magma.core.model.py.neuron import (
-    PlasticNeuronModelFloat, 
+    PlasticNeuronModelFloat,
     PlasticNeuronModelFixed,
 )
 
@@ -57,7 +57,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """
         super().run_spk()
         a_in_data = self.a_in.recv()
-        
+
         self.subthr_dynamics(activation_in=a_in_data)
         self.s_out_buff = self.spiking_activation()
         self.reset_voltage(spike_vector=self.s_out_buff)
@@ -185,7 +185,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
-        
+
         self.scale_bias()
         # # Compute effective bias and threshold only once, not every time-step
         # if not self.isbiasscaled:
@@ -226,7 +226,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 @tag('floating_pt')
 class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural 
-    process in floating point precision with learning enabled. 
+    process in floating point precision with learning enabled.
     """
     # Graded reward input spikes
     a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -239,20 +239,20 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
-    def calculate_third_factor_trace(self, s_graded_in: float) -> float: 
-        """Generate's a third factor Reward traces based on 
-        Graded input spikes to the Learning LIF process. 
+    def calculate_third_factor_trace(self, s_graded_in: float) -> float:
+        """Generate's a third factor Reward traces based on
+        Graded input spikes to the Learning LIF process.
 
         Currently, the third factor resembles the input graded spike.
         """
         return s_graded_in
 
     def run_spk(self) -> None:
-        """Calculates the third factor trace and sends it to the 
+        """Calculates the third factor trace and sends it to the
         Dense process for learning.
         """
         super().run_spk()
-        
+
         a_graded_in = self.a_graded_reward_in.recv()
 
         y2 = self.calculate_third_factor_trace(a_graded_in)
@@ -262,7 +262,7 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_out_y3.send(y3)
         self.s_out_bap.send(self.s_out_buff)
 
-        
+
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
@@ -310,7 +310,10 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
-class PyLearningLifModelBitAcc(PlasticNeuronModelFixed, AbstractPyLifModelFixed):
+class PyLearningLifModelBitAcc(
+    PlasticNeuronModelFixed, 
+    AbstractPyLifModelFixed
+    ):
     """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
     with Loihi's hardware LIF dynamics, which means, it mimics Loihi
     behaviour bit-by-bit.

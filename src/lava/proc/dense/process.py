@@ -143,3 +143,4 @@ class LearningDense(PlasticConnectionProcess, Dense):
                          log_config=log_config,
                          learning_rule=learning_rule,
                          **kwargs)
+                         

@@ -16,12 +16,12 @@ class PlasticNeuronProcess:
 
         # Learning Ports
         # Port for backprop action potentials
-        self.s_out_bap = OutPort(shape=(shape[0],)) 
+        self.s_out_bap = OutPort(shape=(shape[0],))
 
         # Port for arbitrary trace using graded spikes
-        self.s_out_y2 = OutPort(shape=(shape[0],))  
+        self.s_out_y2 = OutPort(shape=(shape[0],))
 
         # Port for arbitrary trace using graded spikes
-        self.s_out_y3 = OutPort(shape=(shape[0],)) 
+        self.s_out_y3 = OutPort(shape=(shape[0],))
 
         super().__init__(*args, **kwargs)

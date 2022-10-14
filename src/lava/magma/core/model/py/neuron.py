@@ -3,6 +3,7 @@ from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 import numpy as np
 
+
 class PlasticNeuronModel(PyLoihiProcessModel):
 
     def __init__(self, proc_params: dict) -> None:

@@ -145,9 +145,7 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
 class PyLearningDenseModelBitApproximate(
-    PlasticConnectionModelBitApproximate, 
-    PyDenseModelBitAcc
-    ):
+    PlasticConnectionModelBitApproximate, PyDenseModelBitAcc):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.
@@ -189,3 +187,4 @@ class PyLearningDenseModelBitApproximate(
         )
 
         super().run_spk(s_in)
+        

@@ -256,8 +256,8 @@ class TestLearningLIFProcessModelsFloat(unittest.TestCase):
     """Tests for floating point ProcessModels of Learning LIF"""
     def test_float_pm_no_decay(self):
         """
-        Tests floating point Learning LIF ProcessModel with 
-        no current or voltage decay and neurons driven 
+        Tests floating point Learning LIF ProcessModel with
+        no current or voltage decay and neurons driven
         by internal biases.
         """
         shape = (10,)
@@ -292,8 +292,8 @@ class TestLearningLIFProcessModelsFloat(unittest.TestCase):
 
     def test_float_pm_impulse_du(self):
         """
-        Tests floating point Learning LIF ProcessModel's 
-        impulse response with no voltage decay and input 
+        Tests floating point Learning LIF ProcessModel's
+        impulse response with no voltage decay and input
         activation at the very first time-step.
         """
         shape = (1,)  # a single neuron
@@ -331,8 +331,8 @@ class TestLearningLIFProcessModelsFloat(unittest.TestCase):
 
     def test_float_pm_impulse_dv(self):
         """
-        Tests floating point Learning LIF ProcessModel's 
-        impulse response with no current decay and input 
+        Tests floating point Learning LIF ProcessModel's
+        impulse response with no current decay and input
         activation at the very first time-step.
         """
         shape = (1,)  # a single neuron
@@ -374,8 +374,8 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
     with Loihi hardware"""
     def test_bitacc_pm_no_decay(self):
         """
-        Tests fixed point LIF ProcessModel (bit-accurate 
-        with Loihi hardware) with no current or voltage 
+        Tests fixed point LIF ProcessModel (bit-accurate
+        with Loihi hardware) with no current or voltage
         decay and neurons driven by internal biases.
         """
         shape = (10,)

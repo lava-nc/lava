@@ -186,13 +186,13 @@ class PlasticConnection:
         traces are active."""
         # Shape : (2, )
         self._active_x_traces = self._active_x_traces_per_dependency[0] | \
-                                self._active_x_traces_per_dependency[1] | \
-                                self._active_x_traces_per_dependency[2]
+            self._active_x_traces_per_dependency[1] | \
+            self._active_x_traces_per_dependency[2]
 
         # Shape : (3, )
         self._active_y_traces = self._active_y_traces_per_dependency[0] | \
-                                self._active_y_traces_per_dependency[1] | \
-                                self._active_y_traces_per_dependency[2]
+            self._active_y_traces_per_dependency[1] | \
+            self._active_y_traces_per_dependency[2]
 
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplier for each active learning
