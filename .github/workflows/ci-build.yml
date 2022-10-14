@@ -12,9 +12,10 @@ jobs:
         lfs: true
 
     - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
+        cache: 'poetry'
 
     - name: Install Poetry
       run: pipx install poetry
@@ -24,23 +25,6 @@ jobs:
       #  virtualenvs-path: .venv
       #  virtualenvs-create: true
       #  virtualenvs-in-project: true
-      
-    - name: Configure Poetry
-      run: |
-        pipx run poetry config virtualenvs.path .venv
-        pipx run poetry config virtualenvs.create true
-        pipx run poetry config virtualenvs.in-project true
-        
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-01-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
 
     - name: Install Lava
       run: poetry install --no-interaction
@@ -48,13 +32,13 @@ jobs:
     - name: Run flakeheaven (flake8)
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
-        source $VENV
+        # source $VENV
         flakeheaven lint src/lava tests/
 
     - name: Run flakeheaven (flake8)
       if: runner.os == 'Windows'
       run: |
-        .venv\Scripts\activate.ps1
+        # .venv\Scripts\activate.ps1
         flakeheaven lint src/lava tests/
 
   security-lint:
@@ -67,9 +51,10 @@ jobs:
         lfs: true
 
     - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
+        cache: 'poetry'
 
     - name: Install Poetry
       run: pipx install poetry
@@ -80,17 +65,6 @@ jobs:
       #  virtualenvs-create: true
       #  virtualenvs-in-project: true
     
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-01-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
     - name: Install Lava
       run: poetry install --no-interaction
 
@@ -114,9 +88,10 @@ jobs:
         lfs: true
 
     - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
+        cache: 'poetry'
 
     - name: Install Poetry
       run: pipx install poetry
@@ -126,17 +101,6 @@ jobs:
       #  virtualenvs-path: .venv
       #  virtualenvs-create: true
       #  virtualenvs-in-project: true
-    
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-01-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
 
     - name: Install Lava
       run: poetry install --no-interaction
@@ -146,13 +110,13 @@ jobs:
       run: |
         git lfs fetch
         git lfs pull
-        source $VENV
-        python3 -m pip install ipykernel
+        # source $VENV
+        # python3 -m pip install ipykernel
         pytest
         
     - name: Run unit tests
       if: runner.os == 'Windows'
       run: |
-        .venv\Scripts\activate.ps1
-        python3 -m pip install ipykernel
+        # .venv\Scripts\activate.ps1
+        # python3 -m pip install ipykernel
         pytest
