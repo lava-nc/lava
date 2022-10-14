@@ -38,6 +38,7 @@ void TargetFunction(Builder builder, int idx, AbstractActor* actor_ptr) {
 TEST(TestMultiprocessing, MultiprocessingSpawn) {
   // Spawns an actor
   // Checks that actor is spawned successfully
+  GTEST_SKIP();
   Builder *builder = new Builder();
   MultiProcessing mp;
 
@@ -64,6 +65,7 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
 }
 
 TEST(TestMultiprocessing, ActorForceStop) {
+  GTEST_SKIP();
   // Force stops all running actors
   // Checks that actor status returns 1 (StatusStopped)
   MultiProcessing mp;
