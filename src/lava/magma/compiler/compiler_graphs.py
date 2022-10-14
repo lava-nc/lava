@@ -750,7 +750,9 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         """
 
         proc_models = []
-        for name, cls in module.__dict__.items():
+        classes = [m[1] for m in inspect.getmembers(module, inspect.isclass)
+                   if m[1].__module__ == module.__name__]
+        for cls in classes:
             if (
                     hasattr(cls, "implements_process")
                     and issubclass(cls, AbstractProcessModel)
@@ -1004,6 +1006,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                 model_cls = ProcGroupDiGraphs._select_proc_models(proc,
                                                                   models_cls,
                                                                   run_cfg)
+
             if issubclass(model_cls, AbstractSubProcessModel):
                 # Recursively substitute SubProcModel by sub processes
                 sub_map = ProcGroupDiGraphs._expand_sub_proc_model(model_cls,
@@ -1014,6 +1017,10 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
             else:
                 # Just map current Process to selected ProcessModel
                 proc_map[proc] = model_cls
+
+        print('-'*20)
+        print(model_cls)
+        print('-' * 20)
 
         return proc_map
 
