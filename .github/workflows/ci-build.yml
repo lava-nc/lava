@@ -25,11 +25,11 @@ jobs:
 
     - name: Run flakeheaven (flake8)
       if: runner.os == 'Linux' || runner.os == 'macOS'
-      run: flakeheaven lint src/lava tests/
+      run: poetry run flakeheaven lint src/lava tests/
 
     - name: Run flakeheaven (flake8)
       if: runner.os == 'Windows'
-      run: flakeheaven lint src/lava tests/
+      run: poetry run flakeheaven lint src/lava tests/
 
   security-lint:
     name: Security Lint Code
@@ -86,10 +86,10 @@ jobs:
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
-        git lfs fetch
-        git lfs pull
-        pytest
+        poetry run git lfs fetch
+        poetry run git lfs pull
+        poetry run pytest
         
     - name: Run unit tests
       if: runner.os == 'Windows'
-      run: pytest
+      run: poetry run pytest
