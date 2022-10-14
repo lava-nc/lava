@@ -207,7 +207,7 @@ class Monitors(unittest.TestCase):
                      bias_mant=1)
 
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = Loihi1SimCfg(select_tag="floating_pt")
+        rcfg = Loihi1SimCfg()
 
         # Probe voltage of LIF with the first monitor
         monitor1.probe(target=neuron.v, num_steps=num_steps)
@@ -259,7 +259,7 @@ class Monitors(unittest.TestCase):
 
         # Run all connected processes
         neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=Loihi1SimCfg(select_tag="floating_pt"))
+                   run_cfg=Loihi1SimCfg())
 
         # Get data from both monitor
         data1 = monitor1.get_data()
@@ -304,7 +304,7 @@ class Monitors(unittest.TestCase):
 
         # Run all connected processes
         neuron.run(condition=RunSteps(num_steps=num_steps),
-                   run_cfg=Loihi1SimCfg(select_tag="floating_pt"))
+                   run_cfg=Loihi1SimCfg())
 
         # Get data from both monitor
         data1 = monitor1.get_data()
