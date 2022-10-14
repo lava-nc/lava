@@ -226,10 +226,11 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    vth: float = LavaPyType(float, float)
+
     # third factor input
     a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
-    vth: float = LavaPyType(float, float)
 
     def spiking_activation(self):
         """Spiking activation function for Learning LIF.
@@ -244,23 +245,19 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         This is the error signal propogated from the input 
         """
         s_error_out = s_error_in - self.s_out_buff
-        print("y2", s_error_out)
 
         return s_error_out
     
-    def calculate_third_factor_trace_y3(self): 
+    def calculate_third_factor_trace_y3(self) -> float: 
         """Generate's a third factor Reward traces based on 
         Graded input spikes to the Learning LIF process. 
 
         For SuperSpike:
         This is calculating the sigmoid of the membrane potential. 
-        Ex: 1/(1 + np.exp(-self.u))
         """
-        
-        surrogate_u = 1/(1 + np.exp(-(self.u)))
-        print("y3 :", surrogate_u)
+        surrogate_v = 1/(1 + np.exp(-(self.v)))
 
-        return surrogate_u
+        return surrogate_v
 
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the 
