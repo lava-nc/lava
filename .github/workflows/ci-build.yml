@@ -24,6 +24,12 @@ jobs:
       #  virtualenvs-path: .venv
       #  virtualenvs-create: true
       #  virtualenvs-in-project: true
+      
+    - name: Configure Poetry
+      run: |
+        pipx run poetry config virtualenvs.path .venv
+        pipx run poetry config virtualenvs.create true
+        pipx run poetry config virtualenvs.in-project true
         
     - name: Load cached venv
       id: cached-poetry-dependencies
