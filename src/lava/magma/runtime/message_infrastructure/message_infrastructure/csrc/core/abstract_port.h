@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 
-#include "utils.h"
+#include <message_infrastructure/csrc/core/utils.h>
 
 namespace message_infrastructure {
 

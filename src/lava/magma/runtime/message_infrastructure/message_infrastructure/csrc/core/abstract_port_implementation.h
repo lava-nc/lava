@@ -5,7 +5,7 @@
 #ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
 #define ABSTRACT_PORT_IMPLEMENTATION_H_
 
-#include "port_proxy.h"
+#include <message_infrastructure/csrc/port_proxy.h>
 
 namespace message_infrastructure {
 

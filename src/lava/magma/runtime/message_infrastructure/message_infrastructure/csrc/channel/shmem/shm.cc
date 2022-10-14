@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include "shm.h"
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
 
 namespace message_infrastructure {
 
