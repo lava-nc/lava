@@ -402,7 +402,7 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                               or Loihi1NeuroCore in pm.required_resources)
                           and issubclass(pm, AbstractNcProcessModel)]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models
+        proc_models_c = [idx for idx, pm in enumerate(proc_models)
                          if issubclass(pm, CLoihiProcessModel)]
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
 
@@ -464,7 +464,7 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                               or Loihi2NeuroCore in pm.required_resources)
                           and issubclass(pm, AbstractNcProcessModel)]
         # CProcModels compatible with Loihi
-        proc_models_c = [pm for pm in proc_models
+        proc_models_c = [idx for idx,pm in enumerate(proc_models)
                          if issubclass(pm, CLoihiProcessModel)]
         # PyProcModels in Loihi2HwCfg will be made available in the future
         return list(chain(proc_models_nc, proc_models_c, proc_models_py))
