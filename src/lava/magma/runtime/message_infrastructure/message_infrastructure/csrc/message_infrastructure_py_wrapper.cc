@@ -8,11 +8,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "abstract_actor.h"
-#include "channel_proxy.h"
-#include "multiprocessing.h"
-#include "port_proxy.h"
-#include "utils.h"
+#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/port_proxy.h>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/channel_proxy.h>
 
 namespace message_infrastructure {
 
