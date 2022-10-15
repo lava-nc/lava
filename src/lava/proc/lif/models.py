@@ -225,7 +225,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 @requires(CPU)
 @tag('floating_pt')
 class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
-    """Implementation of Leaky-Integrate-and-Fire neural 
+    """Implementation of Leaky-Integrate-and-Fire neural
     process in floating point precision with learning enabled.
     """
     # Graded reward input spikes
@@ -311,9 +311,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
 class PyLearningLifModelBitAcc(
-    PlasticNeuronModelFixed, 
-    AbstractPyLifModelFixed
-    ):
+        PlasticNeuronModelFixed, AbstractPyLifModelFixed):
     """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
     with Loihi's hardware LIF dynamics, which means, it mimics Loihi
     behaviour bit-by-bit.

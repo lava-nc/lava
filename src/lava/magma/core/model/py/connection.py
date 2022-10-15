@@ -1532,5 +1532,3 @@ class PlasticConnectionModelFloat(PlasticConnection):
         y_traces[1, :] = y2
         y_traces[2, :] = y3
         self._set_y_traces(y_traces)
-
-        

@@ -76,8 +76,8 @@ class GatedHebbianLoihi(LoihiLearningRule):
 
         dw = learning_rate * e * x * y
 
-        x and y are the pre- resp. post-synaptic low-pass filtered 
-        spike trains. The error signal e is provided by the 
+        x and y are the pre- resp. post-synaptic low-pass filtered
+        spike trains. The error signal e is provided by the
         post-synaptic neuron as second trace (y2).
         """
 
