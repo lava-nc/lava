@@ -14,6 +14,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     "message_infrastructure/csrc/core/abstract_port.cc"
     "message_infrastructure/csrc/core/multiprocessing.cc"
     "message_infrastructure/csrc/core/abstract_port_implementation.cc"
+    "message_infrastructure/csrc/core/ports.cc"
     "message_infrastructure/csrc/actor/posix_actor.cc"
     "message_infrastructure/csrc/channel/shmem/shm.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
@@ -31,7 +32,7 @@ target_link_libraries(message_infrastructure
                       )
 
 if(PY_WRAPPER)
-    set (PY_WRAPPER_SRCS
+    set(PY_WRAPPER_SRCS
         "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
         "message_infrastructure/csrc/channel_proxy.cc"
         "message_infrastructure/csrc/port_proxy.cc"

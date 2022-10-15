@@ -6,7 +6,7 @@
 
 namespace message_infrastructure {
 
-CppInPort::CppInPort(const RecvPortProxyList &recv_ports)
+CppInPort::CppInPort(const RecvPortList &recv_ports)
   : AbstractPortImplementation(recv_ports)
 {}
 
@@ -54,7 +54,7 @@ int CppInPortScalarSparse::Peek() {
   return 0;
 }
 
-CppOutPort::CppOutPort(const SendPortProxyList &send_ports)
+CppOutPort::CppOutPort(const SendPortList &send_ports)
   : AbstractPortImplementation(send_ports)
 {}
 
@@ -78,10 +78,15 @@ int CppOutPortScalarSparse::Send() {
   return 0;
 }
 
-CppRefPort::CppRefPort(const SendPortProxyList &send_ports,
-                        const RecvPortProxyList &recv_ports)
+CppRefPort::CppRefPort(const SendPortList &send_ports,
+                        const RecvPortList &recv_ports)
   : AbstractPortImplementation(send_ports, recv_ports)
 {}
+
+int CppRefPort::Wait() {
+  // Todo
+  return 0;
+}
 
 int CppRefPortVectorDense::Read() {
   // Todo
@@ -124,8 +129,8 @@ int CppRefPortScalarSparse::Write() {
 }
 
 CppVarPort::CppVarPort(const std::string &name,
-                       const SendPortProxyList &send_ports,
-                       const RecvPortProxyList &recv_ports)
+                       const SendPortList &send_ports,
+                       const RecvPortList &recv_ports)
   : name_(name), AbstractPortImplementation(send_ports, recv_ports)
 {}
 

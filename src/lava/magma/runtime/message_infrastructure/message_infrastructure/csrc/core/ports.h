@@ -5,21 +5,18 @@
 #ifndef PORTS_H_
 #define PORTS_H_
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <message_infrastructure/csrc/core/abstract_port_implementation.h>
 
 #include <vector>
 #include <variant>
 #include <memory>
 #include <string>
 
-#include <message_infrastructure/csrc/core/abstract_port_implementation.h>
-
 namespace message_infrastructure {
 
 class CppInPort : public AbstractPortImplementation {
  public:
-    explicit CppInPort(const RecvPortProxyList &recv_ports);
+    explicit CppInPort(const RecvPortList &recv_ports);
     bool Probe();
     virtual int Recv() = 0;
     virtual int Peek() = 0;
@@ -60,7 +57,7 @@ class CppInPortScalarSparse final : public CppInPort {
 
 class CppOutPort : public AbstractPortImplementation {
  public:
-    explicit CppOutPort(const SendPortProxyList &send_ports);
+    explicit CppOutPort(const SendPortList &send_ports);
     virtual int Send() = 0;
     void Flush() {}
 };
@@ -96,11 +93,11 @@ class CppOutPortScalarSparse final : public CppOutPort {
 
 class CppRefPort : public AbstractPortImplementation {
  public:
-    explicit CppRefPort(const SendPortProxyList &send_ports,
-                        const RecvPortProxyList &recv_ports);
+    explicit CppRefPort(const SendPortList &send_ports,
+                        const RecvPortList &recv_ports);
     virtual int Read() = 0;
     virtual int Write() = 0;
-    int Wait() {}
+    int Wait();
 };
 
 
@@ -139,8 +136,8 @@ class CppRefPortScalarSparse final : public CppRefPort {
 class CppVarPort : public AbstractPortImplementation {
  public:
     explicit CppVarPort(const std::string &name,
-                        const SendPortProxyList &send_ports,
-                        const RecvPortProxyList &recv_ports);
+                        const SendPortList &send_ports,
+                        const RecvPortList &recv_ports);
 
     virtual int Service() = 0;
     virtual int Recv()  = 0;
