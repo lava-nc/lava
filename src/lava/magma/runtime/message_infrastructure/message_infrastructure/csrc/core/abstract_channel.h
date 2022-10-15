@@ -7,8 +7,7 @@
 
 #include <memory>
 
-// TODO: check this include path
-#include <message_infrastructure/csrc/port_proxy.h>
+#include <message_infrastructure/csrc/core/abstract_port.h>
 
 namespace message_infrastructure {
 

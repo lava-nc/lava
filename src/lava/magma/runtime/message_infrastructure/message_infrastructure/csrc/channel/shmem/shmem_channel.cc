@@ -3,7 +3,6 @@
 // See: https://spdx.org/licenses/
 
 #include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
-#include <message_infrastructure/csrc/port_proxy.h>
 #include <message_infrastructure/csrc/core/utils.h>
 
 namespace message_infrastructure {
