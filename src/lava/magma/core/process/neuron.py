@@ -12,8 +12,6 @@ class PlasticNeuronProcess:
 
         kwargs['shape'] = shape
 
-        self.enable_learning = enable_learning
-
         # Learning Ports
         # Port for backprop action potentials
         self.s_out_bap = OutPort(shape=(shape[0],))
