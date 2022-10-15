@@ -13,6 +13,7 @@ set (MESSAGE_INFRASTRUCTURE_SRCS
      "message_infrastructure/csrc/core/abstract_actor.cc"
      "message_infrastructure/csrc/core/abstract_port.cc"
      "message_infrastructure/csrc/core/multiprocessing.cc"
+     "message_infrastructure/csrc/core/abstract_port_implementation.cc"
      "message_infrastructure/csrc/actor/posix_actor.cc"
      "message_infrastructure/csrc/channel/shmem/shm.cc"
      "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
@@ -27,7 +28,6 @@ if(PY_WRAPPER)
         "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
         "message_infrastructure/csrc/channel_proxy.cc"
         "message_infrastructure/csrc/port_proxy.cc"
-        "message_infrastructure/csrc/core/abstract_port_implementation.cc"
         )
     target_include_directories(message_infrastructure PUBLIC 
                                ${pybind11_INCLUDE_DIRS}

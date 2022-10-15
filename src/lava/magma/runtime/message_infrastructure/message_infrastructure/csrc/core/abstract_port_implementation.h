@@ -5,22 +5,22 @@
 #ifndef ABSTRACT_PORT_IMPLEMENTATION_H_
 #define ABSTRACT_PORT_IMPLEMENTATION_H_
 
-#include <message_infrastructure/csrc/port_proxy.h>
+#include <message_infrastructure/csrc/core/abstract_port.h>
 
 namespace message_infrastructure {
 
 class AbstractPortImplementation {
  public:
-  explicit AbstractPortImplementation(const SendPortProxyList &send_ports,
-                                      const RecvPortProxyList &recv_ports);
-  explicit AbstractPortImplementation(const RecvPortProxyList &recv_ports);
-  explicit AbstractPortImplementation(const SendPortProxyList &send_ports);
+  explicit AbstractPortImplementation(const SendPortList &send_ports,
+                                      const RecvPortList &recv_ports);
+  explicit AbstractPortImplementation(const RecvPortList &recv_ports);
+  explicit AbstractPortImplementation(const SendPortList &send_ports);
   int Start();
   int Join();
 
  protected:
-  SendPortProxyList send_ports_;
-  RecvPortProxyList recv_ports_;
+  SendPortList send_ports_;
+  RecvPortList recv_ports_;
 };
 
 }  // namespace message_infrastructure
