@@ -1,10 +1,7 @@
-#include <numpy/arrayobject.h>
-#include <Python.h>
-#include "port_proxy.h"
-#include "message_infrastructure_logging.h"
-#include "abstract_port.h"
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/core/abstract_port.h>
 #include <atomic>
-#include "utils.h"
 #include <thread>
 #include<iostream>
 #include <memory>
@@ -34,7 +31,7 @@ public:
                           const size_t &nbytes);
   Status RecvArrayData(ServerContext* context, const GrpcMetaData* request,
 							DataReply* reply) override;
-  void Push(GrpcMetaData* src)
+  void Push(GrpcMetaData *src);
   int AvailableCount();
   bool Empty();
   GrpcMetaData Pop(bool block);
@@ -50,9 +47,9 @@ private:
 	std::atomic<uint32_t> read_index_;
 	std::atomic<uint32_t> write_index_;
   std::atomic_bool done_;
-}
-using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
+};
 
+using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
 class GrpcRecvPort{
   public:
@@ -72,9 +69,7 @@ class GrpcRecvPort{
     std::unique_ptr<Server> server;
     ServerImplPtr serviceptr;
     ThreadPtr grpcthreadptr = nullptr;
-}
-
-
+};
 
 class GrpcSendPort final : public AbstractSendPort{
   public:
@@ -94,6 +89,4 @@ class GrpcSendPort final : public AbstractSendPort{
     std::atomic_bool done_;
     std::unique_ptr<GrpcChannelServer::Stub> stub_;
     ThreadPtr ack_callback_thread_ = nullptr;
-
-}
-
+};

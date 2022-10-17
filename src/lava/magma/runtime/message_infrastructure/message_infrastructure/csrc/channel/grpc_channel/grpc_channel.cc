@@ -1,17 +1,15 @@
-#include <numpy/arrayobject.h>
-#include <Python.h>
-#include "port_proxy.h"
-#include "message_infrastructure_logging.h"
-#include<iostream>
+#include <iostream>
 #include <memory>
 #include <string>
-#include "utils.h"
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include "grpcchannel.grpc.pb.h"
-#include "grpc_channel.h"
+#include <message_infrastructure/csrc/channel/grpc_channel/grpc_channel.h>
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
