@@ -22,10 +22,6 @@ class AbstractChannel {
   virtual AbstractRecvPortPtr GetRecvPort() {
     return NULL;
   }
-
-  size_t size_;
-  size_t nbytes_;
-  size_t name_;
 };
 
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;
