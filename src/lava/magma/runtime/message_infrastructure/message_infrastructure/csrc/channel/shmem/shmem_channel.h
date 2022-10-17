@@ -8,10 +8,10 @@
 #include <memory>
 #include <string>
 
-#include "abstract_channel.h"
-#include "abstract_port.h"
-#include "shm.h"
-#include "shmem_port.h"
+#include <message_infrastructure/csrc/core/abstract_channel.h>
+#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
+#include <message_infrastructure/csrc/channel/shmem/shmem_port.h>
 
 namespace message_infrastructure {
 

@@ -5,11 +5,11 @@
 #ifndef CHANNEL_PROXY_H_
 #define CHANNEL_PROXY_H_
 
-#include <string>
+#include <message_infrastructure/csrc/core/abstract_channel.h>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/port_proxy.h>
 
-#include "abstract_channel.h"
-#include "port_proxy.h"
-#include "utils.h"
+#include <string>
 
 namespace message_infrastructure {
 

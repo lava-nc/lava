@@ -5,8 +5,8 @@
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include <multiprocessing.h>
-#include <abstract_actor.h>
+#include "core/multiprocessing.h"
+#include "core/abstract_actor.h"
 
 
 using namespace message_infrastructure;

@@ -4,8 +4,8 @@
 
 #include <memory>
 
-#include "channel_proxy.h"
-#include "channel_factory.h"
+#include <message_infrastructure/csrc/channel_proxy.h>
+#include <message_infrastructure/csrc/core/channel_factory.h>
 
 namespace message_infrastructure {
 
