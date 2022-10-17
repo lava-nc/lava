@@ -11,6 +11,7 @@
 #define LOG_LAYER (0)
 #define DEBUG_MODE (0)
 #define LOG_SMMP (0)  // log for shmemport
+#define LOG_SKP (0)  // log for socketport
 
 #define LAVA_LOG(_cond, _fmt, ...) { \
   if ((_cond)) { \
