@@ -21,7 +21,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "message_infrastructure_logging.h"
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 

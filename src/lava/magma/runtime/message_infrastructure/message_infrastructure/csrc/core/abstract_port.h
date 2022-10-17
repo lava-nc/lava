@@ -6,10 +6,10 @@
 #define ABSTRACT_PORT_H_
 
 #include <string>
-#include <vector>
+#include <list>
 #include <memory>
 
-#include "utils.h"
+#include <message_infrastructure/csrc/core/utils.h>
 
 namespace message_infrastructure {
 
@@ -53,6 +53,8 @@ class AbstractRecvPort : public AbstractPort {
 
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
 using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
+using SendPortList = std::list<AbstractSendPortPtr>;
+using RecvPortList = std::list<AbstractRecvPortPtr>;
 
 }  // namespace message_infrastructure
 

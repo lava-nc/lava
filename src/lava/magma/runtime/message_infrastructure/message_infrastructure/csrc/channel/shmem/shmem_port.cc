@@ -12,9 +12,9 @@
 #include <cassert>
 #include <cstring>
 
-#include "shmem_port.h"
-#include "utils.h"
-#include "message_infrastructure_logging.h"
+#include <message_infrastructure/csrc/channel/shmem/shmem_port.h>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 ShmemRecvQueue::ShmemRecvQueue(const std::string& name,
