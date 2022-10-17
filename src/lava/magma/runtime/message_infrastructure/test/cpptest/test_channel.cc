@@ -19,7 +19,8 @@ class Builder {
 
 MetaDataPtr ExpectData() {
   auto metadata = std::make_shared<MetaData>();
-  int32_t *data[5] = {1, 3, 5, 7, 9};
+  int32_t data[5] = {1, 3, 5, 7, 9};
+  int32_t *data_ptr = data;
   metadata->mdata = (void*)data;
   return metadata;
 }
