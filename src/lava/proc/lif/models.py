@@ -255,7 +255,8 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         For SuperSpike:
         This is calculating the sigmoid of the membrane potential. 
         """
-        surrogate_v = 1/(1 + np.exp(-(self.v)))
+        h_i = (self.v - self.vth)
+        surrogate_v = np.power((1 + np.abs(h_i)), (-2))
 
         return surrogate_v
 
