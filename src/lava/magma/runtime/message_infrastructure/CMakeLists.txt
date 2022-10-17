@@ -1,5 +1,27 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5.1)
 project(message_passing)
+
+include(message_infrastructure/csrc/channel/grpc_channel/cmake/common.cmake)
+
+get_filename_component(grpc_channel_proto "./message_infrastructure/csrc/channel/grpc_channel/protos/grpcchannel.proto" ABSOLUTE)
+get_filename_component(grpc_channel_proto_path "${grpc_channel_proto}" PATH)
+
+set(grpc_channel_proto_srcs "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.pb.cc")
+set(grpc_channel_proto_hdrs "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.pb.h")
+set(grpc_channel_grpc_srcs "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.grpc.pb.cc")
+set(grpc_channel_grpc_hdrs "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.grpc.pb.h")
+
+add_custom_command(
+      OUTPUT "${grpc_channel_proto_srcs}" "${grpc_channel_proto_hdrs}" "${grpc_channel_grpc_srcs}" "${grpc_channel_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "message_infrastructure/csrc/channel/grpc_channel"
+        --cpp_out "message_infrastructure/csrc/channel/grpc_channel"
+        -I "${grpc_channel_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${grpc_channel_proto}"
+      DEPENDS "${grpc_channel_proto}")
+
+include_directories("message_infrastructure/csrc/channel/grpc_channel")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,9 +41,13 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     "message_infrastructure/csrc/channel/shmem/shm.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/grpc_channel.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.pb.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/grpcchannel.grpc.pb.cc"
     "message_infrastructure/csrc/channel/socket/socket.cc"
     "message_infrastructure/csrc/channel/socket/socket_channel.cc"
     "message_infrastructure/csrc/channel/socket/socket_port.cc"
+
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
@@ -45,7 +71,10 @@ if(PY_WRAPPER)
     target_include_directories(MessageInfrastructurePywrapper PUBLIC
                                ${NUMPY_INCLUDE_DIRS}
                                )
-    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
+    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure 
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
