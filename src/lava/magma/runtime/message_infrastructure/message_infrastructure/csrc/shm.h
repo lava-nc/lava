@@ -22,13 +22,12 @@
 #include <ctime>
 
 #include "message_infrastructure_logging.h"
+#include "utils.h"
 
 namespace message_infrastructure {
 
 #define SHM_FLAG O_RDWR | O_CREAT
 #define SHM_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
-
-using HandleFn = std::function<void(void *)>;
 
 class SharedMemory {
  public:

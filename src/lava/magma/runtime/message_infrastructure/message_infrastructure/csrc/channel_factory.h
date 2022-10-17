@@ -12,6 +12,8 @@
 #include "shmem_channel.h"
 #include "utils.h"
 #include "shm.h"
+#include "socket_channel.h"
+#include "socket.h"
 
 namespace message_infrastructure {
 
@@ -28,6 +30,8 @@ class ChannelFactory {
         break;
       case DDSCHANNEL:
         break;
+      case SOCKETCHANNEL:
+        return GetSocketChannel(1, nbytes, src_name, dst_name);
       default:
         return GetShmemChannel(size, nbytes, src_name, dst_name);
     }

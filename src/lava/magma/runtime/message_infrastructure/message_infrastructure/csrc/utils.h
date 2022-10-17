@@ -8,6 +8,7 @@
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
+#include <functional>
 
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_US (1)
@@ -23,7 +24,8 @@ enum ProcessType {
 enum ChannelType {
   SHMEMCHANNEL = 0,
   RPCCHANNEL = 1,
-  DDSCHANNEL = 2
+  DDSCHANNEL = 2,
+  SOCKETCHANNEL = 3
 };
 
 struct MetaData {
@@ -37,6 +39,8 @@ struct MetaData {
 };
 
 using MetaDataPtr = std::shared_ptr<MetaData>;
+
+using HandleFn = std::function<void(void *)>;
 
 namespace helper {
 
