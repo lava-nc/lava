@@ -9,13 +9,6 @@
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/abstract_actor.h>
 
-TEST(HelloTest, BasicAssertions) {
-  // Expect two strings not to be equal.
-  EXPECT_STRNE("hello", "world");
-  // Expect equality.
-  EXPECT_EQ(7 * 6, 42);
-}
-
 using namespace message_infrastructure;
 
 class Builder {
