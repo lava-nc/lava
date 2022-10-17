@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import os
+from typing import Optional
 
 
 class staticproperty(property):
@@ -15,20 +16,23 @@ class staticproperty(property):
 
 
 class Loihi2:
-    preferred_partition: str = 'kp_stack'
+    preferred_partition: str = None
 
     @staticmethod
-    def set_environ_settings(partititon: str = 'kp_stack') -> None:
+    def set_environ_settings(partititon: Optional[str] = None) -> None:
         """Sets the os environment for execution on Loihi.
 
         Parameters
         ----------
         partititon : str, optional
-            Loihi partition name, by default 'kp_stack'
+            Loihi partition name, by default None.
         """
-        os.environ['SLURM'] = '1'
-        os.environ['LOIHI_GEN'] = 'N3B3'
-        os.environ['PARTITION'] = partititon
+        if 'SLURM' not in os.environ and 'NOSLURM' not in os.environ:
+            os.environ['SLURM'] = '1'
+        if 'LOIHI_GEN' not in os.environ:
+            os.environ['LOIHI_GEN'] = 'N3B3'
+        if 'PARTITION' not in os.environ and partititon is not None:
+            os.environ['PARTITION'] = partititon
 
     @staticproperty
     def is_loihi2_available() -> bool:
