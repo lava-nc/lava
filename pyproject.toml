@@ -138,7 +138,7 @@ extended_default_ignore=[]  # Fix for bug while using newer flake8 ver.
 format = "grouped"
 max_line_length = 80
 show_source = true
-exclude = ["./docs/"]
+exclude = ["./docs/", "./src/lava/magma/runtime/message_infrastructure/build"]
 
 [tool.flakeheaven.plugins]
 flake8-bandit = ["+*", "-S322", "-B101", "-S404", "-S602"]       # Enable a plugin, disable specific checks
