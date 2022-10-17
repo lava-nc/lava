@@ -17,6 +17,13 @@ class Builder {
     void Build() {};
 };
 
+MetaDataPtr ExpectData() {
+  auto metadata = std::make_shared<MetaData>();
+  int32_t *data[5] = {1, 3, 5, 7, 9};
+  metadata->mdata = (void*)data;
+  return metadata;
+}
+
 void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
@@ -43,9 +50,6 @@ void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
 
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
 
-  // TODO: Check data value
-  recv_data->mdata;
-  std::cout << "Mdata" << std::endl;
   // if (recv_data != Data()) {
   //   std::cout << "Received Data is incorrect" << std::endl;
   // }
@@ -53,8 +57,7 @@ void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
 
 TEST(TestSharedMemory, SharedMemSendReceive) {
   // Creates a pair of send and receive ports
-  // TODO: Define success criteria
-
+  // Expects that data sent is the same as data received
   // Create Shared Memory Channel
   int size = 1;
   int nbytes = sizeof(int);
@@ -76,8 +79,7 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   AbstractActor::TargetFn send_target_fn;
   AbstractActor::TargetFn recv_target_fn;
 
-  // TODO: convert data into python to pass into function
-  MetaDataPtr data;
+  auto data = ExpectData();
   auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
   send_target_fn = send_bound_fn;
 
