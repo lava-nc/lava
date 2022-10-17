@@ -60,7 +60,7 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   mp.Stop(true);
 }
 
-TEST(TestMultiprocessing, ActorForceStop) {
+TEST(TestMultiprocessing, ActorStop) {
   GTEST_SKIP();
   // Force stops all running actors
   // Checks that actor status returns 1 (StatusStopped)
