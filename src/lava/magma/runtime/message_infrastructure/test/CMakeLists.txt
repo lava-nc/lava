@@ -25,4 +25,4 @@ target_link_libraries(
 )
 
 include(GoogleTest)
-gtest_discover_tests(test_messaging_infrastructure)
+gtest_discover_tests(test_messaging_infrastructure PROPERTIES TIMEOUT 10)
