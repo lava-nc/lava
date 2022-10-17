@@ -244,10 +244,16 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         Graded input spikes to the Learning LIF process. 
 
         For SuperSpike:
-        This is the error signal propogated from the input 
+        This is the error signal propogated from the input. The error
+        signal is decayed with a small time constant. 
         """
+        # Decay constant for error
         error_tau = 10
+
+        # Decaying error trace
         self.s_error_out = np.exp(-1 / error_tau) * self.s_error_out
+
+        # Spike error at each time step
         error = s_error_in - self.s_out_buff
         s_error_out = self.s_error_out + error
         self.s_error_out = s_error_out
@@ -259,7 +265,7 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         Graded input spikes to the Learning LIF process. 
 
         For SuperSpike:
-        This is calculating the sigmoid of the membrane potential. 
+        This is calculating the surrogate gradient of the membrane potential. 
         """
         h_i = (self.v - self.vth)
         surrogate_v = np.power((1 + np.abs(h_i)), (-2))
