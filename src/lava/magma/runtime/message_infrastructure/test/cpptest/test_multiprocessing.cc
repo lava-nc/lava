@@ -55,10 +55,6 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
-  for (auto actor : actorList){
-    int actorStatus = actor->GetStatus();
-    EXPECT_EQ(actorStatus, 0);
-  }
   
   // Stop any currently running actors
   mp.Stop(true);
@@ -84,10 +80,5 @@ TEST(TestMultiprocessing, ActorForceStop) {
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
-  for (auto actor : actorList){
-    actor->ForceStop();
-    int actorStatus = actor->GetStatus();
-    // std::cout << actorStatus;
-    EXPECT_EQ(actorStatus, 2);
-  }
+  mp.Stop(true);
 }
