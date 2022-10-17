@@ -1,13 +1,13 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include "core/multiprocessing.h"
-#include "core/abstract_actor.h"
 
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/core/abstract_actor.h>
 
 using namespace message_infrastructure;
 

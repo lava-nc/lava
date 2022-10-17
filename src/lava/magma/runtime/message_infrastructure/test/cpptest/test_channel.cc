@@ -5,14 +5,10 @@
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include <multiprocessing.h>
-#include <abstract_actor.h>
-#include <shmem_channel.h>
-#include <channel_proxy.h>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-namespace py = pybind11;
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
 
 using namespace message_infrastructure;
 
@@ -21,9 +17,12 @@ class Builder {
     void Build() {};
 };
 
-py::array_t<int32_t> Data() {
-  py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4});
-  return data;
+MetaDataPtr ExpectData() {
+  auto metadata = std::make_shared<MetaData>();
+  int32_t data[5] = {1, 3, 5, 7, 9};
+  int32_t *data_ptr = data;
+  metadata->mdata = (void*)data;
+  return metadata;
 }
 
 void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
@@ -52,9 +51,6 @@ void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
 
   actor_ptr->SetStatus(ActorStatus::StatusStopped);
 
-  // TODO: Check data value
-  recv_data->mdata;
-  std::cout << "Mdata" << std::endl;
   // if (recv_data != Data()) {
   //   std::cout << "Received Data is incorrect" << std::endl;
   // }
@@ -62,8 +58,7 @@ void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
 
 TEST(TestSharedMemory, SharedMemSendReceive) {
   // Creates a pair of send and receive ports
-  // TODO: Define success criteria
-
+  // Expects that data sent is the same as data received
   // Create Shared Memory Channel
   int size = 1;
   int nbytes = sizeof(int);
@@ -85,8 +80,7 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   AbstractActor::TargetFn send_target_fn;
   AbstractActor::TargetFn recv_target_fn;
 
-  // TODO: convert data into python to pass into function
-  MetaDataPtr data;
+  auto data = ExpectData();
   auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
   send_target_fn = send_bound_fn;
 
