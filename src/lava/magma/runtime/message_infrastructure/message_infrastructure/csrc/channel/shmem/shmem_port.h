@@ -11,8 +11,8 @@
 #include <atomic>
 #include <thread>  // NOLINT
 
-#include "abstract_port.h"
-#include "shm.h"
+#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
 
 namespace message_infrastructure {
 

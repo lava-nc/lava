@@ -6,10 +6,10 @@
 #define ABSTRACT_PORT_H_
 
 #include <string>
-#include <vector>
+#include <list>
 #include <memory>
 
-#include "utils.h"
+#include <message_infrastructure/csrc/core/utils.h>
 
 namespace message_infrastructure {
 
@@ -36,19 +36,25 @@ class AbstractSendPort : public AbstractPort {
  public:
   using AbstractPort::AbstractPort;
   virtual ~AbstractSendPort() = default;
+  virtual void Start() = 0;
   virtual void Send(MetaDataPtr data) = 0;
+  virtual void Join() = 0;
 };
 
 class AbstractRecvPort : public AbstractPort {
  public:
   using AbstractPort::AbstractPort;
   virtual ~AbstractRecvPort() = default;
+  virtual void Start() = 0;
   virtual MetaDataPtr Recv() = 0;
   virtual MetaDataPtr Peek() = 0;
+  virtual void Join() = 0;
 };
 
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
 using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
+using SendPortList = std::list<AbstractSendPortPtr>;
+using RecvPortList = std::list<AbstractRecvPortPtr>;
 
 }  // namespace message_infrastructure
 

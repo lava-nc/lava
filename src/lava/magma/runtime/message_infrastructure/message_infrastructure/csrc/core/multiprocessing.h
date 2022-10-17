@@ -8,7 +8,7 @@
 #include <vector>
 #include <functional>
 
-#include "abstract_actor.h"
+#include <message_infrastructure/csrc/core/abstract_actor.h>
 
 namespace message_infrastructure {
 

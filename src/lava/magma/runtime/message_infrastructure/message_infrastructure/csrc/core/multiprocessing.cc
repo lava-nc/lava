@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include "multiprocessing.h"
-#include "message_infrastructure_logging.h"
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 

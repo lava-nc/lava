@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "port_proxy.h"
+#include <message_infrastructure/csrc/core/abstract_port.h>
 
 namespace message_infrastructure {
 

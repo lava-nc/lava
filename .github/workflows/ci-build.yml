@@ -97,7 +97,7 @@ jobs:
       with:
         targets: |
           src/lava/.      
-        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+        options: "-r --exclude build --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
 
   unit-tests:
     name: Unit Test Code + Coverage
@@ -158,6 +158,9 @@ jobs:
   msg-infr-unit-tests:
     name: Message Infrastructure Unit Test
     runs-on: ${{ matrix.operating-system }}
+    env:
+      DEBUG: 1
+
     strategy:
       matrix:
         # TODO: restore it before merge into ML
@@ -195,6 +198,10 @@ jobs:
     - name: Install Lava
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       run: poetry install --no-interaction
+
+    - name: Run message infrastructure cpp unit tests
+      working-directory: ./src/lava/magma/runtime/message_infrastructure/
+      run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure

@@ -7,8 +7,8 @@
 
 #include <numpy/arrayobject.h>
 #include <Python.h>
-#include "port_proxy.h"
-#include "message_infrastructure_logging.h"
+#include <message_infrastructure/csrc/port_proxy.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 
