@@ -18,25 +18,30 @@
 
 namespace message_infrastructure {
 
-void SocketWriteValid(size_t length, size_t size) {
-  if (length == -1){
+bool SocketWriteValid(size_t length, size_t size) {
+  if (length == -1) {
     LAVA_LOG_ERR("Write socket failed.\n");
-    exit(-1);
-  } else if (length != size) {
-    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd", size, length);
-    exit(-1);
+    return false;
   }
+  else if (length != size) {
+    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd", size, length);
+    return false;
+  }
+  return true;
 }
 
-void SocketReadValid(size_t length, size_t size) {
-  if (length < 0) {
-    LAVA_LOG_ERR("Read socket failed.");
-    exit(-1);
-  } else if (size != length) {
-    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd", size, length);
-    exit(-1);
+bool SocketReadValid(size_t length, size_t size) {
+  if (length == -1) {
+    LAVA_LOG_ERR("Read socket failed.\n");
+    return false;
   }
+  else if (length != size) {
+    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd", size, length);
+    return false;
+  }
+  return true;
 }
+
 void SocketSendPort::Start() {}
 void SocketSendPort::Send(MetaDataPtr metadata) {
   size_t length = write(socket_.first, (char*)metadata.get(), sizeof(MetaData));

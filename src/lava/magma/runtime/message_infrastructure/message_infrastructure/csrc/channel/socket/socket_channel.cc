@@ -11,8 +11,7 @@ namespace message_infrastructure {
 
 SocketChannel::SocketChannel(const std::string &src_name,
                              const std::string &dst_name,
-                             const size_t &nbytes,
-                             const size_t &size) {
+                             const size_t &nbytes) {
   SocketPair skt = GetSktManager().AllocChannelSocket(nbytes);
   send_port_ = std::make_shared<SocketSendPort>(src_name, skt, nbytes);
   recv_port_ = std::make_shared<SocketRecvPort>(dst_name, skt, nbytes);
@@ -26,14 +25,12 @@ AbstractRecvPortPtr SocketChannel::GetRecvPort() {
   return recv_port_;
 }
 
-std::shared_ptr<SocketChannel> GetSocketChannel(const size_t &size,
-                              const size_t &nbytes,
-                              const std::string &src_name,
-                              const std::string &dst_name) {
+std::shared_ptr<SocketChannel> GetSocketChannel(const size_t &nbytes,
+                                                const std::string &src_name,
+                                                const std::string &dst_name) {
   return (std::make_shared<SocketChannel>(src_name,
                                          dst_name,
-                                         nbytes,
-                                         size));
+                                         nbytes));
 }
 
 }  // namespace message_infrastructure

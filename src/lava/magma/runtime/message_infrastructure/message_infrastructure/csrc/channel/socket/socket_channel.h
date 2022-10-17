@@ -20,7 +20,6 @@ class SocketChannel : public AbstractChannel {
   SocketChannel() {}
   SocketChannel(const std::string &src_name,
                 const std::string &dst_name,
-                const size_t &size,
                 const size_t &nbytes);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
@@ -32,8 +31,7 @@ class SocketChannel : public AbstractChannel {
 
 using SocketChannelPtr = std::shared_ptr<SocketChannel>;
 
-SocketChannelPtr GetSocketChannel(const size_t &size,
-                                  const size_t &nbytes,
+SocketChannelPtr GetSocketChannel(const size_t &nbytes,
                                   const std::string &src_name,
                                   const std::string &dst_name);
 

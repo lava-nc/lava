@@ -32,7 +32,7 @@ class ChannelFactory {
       case DDSCHANNEL:
         break;
       case SOCKETCHANNEL:
-        return GetSocketChannel(1, nbytes, src_name, dst_name);
+        return GetSocketChannel(nbytes, src_name, dst_name);
       default:
         return GetShmemChannel(size, nbytes, src_name, dst_name);
     }
