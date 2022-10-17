@@ -5,8 +5,9 @@
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include <multiprocessing.h>
-#include <abstract_actor.h>
+
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/core/abstract_actor.h>
 
 TEST(HelloTest, BasicAssertions) {
   // Expect two strings not to be equal.

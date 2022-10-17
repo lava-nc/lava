@@ -5,9 +5,10 @@
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include <multiprocessing.h>
-#include <abstract_actor.h>
-#include <shmem_channel.h>
+
+#include <message_infrastructure/csrc/core/multiprocessing.h>
+#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
 
 using namespace message_infrastructure;
 
