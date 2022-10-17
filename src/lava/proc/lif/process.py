@@ -148,6 +148,8 @@ class LearningLIF(PlasticNeuronProcess, AbstractLIF):
                          bias_exp=bias_exp, name=name,
                          log_config=log_config, **kwargs)
         self.vth = Var(shape=(1,), init=vth)
+
+        self.s_error_out = Var(shape=shape, init=np.zeros(shape))
         
         # Third factor input
         self.a_third_factor_in = InPort(shape=shape)

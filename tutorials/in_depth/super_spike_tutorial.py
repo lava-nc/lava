@@ -22,7 +22,7 @@ y1_tau = 10
 tag_tau = "2 ^ -1" 
 
 # error signal decay constant
-y2_tau = 2 ** 32-1 
+y2_tau = 10 
 # surrogate gradient of membrane potential u, decay constant
 y3_tau = 2 ** 32-1 
 
@@ -31,7 +31,7 @@ x1_impulse = 16
 y1_impulse = 16
 
 # Zero impulse value for reward. 
-y2_impulse = 0
+y2_impulse = 0.00001
 y3_impulse = 0
 
 # Epoch length
@@ -62,8 +62,8 @@ SELECT_TAG = "floating_pt"
 
 # LIF parameters : Only supports floating_pt for now. 
 if SELECT_TAG == "floating_pt":
-    du = 1
-    dv = 1
+    du = 0.3
+    dv = 0.6
 
 vth = 240
 
@@ -86,42 +86,44 @@ wgt_inp_pre = np.eye(num_neurons_pre) * 250
 wgt_inp_post = np.eye(num_neurons_post) * 250
 
 # Error SpikePattern -> LIF connection weight : ERROR
-wgt_inp_reward = np.eye(num_neurons_post) * 250
+wgt_inp_reward = np.eye(num_neurons_post) * 1
 
 # LIF -> LIF connection initial weight (learning-enabled)
-wgt_plast_conn = np.full(shape_conn_post, 50)
+wgt_plast_conn = np.full(shape_conn_post, 150)
     
-# Number of simulation time steps
-num_steps = 100
-time = list(range(1, num_steps + 1))
+# time duration
+n_steps = 500
 
 # Spike times
 spike_prob = 0.03
 
 # Create random spike rasters
-np.random.seed(223)
-spike_raster_pre = np.zeros((num_neurons_pre, num_steps))
-np.place(spike_raster_pre, np.random.rand(num_neurons_pre, num_steps) < spike_prob, 1)
+np.random.seed(1523)
+spike_raster_pre = np.zeros((num_neurons_pre, n_steps))
+np.place(spike_raster_pre, np.random.rand(num_neurons_pre, n_steps) < spike_prob, 1)
 
-spike_raster_post = np.zeros((num_neurons_post, num_steps))
-np.place(spike_raster_post, np.random.rand(num_neurons_post, num_steps) < spike_prob, 1)
+# Number of simulation time steps
+num_steps = 500
+time = list(range(1, num_steps + 1))
+
+spike_raster_pre = np.resize(spike_raster_pre, (num_neurons_pre, num_steps))
 
 # Create error spike signal
 error_spike_signal = np.zeros((num_neurons_post, num_steps)) 
 for index in range(num_steps):
-    if index == 50:
+    if index % 300 == 0:
         error_spike_signal[0][index] = 1
 
 # Create input devices
 pattern_pre = SpikeIn(data=spike_raster_pre.astype(int))
-pattern_post = SpikeIn(data=spike_raster_post.astype(int))
+# pattern_post = SpikeIn(data=spike_raster_post.astype(int))
 
 # Create error signal input device
 reward_pattern_post = SpikeIn(data=error_spike_signal.astype(float))
 
 # Create input connectivity
 conn_inp_pre = Dense(weights=wgt_inp_pre)
-conn_inp_post = Dense(weights=wgt_inp_post)
+# conn_inp_post = Dense(weights=wgt_inp_post)
 conn_inp_reward = Dense(weights=wgt_inp_reward)
 
 # Create pre-synaptic neurons
@@ -155,8 +157,8 @@ lif_post = LearningLIF(u=0,
 pattern_pre.s_out.connect(conn_inp_pre.s_in)
 conn_inp_pre.a_out.connect(lif_pre.a_in)
 
-pattern_post.s_out.connect(conn_inp_post.s_in)
-conn_inp_post.a_out.connect(lif_post.a_in)
+# pattern_post.s_out.connect(conn_inp_post.s_in)
+# conn_inp_post.a_out.connect(lif_post.a_in)
 
 # Reward ports
 reward_pattern_post.s_out.connect(conn_inp_reward.s_in)
@@ -175,22 +177,32 @@ lif_post.s_out_y3.connect(plast_conn.s_in_y3)
 # Create monitors
 mon_pre_trace = Monitor()
 mon_post_trace = Monitor()
-mon_reward_trace = Monitor()
+mon_membrane_potential = Monitor()
+mon_error_trace = Monitor()
+mon_membrane_trace = Monitor()
 mon_pre_spikes = Monitor()
 mon_post_spikes = Monitor()
 mon_weight = Monitor()
 mon_tag = Monitor()
-mon_s_in_y2 = Monitor()
-mon_s_in_y3 = Monitor()
+mon_y2 = Monitor()
+mon_y3 = Monitor()
+
 
 # Connect monitors
 mon_pre_trace.probe(plast_conn.x1, num_steps)
-mon_post_trace.probe(plast_conn.y1, num_steps)
-mon_reward_trace.probe(lif_post.s_out_y2, num_steps)
+mon_post_trace.probe(lif_post.s_out_bap, num_steps)
+
+mon_membrane_potential.probe(lif_post.v, num_steps)
+mon_error_trace.probe(lif_post.s_out_y2, num_steps)
+mon_membrane_trace.probe(lif_post.s_out_y3, num_steps)
+
 mon_pre_spikes.probe(lif_pre.s_out, num_steps)
 mon_post_spikes.probe(lif_post.s_out, num_steps)
 mon_weight.probe(plast_conn.weights, num_steps)
 mon_tag.probe(plast_conn.tag_1, num_steps)
+
+mon_y2.probe(plast_conn.y2, num_steps)
+mon_y3.probe(plast_conn.y3, num_steps)
 
 # Running
 pattern_pre.run(condition=RunSteps(num_steps=num_steps), run_cfg=Loihi2SimCfg(select_tag=SELECT_TAG))

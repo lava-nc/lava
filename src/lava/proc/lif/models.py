@@ -226,8 +226,10 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
+
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
+    s_error_out : np.ndarray = LavaPyType(float, float)
 
     # third factor input
     a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -244,8 +246,12 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         For SuperSpike:
         This is the error signal propogated from the input 
         """
-        s_error_out = s_error_in - self.s_out_buff
-
+        error_tau = 10
+        self.s_error_out = np.exp(-1 / error_tau) * self.s_error_out
+        error = s_error_in - self.s_out_buff
+        s_error_out = self.s_error_out + error
+        self.s_error_out = s_error_out
+        
         return s_error_out
     
     def calculate_third_factor_trace_y3(self) -> float: 
