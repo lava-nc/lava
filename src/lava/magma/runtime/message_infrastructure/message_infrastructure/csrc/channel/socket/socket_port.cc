@@ -93,20 +93,7 @@ void SocketRecvPort::Join() {
   close(socket_.second);
 }
 MetaDataPtr SocketRecvPort::Peek() {
-  bool ret = false;
-  MetaDataPtr metadata = std::make_shared<MetaData>();
-  ret = SocketRead(socket_.second, metadata.get(), sizeof(MetaData));
-  if (!ret){
-    metadata.reset();
-    return metadata;
-  }
-  void *mdata = malloc(nbytes_);
-  ret = SocketRead(socket_.second, mdata, nbytes_);
-  metadata->mdata = mdata;
-  if(!ret) {
-    metadata.reset();
-    free(mdata);
-  }
-  return metadata;
+  return Recv();
 }
+
 }  // namespace message_infrastructure
