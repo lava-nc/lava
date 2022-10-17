@@ -8,11 +8,6 @@
 #include <multiprocessing.h>
 #include <abstract_actor.h>
 #include <shmem_channel.h>
-#include <channel_proxy.h>
-
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-namespace py = pybind11;
 
 using namespace message_infrastructure;
 
@@ -20,11 +15,6 @@ class Builder {
   public:
     void Build() {};
 };
-
-py::array_t<int32_t> Data() {
-  py::array_t<int32_t> data = py::array_t<int32_t>({1, 2, 3, 4});
-  return data;
-}
 
 void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
