@@ -23,7 +23,8 @@ enum ProcessType {
 enum ChannelType {
   SHMEMCHANNEL = 0,
   RPCCHANNEL = 1,
-  DDSCHANNEL = 2
+  DDSCHANNEL = 2,
+  SOCKETCHANNEL = 3
 };
 
 struct MetaData {

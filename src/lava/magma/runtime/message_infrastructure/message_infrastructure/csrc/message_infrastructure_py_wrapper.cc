@@ -74,6 +74,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("SHMEMCHANNEL", SHMEMCHANNEL)
     .value("RPCCHANNEL", RPCCHANNEL)
     .value("DDSCHANNEL", DDSCHANNEL)
+    .value("SOCKETCHANNEL", SOCKETCHANNEL)
     .export_values();
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort")
     .def(py::init<>());
