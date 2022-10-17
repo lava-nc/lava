@@ -10,7 +10,7 @@
 #include <memory>
 #include <utility>
 #include <thread>  // NOLINT
-#include "shm.h"
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
 
 namespace message_infrastructure {
 
