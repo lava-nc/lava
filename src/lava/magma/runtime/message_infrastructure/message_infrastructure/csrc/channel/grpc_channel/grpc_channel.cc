@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //#include <numpy/arrayobject.h>
 //#include <Python.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
@@ -5,16 +6,28 @@
 #include <memory>
 #include <string>
 #include <message_infrastructure/csrc/core/utils.h>
+=======
+#include <iostream>
+#include <memory>
+#include <string>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+>>>>>>> 923ce8418abea8bb3102bb2cac7a6bde2b165bc2
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+<<<<<<< HEAD
 
 #include "message_infrastructure/csrc/channel/grpc_channel/proto_files/grpcchannel.grpc.pb.h"
 
 #include "grpc_channel.h"
 namespace message_infrastructure {
 
+=======
+#include "grpcchannel.grpc.pb.h"
+#include <message_infrastructure/csrc/channel/grpc_channel/grpc_channel.h>
+>>>>>>> 923ce8418abea8bb3102bb2cac7a6bde2b165bc2
 
 using grpc::Server;
 using grpc::ServerBuilder;
