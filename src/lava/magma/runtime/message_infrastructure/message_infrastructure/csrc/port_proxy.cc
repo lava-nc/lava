@@ -133,6 +133,9 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
 }
 
 py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
+  if(metadata == NULL)
+    return py::cast(0);
+
   std::vector<npy_intp> dims(metadata->nd);
   std::vector<npy_intp> strides(metadata->nd);
 

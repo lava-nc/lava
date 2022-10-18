@@ -20,6 +20,9 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     "message_infrastructure/csrc/channel/shmem/shm.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
+    "message_infrastructure/csrc/channel/socket/socket.cc"
+    "message_infrastructure/csrc/channel/socket/socket_channel.cc"
+    "message_infrastructure/csrc/channel/socket/socket_port.cc"
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})

@@ -132,10 +132,11 @@ enum Log_Level{
 
 enum Log_Module{
   LOG_NULL,
-  LOG_MP,       // log for multiprocessing
+  LOG_MP,  // log for multiprocessing
   LOG_ACTOR,
   LOG_LAYER,
-  LOG_SMMP      // log for shmemport
+  LOG_SMMP,  // log for shmemport
+  LOG_SKP  // log for socketport
 };
 
 class LogMsg{

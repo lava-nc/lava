@@ -11,7 +11,8 @@ const char* LOG_MODULE_NAME[] = {
   "LOG_MPROC",  // multiprocess
   "LOG_ACTOR",
   "LOG_LAYER",
-  "LOG_SHMEM"
+  "LOG_SHMEM",
+  "LOG_SHSKT"
 };
 
 LogMsg::LogMsg(const std::string &msg_data,
