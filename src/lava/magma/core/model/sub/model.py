@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.process.process import AbstractProcess
+from dataclasses import is_dataclass, fields
 
 
 class AbstractSubProcessModel(AbstractProcessModel):
@@ -28,24 +29,25 @@ class AbstractSubProcessModel(AbstractProcessModel):
     sub process Vars.
 
     Example:
-        class SubProcessModel(AbstractSubProcessModel):
-            def __init__(self, proc: AbstractProcess):
-                # Create one or more sub processes
-                self.proc1 = Proc1(**proc.init_args)
-                self.proc2 = Proc2(**proc.init_args)
 
-                # Connect one or more ports of sub processes
-                self.proc1.out_ports.out1.connect(self.proc2.in_ports.input1)
+    >>> class SubProcessModel(AbstractSubProcessModel):
+    >>>     def __init__(self, proc: AbstractProcess):
+    >>>         # Create one or more sub processes
+    >>>         self.proc1 = Proc1(**proc.init_args)
+    >>>         self.proc2 = Proc2(**proc.init_args)
 
-                # Connect one or more ports of parent port with ports of sub
-                # processes
-                proc.in_ports.input1.connect(self.proc1.in_ports.input1)
-                self.proc2.out_ports.output1.connect(proc.out_ports.output1)
-                self.proc1.ref_ports.ref1.connect(proc.ref_ports.ref1)
+    >>>         # Connect one or more ports of sub processes
+    >>>         self.proc1.out_ports.out1.connect(self.proc2.in_ports.input1)
 
-                # Define one or more alias relationships between Vars of parent
-                # and sub processes
-                proc.vars.var1.alias(self.proc2.vars.var3)
+    >>>         # Connect one or more ports of parent port with ports of sub
+    >>>         # processes
+    >>>         proc.in_ports.input1.connect(self.proc1.in_ports.input1)
+    >>>         self.proc2.out_ports.output1.connect(proc.out_ports.output1)
+    >>>         self.proc1.ref_ports.ref1.connect(proc.ref_ports.ref1)
+
+    >>>         # Define one or more alias relationships between Vars of parent
+    >>>         # and sub processes
+    >>>         proc.vars.var1.alias(self.proc2.vars.var3)
     """
 
     @abstractmethod
@@ -57,6 +59,12 @@ class AbstractSubProcessModel(AbstractProcessModel):
         procs = OrderedDict()
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
-            if isinstance(attr, AbstractProcess):
+            if isinstance(attr, AbstractProcess) and \
+                    attr is not self.implements_process:
                 procs[attr_name] = attr
+            if is_dataclass(attr):
+                for data in fields(attr):
+                    sub_attr = getattr(attr, data.name)
+                    if isinstance(sub_attr, AbstractProcess):
+                        procs[type(sub_attr).__name__] = sub_attr
         return procs
