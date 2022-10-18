@@ -1,18 +1,19 @@
-#include <numpy/arrayobject.h>
-#include <Python.h>
-#include "port_proxy.h"
-#include "message_infrastructure_logging.h"
-#include "abstract_port.h"
+//#include <numpy/arrayobject.h>
+//#include <Python.h>
+
 #include <atomic>
-#include "utils.h"
+#include <message_infrastructure/csrc/core/utils.h>
 #include <thread>
 #include<iostream>
 #include <memory>
 #include <string>
+#include <message_infrastructure/csrc/core/abstract_port.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include "grpcchannel.grpc.pb.h"
+#include "message_infrastructure/csrc/channel/grpc_channel/proto_files/grpcchannel.grpc.pb.h"
+namespace message_infrastructure {
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -34,7 +35,7 @@ public:
                           const size_t &nbytes);
   Status RecvArrayData(ServerContext* context, const GrpcMetaData* request,
 							DataReply* reply) override;
-  void Push(GrpcMetaData* src)
+  void Push(const GrpcMetaData* src);
   int AvailableCount();
   bool Empty();
   GrpcMetaData Pop(bool block);
@@ -50,11 +51,11 @@ private:
 	std::atomic<uint32_t> read_index_;
 	std::atomic<uint32_t> write_index_;
   std::atomic_bool done_;
-}
+};
 using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
 
-class GrpcRecvPort{
+class GrpcRecvPort final : public AbstractRecvPort{
   public:
   GrpcRecvPort(const std::string& name,
                  const size_t &size,
@@ -66,13 +67,13 @@ class GrpcRecvPort{
     void Stop();
     void Join();
     bool Probe();
-    void GrpcMetaData2GrpcMeta(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
+    void GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
   private:
     std::atomic_bool done_;
     std::unique_ptr<Server> server;
     ServerImplPtr serviceptr;
     ThreadPtr grpcthreadptr = nullptr;
-}
+};
 
 
 
@@ -95,5 +96,5 @@ class GrpcSendPort final : public AbstractSendPort{
     std::unique_ptr<GrpcChannelServer::Stub> stub_;
     ThreadPtr ack_callback_thread_ = nullptr;
 
+};
 }
-
