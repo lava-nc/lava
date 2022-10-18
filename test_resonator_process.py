@@ -1,4 +1,6 @@
+from torch import _fused_moving_avg_obs_fq_helper
 from lava.proc.rf_iz.models import RF_IZ
+from lava.proc.rf.models import RF
 import numpy as np
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.run_conditions import RunSteps
@@ -35,32 +37,28 @@ def plot_spike_graph(time_range: np.array, signal: list, spikes: np.array, real_
 
 
 if __name__ == "__main__":
-    n_neurons = 1 # 1 neuron
-    period = 10 # every ten timesteps complete and oscillation
+
+    n_neurons = 1  # 1 neuron
+    period = 10  # every ten timesteps complete and oscillation
     alpha = .07
-    frequency = 1/period
-    radians_per_second = frequency * np.pi * 2
     fixed_point = True
-    sin_decay = (1 - alpha) * np.sin(radians_per_second)
-    cos_decay = (1 - alpha) * np.cos(radians_per_second)
-    state_exp = 6
-    p_scale = 1 << 12
+
     if fixed_point:
         state_exp = 6
-        sin_decay = int(sin_decay * (1 << 12)) 
-        cos_decay = int(cos_decay * (1 << 12)) 
+        decay_bits = 12
     else:
+        decay_bits = 0
         state_exp = 0
 
-    vth = 1
+    vth = 1.1
     num_steps = 100
 
     # create lava neuron
-    neuron = RF_IZ(shape=(n_neurons,), sin_decay = sin_decay, cos_decay = cos_decay, vth = vth, state_exp=state_exp) # create a single neuron
+    neuron = RF(shape=(n_neurons,), period = period, alpha = alpha, vth = vth, state_exp=state_exp, decay_bits=decay_bits) # create a single neuron
 
     # create spiking data that just spike at regular intervals
     incoming_spike_data = np.zeros((n_neurons, num_steps))  
-    incoming_spike_data[:, [10, 20, 30]] = 1  # neuron recieves input spikes at timestep 10, 20, 30, and 40
+    incoming_spike_data[:, [0, 10]] =1  # neuron recieves input spikes at timestep 10, 20, 30, and 40
     incoming_data_process = RingBufferSend(data=incoming_spike_data)
     incoming_data_process.out_ports.s_out.connect(neuron.a_real_in) # connect incoming spikes to neuron
 
@@ -93,6 +91,6 @@ if __name__ == "__main__":
     
     assert n_neurons == 1, "Rest of Logic will not work if there are more than 1 neurons"
     if fixed_point:
-        plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten() > 0, probe_data_spike.flatten() > 0, probe_data_real.flatten()/(1 << 6), vth, "Rf Neuron in Lava Fixed point", "rf_lava.png")
+        plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten() > 0, probe_data_spike.flatten() > 0, probe_data_real.flatten()/ (1 << 6), vth, "Rf Neuron in Lava Fixed point", "rf_lava.png")
     else:
         plot_spike_graph(np.arange(num_steps), incoming_spike_data.flatten() > 0, probe_data_spike.flatten() > 0, probe_data_real.flatten(), vth, "Rf Neuron in Lava float point", "rf_lava.png")        

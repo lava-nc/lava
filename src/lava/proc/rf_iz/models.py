@@ -1,6 +1,4 @@
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyOutPort
-from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 import numpy as np
 from lava.magma.core.decorator import implements, requires, tag
@@ -12,31 +10,51 @@ from lava.proc.rf.models import AbstractPyRFModelFloat, AbstractPyRFModelFixed
 @requires(CPU)
 @tag('floating_pt')
 class PyRF_IZModelFloat(AbstractPyRFModelFloat):
+    """Float point implementation of Resonate and Fire Izhikevich Neuron"""
     def run_spk(self):
-        self.sub_thresh_dynamics()
-        s_out = self.imag >= self.vth
-        self.real = self.real * (1 - s_out)  # reset dynamics
+        a_real_in_data = self.a_real_in.recv()
+        a_imag_in_data = self.a_imag_in.recv()
+
+        new_real, new_imag = self.resonator_dynamics(a_real_in_data,
+                                                     a_imag_in_data,
+                                                     self.real, 
+                                                     self.imag)
+        s_out = new_imag >= self.vth
+        self.real[:] = new_real * (1 - s_out)  # reset dynamics
 
         # the 1e-5 insures we don't spike again
-        self.imag = s_out * (self.vth - 1e-5) + (1 - s_out) * self.imag
+        self.imag[:] = s_out * (self.vth - 1e-5) + (1 - s_out) * new_imag
         self.s_out.send(s_out)
 
 
 @implements(proc=RF_IZ, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
-class PyRF_IZModelBitAcc(AbstractPyRFModelFixed):
-
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
-
-    def __init__(self, proc_params):
-        super(PyRF_IZModelBitAcc, self).__init__(proc_params)
-
+@tag('fixed_pt')
+class PyRF_IZModelFoxed(AbstractPyRFModelFixed):
+    """Fixed point implementation of Resonate and Fire Izhikevich Neuron"""
     def run_spk(self):
-        self.sub_thresh_dynamics()
-        s_out = self.imag >= self.vth
+        a_real_in_data = np.left_shift(self.a_real_in.recv(),
+                                       self.state_exp + self.decay_bits)
+        a_imag_in_data = np.left_shift(self.a_imag_in.recv(),
+                                       self.state_exp + self.decay_bits)
 
-        self.real = self.real * (1 - s_out)  # reset dynamics
-        self.imag = s_out * (self.vth-1) + (1 - s_out) * self.imag
+        new_real, new_imag = self.resonator_dynamics(a_real_in_data,
+                                                     a_imag_in_data,
+                                                     np.int64(self.real),
+                                                     np.int64(self.imag))
+
+        new_real = np.sign(new_real) * np.right_shift(np.abs(
+                     new_real), self.decay_bits)
+        new_imag = np.sign(new_imag) * np.right_shift(np.abs(
+                    new_imag), self.decay_bits)
+
+        new_real = np.clip(new_real,
+                           self.neg_voltage_limit, self.pos_voltage_limit)
+        new_imag = np.clip(new_imag,
+                           self.neg_voltage_limit, self.pos_voltage_limit)
+
+        s_out = new_imag >= self.vth
+        self.real[:] = new_real * (1 - s_out)  # reset dynamics
+
+        self.imag[:] = s_out * (self.vth - 1) + (1 - s_out) * new_imag
         self.s_out.send(s_out)

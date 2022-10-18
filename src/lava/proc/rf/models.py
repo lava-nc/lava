@@ -16,54 +16,82 @@ class AbstractPyRFModelFloat(PyLoihiProcessModel):
     imag: np.ndarray = LavaPyType(np.ndarray, float)
     sin_decay: float = LavaPyType(float, float)
     cos_decay: float = LavaPyType(float, float)
-    vth: float = LavaPyType(float, float)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    decay_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    vth: float = LavaPyType(float, float)
 
-    def sub_thresh_dynamics(self):
+    def resonator_dynamics(self, a_real_in_data, a_imag_in_data, real, imag):
+        """Resonate and Fire real and imaginary voltage dynamics
 
-        a_real_in_data = self.a_real_in.recv()
-        a_imag_in_data = self.a_imag_in.recv()
+        Parameters
+        ----------
+        a_real_in_data : np.ndarray
+            Real component input current
+        a_imag_in_data : np.ndarray
+            Imaginary component input current
+        real : np.ndarray
+            Real component voltage to be updated
+        imag : np.ndarray
+            Imag component voltage to be updated
 
-        # I don't think it needs a bias for now
-        decayed_real = (self.cos_decay * self.real -
-                        self.sin_decay * self.imag + a_real_in_data)
-        decayed_imag = (self.sin_decay * self.real +
-                        self.cos_decay * self.imag + a_imag_in_data)
+        Returns
+        -------
+        np.ndarray, np.ndarray
+            updated real and imaginary components
 
-        self.real[:] = decayed_real
-        self.imag[:] = decayed_imag
+        """
+
+        decayed_real = (self.cos_decay * real -
+                        self.sin_decay * imag + a_real_in_data)
+        decayed_imag = (self.sin_decay * real +
+                        self.cos_decay * imag + a_imag_in_data)
+
+        return decayed_real, decayed_imag
 
     def run_spk(self):
-        old_imag = self.imag.copy()
-        self.sub_thresh_dynamics()
-        s_out = (self.real >= self.vth) * (self.imag >= 0) * (old_imag < 0)
-        self.s_out.send(s_out)
+        raise NotImplementedError("spiking activation() cannot be called from "
+                                  "an abstract ProcessModel")
 
 
 @implements(proc=RF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
 class PyRFModelFloat(AbstractPyRFModelFloat):
-    pass
+    """Implementation of Resonate-and-Fire neural process in floating
+    point precision. This short and simple ProcessModel can be used for quick
+    algorithmic prototyping, without engaging with the nuances of a fixed
+    point implementation.
+    """
+    def run_spk(self):
+        a_real_in_data = self.a_real_in.recv()
+        a_imag_in_data = self.a_imag_in.recv()
+
+        new_real, new_imag = self.resonator_dynamics(a_real_in_data,
+                                                     a_imag_in_data,
+                                                     self.real, 
+                                                     self.imag)
+
+        s_out = (new_real >= self.vth) * (new_imag >= 0) * (self.imag < 0)
+        self.real[:], self.imag[:] = new_real, new_imag
+        self.s_out.send(s_out)
 
 
-class AbstractPyRFModelFixed(PyLoihiProcessModel):
+class AbstractPyRFModelFixed(AbstractPyRFModelFloat):
     a_real_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE,
-                                     np.int16, precision=16)
+                                     np.int16, precision=24)
     a_imag_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, 
-                                     np.int16, precision=16)
+                                     np.int16, precision=24)
     s_out: None
     real: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     imag: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     sin_decay: int = LavaPyType(int, np.uint16, precision=12)
     cos_decay: int = LavaPyType(int, np.uint16, precision=12)
-    vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    decay_bits: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def __init__(self, proc_params):
         super(AbstractPyRFModelFixed, self).__init__(proc_params)
-
-        self.decay_shift = self.sin_decay.precision
 
         # real, imaginary bitwidth
         self.ri_bitwidth = self.sin_decay.precision * 2
@@ -71,51 +99,37 @@ class AbstractPyRFModelFixed(PyLoihiProcessModel):
         self.neg_voltage_limit = -np.int32(max_ri_val) + 1
         self.pos_voltage_limit = np.int32(max_ri_val) - 1
 
-    def sub_thresh_dynamics(self):
-
-        decay_const_cos = self.cos_decay
-        decay_const_sin = self.sin_decay
-
-        a_real_in_data = self.a_real_in.recv()
-        a_imag_in_data = self.a_imag_in.recv()
-
-        decayed_real = (np.int64(self.real) * (decay_const_cos)
-                        - np.int64(self.imag) * (decay_const_sin))
-        decayed_real = (np.sign(decayed_real) *
-                        np.right_shift(np.abs(decayed_real), self.decay_shift))
-        decayed_real = np.int32(decayed_real)
-
-        a_real_in_data = np.left_shift(a_real_in_data, self.state_exp)
-        decayed_real += a_real_in_data
-
-        decayed_imag = (np.int64(self.real) * (decay_const_sin)
-                        + np.int64(self.imag) * (decay_const_cos))
-        decayed_imag = (np.sign(decayed_imag) *
-                        np.right_shift(np.abs(decayed_imag), self.decay_shift))
-        decayed_imag = np.int32(decayed_imag)
-
-        a_imag_in_data = np.left_shift(a_imag_in_data, self.state_exp)
-        decayed_imag += a_imag_in_data
-
-        self.real[:] = np.clip(decayed_real,
-                               self.neg_voltage_limit, self.pos_voltage_limit)
-        self.imag[:] = np.clip(decayed_imag, 
-                               self.neg_voltage_limit, self.pos_voltage_limit)
-
     def run_spk(self):
-        old_imag = self.imag.copy()
-        self.sub_thresh_dynamics()
-        s_out = (self.real >= self.vth) * (self.imag >= 0) * (old_imag < 0)
-        self.s_out.send(s_out)
+        raise NotImplementedError("spiking activation() cannot be called from "
+                                  "an abstract ProcessModel")
 
 
 @implements(proc=RF, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
-class PyRFModelBitAcc(AbstractPyRFModelFixed):
+@tag('fixed_pt')
+class PyRFModelFixed(AbstractPyRFModelFixed):
+    """Fixed point implementation of Resonate and Fire neuron."""
+    def run_spk(self):
+        a_real_in_data = np.left_shift(self.a_real_in.recv(),
+                                       self.state_exp + self.decay_bits)
+        a_imag_in_data = np.left_shift(self.a_imag_in.recv(),
+                                       self.state_exp + self.decay_bits)
 
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
+        new_real, new_imag = self.resonator_dynamics(a_real_in_data,
+                                                     a_imag_in_data,
+                                                     np.int64(self.real),
+                                                     np.int64(self.imag))
 
-    def __init__(self, proc_params):
-        super(PyRFModelBitAcc, self).__init__(proc_params)
+        new_real = np.sign(new_real) * np.right_shift(np.abs(
+                    new_real), self.decay_bits)      
+        new_imag = np.sign(new_imag) * np.right_shift(np.abs(
+                    new_imag), self.decay_bits)
+
+        new_real = np.clip(new_real,
+                           self.neg_voltage_limit, self.pos_voltage_limit)
+        new_imag = np.clip(new_imag,
+                           self.neg_voltage_limit, self.pos_voltage_limit)                         
+        s_out = (new_real >= self.vth) * (new_imag >= 0) * (self.imag < 0)
+        self.real[:], self.imag[:] = new_real, new_imag
+
+        self.s_out.send(s_out)
