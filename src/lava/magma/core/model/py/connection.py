@@ -1381,7 +1381,7 @@ class PlasticConnectionModelFloat(PlasticConnection):
 
         t_diff = t_eval - t_spikes
 
-        decay_only = ((t_spikes == 0) | (t_diff < 0)) & (broad_taus > 0)
+        decay_only = ((t_spikes == 0) | (t_diff < 0)) & (broad_taus > 0) & (trace_values != 0)
         decay_spike_decay = (t_spikes != 0) & (t_diff >= 0) & (broad_taus > 0)
 
         result = trace_values.copy()
