@@ -2,30 +2,31 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <iostream>
-
-#include <gtest/gtest.h>
-
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/abstract_actor.h>
 #include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
+#include <gtest/gtest.h>
+#include <iostream>
 
 using namespace message_infrastructure;
 
 class Builder {
-  public:
-    void Build() {};
+ public:
+    void Build() {}
 };
 
 MetaDataPtr ExpectData() {
   auto metadata = std::make_shared<MetaData>();
   int32_t data[5] = {1, 3, 5, 7, 9};
   int32_t *data_ptr = data;
-  metadata->mdata = (void*)data;
+  metadata->mdata = reinterpret_cast<void*>(data);
+  // metadata->mdata = (void*)data;
   return metadata;
 }
 
-void SendProc(AbstractSendPortPtr send_port, MetaDataPtr data, AbstractActor* actor_ptr) {
+void SendProc(AbstractSendPortPtr send_port,
+              MetaDataPtr data,
+              AbstractActor* actor_ptr) {
   AbstractActor::StopFn stop_fn;
   actor_ptr->SetStopFn(stop_fn);
   std::cout << "Here I am" << std::endl;
@@ -81,10 +82,15 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   AbstractActor::TargetFn recv_target_fn;
 
   auto data = ExpectData();
-  auto send_bound_fn = std::bind(&SendProc, send_port, data, std::placeholders::_1);
+  auto send_bound_fn = std::bind(&SendProc,
+                                 send_port,
+                                 data,
+                                 std::placeholders::_1);
   send_target_fn = send_bound_fn;
 
-  auto recv_bound_fn = std::bind(&RecvProc, recv_port, std::placeholders::_1);
+  auto recv_bound_fn = std::bind(&RecvProc,
+                                 recv_port,
+                                 std::placeholders::_1);
   recv_target_fn = recv_bound_fn;
 
   mp.BuildActor(send_target_fn);
@@ -96,7 +102,7 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   mp.Stop(true);
 }
 
-TEST(TestSharedMemory, SharedMemSingleProcess){
+TEST(TestSharedMemory, SharedMemSingleProcess) {
   // ChannelProxy ShmemChannel;
 
   // SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();

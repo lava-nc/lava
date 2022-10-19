@@ -2,17 +2,15 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <iostream>
-
-#include <gtest/gtest.h>
-
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <gtest/gtest.h>
+#include <iostream>
 
 using namespace message_infrastructure;
 
 class Builder {
-  public:
+ public:
     void Build(int i);
 };
 
@@ -38,10 +36,12 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
 
   AbstractActor::TargetFn target_fn;
 
-  // TODO: Make test pass with multiple actors
   for (int i = 0; i < 1; i++) {
     std::cout << "Loop " << i << std::endl;
-    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
+    auto bound_fn = std::bind(&TargetFunction,
+                              (*builder),
+                              i,
+                              std::placeholders::_1);
     target_fn = bound_fn;
     int return_value = mp.BuildActor(bound_fn);
     std::cout << "Return Value --> " << return_value << std::endl;
@@ -49,7 +49,7 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
-  
+
   // Stop any currently running actors
   mp.Stop(true);
 }
@@ -64,7 +64,10 @@ TEST(TestMultiprocessing, ActorStop) {
 
   for (int i = 0; i < 5; i++) {
     std::cout << "Loop " << i << std::endl;
-    auto bound_fn = std::bind(&TargetFunction, (*builder), i, std::placeholders::_1);
+    auto bound_fn = std::bind(&TargetFunction,
+                              (*builder),
+                              i,
+                              std::placeholders::_1);
     target_fn = bound_fn;
     int return_value = mp.BuildActor(bound_fn);
     std::cout << "Return Value --> " << return_value << std::endl;

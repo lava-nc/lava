@@ -54,7 +54,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         source $VENV
-        cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc --filter=-build/include_subdir --root=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/*.cc src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/*.h
+        cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ --root=csrc src/lava/magma/runtime/message_infrastructure/message_infrastructure/ src/lava/magma/runtime/message_infrastructure/test/
 
   security-lint:
     name: Security Lint Code
