@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef MULTIPROCESSING_H_
-#define MULTIPROCESSING_H_
-
-#include <vector>
-#include <functional>
+#ifndef CORE_MULTIPROCESSING_H_
+#define CORE_MULTIPROCESSING_H_
 
 #include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <vector>
+#include <functional>
 
 namespace message_infrastructure {
 
@@ -26,4 +25,4 @@ class MultiProcessing {
 
 }  // namespace message_infrastructure
 
-#endif  // MULTIPROCESSING_H_
+#endif  // CORE_MULTIPROCESSING_H_
