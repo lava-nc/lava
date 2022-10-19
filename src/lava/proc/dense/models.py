@@ -112,7 +112,7 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 class StaticPyDenseModelBitAcc(PyDenseModelBitAcc):
     pass
 
-@implements(proc=LearningDense, protocol=LoihiProtocol)
+# @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
@@ -122,7 +122,6 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
     fixed point implementation.
     """
     
-
     def __init__(self, proc_params):
         super().__init__(proc_params)
 
@@ -141,8 +140,6 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
         super().run_spk(s_in)
 
 
-
-
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
@@ -151,7 +148,6 @@ class PyLearningDenseModelBitApproximate(PlasticConnectionModelBitApproximate, P
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.
     """
-
 
     def __init__(self, proc_params):
         super().__init__(proc_params)

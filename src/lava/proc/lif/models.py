@@ -247,18 +247,19 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         This is the error signal propogated from the input. The error
         signal is decayed with a small time constant. 
         """
-        # Decay constant for error
-        error_tau = 10
-
-        # Decaying error trace
-        self.s_error_out = np.exp(-1 / error_tau) * self.s_error_out
+        # Decay constants for error
+        error_tau_rise = 50
+        error_tau_decay = 100
 
         # Spike error at each time step
-        error = s_error_in - self.s_out_buff
-        s_error_out = self.s_error_out + error
-        self.s_error_out = s_error_out
-        
-        return s_error_out
+        error = s_error_in - self.s_out_buff        
+        self.s_error_out = self.s_error_out + error
+        self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
+
+        # Decaying error trace
+        self.s_error_out = np.exp(-1 / error_tau_decay) * self.s_error_out
+
+        return self.s_error_out
     
     def calculate_third_factor_trace_y3(self) -> float: 
         """Generate's a third factor Reward traces based on 
@@ -289,7 +290,6 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_out_bap.send(self.s_out_buff)
 
         
-
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')

@@ -86,8 +86,8 @@ class Dense(AbstractProcess):
 
 
 class LearningDense(PlasticConnectionProcess, Dense):
-    """Dense connections between neurons. Realizes the following abstract
-    behavior: a_out = weights * s_in '
+    """Learning Dense connections between neurons. Realizes 
+    the following abstract behavior: a_out = weights * s_in '
 
     Parameters
     ----------
@@ -144,4 +144,4 @@ class LearningDense(PlasticConnectionProcess, Dense):
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
-                         **kwargs) 
+                         **kwargs)

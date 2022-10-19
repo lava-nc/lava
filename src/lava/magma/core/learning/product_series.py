@@ -726,10 +726,10 @@ class ProductSeries:
                 "'s_mantissa = x * 2**y'."
             )
 
-        if s_exp < -7 or s_exp >= 9:
-            raise ValueError(
-                "Exponent of scaling constant exponent " "must within -7 and 9."
-            )
+        #if s_exp < -7 or s_exp >= 9:
+        #    raise ValueError(
+        #        "Exponent of scaling constant exponent " "must within -7 and 9."
+        #    )
 
         product = Product(
             self._target,
