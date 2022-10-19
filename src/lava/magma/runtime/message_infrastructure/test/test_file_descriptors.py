@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from code import interact
 import unittest
 import os
 from lava.magma.core.run_conditions import RunSteps
@@ -33,6 +34,7 @@ def run_process():
 def get_file_descriptor_usage():
     result = run("lsof 2>/dev/null | grep python | grep FIFO | wc -l",
                  shell=True)
+    print(flush=True)
     sleep(0.1)
     return result.stdout
 
@@ -47,14 +49,15 @@ class TestFileDescriptors(unittest.TestCase):
         file_descriptor_usage = get_file_descriptor_usage()
         self.assertEqual(file_descriptor_usage, None)
 
-
-        for iteration in range(self.num_iterations):    
+        for iteration in range(self.num_iterations):
+            print(f"We are at interation {iteration}", flush=True)
             # Run Process
             run_process()
 
             # Check file descriptor usage after running processes
             file_descriptor_usage = get_file_descriptor_usage()
-            self.assertEqual(file_descriptor_usage, None)
+            self.assertEqual(file_descriptor_usage, None,
+                msg=f"Failed on iteration {iteration}")
 
 
 if __name__ == "__main__":
