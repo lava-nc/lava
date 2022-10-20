@@ -178,6 +178,7 @@ class TestChannel(unittest.TestCase):
 
         size = 5
         predata = prepare_data()
+        print(predata)
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'
 
@@ -196,18 +197,18 @@ class TestChannel(unittest.TestCase):
         recv_port.start()
 
         send_port.send(predata)
-        send_port.send(predata)
-
+        print("send ok")
         resdata = recv_port.recv()
-        #print(resdata)
+        
+        print(resdata)
         if not np.array_equal(resdata, predata):
             raise AssertionError()
         
-
+        
         send_port.join()
-
+        print("send join ok")
         recv_port.join()
-
+        print("recv join ok")
 
 
 if __name__ == "__main__":

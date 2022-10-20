@@ -4,16 +4,13 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <message_infrastructure/csrc/channel/grpc_channel/grpc_port.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/channel/grpc_channel/grpc_port.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.grpc.pb.h"
-
-
-
 namespace message_infrastructure {
 
 using grpc::Server;
@@ -28,7 +25,7 @@ using grpcchannel::GrpcMetaData;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context, \
-                      const GrpcMetaData *request, DataReply* reply) {
+        const GrpcMetaData *request, DataReply* reply) {
   bool ret = false;
   if (Writable()) {
     data_ = std::make_shared<GrpcMetaData>(*request);
@@ -45,7 +42,6 @@ GrpcMetaDataPtr GrpcChannelServerImpl::getdata() {
 }
 
 GrpcRecvPort::~GrpcRecvPort() {
-  free(data_->mdata);
   server->Shutdown();
 }
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
@@ -53,8 +49,6 @@ GrpcRecvPort::GrpcRecvPort(const std::string& name,
                  const size_t &nbytes, const std::string &url)
   :AbstractRecvPort(name, size, nbytes), url_(url) {
   serviceptr = std::make_shared<GrpcChannelServerImpl>(name_, size_, nbytes_);
-  data_ = std::make_shared<MetaData>();
-  data_->mdata = malloc(nbytes_);
 }
 void GrpcRecvPort::StartSever() {
   grpc::EnableDefaultHealthCheckService(true);
@@ -66,7 +60,7 @@ void GrpcRecvPort::StartSever() {
 }
 void GrpcRecvPort::Start() {
   grpcthreadptr = std::make_shared<std::thread>(\
-      &message_infrastructure::GrpcRecvPort::StartSever, this);
+          &message_infrastructure::GrpcRecvPort::StartSever, this);
 }
 MetaDataPtr GrpcRecvPort::Recv() {
   while (serviceptr->Writable()) {
@@ -74,9 +68,8 @@ MetaDataPtr GrpcRecvPort::Recv() {
     if (done_)
       return NULL;
   }
-  memset(data_->mdata, 0, nbytes_);
+  MetaDataPtr data_ = std::make_shared<MetaData>();
   GrpcMetaData2MetaData(data_, serviceptr->getdata());
-  serviceptr->getdata() = nullptr;
   return data_;
 }
 void GrpcRecvPort::Join() {
@@ -93,16 +86,19 @@ MetaDataPtr GrpcRecvPort::Peek() {
   return Recv();
 }
 void GrpcRecvPort::GrpcMetaData2MetaData(\
-    MetaDataPtr metadata, GrpcMetaDataPtr grpcdata) {
+        MetaDataPtr metadata, GrpcMetaDataPtr grpcdata) {
   metadata->nd = grpcdata->nd();
   metadata->type = grpcdata->type();
   metadata->elsize = grpcdata->elsize();
   metadata->total_size = grpcdata->total_size();
+  void* data = malloc(nbytes_);
   for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
   }
-  std::memcpy(metadata->mdata, grpcdata->value().c_str(), nbytes_);
+  std::memcpy(data, grpcdata->value().c_str(), nbytes_);
+  metadata->mdata = data;
+  grpcdata = nullptr;
 }
 
 void GrpcSendPort::Start() {
@@ -110,15 +106,14 @@ void GrpcSendPort::Start() {
   stub_ = GrpcChannelServer::NewStub(channel);
 }
 
-void GrpcSendPort::MetaData2GrpcMetaData(\
-                        MetaDataPtr metadata, \
-                        GrpcMetaDataPtr grpcdata) {
+void GrpcSendPort::MetaData2GrpcMetaData(MetaDataPtr metadata, \
+        GrpcMetaDataPtr grpcdata) {
   grpcdata->set_nd(metadata->nd);
   grpcdata->set_type(metadata->type);
   grpcdata->set_elsize(metadata->elsize);
   grpcdata->set_total_size(metadata->total_size);
-  char* data = (char*)metadata->mdata;
-  for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
+  char* data = (char*)metadata->mdata;   //NOLINT
+  for (int i=0; i < MAX_ARRAY_DIMS; i++) {
     grpcdata->add_dims(metadata->dims[i]);
     grpcdata->add_strides(metadata->strides[i]);
   }
@@ -130,8 +125,7 @@ void GrpcSendPort::Send(MetaDataPtr metadata) {
   DataReply reply;
   ClientContext context;
   Status status = stub_->RecvArrayData(&context, *request, &reply);
-
-  // if (status.ok()&&reply.ack()) {
+  //  if (status.ok()&&reply.ack()) {
   //  std::cout<<"Successed,Recv ack is "<<reply.ack()<<std::endl;
   //} else {
   //  std::cout<<"Recv ack is "<<reply.ack()<<"ERROR! Send fail!"<<std::endl;
@@ -143,4 +137,4 @@ bool GrpcSendPort::Probe() {
 void GrpcSendPort::Join() {
   done_ = true;
 }
-}  // namespace message_infrastructure
+}   // namespace message_infrastructure
