@@ -35,9 +35,9 @@ message GrpcMetaData{
   int64 total_size = 4;
   repeated int64	dims = 5;
   repeated int64	strides = 6;
-  repeated sint32 value =7;
-}
+  bytes value =16;
 
+}
 
 
 

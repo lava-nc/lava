@@ -118,7 +118,7 @@ class TestChannel(unittest.TestCase):
     def test_socketchannel(self):
         mp = MultiProcessing()
         mp.start()
-        size = 1
+        size = 3
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_socket_channel'
@@ -145,7 +145,8 @@ class TestChannel(unittest.TestCase):
         mp.stop(True)
 
     def test_single_process_socketchannel(self):
-        size = 1
+
+        size = 3
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'
@@ -164,11 +165,41 @@ class TestChannel(unittest.TestCase):
         recv_port.start()
 
         send_port.send(predata)
+
         resdata = recv_port.recv()
 
         if not np.array_equal(resdata, predata):
             raise AssertionError()
 
+        send_port.join()
+        recv_port.join()
+
+    def test_single_process_socketchannel(self):
+
+        size = 5
+        predata = prepare_data()
+        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        name = 'test_single_process_socket_channel'
+
+        socket_channel = Channel(
+            ChannelBackend.RPCCHANNEL,
+            size,
+            nbytes,
+            name,
+            name)
+
+        send_port = socket_channel.src_port
+        recv_port = socket_channel.dst_port
+
+        send_port.start()
+        recv_port.start()
+
+        send_port.send(predata)
+
+        resdata = recv_port.recv()
+
+        if not np.array_equal(resdata, predata):
+            raise AssertionError()
         send_port.join()
         recv_port.join()
 

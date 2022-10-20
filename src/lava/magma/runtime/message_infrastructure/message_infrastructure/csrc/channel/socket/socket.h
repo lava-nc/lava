@@ -47,7 +47,7 @@ public:
 
   friend SktManager &GetSktManager();
 
- private:
+  private:
   SktManager() {}
   std::vector<SocketPair> sockets_;
   static SktManager sktm_;

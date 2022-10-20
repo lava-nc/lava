@@ -14,6 +14,7 @@
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
 #include <message_infrastructure/csrc/channel/socket/socket.h>
 #include <message_infrastructure/csrc/channel/socket/socket_channel.h>
+#include <message_infrastructure/csrc/channel/grpc_channel/grpc_channel.h>
 
 
 namespace message_infrastructure {
@@ -28,7 +29,7 @@ class ChannelFactory {
       const std::string &dst_name) {
     switch (channel_type) {
       case RPCCHANNEL:
-        break;
+        return GetGrpcChannel(size,nbytes,src_name,dst_name);
       case DDSCHANNEL:
         break;
       case SOCKETCHANNEL:
