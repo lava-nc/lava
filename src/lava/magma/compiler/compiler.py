@@ -310,9 +310,9 @@ class Compiler:
             # ...and add it to the list.
             subcompilers.append(compiler)
             # Remember the index for C and Nc subcompilers:
-            if isinstance(compiler, type(CProcCompiler)):
+            if isinstance(compiler, CProcCompiler):
                 c_idx.append(idx)
-            if isinstance(compiler, type(NcProcCompiler)):
+            if isinstance(compiler, NcProcCompiler):
                 nc_idx.append(idx)
 
         # Implement the heuristic "C-first Nc-second" whenever C and Nc
