@@ -22,11 +22,11 @@ bool SocketWrite(int fd, void* data, size_t size) {
   size_t length = write(fd, (char *)data, size);
 
   if (length == -1) {
-    LAVA_LOG_ERR(LOG_SKP, "Write socket failed.\n");
+    LAVA_LOG_ERR("Write socket failed.\n");
     return false;
   }
   else if (length != size) {
-    LAVA_LOG_ERR(LOG_SKP, "Write socket error, expected size: %zd, got size: %zd", size, length);
+    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd", size, length);
     return false;
   }
 
@@ -37,11 +37,11 @@ bool SocketRead(int fd, void* data, size_t size) {
   size_t length = read(fd, (char *)data, size);
 
   if (length == -1) {
-    LAVA_LOG_ERR(LOG_SKP, "Read socket failed.\n");
+    LAVA_LOG_ERR("Read socket failed.\n");
     return false;
   }
   else if (length != size) {
-    LAVA_LOG_ERR(LOG_SKP, "Read socket error, expected size: %zd, got size: %zd", size, length);
+    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd", size, length);
     return false;
   }
 

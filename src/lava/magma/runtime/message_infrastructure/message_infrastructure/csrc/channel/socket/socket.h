@@ -36,7 +36,7 @@ public:
     int socket[2];
     int err = socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, socket);
     if (err == -1){
-        LAVA_LOG_ERR(LOG_SKP, "Create socket object failed.\n");
+        LAVA_LOG_ERR("Create socket object failed.\n");
         exit(-1);
     }
     skt_pair.first = socket[0];

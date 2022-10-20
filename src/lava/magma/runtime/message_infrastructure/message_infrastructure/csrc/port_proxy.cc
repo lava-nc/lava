@@ -93,7 +93,7 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
   LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
   if (!PyArray_Check(obj)) {
-    LAVA_LOG_ERR(LOG_LAYER, "The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
+    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
     exit(-1);
   }
 
@@ -121,7 +121,7 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
     metadata->dims[i] = dims[i];
     metadata->strides[i] = strides[i]/element_size_in_bytes;
     if (strides[i] % element_size_in_bytes != 0) {
-      LAVA_LOG_ERR(LOG_LAYER, "numpy array stride not a multiple of element bytes\n");
+      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
     }
   }
   metadata->type = dtype;

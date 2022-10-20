@@ -17,11 +17,11 @@ int CheckSemaphore(sem_t *sem) {
   int sem_val;
   sem_getvalue(sem, &sem_val);
   if(sem_val < 0) {
-    LAVA_LOG_ERR(LOG_MP, "get the negtive sem value: %d\n", sem_val);
+    LAVA_LOG_ERR("get the negtive sem value: %d\n", sem_val);
     return -1;
   }
   if(sem_val == 1) {
-    LAVA_LOG_ERR(LOG_MP, "There is a semaphere not used\n");
+    LAVA_LOG_ERR("There is a semaphere not used\n");
     return 1;
   }
   
@@ -35,7 +35,7 @@ int PosixActor::Wait() {
   int ret = waitpid(this->pid_, &status, options);
 
   if (ret < 0) {
-    LAVA_LOG_ERR(LOG_MP, "process %d waitpid error\n", this->pid_);
+    LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
     return -1;
   }
 
@@ -76,7 +76,7 @@ int PosixActor::Create() {
     Run();
     exit(0);
   }
-  LAVA_LOG_ERR(LOG_MP, "Cannot allocate new pid for the process\n");
+  LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
   return ErrorProcess;
 }
 
