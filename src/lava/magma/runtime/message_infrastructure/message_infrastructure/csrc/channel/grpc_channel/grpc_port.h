@@ -50,6 +50,7 @@ using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
 class GrpcRecvPort final : public AbstractRecvPort{
  public:
+  ~GrpcRecvPort();
   GrpcRecvPort(const std::string& name,
                  const size_t &size,
                  const size_t &nbytes,

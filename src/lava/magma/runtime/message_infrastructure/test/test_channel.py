@@ -196,9 +196,10 @@ class TestChannel(unittest.TestCase):
         recv_port.start()
 
         send_port.send(predata)
+        send_port.send(predata)
 
         resdata = recv_port.recv()
-
+        #print(resdata)
         if not np.array_equal(resdata, predata):
             raise AssertionError()
         

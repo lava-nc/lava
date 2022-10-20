@@ -37,6 +37,9 @@ GrpcMetaDataPtr GrpcChannelServerImpl::getdata(){
   return data_;
 }
 
+GrpcRecvPort::~GrpcRecvPort(){
+  server->Shutdown();
+}
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
                  const size_t &size,
                  const size_t &nbytes, const std::string &url)
