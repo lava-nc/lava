@@ -1,5 +1,3 @@
-//#include <numpy/arrayobject.h>
-//#include <Python.h>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -69,9 +67,9 @@ MetaDataPtr GrpcRecvPort::Recv(){
 }
 void GrpcRecvPort::Join(){
   if (!done_) {
-      done_ = true;
-      server->Shutdown();
-      grpcthreadptr->join();
+    done_ = true;
+    server->Shutdown();
+    grpcthreadptr->join();
   }
 }
 bool GrpcRecvPort::Probe(){

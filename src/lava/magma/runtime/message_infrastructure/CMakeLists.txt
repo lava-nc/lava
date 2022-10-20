@@ -4,9 +4,9 @@ project(message_passing)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory("message_infrastructure/csrc/channel/grpc_channel")
 
 
+option(GRPC_CHANNEL "Use grpc_channel" ON)
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
     find_package(pybind11 REQUIRED)
@@ -22,17 +22,27 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     "message_infrastructure/csrc/channel/shmem/shm.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/grpc.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/grpc_port.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/grpc_channel.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.pb.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.grpc.pb.cc"
+
     "message_infrastructure/csrc/channel/socket/socket.cc"
     "message_infrastructure/csrc/channel/socket/socket_channel.cc"
     "message_infrastructure/csrc/channel/socket/socket_port.cc"
     )
 
-add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+
+if(GRPC_CHANNEL)
+    add_subdirectory("message_infrastructure/csrc/channel/grpc_channel")
+    set(GRPC_CHANNEL_SRCS
+    "message_infrastructure/csrc/channel/grpc_channel/grpc.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/grpc_port.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/grpc_channel.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.pb.cc"
+    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.grpc.pb.cc"
+    )
+    
+    add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS} ${GRPC_CHANNEL_SRCS})
+else()
+    add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+endif()
 
 target_include_directories(message_infrastructure PUBLIC
                            ${PROJECT_SOURCE_DIR}
@@ -40,7 +50,7 @@ target_include_directories(message_infrastructure PUBLIC
 
 target_link_libraries(message_infrastructure
                       rt
-                      hw_grpc_proto
+                      grpc_proto
                       )
 
 if(PY_WRAPPER)

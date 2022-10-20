@@ -32,9 +32,8 @@ friend GrpcManager &GetGrpcManager();
 
 private:
   GrpcManager(){}
-  //std::string url = "127.13.5.78:50051"; 
   std::string base_url = "127.13.5.";
-  std::string base_port = ":5005";
+  std::string base_port = ":500";
   int url_num = 78;
   int port_num = 0;
   std::vector<std::string> urls_;

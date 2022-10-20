@@ -192,6 +192,7 @@ class TestChannel(unittest.TestCase):
         recv_port = socket_channel.dst_port
 
         send_port.start()
+
         recv_port.start()
 
         send_port.send(predata)
@@ -200,8 +201,12 @@ class TestChannel(unittest.TestCase):
 
         if not np.array_equal(resdata, predata):
             raise AssertionError()
+        
+
         send_port.join()
+
         recv_port.join()
+
 
 
 if __name__ == "__main__":

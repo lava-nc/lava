@@ -24,34 +24,34 @@ project(GrpcChannel)
 include(cmake/common.cmake)
 
 # Proto file
-get_filename_component(hw_proto "protos/grpcchannel.proto" ABSOLUTE)
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+get_filename_component(grpc_proto "protos/grpcchannel.proto" ABSOLUTE)
+get_filename_component(grpc_proto_path "${grpc_proto}" PATH)
 
 # Generated sources
-set(hw_proto_srcs "grpcchannel.pb.cc")
-set(hw_proto_hdrs "grpcchannel.pb.h")
-set(hw_grpc_srcs "grpcchannel.grpc.pb.cc")
-set(hw_grpc_hdrs "grpcchannel.grpc.pb.h")
+set(grpc_proto_srcs "grpcchannel.pb.cc")
+set(grpc_proto_hdrs "grpcchannel.pb.h")
+set(grpc_srcs "grpcchannel.grpc.pb.cc")
+set(grpc_hdrs "grpcchannel.grpc.pb.h")
 add_custom_command(
-      OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+      OUTPUT "${grpc_proto_srcs}" "${grpc_proto_hdrs}" "${grpc_srcs}" "${grpc_hdrs}"
       COMMAND ${_PROTOBUF_PROTOC}
       ARGS --grpc_out "./"
         --cpp_out "./"
-        -I "${hw_proto_path}"
+        -I "${grpc_proto_path}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${hw_proto}"
-      DEPENDS "${hw_proto}")
+        "${grpc_proto}"
+      DEPENDS "${grpc_proto}")
 
 # Include generated *.pb.h files
 include_directories("./")
 
 # hw_grpc_proto
-add_library(hw_grpc_proto
-  ${hw_grpc_srcs}
-  ${hw_grpc_hdrs}
-  ${hw_proto_srcs}
-  ${hw_proto_hdrs})
-target_link_libraries(hw_grpc_proto
+add_library(grpc_proto
+  ${grpc_srcs}
+  ${grpc_hdrs}
+  ${grpc_proto_srcs}
+  ${grpc_proto_hdrs})
+target_link_libraries(grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
