@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef UTILS_H_
-#define UTILS_H_
+#ifndef CORE_UTILS_H_
+#define CORE_UTILS_H_
 
 #include <memory>
 #include <chrono>  // NOLINT
@@ -47,4 +47,4 @@ static void Sleep() {
 }
 }  // namespace message_infrastructure
 
-#endif  // UTILS_H_
+#endif  // CORE_UTILS_H_

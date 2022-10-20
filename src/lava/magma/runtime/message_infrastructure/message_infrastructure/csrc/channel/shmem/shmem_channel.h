@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SHMEM_CHANNEL_H_
-#define SHMEM_CHANNEL_H_
-
-#include <memory>
-#include <string>
+#ifndef CHANNEL_SHMEM_SHMEM_CHANNEL_H_
+#define CHANNEL_SHMEM_SHMEM_CHANNEL_H_
 
 #include <message_infrastructure/csrc/core/abstract_channel.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
 #include <message_infrastructure/csrc/channel/shmem/shmem_port.h>
+
+#include <memory>
+#include <string>
 
 namespace message_infrastructure {
 
@@ -37,4 +37,4 @@ std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,
 
 }  // namespace message_infrastructure
 
-#endif  // SHMEM_CHANNEL_H_
+#endif  // CHANNEL_SHMEM_SHMEM_CHANNEL_H_

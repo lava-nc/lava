@@ -6,7 +6,8 @@
 
 namespace message_infrastructure {
 
-AbstractPort::AbstractPort(const std::string &name, const size_t &size, const size_t &nbytes)
+AbstractPort::AbstractPort(
+  const std::string &name, const size_t &size, const size_t &nbytes)
   : name_(name), size_(size), nbytes_(nbytes)
 {}
 

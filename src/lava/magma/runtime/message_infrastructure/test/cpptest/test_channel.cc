@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-using namespace message_infrastructure;
+namespace message_infrastructure {
 
 class Builder {
  public:
@@ -115,3 +115,5 @@ TEST(TestSharedMemory, SharedMemSingleProcess) {
   // auto received_data = RecvPort.Recv();
   // EXPECT_EQ(data, received_data)
 }
+
+}  // namespace message_infrastructure

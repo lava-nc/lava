@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-using namespace message_infrastructure;
+namespace message_infrastructure {
 
 class Builder {
  public:
@@ -79,3 +79,5 @@ TEST(TestMultiprocessing, ActorStop) {
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
   mp.Stop(true);
 }
+
+}  // namespace message_infrastructure
