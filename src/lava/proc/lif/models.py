@@ -255,7 +255,7 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_error_out = self.s_error_out + error
 
         # error trace updated with rise constant
-        # self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
+        self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
 
         # Decaying error trace
         self.s_error_out = np.exp(-1 / error_tau_decay) * self.s_error_out
