@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SHM_H_
-#define SHM_H_
+#ifndef CHANNEL_SHMEM_SHM_H_
+#define CHANNEL_SHMEM_SHM_H_
 
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -20,8 +21,6 @@
 #include <functional>
 #include <cstdlib>
 #include <ctime>
-
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 
@@ -124,4 +123,4 @@ using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure
 
-#endif  // SHM_H_
+#endif  // CHANNEL_SHMEM_SHM_H_

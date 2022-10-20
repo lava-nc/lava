@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SOCKET_CHANNEL_H_
-#define SOCKET_CHANNEL_H_
-
-#include <memory>
-#include <string>
+#ifndef CHANNEL_SOCKET_SOCKET_CHANNEL_H_
+#define CHANNEL_SOCKET_SOCKET_CHANNEL_H_
 
 #include <message_infrastructure/csrc/channel/socket/socket_port.h>
 #include <message_infrastructure/csrc/channel/socket/socket.h>
 #include <message_infrastructure/csrc/core/abstract_channel.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
+
+#include <memory>
+#include <string>
 
 namespace message_infrastructure {
 
@@ -37,4 +37,4 @@ SocketChannelPtr GetSocketChannel(const size_t &nbytes,
 
 }  // namespace message_infrastructure
 
-#endif  // SHMEM_CHANNEL_H_
+#endif  // CHANNEL_SOCKET_SOCKET_CHANNEL_H_
