@@ -8,15 +8,6 @@ namespace message_infrastructure {
 
 namespace {
 
-// const char *kLogModuleName[] = {
-//   "LOG_MULL_MODULE",
-//   "LOG_MPROC",  // multiprocess
-//   "LOG_ACTOR",
-//   "LOG_LAYER",
-//   "LOG_SHMEM",
-//   "LOG_SHSKT"
-// };
-
 signed int GetPid() {
   return getpid();
 }
@@ -103,7 +94,7 @@ MessageInfrastructureLog::~MessageInfrastructureLog() {
 }
 
 void LogClear() {
-#if MSG_LOG_PRINT_MODE & LOG_PRINT_MASK_FILE
+#if defined(MSG_LOG_FILE_ENABLE)
   GetLogInstance()->Clear();
 #endif
 }

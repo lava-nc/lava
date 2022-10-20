@@ -27,32 +27,21 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
 
-set(MSG_LOG_LEVEL 16 CACHE STRING "Default vaule: 16, error log only.")
-set(MSG_LOG_PRINT_MODE 1 CACHE STRING "Default value: 1, print onto console only.")
+set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
+set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
 
-if ((${MSG_LOG_LEVEL} LESS 32) AND (${MSG_LOG_LEVEL} GREATER_EQUAL 0))
-    target_compile_definitions(message_infrastructure PRIVATE
-                               MSG_LOG_LEVEL=${MSG_LOG_LEVEL}
-                               )
-else()
     target_compile_definitions(message_infrastructure PRIVATE
                                $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
-                               $<$<STREQUAL:${MSG_LOG_LEVEL},err_warn>:MSG_LOG_LEVEL_WARN_ERR>
+                               $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
+                               $<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
+                               $<$<STREQUAL:${MSG_LOG_LEVEL},info>:MSG_LOG_LEVEL_INFO>
+                               $<$<STREQUAL:${MSG_LOG_LEVEL},err>:MSG_LOG_LEVEL_ERRO>
+                               $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
                                )
-endif()
 
-if ((${MSG_LOG_PRINT_MODE} LESS 4) AND (${MSG_LOG_PRINT_MODE} GREATER_EQUAL 0))
-    target_compile_definitions(message_infrastructure PRIVATE
-                               MSG_LOG_PRINT_MODE=${MSG_LOG_PRINT_MODE}
-                               )
-else()
 target_compile_definitions(message_infrastructure PRIVATE
-                           $<$<STREQUAL:${MSG_LOG_PRINT_MODE},all>:MSG_LOG_PRINT_MODE_ALL>
-                           $<$<STREQUAL:${MSG_LOG_PRINT_MODE},file>:MSG_LOG_PRINT_MODE_FILE>
-                           $<$<STREQUAL:${MSG_LOG_PRINT_MODE},shell>:MSG_LOG_PRINT_MODE_SHEL>
-                           $<$<STREQUAL:${MSG_LOG_PRINT_MODE},null>:MSG_LOG_PRINT_MODE_NULL>
+                           $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
                            )
-endif()
 
 target_include_directories(message_infrastructure PUBLIC
                            ${PROJECT_SOURCE_DIR}

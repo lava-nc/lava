@@ -34,51 +34,32 @@
 #define LOG_GET_TIME_FAIL     "Get log time failed."
 #define DEBUG_LOG_MODULE      "lava_message_infrastructure"
 #define LOG_MSG_SUBSTITUTION  "This message was displayed due to " \
+                              "the failure of the malloc of this log message!"
 
+// the following macros indicate if the specific log message need to be printed
+// except the ERROR log message, ERROR log message will be printed whatever the
+// macro value is
 #define LOG_MP    (1)  // log for multiprocessing
-#define LOG_ACTOR (0)
-#define LOG_LAYER (0)
-#define LOG_SMMP  (0)  // log for shmemport
+#define LOG_ACTOR (1)
+#define LOG_LAYER (1)
+#define LOG_SMMP  (1)  // log for shmemport
 #define LOG_SKP   (1)  // log for socketport
-
-#define LOG_MASK_NULL (0)
-#define LOG_MASK_INFO (1)
-#define LOG_MASK_DUMP (1<<1)
-#define LOG_MASK_DBUG (1<<2)
-#define LOG_MASK_WARN (1<<3)
-#define LOG_MASK_ERRO (1<<4)
-
-#define LOG_PRINT_MASK_NULL (0)
-#define LOG_PRINT_MASK_SHEL (1)
-#define LOG_PRINT_MASK_FILE (2)
 
 #if defined(MSG_LOG_LEVEL)
 #elif defined(MSG_LOG_LEVEL_ALL)
-  #define MSG_LOG_LEVEL (LOG_MASK_INFO | \
-                         LOG_MASK_ERRO | \
-                         LOG_MASK_DUMP | \
-                         LOG_MASK_WARN | \
-                         LOG_MASK_DBUG)
-#elif defined(MSG_LOG_LEVEL_WARN_ERR)
-  #define MSG_LOG_LEVEL (LOG_MASK_ERRO | LOG_MASK_WARN)
+  #define MSG_LOG_LEVEL (LOG_MASK_DBUG)
+#elif defined(MSG_LOG_LEVEL_WARN)
+  #define MSG_LOG_LEVEL (LOG_MASK_WARN)
+#elif defined(MSG_LOG_LEVEL_DUMP)
+  #define MSG_LOG_LEVEL (LOG_MASK_DUMP)
+#elif defined(MSG_LOG_LEVEL_INFO)
+  #define MSG_LOG_LEVEL (LOG_MASK_INFO)
 #else
   #define MSG_LOG_LEVEL (LOG_MASK_ERRO)  // default
 #endif
 
-#if defined(MSG_LOG_PRINT_MODE)
-#elif defined(MSG_LOG_PRINT_MODE_ALL)
-  #define MSG_LOG_PRINT_MODE (LOG_PRINT_MASK_SHEL | LOG_PRINT_MASK_FILE)
-#elif defined(MSG_LOG_PRINT_MODE_FILE)
-  #define MSG_LOG_PRINT_MODE (LOG_PRINT_MASK_FILE)
-#elif defined(MSG_LOG_PRINT_MODE_NULL)
-  #define MSG_LOG_PRINT_MODE (LOG_PRINT_MASK_NULL)
-#else
-  #define MSG_LOG_PRINT_MODE (LOG_PRINT_MASK_SHEL)  // default
-#endif
-
-#if (MSG_LOG_PRINT_MODE)
+#if defined(MSG_LOG_FILE_ENABLE)
 #define DEBUG_LOG_PRINT(_level, _fmt, ...) do { \
-  if (MSG_LOG_PRINT_MODE & LOG_PRINT_MASK_FILE) { \
     int length = 0; \
     char *log_data = reinterpret_cast<char *> \
                       (malloc(sizeof(char)*MAX_SIZE_PER_LOG_MSG)); \
@@ -98,46 +79,53 @@
                                         _level)); \
     } \
     free(log_data); \
-  } \
-  if (MSG_LOG_PRINT_MODE & LOG_PRINT_MASK_SHEL) { \
+    std::printf("%s", _level); \
     std::printf(_fmt, ## __VA_ARGS__); \
-  } \
 } while (0)
 #else
-#define DEBUG_LOG_PRINT(_level,, ...)
+#define DEBUG_LOG_PRINT(_level, _fmt, ...) do { \
+  std::printf("%s", _level); \
+  std::printf(_fmt, ## __VA_ARGS__); \
+} while (0)
 #endif
 
 #define LAVA_LOG(_module, _fmt, ...) do { \
-  if ((_module) && (MSG_LOG_LEVEL & LOG_MASK_INFO)) { \
+  if ((_module) && (MSG_LOG_LEVEL <= LOG_MASK_INFO)) { \
     DEBUG_LOG_PRINT("[CPP INFO]", _fmt, ## __VA_ARGS__); \
   } \
 } while (0)
 
 #define LAVA_DUMP(_module, _fmt, ...) do { \
-  if (_module && (MSG_LOG_LEVEL & LOG_MASK_DUMP)) { \
+  if (_module && (MSG_LOG_LEVEL <= LOG_MASK_DUMP)) { \
     DEBUG_LOG_PRINT("[CPP DUMP]", _fmt, ## __VA_ARGS__); \
   } \
 } while (0)
 
 #define LAVA_DEBUG(_module, _fmt, ...) do { \
-  if (_module && (MSG_LOG_LEVEL & LOG_MASK_DBUG)) { \
+  if (_module && (MSG_LOG_LEVEL <= LOG_MASK_DBUG)) { \
     DEBUG_LOG_PRINT("[CPP DBUG]", _fmt, ## __VA_ARGS__); \
   } \
 } while (0)
 
 #define LAVA_LOG_WARN(_module, _fmt, ...) do { \
-  if (_module && (MSG_LOG_LEVEL & LOG_MASK_WARN)) { \
+  if (_module && (MSG_LOG_LEVEL <= LOG_MASK_WARN)) { \
     DEBUG_LOG_PRINT("[CPP WARN]", _fmt, ## __VA_ARGS__); \
   } \
 } while (0)
 
 #define LAVA_LOG_ERR(_fmt, ...) do { \
-  if ((MSG_LOG_LEVEL & LOG_MASK_ERRO)) { \
-    DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
-  } \
+  DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
 } while (0)
 
 namespace message_infrastructure {
+
+enum LogLevel {
+  LOG_MASK_DBUG,
+  LOG_MASK_INFO,
+  LOG_MASK_DUMP,
+  LOG_MASK_WARN,
+  LOG_MASK_ERRO
+};
 
 class LogMsg{
  public:
