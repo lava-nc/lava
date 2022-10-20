@@ -204,7 +204,7 @@ class TestChannel(unittest.TestCase):
         if not np.array_equal(resdata, predata):
             raise AssertionError()
         
-        
+        ######
         send_port.join()
         print("send join ok")
         recv_port.join()

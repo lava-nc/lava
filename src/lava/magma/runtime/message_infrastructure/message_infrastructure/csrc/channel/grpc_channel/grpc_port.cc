@@ -61,6 +61,7 @@ void GrpcRecvPort::StartSever() {
 void GrpcRecvPort::Start() {
   grpcthreadptr = std::make_shared<std::thread>(\
           &message_infrastructure::GrpcRecvPort::StartSever, this);
+          void *mempt = malloc(nbytes_);
 }
 MetaDataPtr GrpcRecvPort::Recv() {
   while (serviceptr->Writable()) {
