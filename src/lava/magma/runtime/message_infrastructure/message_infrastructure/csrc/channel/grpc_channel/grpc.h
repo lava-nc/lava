@@ -1,7 +1,11 @@
-#include <sys/mman.h>
+// Copyright (C) 2022 Intel Corporation
+// SPDX-License-Identifier: BSD-3-Clause
+// See: https://spdx.org/licenses/
 #include <sys/stat.h>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -12,16 +16,16 @@
 #include <ctime>
 #include <vector>
 
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/utils.h>
+
 namespace message_infrastructure {
-class GrpcManager
-{
-public:
+
+class GrpcManager {
+ public:
   ~GrpcManager();
 
   std::string AllocChannelGrpc(size_t nbytes) {
-    std::string url = base_url + std::to_string(url_num) + base_port+std::to_string(port_num);
+    std::string url = base_url + std::to_string(url_num) \
+    + base_port+std::to_string(port_num);
     urls_.push_back(url);
     url_num++;
     port_num++;
@@ -30,8 +34,8 @@ public:
 
 friend GrpcManager &GetGrpcManager();
 
-private:
-  GrpcManager(){}
+ private:
+  GrpcManager() {}
   std::string base_url = "127.13.5.";
   std::string base_port = ":500";
   int url_num = 78;

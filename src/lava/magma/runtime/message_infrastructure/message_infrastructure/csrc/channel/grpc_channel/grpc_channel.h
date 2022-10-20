@@ -1,6 +1,10 @@
+// Copyright (C) 2022 Intel Corporation
+// SPDX-License-Identifier: BSD-3-Clause
+// See: https://spdx.org/licenses/
 #include <message_infrastructure/csrc/channel/grpc_channel/grpc_port.h>
 #include <message_infrastructure/csrc/core/abstract_channel.h>
-
+#include <memory>
+#include <string>
 namespace message_infrastructure {
 
 class GrpcChannel : public AbstractChannel {
@@ -23,5 +27,4 @@ GrpcChannelPtr GetGrpcChannel(const size_t &size,
                               const size_t &nbytes,
                               const std::string &src_name,
                               const std::string &dst_name);
-
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
