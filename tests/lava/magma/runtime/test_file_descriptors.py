@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from code import interact
 import unittest
 import os
 from lava.magma.core.run_conditions import RunSteps
@@ -19,14 +18,14 @@ def run_process():
 
     # Create processes
     lif2 = LIF(shape=(2, ),
-            vth=vth,
-            dv=dv,
-            du=du,
-            bias_mant=0,
-            name='lif2')
+               vth=vth,
+               dv=dv,
+               du=du,
+               bias_mant=0,
+               name='lif2')
 
     lif2.run(condition=RunSteps(num_steps=1),
-        run_cfg=Loihi1SimCfg(select_tag="fixed_pt"))
+             run_cfg=Loihi1SimCfg(select_tag="fixed_pt"))
 
     lif2.stop()
 
@@ -43,7 +42,7 @@ class TestFileDescriptors(unittest.TestCase):
     num_iterations = 1000
 
     @unittest.skipIf(os.name != "posix",
-        "Checking file descriptor only for POSIX systems.")
+                     "Checking file descriptor only for POSIX systems.")
     def test_file_descriptor_usage(self):
         # Check initial state that file descriptor usage is zero
         file_descriptor_usage = get_file_descriptor_usage()
@@ -57,7 +56,7 @@ class TestFileDescriptors(unittest.TestCase):
             # Check file descriptor usage after running processes
             file_descriptor_usage = get_file_descriptor_usage()
             self.assertEqual(file_descriptor_usage, None,
-                msg=f"Failed on iteration {iteration}")
+                             msg=f"Failed on iteration {iteration}")
 
 
 if __name__ == "__main__":
