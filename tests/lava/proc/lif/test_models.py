@@ -879,7 +879,7 @@ class TestTLIFReset(unittest.TestCase):
         v_logger.connect_var(lif_reset.v)
 
         lif_reset.run(condition=RunSteps(num_steps),
-                      run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+                      run_cfg=Loihi2SimCfg())
         u = u_logger.data.get()
         v = v_logger.data.get()
         lif_reset.stop()
