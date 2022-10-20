@@ -21,7 +21,7 @@ void MultiProcessing::Stop(bool block) {
 
   LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
   if (block) {
-    for (auto actor: actors_) {
+    for (auto actor : actors_) {
       actor->Wait();
     }
   }
@@ -29,7 +29,7 @@ void MultiProcessing::Stop(bool block) {
 
 void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
-    LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)", 
+    LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)",
                      actor->GetPid(), actor->GetStatus());
   }
 }

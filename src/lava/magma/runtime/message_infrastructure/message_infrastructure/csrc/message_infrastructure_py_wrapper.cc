@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <memory>
-
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -14,6 +12,8 @@
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/channel_proxy.h>
 
+#include <memory>
+
 namespace message_infrastructure {
 
 namespace py = pybind11;
@@ -23,7 +23,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>())
     .def("build_actor", &MultiProcessing::BuildActor)
     .def("check_actor", &MultiProcessing::CheckActor)
-    .def("get_actors", &MultiProcessing::GetActors, py::return_value_policy::reference)
+    .def("get_actors", &MultiProcessing::GetActors,
+                       py::return_value_policy::reference)
     .def("stop", &MultiProcessing::Stop);
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
@@ -80,9 +81,12 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def(py::init<>());
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
     .def(py::init<ChannelType, size_t, size_t, std::string, std::string>())
-    .def_property_readonly("src_port", &ChannelProxy::GetSendPort, py::return_value_policy::reference)
-    .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort, py::return_value_policy::reference);
-  py::class_<SendPortProxy, PortProxy, std::shared_ptr<SendPortProxy>> (m, "SendPort")
+    .def_property_readonly("src_port", &ChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
+  py::class_<SendPortProxy, PortProxy,
+             std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())
     .def("get_channel_type", &SendPortProxy::GetChannelType)
     .def("start", &SendPortProxy::Start)
@@ -91,7 +95,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &SendPortProxy::Join)
     .def_property_readonly("name", &SendPortProxy::Name)
     .def("size", &SendPortProxy::Size);
-  py::class_<RecvPortProxy, PortProxy, std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
+  py::class_<RecvPortProxy, PortProxy,
+             std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
     .def(py::init<>())
     .def("get_channel_type", &RecvPortProxy::GetChannelType)
     .def("start", &RecvPortProxy::Start)

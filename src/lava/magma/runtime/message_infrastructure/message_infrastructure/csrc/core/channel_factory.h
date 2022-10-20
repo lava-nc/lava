@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef CHANNEL_FACTORY_H_
-#define CHANNEL_FACTORY_H_
-
-#include <string>
-#include <memory>
+#ifndef CORE_CHANNEL_FACTORY_H_
+#define CORE_CHANNEL_FACTORY_H_
 
 #include <message_infrastructure/csrc/core/abstract_channel.h>
 #include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
@@ -16,6 +13,8 @@
 #include <message_infrastructure/csrc/channel/socket/socket_channel.h>
 #include <message_infrastructure/csrc/channel/grpc_channel/grpc_channel.h>
 
+#include <string>
+#include <memory>
 
 namespace message_infrastructure {
 
@@ -56,4 +55,4 @@ ChannelFactory& GetChannelFactory() {
 
 }  // namespace message_infrastructure
 
-#endif  // CHANNEL_FACTORY_H_
+#endif  // CORE_CHANNEL_FACTORY_H_

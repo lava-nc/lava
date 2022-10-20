@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef MESSAGE_INFRASTRUCTURE_LOGGING_H_
-#define MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#ifndef CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#define CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
 
 #include <stdio.h>
 #define LOG_MP (0)  // log for multiprocessing
@@ -41,4 +41,4 @@
   printf("[CPP ERROR] %s " _fmt, __FUNCTION__, ## __VA_ARGS__); \
 }
 
-#endif  // MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#endif  // CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
