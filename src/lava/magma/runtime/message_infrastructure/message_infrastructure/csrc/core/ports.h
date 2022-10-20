@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef PORTS_H_
-#define PORTS_H_
+#ifndef CORE_PORTS_H_
+#define CORE_PORTS_H_
 
 #include <message_infrastructure/csrc/core/abstract_port_implementation.h>
 
@@ -186,4 +186,4 @@ class CppVarPortScalarSparse final : public CppVarPort {
 
 }  // namespace message_infrastructure
 
-#endif  // PORTS_H_
+#endif  // CORE_PORTS_H_

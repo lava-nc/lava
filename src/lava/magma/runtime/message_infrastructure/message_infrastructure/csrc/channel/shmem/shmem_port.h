@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SHMEM_PORT_H_
-#define SHMEM_PORT_H_
+#ifndef CHANNEL_SHMEM_SHMEM_PORT_H_
+#define CHANNEL_SHMEM_SHMEM_PORT_H_
+
+#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
 
 #include <string>
 #include <vector>
 #include <memory>
 #include <atomic>
 #include <thread>  // NOLINT
-
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/shmem/shm.h>
 
 namespace message_infrastructure {
 
@@ -90,4 +90,4 @@ using ShmemRecvPortPtr = std::shared_ptr<ShmemRecvPort>;
 
 }  // namespace message_infrastructure
 
-#endif  // SHMEM_PORT_H_
+#endif  // CHANNEL_SHMEM_SHMEM_PORT_H_

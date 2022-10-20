@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#ifndef CHANNEL_SOCKET_SOCKET_H_
+#define CHANNEL_SOCKET_SOCKET_H_
+
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/core/utils.h>
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -18,24 +21,21 @@
 #include <cstdlib>
 #include <ctime>
 #include <vector>
-
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <utility>
 
 namespace message_infrastructure {
 
 using SocketPair = std::pair<int, int>;
 
-class SktManager
-{
-public:
+class SktManager {
+ public:
   ~SktManager();
 
   SocketPair AllocChannelSocket(size_t nbytes) {
     SocketPair skt_pair;
     int socket[2];
     int err = socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, socket);
-    if (err == -1){
+    if (err == -1) {
         LAVA_LOG_ERR("Create socket object failed.\n");
         exit(-1);
     }
@@ -59,4 +59,4 @@ using SktManagerPtr = std::shared_ptr<SktManager>;
 
 }  // namespace message_infrastructure
 
-#endif  // SOCKET_H_
+#endif  // CHANNEL_SOCKET_SOCKET_H_
