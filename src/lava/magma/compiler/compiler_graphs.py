@@ -750,9 +750,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         """
 
         proc_models = []
-        classes = [m[1] for m in inspect.getmembers(module, inspect.isclass)
-                   if m[1].__module__ == module.__name__]
-        for cls in classes:
+        for name, cls in module.__dict__.items():
             if (
                     hasattr(cls, "implements_process")
                     and issubclass(cls, AbstractProcessModel)
