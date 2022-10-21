@@ -5,10 +5,11 @@
 #ifndef CHANNEL_GRPC_GRPC_H_
 #define CHANNEL_GRPC_GRPC_H_
 
-#include <sys/stat.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,7 +21,6 @@
 #include <ctime>
 #include <vector>
 
-
 namespace message_infrastructure {
 
 class GrpcManager {
@@ -29,14 +29,14 @@ class GrpcManager {
 
   std::string AllocChannelGrpc(size_t nbytes) {
     std::string url = base_url + std::to_string(url_num) \
-    + base_port+std::to_string(port_num);
+                      + base_port+std::to_string(port_num);
     urls_.push_back(url);
     url_num++;
     port_num++;
     return url;
   }
 
-friend GrpcManager &GetGrpcManager();
+  friend GrpcManager &GetGrpcManager();
 
  private:
   GrpcManager() {}

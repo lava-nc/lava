@@ -26,7 +26,6 @@ add_custom_command(
 # Include generated *.pb.h files
 include_directories("./")
 
-# hw_grpc_proto
 add_library(grpc_proto
   ${grpc_srcs}
   ${grpc_hdrs}

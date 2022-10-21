@@ -175,48 +175,69 @@ class TestChannel(unittest.TestCase):
         send_port.join()
         recv_port.join()
 
-    def test_single_process_socketchannel(self):
-
+    def test_grpcchannel(self):
+        mp = MultiProcessing()
+        mp.start()
         size = 5
         predata = prepare_data()
-        predata2 = prepare_data()
-        print(predata)
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
-        name = 'test_single_process_socket_channel'
+        name = 'test_grpc_channel'
 
-        socket_channel = Channel(
+        grpc_channel = Channel(
             ChannelBackend.RPCCHANNEL,
             size,
             nbytes,
             name,
             name)
 
-        send_port = socket_channel.src_port
-        recv_port = socket_channel.dst_port
+        send_port = grpc_channel.src_port
+        recv_port = grpc_channel.dst_port
+
+        recv_port_fn = partial(recv_proc, port=recv_port)
+        send_port_fn = partial(send_proc, port=send_port)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
+
+        time.sleep(0.1)
+        mp.stop(True)
+
+
+    def test_single_process_grpcchannel(self):
+
+        size = 5
+        predata = prepare_data()
+        predata2 = prepare_data()
+        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        name = 'test_single_process_grpc_channel'
+
+        grpc_channel = Channel(
+            ChannelBackend.RPCCHANNEL,
+            size,
+            nbytes,
+            name,
+            name)
+
+        send_port = grpc_channel.src_port
+        recv_port = grpc_channel.dst_port
 
         send_port.start()
-        print("send start OK")
         recv_port.start()
-        print("recv start OK")
         send_port.send(predata)
         send_port.send(predata2)
         send_port.send(predata)
         send_port.send(predata)
-        print("send ok")
         resdata = recv_port.recv()
         resdata2 = recv_port.recv()
-        print("recv ok")
-        print(resdata)
-        print(resdata2)
         if not np.array_equal(resdata, predata):
             raise AssertionError()
         if not np.array_equal(resdata2, predata2):
             raise AssertionError()     
-        ######
         send_port.join()
-        print("send join ok")
         recv_port.join()
-        print("recv join ok")
+
 
 
 if __name__ == "__main__":

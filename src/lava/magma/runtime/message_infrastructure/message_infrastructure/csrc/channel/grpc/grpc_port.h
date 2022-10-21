@@ -5,22 +5,21 @@
 #ifndef CHANNEL_GRPC_GRPC_PORT_H_
 #define CHANNEL_GRPC_GRPC_PORT_H_
 
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
+#include <message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h>
 
 #include <atomic>
 #include <thread> //NOLINT
-#include<iostream>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h"
 
 namespace message_infrastructure {
 
@@ -40,10 +39,11 @@ using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
  public:
   GrpcChannelServerImpl(const std::string& name,
-                          const size_t &size,
-                          const size_t &nbytes);
-  Status RecvArrayData(ServerContext* context, const GrpcMetaData* request, \
-          DataReply* reply) override;
+                        const size_t &size,
+                        const size_t &nbytes);
+  Status RecvArrayData(ServerContext* context,
+                       const GrpcMetaData* request,
+                       DataReply* reply) override;
   void Push(const GrpcMetaData *src);
   int AvailableCount();
   bool Empty();
@@ -54,12 +54,11 @@ class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
   std::vector<GrpcMetaDataPtr> array_;
   std::atomic<uint32_t> read_index_;
   std::atomic<uint32_t> write_index_;
+
  private:
   std::string name_;
   size_t size_;
   size_t nbytes_;
-
-
   std::atomic_bool done_;
 };
 
@@ -68,9 +67,9 @@ using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 class GrpcRecvPort final : public AbstractRecvPort{
  public:
   GrpcRecvPort(const std::string& name,
-                 const size_t &size,
-                 const size_t &nbytes,
-                 const std::string& url);
+               const size_t &size,
+               const size_t &nbytes,
+               const std::string& url);
   ~GrpcRecvPort();
     void Start();
     MetaDataPtr Recv();
@@ -78,39 +77,36 @@ class GrpcRecvPort final : public AbstractRecvPort{
     void Join();
     bool Probe();
     void GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
-    std::string testtmpsig;
  private:
-    ServerBuilder builder;
-    std::atomic_bool done_;
-    std::unique_ptr<Server> server;
-    ServerImplPtr serviceptr;
-    std::string url_;
+  ServerBuilder builder;
+  std::atomic_bool done_;
+  std::unique_ptr<Server> server;
+  ServerImplPtr serviceptr;
+  std::string url_;
 };
+
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
-
-
-
 
 class GrpcSendPort final : public AbstractSendPort{
  public:
-    GrpcSendPort(const std::string &name,
-              const size_t &size,
-              const size_t &nbytes, const std::string& url);
+  GrpcSendPort(const std::string &name,
+               const size_t &size,
+               const size_t &nbytes, const std::string& url);
 
-    void Start();
-    void Send(MetaDataPtr metadata);
-    void Join();
-    bool Probe();
-    GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata);
+  void Start();
+  void Send(MetaDataPtr metadata);
+  void Join();
+  bool Probe();
+  GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata);
 
  private:
-    int idx_ = 0;
-    std::shared_ptr<Channel> channel;
-    std::atomic_bool done_;
-    std::unique_ptr<GrpcChannelServer::Stub> stub_;
-    ThreadPtr ack_callback_thread_ = nullptr;
-    std::string url_;
+  std::shared_ptr<Channel> channel;
+  std::atomic_bool done_;
+  std::unique_ptr<GrpcChannelServer::Stub> stub_;
+  ThreadPtr ack_callback_thread_ = nullptr;
+  std::string url_;
 };
+
 using GrpcSendPortPtr = std::shared_ptr<GrpcSendPort>;
 
 }  // namespace message_infrastructure
