@@ -57,7 +57,7 @@ class RF(AbstractProcess):
         -------
         >>> rf = RF(shape=(200, 15), period=10, alpha=.07)
         This will create 200x15 RF neurons that all have the same period decay
-        of 10 and alpja decay of .07
+        of 10 and alpha decay of .07
         """
         sin_decay = (1 - alpha) * np.sin(np.pi * 2 * 1 / period)
         cos_decay = (1 - alpha) * np.cos(np.pi * 2 * 1 / period)

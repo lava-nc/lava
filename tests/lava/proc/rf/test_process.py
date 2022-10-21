@@ -20,6 +20,7 @@ class TestRFProcess(unittest.TestCase):
         sin_decay = (1 - .1) * np.sin(np.pi * 2 * 1 / 100)
         cos_decay = (1 - .1) * np.cos(np.pi * 2 * 1 / 100)
 
+        self.assertEqual(rf.shape, (100,))
         self.assertEqual(rf.name, "RF")
         self.assertEqual(rf.sin_decay.init, sin_decay)
         self.assertEqual(rf.cos_decay.init, cos_decay)

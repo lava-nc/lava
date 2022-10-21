@@ -68,7 +68,7 @@ class PyRFModelFloat(AbstractPyRFModelFloat):
 
         new_real, new_imag = self.resonator_dynamics(a_real_in_data,
                                                      a_imag_in_data,
-                                                     self.real, 
+                                                     self.real,
                                                      self.imag)
 
         s_out = (new_real >= self.vth) * (new_imag >= 0) * (self.imag < 0)
