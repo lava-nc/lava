@@ -35,11 +35,14 @@ using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size,
                                              const size_t &nbytes)
-:name_(name), size_(size), nbytes_(nbytes), read_index_(0), write_index_(0),done_(false) {
+:name_(name), size_(size), nbytes_(nbytes),
+read_index_(0), write_index_(0), done_(false) {
 array_.resize(size_);
 }
 
-Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context, const GrpcMetaData *request, DataReply* reply) {
+Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
+                                            const GrpcMetaData *request,
+                                            DataReply* reply) {
   bool rep = true;
   while (AvailableCount() <=0) {
     helper::Sleep();
@@ -123,8 +126,8 @@ void GrpcChannelServerImpl::Stop() {
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
                  const size_t &size,
                  const size_t &nbytes, const std::string& url)\
-                 :AbstractRecvPort(name, size, nbytes), done_(false), url_(url) {
-                    serviceptr = std::make_shared<GrpcChannelServerImpl>(name_, size_, nbytes_);
+                 :AbstractRecvPort(name, size, nbytes), done_(false), url_(url) { //NOLINT
+                  serviceptr = std::make_shared<GrpcChannelServerImpl>(name_, size_, nbytes_); //NOLINT
                  }
 GrpcRecvPort::~GrpcRecvPort() {
   serviceptr->Stop();
@@ -164,8 +167,8 @@ void GrpcRecvPort::Join() {
 bool GrpcRecvPort::Probe() {
   serviceptr->Probe();
 }
-void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata) {
-
+void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
+                                        GrpcMetaDataPtr grpcdata) {
   metadata->nd = grpcdata->nd();
   metadata->type = grpcdata->type();
   metadata->elsize = grpcdata->elsize();
@@ -212,11 +215,12 @@ void GrpcSendPort::Send(MetaDataPtr metadata) {
   DataReply reply;
   ClientContext context;
   Status status = stub_->RecvArrayData(&context, request, &reply);
-  if (status.ok()&&reply.ack()) {
-      std::cout << "Successed, Recv ack is " << reply.ack() << std::endl;
-  } else {
-      std::cout << " Recv ack is " << reply.ack() << ", ERROR! Send fail!" << std::endl;
-  }
+
+  // if (status.ok()&&reply.ack()) {
+  //    std::cout << "Successed, Recv ack is " << reply.ack() << std::endl;
+  //} else {
+  //    std::cout << "ERROR! Send fail!" << std::endl;
+  //}
 }
 bool GrpcSendPort::Probe() {
   return false;
