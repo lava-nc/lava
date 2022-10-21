@@ -48,7 +48,6 @@ class DoubleExponentialSuperSpikeLoihi(LoihiLearningRule):
         
         # Impulses
         x1_impulse = 1/((1/x2_tau) - (1/x1_tau))
-        print(x1_impulse)
         x2_impulse = 1/((1/x2_tau) - (1/x1_tau))
 
         # Zero impulse value for error and surrogate gradients. 
@@ -57,9 +56,9 @@ class DoubleExponentialSuperSpikeLoihi(LoihiLearningRule):
 
         dt = f"u0 * y3 * x1 - u0 * y3 * x2 - u0 * {eligibility_trace_rise_tau} * t"
 
-        dd = f"u0 * {eligibility_trace_decay_tau} * t"
+        dd = f"t * u0 - u0 * {eligibility_trace_decay_tau} * t"
 
-        dw = f"{learning_rate} * u0 * y2 * t"
+        dw = f"{learning_rate} * u0 * y2 * d"
 
         super().__init__(
             dw=dw,
