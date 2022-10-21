@@ -95,6 +95,13 @@ class LoihiLearningRule:
         t_epoch: ty.Optional[int] = 1,
         rng_seed: ty.Optional[int] = None,
     ) -> None:
+
+        # TODO this is needed because the string get transformed to a PS immediatelty.
+        # TODO I would like to change that.
+        self._dw_str = "dw = " + str(dw)
+        self._dd_str = "dd = " + str(dd)
+        self._dt_str = "dt = " + str(dt)
+
         # dict of string learning rules
         str_learning_rules = {
             str_symbols.DW: dw,
