@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from traceback import print_tb
 import numpy as np
 import unittest
 from functools import partial
@@ -178,6 +179,7 @@ class TestChannel(unittest.TestCase):
 
         size = 5
         predata = prepare_data()
+        predata2 = prepare_data()
         print(predata)
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'
@@ -193,17 +195,23 @@ class TestChannel(unittest.TestCase):
         recv_port = socket_channel.dst_port
 
         send_port.start()
-
+        print("send start OK")
         recv_port.start()
-
+        print("recv start OK")
+        send_port.send(predata)
+        send_port.send(predata2)
+        send_port.send(predata)
         send_port.send(predata)
         print("send ok")
         resdata = recv_port.recv()
-        
+        resdata2 = recv_port.recv()
+        print("recv ok")
         print(resdata)
+        print(resdata2)
         if not np.array_equal(resdata, predata):
             raise AssertionError()
-        
+        if not np.array_equal(resdata2, predata2):
+            raise AssertionError()     
         ######
         send_port.join()
         print("send join ok")

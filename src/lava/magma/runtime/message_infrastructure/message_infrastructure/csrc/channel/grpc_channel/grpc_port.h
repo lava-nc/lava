@@ -1,18 +1,22 @@
-//#include <numpy/arrayobject.h>
-//#include <Python.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <atomic>
-#include <thread>
-#include<iostream>
-#include <memory>
-#include <string>
-#include <message_infrastructure/csrc/core/abstract_port.h>
+// Copyright (C) 2021 Intel Corporation
+// SPDX-License-Identifier: BSD-3-Clause
+// See: https://spdx.org/licenses/
+
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/core/abstract_port.h>
+
+#include <atomic>
+#include <thread> //NOLINT
+#include<iostream>
+#include <memory>
+#include <string>
 #include <vector>
+
 #include "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.grpc.pb.h"
 
 namespace message_infrastructure {
@@ -31,12 +35,12 @@ using ThreadPtr = std::shared_ptr<std::thread>;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
-public:
+ public:
   GrpcChannelServerImpl(const std::string& name,
                           const size_t &size,
                           const size_t &nbytes);
-  Status RecvArrayData(ServerContext* context, const GrpcMetaData* request,
-							DataReply* reply) override;
+  Status RecvArrayData(ServerContext* context, const GrpcMetaData* request, \
+          DataReply* reply) override;
   void Push(const GrpcMetaData *src);
   int AvailableCount();
   bool Empty();
@@ -46,8 +50,8 @@ public:
   void Stop();
   std::vector<GrpcMetaDataPtr> array_;
   std::atomic<uint32_t> read_index_;
-	std::atomic<uint32_t> write_index_;
-private:
+  std::atomic<uint32_t> write_index_;
+ private:
   std::string name_;
   size_t size_;
   size_t nbytes_;
@@ -59,12 +63,12 @@ private:
 using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
 class GrpcRecvPort final : public AbstractRecvPort{
-  public:
+ public:
   GrpcRecvPort(const std::string& name,
                  const size_t &size,
                  const size_t &nbytes,
                  const std::string& url);
-    void Startsever();
+  ~GrpcRecvPort();
     void Start();
     MetaDataPtr Recv();
     MetaDataPtr Peek();
@@ -72,15 +76,12 @@ class GrpcRecvPort final : public AbstractRecvPort{
     bool Probe();
     void GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
     std::string testtmpsig;
-  private:
+ private:
     ServerBuilder builder;
     std::atomic_bool done_;
     std::unique_ptr<Server> server;
     ServerImplPtr serviceptr;
-    ThreadPtr grpcthreadptr = nullptr;
     std::string url_;
-
-    
 };
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
@@ -88,7 +89,7 @@ using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
 
 class GrpcSendPort final : public AbstractSendPort{
-  public:
+ public:
     GrpcSendPort(const std::string &name,
               const size_t &size,
               const size_t &nbytes, const std::string& url);
@@ -99,7 +100,7 @@ class GrpcSendPort final : public AbstractSendPort{
     bool Probe();
     GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata);
 
-  private:
+ private:
     int idx_ = 0;
     std::shared_ptr<Channel> channel;
     std::atomic_bool done_;
@@ -108,4 +109,6 @@ class GrpcSendPort final : public AbstractSendPort{
     std::string url_;
 };
 using GrpcSendPortPtr = std::shared_ptr<GrpcSendPort>;
-}
+
+}  // namespace message_infrastructure
+
