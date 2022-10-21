@@ -16,9 +16,6 @@
 #include "message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h"
 
 
-
-
-
 namespace message_infrastructure {
 
 using grpc::Server;
@@ -165,7 +162,7 @@ void GrpcRecvPort::Join() {
 }
 
 bool GrpcRecvPort::Probe() {
-  serviceptr->Probe();
+  return serviceptr->Probe();
 }
 void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
                                         GrpcMetaDataPtr grpcdata) {
