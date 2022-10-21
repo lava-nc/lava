@@ -15,6 +15,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     "message_infrastructure/csrc/core/multiprocessing.cc"
     "message_infrastructure/csrc/core/abstract_port_implementation.cc"
     "message_infrastructure/csrc/core/ports.cc"
+    "message_infrastructure/csrc/core/message_infrastructure_logging.cc"
     "message_infrastructure/csrc/actor/posix_actor.cc"
     "message_infrastructure/csrc/channel/shmem/shm.cc"
     "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
@@ -25,6 +26,22 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     )
 
 add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+
+set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
+set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
+
+target_compile_definitions(message_infrastructure PRIVATE
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},info>:MSG_LOG_LEVEL_INFO>
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},err>:MSG_LOG_LEVEL_ERRO>
+                          $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
+                          )
+
+target_compile_definitions(message_infrastructure PRIVATE
+                           $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
+                           )
 
 target_include_directories(message_infrastructure PUBLIC
                            ${PROJECT_SOURCE_DIR}

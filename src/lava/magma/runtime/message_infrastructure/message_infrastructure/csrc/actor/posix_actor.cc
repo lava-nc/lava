@@ -66,6 +66,7 @@ int PosixActor::Create() {
   }
 
   if (pid == 0) {
+    LogClear();
     LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
     this->pid_ = getpid();
     Run();
