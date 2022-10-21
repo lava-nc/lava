@@ -30,13 +30,13 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
 
 
 if(GRPC_CHANNEL)
-    add_subdirectory("message_infrastructure/csrc/channel/grpc_channel")
+    add_subdirectory("message_infrastructure/csrc/channel/grpc")
     set(GRPC_CHANNEL_SRCS
-    "message_infrastructure/csrc/channel/grpc_channel/grpc.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/grpc_port.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/grpc_channel.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.pb.cc"
-    "message_infrastructure/csrc/channel/grpc_channel/build/grpcchannel.grpc.pb.cc"
+    "message_infrastructure/csrc/channel/grpc/grpc.cc"
+    "message_infrastructure/csrc/channel/grpc/grpc_port.cc"
+    "message_infrastructure/csrc/channel/grpc/grpc_channel.cc"
+    "message_infrastructure/csrc/channel/grpc/build/grpcchannel.pb.cc"
+    "message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.cc"
     )
     
     add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS} ${GRPC_CHANNEL_SRCS})

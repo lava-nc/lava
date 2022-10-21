@@ -11,7 +11,7 @@
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
 #include <message_infrastructure/csrc/channel/socket/socket.h>
 #include <message_infrastructure/csrc/channel/socket/socket_channel.h>
-#include <message_infrastructure/csrc/channel/grpc_channel/grpc_channel.h>
+#include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
 
 #include <string>
 #include <memory>
