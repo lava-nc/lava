@@ -12,6 +12,7 @@ predefs_*.h
 # Distribution / packaging
 .Python
 build/
+log/
 develop-eggs/
 dist/
 downloads/

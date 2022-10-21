@@ -18,7 +18,7 @@ namespace py = pybind11;
 void MetaDataDump(MetaDataPtr metadata) {
   int64_t *dims = metadata->dims;
   int64_t *strides = metadata->strides;
-  LAVA_DUMP(1, "MetaData Info:\n"
+  LAVA_DUMP(LOG_LAYER, "MetaData Info:\n"
                "(nd, type, elsize): (%ld, %ld, %ld)\n"
                "total_size: %ld\n"
                "dims:[%ld, %ld, %ld, %ld, %ld]\n"
