@@ -6,7 +6,7 @@
 #define CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
 
 #include <memory>
-#include <mutex>
+#include <mutex>  // NOLINT
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -131,9 +131,9 @@ class LogMsg{
  public:
   LogMsg(const std::string &msg_data,
          const char *log_file,
-         const int log_line,
+         const int &log_line,
          const char *log_level);
-  std::string GetEntireLogMsg(int pid);
+  std::string GetEntireLogMsg(const int &pid);
 
  private:
   std::string msg_time_;

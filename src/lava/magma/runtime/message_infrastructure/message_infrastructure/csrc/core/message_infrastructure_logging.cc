@@ -18,15 +18,14 @@ std::string GetTime() {
   timespec_get(&ts, TIME_UTC);
   int end = strftime(buf, sizeof(buf), "%Y-%m-%d.%X", gmtime(&ts.tv_sec));
   snprintf(buf + end, MAX_SIZE_LOG_TIME-end, " %09ld", ts.tv_nsec);
-  std::string ret = std::string(buf);
-  return ret;
+  return std::string(buf);
 }
 
 }  // namespace
 
 LogMsg::LogMsg(const std::string &msg_data,
                const char *log_file,
-               const int log_line,
+               const int &log_line,
                const char *log_level)
     : msg_data_(msg_data),
       msg_line_(log_line),
@@ -35,7 +34,7 @@ LogMsg::LogMsg(const std::string &msg_data,
   msg_time_ = GetTime();
 }
 
-std::string LogMsg::GetEntireLogMsg(int pid) {
+std::string LogMsg::GetEntireLogMsg(const int &pid) {
   std::stringstream buf;
   buf << msg_time_    << " ";
   buf << msg_level_   << " ";
@@ -61,7 +60,7 @@ MessageInfrastructureLog::MessageInfrastructureLog() {
 void MessageInfrastructureLog::LogWrite(const LogMsg& msg) {
   std::lock_guard<std::mutex> lg(log_lock_);
   log_queue_.push(msg);
-    if (log_queue_.size() == MAX_SIZE_LOG) {
+  if (log_queue_.size() == MAX_SIZE_LOG) {
       WriteDown();
   }
 }
