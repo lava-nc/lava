@@ -6,7 +6,9 @@
 
 namespace message_infrastructure {
 
-SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd, const int &key) {
+SharedMemory::SharedMemory(const size_t &mem_size,
+                           const int &shmfd,
+                           const int &key) {
   shmfd_ = shmfd;
   size_ = mem_size;
   req_name_ += std::to_string(key);
@@ -34,11 +36,10 @@ void SharedMemory::Store(HandleFn store_fn) {
 
 bool SharedMemory::Load(HandleFn consume_fn) {
   bool ret = false;
-  if (!sem_trywait(req_))
-  {
-      consume_fn(MemMap());
-      sem_post(ack_);
-      ret = true;
+  if (!sem_trywait(req_)) {
+    consume_fn(MemMap());
+    sem_post(ack_);
+    ret = true;
   }
   return ret;
 }
@@ -57,21 +58,23 @@ std::string SharedMemory::GetAck() {
 }
 
 void* SharedMemory::MemMap() {
-  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
+  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE,
+                       MAP_SHARED, shmfd_, 0));
 }
 
 
 int SharedMemory::GetDataElem(int offset) {
-  return static_cast<int> (*(((char*)data_) + offset));
+  return static_cast<int>(*(reinterpret_cast<char*>(data_) + offset));
 }
 
 SharedMemory::~SharedMemory() {
   Close();
 }
 
-RwSharedMemory::RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key)
-  : size_(mem_size), shmfd_(shmfd)
-{
+RwSharedMemory::RwSharedMemory(const size_t &mem_size,
+                               const int &shmfd,
+                               const int &key)
+  : size_(mem_size), shmfd_(shmfd) {
   sem_name_ += std::to_string(key);
 }
 
@@ -94,7 +97,8 @@ void RwSharedMemory::Close() {
 }
 
 void* RwSharedMemory::GetData() {
-  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0));
+  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE,
+                       MAP_SHARED, shmfd_, 0));
 }
 
 RwSharedMemory::~RwSharedMemory() {
@@ -108,7 +112,9 @@ void SharedMemManager::DeleteSharedMemory(const std::string &shm_str) {
     shm_unlink(shm_str.c_str());
     shm_strs_.erase(shm_str);
   } else {
-    LAVA_LOG_WARN(LOG_SMMP,"There is no shmem whose name is %s.\n", shm_str.c_str());
+    LAVA_LOG_WARN(LOG_SMMP,
+                  "There is no shmem whose name is %s.\n",
+                  shm_str.c_str());
   }
 }
 

@@ -11,12 +11,15 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
                            const std::string &dst_name,
                            const size_t &size,
                            const size_t &nbytes) {
-  unsigned long shmem_size = nbytes + sizeof(MetaData);
+  size_t shmem_size = nbytes + sizeof(MetaData);
 
-  shm_ = GetSharedMemManager().AllocChannelSharedMemory<SharedMemory>(shmem_size);
+  shm_ = GetSharedMemManager().AllocChannelSharedMemory<SharedMemory>(
+          shmem_size);
 
-  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_, size, shmem_size);
-  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_, size, shmem_size);
+  send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_,
+                                               size, shmem_size);
+  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_,
+                                              size, shmem_size);
 }
 
 AbstractSendPortPtr ShmemChannel::GetSendPort() {

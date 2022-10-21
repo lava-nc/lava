@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <memory>
-
 #include <message_infrastructure/csrc/channel_proxy.h>
 #include <message_infrastructure/csrc/core/channel_factory.h>
+#include <memory>
 
 namespace message_infrastructure {
 

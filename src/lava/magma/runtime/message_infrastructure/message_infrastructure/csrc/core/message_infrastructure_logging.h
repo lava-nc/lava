@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#ifndef MESSAGE_INFRASTRUCTURE_LOGGING_H_
-#define MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#ifndef CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#define CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_
 
 #include <memory>
 #include <mutex>
@@ -165,4 +165,4 @@ void LogClear();
 
 }  // namespace message_infrastructure
 
-#endif  // MESSAGE_INFRASTRUCTURE_LOGGING_H_
+#endif  // CORE_MESSAGE_INFRASTRUCTURE_LOGGING_H_

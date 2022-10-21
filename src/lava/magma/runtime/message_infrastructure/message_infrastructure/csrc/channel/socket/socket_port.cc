@@ -2,49 +2,49 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <semaphore.h>
-#include <unistd.h>
-#include <thread>
-#include <mutex>
-#include <memory>
-#include <string>
-#include <condition_variable>
-#include <cassert>
-#include <cstring>
-
 #include <message_infrastructure/csrc/channel/socket/socket_port.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
+#include <semaphore.h>
+#include <unistd.h>
+#include <thread>  // NOLINT
+#include <mutex>  // NOLINT
+#include <memory>
+#include <string>
+#include <condition_variable>  // NOLINT
+#include <cassert>
+#include <cstring>
+
 namespace message_infrastructure {
 
 bool SocketWrite(int fd, void* data, size_t size) {
-  size_t length = write(fd, (char *)data, size);
+  size_t length = write(fd, reinterpret_cast<char *>(data), size);
 
-  if (length == -1) {
-    LAVA_LOG_ERR("Write socket failed.\n");
+  if (length != size) {
+    if (length == -1) {
+      LAVA_LOG_ERR("Write socket failed.\n");
+      return false;
+    }
+    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd",
+                 size, length);
     return false;
   }
-  else if (length != size) {
-    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd", size, length);
-    return false;
-  }
-
   return true;
 }
 
 bool SocketRead(int fd, void* data, size_t size) {
-  size_t length = read(fd, (char *)data, size);
+  size_t length = read(fd, reinterpret_cast<char *>(data), size);
 
-  if (length == -1) {
-    LAVA_LOG_ERR("Read socket failed.\n");
+  if (length != size) {
+    if (length == -1) {
+      LAVA_LOG_ERR("Read socket failed.\n");
+      return false;
+    }
+    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd",
+                 size, length);
     return false;
   }
-  else if (length != size) {
-    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd", size, length);
-    return false;
-  }
-
   return true;
 }
 
@@ -55,7 +55,7 @@ void SocketSendPort::Send(MetaDataPtr metadata) {
     ret = SocketWrite(socket_.first, metadata.get(), sizeof(MetaData));
   }
   ret = false;
-  while(!ret) {
+  while (!ret) {
     ret = SocketWrite(socket_.first, metadata->mdata, nbytes_);
   }
 }
@@ -75,14 +75,14 @@ MetaDataPtr SocketRecvPort::Recv() {
   bool ret = false;
   MetaDataPtr metadata = std::make_shared<MetaData>();
   ret = SocketRead(socket_.second, metadata.get(), sizeof(MetaData));
-  if (!ret){
+  if (!ret) {
     metadata.reset();
     return metadata;
   }
   void *mdata = malloc(nbytes_);
   ret = SocketRead(socket_.second, mdata, nbytes_);
   metadata->mdata = mdata;
-  if(!ret) {
+  if (!ret) {
     metadata.reset();
     free(mdata);
   }

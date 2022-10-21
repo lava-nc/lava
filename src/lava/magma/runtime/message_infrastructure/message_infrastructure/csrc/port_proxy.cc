@@ -3,7 +3,8 @@
 // See: https://spdx.org/licenses/
 
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
-//to solve the warning "Using deprecated NumPy API, disable it with " "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
+// to solve the warning "Using deprecated NumPy API,
+// disable it with " "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
 
 #include <numpy/arrayobject.h>
 #include <Python.h>
@@ -27,8 +28,7 @@ void MetaDataDump(MetaDataPtr metadata) {
                metadata->elsize,
                metadata->total_size,
                dims[0], dims[1], dims[2], dims[3], dims[4],
-               strides[0], strides[1], strides[2], strides[3], strides[4] 
-            );
+               strides[0], strides[1], strides[2], strides[3], strides[4]);
 }
 
 ChannelType SendPortProxy::GetChannelType() {
@@ -82,7 +82,8 @@ size_t RecvPortProxy::Size() {
 }
 
 int trick() {
-    //to solve the warning "converting to non-pointer type 'int' from NULL [-Wconversion-null] import_array()"
+    // to solve the warning "converting to non-pointer type 'int'
+    // from NULL [-Wconversion-null] import_array()"
     _import_array();
     return 0;
 }
@@ -115,7 +116,7 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
   auto tsize = PyArray_SIZE(array);
 
   // set metadata
-  MetaDataPtr metadata= std::make_shared<MetaData>();
+  MetaDataPtr metadata = std::make_shared<MetaData>();
   metadata->nd = ndim;
   for (int i = 0; i < ndim; i++) {
     metadata->dims[i] = dims[i];
@@ -133,7 +134,7 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
 }
 
 py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
-  if(metadata == NULL)
+  if (metadata == NULL)
     return py::cast(0);
 
   std::vector<npy_intp> dims(metadata->nd);
