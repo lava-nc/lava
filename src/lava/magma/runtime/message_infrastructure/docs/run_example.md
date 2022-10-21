@@ -12,6 +12,13 @@ source setenv.sh
 pytest test
 ```
 
+```shell
+# msg log setting
+cmake ../ -DMSG_LOG_LEVEL=debug -DMSG_LOG_FILE_ENABLE=1
+# MSG_LOG_LEVEL valid value: all, debug, info, dump, warn, err
+# MSG_LOG_FILE_ENABLE valid value:  0, 1
+```
+
 ## Running Unit Tests (C++ / GoogleTest)
 ```shell
 cd build
