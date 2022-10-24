@@ -555,8 +555,8 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_recurrence(self):
         """
-        Tests that bit accurate Sparse ProcessModel has non-blocking dynamics for
-        recurrent connectivity architectures.
+        Tests that bit accurate Sparse ProcessModel has non-blocking dynamics 
+        for recurrent connectivity architectures.
         """
         shape = (3, 3)
         num_steps = 6
