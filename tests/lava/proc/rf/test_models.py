@@ -119,11 +119,11 @@ class TestrfProcessModels(unittest.TestCase):
 
     def test_fixed_no_decay(self):
         """Neuron with no alpha decay should spike periodically due
-           to a single input spike. We observe voltage decay caused
+           to a single input spike. We should observe voltage decay caused
            by accumulated fixed point precision errors.
         """
         alpha = 0
-        vth = .5  # instantiate a low voltage to achieve repeat spiking
+        vth = .5  # choose a low voltage threshold to achieve repeat spiking
         decay_bits = 12
         state_exp = 6
         period = 10
