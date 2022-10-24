@@ -25,7 +25,7 @@ class AbstractPyRFModelFloat(PyLoihiProcessModel):
     vth: float = LavaPyType(float, float)
 
     def scale_volt(self, voltage):
-        """No downsca of voltage needed for floating point implementation"""
+        """No downscale of voltage needed for floating point implementation"""
         return voltage
 
     def resonator_dynamics(self, a_real_in_data, a_imag_in_data, real, imag):
