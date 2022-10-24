@@ -41,7 +41,7 @@ class Testrf_izProcessModels(unittest.TestCase):
         imag_monitor.probe(target=rf.imag, num_steps=num_steps)
         sink = io.sink.RingBuffer(shape=rf.shape, buffer=num_steps)
 
-        source.s_out.connect(rf.a_real_in)
+        source.s_out.connect(rf.a_imag_in)
         rf.s_out.connect(sink.a_in)
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -49,7 +49,7 @@ class Testrf_izProcessModels(unittest.TestCase):
 
         rf.run(condition=run_condition, run_cfg=run_config)
 
-        s_out = sink.data.get()
+        s_out = sink.get()
         real = real_monitor.get_data()[rf.name]["real"]
         imag = imag_monitor.get_data()[rf.name]["imag"]
         rf.stop()

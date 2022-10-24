@@ -30,23 +30,18 @@ class PyRF_IZModelFloat(AbstractPyRFModelFloat):
 @implements(proc=RF_IZ, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('fixed_pt')
-class PyRF_IZModelFoxed(AbstractPyRFModelFixed):
+class PyRF_IZModelFixed(AbstractPyRFModelFixed):
     """Fixed point implementation of Resonate and Fire Izhikevich Neuron"""
     def run_spk(self):
         a_real_in_data = np.left_shift(self.a_real_in.recv(),
-                                       self.state_exp + self.decay_bits)
+                                       self.state_exp)
         a_imag_in_data = np.left_shift(self.a_imag_in.recv(),
-                                       self.state_exp + self.decay_bits)
+                                       self.state_exp)
 
         new_real, new_imag = self.resonator_dynamics(a_real_in_data,
                                                      a_imag_in_data,
                                                      np.int64(self.real),
                                                      np.int64(self.imag))
-
-        new_real = np.sign(new_real) * np.right_shift(np.abs(
-                     new_real), self.decay_bits)
-        new_imag = np.sign(new_imag) * np.right_shift(np.abs(
-                    new_imag), self.decay_bits)
 
         new_real = np.clip(new_real,
                            self.neg_voltage_limit, self.pos_voltage_limit)
@@ -55,6 +50,5 @@ class PyRF_IZModelFoxed(AbstractPyRFModelFixed):
 
         s_out = new_imag >= self.vth
         self.real[:] = new_real * (1 - s_out)  # reset dynamics
-
         self.imag[:] = s_out * (self.vth - 1) + (1 - s_out) * new_imag
         self.s_out.send(s_out)
