@@ -37,6 +37,7 @@ class PySparseModelFloat(PyLoihiProcessModel):
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
+
     def run_spk(self):
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
@@ -67,6 +68,7 @@ class PySparseModelBitAcc(PyLoihiProcessModel):
     # num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+    num_weight_bits: int = LavaPyType(int, int)
 
     def __init__(self, proc_params):
         super(PySparseModelBitAcc, self).__init__(proc_params)
