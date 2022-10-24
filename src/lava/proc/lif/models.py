@@ -270,7 +270,6 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
-        #self.s_out_bap.send(self.s_out_buff)
 
 
 @implements(proc=LIF, protocol=LoihiProtocol)

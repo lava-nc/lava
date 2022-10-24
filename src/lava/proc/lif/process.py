@@ -9,8 +9,6 @@ from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import PlasticNeuronProcess
-
-from lava.magma.core.learning.learning_rule import LoihiUCLearningRule
 from lava.proc.learning_rules.r_stdp_learning_rule import R_STDPLoihi
 
 
@@ -104,8 +102,8 @@ class LIF(AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
 
 
-class LearningLIF(PlasticNeuronProcess, AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process with learning enabled.
+class RSTDPLIF(PlasticNeuronProcess, AbstractLIF):
+    """Leaky-Integrate-and-Fire (LIF) neural Process with RSTDP learning rule.
 
     Parameters
     ----------
