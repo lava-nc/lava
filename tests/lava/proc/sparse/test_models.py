@@ -582,3 +582,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()
+
+
+if __name__ == "__main__":
+    unittest.main()
