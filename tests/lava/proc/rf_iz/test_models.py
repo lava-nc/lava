@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import unittest
 import numpy as np
 
@@ -49,7 +50,7 @@ class Testrf_izProcessModels(unittest.TestCase):
 
         rf.run(condition=run_condition, run_cfg=run_config)
 
-        s_out = sink.get()
+        s_out = sink.data.get()
         real = real_monitor.get_data()[rf.name]["real"]
         imag = imag_monitor.get_data()[rf.name]["imag"]
         rf.stop()
@@ -69,9 +70,10 @@ class Testrf_izProcessModels(unittest.TestCase):
         _, real, imag, s_out = self.run_test(period, alpha, input)
         s_out = s_out.flatten() == 1  # change to bool
         self.assertGreaterEqual(s_out.sum(), 1)  # ensure network is spiking
-        self.assertListEqual(real.flatten()[s_out].tolist(), [0]*np.sum(s_out))
+        self.assertListEqual(real.flatten()[s_out].tolist(),
+                             [0] * np.sum(s_out))
         self.assertListEqual(imag.flatten()[s_out].tolist(),
-                             [1-eps] * np.sum(s_out))
+                             [1 - eps] * np.sum(s_out))
 
     def test_fixed_pm_reset(self):
         """Ensure that spikes events are followed by proper rf_iz reset
@@ -85,11 +87,12 @@ class Testrf_izProcessModels(unittest.TestCase):
         input = np.zeros(num_steps)
         input[[0, 10, 20]] = 1  # Will ensure 2 spikes
         _, real, imag, s_out = self.run_test(period, alpha, input,
-                                             tag="fixed_pt", 
+                                             tag="fixed_pt",
                                              state_exp=state_exp,
                                              decay_bits=12)
         s_out = s_out.flatten() == 1  # change to bool
         self.assertGreaterEqual(s_out.sum(), 1)  # ensure network is spiking
-        self.assertListEqual(real.flatten()[s_out].tolist(), [0]*np.sum(s_out))
+        self.assertListEqual(real.flatten()[s_out].tolist(),
+                             [0] * np.sum(s_out))
         self.assertListEqual(imag.flatten()[s_out].tolist(),
                              [(1 << state_exp) - eps] * np.sum(s_out))

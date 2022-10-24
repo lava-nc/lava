@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.resources import CPU
 import numpy as np
@@ -17,7 +21,7 @@ class PyRF_IZModelFloat(AbstractPyRFModelFloat):
 
         new_real, new_imag = self.resonator_dynamics(a_real_in_data,
                                                      a_imag_in_data,
-                                                     self.real, 
+                                                     self.real,
                                                      self.imag)
         s_out = new_imag >= self.vth
         self.real[:] = new_real * (1 - s_out)  # reset dynamics

@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -21,7 +25,7 @@ class AbstractPyRFModelFloat(PyLoihiProcessModel):
     vth: float = LavaPyType(float, float)
 
     def scale_volt(self, voltage):
-        """No downscaling of voltage needed for floating point implementation"""
+        """No downsca of voltage needed for floating point implementation"""
         return voltage
 
     def resonator_dynamics(self, a_real_in_data, a_imag_in_data, real, imag):
@@ -45,12 +49,12 @@ class AbstractPyRFModelFloat(PyLoihiProcessModel):
 
         """
 
-        decayed_real = (self.scale_volt(self.cos_decay * real) -
-                        self.scale_volt(self.sin_decay * imag)
-                        + a_real_in_data) 
-        decayed_imag = (self.scale_volt(self.sin_decay * real) +
-                        self.scale_volt(self.cos_decay * imag)
-                        + a_imag_in_data)
+        decayed_real = self.scale_volt(self.cos_decay * real) \
+            - self.scale_volt(self.sin_decay * imag) \
+            + a_real_in_data
+        decayed_imag = self.scale_volt(self.sin_decay * real) \
+            + self.scale_volt(self.cos_decay * imag) \
+            + a_imag_in_data
 
         return decayed_real, decayed_imag
 
@@ -82,11 +86,11 @@ class PyRFModelFloat(AbstractPyRFModelFloat):
         self.real[:], self.imag[:] = new_real, new_imag
         self.s_out.send(s_out)
 
-        
+
 class AbstractPyRFModelFixed(AbstractPyRFModelFloat):
     a_real_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE,
                                      np.int16, precision=24)
-    a_imag_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, 
+    a_imag_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE,
                                      np.int16, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     real: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
@@ -107,8 +111,8 @@ class AbstractPyRFModelFixed(AbstractPyRFModelFloat):
         self.pos_voltage_limit = np.int32(max_ri_val) - 1
 
     def scale_volt(self, voltage):
-        return  np.sign(voltage) * np.right_shift(np.abs(
-                    voltage), self.decay_bits)
+        return np.sign(voltage) * np.right_shift(np.abs(
+            voltage), self.decay_bits)
 
     def run_spk(self):
         raise NotImplementedError("spiking activation() cannot be called from "
@@ -134,8 +138,8 @@ class PyRFModelFixed(AbstractPyRFModelFixed):
         new_real = np.clip(new_real,
                            self.neg_voltage_limit, self.pos_voltage_limit)
         new_imag = np.clip(new_imag,
-                           self.neg_voltage_limit, self.pos_voltage_limit)                         
-        
+                           self.neg_voltage_limit, self.pos_voltage_limit)
+        s_out = (new_real >= self.vth) * (new_imag >= 0) * (self.imag < 0)
         self.real[:], self.imag[:] = new_real, new_imag
 
         self.s_out.send(s_out)

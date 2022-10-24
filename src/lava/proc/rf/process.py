@@ -1,7 +1,7 @@
-"""Code based on the tutorial for now:
-https://github.com/lava-nc/lava/blob/main/tutorials/in_depth/tutorial02_processes.ipynb
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
 
-"""
 import typing as ty
 import numpy as np
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -64,7 +64,7 @@ class RF(AbstractProcess):
         super().__init__(shape=shape, sin_decay=sin_decay, cos_decay=cos_decay,
                          state_exp=state_exp, decay_bits=decay_bits, vth=vth,
                          name=name, log_config=log_config)
-                      
+
         if state_exp > 0:
             vth = int(vth * (1 << state_exp))
         if decay_bits > 0:
