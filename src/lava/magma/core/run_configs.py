@@ -439,16 +439,18 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
-                 pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = [],
+                 pre_run_fxs: ty.List[ty.Callable] = None,
+                 post_run_fxs: ty.List[ty.Callable] = None,
                  embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
-        self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
+        self.pre_run_fxs: ty.List[ty.Callable] = [] if not pre_run_fxs else \
+            pre_run_fxs
+        self.post_run_fxs: ty.List[ty.Callable] = [] if not post_run_fxs else \
+            post_run_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
