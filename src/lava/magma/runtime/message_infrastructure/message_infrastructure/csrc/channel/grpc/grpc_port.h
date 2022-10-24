@@ -76,7 +76,7 @@ class GrpcRecvPort final : public AbstractRecvPort{
  private:
   ServerBuilder builder;
   std::atomic_bool done_;
-  std::unique_ptr<Server> server;
+  std::unique_ptr<Server> server_;
   ServerImplPtr serviceptr;
   std::string url_;
 };

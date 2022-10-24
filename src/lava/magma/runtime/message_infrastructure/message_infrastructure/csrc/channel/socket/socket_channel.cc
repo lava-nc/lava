@@ -12,7 +12,6 @@ namespace message_infrastructure {
 SocketChannel::SocketChannel(const std::string &src_name,
                              const std::string &dst_name,
                              const size_t &nbytes) {
-                              
   SocketPair skt = GetSktManager().AllocChannelSocket(nbytes);
   send_port_ = std::make_shared<SocketSendPort>(src_name, skt, nbytes);
   recv_port_ = std::make_shared<SocketRecvPort>(dst_name, skt, nbytes);

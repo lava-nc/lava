@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from traceback import print_tb
 import numpy as np
 import unittest
 from functools import partial
@@ -174,7 +173,9 @@ class TestChannel(unittest.TestCase):
 
         send_port.join()
         recv_port.join()
+
     def test_grpcchannel(self):
+
         mp = MultiProcessing()
         mp.start()
         size = 5
@@ -203,7 +204,6 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop(True)
 
-
     def test_single_process_grpcchannel(self):
 
         size = 3
@@ -223,14 +223,16 @@ class TestChannel(unittest.TestCase):
 
         send_port.start()
         recv_port.start()
-        
+
         send_port.send(predata)
         resdata = recv_port.recv()
 
         if not np.array_equal(resdata, predata):
             raise AssertionError()
-   
+
         send_port.join()
         recv_port.join()
+
+
 if __name__ == "__main__":
     unittest.main()

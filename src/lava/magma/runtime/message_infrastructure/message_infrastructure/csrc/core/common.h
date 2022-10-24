@@ -18,7 +18,7 @@ namespace message_infrastructure {
 template<class T>
 class RecvQueue{
  public:
-  explicit RecvQueue(const std::string& name,
+  RecvQueue(const std::string& name,
                     const size_t &size,
                     const size_t &nbytes)
     : name_(name), size_(size), nbytes_(nbytes),
