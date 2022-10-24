@@ -23,7 +23,7 @@ class SparseRunConfig(RunConfig):
     """Run configuration selects appropriate Sparse ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed-point precision"""
 
-    def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
+    def __init__(self, custom_sync_domains=None, select_tag="fixed_pt"):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
 
@@ -84,7 +84,7 @@ class VecRecvProcess(AbstractProcess):
 @implements(proc=VecSendandRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
 # need the following tag to discover the ProcessModel using SparseRunConfig
-@tag('floating_pt')
+@tag("floating_pt")
 class PyVecSendModelFloat(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -106,7 +106,7 @@ class PyVecSendModelFloat(PyLoihiProcessModel):
 @implements(proc=VecSendandRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
 # need the following tag to discover the ProcessModel using SparseRunConfig
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PyVecSendModelFixed(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=16)
@@ -128,7 +128,7 @@ class PyVecSendModelFixed(PyLoihiProcessModel):
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
 # need the following tag to discover the ProcessModel using SparseRunConfig
-@tag('floating_pt')
+@tag("floating_pt")
 class PySpkRecvModelFloat(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     spk_data: np.ndarray = LavaPyType(np.ndarray, float)
@@ -142,7 +142,7 @@ class PySpkRecvModelFloat(PyLoihiProcessModel):
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
 # need the following tag to discover the ProcessModel using SparseRunConfig
-@tag('fixed_pt')
+@tag("fixed_pt")
 class PySpkRecvModelFixed(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     spk_data: np.ndarray = LavaPyType(np.ndarray, int, precision=1)
@@ -171,9 +171,12 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process with a single non-zero connection weight at
         # entry [2,2] of the connectivity mat.
         weights = np.zeros(shape, dtype=float)
@@ -185,7 +188,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='floating_pt')
+        rcfg = SparseRunConfig(select_tag="floating_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -194,7 +197,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         # a_out will be equal to 1 at timestep 5, because the dendritic
         #  accumulators work on inputs from the previous timestep.
         expected_spk_data = np.zeros((num_steps, shape[0]))
-        expected_spk_data[4, 2] = 1.
+        expected_spk_data[4, 2] = 1.0
         self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
     def test_float_pm_fan_in(self):
@@ -209,9 +212,12 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up a Sparse Process where all input layer neurons project to a
         # single output layer neuron.
         weights = np.zeros(shape, dtype=float)
@@ -223,7 +229,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='floating_pt')
+        rcfg = SparseRunConfig(select_tag="floating_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -247,9 +253,12 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up a Sparse Process where a single input layer neuron projects to
         # all output layer neurons.
         weights = np.zeros(shape, dtype=float)
@@ -261,7 +270,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='floating_pt')
+        rcfg = SparseRunConfig(select_tag="floating_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -275,18 +284,21 @@ class TestSparseProcessModelFloat(unittest.TestCase):
 
     def test_float_pm_recurrence(self):
         """
-         Tests that floating Sparse ProcessModel has non-blocking dynamics for
-         recurrent connectivity architectures.
-         """
+        Tests that floating Sparse ProcessModel has non-blocking dynamics for
+        recurrent connectivity architectures.
+        """
         shape = (3, 3)
         num_steps = 6
         # Set up external input to emulate every neuron spiking once on
         # timestep 4.
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(True, (num_steps,))
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process with fully connected recurrent connectivity
         # architecture
         weights = np.ones(shape, dtype=float)
@@ -296,7 +308,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse.a_out.connect(sps.a_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='floating_pt')
+        rcfg = SparseRunConfig(select_tag="floating_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()
 
@@ -318,22 +330,24 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process in which a single input neuron projects to all
         #  output neurons.
         weights = np.zeros(shape, dtype=float)
         weights[:, 2] = [0.5, 300, 40]
-        sparse = Sparse(weights=weights,
-                      sign_mode=SignMode.EXCITATORY)
+        sparse = Sparse(weights=weights, sign_mode=SignMode.EXCITATORY)
         # Receive neuron spikes
         spr = VecRecvProcess(shape=(num_steps, shape[0]))
         sps.s_out.connect(sparse.s_in)
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -362,9 +376,12 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process in which a single input neuron projects to all
         # output neurons with both excitatory and inhibitory weights.
         weights = np.zeros(shape, dtype=float)
@@ -376,7 +393,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -392,15 +409,15 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_out_weight_exp(self):
         """
-         Tests fixed-point Sparse ProcessModel dendritic accumulation
-         behavior when the fan-out of a projecting neuron is greater than 1
-         , connections are both excitatory and inhibitory (sign_mode = 1),
-         and weight_exp = 1.
-         When using mixed sign weights, full 8 bit weight precision,
-         and weight_exp = 1, a_out can take even values from -512 to 508.
-         As a result of setting weight_exp = 1, the expected a_out result is 2x
-         that of the previous unit test.
-         """
+        Tests fixed-point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        , connections are both excitatory and inhibitory (sign_mode = 1),
+        and weight_exp = 1.
+        When using mixed sign weights, full 8 bit weight precision,
+        and weight_exp = 1, a_out can take even values from -512 to 508.
+        As a result of setting weight_exp = 1, the expected a_out result is 2x
+        that of the previous unit test.
+        """
 
         shape = (3, 4)
         num_steps = 6
@@ -409,9 +426,12 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process in which all input neurons project to a single
         # output neuron with mixed sign connection weights.
         weights = np.zeros(shape, dtype=float)
@@ -424,7 +444,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -440,13 +460,13 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
     def test_bitacc_pm_fan_out_weight_precision(self):
         """
-         Tests fixed-point Sparse ProcessModel dendritic accumulation
-         behavior when the fan-out of a projecting neuron is greater than 1
-         , connections are both excitatory and inhibitory (sign_mode = 1),
-         and num_weight_bits = 7.
-         When using mixed sign weights and 7 bit weight precision,
-         a_out can take values from -256 to 252 such that a_out % 4 = 0.
-         """
+        Tests fixed-point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        , connections are both excitatory and inhibitory (sign_mode = 1),
+        and num_weight_bits = 7.
+        When using mixed sign weights and 7 bit weight precision,
+        a_out can take values from -256 to 252 such that a_out % 4 = 0.
+        """
 
         shape = (3, 4)
         num_steps = 6
@@ -455,9 +475,12 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process in which all input neurons project to a single
         # output neuron with mixed sign connection weights.
         weights = np.zeros(shape, dtype=float)
@@ -470,7 +493,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -499,9 +522,12 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(False, (num_steps,))
         send_at_times[3] = True
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process in which all input layer neurons project to a
         # single output layer neuron with both excitatory and inhibitory
         # weights.
@@ -514,7 +540,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse.a_out.connect(spr.s_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         # Gather spike data and stop
         spk_data_through_run = spr.spk_data.get()
@@ -538,9 +564,12 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         # timestep 4.
         vec_to_send = np.ones((shape[1],), dtype=float)
         send_at_times = np.repeat(True, (num_steps,))
-        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                    vec_to_send=vec_to_send,
-                                    send_at_times=send_at_times)
+        sps = VecSendandRecvProcess(
+            shape=(shape[1],),
+            num_steps=num_steps,
+            vec_to_send=vec_to_send,
+            send_at_times=send_at_times,
+        )
         # Set up Sparse Process with fully connected recurrent connectivity
         # architecture.
         weights = np.ones(shape, dtype=float)
@@ -550,6 +579,6 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse.a_out.connect(sps.a_in)
         # Configure execution and run
         rcnd = RunSteps(num_steps=num_steps)
-        rcfg = SparseRunConfig(select_tag='fixed_pt')
+        rcfg = SparseRunConfig(select_tag="fixed_pt")
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()

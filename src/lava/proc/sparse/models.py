@@ -11,8 +11,12 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.sparse.process import Sparse
 from scipy.sparse import csr_matrix
-from lava.utils.weightutils import SignMode, determine_sign_mode,\
-    truncate_weights, clip_weights
+from lava.utils.weightutils import (
+    SignMode,
+    determine_sign_mode,
+    truncate_weights,
+    clip_weights,
+)
 
 
 @implements(proc=Sparse, protocol=LoihiProtocol)
@@ -76,13 +80,14 @@ class PySparseModelBitAcc(PyLoihiProcessModel):
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
             num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
-            sign_mode: SignMode = self.proc_params.get("sign_mode") \
-                or determine_sign_mode(self.weights)
+            sign_mode: SignMode = self.proc_params.get(
+                "sign_mode"
+            ) or determine_sign_mode(self.weights)
 
             self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
-            self.weights = truncate_weights(self.weights,
-                                            sign_mode,
-                                            num_weight_bits)
+            self.weights = truncate_weights(
+                self.weights, sign_mode, num_weight_bits
+            )
             self.weights_set = True
 
         # The a_out sent at each timestep is a buffered value from dendritic
@@ -101,5 +106,3 @@ class PySparseModelBitAcc(PyLoihiProcessModel):
             if self.weight_exp > 0
             else np.right_shift(a_accum, -self.weight_exp)
         )
-
-

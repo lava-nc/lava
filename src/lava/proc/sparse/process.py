@@ -8,20 +8,23 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.utils.weightutils import SignMode
 
+
 class Sparse(AbstractProcess):
-    def __init__(self,
-                 *,
-                 weights: np.ndarray,
-                 weight_exp: ty.Optional[int] = 0,
-                 num_weight_bits: ty.Optional[int] = 8,
-                 sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
-                 num_message_bits: ty.Optional[int] = 0,
-                 name: ty.Optional[str] = None,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
+    def __init__(
+        self,
+        *,
+        weights: np.ndarray,
+        weight_exp: ty.Optional[int] = 0,
+        num_weight_bits: ty.Optional[int] = 8,
+        sign_mode: ty.Optional[SignMode] = SignMode.MIXED,
+        num_message_bits: ty.Optional[int] = 0,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
         """Sparse connections between neurons. Realizes the following abstract
         behavior: a_out = weights * s_in '. Note that one can must pass a dense
         matrix to the argument `weights`. The conversion to sparse is taken care
-        of internally. 
+        of internally.
         Parameters
         ----------
         weights : numpy.ndarray
@@ -51,13 +54,15 @@ class Sparse(AbstractProcess):
         use_graded_spike: bool, optional
             Flag to indicate graded spike. Default is False.
         """
-        super().__init__(weights=weights,
-                         weight_exp=weight_exp,
-                         num_weight_bits=num_weight_bits,
-                         sign_mode=sign_mode,
-                         num_message_bits=num_message_bits,
-                         name=name,
-                         log_config=log_config)
+        super().__init__(
+            weights=weights,
+            weight_exp=weight_exp,
+            num_weight_bits=num_weight_bits,
+            sign_mode=sign_mode,
+            num_message_bits=num_message_bits,
+            name=name,
+            log_config=log_config,
+        )
         self._validate_weights(weights)
         shape = weights.shape
         # Ports
@@ -70,8 +75,11 @@ class Sparse(AbstractProcess):
         self.sign_mode = Var(shape=(1,), init=sign_mode.value)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
+
     @staticmethod
     def _validate_weights(weights: np.ndarray) -> None:
         if len(np.shape(weights)) != 2:
-            raise ValueError("Sparse Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
+            raise ValueError(
+                "Sparse Process 'weights' expects a 2D matrix, "
+                f"got {weights}."
+            )

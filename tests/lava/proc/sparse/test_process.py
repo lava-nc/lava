@@ -27,4 +27,3 @@ class TestSparseProcess(unittest.TestCase):
         weights = np.random.randint(100, size=(2, 3, 4))
         with self.assertRaises(ValueError):
             Sparse(weights=weights)
-
