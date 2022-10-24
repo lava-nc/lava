@@ -119,12 +119,13 @@ class LearningDense(PlasticConnectionProcess, Dense):
         w_scale = 8 - num_weight_bits + weight_exp + isMixed()
         weights = weights * (2 ** w_scale)
 
-        num_message_bits : int, optional
-            Determines whether the LearningDense Process deals with the incoming
-            spikes as binary spikes (num_message_bits = 0) or as graded
-            spikes (num_message_bits > 0). Default is 0.
+    num_message_bits : int, optional
+        Determines whether the LearningDense Process deals with the incoming
+        spikes as binary spikes (num_message_bits = 0) or as graded
+        spikes (num_message_bits > 0). Default is 0.
 
-        TODO add learning rule parameter to docstring
+    learning_rule: LoihiLearningRule
+        Learning rule which determines the parameters for online learning.
     """
 
     def __init__(self,

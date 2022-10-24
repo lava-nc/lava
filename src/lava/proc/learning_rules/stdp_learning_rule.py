@@ -14,10 +14,10 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.learning.learning_rule import LoihiHCLearningRule
 
 
-class STDPLoihi(LoihiLearningRule):
+class STDPLoihi(LoihiHCLearningRule):
 
     def __init__(
             self,

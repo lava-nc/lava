@@ -10,6 +10,9 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import PlasticNeuronProcess
 
+from lava.magma.core.learning.learning_rule import LoihiUCLearningRule
+from lava.proc.learning_rules.r_stdp_learning_rule import R_STDPLoihi
+
 
 class AbstractLIF(AbstractProcess):
     """Abstract class for variables common to all neurons with leaky
@@ -142,11 +145,13 @@ class LearningLIF(PlasticNeuronProcess, AbstractLIF):
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
+            learning_rule: R_STDPLoihi = None,
             **kwargs) -> None:
         super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
-                         log_config=log_config, **kwargs)
+                         log_config=log_config,
+                         learning_rule=learning_rule, **kwargs)
         self.vth = Var(shape=(1,), init=vth)
 
         self.a_graded_reward_in = InPort(shape=shape)

@@ -13,10 +13,16 @@ class PlasticNeuronModel(PyLoihiProcessModel):
 
 
 class PlasticNeuronModelFixed(PlasticNeuronModel):
-    # Learning Ports
+    # Learning ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
+    s_out_y1: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
     s_out_y2: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
     s_out_y3: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
+
+    # Learning states
+    y1: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=7)
+    y2: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=7)
+    y3: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=7)
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
@@ -26,8 +32,14 @@ class PlasticNeuronModelFloat(PlasticNeuronModel):
 
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool)
+    s_out_y1: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     s_out_y2: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     s_out_y3: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+
+    # Learning states
+    y1: np.ndarray = LavaPyType(np.ndarray, float)
+    y2: np.ndarray = LavaPyType(np.ndarray, float)
+    y3: np.ndarray = LavaPyType(np.ndarray, float)
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)

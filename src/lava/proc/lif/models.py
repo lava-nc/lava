@@ -239,6 +239,14 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
+    def filter_spike_trains(self):
+        """Filters the spike trains with an exponential filter."""
+
+        y1_impulse = self.proc_params['learning_rule'].post_trace_kernel_magnitude
+        y1_tau = self.proc_params['learning_rule'].post_trace_decay_tau
+
+        return self.y1 * np.exp(-1 / y1_tau) + self.s_out_buff * y1_impulse
+
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
         """Generate's a third factor Reward traces based on
         Graded input spikes to the Learning LIF process.
@@ -255,12 +263,14 @@ class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
 
         a_graded_in = self.a_graded_reward_in.recv()
 
-        y2 = self.calculate_third_factor_trace(a_graded_in)
-        y3 = self.calculate_third_factor_trace(a_graded_in)
+        self.y1 = self.filter_spike_trains()
+        self.y2 = self.calculate_third_factor_trace(a_graded_in)
+        self.y3 = self.s_out_buff
 
-        self.s_out_y2.send(y2)
-        self.s_out_y3.send(y3)
-        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
+        self.s_out_y2.send(self.y2)
+        self.s_out_y3.send(self.y3)
+        #self.s_out_bap.send(self.s_out_buff)
 
 
 @implements(proc=LIF, protocol=LoihiProtocol)
