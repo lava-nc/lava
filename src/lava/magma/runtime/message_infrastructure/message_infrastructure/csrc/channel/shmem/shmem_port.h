@@ -7,6 +7,7 @@
 
 #include <message_infrastructure/csrc/core/abstract_port.h>
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
+#include <message_infrastructure/csrc/core/common.h>
 
 #include <string>
 #include <vector>
@@ -37,7 +38,7 @@ class ShmemSendPort final : public AbstractSendPort {
 };
 
 using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
-
+/*
 class ShmemRecvQueue {
  public:
   ShmemRecvQueue(const std::string& name,
@@ -64,13 +65,14 @@ class ShmemRecvQueue {
 };
 
 using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
-
+*/
 class ShmemRecvPort final : public AbstractRecvPort {
  public:
   ShmemRecvPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
+  ~ShmemRecvPort();
   void Start();
   bool Probe();
   MetaDataPtr Recv();
@@ -82,7 +84,7 @@ class ShmemRecvPort final : public AbstractRecvPort {
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  ShmemRecvQueuePtr queue_ = nullptr;
+  std::shared_ptr<RecvQueue<void*>> recvqueue;
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 

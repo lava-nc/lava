@@ -10,6 +10,7 @@
 #include <grpcpp/health_check_service_interface.h>
 
 #include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/core/common.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
 #include <message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h>
@@ -44,18 +45,13 @@ class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
   Status RecvArrayData(ServerContext* context,
                        const GrpcMetaData* request,
                        DataReply* reply) override;
-  void Push(const GrpcMetaData *src);
-  int AvailableCount();
-  bool Empty();
   GrpcMetaDataPtr Pop(bool block);
   GrpcMetaDataPtr Front();
   bool Probe();
   void Stop();
-  std::vector<GrpcMetaDataPtr> array_;
-  std::atomic<uint32_t> read_index_;
-  std::atomic<uint32_t> write_index_;
 
  private:
+  std::shared_ptr<RecvQueue<GrpcMetaDataPtr>> recvqueue;
   std::string name_;
   size_t size_;
   size_t nbytes_;

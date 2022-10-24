@@ -174,7 +174,6 @@ class TestChannel(unittest.TestCase):
 
         send_port.join()
         recv_port.join()
-
     def test_grpcchannel(self):
         mp = MultiProcessing()
         mp.start()
@@ -207,9 +206,8 @@ class TestChannel(unittest.TestCase):
 
     def test_single_process_grpcchannel(self):
 
-        size = 5
+        size = 3
         predata = prepare_data()
-        predata2 = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_grpc_channel'
 
@@ -225,20 +223,14 @@ class TestChannel(unittest.TestCase):
 
         send_port.start()
         recv_port.start()
-        send_port.send(predata)
-        send_port.send(predata2)
-        send_port.send(predata)
+        
         send_port.send(predata)
         resdata = recv_port.recv()
-        resdata2 = recv_port.recv()
+
         if not np.array_equal(resdata, predata):
             raise AssertionError()
-        if not np.array_equal(resdata2, predata2):
-            raise AssertionError()     
+   
         send_port.join()
         recv_port.join()
-
-
-
 if __name__ == "__main__":
     unittest.main()

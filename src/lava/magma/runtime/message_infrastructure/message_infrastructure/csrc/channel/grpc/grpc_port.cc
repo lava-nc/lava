@@ -31,85 +31,39 @@ using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size,
                                              const size_t &nbytes)
-                        :name_(name), size_(size), nbytes_(nbytes),
-                        read_index_(0), write_index_(0), done_(false) {
-  array_.resize(size_);
+                        :name_(name), size_(size),
+                        nbytes_(nbytes), done_(false) {
+  recvqueue = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_, size_, nbytes_); //NOLINT
 }
 Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
                                             const GrpcMetaData *request,
                                             DataReply* reply) {
   bool rep = true;
-  while (AvailableCount() <=0) {
+  while (recvqueue->AvailableCount() <=0) {
     helper::Sleep();
     if (done_) {
       rep = false;
       return Status::OK;
     }
   }
-  Push(request);
+  recvqueue->Push(std::make_shared<GrpcMetaData>(*request));
   reply->set_ack(rep);
   return Status::OK;
 }
-void GrpcChannelServerImpl::Push(const GrpcMetaData *src) {
-  auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
-  auto next_write_index = curr_write_index + 1;
-  if (next_write_index == size_) {
-    next_write_index = 0;
-  }
-  if (next_write_index != read_index_.load(std::memory_order_acquire)) {
-    array_[curr_write_index] = std::make_shared<GrpcMetaData>(*src);
-    write_index_.store(next_write_index, std::memory_order_release);
-  }
-}
-int GrpcChannelServerImpl::AvailableCount() {
-  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
-  auto const curr_write_index = write_index_.load(std::memory_order_acquire);
-  if (curr_read_index == curr_write_index) {
-    return size_;
-  }
-  if (curr_write_index > curr_read_index) {
-    return size_ - curr_write_index + curr_read_index - 1;
-  }
-  return curr_read_index - curr_write_index - 1;
-}
-bool GrpcChannelServerImpl::Empty() {
-  auto const curr_read_index = read_index_.load(std::memory_order_acquire);
-  auto const curr_write_index = write_index_.load(std::memory_order_acquire);
-  return curr_read_index == curr_write_index;
-}
 GrpcMetaDataPtr GrpcChannelServerImpl::Pop(bool block) {
-  while (block && Empty()) {
-    helper::Sleep();
-    if (done_)
-      return NULL;
-  }
-  auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
-  assert(curr_read_index != write_index_.load(std::memory_order_acquire));
-  GrpcMetaDataPtr data_ = array_[curr_read_index];
-  auto next_read_index = curr_read_index + 1;
-  if (next_read_index == size_) {
-    next_read_index = 0;
-  }
-  read_index_.store(next_read_index, std::memory_order_release);
-  return data_;
+  return recvqueue->Pop(block);
 }
-
 GrpcMetaDataPtr GrpcChannelServerImpl::Front() {
-  while (Empty()) {
-    helper::Sleep();
-    if (done_)
-      return NULL;
-  }
-  auto curr_read_index = read_index_.load(std::memory_order_acquire);
-  GrpcMetaDataPtr data_ = array_[curr_read_index];
-  return data_;
+  return recvqueue->Front();
 }
 bool GrpcChannelServerImpl::Probe() {
-  return !Empty();
+  return recvqueue->Probe();
 }
 void GrpcChannelServerImpl::Stop() {
   done_ = true;
+  recvqueue->Stop();
 }
+
 
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
                  const size_t &size,
@@ -165,8 +119,8 @@ void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
 }
 
 GrpcSendPort::GrpcSendPort(const std::string &name,
-                const size_t &size,
-                const size_t &nbytes, const std::string& url)
+                           const size_t &size,
+                           const size_t &nbytes, const std::string& url)
   :AbstractSendPort(name, size, nbytes), done_(false), url_(url) {}
 void GrpcSendPort::Start() {
   channel = grpc::CreateChannel(url_, grpc::InsecureChannelCredentials());
