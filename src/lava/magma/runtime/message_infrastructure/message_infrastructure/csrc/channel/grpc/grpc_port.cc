@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -29,13 +29,11 @@ using grpcchannel::GrpcMetaData;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
-                                             const size_t &size,
-                                             const size_t &nbytes)
-                        :name_(name), size_(size),
-                        nbytes_(nbytes), done_(false) {
-  recvqueue = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_,
-                                                           size_,
-                                                           nbytes_);
+                                             const size_t &size)
+                                             :name_(name),
+                                             size_(size),
+                                             done_(false) {
+  recvqueue = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_, size_);
 }
 Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
                                             const GrpcMetaData *request,
@@ -66,19 +64,14 @@ void GrpcChannelServerImpl::Stop() {
   recvqueue->Stop();
 }
 
-
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
-                 const size_t &size,
-                 const size_t &nbytes, const std::string& url)
-                 :AbstractRecvPort(name, size, nbytes),
-                 done_(false),
-                 url_(url) {
-                  serviceptr = std::make_shared<GrpcChannelServerImpl>(name_,
-                                                                       size_,
-                                                                      nbytes_);
-                 }
-GrpcRecvPort::~GrpcRecvPort() {
-  // have bug ready to be fix
+                           const size_t &size,
+                           const std::string& url)
+                           :name_(name),
+                           size_(size),
+                           done_(false),
+                           url_(url) {
+  serviceptr = std::make_shared<GrpcChannelServerImpl>(name_, size_);
 }
 void GrpcRecvPort::Start() {
   grpc::EnableDefaultHealthCheckService(true);
@@ -115,19 +108,17 @@ void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
   metadata->type = grpcdata->type();
   metadata->elsize = grpcdata->elsize();
   metadata->total_size = grpcdata->total_size();
-  void* data = malloc(nbytes_);
+  void* data = malloc(metadata->elsize*metadata->total_size);
   for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
   }
-  std::memcpy(data, grpcdata->value().c_str(), nbytes_);
+  std::memcpy(data, grpcdata->value().c_str(),
+              metadata->elsize*metadata->total_size);
   metadata->mdata = data;
 }
 
-GrpcSendPort::GrpcSendPort(const std::string &name,
-                           const size_t &size,
-                           const size_t &nbytes, const std::string& url)
-  :AbstractSendPort(name, size, nbytes), done_(false), url_(url) {}
+
 void GrpcSendPort::Start() {
   channel = grpc::CreateChannel(url_, grpc::InsecureChannelCredentials());
   stub_ = GrpcChannelServer::NewStub(channel);
@@ -143,7 +134,7 @@ GrpcMetaData GrpcSendPort::MetaData2GrpcMetaData(MetaDataPtr metadata) {
     grpcdata.add_dims(metadata->dims[i]);
     grpcdata.add_strides(metadata->strides[i]);
   }
-  grpcdata.set_value(data, nbytes_);
+  grpcdata.set_value(data, metadata->elsize*metadata->total_size);
   return grpcdata;
 }
 void GrpcSendPort::Send(MetaDataPtr metadata) {

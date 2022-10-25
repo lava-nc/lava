@@ -27,8 +27,8 @@ class ChannelFactory {
       const std::string &src_name,
       const std::string &dst_name) {
     switch (channel_type) {
-      case RPCCHANNEL:
-        return GetGrpcChannel(size,nbytes,src_name,dst_name);
+      // case RPCCHANNEL:
+        // return GetGrpcChannel(size, src_name, dst_name);// reserve?
       case DDSCHANNEL:
         break;
       case SOCKETCHANNEL:
@@ -39,6 +39,18 @@ class ChannelFactory {
     return NULL;
   }
   friend ChannelFactory& GetChannelFactory();
+
+  AbstractChannelPtr GetRPCChannel(const std::string &url,
+                                   const int &port,
+                                   const std::string &src_name,
+                                   const std::string &dst_name,
+                                   const size_t &size) {
+  return std::make_shared<GrpcChannel>(url,
+                                       port,
+                                       src_name,
+                                       dst_name,
+                                       size);
+}
 
  private:
   ChannelFactory() {}
@@ -52,6 +64,10 @@ ChannelFactory& GetChannelFactory() {
   ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
   return channel_factory;
 }
+
+
+
+
 
 }  // namespace message_infrastructure
 

@@ -10,6 +10,6 @@ from MessageInfrastructurePywrapper import ActorCmd
 from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import AbstractTransferPort
-from .ports import SendPort, Channel
+from .ports import SendPort, Channel, GetRPCChannel
 
 ChannelQueueSize = 32

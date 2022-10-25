@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Intel Corporation
+// Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
@@ -40,8 +40,7 @@ using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
  public:
   GrpcChannelServerImpl(const std::string& name,
-                        const size_t &size,
-                        const size_t &nbytes);
+                        const size_t &size);
   Status RecvArrayData(ServerContext* context,
                        const GrpcMetaData* request,
                        DataReply* reply) override;
@@ -54,7 +53,6 @@ class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
   std::shared_ptr<RecvQueue<GrpcMetaDataPtr>> recvqueue;
   std::string name_;
   size_t size_;
-  size_t nbytes_;
   std::atomic_bool done_;
 };
 
@@ -64,9 +62,7 @@ class GrpcRecvPort final : public AbstractRecvPort{
  public:
   GrpcRecvPort(const std::string& name,
                const size_t &size,
-               const size_t &nbytes,
                const std::string& url);
-  ~GrpcRecvPort();
     void Start();
     MetaDataPtr Recv();
     MetaDataPtr Peek();
@@ -79,6 +75,8 @@ class GrpcRecvPort final : public AbstractRecvPort{
   std::unique_ptr<Server> server_;
   ServerImplPtr serviceptr;
   std::string url_;
+  std::string name_;
+  size_t size_;
 };
 
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
@@ -87,7 +85,11 @@ class GrpcSendPort final : public AbstractSendPort{
  public:
   GrpcSendPort(const std::string &name,
                const size_t &size,
-               const size_t &nbytes, const std::string& url);
+               const std::string& url)
+               :name_(name),
+               size_(size),
+               done_(false),
+               url_(url) {}
 
   void Start();
   void Send(MetaDataPtr metadata);
@@ -101,6 +103,8 @@ class GrpcSendPort final : public AbstractSendPort{
   std::unique_ptr<GrpcChannelServer::Stub> stub_;
   ThreadPtr ack_callback_thread_ = nullptr;
   std::string url_;
+  std::string name_;
+  size_t size_;
 };
 
 using GrpcSendPortPtr = std::shared_ptr<GrpcSendPort>;

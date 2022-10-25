@@ -19,11 +19,11 @@ template<class T>
 class RecvQueue{
  public:
   RecvQueue(const std::string& name,
-                    const size_t &size,
-                    const size_t &nbytes)
-    : name_(name), size_(size), nbytes_(nbytes),
+            const size_t &size)
+    : name_(name), size_(size),
     read_index_(0), write_index_(0), done_(false)  {
-    array_.reserve(size_);
+    
+    array_.resize(size_);
   }
   void Push(T val) {
     auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
@@ -102,13 +102,13 @@ class RecvQueue{
   void Stop() {
     done_ = true;
   }
+
  private:
   std::vector<T> array_;
   std::atomic<uint32_t> read_index_;
   std::atomic<uint32_t> write_index_;
   std::string name_;
   size_t size_;
-  size_t nbytes_;
   std::atomic_bool done_;
 };
 

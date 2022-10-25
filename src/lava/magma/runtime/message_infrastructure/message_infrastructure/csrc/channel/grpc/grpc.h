@@ -10,32 +10,24 @@
 
 #include <string>
 #include <vector>
+#include <set>
+#include <memory>
 
 namespace message_infrastructure {
 
 class GrpcManager {
  public:
-  ~GrpcManager();
-
-  std::string AllocChannelGrpc(size_t nbytes) {
-    std::string url = base_url + std::to_string(url_num) \
-                      + base_port+std::to_string(port_num);
-    urls_.push_back(url);
-    url_num++;
-    port_num++;
-    return url;
+  bool CheckURL(const std::string &url) {
+    if (url_set.count(url))
+      return false;
+    url_set.insert(url);
+    return true;
   }
-
   friend GrpcManager &GetGrpcManager();
-
  private:
   GrpcManager() {}
-  std::string base_url = "127.13.2.";
-  std::string base_port = ":800";
-  int url_num = 78;
-  int port_num = 0;
-  std::vector<std::string> urls_;
   static GrpcManager grpcm_;
+  std::set<std::string> url_set;
 };
 
 

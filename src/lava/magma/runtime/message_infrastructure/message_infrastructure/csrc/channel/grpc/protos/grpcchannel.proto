@@ -1,4 +1,6 @@
-// Copyright 2015 gRPC authors.
+// Copyright (C) 2022 Intel Corporation
+// SPDX-License-Identifier: BSD-3-Clause
+// See: https://spdx.org/licenses/
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +19,9 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.grpcchannel";
 option java_outer_classname = "GrpcChannel";
-option objc_class_prefix = "HLW";
+//option objc_class_prefix = "HLW";
 
 package grpcchannel;
-
-
 
 // The request message containing the user's name.
 service GrpcChannelServer{
@@ -38,8 +38,6 @@ message GrpcMetaData{
   bytes value =16;
 
 }
-
-
 
 // The response message containing the greetings
 message DataReply {

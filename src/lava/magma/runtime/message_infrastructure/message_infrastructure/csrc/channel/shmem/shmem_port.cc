@@ -50,7 +50,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const size_t &size,
                 const size_t &nbytes)
   : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false) {
-  recvqueue = std::make_shared<RecvQueue<void*>>(name_, size_, nbytes_);
+  recvqueue = std::make_shared<RecvQueue<void*>>(name_, size_);
 }
 ShmemRecvPort::~ShmemRecvPort() {
   recvqueue->Free();

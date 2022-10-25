@@ -13,7 +13,8 @@ from message_infrastructure import (
     ChannelBackend,
     Channel,
     SendPort,
-    RecvPort
+    RecvPort,
+    GetRPCChannel
 )
 
 
@@ -175,20 +176,19 @@ class TestChannel(unittest.TestCase):
         recv_port.join()
 
     def test_grpcchannel(self):
-
         mp = MultiProcessing()
         mp.start()
         size = 5
-        predata = prepare_data()
-        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        #nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_grpc_channel'
-
-        grpc_channel = Channel(
-            ChannelBackend.RPCCHANNEL,
-            size,
-            nbytes,
+        url = '127.13.2.1:'
+        port = 8001
+        grpc_channel = GetRPCChannel(
+            url,
+            port,
             name,
-            name)
+            name,
+            size)
 
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
@@ -205,25 +205,25 @@ class TestChannel(unittest.TestCase):
         mp.stop(True)
 
     def test_single_process_grpcchannel(self):
-
         size = 3
         predata = prepare_data()
-        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        #nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_grpc_channel'
 
-        grpc_channel = Channel(
-            ChannelBackend.RPCCHANNEL,
-            size,
-            nbytes,
+        url = '127.13.2.2:'
+        port = 8002
+        grpc_channel = GetRPCChannel(
+            url,
+            port,
             name,
-            name)
-
+            name,
+            size)
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
-
+        
         send_port.start()
         recv_port.start()
-
+        
         send_port.send(predata)
         resdata = recv_port.recv()
 

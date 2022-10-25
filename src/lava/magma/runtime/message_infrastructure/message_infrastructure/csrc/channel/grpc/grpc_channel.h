@@ -16,10 +16,11 @@ namespace message_infrastructure {
 class GrpcChannel : public AbstractChannel {
  public:
   GrpcChannel() {}
-  GrpcChannel(const std::string &src_name,
+  GrpcChannel(const std::string &url,
+              const int &port,
+              const std::string &src_name,
               const std::string &dst_name,
-              const size_t &size,
-              const size_t &nbytes);
+              const size_t &size);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:
@@ -28,11 +29,6 @@ class GrpcChannel : public AbstractChannel {
 };
 
 using GrpcChannelPtr = std::shared_ptr<GrpcChannel>;
-
-GrpcChannelPtr GetGrpcChannel(const size_t &size,
-                              const size_t &nbytes,
-                              const std::string &src_name,
-                              const std::string &dst_name);
 
 }  // namespace message_infrastructure
 
