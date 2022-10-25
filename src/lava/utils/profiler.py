@@ -33,9 +33,9 @@ class Profiler:
             raise AssertionError("<run_cfg> must be an "
                                  "instance of {}".format(RunConfig))
 
-        if not type(run_cfg) in Profiler.run_cfg_dict:
+        if not type(run_cfg) in run_cfg_dict:
             raise NotImplementedError(
                 f"There is currently no implementation of the "
                 f"profiler for {type(run_cfg).__name__}.")
 
-        return Profiler.run_cfg_dict[type(run_cfg)](run_cfg)
+        return run_cfg_dict[type(run_cfg)](run_cfg)
