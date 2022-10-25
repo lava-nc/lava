@@ -50,13 +50,13 @@ def apply_mask(int_number: int, nb_bits: int) -> int:
 
 
 def float_to_literal(learning_parameter: float) -> str:
-    """Convert the floating point representation of the 
+    """Convert the floating point representation of the
     learning parameter to the form mantissa * 2 ^ [+/1]exponent.
     Parameters
     ----------
     learning_parameters: float
         the float value of learning-related parameter
-    
+
     Returns
     -------
     result: str

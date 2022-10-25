@@ -62,14 +62,15 @@ class RewardModulatedSTDP(LoihiLearningRule):
             Decay time constant of the eligibility trace.
 
         """
-        self.learning_rate = float_to_literal(learning_rate) 
+        self.learning_rate = float_to_literal(learning_rate)
         self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
         self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
         self.pre_trace_decay_tau = pre_trace_decay_tau
         self.post_trace_decay_tau = post_trace_decay_tau
         self.pre_trace_kernel_magnitude = pre_trace_kernel_magnitude
         self.post_trace_kernel_magnitude = post_trace_kernel_magnitude
-        self.eligibility_trace_decay_tau = float_to_literal(eligibility_trace_decay_tau)
+        self.eligibility_trace_decay_tau = \
+            float_to_literal(eligibility_trace_decay_tau)
 
         # Trace impulse values
         x1_impulse = pre_trace_kernel_magnitude
