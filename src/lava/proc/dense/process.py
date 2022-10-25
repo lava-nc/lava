@@ -55,9 +55,9 @@ class Dense(AbstractProcess):
         weights = weights * (2 ** w_scale)
 
     num_message_bits : int, optional
-            Determines whether the Dense Process deals with the incoming
-            spikes as binary spikes (num_message_bits = 0) or as graded
-            spikes (num_message_bits > 0). Default is 0.
+        Determines whether the Dense Process deals with the incoming
+        spikes as binary spikes (num_message_bits = 0) or as graded
+        spikes (num_message_bits > 0). Default is 0.
         """
 
         super().__init__(weights=weights,

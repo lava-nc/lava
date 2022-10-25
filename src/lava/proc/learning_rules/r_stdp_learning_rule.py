@@ -14,7 +14,12 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
+<<<<<<< HEAD
 from lava.magma.core.learning.learning_rule import LoihiUCLearningRule
+=======
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.learning.utils import float_to_literal
+>>>>>>> BS/dev/learning_three_factor
 
 
 class RewardModulatedSTDP(LoihiUCLearningRule):
@@ -27,7 +32,7 @@ class RewardModulatedSTDP(LoihiUCLearningRule):
             post_trace_decay_tau: float,
             pre_trace_kernel_magnitude: float,
             post_trace_kernel_magnitude: float,
-            eligibility_trace_decay_tau: str,
+            eligibility_trace_decay_tau: float,
             *args,
             **kwargs
     ):
@@ -61,22 +66,25 @@ class RewardModulatedSTDP(LoihiUCLearningRule):
             Decay time constant of the eligibility trace.
 
         """
-        self.learning_rate = learning_rate
+        self.learning_rate = float_to_literal(learning_rate)
         self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
         self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
         self.pre_trace_decay_tau = pre_trace_decay_tau
         self.post_trace_decay_tau = post_trace_decay_tau
         self.pre_trace_kernel_magnitude = pre_trace_kernel_magnitude
         self.post_trace_kernel_magnitude = post_trace_kernel_magnitude
-        self.eligibility_trace_decay_tau = eligibility_trace_decay_tau
+        self.eligibility_trace_decay_tau = \
+            float_to_literal(eligibility_trace_decay_tau)
 
         # Trace impulse values
         x1_impulse = pre_trace_kernel_magnitude
 
         # Trace decay constants
-        x1_tau = pre_trace_decay_tau
+        x1_tau = self.pre_trace_decay_tau
+        y1_tau = self.post_trace_decay_tau
+        y2_tau = 2 ** 32 - 1
 
-        # Elgibility trace represented as dt
+        # Eligibility trace represented as dt
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
              f"{self.learning_rate} * {self.A_minus} * u0 * y3 * x1 -" \
              f"u0 * t * {eligibility_trace_decay_tau}"
