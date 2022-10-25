@@ -15,7 +15,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg, Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LearningLIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF
 from lava.proc import io
 
 
