@@ -14,7 +14,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.dense.process import Dense, LearningDense, DenseDelay
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
@@ -198,3 +198,85 @@ class PyLearningDenseModelBitApproximate(ConnectionModelBitApproximate):
             self._record_pre_spike_times(s_in)
 
         super().run_spk()
+
+@implements(proc=DenseDelay, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyDenseDelayModelFloat(PyLoihiProcessModel):
+    """Implementation of Conn Process with Dense synaptic connections in
+    floating point precision. This short and simple ProcessModel can be used
+    for quick algorithmic prototyping, without engaging with the nuances of a
+    fixed point implementation. DenseDelay incorporates delays into the Conn
+    Process.
+    """
+
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
+    # weights is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    # delays is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    delays: np.ndarray = LavaPyType(np.ndarray, int)
+    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+
+    def get_del_wgts(self):
+        """
+        Use self.weights and self.delays to create a matrix where the
+        weights are separated by delay. Returns 2D matrix of form
+        (num_flat_output_neurons * max_delay + 1, num_flat_input_neurons) where
+        del_wgts[
+            k * num_flat_output_neurons : (k + 1) * num_flat_output_neurons, :
+        ]
+        contains the weights for all connections with a delay equal to k.
+        This allows for the updating of the activation buffer and updating
+        weights.
+        """
+        return np.vstack([
+            np.where(self.delays==k, self.weights, 0)
+            for k in range(np.max(self.delays) + 1)
+        ])
+
+    def calc_act(self, s_in):
+        """
+        Calculate the activations by performing del_wgts * s_in. This matrix 
+        is then summed across each row to get the activations to the output
+        neurons for different delays. This activation vector is reshaped to a
+        matrix of the form
+        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
+        which is then transposed to get the activation matrix.
+        """
+        return np.reshape(
+           np.sum(self.get_del_wgts() * s_in, axis=1),
+           (np.max(self.delays) + 1, self.weights.shape[0])
+        ).T
+
+    def update_act(self, s_in):
+        """
+        Updates the activations for the connection.
+        First, updates a_out with the first column of a_buff.
+        Then clears these values from a_buff and rolls them to the last column.
+        Finally, calculates the activations for the current time step and adds
+        them to a_buff.
+        This order of operations ensures that delays of 0 correspond to
+        the next time step.
+        """
+        self.a_out = self.a_buff[:,0]
+        self.a_buff[:,0] = 0
+        self.a_buff = np.roll(self.a_buff, -1)
+        self.a_buff += self.calc_act(s_in)
+
+    def run_spk(self):
+        # The a_out sent on a each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
+        self.a_out.send(self.a_buff[:,0])
+        if self.num_message_bits.item() > 0:
+            s_in = self.s_in.recv()
+            self.update_act(s_in)
+        else:
+            s_in = self.s_in.recv().astype(bool)
+            self.update_act(s_in)
+
+            
