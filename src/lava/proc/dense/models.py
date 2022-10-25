@@ -5,8 +5,8 @@
 import numpy as np
 
 from lava.magma.core.model.py.connection import (
-    PlasticConnectionModelFloat,
-    PlasticConnectionModelBitApproximate,
+    LearningConnectionModelFloat,
+    LearningConnectionModelBitApproximate,
 )
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -116,7 +116,8 @@ class StaticPyDenseModelBitAcc(PyDenseModelBitAcc):
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
+class PyLearningDenseModelFloat(
+        LearningConnectionModelFloat, PyDenseModelFloat):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -145,7 +146,7 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
 class PyLearningDenseModelBitApproximate(
-        PlasticConnectionModelBitApproximate, PyDenseModelBitAcc):
+        LearningConnectionModelBitApproximate, PyDenseModelBitAcc):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.

@@ -10,8 +10,8 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LearningLIF
 from lava.magma.core.model.py.neuron import (
-    PlasticNeuronModelFloat,
-    PlasticNeuronModelFixed,
+    LearningNeuronModelFloat,
+    LearningNeuronModelFixed,
 )
 
 
@@ -224,7 +224,8 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
+class PyLearningLifModelFloat(
+        LearningNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural
     process in floating point precision with learning enabled.
     """
@@ -311,7 +312,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
 class PyLearningLifModelBitAcc(
-        PlasticNeuronModelFixed, AbstractPyLifModelFixed):
+        LearningNeuronModelFixed, AbstractPyLifModelFixed):
     """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
     with Loihi's hardware LIF dynamics, which means, it mimics Loihi
     behaviour bit-by-bit.

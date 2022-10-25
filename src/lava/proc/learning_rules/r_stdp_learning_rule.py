@@ -17,7 +17,7 @@
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 
 
-class R_STDPLoihi(LoihiLearningRule):
+class RewardModulatedSTDP(LoihiLearningRule):
     def __init__(
             self,
             learning_rate: float,

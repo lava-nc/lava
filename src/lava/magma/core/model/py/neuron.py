@@ -4,7 +4,7 @@ from lava.magma.core.model.py.type import LavaPyType
 import numpy as np
 
 
-class PlasticNeuronModel(PyLoihiProcessModel):
+class LearningNeuronModel(PyLoihiProcessModel):
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
@@ -12,7 +12,7 @@ class PlasticNeuronModel(PyLoihiProcessModel):
         self._shape = self.proc_params["shape"]
 
 
-class PlasticNeuronModelFixed(PlasticNeuronModel):
+class LearningNeuronModelFixed(LearningNeuronModel):
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     s_out_y2: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
@@ -22,7 +22,7 @@ class PlasticNeuronModelFixed(PlasticNeuronModel):
         super().__init__(proc_params)
 
 
-class PlasticNeuronModelFloat(PlasticNeuronModel):
+class LearningNeuronModelFloat(LearningNeuronModel):
 
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool)

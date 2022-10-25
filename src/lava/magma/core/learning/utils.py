@@ -4,6 +4,7 @@
 
 import numpy as np
 import typing as ty
+import struct
 
 
 def stochastic_round(values: np.ndarray,

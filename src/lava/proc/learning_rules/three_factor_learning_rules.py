@@ -17,51 +17,6 @@
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 
 
-class DopaminergicSTDPLoihi(LoihiLearningRule):
-    def __init__(
-            self,
-            learning_rate: float,
-            A_plus: float,
-            A_minus: float,
-            tau_plus: float,
-            tau_minus: float,
-            *args,
-            **kwargs
-    ):
-        self.learning_rate = learning_rate
-        self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
-        self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
-        self.tau_plus = tau_plus
-        self.tau_minus = tau_minus
-
-        # String learning rule for dw
-        dw = f"{self.learning_rate} * {self.A_plus} * x0 * y1 * y2 + " \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1 * y2"
-
-        # Other learning-related parameters
-        # Trace impulse values
-        x1_impulse = 16
-        y1_impulse = 16
-        y2_impulse = 0
-
-        # Trace decay constants
-        x1_tau = tau_plus
-        y1_tau = tau_minus
-        y2_tau = 2 ** 32 - 1
-
-        super().__init__(
-            dw=dw,
-            x1_impulse=x1_impulse,
-            x1_tau=x1_tau,
-            y1_impulse=y1_impulse,
-            y1_tau=y1_tau,
-            y2_impulse=y2_impulse,
-            y2_tau=y2_tau,
-            *args,
-            **kwargs
-        )
-
-
 class GatedHebbianLoihi(LoihiLearningRule):
     def __init__(
             self,
