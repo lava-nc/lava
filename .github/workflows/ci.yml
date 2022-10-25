@@ -5,23 +5,12 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-      with:
-        lfs: true
-        
-    - name: Install Poetry
-      run: pipx install poetry
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
-        python-version: 3.9
-        cache: 'poetry'
-
-    - name: Install Lava
-      run: poetry install --no-interaction
+        repository: 'Lava'    
 
     - name: Run flakeheaven (flake8)
       if: runner.os == 'Linux' || runner.os == 'macOS'
@@ -34,23 +23,12 @@ jobs:
   security-lint:
     name: Security Lint Code
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-      with:
-        lfs: true
-        
-    - name: Install Poetry
-      run: pipx install poetry
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
-        python-version: 3.9
-        cache: 'poetry'
-
-    - name: Install Lava
-      run: poetry install --no-interaction
+        repository: 'Lava'
 
     - name: Run bandit    
       uses: tj-actions/bandit@v5.1
@@ -65,23 +43,12 @@ jobs:
     strategy:
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
-
     steps:
-    - uses: actions/checkout@v2
-      with:
-        lfs: true
-        
-    - name: Install Poetry
-      run: pipx install poetry
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
-        python-version: 3.9
-        cache: 'poetry'
-
-    - name: Install Lava
-      run: poetry install --no-interaction
+        repository: 'Lava'
 
     - name: Run unit tests
       if: runner.os == 'Linux' || runner.os == 'macOS'
