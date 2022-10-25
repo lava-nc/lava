@@ -2,7 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import warnings
+import typing as ty
 from lava.magma.core.run_configs import RunConfig, Loihi2HwCfg
+
+# Dictionary to relate a certain RunCfg to specific Profiler
+run_cfg_dict: ty.Dict[RunConfig, RunConfig] = {}
+
+try:
+    from lava.utils.l2_profiler import Loihi2HWProfiler
+    run_cfg_dict[Loihi2HwCfg] = Loihi2HWProfiler
+except ModuleNotFoundError:
+    warnings.warn("Loihi2HWProfiler could not be imported. "
+                  "Currently no profiler is available.")
 
 
 class Profiler:
@@ -11,8 +23,6 @@ class Profiler:
     ressource an appropriate profiler needs to be chosen. The run
     configuration is used to choose the related profiler, if there
     is one."""
-
-    run_cfg_dict = {Loihi2HwCfg: Loihi2HWProfiler}
 
     @staticmethod
     def init(run_cfg: RunConfig):
