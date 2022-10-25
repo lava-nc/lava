@@ -10,7 +10,7 @@ from lava.magma.core.run_configs import RunConfig, Loihi2HwCfg
 run_cfg_dict: ty.Dict[RunConfig, 'Profiler'] = {}
 
 try:
-    from lava.utils.l2_profiler import Loihi2HWProfiler
+    from lava.utils.loihi2_profiler_api import Loihi2HWProfiler
     run_cfg_dict[Loihi2HwCfg] = Loihi2HWProfiler
 except ModuleNotFoundError:
     warnings.warn("Loihi2HWProfiler could not be imported. "
