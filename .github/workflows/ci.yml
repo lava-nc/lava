@@ -8,7 +8,7 @@ jobs:
     steps:
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
         repository: 'Lava'    
 
@@ -26,7 +26,7 @@ jobs:
     steps:
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
         repository: 'Lava'
 
@@ -46,7 +46,7 @@ jobs:
     steps:
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
         repository: 'Lava'
 
