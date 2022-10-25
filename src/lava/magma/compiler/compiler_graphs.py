@@ -815,7 +815,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         if not proc_module.__name__ == "__main__":
             # Get the parent module.
             module_spec = importlib.util.find_spec(proc_module.__name__)
-            if module_spec.parent:
+            if module_spec.parent != '':
                 parent_module = importlib.import_module(module_spec.parent)
 
                 # Get all the modules inside the parent (namespace) module.
@@ -992,16 +992,21 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         proc_map = OrderedDict()
         for proc in procs:
             # Select a specific ProcessModel
-            models_cls = ProcGroupDiGraphs._find_proc_models(proc=proc)
-            model_cls = \
-                ProcGroupDiGraphs._select_proc_models(
-                    proc, models_cls, run_cfg)
+            if hasattr(run_cfg, "exception_proc_model_map") and \
+                    proc in run_cfg.exception_proc_model_map:
+                model_cls = run_cfg.exception_proc_model_map[proc]
+            else:
+                models_cls = ProcGroupDiGraphs._find_proc_models(proc=proc)
+                model_cls = ProcGroupDiGraphs._select_proc_models(proc,
+                                                                  models_cls,
+                                                                  run_cfg)
             if issubclass(model_cls, AbstractSubProcessModel):
                 # Recursively substitute SubProcModel by sub processes
                 sub_map = ProcGroupDiGraphs._expand_sub_proc_model(model_cls,
                                                                    proc,
                                                                    run_cfg)
                 proc_map.update(sub_map)
+                proc._model_class = model_cls
             else:
                 # Just map current Process to selected ProcessModel
                 proc_map[proc] = model_cls
