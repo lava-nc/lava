@@ -19,7 +19,7 @@ from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
 
-class PyDenseModelFloat(PyLoihiProcessModel):
+class AbstractPyDenseModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -50,11 +50,11 @@ class PyDenseModelFloat(PyLoihiProcessModel):
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class StaticPyDenseModelFloat(PyDenseModelFloat):
+class PyDenseModelFloat(AbstractPyDenseModelFloat):
     pass
 
 
-class PyDenseModelBitAcc(PyLoihiProcessModel):
+class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behavior bit-by-bit.
@@ -109,14 +109,14 @@ class PyDenseModelBitAcc(PyLoihiProcessModel):
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class StaticPyDenseModelBitAcc(PyDenseModelBitAcc):
+class PyDenseModelBitAcc(AbstractPyDenseModelBitAcc):
     pass
 
 
 @implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
+class PyLearningDenseModelFloat(PlasticConnectionModelFloat, AbstractPyDenseModelFloat):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -145,7 +145,7 @@ class PyLearningDenseModelFloat(PlasticConnectionModelFloat, PyDenseModelFloat):
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
 class PyLearningDenseModelBitApproximate(
-        PlasticConnectionModelBitApproximate, PyDenseModelBitAcc):
+        PlasticConnectionModelBitApproximate, AbstractPyDenseModelBitAcc):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behaviour bit-by-bit.

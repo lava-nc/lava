@@ -618,7 +618,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )
@@ -1271,7 +1271,7 @@ class PlasticConnectionModelFloat(PlasticConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )

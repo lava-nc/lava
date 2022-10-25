@@ -68,7 +68,7 @@ class R_STDPLoihi(LoihiUCLearningRule):
         self.post_trace_decay_tau = post_trace_decay_tau
         self.pre_trace_kernel_magnitude = pre_trace_kernel_magnitude
         self.post_trace_kernel_magnitude = post_trace_kernel_magnitude
-        self.eligibility_trace__decay_tau = eligibility_trace_decay_tau
+        self.eligibility_trace_decay_tau = eligibility_trace_decay_tau
 
         # Trace impulse values
         x1_impulse = pre_trace_kernel_magnitude
