@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import typing
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.learning.learning_rule import LoihiLearningRule, LoihiHCLearningRule, LoihiUCLearningRule
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
@@ -32,6 +32,7 @@ class LearningConnection:
 
     # Learning Ports
     s_in_bap = None
+    s_in_y1 = None
     s_in_y2 = None
     s_in_y3 = None
 
@@ -49,8 +50,6 @@ class LearningConnection:
 
     tag_2 = None
     tag_1 = None
-
-    time_step = None
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
@@ -295,16 +294,19 @@ class LearningConnection:
         """
         self._record_pre_spike_times(s_in)
 
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        y2 = self.s_in_y2.recv()
-        y3 = self.s_in_y3.recv()
+        if isinstance(self._learning_rule, LoihiHCLearningRule):
+            s_in_bap = self.s_in_bap.recv().astype(bool)
+            self._record_post_spike_times(s_in_bap)
+        elif isinstance(self._learning_rule, LoihiUCLearningRule):
+            y1 = self.s_in_y1.recv()
+            y2 = self.s_in_y2.recv()
+            y3 = self.s_in_y3.recv()
 
-        self._record_post_spike_times(s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[1, :] = y2
-        y_traces[2, :] = y3
-        self._set_y_traces(y_traces)
+            y_traces = self._y_traces
+            y_traces[0, :] = y1
+            y_traces[1, :] = y2
+            y_traces[2, :] = y3
+            self._set_y_traces(y_traces)
 
         self._update_trace_randoms()
 
@@ -397,6 +399,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in_y1: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
     s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
     s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
 
@@ -615,7 +618,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )
@@ -1097,6 +1100,7 @@ class LearningConnectionModelFloat(LearningConnection):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool)
+    s_in_y1: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
@@ -1267,7 +1271,7 @@ class LearningConnectionModelFloat(LearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )

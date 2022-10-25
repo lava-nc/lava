@@ -57,7 +57,7 @@ class LearningConnectionProcess(AbstractProcess):
     def __init__(
         self,
         shape: tuple = (1, 1),
-        learning_rule: LoihiLearningRule = None,
+        learning_rule: ty.Optional[LoihiLearningRule] = None,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
@@ -68,6 +68,7 @@ class LearningConnectionProcess(AbstractProcess):
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
+        self.s_in_y1 = InPort(shape=(shape[0],))
         self.s_in_y2 = InPort(shape=(shape[0],))
         self.s_in_y3 = InPort(shape=(shape[0],))
 
