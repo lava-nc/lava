@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 class Profiler:
     """Base class for profiling execution time, energy and other
-    metrics on different Ressources. Depending on the computing
+    metrics on different Resources. Depending on the computing
     ressource an appropriate profiler needs to be chosen. The run
     configuration is used to choose the related profiler, if there
     is one."""
@@ -30,8 +30,8 @@ class Profiler:
         configuration."""
 
         if not isinstance(run_cfg, RunConfig):
-            raise AssertionError("<run_cfg> must be an "
-                                 "instance of {}".format(RunConfig))
+            raise TypeError("<run_cfg> must be an "
+                            "instance of {}".format(RunConfig))
 
         if not type(run_cfg) in run_cfg_dict:
             raise NotImplementedError(
