@@ -4,7 +4,7 @@ from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.variable import Var
 
 
-class PlasticNeuronProcess:
+class LearningNeuronProcess:
     """
     Base class for plastic neuron processes.
 

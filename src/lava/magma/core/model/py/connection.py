@@ -28,7 +28,7 @@ NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
-class PlasticConnection:
+class LearningConnection:
 
     # Learning Ports
     s_in_bap = None
@@ -352,7 +352,7 @@ class PlasticConnection:
         self.ty = np.zeros_like(self.ty)
 
 
-class PlasticConnectionModelBitApproximate(PlasticConnection):
+class LearningConnectionModelBitApproximate(LearningConnection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
 
@@ -1056,7 +1056,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
         )
 
 
-class PlasticConnectionModelFloat(PlasticConnection):
+class LearningConnectionModelFloat(LearningConnection):
     """Floating-point implementation of the Connection Process
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses

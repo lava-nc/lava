@@ -11,7 +11,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class PlasticConnectionProcess(AbstractProcess):
+class LearningConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
