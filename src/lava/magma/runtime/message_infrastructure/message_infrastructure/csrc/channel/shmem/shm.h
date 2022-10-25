@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <memory>
+#include <map>
 #include <set>
 #include <string>
 #include <atomic>
@@ -80,8 +81,6 @@ using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
 class SharedMemManager {
  public:
-  ~SharedMemManager();
-
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
     int random = std::rand();
@@ -96,7 +95,7 @@ class SharedMemManager {
       LAVA_LOG_ERR("Resize shared memory segment failed.\n");
       exit(-1);
     }
-    shm_strs_.insert(str);
+    shm_fd_strs_.insert({shmfd, str});
     std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
     sem_strs_.insert(shm->GetReq());
     sem_strs_.insert(shm->GetAck());
@@ -104,14 +103,14 @@ class SharedMemManager {
     return shm;
   }
 
-  void DeleteSharedMemory(const std::string &shm_str);
+  void DeleteSharedAllMemory();
   friend SharedMemManager &GetSharedMemManager();
 
  private:
   SharedMemManager() {
     std::srand(std::time(nullptr));
   }
-  std::set<std::string> shm_strs_;
+  std::map<int, std::string> shm_fd_strs_;
   std::set<std::string> sem_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";

@@ -117,6 +117,14 @@
   DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
 } while (0)
 
+#define LAVA_ASSERT_INT(result, expectation) do { \
+  if (int r = (result) != expectation) { \
+    LAVA_LOG_ERR("Assert failed, %d get, %d except. Errno: %d\n", \
+                 r, 0, errno); \
+    exit(-1); \
+  } \
+} while (0)
+
 namespace message_infrastructure {
 
 enum LogLevel {

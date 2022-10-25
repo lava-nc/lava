@@ -45,8 +45,8 @@ bool SharedMemory::Load(HandleFn consume_fn) {
 }
 
 void SharedMemory::Close() {
-  sem_close(req_);
-  sem_close(ack_);
+  LAVA_ASSERT_INT(sem_close(req_), 0);
+  LAVA_ASSERT_INT(sem_close(ack_), 0);
 }
 
 std::string SharedMemory::GetReq() {
@@ -65,10 +65,6 @@ void* SharedMemory::MemMap() {
 
 int SharedMemory::GetDataElem(int offset) {
   return static_cast<int>(*(reinterpret_cast<char*>(data_) + offset));
-}
-
-SharedMemory::~SharedMemory() {
-  Close();
 }
 
 RwSharedMemory::RwSharedMemory(const size_t &mem_size,
@@ -93,7 +89,7 @@ void RwSharedMemory::Handle(HandleFn handle_fn) {
 }
 
 void RwSharedMemory::Close() {
-  sem_close(sem_);
+  LAVA_ASSERT_INT(sem_close(sem_), 0);
 }
 
 void* RwSharedMemory::GetData() {
@@ -101,33 +97,23 @@ void* RwSharedMemory::GetData() {
                        MAP_SHARED, shmfd_, 0));
 }
 
-RwSharedMemory::~RwSharedMemory() {
-  Close();
-  sem_unlink(sem_name_.c_str());
-}
-
-void SharedMemManager::DeleteSharedMemory(const std::string &shm_str) {
-  // Release specific shared memory
-  if (shm_strs_.find(shm_str) != shm_strs_.end()) {
-    shm_unlink(shm_str.c_str());
-    shm_strs_.erase(shm_str);
-  } else {
-    LAVA_LOG_WARN(LOG_SMMP,
-                  "There is no shmem whose name is %s.\n",
-                  shm_str.c_str());
-  }
-}
-
-SharedMemManager::~SharedMemManager() {
+void SharedMemManager::DeleteSharedAllMemory() {
   int result = 0;
-  for (auto it = shm_strs_.begin(); it != shm_strs_.end(); it++) {
-    shm_unlink(it->c_str());
+  LAVA_DEBUG(LOG_SMMP, "Delete: Number of shm to free: %zd.\n",
+             shm_fd_strs_.size());
+  LAVA_DEBUG(LOG_SMMP, "Delete: Number of sem to free: %zd.\n",
+             sem_strs_.size());
+  for (auto const& it : shm_fd_strs_) {
+    LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
+    LAVA_DEBUG(LOG_SMMP, "Shm fd and name close: %s %d\n",
+               it.second.c_str(), it.first);
+    LAVA_ASSERT_INT(close(it.first), 0);
   }
   for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
-    sem_unlink(it->c_str());
+    LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
   }
   sem_strs_.clear();
-  shm_strs_.clear();
+  shm_fd_strs_.clear();
 }
 
 SharedMemManager SharedMemManager::smm_;
