@@ -35,7 +35,6 @@ class SharedMemory {
   SharedMemory() {}
   SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
   SharedMemory(const size_t &mem_size, const int &shmfd);
-  ~SharedMemory();
   void Start();
   bool Load(HandleFn consume_fn);
   void Store(HandleFn store_fn);
@@ -60,7 +59,6 @@ class SharedMemory {
 class RwSharedMemory {
  public:
   RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
-  ~RwSharedMemory();
   void InitSemaphore();
   void Start();
   void Handle(HandleFn handle_fn);
