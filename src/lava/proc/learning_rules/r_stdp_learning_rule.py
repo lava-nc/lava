@@ -14,12 +14,8 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
-<<<<<<< HEAD
 from lava.magma.core.learning.learning_rule import LoihiUCLearningRule
-=======
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.learning.utils import float_to_literal
->>>>>>> BS/dev/learning_three_factor
 
 
 class RewardModulatedSTDP(LoihiUCLearningRule):
@@ -81,13 +77,11 @@ class RewardModulatedSTDP(LoihiUCLearningRule):
 
         # Trace decay constants
         x1_tau = self.pre_trace_decay_tau
-        y1_tau = self.post_trace_decay_tau
-        y2_tau = 2 ** 32 - 1
 
         # Eligibility trace represented as dt
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
              f"{self.learning_rate} * {self.A_minus} * u0 * y3 * x1 -" \
-             f"u0 * t * {eligibility_trace_decay_tau}"
+             f"u0 * t * {self.eligibility_trace_decay_tau}"
 
         # Reward-modulated weight update
         dw = " u0 * t * y2 "

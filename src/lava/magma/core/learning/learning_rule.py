@@ -567,6 +567,7 @@ class LoihiLearningRule:
 class LoihiHCLearningRule(LoihiLearningRule):
     pass
 
+
 class LoihiUCLearningRule(LoihiLearningRule):
     """Encapsulation of learning-related information according to Loihi.
 
@@ -637,7 +638,7 @@ class LoihiUCLearningRule(LoihiLearningRule):
         super().__init__(dw=dw, dd=dd, dt=dt,
                          x1_impulse=x1_impulse, x1_tau=x1_tau,
                          x2_impulse=x2_impulse, x2_tau=x2_tau,
-                         y1_impulse=0, y1_tau=2**32-1,
-                         y2_impulse=0, y2_tau=2**32-1,
-                         y3_impulse=0, y3_tau=2**32-1,
+                         y1_impulse=0, y1_tau=2 ** 32 - 1,
+                         y2_impulse=0, y2_tau=2 ** 32 - 1,
+                         y3_impulse=0, y3_tau=2 ** 32 - 1,
                          t_epoch=t_epoch, rng_seed=rng_seed)

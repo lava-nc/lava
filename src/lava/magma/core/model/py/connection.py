@@ -6,7 +6,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 import typing
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule, LoihiHCLearningRule, LoihiUCLearningRule
+from lava.magma.core.learning.learning_rule import (
+    LoihiLearningRule,
+    LoihiHCLearningRule,
+    LoihiUCLearningRule,
+)
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
