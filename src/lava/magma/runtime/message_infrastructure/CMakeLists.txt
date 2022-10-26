@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5)
 project(message_passing)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,90 +6,89 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(GRPC_CHANNEL "Use grpc_channel" ON)
 if(GRPC_CHANNEL)
-    add_definitions(-DGRPC_CHANNEL)
+  add_definitions(-DGRPC_CHANNEL)
 endif()
 
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
-    find_package(pybind11 REQUIRED)
+  find_package(pybind11 REQUIRED)
 endif()
 
 set(MESSAGE_INFRASTRUCTURE_SRCS
-    "message_infrastructure/csrc/core/abstract_actor.cc"
-    "message_infrastructure/csrc/core/abstract_port.cc"
-    "message_infrastructure/csrc/core/multiprocessing.cc"
-    "message_infrastructure/csrc/core/abstract_port_implementation.cc"
-    "message_infrastructure/csrc/core/ports.cc"
-    "message_infrastructure/csrc/core/message_infrastructure_logging.cc"
-    "message_infrastructure/csrc/actor/posix_actor.cc"
-    "message_infrastructure/csrc/channel/shmem/shm.cc"
-    "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
-    "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
-
-    "message_infrastructure/csrc/channel/socket/socket.cc"
-    "message_infrastructure/csrc/channel/socket/socket_channel.cc"
-    "message_infrastructure/csrc/channel/socket/socket_port.cc"
-    )
+	"message_infrastructure/csrc/core/abstract_actor.cc"
+	"message_infrastructure/csrc/core/abstract_port.cc"
+	"message_infrastructure/csrc/core/multiprocessing.cc"
+	"message_infrastructure/csrc/core/abstract_port_implementation.cc"
+	"message_infrastructure/csrc/core/ports.cc"
+	"message_infrastructure/csrc/core/message_infrastructure_logging.cc"
+	"message_infrastructure/csrc/actor/posix_actor.cc"
+	"message_infrastructure/csrc/channel/shmem/shm.cc"
+	"message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
+	"message_infrastructure/csrc/channel/shmem/shmem_port.cc"
+	"message_infrastructure/csrc/channel/socket/socket.cc"
+	"message_infrastructure/csrc/channel/socket/socket_channel.cc"
+	"message_infrastructure/csrc/channel/socket/socket_port.cc"
+)
 
 
 if(GRPC_CHANNEL)
-    add_subdirectory("message_infrastructure/csrc/channel/grpc")
-    set(GRPC_CHANNEL_SRCS
-    "message_infrastructure/csrc/channel/grpc/grpc.cc"
-    "message_infrastructure/csrc/channel/grpc/grpc_port.cc"
-    "message_infrastructure/csrc/channel/grpc/grpc_channel.cc"
-    "message_infrastructure/csrc/channel/grpc/build/grpcchannel.pb.cc"
-    "message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.cc"
-    )
+	add_subdirectory("message_infrastructure/csrc/channel/grpc")
+	set(GRPC_CHANNEL_SRCS
+		"message_infrastructure/csrc/channel/grpc/grpc.cc"
+		"message_infrastructure/csrc/channel/grpc/grpc_port.cc"
+		"message_infrastructure/csrc/channel/grpc/grpc_channel.cc"
+		"message_infrastructure/csrc/channel/grpc/build/grpcchannel.pb.cc"
+		"message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.cc"
+	)
     
-    add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS} ${GRPC_CHANNEL_SRCS})
+  add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS} ${GRPC_CHANNEL_SRCS})
 else()
-    add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+  add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
 endif()
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
 
 target_compile_definitions(message_infrastructure PRIVATE
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},info>:MSG_LOG_LEVEL_INFO>
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},err>:MSG_LOG_LEVEL_ERRO>
-                          $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},info>:MSG_LOG_LEVEL_INFO>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},err>:MSG_LOG_LEVEL_ERRO>
+														$<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
                           )
 
 target_compile_definitions(message_infrastructure PRIVATE
-                           $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
+                           	 $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
                            )
 
 target_include_directories(message_infrastructure PUBLIC
-                           ${PROJECT_SOURCE_DIR}
+														 ${PROJECT_SOURCE_DIR}
                            )
 
 target_link_libraries(message_infrastructure
-                      rt
-                      grpc_proto
+												rt
+												grpc_proto
                       )
 
 if(PY_WRAPPER)
-    set(PY_WRAPPER_SRCS
-        "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
-        "message_infrastructure/csrc/channel_proxy.cc"
-        "message_infrastructure/csrc/port_proxy.cc"
-        )
+	set(PY_WRAPPER_SRCS
+				"message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
+				"message_infrastructure/csrc/channel_proxy.cc"
+				"message_infrastructure/csrc/port_proxy.cc"
+			)
 
-    pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
-    target_include_directories(MessageInfrastructurePywrapper PUBLIC
-                               ${NUMPY_INCLUDE_DIRS}
-                               )
-    target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
+	pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
+	target_include_directories(MessageInfrastructurePywrapper PUBLIC
+																${NUMPY_INCLUDE_DIRS}
+															)
+	target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("debug mode and enable cpp unit test")
-    enable_testing()
-    add_subdirectory(test)
+	message("debug mode and enable cpp unit test")
+	enable_testing()
+	add_subdirectory(test)
 else()
-    message("not debug mode and disable cpp unit test")
+	message("not debug mode and disable cpp unit test")
 endif()
