@@ -37,6 +37,12 @@ Then go back to `src/lava/magma/runtime/message_infrastructure/build` and run,
 ```
 $ cmake .. -DGRPC_CHANNEL=ON
 ```
+
+Note : If your env is using http/https proxy, please unable the proxy to use grpc channel. You could use the commands in your ternimal,
+```
+$ unset http_proxy
+$ unset https_proxy
+```
 ### 3. Compile with makefile
 Run the command,
 ```
