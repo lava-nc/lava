@@ -413,8 +413,8 @@ class TestQuboScifModels(unittest.TestCase):
         self.assertTrue(np.all(
             v_lif_sig[sig_spk_rfct_interrupt] == cost_diag_coeff))
         # # Test post-inhibitory-injection SCIF voltage and spiking
-        idx_lst = [inj_times[2] + 2 + j *
-                   total_period for j in range(num_epochs)]
+        idx_lst = [inj_times[2] + 2 + j * total_period for j in range(
+            num_epochs)]
         spk_idxs_post_inj = np.array(idx_lst).astype(int)
         wta_pos_spk_idxs = spk_idxs_post_inj + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
