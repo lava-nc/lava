@@ -166,7 +166,6 @@ class TestChannel(unittest.TestCase):
         recv_port.start()
 
         send_port.send(predata)
-
         resdata = recv_port.recv()
 
         if not np.array_equal(resdata, predata):
@@ -179,20 +178,12 @@ class TestChannel(unittest.TestCase):
         mp = MultiProcessing()
         mp.start()
         size = 5
-        #nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_grpc_channel'
-        url = '127.13.2.1:'
-        port = 8001
-        #grpc_channel = GetRPCChannel(
-        #    url,
-        #    port,
-        #    name,
-        #    name,
-        #    size)
         grpc_channel = GetRPCChannel(
             name,
             name,
             size)
+
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
 
@@ -210,21 +201,16 @@ class TestChannel(unittest.TestCase):
     def test_single_process_grpcchannel(self):
         size = 3
         predata = prepare_data()
-        #nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_grpc_channel'
-
         url = '127.13.2.2:'
         port = 8002
-        #grpc_channel = GetRPCChannel(
-        #    url,
-        #    port,
-        #    name,
-        #    name,
-        #    size)
         grpc_channel = GetRPCChannel(
+            url,
+            port,
             name,
             name,
             size)
+
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
         

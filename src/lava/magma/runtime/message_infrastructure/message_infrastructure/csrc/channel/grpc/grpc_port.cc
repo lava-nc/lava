@@ -71,23 +71,23 @@ GrpcRecvPort::GrpcRecvPort(const std::string& name,
                            size_(size),
                            done_(false),
                            url_(url) {
-  serviceptr = std::make_shared<GrpcChannelServerImpl>(name_, size_);
+  serviceptr_ = std::make_shared<GrpcChannelServerImpl>(name_, size_);
 }
 void GrpcRecvPort::Start() {
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   builder_.AddListeningPort(url_, grpc::InsecureServerCredentials());
-  builder_.RegisterService(serviceptr.get());
+  builder_.RegisterService(serviceptr_.get());
   server_ = builder_.BuildAndStart();
 }
 MetaDataPtr GrpcRecvPort::Recv() {
-  GrpcMetaDataPtr recvdata = serviceptr->Pop(true);
+  GrpcMetaDataPtr recvdata = serviceptr_->Pop(true);
   MetaDataPtr data_ = std::make_shared<MetaData>();
   GrpcMetaData2MetaData(data_, recvdata);
   return data_;
 }
 MetaDataPtr GrpcRecvPort::Peek() {
-  GrpcMetaDataPtr peekdata = serviceptr->Front();
+  GrpcMetaDataPtr peekdata = serviceptr_->Front();
   MetaDataPtr data_ = std::make_shared<MetaData>();
   GrpcMetaData2MetaData(data_, peekdata);
   return data_;
@@ -95,12 +95,12 @@ MetaDataPtr GrpcRecvPort::Peek() {
 void GrpcRecvPort::Join() {
   if (!done_) {
     done_ = true;
-    serviceptr->Stop();
+    serviceptr_->Stop();
     server_->Shutdown();
   }
 }
 bool GrpcRecvPort::Probe() {
-  return serviceptr->Probe();
+  return serviceptr_->Probe();
 }
 void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
                                          GrpcMetaDataPtr grpcdata) {

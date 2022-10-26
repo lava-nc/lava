@@ -18,10 +18,7 @@ GrpcChannel::GrpcChannel(const std::string &url,
                          const std::string &dst_name,
                          const size_t &size) {
   std::string url_ = url + std::to_string(port);
-  bool ret = GetGrpcManager().CheckURL(url_);
-  if (!ret) {
-    LAVA_LOG_ERR("URL is used");
-  }
+  GetGrpcManager().CheckURL(url_);
   send_port_ = std::make_shared<GrpcSendPort>(src_name, size, url_);
   recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);
 }
@@ -30,6 +27,8 @@ GrpcChannel::GrpcChannel(const std::string &src_name,
                          const std::string &dst_name,
                          const size_t &size) {
   std::string  url_ = GetGrpcManager().AllocURL();
+  GetGrpcManager().CheckURL(url_);
+
   send_port_ = std::make_shared<GrpcSendPort>(src_name, size, url_);
   recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);
 }

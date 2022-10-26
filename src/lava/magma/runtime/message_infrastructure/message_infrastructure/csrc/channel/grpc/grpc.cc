@@ -8,8 +8,6 @@ namespace message_infrastructure {
 
 GrpcManager GrpcManager::grpcm_;
 GrpcManager::~GrpcManager() {
-  port_num_ = 0;
-  url_num_ = 0;
   url_set_.clear();
 }
 GrpcManager& GetGrpcManager() {

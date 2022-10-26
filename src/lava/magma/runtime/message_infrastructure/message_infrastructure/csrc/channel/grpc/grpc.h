@@ -18,17 +18,16 @@ namespace message_infrastructure {
 class GrpcManager {
  public:
   ~GrpcManager();
-  bool CheckURL(const std::string &url) {
-    if (url_set_.count(url))
-      return false;
+  void CheckURL(const std::string &url) {
+    if (url_set_.count(url)) {
+      LAVA_LOG_ERR("URL is used, Throw an exception\n");
+      throw;
+    }
     url_set_.insert(url);
-    return true;
   }
-
   std::string AllocURL() {
-    std::string url = base_url_ + std::to_string(url_num_) \
+    std::string url = base_url_ + std::to_string(url_num_)
                       + base_port_+std::to_string(port_num_);
-    url_set_.insert(url);
     url_num_++;
     port_num_++;
     return url;
@@ -44,7 +43,6 @@ class GrpcManager {
   static GrpcManager grpcm_;
   std::set<std::string> url_set_;
 };
-
 
 GrpcManager& GetGrpcManager();
 
