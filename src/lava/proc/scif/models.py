@@ -197,7 +197,7 @@ class PyModelQuboScifFixed(PyLoihiProcessModel):
     noise_ampl: np.ndarray = LavaPyType(np.ndarray, int, precision=1)
 
     cost_diagonal: np.ndarray = LavaPyType(np.ndarray, int, precision=24)
-    noise_prec: np.ndarray = LavaPyType(np.ndarray, int, precision=24)
+    noise_shift: np.ndarray = LavaPyType(np.ndarray, int, precision=24)
 
     def __init__(self, proc_params):
         super(PyModelQuboScifFixed, self).__init__(proc_params)
@@ -212,10 +212,11 @@ class PyModelQuboScifFixed(PyLoihiProcessModel):
         prand = np.zeros(shape=self.state.shape)
         if prand.size > 0:
             rand_nums = \
-                np.random.randint(-2 ** 15, 2 ** 15 - 1, size=prand.size)
+                np.random.randint(0, (2 ** 16) - 1, size=prand.size)
             # Assign random numbers only to neurons, for which noise is enabled
             prand = np.right_shift((rand_nums * self.noise_ampl).astype(int),
-                                   16 - self.noise_prec)
+                                   self.noise_shift)
+
         return prand
 
     def _update_buffers(self):
@@ -225,8 +226,11 @@ class PyModelQuboScifFixed(PyLoihiProcessModel):
         spk_hist_buffer = self.spk_hist.copy()
         spk_hist_buffer &= 1
         self.spk_hist <<= 1
-        # Overflow 8-bit unsigned beta to 0
-        self.spk_hist[self.spk_hist >= 256] = 0
+        # The following ensures that we flush all history beyond 3 timesteps
+        # The number '3' comes from the fact that it takes 3 timesteps to
+        # read out solutions after a minimum cost is detected (due to
+        # downstream connected process-chain)
+        self.spk_hist &= 7
 
         return spk_hist_buffer
 
@@ -262,7 +266,7 @@ class PyModelQuboScifFixed(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         # Receive synaptic input
-        self.a_in_data = self.a_in.recv()
+        self.a_in_data = self.a_in.recv().astype(int)
 
         # !! Side effect: Changes self.beta !!
         spk_hist_buffer = self._update_buffers()

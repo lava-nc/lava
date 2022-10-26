@@ -55,19 +55,19 @@ class ReadGatePyModel(PyLoihiProcessModel):
             print("Found a solution with cost: ", self.min_cost)
             self.cost_out.send(np.asarray([0]))
             self.acknowledgemet.recv()
-            self.send_pause_request.send(np.asarray([0]))
+            self.send_pause_request.send(np.asarray([self.time_step]))
             self.acknowledgemet.recv()
         elif self.solution is not None:
             self.cost_out.send(np.asarray([self.min_cost]))
             self.solution_out.send(self.solution)
-            self.send_pause_request.send(np.asarray([0]))
+            self.send_pause_request.send(np.asarray([self.time_step]))
             self.acknowledgemet.recv()
             self.solution = None
             self.min_cost = None
         else:
             self.cost_out.send(np.asarray([0]))
             self.acknowledgemet.recv()
-            self.send_pause_request.send(np.asarray([0]))
+            self.send_pause_request.send(np.asarray([-1]))
             self.acknowledgemet.recv()
 
     def run_post_mgmt(self):

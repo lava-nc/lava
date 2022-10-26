@@ -36,10 +36,6 @@ class AbstractScif(AbstractProcess):
         theta: int
             threshold above which a SCIF neuron would fire winner-take-all
             spike. Default is 4 (arbitrary).
-        neg_tau_ref: int
-            refractory time period (in number of algorithmic time-steps) for a
-            SCIF neuron after firing winner-take-all spike. Default is -5 (
-            arbitrary).
         """
         super().__init__(shape=shape)
 
@@ -92,11 +88,13 @@ class QuboScif(AbstractScif):
                  step_size: ty.Optional[int] = 1,
                  theta: ty.Optional[int] = 4,
                  noise_amplitude: ty.Optional[int] = 0,
-                 noise_precision: ty.Optional[int] = 8):
+                 noise_shift: ty.Optional[int] = 8):
 
         super(QuboScif, self).__init__(shape=shape,
                                        step_size=step_size,
                                        theta=theta,
                                        noise_amplitude=noise_amplitude)
         self.cost_diagonal = Var(shape=shape, init=cost_diag)
-        self.noise_prec = Var(shape=shape, init=noise_precision)
+        # User provides a desired precision. We convert it to the amount by
+        # which unsigned 16-bit noise is right-shifted:
+        self.noise_shift = Var(shape=shape, init=noise_shift)
