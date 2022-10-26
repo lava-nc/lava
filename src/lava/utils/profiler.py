@@ -7,10 +7,10 @@ import typing as ty
 from lava.magma.core.run_configs import RunConfig, Loihi2HwCfg
 
 # Dictionary to relate a certain RunCfg to specific Profiler
-run_cfg_dict: ty.Dict[RunConfig, RunConfig] = {}
+run_cfg_dict: ty.Dict[RunConfig, 'Profiler'] = {}
 
 try:
-    from lava.utils.l2_profiler import Loihi2HWProfiler
+    from lava.utils.loihi2_profiler_api import Loihi2HWProfiler
     run_cfg_dict[Loihi2HwCfg] = Loihi2HWProfiler
 except ModuleNotFoundError:
     warnings.warn("Loihi2HWProfiler could not be imported. "
@@ -19,13 +19,13 @@ except ModuleNotFoundError:
 
 class Profiler:
     """Base class for profiling execution time, energy and other
-    metrics on different Resources. Depending on the computing
+    metrics on different resources. Depending on the computing
     ressource an appropriate profiler needs to be chosen. The run
     configuration is used to choose the related profiler, if there
     is one."""
 
     @staticmethod
-    def init(run_cfg: RunConfig):
+    def init(run_cfg: RunConfig) -> 'Profiler':
         """Decide which profiler is needed based on the run
         configuration."""
 
