@@ -134,8 +134,9 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
             self.y3 = self.y3 & False
 
 
-def plot_spikes(spikes, figsize, legend, colors, title):
+def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     offsets = list(range(1, len(spikes) + 1))
+    num_x_ticks = np.arange(0, num_steps+1, 25)
     
     plt.figure(figsize=figsize)
     
@@ -143,26 +144,36 @@ def plot_spikes(spikes, figsize, legend, colors, title):
                                 lineoffsets=offsets,
                                 linelength=0.9,
                                 colors=colors)
-    
+
     plt.title(title)
     plt.xlabel("Time steps")
     plt.ylabel("Neurons")
+
+    plt.xticks(num_x_ticks)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.8)
+    plt.minorticks_on()
+    
     plt.yticks(ticks=offsets, labels=legend)
+
     
     plt.show()
 
 def plot_time_series(time, time_series, ylabel, title, figsize, color):
     plt.figure(figsize=figsize)
-    
     plt.step(time, time_series, color=color)
    
     plt.title(title)
     plt.xlabel("Time steps")
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.8)
+    plt.minorticks_on()
+
     plt.ylabel(ylabel)
     
     plt.show()
 
-def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, title, figsize, color, legend):    
+def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, title, figsize, color, legend, leg_loc="upper left"):    
     plt.figure(figsize=figsize)
     
     plt.step(time, time_series_y1, label=legend[0], color=color[0])
@@ -171,6 +182,10 @@ def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, titl
     plt.title(title)
     plt.xlabel("Time steps")
     plt.ylabel(ylabel)
-    plt.legend(loc="upper left")
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.8)
+    plt.minorticks_on()
+
+    plt.legend(loc=leg_loc)
     
     plt.show()

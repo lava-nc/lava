@@ -334,8 +334,13 @@ class LearningConnection:
 
     def recv_traces(self, s_in) -> None:
         """
-        Overrides the Connection Model run_spk function to
-        receive and update y2 and y3 traces.
+        Function to receive and update y1, y2 and y3 traces
+        from the post-synaptic neuron.
+
+        Parameters
+        ----------
+        s_in : np.adarray
+            Synaptic spike input
         """
         self._record_pre_spike_times(s_in)
 
