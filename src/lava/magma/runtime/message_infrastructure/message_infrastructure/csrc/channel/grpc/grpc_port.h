@@ -112,4 +112,3 @@ using GrpcSendPortPtr = std::shared_ptr<GrpcSendPort>;
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_GRPC_GRPC_PORT_H_
-
