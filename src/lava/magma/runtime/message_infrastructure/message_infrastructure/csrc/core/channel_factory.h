@@ -20,15 +20,14 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
-  AbstractChannelPtr GetChannel(
-      const ChannelType &channel_type,
-      const size_t &size,
-      const size_t &nbytes,
-      const std::string &src_name,
-      const std::string &dst_name) {
+  AbstractChannelPtr GetChannel(const ChannelType &channel_type,
+                                const size_t &size,
+                                const size_t &nbytes,
+                                const std::string &src_name,
+                                const std::string &dst_name) {
     switch (channel_type) {
       // case RPCCHANNEL:
-        // return GetGrpcChannel(size, src_name, dst_name);// reserve?
+        // return GetGrpcChannel(size, src_name, dst_name);
       case DDSCHANNEL:
         break;
       case SOCKETCHANNEL:
@@ -38,6 +37,7 @@ class ChannelFactory {
     }
     return NULL;
   }
+
   friend ChannelFactory& GetChannelFactory();
 
   AbstractChannelPtr GetRPCChannel(const std::string &url,
@@ -45,11 +45,13 @@ class ChannelFactory {
                                    const std::string &src_name,
                                    const std::string &dst_name,
                                    const size_t &size) {
-  return std::make_shared<GrpcChannel>(url,
-                                       port,
-                                       src_name,
-                                       dst_name,
-                                       size);
+  return std::make_shared<GrpcChannel>(url, port, src_name, dst_name, size);
+}
+
+  AbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
+                                      const std::string &dst_name,
+                                      const size_t &size) {
+  return std::make_shared<GrpcChannel>(src_name, dst_name, size);
 }
 
  private:
@@ -64,10 +66,6 @@ ChannelFactory& GetChannelFactory() {
   ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
   return channel_factory;
 }
-
-
-
-
 
 }  // namespace message_infrastructure
 

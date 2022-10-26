@@ -88,6 +88,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
 
   py::class_<GetRPCChannelProxy, std::shared_ptr<GetRPCChannelProxy>> (m, "GetRPCChannel")
     .def(py::init<std::string, int, std::string, std::string, size_t>())
+    .def(py::init<std::string, std::string, size_t>())
     .def_property_readonly("src_port", &GetRPCChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &GetRPCChannelProxy::GetRecvPort,

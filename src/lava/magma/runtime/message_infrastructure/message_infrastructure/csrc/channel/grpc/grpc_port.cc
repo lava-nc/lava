@@ -33,35 +33,35 @@ GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              :name_(name),
                                              size_(size),
                                              done_(false) {
-  recvqueue = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_, size_);
+  recv_queue_ = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_, size_);
 }
 Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
                                             const GrpcMetaData *request,
                                             DataReply* reply) {
   bool rep = true;
-  while (recvqueue->AvailableCount() <=0) {
+  while (recv_queue_->AvailableCount() <=0) {
     helper::Sleep();
     if (done_) {
       rep = false;
       return Status::OK;
     }
   }
-  recvqueue->Push(std::make_shared<GrpcMetaData>(*request));
+  recv_queue_->Push(std::make_shared<GrpcMetaData>(*request));
   reply->set_ack(rep);
   return Status::OK;
 }
 GrpcMetaDataPtr GrpcChannelServerImpl::Pop(bool block) {
-  return recvqueue->Pop(block);
+  return recv_queue_->Pop(block);
 }
 GrpcMetaDataPtr GrpcChannelServerImpl::Front() {
-  return recvqueue->Front();
+  return recv_queue_->Front();
 }
 bool GrpcChannelServerImpl::Probe() {
-  return recvqueue->Probe();
+  return recv_queue_->Probe();
 }
 void GrpcChannelServerImpl::Stop() {
   done_ = true;
-  recvqueue->Stop();
+  recv_queue_->Stop();
 }
 
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
@@ -76,9 +76,9 @@ GrpcRecvPort::GrpcRecvPort(const std::string& name,
 void GrpcRecvPort::Start() {
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-  builder.AddListeningPort(url_, grpc::InsecureServerCredentials());
-  builder.RegisterService(serviceptr.get());
-  server_ = builder.BuildAndStart();
+  builder_.AddListeningPort(url_, grpc::InsecureServerCredentials());
+  builder_.RegisterService(serviceptr.get());
+  server_ = builder_.BuildAndStart();
 }
 MetaDataPtr GrpcRecvPort::Recv() {
   GrpcMetaDataPtr recvdata = serviceptr->Pop(true);
@@ -113,15 +113,16 @@ void GrpcRecvPort::GrpcMetaData2MetaData(MetaDataPtr metadata,
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
   }
-  std::memcpy(data, grpcdata->value().c_str(),
+  std::memcpy(data,
+              grpcdata->value().c_str(),
               metadata->elsize*metadata->total_size);
   metadata->mdata = data;
 }
 
 
 void GrpcSendPort::Start() {
-  channel = grpc::CreateChannel(url_, grpc::InsecureChannelCredentials());
-  stub_ = GrpcChannelServer::NewStub(channel);
+  channel_ = grpc::CreateChannel(url_, grpc::InsecureChannelCredentials());
+  stub_ = GrpcChannelServer::NewStub(channel_);
 }
 GrpcMetaData GrpcSendPort::MetaData2GrpcMetaData(MetaDataPtr metadata) {
   GrpcMetaData grpcdata;

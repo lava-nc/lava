@@ -35,6 +35,9 @@ class GetRPCChannelProxy {
                      const std::string &src_name,
                      const std::string &dst_name,
                      const size_t &size);
+  GetRPCChannelProxy(const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size);
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:

@@ -20,10 +20,8 @@ class RecvQueue{
  public:
   RecvQueue(const std::string& name,
             const size_t &size)
-    : name_(name), size_(size),
-    read_index_(0), write_index_(0), done_(false)  {
-    
-    array_.resize(size_);
+    : name_(name), size_(size), read_index_(0), write_index_(0), done_(false)  {
+    array_.reserve(size_);
   }
   void Push(T val) {
     auto const curr_write_index = write_index_.load(std::memory_order_relaxed);

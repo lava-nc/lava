@@ -7,7 +7,11 @@
 namespace message_infrastructure {
 
 GrpcManager GrpcManager::grpcm_;
-
+GrpcManager::~GrpcManager() {
+  port_num_ = 0;
+  url_num_ = 0;
+  urls_.clear();
+}
 GrpcManager& GetGrpcManager() {
   GrpcManager &grpcm = GrpcManager::grpcm_;
   return grpcm;

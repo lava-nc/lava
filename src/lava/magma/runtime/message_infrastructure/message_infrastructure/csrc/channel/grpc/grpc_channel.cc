@@ -25,6 +25,15 @@ GrpcChannel::GrpcChannel(const std::string &url,
   send_port_ = std::make_shared<GrpcSendPort>(src_name, size, url_);
   recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);
 }
+
+GrpcChannel::GrpcChannel(const std::string &src_name,
+                         const std::string &dst_name,
+                         const size_t &size) {
+  std::string  url_ = GetGrpcManager().AllocURL();
+  send_port_ = std::make_shared<GrpcSendPort>(src_name, size, url_);
+  recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);
+}
+
 AbstractSendPortPtr GrpcChannel::GetSendPort() {
   return send_port_;
 }

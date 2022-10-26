@@ -183,13 +183,16 @@ class TestChannel(unittest.TestCase):
         name = 'test_grpc_channel'
         url = '127.13.2.1:'
         port = 8001
+        #grpc_channel = GetRPCChannel(
+        #    url,
+        #    port,
+        #    name,
+        #    name,
+        #    size)
         grpc_channel = GetRPCChannel(
-            url,
-            port,
             name,
             name,
             size)
-
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
 
@@ -212,9 +215,13 @@ class TestChannel(unittest.TestCase):
 
         url = '127.13.2.2:'
         port = 8002
+        #grpc_channel = GetRPCChannel(
+        #    url,
+        #    port,
+        #    name,
+        #    name,
+        #    size)
         grpc_channel = GetRPCChannel(
-            url,
-            port,
             name,
             name,
             size)

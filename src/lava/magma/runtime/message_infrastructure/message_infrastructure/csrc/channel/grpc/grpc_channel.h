@@ -21,6 +21,9 @@ class GrpcChannel : public AbstractChannel {
               const std::string &src_name,
               const std::string &dst_name,
               const size_t &size);
+  GrpcChannel(const std::string &src_name,
+              const std::string &dst_name,
+              const size_t &size);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:

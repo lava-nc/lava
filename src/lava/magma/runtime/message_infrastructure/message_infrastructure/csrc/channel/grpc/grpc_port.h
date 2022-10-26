@@ -50,7 +50,7 @@ class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
   void Stop();
 
  private:
-  std::shared_ptr<RecvQueue<GrpcMetaDataPtr>> recvqueue;
+  std::shared_ptr<RecvQueue<GrpcMetaDataPtr>> recv_queue_;
   std::string name_;
   size_t size_;
   std::atomic_bool done_;
@@ -70,7 +70,7 @@ class GrpcRecvPort final : public AbstractRecvPort{
     bool Probe();
     void GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
  private:
-  ServerBuilder builder;
+  ServerBuilder builder_;
   std::atomic_bool done_;
   std::unique_ptr<Server> server_;
   ServerImplPtr serviceptr;
@@ -98,7 +98,7 @@ class GrpcSendPort final : public AbstractSendPort{
   GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata);
 
  private:
-  std::shared_ptr<Channel> channel;
+  std::shared_ptr<Channel> channel_;
   std::atomic_bool done_;
   std::unique_ptr<GrpcChannelServer::Stub> stub_;
   ThreadPtr ack_callback_thread_ = nullptr;
