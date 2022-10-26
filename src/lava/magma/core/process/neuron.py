@@ -8,16 +8,22 @@ class LearningNeuronProcess:
     """
     Base class for plastic neuron processes.
 
+    This base class holds all necessary Vars, Ports and functionality for
+    online learning in fixed and floating point simulations.
+
     Parameters
     ==========
 
-    learning_rule: Optional[LoihiLearningRule]
+    shape: tuple:
+        Shape of the neuron process.
+
+    learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
 
     """
     def __init__(self,
                  shape: ty.Tuple[int, ...],
-                 learning_rule: ty.Optional[LoihiLearningRule] = None,
+                 learning_rule: LoihiLearningRule,
                  *args,
                  **kwargs):
 

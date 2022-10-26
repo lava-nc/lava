@@ -8,10 +8,9 @@ import typing
 
 from lava.magma.core.learning.learning_rule import (
     LoihiLearningRule,
-    LoihiHCLearningRule,
-    LoihiUCLearningRule,
+    Loihi2FLearningRule,
+    Loihi3FLearningRule,
 )
-from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 
@@ -33,6 +32,48 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
 class LearningConnection:
+    """Base class for plastic connection ProcessModels.
+
+       This class provides commonly used functions for simulating the Loihi
+       learning engine. It is subclasses for floating and fixed point
+       simulations.
+
+       To summarize the behavior:
+
+       Spiking phase:
+       run_spk:
+
+           (1) (Dense) Send activations from past time step to post-synaptic
+           neuron Process.
+           (2) (Dense) Compute activations to be sent on next time step.
+           (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+           (4) (Dense) Record within-epoch pre-synaptic spiking time.
+           Update pre-synaptic traces if more than one spike during the epoch.
+           (5) Receive spikes from post-synaptic neuron Process.
+           (6) Record within-epoch pre-synaptic spiking time.
+           Update pre-synaptic traces if more than one spike during the epoch.
+           (7) Advance trace random generators.
+
+       Learning phase:
+       run_lrn:
+
+           (1) Advance synaptic variable random generators.
+           (2) Compute updates for each active synaptic variable,
+           according to associated learning rule,
+           based on the state of Vars representing dependencies and factors.
+           (3) Update traces based on within-epoch spiking times and trace
+           configuration parameters (impulse, decay).
+           (4) Reset within-epoch spiking times and dependency Vars
+
+       Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
+       delay in this connections Process. It can be adapted according to its
+       learning rule (learned), but it will not affect synaptic activity.
+
+       Parameters
+       ----------
+       proc_params: dict
+           Parameters from the ProcessModel
+       """
 
     # Learning Ports
     s_in_bap = None
@@ -291,17 +332,17 @@ class LearningConnection:
 
         return within_epoch_ts
 
-    def run_spk(self, s_in) -> None:
+    def recv_traces(self, s_in) -> None:
         """
         Overrides the Connection Model run_spk function to
         receive and update y2 and y3 traces.
         """
         self._record_pre_spike_times(s_in)
 
-        if isinstance(self._learning_rule, LoihiHCLearningRule):
+        if isinstance(self._learning_rule, Loihi2FLearningRule):
             s_in_bap = self.s_in_bap.recv().astype(bool)
             self._record_post_spike_times(s_in_bap)
-        elif isinstance(self._learning_rule, LoihiUCLearningRule):
+        elif isinstance(self._learning_rule, Loihi3FLearningRule):
             y1 = self.s_in_y1.recv()
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
@@ -1061,7 +1102,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
 
 
 class LearningConnectionModelFloat(LearningConnection):
-    """Floating-point implementation of the Connection Process
+    """Floating-point implementation of the Connection Process.
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
     written in Python, executing on CPU, and operating in floating-point

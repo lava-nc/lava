@@ -62,7 +62,17 @@ def float_to_literal(learning_parameter: float) -> str:
     result: str
         string representation of learning_parameter.
     """
-    mantissa = int(learning_parameter) + 1
+    if learning_parameter == 0:
+        return "0"
+
+    sign = int(np.sign(learning_parameter))
+
+    learning_parameter = np.abs(learning_parameter)
+    mantissa = np.max([int(learning_parameter), 1])
     remainder = learning_parameter / mantissa
+
+    if remainder == 1:
+        return f"({sign * mantissa})"
+
     exp = int(np.round(np.log2(remainder)))
-    return f"{mantissa} * 2 ^ {exp}"
+    return f"({sign * mantissa}) * 2 ^ {exp}"

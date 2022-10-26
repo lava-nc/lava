@@ -14,11 +14,11 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
-from lava.magma.core.learning.learning_rule import LoihiUCLearningRule
+from lava.magma.core.learning.learning_rule import Loihi3FLearningRule
 from lava.magma.core.learning.utils import float_to_literal
 
 
-class RewardModulatedSTDP(LoihiUCLearningRule):
+class RewardModulatedSTDP(Loihi3FLearningRule):
     def __init__(
             self,
             learning_rate: float,
@@ -63,8 +63,8 @@ class RewardModulatedSTDP(LoihiUCLearningRule):
 
         """
         self.learning_rate = float_to_literal(learning_rate)
-        self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
-        self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
+        self.A_plus = float_to_literal(A_plus)
+        self.A_minus = float_to_literal(A_minus)
         self.pre_trace_decay_tau = pre_trace_decay_tau
         self.post_trace_decay_tau = post_trace_decay_tau
         self.pre_trace_kernel_magnitude = pre_trace_kernel_magnitude
@@ -79,8 +79,8 @@ class RewardModulatedSTDP(LoihiUCLearningRule):
         x1_tau = self.pre_trace_decay_tau
 
         # Eligibility trace represented as dt
-        dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * u0 * y3 * x1 -" \
+        dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 + " \
+             f"{self.learning_rate} * {self.A_minus} * u0 * y3 * x1 - " \
              f"u0 * t * {self.eligibility_trace_decay_tau}"
 
         # Reward-modulated weight update

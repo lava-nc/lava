@@ -139,7 +139,7 @@ class PyLearningDenseModelFloat(
             s_in = self.s_in.recv().astype(bool)
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
-        super().run_spk(s_in)
+        self.recv_traces(s_in)
 
 
 @implements(proc=LearningDense, protocol=LoihiProtocol)
@@ -187,4 +187,4 @@ class PyLearningDenseModelBitApproximate(
             else np.right_shift(a_accum, -self.weight_exp)
         )
 
-        super().run_spk(s_in)
+        self.recv_traces(s_in)

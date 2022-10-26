@@ -5,6 +5,29 @@ import numpy as np
 
 
 class LearningNeuronModel(PyLoihiProcessModel):
+    """Base class for learning enables neuron models.
+
+    Implements ports and vars used by learning enabled neurons. Must be
+    inherited by floating point and fixed point implementations.
+
+    Parameters
+    ==========
+
+    proc_params: dict
+        Process parameters from the neuron model.
+
+    """
+
+    # Learning Ports
+    s_out_bap = None
+    s_out_y1 = None
+    s_out_y2 = None
+    s_out_y3 = None
+
+    # Learning states
+    y1 = None
+    y2 = None
+    y3 = None
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
@@ -13,6 +36,18 @@ class LearningNeuronModel(PyLoihiProcessModel):
 
 
 class LearningNeuronModelFixed(LearningNeuronModel):
+    """Base class for learning enables neuron models.
+
+    Implements ports and vars used by learning enabled neurons for fixed
+    point implementations.
+
+    Parameters
+    ==========
+
+    proc_params: dict
+        Process parameters from the neuron model.
+
+    """
 
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
@@ -30,6 +65,18 @@ class LearningNeuronModelFixed(LearningNeuronModel):
 
 
 class LearningNeuronModelFloat(LearningNeuronModel):
+    """Base class for learning enables neuron models.
+
+    Implements ports and vars used by learning enabled neurons for floating
+    point implementations.
+
+    Parameters
+    ==========
+
+    proc_params: dict
+        Process parameters from the neuron model.
+
+    """
 
     # Learning Ports
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool)

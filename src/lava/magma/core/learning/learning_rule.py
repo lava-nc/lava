@@ -564,12 +564,16 @@ class LoihiLearningRule:
         return product_series
 
 
-class LoihiHCLearningRule(LoihiLearningRule):
+class Loihi2FLearningRule(LoihiLearningRule):
     pass
 
 
-class LoihiUCLearningRule(LoihiLearningRule):
+class Loihi3FLearningRule(LoihiLearningRule):
     """Encapsulation of learning-related information according to Loihi.
+
+    By using the three-factor (3F) learning rule all post-synaptic traces
+    are handled by the post-synaptic neuron. Hence, the y_impulses and y_taus
+    are set to 0 resp. 2^32 to the corresponding low-pass filter.
 
     A LoihiLearningRule object has the following main objectives:
     (1) Given string representations of learning rules (equations) describing

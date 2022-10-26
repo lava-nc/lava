@@ -15,8 +15,7 @@ class LearningConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
-    online learning in fixed and floating point simulations. If the
-    learning_rule parameter is not set, plasticity is disabled.
+    online learning in fixed and floating point simulations.
 
     Attributes
     ----------
