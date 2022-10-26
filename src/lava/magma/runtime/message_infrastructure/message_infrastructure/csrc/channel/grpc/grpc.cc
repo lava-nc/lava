@@ -10,7 +10,7 @@ GrpcManager GrpcManager::grpcm_;
 GrpcManager::~GrpcManager() {
   port_num_ = 0;
   url_num_ = 0;
-  urls_.clear();
+  url_set_.clear();
 }
 GrpcManager& GetGrpcManager() {
   GrpcManager &grpcm = GrpcManager::grpcm_;

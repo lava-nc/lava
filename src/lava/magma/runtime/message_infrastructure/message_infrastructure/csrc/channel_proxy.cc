@@ -31,6 +31,7 @@ RecvPortProxyPtr ChannelProxy::GetRecvPort() {
     return recv_port_;
 }
 
+#ifdef GRPC_CHANNEL
 GetRPCChannelProxy::GetRPCChannelProxy(const std::string &url,
                                        const int &port,
                                        const std::string &src_name,
@@ -59,5 +60,5 @@ SendPortProxyPtr GetRPCChannelProxy::GetSendPort() {
 RecvPortProxyPtr GetRPCChannelProxy::GetRecvPort() {
     return recv_port_;
 }
-
+#endif
 }  // namespace message_infrastructure

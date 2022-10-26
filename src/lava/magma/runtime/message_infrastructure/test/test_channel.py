@@ -239,7 +239,7 @@ class TestChannel(unittest.TestCase):
 
         send_port.join()
         recv_port.join()
-
+ 
 
 if __name__ == "__main__":
     unittest.main()

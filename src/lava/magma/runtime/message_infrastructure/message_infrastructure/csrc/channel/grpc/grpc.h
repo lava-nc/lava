@@ -28,7 +28,7 @@ class GrpcManager {
   std::string AllocURL() {
     std::string url = base_url_ + std::to_string(url_num_) \
                       + base_port_+std::to_string(port_num_);
-    urls_.push_back(url);
+    url_set_.insert(url);
     url_num_++;
     port_num_++;
     return url;
@@ -41,7 +41,6 @@ class GrpcManager {
   std::string base_port_ = ":800";
   int url_num_ = 78;
   int port_num_ = 0;
-  std::vector<std::string> urls_;
   static GrpcManager grpcm_;
   std::set<std::string> url_set_;
 };
