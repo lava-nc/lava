@@ -4,9 +4,11 @@ project(message_passing)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-
 option(GRPC_CHANNEL "Use grpc_channel" ON)
+if(GRPC_CHANNEL)
+    add_definitions(-DGRPC_CHANNEL)
+endif()
+
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
     find_package(pybind11 REQUIRED)
