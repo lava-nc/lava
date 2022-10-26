@@ -40,11 +40,9 @@ class TestQuboScifProcess(unittest.TestCase):
         scif = QuboScif(shape=(10,),
                         step_size=2,
                         theta=8,
-                        neg_tau_ref=-10,
                         cost_diag=np.arange(1, 11))
 
         self.assertEqual(scif.shape, (10,))
         self.assertEqual(scif.step_size.init, 2)
         self.assertEqual(scif.theta.init, 8)
-        self.assertEqual(scif.neg_tau_ref.init, -10)
         self.assertTrue(np.all(scif.cost_diagonal.init == np.arange(1, 11)))
