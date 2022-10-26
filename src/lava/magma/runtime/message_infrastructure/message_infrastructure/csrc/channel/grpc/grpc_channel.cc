@@ -5,6 +5,7 @@
 #include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/channel/grpc/grpc.h>
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 #include <string>
 #include <memory>
@@ -19,8 +20,7 @@ GrpcChannel::GrpcChannel(const std::string &url,
   std::string url_ = url + std::to_string(port);
   bool ret = GetGrpcManager().CheckURL(url_);
   if (!ret) {
-    // maybe throw an exception?
-    std::cout << "url is used" << std::endl;
+    LAVA_LOG_ERR("URL is used");
   }
   send_port_ = std::make_shared<GrpcSendPort>(src_name, size, url_);
   recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);

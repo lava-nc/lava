@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 
-option(GRPC_CHANNEL "Use grpc_channel" ON)
+option(GRPC_CHANNEL_ "Use grpc_channel" ON)
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
     find_package(pybind11 REQUIRED)
@@ -30,7 +30,8 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
     )
 
 
-if(GRPC_CHANNEL)
+if(GRPC_CHANNEL_)
+    
     add_subdirectory("message_infrastructure/csrc/channel/grpc")
     set(GRPC_CHANNEL_SRCS
     "message_infrastructure/csrc/channel/grpc/grpc.cc"
@@ -47,7 +48,7 @@ endif()
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
-
+target_compile_definitions(message_infrastructure PRIVATE GRPC_CHANNEL)
 target_compile_definitions(message_infrastructure PRIVATE
                           $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
                           $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>

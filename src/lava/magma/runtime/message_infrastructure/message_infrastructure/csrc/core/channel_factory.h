@@ -37,7 +37,8 @@ class ChannelFactory {
   }
 
   friend ChannelFactory& GetChannelFactory();
-#ifdef GRPC_CHANNEL
+
+#if defined(GRPC_CHANNEL)
   AbstractChannelPtr GetRPCChannel(const std::string &url,
                                    const int &port,
                                    const std::string &src_name,
