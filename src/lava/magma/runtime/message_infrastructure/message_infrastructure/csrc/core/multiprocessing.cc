@@ -25,6 +25,7 @@ void MultiProcessing::Stop(bool block) {
       actor->Wait();
     }
   }
+  GetSharedMemManager().DeleteAllSharedMemory();
 }
 
 void MultiProcessing::CheckActor() {
@@ -42,6 +43,7 @@ MultiProcessing::~MultiProcessing() {
   for (auto actor : actors_) {
     delete actor;
   }
+  GetSharedMemManager().DeleteAllSharedMemory();
 }
 
 }  // namespace message_infrastructure
