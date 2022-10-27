@@ -23,11 +23,11 @@
 
 namespace message_infrastructure {
 
-class FastDDSPubLisener final : public
+class FastDDSPubListener final : public
                                 eprosima::fastdds::dds::DataWriterListener {
  public:
-  FastDDSPubLisener() : matched_(0), first_connected_(false) {}
-  ~FastDDSPubLisener() override {}
+  FastDDSPubListener() : matched_(0), first_connected_(false) {}
+  ~FastDDSPubListener() override {}
   void on_publication_matched(
     eprosima::fastdds::dds::DataWriter* writer,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info
@@ -38,7 +38,7 @@ class FastDDSPubLisener final : public
   eprosima::fastdds::dds::TypeSupport type_;
 };
 
-using FastDDSPubLisenerPtr = std::shared_ptr<FastDDSPubLisener>;
+using FastDDSPubListenerPtr = std::shared_ptr<FastDDSPubListener>;
 
 class FastDDSPublisher final : public DDSPublisher {
  public:
@@ -57,7 +57,7 @@ class FastDDSPublisher final : public DDSPublisher {
   void InitParticipant(); // Add type for shm, tcp or others
   void InitDataWriter();
   
-  FastDDSPubLisenerPtr listener_ = nullptr;
+  FastDDSPubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Publisher* publisher_ = nullptr;
@@ -69,6 +69,22 @@ class FastDDSPublisher final : public DDSPublisher {
   size_t nbytes_;
   std::string topic_name_;
 };
+
+class FastDDSSubListener final : public
+                         eprosima::fastdds::dds::DataReaderListener {
+ public:
+  FastDDSSubListener() : matched_(0), samples_(0) {}
+  ~FastDDSSubListener() override{}
+  void on_data_available(
+                eprosima::fastdds::dds::DataReader* reader) override;
+  void on_subscription_matched(
+                eprosima::fastdds::dds::DataReader* reader,
+                const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
+  int matched_;
+  uint32_t samples_;
+};
+
+using FastDDSSubListenerPtr = std::shared_ptr<FastDDSSubListener>;
 
 class FastDDSSubscriber final : public DDSSubscriber {
  public:
@@ -87,6 +103,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
  private:
   void InitParticipant();
   void InitDataReader();
+  FastDDSSubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Subscriber* subscriber_ = nullptr;

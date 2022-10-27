@@ -33,15 +33,16 @@ int FastDDSPublisher::Init() {
   if (publisher_ == nullptr)
     return -2;
 
-  topic_ = participant_->create_topic("TopicName", "DDSMetaData", TOPIC_QOS_DEFAULT);
+  topic_ = participant_->create_topic(topic_name_, "DDSMetaData", TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return -3;
 
-  listener_ = std::make_shared<FastDDSPubLisener>();
+  listener_ = std::make_shared<FastDDSPubListener>();
   InitDataWriter();
   if (writer_ == nullptr)
     return -4;
   
+  printf("Init Publisher Successfully, topic name: %s\n", topic_name_.c_str());
   return 0;
 }
 
@@ -50,7 +51,7 @@ void FastDDSPublisher::InitDataWriter() {
   wqos.history().kind = KEEP_LAST_HISTORY_QOS;
   wqos.history().depth = 30;
   wqos.resource_limits().max_samples = max_samples_;
-  wqos.resource_limits().allocated_samples = max_samples_;
+  wqos.resource_limits().allocated_samples = max_samples_/2;
   wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = 2;
   wqos.reliable_writer_qos().times.heartbeatPeriod.nanosec = 200 * 1000 * 1000;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
@@ -69,7 +70,7 @@ void FastDDSPublisher::InitParticipant() {
   pqos.name("Participant pub" + topic_name_);
   
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * nbytes_);
+  shm_transport->segment_size(2 * 1024 * 1024);
   pqos.transport().user_transports.push_back(shm_transport);
 
   participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
@@ -77,43 +78,68 @@ void FastDDSPublisher::InitParticipant() {
 
 bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
   if (listener_->first_connected_ || listener_->matched_ > 0) {
-    // Try to use zero copy here
-    void *sample = nullptr;
-    if (ReturnCode_t::RETCODE_OK == writer_->loan_sample(sample)) {
-      DDSMetaData* data = static_cast<DDSMetaData*>(sample);
-      data->nd(metadata->nd);
-      data->elsize(metadata->elsize);
-      data->type(metadata->type);
-      data->total_size(metadata->total_size);
-      memcpy(data->dims().data(), metadata->dims, sizeof(metadata->dims));
-      memcpy(data->strides().data(), metadata->strides, sizeof(metadata->strides));
-      memcpy(data->mdata().data(), metadata->mdata, metadata->elsize * metadata->total_size);
-      return true;
+    printf("listener matched and publishing ...\n");
+    memcpy(dds_metadata_->dims().data(), metadata->dims, sizeof(metadata->dims));
+    printf("dims data copied\n");
+    memcpy(dds_metadata_->strides().data(), metadata->strides, sizeof(metadata->strides));
+    printf("strides data copied\n");
+    memcpy(dds_metadata_->mdata().data(), metadata->mdata, metadata->elsize * metadata->total_size);
+    printf("copy metadata to dds\n");
+    dds_metadata_->nd(metadata->nd);
+    dds_metadata_->elsize(metadata->elsize);
+    dds_metadata_->total_size(metadata->total_size);
+    if(writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
+      printf("what error?\n");
+      return false;
     }
-    LAVA_LOG_WARN(1, "cannot loan a sample\n");
-    return false;
+    else {
+      printf("Publish a data\n");
+    }
+    return true;
   }
   LAVA_LOG_ERR("No listener matched\n");
   return false;
 }
 
-void FastDDSPubLisener::on_publication_matched(
+void FastDDSPubListener::on_publication_matched(
         eprosima::fastdds::dds::DataWriter*,
         const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
     matched_ = info.total_count;
     first_connected_ = true;
-    LAVA_LOG(1, "Publisher matched.\n");
+    printf("Publisher matched.\n");
   }
   else if (info.current_count_change == -1) {
     matched_ = info.total_count;
-    LAVA_LOG(1, "Publisher unmatched.\n");
+    printf("Publisher unmatched.\n");
   }
   else
   {
     LAVA_LOG_ERR(" is not a valid value for PublicationMatchedStatus current count change\n");
   }
 }
+
+void FastDDSSubListener::on_subscription_matched(
+        DataReader*,
+        const SubscriptionMatchedStatus& info) {
+  if (info.current_count_change == 1) {
+    matched_ = info.total_count;
+    printf("Subscriber matched.\n");
+  }
+  else if (info.current_count_change == -1) {
+    matched_ = info.total_count;
+    printf("Subscriber unmatched\n");
+  }
+  else {
+    LAVA_LOG_ERR("Subscriber number is not matched\n");
+  }
+}
+
+void FastDDSSubListener::on_data_available(DataReader* reader) {
+  samples_++;
+  printf("on data available trigger times: %d\n", samples_);
+}
+
 
 FastDDSSubscriber::~FastDDSSubscriber() {
   subscriber_->delete_datareader(reader_);
@@ -133,7 +159,7 @@ void FastDDSSubscriber::InitParticipant() {
   pqos.name("Participant sub" + topic_name_);
   
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * nbytes_); // TODO: size
+  shm_transport->segment_size(2 * 1024 * 1024); // TODO: size
   pqos.transport().user_transports.push_back(shm_transport);
 
   participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
@@ -144,11 +170,11 @@ void FastDDSSubscriber::InitDataReader() {
   rqos.history().kind = KEEP_LAST_HISTORY_QOS;
   rqos.history().depth = 30;
   rqos.resource_limits().max_samples = max_samples_;
-  rqos.resource_limits().allocated_samples = max_samples_;
+  rqos.resource_limits().allocated_samples = max_samples_/2;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
 
-  reader_ = subscriber_->create_datareader(topic_, rqos);
+  reader_ = subscriber_->create_datareader(topic_, rqos, listener_.get());
 }
 
 
@@ -163,14 +189,16 @@ int FastDDSSubscriber::Init() {
   if (subscriber_ == nullptr)
     return -2;
 
-  topic_ = participant_->create_topic("TopicName", "DDSMetaData", TOPIC_QOS_DEFAULT);
+  topic_ = participant_->create_topic(topic_name_, "DDSMetaData", TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return -3;
 
+  listener_ = std::make_shared<FastDDSSubListener>();
   InitDataReader();
   if (reader_ == nullptr)
     return -4;
-  
+
+  printf("Init Subscriber Successfully, topic name: %s\n", topic_name_.c_str());
   return 0;
 }
 
@@ -179,7 +207,8 @@ MetaDataPtr FastDDSSubscriber::Read() {
   SampleInfo info;
   int maxtime = 10;
   for (int i = 0; i < maxtime; i++) {
-    if (reader_->wait_for_unread_message(timeout)) {
+    reader_->wait_for_unread_message(timeout);
+    //if (reader_->wait_for_unread_message(timeout)) {
       if (ReturnCode_t::RETCODE_OK == reader_->take_next_sample(dds_metadata_.get(), &info)) {
         if (info.valid_data) {
           // Recv data here
@@ -191,17 +220,17 @@ MetaDataPtr FastDDSSubscriber::Read() {
           memcpy(metadata->dims, dds_metadata_->dims().data(), sizeof(metadata->dims));
           memcpy(metadata->strides, dds_metadata_->strides().data(), sizeof(metadata->strides));
           metadata->mdata = dds_metadata_->mdata().data();
-          LAVA_LOG(1, "Data Recieved\n");
+          printf("Data Recieved\n");
           return metadata;
         }
-        else {
-          LAVA_LOG(1, "Remote writer die\n");
-        }
-      }
-      break;
+        // else {
+        //   printf("Remote writer die\n");
+        // }
+      // }
+      // break;
     }
     else {
-      LAVA_LOG(1, "%i: didn't recv data\n");
+      printf("%i: didn't recv data\n", i);
     }
   }
 
@@ -209,6 +238,5 @@ MetaDataPtr FastDDSSubscriber::Read() {
   return nullptr;
 
 }
-
 
 }  // namespace message_infrastructure

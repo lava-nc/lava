@@ -254,26 +254,26 @@ public:
      * @param _mdata New value to be copied in member mdata
      */
     eProsima_user_DllExport void mdata(
-            const std::vector<char>& _mdata);
+            const std::array<char, 256>& _mdata);
 
     /*!
      * @brief This function moves the value in member mdata
      * @param _mdata New value to be moved in member mdata
      */
     eProsima_user_DllExport void mdata(
-            std::vector<char>&& _mdata);
+            std::array<char, 256>&& _mdata);
 
     /*!
      * @brief This function returns a constant reference to member mdata
      * @return Constant reference to member mdata
      */
-    eProsima_user_DllExport const std::vector<char>& mdata() const;
+    eProsima_user_DllExport const std::array<char, 256>& mdata() const;
 
     /*!
      * @brief This function returns a reference to member mdata
      * @return Reference to member mdata
      */
-    eProsima_user_DllExport std::vector<char>& mdata();
+    eProsima_user_DllExport std::array<char, 256>& mdata();
 
     /*!
      * @brief This function returns the maximum serialized size of an object
@@ -340,7 +340,7 @@ private:
     int64_t m_total_size;
     std::array<int64_t, 5> m_dims;
     std::array<int64_t, 5> m_strides;
-    std::vector<char> m_mdata;
+    std::array<char, 256> m_mdata;
 };
 
 #endif // _FAST_DDS_GENERATED_METADATA_H_

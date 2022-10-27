@@ -6,16 +6,16 @@
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-
+#include <iostream>
 namespace message_infrastructure {
 
 DDSChannel::DDSChannel(const size_t &size,
                        const size_t &nbytes,
                        const std::string &topic_name) {
   size_t sample_bytes = nbytes + sizeof(MetaData);
-
+  printf("DDSChannel: get dds\n");
   dds_ = GetDDSManager().AllocDDS(size, sample_bytes, topic_name);
-
+  printf("DDSChannel: set port\n");
   send_port_ = std::make_shared<DDSSendPort>(dds_);
   recv_port_ = std::make_shared<DDSRecvPort>(dds_);
 }

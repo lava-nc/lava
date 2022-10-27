@@ -36,20 +36,20 @@ using namespace eprosima::fastcdr::exception;
 
 DDSMetaData::DDSMetaData()
 {
-    // m_nd com.eprosima.idl.parser.typecode.PrimitiveTypeCode@4fcd19b3
+    // m_nd com.eprosima.idl.parser.typecode.PrimitiveTypeCode@3891771e
     m_nd = 0;
-    // m_type com.eprosima.idl.parser.typecode.PrimitiveTypeCode@376b4233
+    // m_type com.eprosima.idl.parser.typecode.PrimitiveTypeCode@78ac1102
     m_type = 0;
-    // m_elsize com.eprosima.idl.parser.typecode.PrimitiveTypeCode@2fd66ad3
+    // m_elsize com.eprosima.idl.parser.typecode.PrimitiveTypeCode@2de8284b
     m_elsize = 0;
-    // m_total_size com.eprosima.idl.parser.typecode.PrimitiveTypeCode@5d11346a
+    // m_total_size com.eprosima.idl.parser.typecode.PrimitiveTypeCode@396e2f39
     m_total_size = 0;
-    // m_dims com.eprosima.idl.parser.typecode.ArrayTypeCode@7a36aefa
+    // m_dims com.eprosima.idl.parser.typecode.ArrayTypeCode@a74868d
     memset(&m_dims, 0, (5) * 8);
-    // m_strides com.eprosima.idl.parser.typecode.ArrayTypeCode@17211155
+    // m_strides com.eprosima.idl.parser.typecode.ArrayTypeCode@12c8a2c0
     memset(&m_strides, 0, (5) * 8);
-    // m_mdata com.eprosima.idl.parser.typecode.SequenceTypeCode@b3d7190
-
+    // m_mdata com.eprosima.idl.parser.typecode.ArrayTypeCode@7e0e6aa2
+    memset(&m_mdata, 0, (256) * 1);
 
 }
 
@@ -155,10 +155,7 @@ size_t DDSMetaData::getMaxCdrSerializedSize(
     current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
 
 
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
-
-    current_alignment += (100 * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
-
+    current_alignment += ((256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
 
 
 
@@ -195,14 +192,10 @@ size_t DDSMetaData::getCdrSerializedSize(
         current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
     }
 
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
-
-    if (data.mdata().size() > 0)
+    if ((256) > 0)
     {
-        current_alignment += (data.mdata().size() * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
+        current_alignment += ((256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
     }
-
-
 
 
     return current_alignment - initial_alignment;
@@ -222,6 +215,7 @@ void DDSMetaData::serialize(
 
     scdr << m_mdata;
 
+
 }
 
 void DDSMetaData::deserialize(
@@ -237,6 +231,7 @@ void DDSMetaData::deserialize(
     dcdr >> m_strides;
 
     dcdr >> m_mdata;
+
 }
 
 /*!
@@ -430,7 +425,7 @@ std::array<int64_t, 5>& DDSMetaData::strides()
  * @param _mdata New value to be copied in member mdata
  */
 void DDSMetaData::mdata(
-        const std::vector<char>& _mdata)
+        const std::array<char, 256>& _mdata)
 {
     m_mdata = _mdata;
 }
@@ -440,7 +435,7 @@ void DDSMetaData::mdata(
  * @param _mdata New value to be moved in member mdata
  */
 void DDSMetaData::mdata(
-        std::vector<char>&& _mdata)
+        std::array<char, 256>&& _mdata)
 {
     m_mdata = std::move(_mdata);
 }
@@ -449,7 +444,7 @@ void DDSMetaData::mdata(
  * @brief This function returns a constant reference to member mdata
  * @return Constant reference to member mdata
  */
-const std::vector<char>& DDSMetaData::mdata() const
+const std::array<char, 256>& DDSMetaData::mdata() const
 {
     return m_mdata;
 }
@@ -458,7 +453,7 @@ const std::vector<char>& DDSMetaData::mdata() const
  * @brief This function returns a reference to member mdata
  * @return Reference to member mdata
  */
-std::vector<char>& DDSMetaData::mdata()
+std::array<char, 256>& DDSMetaData::mdata()
 {
     return m_mdata;
 }

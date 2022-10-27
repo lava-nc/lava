@@ -37,5 +37,10 @@ DDS::DDS(const size_t &max_samples, const size_t &nbytes, const std::string &top
 #endif
 }
 
+DDSManager DDSManager::dds_manager_;
 
+DDSManager& GetDDSManager() {
+  DDSManager &dds_manager = DDSManager::dds_manager_;
+  return dds_manager;
+}
 }  // message_infrastructure

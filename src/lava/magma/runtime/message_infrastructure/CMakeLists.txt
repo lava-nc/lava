@@ -73,7 +73,7 @@ if(DDS_CHANNEL)
     target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
     target_compile_definitions(dds_channel PRIVATE ${DDS_TRANSFER_TYPE} ${DDS_BACKEND})
     target_link_libraries(dds_channel fastrtps fastcdr foonathan_memory)
-    target_compile_definitions(message_infrastructure PRIVATE DDS_CHANNEL_ENABLE)
+    target_compile_definitions(message_infrastructure PUBLIC DDS_CHANNEL_ENABLE)
     target_link_libraries(message_infrastructure dds_channel)
 endif()
 

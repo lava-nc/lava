@@ -13,7 +13,6 @@
 namespace message_infrastructure {
 class DDSPublisher {
  public:
-  ~DDSPublisher();
   virtual int Init() = 0;
   virtual bool Publish(MetaDataPtr metadata) = 0;
 };
@@ -22,7 +21,6 @@ using DDSPublisherPtr = std::shared_ptr<DDSPublisher>;
 
 class DDSSubscriber {
  public:
-  ~DDSSubscriber();
   virtual int Init() = 0;
   virtual MetaDataPtr Read() = 0;
 };
@@ -48,9 +46,10 @@ class DDSManager {
   friend DDSManager &GetDDSManager();
 
  private:
-  DDSManager();
+  DDSManager(){};
   std::vector<DDSPtr> ddss_;
   std::set<std::string> dds_topics_;
+  static DDSManager dds_manager_;
 };
 
 DDSManager& GetDDSManager();

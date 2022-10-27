@@ -34,6 +34,7 @@ class ChannelFactory {
         break;
       case DDSCHANNEL:
         #ifdef DDS_CHANNEL_ENABLE
+        printf("Channel factory: get dds channel\n");
         return GetDDSChannel(size, nbytes, src_name);
         #endif
         break;
@@ -42,6 +43,7 @@ class ChannelFactory {
       default:
         return GetShmemChannel(size, nbytes, src_name, dst_name);
     }
+    LAVA_LOG_ERR("Get Channel error\n");
     return NULL;
   }
   friend ChannelFactory& GetChannelFactory();
