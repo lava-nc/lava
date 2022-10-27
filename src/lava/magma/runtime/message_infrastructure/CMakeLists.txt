@@ -4,30 +4,6 @@ project(message_passing)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
-if(DDS_CHANNEL)
-    # set build environment
-    message("DDS_CHANNEL Enable, DDS_BACKEND: ${DDS_BACKEND}, DDS_TRANSFER_TYPE: ${DDS_TRANSFER_TYPE}")
-    if(DDS_BACKEND STREQUAL "fast_dds")
-        find_package(fastcdr REQUIRED)
-        find_package(fastrtps REQUIRED)
-        find_package(foonathan_memory REQUIRED)
-    endif()
-    set(DDS_CHANNEL_SRCS
-    "message_infrastructure/csrc/channel/dds/dds.cc"
-    "message_infrastructure/csrc/channel/dds/dds_channel.cc"
-    "message_infrastructure/csrc/channel/dds/dds_port.cc"
-    # workaround to use DDS_BACKEND named src and change *.cxx to *.cc
-    "message_infrastructure/csrc/channel/dds/${DDS_BACKEND}.cc"
-    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadata.cc"
-    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadataPubSubTypes.cc"
-    )
-    add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS})
-    target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
-    target_compile_definitions(dds_channel PRIVATE ${DDS_TRANSFER_TYPE} ${DDS_BACKEND})
-    target_link_libraries(dds_channel fastrtps fastcdr foonathan_memory)
-endif()
-
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
     find_package(pybind11 REQUIRED)
@@ -74,6 +50,32 @@ target_include_directories(message_infrastructure PUBLIC
 target_link_libraries(message_infrastructure
                       rt
                       )
+
+option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
+if(DDS_CHANNEL)
+    # set build environment
+    message("DDS_CHANNEL Enable, DDS_BACKEND: ${DDS_BACKEND}, DDS_TRANSFER_TYPE: ${DDS_TRANSFER_TYPE}")
+    if(DDS_BACKEND STREQUAL "fast_dds")
+        find_package(fastcdr REQUIRED)
+        find_package(fastrtps REQUIRED)
+        find_package(foonathan_memory REQUIRED)
+    endif()
+    set(DDS_CHANNEL_SRCS
+    "message_infrastructure/csrc/channel/dds/dds.cc"
+    "message_infrastructure/csrc/channel/dds/dds_channel.cc"
+    "message_infrastructure/csrc/channel/dds/dds_port.cc"
+    # workaround to use DDS_BACKEND named src and change *.cxx to *.cc
+    "message_infrastructure/csrc/channel/dds/${DDS_BACKEND}.cc"
+    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadata.cc"
+    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadataPubSubTypes.cc"
+    )
+    add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS})
+    target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
+    target_compile_definitions(dds_channel PRIVATE ${DDS_TRANSFER_TYPE} ${DDS_BACKEND})
+    target_link_libraries(dds_channel fastrtps fastcdr foonathan_memory)
+    target_compile_definitions(message_infrastructure PRIVATE DDS_CHANNEL_ENABLE)
+    target_link_libraries(message_infrastructure dds_channel)
+endif()
 
 if(PY_WRAPPER)
     set(PY_WRAPPER_SRCS

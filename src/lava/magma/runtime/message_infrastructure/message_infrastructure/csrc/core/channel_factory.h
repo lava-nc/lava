@@ -12,6 +12,10 @@
 #include <message_infrastructure/csrc/channel/socket/socket.h>
 #include <message_infrastructure/csrc/channel/socket/socket_channel.h>
 
+#ifdef DDS_CHANNEL_ENABLE
+#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
+#endif
+
 #include <string>
 #include <memory>
 
@@ -29,8 +33,9 @@ class ChannelFactory {
       case RPCCHANNEL:
         break;
       case DDSCHANNEL:
-        // TODO: Add DDS Channel Here.
-        // return GetDDSChannel(size, nbytes, src_name);
+        #ifdef DDS_CHANNEL_ENABLE
+        return GetDDSChannel(size, nbytes, src_name);
+        #endif
         break;
       case SOCKETCHANNEL:
         return GetSocketChannel(nbytes, src_name, dst_name);
