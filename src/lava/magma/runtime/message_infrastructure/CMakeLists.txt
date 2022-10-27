@@ -38,7 +38,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
 if(GRPC_CHANNEL)
   set(GRPC_FETCHCONTENT 1)
   set(GRPC_TAG v1.49.1)
-  include(cmake/grpc_common.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc_common.cmake)
 
   set(grpc_path "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/grpc/")
   get_filename_component(grpc_proto "${grpc_path}/protos/grpcchannel.proto" ABSOLUTE)
