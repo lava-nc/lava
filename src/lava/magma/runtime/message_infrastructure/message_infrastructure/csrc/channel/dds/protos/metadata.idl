@@ -1,9 +1,3 @@
 struct DDSMetaData {
-  long long nd;
-  long long type;
-  long long elsize;
-  long long total_size;
-  long long dims[5];
-  long long strides[5];
-  char mdata[256];
+  char mdata[1024*256];
 };

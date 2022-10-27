@@ -124,156 +124,30 @@ public:
             const DDSMetaData& x) const;
 
     /*!
-     * @brief This function sets a value in member nd
-     * @param _nd New value for member nd
-     */
-    eProsima_user_DllExport void nd(
-            int64_t _nd);
-
-    /*!
-     * @brief This function returns the value of member nd
-     * @return Value of member nd
-     */
-    eProsima_user_DllExport int64_t nd() const;
-
-    /*!
-     * @brief This function returns a reference to member nd
-     * @return Reference to member nd
-     */
-    eProsima_user_DllExport int64_t& nd();
-
-    /*!
-     * @brief This function sets a value in member type
-     * @param _type New value for member type
-     */
-    eProsima_user_DllExport void type(
-            int64_t _type);
-
-    /*!
-     * @brief This function returns the value of member type
-     * @return Value of member type
-     */
-    eProsima_user_DllExport int64_t type() const;
-
-    /*!
-     * @brief This function returns a reference to member type
-     * @return Reference to member type
-     */
-    eProsima_user_DllExport int64_t& type();
-
-    /*!
-     * @brief This function sets a value in member elsize
-     * @param _elsize New value for member elsize
-     */
-    eProsima_user_DllExport void elsize(
-            int64_t _elsize);
-
-    /*!
-     * @brief This function returns the value of member elsize
-     * @return Value of member elsize
-     */
-    eProsima_user_DllExport int64_t elsize() const;
-
-    /*!
-     * @brief This function returns a reference to member elsize
-     * @return Reference to member elsize
-     */
-    eProsima_user_DllExport int64_t& elsize();
-
-    /*!
-     * @brief This function sets a value in member total_size
-     * @param _total_size New value for member total_size
-     */
-    eProsima_user_DllExport void total_size(
-            int64_t _total_size);
-
-    /*!
-     * @brief This function returns the value of member total_size
-     * @return Value of member total_size
-     */
-    eProsima_user_DllExport int64_t total_size() const;
-
-    /*!
-     * @brief This function returns a reference to member total_size
-     * @return Reference to member total_size
-     */
-    eProsima_user_DllExport int64_t& total_size();
-
-    /*!
-     * @brief This function copies the value in member dims
-     * @param _dims New value to be copied in member dims
-     */
-    eProsima_user_DllExport void dims(
-            const std::array<int64_t, 5>& _dims);
-
-    /*!
-     * @brief This function moves the value in member dims
-     * @param _dims New value to be moved in member dims
-     */
-    eProsima_user_DllExport void dims(
-            std::array<int64_t, 5>&& _dims);
-
-    /*!
-     * @brief This function returns a constant reference to member dims
-     * @return Constant reference to member dims
-     */
-    eProsima_user_DllExport const std::array<int64_t, 5>& dims() const;
-
-    /*!
-     * @brief This function returns a reference to member dims
-     * @return Reference to member dims
-     */
-    eProsima_user_DllExport std::array<int64_t, 5>& dims();
-    /*!
-     * @brief This function copies the value in member strides
-     * @param _strides New value to be copied in member strides
-     */
-    eProsima_user_DllExport void strides(
-            const std::array<int64_t, 5>& _strides);
-
-    /*!
-     * @brief This function moves the value in member strides
-     * @param _strides New value to be moved in member strides
-     */
-    eProsima_user_DllExport void strides(
-            std::array<int64_t, 5>&& _strides);
-
-    /*!
-     * @brief This function returns a constant reference to member strides
-     * @return Constant reference to member strides
-     */
-    eProsima_user_DllExport const std::array<int64_t, 5>& strides() const;
-
-    /*!
-     * @brief This function returns a reference to member strides
-     * @return Reference to member strides
-     */
-    eProsima_user_DllExport std::array<int64_t, 5>& strides();
-    /*!
      * @brief This function copies the value in member mdata
      * @param _mdata New value to be copied in member mdata
      */
     eProsima_user_DllExport void mdata(
-            const std::array<char, 256>& _mdata);
+            const std::array<char, 1024*256>& _mdata);
 
     /*!
      * @brief This function moves the value in member mdata
      * @param _mdata New value to be moved in member mdata
      */
     eProsima_user_DllExport void mdata(
-            std::array<char, 256>&& _mdata);
+            std::array<char, 1024*256>&& _mdata);
 
     /*!
      * @brief This function returns a constant reference to member mdata
      * @return Constant reference to member mdata
      */
-    eProsima_user_DllExport const std::array<char, 256>& mdata() const;
+    eProsima_user_DllExport const std::array<char, 1024*256>& mdata() const;
 
     /*!
      * @brief This function returns a reference to member mdata
      * @return Reference to member mdata
      */
-    eProsima_user_DllExport std::array<char, 256>& mdata();
+    eProsima_user_DllExport std::array<char, 1024*256>& mdata();
 
     /*!
      * @brief This function returns the maximum serialized size of an object
@@ -334,13 +208,7 @@ public:
 
 private:
 
-    int64_t m_nd;
-    int64_t m_type;
-    int64_t m_elsize;
-    int64_t m_total_size;
-    std::array<int64_t, 5> m_dims;
-    std::array<int64_t, 5> m_strides;
-    std::array<char, 256> m_mdata;
+    std::array<char, 1024*256> m_mdata;
 };
 
 #endif // _FAST_DDS_GENERATED_METADATA_H_

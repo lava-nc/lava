@@ -78,26 +78,20 @@ void FastDDSPublisher::InitParticipant() {
 
 bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
   if (listener_->first_connected_ || listener_->matched_ > 0) {
-    printf("listener matched and publishing ...\n");
-    memcpy(dds_metadata_->dims().data(), metadata->dims, sizeof(metadata->dims));
-    printf("dims data copied\n");
-    memcpy(dds_metadata_->strides().data(), metadata->strides, sizeof(metadata->strides));
-    printf("strides data copied\n");
-    memcpy(dds_metadata_->mdata().data(), metadata->mdata, metadata->elsize * metadata->total_size);
-    printf("copy metadata to dds\n");
-    dds_metadata_->nd(metadata->nd);
-    dds_metadata_->elsize(metadata->elsize);
-    dds_metadata_->total_size(metadata->total_size);
+    printf("start publishing...\n");
+    memcpy(&dds_metadata_->mdata()[0], metadata.get(), sizeof(MetaData));
+    memcpy(&dds_metadata_->mdata()[sizeof(MetaData)], metadata->mdata,
+            metadata->elsize * metadata->total_size);
+    printf("medata copied %d mdata\n", metadata->elsize * metadata->total_size);
     if(writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
       printf("what error?\n");
-      return false;
     }
     else {
       printf("Publish a data\n");
     }
     return true;
   }
-  LAVA_LOG_ERR("No listener matched\n");
+  // LAVA_LOG_ERR("No listener matched\n");
   return false;
 }
 
@@ -136,8 +130,15 @@ void FastDDSSubListener::on_subscription_matched(
 }
 
 void FastDDSSubListener::on_data_available(DataReader* reader) {
-  samples_++;
-  printf("on data available trigger times: %d\n", samples_);
+  // SampleInfo info;
+  // DDSMetaData *data = new DDSMetaData();
+  // if (reader->read_next_sample(data, &info) == ReturnCode_t::RETCODE_OK){
+  //   if (info.valid_data) {
+  //     samples_++;
+  //     printf("samples: %d\n", samples_);
+  //   }
+  // }
+  // delete data;
 }
 
 
@@ -213,13 +214,12 @@ MetaDataPtr FastDDSSubscriber::Read() {
         if (info.valid_data) {
           // Recv data here
           MetaDataPtr metadata = std::make_shared<MetaData>();
-          metadata->elsize = dds_metadata_->elsize();
-          metadata->nd = dds_metadata_->nd();
-          metadata->total_size = dds_metadata_->total_size();
-          metadata->type = dds_metadata_->type();
-          memcpy(metadata->dims, dds_metadata_->dims().data(), sizeof(metadata->dims));
-          memcpy(metadata->strides, dds_metadata_->strides().data(), sizeof(metadata->strides));
-          metadata->mdata = dds_metadata_->mdata().data();
+          memcpy(metadata.get(), dds_metadata_->mdata().data(), sizeof(MetaData));
+          printf("Allocating %d size\n", metadata->elsize * metadata->total_size);
+          void *ptr = malloc(metadata->elsize * metadata->total_size);
+          memcpy(ptr, dds_metadata_->mdata().data()+sizeof(MetaData),
+                                          metadata->elsize * metadata->total_size);
+          metadata->mdata = ptr;
           printf("Data Recieved\n");
           return metadata;
         }

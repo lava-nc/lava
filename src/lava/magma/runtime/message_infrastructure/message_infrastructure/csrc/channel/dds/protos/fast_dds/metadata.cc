@@ -36,55 +36,24 @@ using namespace eprosima::fastcdr::exception;
 
 DDSMetaData::DDSMetaData()
 {
-    // m_nd com.eprosima.idl.parser.typecode.PrimitiveTypeCode@3891771e
-    m_nd = 0;
-    // m_type com.eprosima.idl.parser.typecode.PrimitiveTypeCode@78ac1102
-    m_type = 0;
-    // m_elsize com.eprosima.idl.parser.typecode.PrimitiveTypeCode@2de8284b
-    m_elsize = 0;
-    // m_total_size com.eprosima.idl.parser.typecode.PrimitiveTypeCode@396e2f39
-    m_total_size = 0;
-    // m_dims com.eprosima.idl.parser.typecode.ArrayTypeCode@a74868d
-    memset(&m_dims, 0, (5) * 8);
-    // m_strides com.eprosima.idl.parser.typecode.ArrayTypeCode@12c8a2c0
-    memset(&m_strides, 0, (5) * 8);
-    // m_mdata com.eprosima.idl.parser.typecode.ArrayTypeCode@7e0e6aa2
-    memset(&m_mdata, 0, (256) * 1);
+    // m_mdata com.eprosima.idl.parser.typecode.ArrayTypeCode@192d3247
+    memset(&m_mdata, 0, (1024*256) * 1);
 
 }
 
 DDSMetaData::~DDSMetaData()
 {
-
-
-
-
-
-
-
 }
 
 DDSMetaData::DDSMetaData(
         const DDSMetaData& x)
 {
-    m_nd = x.m_nd;
-    m_type = x.m_type;
-    m_elsize = x.m_elsize;
-    m_total_size = x.m_total_size;
-    m_dims = x.m_dims;
-    m_strides = x.m_strides;
     m_mdata = x.m_mdata;
 }
 
 DDSMetaData::DDSMetaData(
         DDSMetaData&& x)
 {
-    m_nd = x.m_nd;
-    m_type = x.m_type;
-    m_elsize = x.m_elsize;
-    m_total_size = x.m_total_size;
-    m_dims = std::move(x.m_dims);
-    m_strides = std::move(x.m_strides);
     m_mdata = std::move(x.m_mdata);
 }
 
@@ -92,12 +61,6 @@ DDSMetaData& DDSMetaData::operator =(
         const DDSMetaData& x)
 {
 
-    m_nd = x.m_nd;
-    m_type = x.m_type;
-    m_elsize = x.m_elsize;
-    m_total_size = x.m_total_size;
-    m_dims = x.m_dims;
-    m_strides = x.m_strides;
     m_mdata = x.m_mdata;
 
     return *this;
@@ -107,12 +70,6 @@ DDSMetaData& DDSMetaData::operator =(
         DDSMetaData&& x)
 {
 
-    m_nd = x.m_nd;
-    m_type = x.m_type;
-    m_elsize = x.m_elsize;
-    m_total_size = x.m_total_size;
-    m_dims = std::move(x.m_dims);
-    m_strides = std::move(x.m_strides);
     m_mdata = std::move(x.m_mdata);
 
     return *this;
@@ -122,7 +79,7 @@ bool DDSMetaData::operator ==(
         const DDSMetaData& x) const
 {
 
-    return (m_nd == x.m_nd && m_type == x.m_type && m_elsize == x.m_elsize && m_total_size == x.m_total_size && m_dims == x.m_dims && m_strides == x.m_strides && m_mdata == x.m_mdata);
+    return (m_mdata == x.m_mdata);
 }
 
 bool DDSMetaData::operator !=(
@@ -137,26 +94,7 @@ size_t DDSMetaData::getMaxCdrSerializedSize(
     size_t initial_alignment = current_alignment;
 
 
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += ((256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
-
+    current_alignment += ((1024*256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
 
 
     return current_alignment - initial_alignment;
@@ -170,33 +108,10 @@ size_t DDSMetaData::getCdrSerializedSize(
     size_t initial_alignment = current_alignment;
 
 
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    current_alignment += 8 + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-
-
-    if ((5) > 0)
+    if ((1024*256) > 0)
     {
-        current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+        current_alignment += ((1024*256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
     }
-
-    if ((5) > 0)
-    {
-        current_alignment += ((5) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
-    }
-
-    if ((256) > 0)
-    {
-        current_alignment += ((256) * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
-    }
-
 
     return current_alignment - initial_alignment;
 }
@@ -204,14 +119,6 @@ size_t DDSMetaData::getCdrSerializedSize(
 void DDSMetaData::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
-
-    scdr << m_nd;
-    scdr << m_type;
-    scdr << m_elsize;
-    scdr << m_total_size;
-    scdr << m_dims;
-
-    scdr << m_strides;
 
     scdr << m_mdata;
 
@@ -222,210 +129,16 @@ void DDSMetaData::deserialize(
         eprosima::fastcdr::Cdr& dcdr)
 {
 
-    dcdr >> m_nd;
-    dcdr >> m_type;
-    dcdr >> m_elsize;
-    dcdr >> m_total_size;
-    dcdr >> m_dims;
-
-    dcdr >> m_strides;
-
     dcdr >> m_mdata;
 
 }
 
 /*!
- * @brief This function sets a value in member nd
- * @param _nd New value for member nd
- */
-void DDSMetaData::nd(
-        int64_t _nd)
-{
-    m_nd = _nd;
-}
-
-/*!
- * @brief This function returns the value of member nd
- * @return Value of member nd
- */
-int64_t DDSMetaData::nd() const
-{
-    return m_nd;
-}
-
-/*!
- * @brief This function returns a reference to member nd
- * @return Reference to member nd
- */
-int64_t& DDSMetaData::nd()
-{
-    return m_nd;
-}
-
-/*!
- * @brief This function sets a value in member type
- * @param _type New value for member type
- */
-void DDSMetaData::type(
-        int64_t _type)
-{
-    m_type = _type;
-}
-
-/*!
- * @brief This function returns the value of member type
- * @return Value of member type
- */
-int64_t DDSMetaData::type() const
-{
-    return m_type;
-}
-
-/*!
- * @brief This function returns a reference to member type
- * @return Reference to member type
- */
-int64_t& DDSMetaData::type()
-{
-    return m_type;
-}
-
-/*!
- * @brief This function sets a value in member elsize
- * @param _elsize New value for member elsize
- */
-void DDSMetaData::elsize(
-        int64_t _elsize)
-{
-    m_elsize = _elsize;
-}
-
-/*!
- * @brief This function returns the value of member elsize
- * @return Value of member elsize
- */
-int64_t DDSMetaData::elsize() const
-{
-    return m_elsize;
-}
-
-/*!
- * @brief This function returns a reference to member elsize
- * @return Reference to member elsize
- */
-int64_t& DDSMetaData::elsize()
-{
-    return m_elsize;
-}
-
-/*!
- * @brief This function sets a value in member total_size
- * @param _total_size New value for member total_size
- */
-void DDSMetaData::total_size(
-        int64_t _total_size)
-{
-    m_total_size = _total_size;
-}
-
-/*!
- * @brief This function returns the value of member total_size
- * @return Value of member total_size
- */
-int64_t DDSMetaData::total_size() const
-{
-    return m_total_size;
-}
-
-/*!
- * @brief This function returns a reference to member total_size
- * @return Reference to member total_size
- */
-int64_t& DDSMetaData::total_size()
-{
-    return m_total_size;
-}
-
-/*!
- * @brief This function copies the value in member dims
- * @param _dims New value to be copied in member dims
- */
-void DDSMetaData::dims(
-        const std::array<int64_t, 5>& _dims)
-{
-    m_dims = _dims;
-}
-
-/*!
- * @brief This function moves the value in member dims
- * @param _dims New value to be moved in member dims
- */
-void DDSMetaData::dims(
-        std::array<int64_t, 5>&& _dims)
-{
-    m_dims = std::move(_dims);
-}
-
-/*!
- * @brief This function returns a constant reference to member dims
- * @return Constant reference to member dims
- */
-const std::array<int64_t, 5>& DDSMetaData::dims() const
-{
-    return m_dims;
-}
-
-/*!
- * @brief This function returns a reference to member dims
- * @return Reference to member dims
- */
-std::array<int64_t, 5>& DDSMetaData::dims()
-{
-    return m_dims;
-}
-/*!
- * @brief This function copies the value in member strides
- * @param _strides New value to be copied in member strides
- */
-void DDSMetaData::strides(
-        const std::array<int64_t, 5>& _strides)
-{
-    m_strides = _strides;
-}
-
-/*!
- * @brief This function moves the value in member strides
- * @param _strides New value to be moved in member strides
- */
-void DDSMetaData::strides(
-        std::array<int64_t, 5>&& _strides)
-{
-    m_strides = std::move(_strides);
-}
-
-/*!
- * @brief This function returns a constant reference to member strides
- * @return Constant reference to member strides
- */
-const std::array<int64_t, 5>& DDSMetaData::strides() const
-{
-    return m_strides;
-}
-
-/*!
- * @brief This function returns a reference to member strides
- * @return Reference to member strides
- */
-std::array<int64_t, 5>& DDSMetaData::strides()
-{
-    return m_strides;
-}
-/*!
  * @brief This function copies the value in member mdata
  * @param _mdata New value to be copied in member mdata
  */
 void DDSMetaData::mdata(
-        const std::array<char, 256>& _mdata)
+        const std::array<char, 1024*256>& _mdata)
 {
     m_mdata = _mdata;
 }
@@ -435,7 +148,7 @@ void DDSMetaData::mdata(
  * @param _mdata New value to be moved in member mdata
  */
 void DDSMetaData::mdata(
-        std::array<char, 256>&& _mdata)
+        std::array<char, 1024*256>&& _mdata)
 {
     m_mdata = std::move(_mdata);
 }
@@ -444,7 +157,7 @@ void DDSMetaData::mdata(
  * @brief This function returns a constant reference to member mdata
  * @return Constant reference to member mdata
  */
-const std::array<char, 256>& DDSMetaData::mdata() const
+const std::array<char, 1024*256>& DDSMetaData::mdata() const
 {
     return m_mdata;
 }
@@ -453,7 +166,7 @@ const std::array<char, 256>& DDSMetaData::mdata() const
  * @brief This function returns a reference to member mdata
  * @return Reference to member mdata
  */
-std::array<char, 256>& DDSMetaData::mdata()
+std::array<char, 1024*256>& DDSMetaData::mdata()
 {
     return m_mdata;
 }
@@ -462,13 +175,6 @@ size_t DDSMetaData::getKeyMaxCdrSerializedSize(
         size_t current_alignment)
 {
     size_t current_align = current_alignment;
-
-
-
-
-
-
-
 
 
 
@@ -484,5 +190,5 @@ void DDSMetaData::serializeKey(
         eprosima::fastcdr::Cdr& scdr) const
 {
     (void) scdr;
-           
+     
 }
