@@ -6,7 +6,7 @@ import numpy as np
 import typing as ty
 
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
-from lava.magma.core.process.connection import PlasticConnectionProcess
+from lava.magma.core.process.connection import LearningConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
@@ -54,10 +54,10 @@ class Dense(AbstractProcess):
         w_scale = 8 - num_weight_bits + weight_exp + isMixed()
         weights = weights * (2 ** w_scale)
 
-        num_message_bits : int, optional
-            Determines whether the Dense Process deals with the incoming
-            spikes as binary spikes (num_message_bits = 0) or as graded
-            spikes (num_message_bits > 0). Default is 0.
+    num_message_bits : int, optional
+        Determines whether the Dense Process deals with the incoming
+        spikes as binary spikes (num_message_bits = 0) or as graded
+        spikes (num_message_bits > 0). Default is 0.
         """
 
         super().__init__(weights=weights,
@@ -68,7 +68,6 @@ class Dense(AbstractProcess):
 
         self._validate_weights(weights)
         shape = weights.shape
-        
         # Ports
         self.s_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
@@ -85,9 +84,9 @@ class Dense(AbstractProcess):
                              f"got {weights}.")
 
 
-class LearningDense(PlasticConnectionProcess, Dense):
-    """Learning Dense connections between neurons. Realizes 
-    the following abstract behavior: a_out = weights * s_in '
+class LearningDense(LearningConnectionProcess, Dense):
+    """Dense connections between neurons. Realizes the following abstract
+    behavior: a_out = weights * s_in '
 
     Parameters
     ----------
@@ -120,14 +119,14 @@ class LearningDense(PlasticConnectionProcess, Dense):
         w_scale = 8 - num_weight_bits + weight_exp + isMixed()
         weights = weights * (2 ** w_scale)
 
-        num_message_bits : int, optional
-            Determines whether the LearningDense Process deals with the incoming
-            spikes as binary spikes (num_message_bits = 0) or as graded
-            spikes (num_message_bits > 0). Default is 0.
+    num_message_bits : int, optional
+        Determines whether the LearningDense Process deals with the incoming
+        spikes as binary spikes (num_message_bits = 0) or as graded
+        spikes (num_message_bits > 0). Default is 0.
 
-        TODO add learning rule parameter to docstring
+    learning_rule: LoihiLearningRule
+        Learning rule which determines the parameters for online learning.
     """
-
 
     def __init__(self,
                  *,

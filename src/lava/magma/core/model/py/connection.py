@@ -6,8 +6,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 import typing
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.learning.learning_rule import (
+    LoihiLearningRule,
+    Loihi2FLearningRule,
+    Loihi3FLearningRule,
+)
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 
@@ -28,10 +31,53 @@ NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
-class PlasticConnection:
+class LearningConnection:
+    """Base class for plastic connection ProcessModels.
+
+       This class provides commonly used functions for simulating the Loihi
+       learning engine. It is subclasses for floating and fixed point
+       simulations.
+
+       To summarize the behavior:
+
+       Spiking phase:
+       run_spk:
+
+           (1) (Dense) Send activations from past time step to post-synaptic
+           neuron Process.
+           (2) (Dense) Compute activations to be sent on next time step.
+           (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+           (4) (Dense) Record within-epoch pre-synaptic spiking time.
+           Update pre-synaptic traces if more than one spike during the epoch.
+           (5) Receive spikes from post-synaptic neuron Process.
+           (6) Record within-epoch pre-synaptic spiking time.
+           Update pre-synaptic traces if more than one spike during the epoch.
+           (7) Advance trace random generators.
+
+       Learning phase:
+       run_lrn:
+
+           (1) Advance synaptic variable random generators.
+           (2) Compute updates for each active synaptic variable,
+           according to associated learning rule,
+           based on the state of Vars representing dependencies and factors.
+           (3) Update traces based on within-epoch spiking times and trace
+           configuration parameters (impulse, decay).
+           (4) Reset within-epoch spiking times and dependency Vars
+
+       Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
+       delay in this connections Process. It can be adapted according to its
+       learning rule (learned), but it will not affect synaptic activity.
+
+       Parameters
+       ----------
+       proc_params: dict
+           Parameters from the ProcessModel
+       """
 
     # Learning Ports
     s_in_bap = None
+    s_in_y1 = None
     s_in_y2 = None
     s_in_y3 = None
 
@@ -60,23 +106,22 @@ class PlasticConnection:
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
-        if self._learning_rule is not None:
-            # store shapes that useful throughout the lifetime of this PM
-            self._store_shapes()
-            # store impulses and taus in ndarrays with the right shapes
-            self._store_impulses_and_taus()
+        # store shapes that useful throughout the lifetime of this PM
+        self._store_shapes()
+        # store impulses and taus in ndarrays with the right shapes
+        self._store_impulses_and_taus()
 
-            # store active traces per dependency from learning_rule in ndarrays
-            # with the right shapes
-            self._build_active_traces_per_dependency()
-            # store active traces from learning_rule in ndarrays
-            # with the right shapes
-            self._build_active_traces()
-            # generate LearningRuleApplierBitApprox from ProductSeries
-            self._build_learning_rule_appliers()
+        # store active traces per dependency from learning_rule in ndarrays
+        # with the right shapes
+        self._build_active_traces_per_dependency()
+        # store active traces from learning_rule in ndarrays
+        # with the right shapes
+        self._build_active_traces()
+        # generate LearningRuleApplierBitApprox from ProductSeries
+        self._build_learning_rule_appliers()
 
-            # initialize TraceRandoms and ConnVarRandom
-            self._init_randoms()
+        # initialize TraceRandoms and ConnVarRandom
+        self._init_randoms()
 
     def _store_shapes(self) -> None:
         """Build and store several shapes that are needed in several
@@ -185,14 +230,16 @@ class PlasticConnection:
         """Build and store boolean numpy arrays specifying which x and y
         traces are active."""
         # Shape : (2, )
-        self._active_x_traces = self._active_x_traces_per_dependency[0] | \
-                                self._active_x_traces_per_dependency[1] | \
-                                self._active_x_traces_per_dependency[2]
+        self._active_x_traces = \
+            self._active_x_traces_per_dependency[0] \
+            | self._active_x_traces_per_dependency[1] \
+            | self._active_x_traces_per_dependency[2]
 
         # Shape : (3, )
-        self._active_y_traces = self._active_y_traces_per_dependency[0] | \
-                                self._active_y_traces_per_dependency[1] | \
-                                self._active_y_traces_per_dependency[2]
+        self._active_y_traces = \
+            self._active_y_traces_per_dependency[0] \
+            | self._active_y_traces_per_dependency[1] \
+            | self._active_y_traces_per_dependency[2]
 
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplier for each active learning
@@ -285,6 +332,34 @@ class PlasticConnection:
 
         return within_epoch_ts
 
+    def recv_traces(self, s_in) -> None:
+        """
+        Function to receive and update y1, y2 and y3 traces
+        from the post-synaptic neuron.
+
+        Parameters
+        ----------
+        s_in : np.adarray
+            Synaptic spike input
+        """
+        self._record_pre_spike_times(s_in)
+
+        if isinstance(self._learning_rule, Loihi2FLearningRule):
+            s_in_bap = self.s_in_bap.recv().astype(bool)
+            self._record_post_spike_times(s_in_bap)
+        elif isinstance(self._learning_rule, Loihi3FLearningRule):
+            y1 = self.s_in_y1.recv()
+            y2 = self.s_in_y2.recv()
+            y3 = self.s_in_y3.recv()
+
+            y_traces = self._y_traces
+            y_traces[0, :] = y1
+            y_traces[1, :] = y2
+            y_traces[2, :] = y3
+            self._set_y_traces(y_traces)
+
+        self._update_trace_randoms()
+
     def lrn_guard(self) -> bool:
         return self.time_step % self._learning_rule.t_epoch == 0
 
@@ -293,6 +368,10 @@ class PlasticConnection:
         self._apply_learning_rules()
         self._update_traces()
         self._reset_dependencies_and_spike_times()
+
+    @abstractmethod
+    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+        pass
 
     @abstractmethod
     def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
@@ -323,7 +402,7 @@ class PlasticConnection:
         self.ty = np.zeros_like(self.ty)
 
 
-class PlasticConnectionModelBitApproximate(PlasticConnection):
+class LearningConnectionModelBitApproximate(LearningConnection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
 
@@ -370,6 +449,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    s_in_y1: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
     s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
     s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
 
@@ -387,13 +467,6 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
 
     tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
     tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-
-    # def __init__(self, proc_params: dict) -> None:
-    #
-    #     # Flag to determine whether weights have already been scaled.
-    #     self.weights_set = False
-    #
-    #     super().__init__(proc_params)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
@@ -482,7 +555,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
             Pre-synaptic spikes.
         """
         self.x0[s_in] = True
-        multi_spike_x = self.tx > 0 & s_in
+        multi_spike_x = (self.tx > 0) & s_in
 
         x_traces = self._x_traces
         x_traces[:, multi_spike_x] = self._add_impulse(
@@ -508,7 +581,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
             Post-synaptic spikes.
         """
         self.y0[s_in_bap] = True
-        multi_spike_y = self.ty > 0 & s_in_bap
+        multi_spike_y = (self.ty > 0) & s_in_bap
 
         y_traces = self._y_traces
         y_traces[:, multi_spike_y] = self._add_impulse(
@@ -595,7 +668,7 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )
@@ -1032,27 +1105,9 @@ class PlasticConnectionModelBitApproximate(PlasticConnection):
             )
         )
 
-    def run_spk(self, s_in) -> None:
-        """
-        Overrides the Connection Model run_spk function to
-        receive and update y2 and y3 traces.
-        """
-        self._record_pre_spike_times(s_in)
 
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        y2 = self.s_in_y2.recv()
-        y3 = self.s_in_y3.recv()
-
-        self._record_post_spike_times(s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[1, :] = y2
-        y_traces[2, :] = y3
-        self._set_y_traces(y_traces)
-
-
-class PlasticConnectionModelFloat(PlasticConnection):
-    """Floating-point implementation of the Connection Process
+class LearningConnectionModelFloat(LearningConnection):
+    """Floating-point implementation of the Connection Process.
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
     written in Python, executing on CPU, and operating in floating-point
@@ -1095,6 +1150,7 @@ class PlasticConnectionModelFloat(PlasticConnection):
 
     # Learning Ports
     s_in_bap: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool)
+    s_in_y1: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_in_y2: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_in_y3: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
@@ -1265,7 +1321,7 @@ class PlasticConnectionModelFloat(PlasticConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ^ k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
                 == 0
                 else 0
             )
@@ -1513,24 +1569,3 @@ class PlasticConnectionModelFloat(PlasticConnection):
                 self._y_taus[:, np.newaxis],
             )
         )
-
-    def run_spk(self, s_in) -> None:
-        """
-        TODO: Change this
-        Overrides the Connection Model run_spk function to
-        receive and update y2 and y3 traces.
-        """
-        self._record_pre_spike_times(s_in)
-
-        s_in_bap = self.s_in_bap.recv().astype(bool)
-        y2 = self.s_in_y2.recv()
-        y3 = self.s_in_y3.recv()
-
-        self._record_post_spike_times(s_in_bap)
-
-        y_traces = self._y_traces
-        y_traces[1, :] = y2
-        y_traces[2, :] = y3
-        self._set_y_traces(y_traces)
-
-        

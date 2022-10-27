@@ -4,6 +4,7 @@
 
 import numpy as np
 import typing as ty
+import struct
 
 
 def stochastic_round(values: np.ndarray,
@@ -46,3 +47,32 @@ def apply_mask(int_number: int, nb_bits: int) -> int:
     """
     mask = ~(~0 << nb_bits)
     return int_number & mask
+
+
+def float_to_literal(learning_parameter: float) -> str:
+    """Convert the floating point representation of the
+    learning parameter to the form mantissa * 2 ^ [+/1]exponent.
+    Parameters
+    ----------
+    learning_parameters: float
+        the float value of learning-related parameter
+
+    Returns
+    -------
+    result: str
+        string representation of learning_parameter.
+    """
+    if learning_parameter == 0:
+        return "0"
+
+    sign = int(np.sign(learning_parameter))
+
+    learning_parameter = np.abs(learning_parameter)
+    mantissa = np.max([int(learning_parameter), 1])
+    remainder = learning_parameter / mantissa
+
+    if remainder == 1:
+        return f"({sign * mantissa})"
+
+    exp = int(np.round(np.log2(remainder)))
+    return f"({sign * mantissa}) * 2 ^ {exp}"

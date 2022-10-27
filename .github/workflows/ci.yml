@@ -1,0 +1,62 @@
+name: Run CI
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
+      with:
+        repository: 'Lava'    
+
+    - name: Run flakeheaven (flake8)
+      if: runner.os == 'Linux' || runner.os == 'macOS'
+      run: poetry run flakeheaven lint src/lava tests/
+
+    - name: Run flakeheaven (flake8)
+      if: runner.os == 'Windows'
+      run: poetry run flakeheaven lint src/lava tests/
+
+  security-lint:
+    name: Security Lint Code
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
+      with:
+        repository: 'Lava'
+
+    - name: Run bandit    
+      uses: tj-actions/bandit@v5.1
+      with:
+        targets: |
+          src/lava/.      
+        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+
+  unit-tests:
+    name: Unit Test Code + Coverage
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.1
+      with:
+        repository: 'Lava'
+
+    - name: Run unit tests
+      if: runner.os == 'Linux' || runner.os == 'macOS'
+      run: |
+        poetry run git lfs fetch
+        poetry run git lfs pull
+        poetry run pytest
+        
+    - name: Run unit tests
+      if: runner.os == 'Windows'
+      run: poetry run pytest

@@ -11,12 +11,11 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class PlasticConnectionProcess(AbstractProcess):
+class LearningConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
-    online learning in fixed and floating point simulations. If the
-    learning_rule parameter is not set, plasticity is disabled.
+    online learning in fixed and floating point simulations.
 
     Attributes
     ----------
@@ -57,7 +56,7 @@ class PlasticConnectionProcess(AbstractProcess):
     def __init__(
         self,
         shape: tuple = (1, 1),
-        learning_rule: LoihiLearningRule = None,
+        learning_rule: ty.Optional[LoihiLearningRule] = None,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
@@ -68,6 +67,7 @@ class PlasticConnectionProcess(AbstractProcess):
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
+        self.s_in_y1 = InPort(shape=(shape[0],))
         self.s_in_y2 = InPort(shape=(shape[0],))
         self.s_in_y3 = InPort(shape=(shape[0],))
 

@@ -266,7 +266,6 @@ class TestQuboScifModels(unittest.TestCase):
         cost_diag: np.ndarray,
         step_size: int,
         theta: int,
-        neg_tau_ref: int,
         wt: int,
         t_inj_spk: Dict[int, int],  # time_step -> payload dict to inject
         tag: str = 'fixed_pt'
@@ -279,8 +278,7 @@ class TestQuboScifModels(unittest.TestCase):
         qubo_scif = QuboScif(shape=(num_neurons,),
                              cost_diag=cost_diag,
                              step_size=step_size,
-                             theta=theta,
-                             neg_tau_ref=neg_tau_ref)
+                             theta=theta)
         dense_wta = Dense(weights=wt * np.eye(num_neurons),
                           num_message_bits=16)
         dense_sig = Dense(weights=wt * np.eye(num_neurons),
@@ -347,9 +345,8 @@ class TestQuboScifModels(unittest.TestCase):
         cost_diag = np.arange(1, num_neurons + 1)
         step_size = 1
         theta = 4
-        neg_tau_ref = 0
         wt = 2
-        total_period = theta // step_size - neg_tau_ref
+        total_period = theta // step_size
         num_epochs = 10
         num_steps = num_epochs * total_period + (theta // step_size)
         v_scif, v_lif_wta, v_lif_sig = self.run_test(num_steps=num_steps,
@@ -357,14 +354,13 @@ class TestQuboScifModels(unittest.TestCase):
                                                      cost_diag=cost_diag,
                                                      step_size=step_size,
                                                      theta=theta,
-                                                     neg_tau_ref=neg_tau_ref,
                                                      wt=wt,
                                                      t_inj_spk={})
         spk_idxs = np.array([theta // step_size - 1 + j * total_period for j in
                              range(num_epochs)]).astype(int)
         wta_pos_spk_idxs = spk_idxs + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
-        self.assertTrue(np.all(v_scif[spk_idxs] == neg_tau_ref))
+        self.assertTrue(np.all(v_scif[spk_idxs] == 0))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_idxs] == 1))
         self.assertTrue(np.all(v_lif_sig[sig_pos_spk_idxs] == cost_diag))
 
@@ -381,48 +377,48 @@ class TestQuboScifModels(unittest.TestCase):
         starts spiking periodically again.
         """
         num_neurons = np.random.randint(1, 11)
-        cost_diag = np.arange(1, num_neurons + 1)
-        step_size = 1
+        cost_diag_coeff = -2
+        cost_diag = cost_diag_coeff * np.ones(num_neurons,)
+        step_size = 3
+        effective_bias = step_size + cost_diag_coeff
         theta = 4
-        neg_tau_ref = 0
         wt = 2
-        t_inj_spk = {4: -1, 6: -1, 8: 2}
+        t_inj_spk = {5: -1, 7: -1, 9: 2}
         inj_times = list(t_inj_spk.keys())
-        total_period = (theta // step_size) - neg_tau_ref
+        total_period = (theta // effective_bias)
         num_epochs = 5
-        num_steps = \
-            (theta // step_size) + num_epochs * total_period + inj_times[1]
+        num_steps = (num_epochs + 1) * total_period + inj_times[1]
         v_scif, v_lif_wta, v_lif_sig = self.run_test(num_steps=num_steps,
                                                      num_neurons=num_neurons,
                                                      cost_diag=cost_diag,
                                                      step_size=step_size,
                                                      theta=theta,
-                                                     neg_tau_ref=neg_tau_ref,
                                                      wt=wt,
                                                      t_inj_spk=t_inj_spk)
+
         # Test pre-inhibitory-injection SCIF voltage and spiking
-        spk_idxs_pre_inj = np.array([theta // step_size]).astype(int) - 1
+        spk_idxs_pre_inj = np.array([theta // effective_bias]).astype(int) - 1
         wta_pos_spk_pre_inj = spk_idxs_pre_inj + 1
         sig_pos_spk_pre_inj = wta_pos_spk_pre_inj + 1
         inh_inj = inj_times[0]
-        wta_spk_rfct_interrupt = inh_inj
+        wta_spk_rfct_interrupt = inh_inj - 1
         sig_spk_rfct_interrupt = wta_spk_rfct_interrupt + 1
-        self.assertTrue(np.all(v_scif[spk_idxs_pre_inj] == neg_tau_ref))
+        self.assertTrue(np.all(v_scif[spk_idxs_pre_inj] == 0))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_pre_inj] == 1))
         self.assertTrue(np.all(
-            v_lif_sig[sig_pos_spk_pre_inj] == cost_diag + 1))
-        v_gt_inh_inj = step_size - t_inj_spk[inh_inj]
-        self.assertTrue(np.all(v_scif[inh_inj] == v_gt_inh_inj))
+            v_lif_sig[sig_pos_spk_pre_inj] == cost_diag_coeff))
+        v_gt_inh_inj = 2 * effective_bias + t_inj_spk[inh_inj]
+        self.assertTrue(np.all(v_scif[inh_inj - 1] == v_gt_inh_inj))
         self.assertTrue(np.all(v_lif_wta[wta_spk_rfct_interrupt] == 1))
         self.assertTrue(np.all(
-            v_lif_sig[sig_spk_rfct_interrupt] == cost_diag + 1))
-        # Test post-inhibitory-injection SCIF voltage and spiking
-        idx_lst = [inj_times[2] + (theta // step_size) - 1 + j * total_period
-                   for j in range(num_epochs)]
+            v_lif_sig[sig_spk_rfct_interrupt] == cost_diag_coeff))
+        # # Test post-inhibitory-injection SCIF voltage and spiking
+        idx_lst = [inj_times[2] + 2 + j * total_period for j in range(
+            num_epochs)]
         spk_idxs_post_inj = np.array(idx_lst).astype(int)
         wta_pos_spk_idxs = spk_idxs_post_inj + 1
         sig_pos_spk_idxs = wta_pos_spk_idxs + 1
-        self.assertTrue(np.all(v_scif[spk_idxs_post_inj] == neg_tau_ref))
+        self.assertTrue(np.all(v_scif[spk_idxs_post_inj] == 0))
         self.assertTrue(np.all(v_lif_wta[wta_pos_spk_idxs] == 1))
         self.assertTrue(np.all(
             v_lif_sig[sig_pos_spk_idxs] == cost_diag))

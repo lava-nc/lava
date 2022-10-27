@@ -4,7 +4,7 @@
 
 import unittest
 import numpy as np
-from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
+from lava.proc.lif.process import LIF, TernaryLIF
 
 
 class TestLIFProcess(unittest.TestCase):
@@ -20,26 +20,6 @@ class TestLIFProcess(unittest.TestCase):
                   name="LIF")
 
         self.assertEqual(lif.name, "LIF")
-        self.assertEqual(lif.du.init, 100.)
-        self.assertEqual(lif.dv.init, 1.)
-        self.assertListEqual(lif.bias_mant.init.tolist(), 100 * [2.])
-        self.assertListEqual(lif.bias_exp.init.tolist(), 100 * [1.])
-        self.assertEqual(lif.vth.init, 1.)
-        self.assertEqual(lif.proc_params["shape"], (100,))
-
-class TestLearningLIFProcess(unittest.TestCase):
-    """Tests for Learning LIF class"""
-    def test_init(self):
-        """Tests instantiation of Learning LIF"""
-        lif = LearningLIF(shape=(100,),
-                  du=100.,
-                  dv=1.,
-                  bias_mant=2 * np.ones((100,), dtype=float),
-                  bias_exp=np.ones((100,), dtype=float),
-                  vth=1.,
-                  name="LearningLIF")
-
-        self.assertEqual(lif.name, "LearningLIF")
         self.assertEqual(lif.du.init, 100.)
         self.assertEqual(lif.dv.init, 1.)
         self.assertListEqual(lif.bias_mant.init.tolist(), 100 * [2.])

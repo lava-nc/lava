@@ -8,7 +8,6 @@ import typing as ty
 from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.process.neuron import PlasticNeuronProcess
 
 
 class AbstractLIF(AbstractProcess):
