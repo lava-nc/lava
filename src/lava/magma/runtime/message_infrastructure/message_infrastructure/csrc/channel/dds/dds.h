@@ -9,9 +9,6 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
 #include <set>
-#ifdef fast_dds
-#include <message_infrastructure/csrc/channel/dds/fast_dds.h>
-#endif
 
 namespace message_infrastructure {
 class DDSPublisher {

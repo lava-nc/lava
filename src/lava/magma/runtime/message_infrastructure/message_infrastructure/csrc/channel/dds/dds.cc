@@ -5,7 +5,6 @@
 #ifdef fast_dds
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #endif
-
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 
 namespace message_infrastructure {

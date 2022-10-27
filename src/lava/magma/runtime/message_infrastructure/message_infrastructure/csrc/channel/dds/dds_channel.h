@@ -17,10 +17,10 @@ namespace message_infrastructure {
 
 class DDSChannel : public AbstractChannel {
  public:
-  DDSChannel() {}
-  DDSChannel::DDSChannel(const size_t &size,
-                         const size_t &nbytes,
-                         const std::string &topic_name);
+  DDSChannel(){}
+  DDSChannel(const size_t &size,
+             const size_t &nbytes,
+             const std::string &topic_name);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
 
