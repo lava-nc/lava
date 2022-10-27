@@ -195,7 +195,7 @@ jobs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
 
-    - name: Install Lava
+    - name: Install message_infrastructure
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       run: poetry install --no-interaction
 

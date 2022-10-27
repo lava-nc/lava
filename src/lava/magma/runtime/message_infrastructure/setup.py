@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess  # nosec
+import multiprocessing
 import sys
 import numpy
 
@@ -115,12 +116,8 @@ class CMakeBuild(build_ext):
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            # self.parallel is a Python 3 only way to set parallel jobs by hand
-            # using -j in the build_ext call,
-            #   not supported by pip or PyPA-build.
-            if hasattr(self, "parallel") and self.parallel:
-                # CMake 3.12+ only.
-                build_args += [f"-j{self.parallel}"]
+            self.parallel = multiprocessing.cpu_count() if not self.parallel else self.parallel
+            build_args += [f"-j{self.parallel}"]
 
         build_temp = os.path.join(self.build_temp, ext.name)
         if not os.path.exists(build_temp):
