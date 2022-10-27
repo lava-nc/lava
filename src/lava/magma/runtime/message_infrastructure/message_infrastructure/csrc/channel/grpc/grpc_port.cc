@@ -2,31 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
-
 #include <message_infrastructure/csrc/channel/grpc/grpc_port.h>
-#include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h>
-
-#include <memory>
-#include <iostream>
-#include <string>
 
 namespace message_infrastructure {
-
-using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::ServerContext;
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
-using grpcchannel::DataReply;
-using grpcchannel::GrpcChannelServer;
-using grpcchannel::GrpcMetaData;
-using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size)

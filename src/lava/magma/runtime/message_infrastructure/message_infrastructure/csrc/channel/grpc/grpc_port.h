@@ -11,16 +11,13 @@
 
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/common.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/grpc/build/grpcchannel.grpc.pb.h>
+#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
 
 #include <atomic>
 #include <thread> //NOLINT
-#include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace message_infrastructure {
 

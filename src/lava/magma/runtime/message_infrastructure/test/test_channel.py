@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -179,7 +179,11 @@ class TestChannel(unittest.TestCase):
         mp.start()
         size = 5
         name = 'test_grpc_channel'
+        url = '127.13.2.2:'
+        port = 8003
         grpc_channel = GetRPCChannel(
+            url,
+            port,
             name,
             name,
             size)
