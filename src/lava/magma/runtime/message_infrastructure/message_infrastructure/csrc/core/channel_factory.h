@@ -29,6 +29,8 @@ class ChannelFactory {
       case RPCCHANNEL:
         break;
       case DDSCHANNEL:
+        // TODO: Add DDS Channel Here.
+        // return GetDDSChannel(size, nbytes, src_name);
         break;
       case SOCKETCHANNEL:
         return GetSocketChannel(nbytes, src_name, dst_name);
