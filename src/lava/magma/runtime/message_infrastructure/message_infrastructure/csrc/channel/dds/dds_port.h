@@ -6,21 +6,32 @@
 #define CHANNEL_DDS_DDS_PORT_H_
 
 #include <message_infrastructure/csrc/core/abstract_port.h>
+#include <message_infrastructure/csrc/core/utils.h>
+#include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <atomic>
 
 namespace message_infrastructure {
 
 class DDSSendPort final : public AbstractSendPort {
  public:
-  DDSSendPort(const std::string &name,
-              const size_t &size,
-              const size_t &nbytes);
-  void Start();
-  void Send();
-  void Join();
-  bool Probe();
-
+  DDSSendPort(DDSPtr dds) : publisher_(dds->dds_publisher_) {}
+  void Start() {
+    publisher_->Init();
+    done_.store(false);
+  }
+  void Send(MetaDataPtr metadata) {
+    while(!publisher_->Publish(metadata)) {
+      helper::Sleep();
+    }
+  }
+  void Join() {
+    done_.store(true);
+  }
+  bool Probe() {
+    return false;
+  }
  private:
+  DDSPublisherPtr publisher_;
   std::atomic_bool done_;
 };
 
@@ -28,17 +39,27 @@ using DDSSendPortPtr = std::shared_ptr<DDSSendPort>;
 
 class DDSRecvPort final : public AbstractRecvPort {
  public:
-  DDSRecvPort(const std::string &name,
-              const size_t &size,  // TODO: needn't any more
-              const size_t &nbytes);
-  void Start();
-  bool Probe();
-  MetaDataPtr Recv();
-  void Join();
-  MetaDataPtr Peek();
-  void QueueRecv();  // TODO: use the common queue.
+  DDSRecvPort(DDSPtr dds) : subscriber_(dds->dds_subscriber_) {}
+  void Start() {
+    subscriber_->Init();
+    done_.store(true);
+  }
+  MetaDataPtr Recv() {
+    return subscriber_->Read();
+  }
+  void Join() {
+    done_.store(true);
+  }
+  MetaDataPtr Peek() {
+    // RecvQueue not achieved, cannot just peek the data
+    return Recv();
+  }
+  bool Probe() {
+    return false;
+  }
 
  private:
+  DDSSubscriberPtr subscriber_;
   std::atomic_bool done_;
 };
 

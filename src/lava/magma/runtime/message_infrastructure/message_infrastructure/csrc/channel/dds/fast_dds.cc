@@ -49,8 +49,8 @@ void FastDDSPublisher::InitDataWriter() {
   DataWriterQos wqos;
   wqos.history().kind = KEEP_LAST_HISTORY_QOS;
   wqos.history().depth = 30;
-  wqos.resource_limits().max_samples = 50;
-  wqos.resource_limits().allocated_samples = 20;
+  wqos.resource_limits().max_samples = max_samples_;
+  wqos.resource_limits().allocated_samples = max_samples_;
   wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = 2;
   wqos.reliable_writer_qos().times.heartbeatPeriod.nanosec = 200 * 1000 * 1000;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
@@ -66,9 +66,10 @@ void FastDDSPublisher::InitParticipant() {
   pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
   pqos.wire_protocol().builtin.discovery_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
   pqos.transport().use_builtin_transports = false;
+  pqos.name("Participant pub" + topic_name_);
   
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * 1024 * 1024);
+  shm_transport->segment_size(2 * nbytes_);
   pqos.transport().user_transports.push_back(shm_transport);
 
   participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
@@ -129,10 +130,10 @@ void FastDDSSubscriber::InitParticipant() {
   pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
   pqos.wire_protocol().builtin.discovery_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
   pqos.transport().use_builtin_transports = false;
-  pqos.name("Participant sub");
+  pqos.name("Participant sub" + topic_name_);
   
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * 1024 * 1024); // TODO: size
+  shm_transport->segment_size(2 * nbytes_); // TODO: size
   pqos.transport().user_transports.push_back(shm_transport);
 
   participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
@@ -142,8 +143,8 @@ void FastDDSSubscriber::InitDataReader() {
   DataReaderQos rqos;
   rqos.history().kind = KEEP_LAST_HISTORY_QOS;
   rqos.history().depth = 30;
-  rqos.resource_limits().max_samples = 50;
-  rqos.resource_limits().allocated_samples = 20;
+  rqos.resource_limits().max_samples = max_samples_;
+  rqos.resource_limits().allocated_samples = max_samples_;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
 

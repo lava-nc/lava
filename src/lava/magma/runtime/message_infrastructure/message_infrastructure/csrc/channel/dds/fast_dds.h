@@ -42,7 +42,14 @@ using FastDDSPubLisenerPtr = std::shared_ptr<FastDDSPubLisener>;
 
 class FastDDSPublisher final : public DDSPublisher {
  public:
-  FastDDSPublisher() : type_(new DDSMetaDataPubSubType()) {};
+  FastDDSPublisher(const size_t &max_samples,
+                   const size_t &nbytes,
+                   const std::string &topic_name) :
+                   type_(new DDSMetaDataPubSubType()),
+                   max_samples_(max_samples),
+                   nbytes_(nbytes),
+                   topic_name_(topic_name)
+                    {};
   ~FastDDSPublisher();
   int Init();
   bool Publish(MetaDataPtr metadata);
@@ -58,11 +65,21 @@ class FastDDSPublisher final : public DDSPublisher {
   eprosima::fastdds::dds::DataWriter* writer_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
   bool stop_;
+  int max_samples_;
+  size_t nbytes_;
+  std::string topic_name_;
 };
 
 class FastDDSSubscriber final : public DDSSubscriber {
  public:
-  FastDDSSubscriber() : type_(new DDSMetaDataPubSubType()) {}
+  FastDDSSubscriber(const size_t &max_samples,
+                   const size_t &nbytes,
+                   const std::string &topic_name) :
+                   type_(new DDSMetaDataPubSubType()),
+                   max_samples_(max_samples),
+                   nbytes_(nbytes),
+                   topic_name_(topic_name)
+                    {};
   ~FastDDSSubscriber();
   int Init();
   void Run();
@@ -76,6 +93,9 @@ class FastDDSSubscriber final : public DDSSubscriber {
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
   eprosima::fastdds::dds::DataReader* reader_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
+  int max_samples_;
+  size_t nbytes_;
+  std::string topic_name_;
 };
 
 }  // namespace message_infrastructure

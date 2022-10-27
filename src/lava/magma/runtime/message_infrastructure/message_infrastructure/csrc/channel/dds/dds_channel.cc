@@ -12,12 +12,12 @@ namespace message_infrastructure {
 DDSChannel::DDSChannel(const size_t &size,
                        const size_t &nbytes,
                        const std::string &topic_name) {
-  size_t sample_size = nbytes + sizeof(MetaData);
+  size_t sample_bytes = nbytes + sizeof(MetaData);
 
-  dds_ = GetDDSManager().AllocDDS(sample_size);
+  dds_ = GetDDSManager().AllocDDS(size, sample_bytes, topic_name);
 
-  send_port_ = std::make_shared<DDSSendPort>(topic_name, dds_, sample_size);
-  recv_port_ = std::make_shared<DDSRecvPort>(topic_name, dds_, sample_size);
+  send_port_ = std::make_shared<DDSSendPort>(dds_);
+  recv_port_ = std::make_shared<DDSRecvPort>(dds_);
 }
 
 AbstractSendPortPtr DDSChannel::GetSendPort() {
