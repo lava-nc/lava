@@ -84,6 +84,8 @@ class SharedMemManager {
     int random = std::rand();
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
+    LAVA_DEBUG(LOG_SMMP, "Shm fd and name open: %s %d\n",
+               str.c_str(), shmfd);
     if (shmfd == -1) {
       LAVA_LOG_ERR("Create shared memory object failed.\n");
       exit(-1);
@@ -101,7 +103,7 @@ class SharedMemManager {
     return shm;
   }
 
-  void DeleteSharedAllMemory();
+  void DeleteAllSharedMemory();
   friend SharedMemManager &GetSharedMemManager();
 
  private:
