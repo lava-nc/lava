@@ -258,8 +258,9 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
     with Loihi hardware"""
     def test_bitacc_pm_no_decay(self):
         """
-        Tests fixed point LIF ProcessModel (bit-accurate with Loihi hardware)
-        with no current or voltage decay and neurons driven by internal biases.
+        Tests fixed point LIF ProcessModel (bit-accurate
+        with Loihi hardware) with no current or voltage
+        decay and neurons driven by internal biases.
         """
         shape = (10,)
         num_steps = 10
