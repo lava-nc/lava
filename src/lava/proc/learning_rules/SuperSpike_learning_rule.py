@@ -44,7 +44,7 @@ class DoubleExponentialSuperSpikeLoihi(Loihi3FLearningRule):
 
         dt = f"u0 * y3 * x1 - u0 * y3 * x2 - u0 * {self.eligibility_trace_rise_tau} * t"
 
-        dd = f"t * u0 - u0 * {self.eligibility_trace_decay_tau} * t"
+        dd = f"t * u0 - u0 * {self.eligibility_trace_decay_tau} * d"
 
         dw = f"{self.learning_rate} * u0 * y2 * d"
 
