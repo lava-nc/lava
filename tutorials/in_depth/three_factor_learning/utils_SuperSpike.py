@@ -11,8 +11,8 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.process.neuron import PlasticNeuronProcess
-from lava.magma.core.model.py.neuron import PlasticNeuronModelFloat
+from lava.magma.core.process.neuron import LearningNeuronProcess
+from lava.magma.core.model.py.neuron import LearningNeuronModelFloat
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
@@ -28,7 +28,7 @@ from lava.proc.io.source import RingBuffer as SpikeIn
 ####################################################################
 # Creating a custom SuperSpikeLIF
 ####################################################################
-class SuperSpikeLIF(PlasticNeuronProcess, AbstractLIF):
+class SuperSpikeLIF(LearningNeuronProcess, AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process with learning enabled.
 
     Parameters
@@ -85,7 +85,7 @@ class SuperSpikeLIF(PlasticNeuronProcess, AbstractLIF):
 @implements(proc=SuperSpikeLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class PySuperSpikeLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
+class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
     point precision with learning enabled. 
     """
@@ -145,13 +145,16 @@ class PySuperSpikeLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat
         
         a_third_factor_in = self.a_third_factor_in.recv()
 
-        y2 = self.calculate_third_factor_trace_y2(a_third_factor_in)
-        y3 = self.calculate_third_factor_trace_y3()
+        self.y1 = self.y1.astype(bool) | self.s_out_buff.astype(bool)
+        self.y2 = self.calculate_third_factor_trace_y2(a_third_factor_in)
+        self.y3 = self.calculate_third_factor_trace_y3()
     
+        self.s_out_y1.send(self.y1)
+        self.s_out_y2.send(self.y2)
+        self.s_out_y3.send(self.y3)
 
-        self.s_out_y2.send(y2)
-        self.s_out_y3.send(y3)
-        self.s_out_bap.send(self.s_out_buff)
+        if self.time_step % self.proc_params['learning_rule'].t_epoch == 0:
+            self.y1 = self.y1 & False
 
 ####################################################################
 # Creating a LearningDenseProbe for Measuring Trace Dynamics
