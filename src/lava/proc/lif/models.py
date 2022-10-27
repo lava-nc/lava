@@ -8,7 +8,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.lif.process import LIF, TernaryLIF, LearningLIF
+from lava.proc.lif.process import LIF, TernaryLIF
 from lava.magma.core.model.py.neuron import PlasticNeuronModelFloat, PlasticNeuronModelFixed
 
 
@@ -219,125 +219,11 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
-@implements(proc=LearningLIF, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('floating_pt')
-class PyLearningLifModelFloat(PlasticNeuronModelFloat, AbstractPyLifModelFloat):
-    """Implementation of Leaky-Integrate-and-Fire neural process in floating
-    point precision with learning enabled. 
-    """
-
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    vth: float = LavaPyType(float, float)
-    s_error_out : np.ndarray = LavaPyType(float, float)
-
-    # third factor input
-    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
-    def spiking_activation(self):
-        """Spiking activation function for Learning LIF.
-        """
-        return self.v > self.vth
-
-    def calculate_third_factor_trace_y2(self, s_error_in: float) -> float: 
-        """Generate's a third factor Reward traces based on 
-        Graded input spikes to the Learning LIF process. 
-
-        For SuperSpike:
-        This is the error signal propogated from the input. 
-        """
-        # Decay constants for error
-        error_tau_rise = 20
-        error_tau_decay = 80
-
-        # Spike error at each time step
-        error = s_error_in - self.s_out_buff        
-        self.s_error_out = self.s_error_out + error
-
-        # error trace updated with rise constant
-        self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
-
-        # Decaying error trace
-        self.s_error_out = np.exp(-1 / error_tau_decay) * self.s_error_out
-
-        return self.s_error_out
-    
-    def calculate_third_factor_trace_y3(self) -> float: 
-        """Generate's a third factor Reward traces based on 
-        Graded input spikes to the Learning LIF process. 
-
-        For SuperSpike:
-        This is calculating the surrogate gradient of the membrane potential. 
-        """
-        h_i = (self.v - self.vth)
-        surrogate_v = np.power((1 + np.abs(h_i)), (-2))
-
-        return surrogate_v
-
-    def run_spk(self) -> None:
-        """Calculates the third factor trace and sends it to the 
-        Dense process for learning.
-        """
-        super().run_spk()
-        
-        a_third_factor_in = self.a_third_factor_in.recv()
-
-        y2 = self.calculate_third_factor_trace_y2(a_third_factor_in)
-        y3 = self.calculate_third_factor_trace_y3()
-    
-
-        self.s_out_y2.send(y2)
-        self.s_out_y3.send(y3)
-        self.s_out_bap.send(self.s_out_buff)
-
         
 @implements(proc=LIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('bit_accurate_loihi', 'fixed_pt')
 class PyLifModelBitAcc(AbstractPyLifModelFixed):
-    """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
-    with Loihi's hardware LIF dynamics, which means, it mimics Loihi
-    behaviour bit-by-bit.
-
-    Currently missing features (compared to Loihi 1 hardware):
-
-    - refractory period after spiking
-    - axonal delays
-
-    Precisions of state variables
-
-    - du: unsigned 12-bit integer (0 to 4095)
-    - dv: unsigned 12-bit integer (0 to 4095)
-    - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
-      bias.
-    - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    - vth: unsigned 17-bit integer (0 to 131071).
-
-    """
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
-
-    def __init__(self, proc_params):
-        super(PyLifModelBitAcc, self).__init__(proc_params)
-        self.effective_vth = 0
-
-    def scale_threshold(self):
-        """Scale threshold according to the way Loihi hardware scales it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
-        with other state variables of higher precision.
-        """
-        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
-        self.isthrscaled = True
-
-    def spiking_activation(self):
-        """Spike when voltage exceeds threshold.
-        """
-        return self.v > self.effective_vth
-
-@implements(proc=LearningLIF, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
-class PyLearningLifModelBitAcc(PlasticNeuronModelFixed, AbstractPyLifModelFixed):
     """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
     with Loihi's hardware LIF dynamics, which means, it mimics Loihi
     behaviour bit-by-bit.

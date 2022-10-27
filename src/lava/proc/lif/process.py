@@ -101,62 +101,6 @@ class LIF(AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
 
 
-class LearningLIF(PlasticNeuronProcess, AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process with learning enabled.
-
-    Parameters
-    ----------
-    shape : tuple(int)
-        Number and topology of LIF neurons.
-    u : float, list, numpy.ndarray, optional
-        Initial value of the neurons' current.
-    v : float, list, numpy.ndarray, optional
-        Initial value of the neurons' voltage (membrane potential).
-    du : float, optional
-        Inverse of decay time-constant for current decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    dv : float, optional
-        Inverse of decay time-constant for voltage decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    bias_mant : float, list, numpy.ndarray, optional
-        Mantissa part of neuron bias.
-    bias_exp : float, list, numpy.ndarray, optional
-        Exponent part of neuron bias, if needed. Mostly for fixed point
-        implementations. Ignored for floating point implementations.
-    vth : float, optional
-        Neuron threshold voltage, exceeding which, the neuron will spike.
-        Currently, only a single threshold can be set for the entire
-        population of neurons.
-
-    """
-    def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            du: ty.Optional[float] = 0,
-            dv: ty.Optional[float] = 0,
-            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10, 
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None,
-            **kwargs) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant,
-                         bias_exp=bias_exp, name=name,
-                         log_config=log_config, **kwargs)
-        self.vth = Var(shape=(1,), init=vth)
-
-        self.s_error_out = Var(shape=shape, init=np.zeros(shape))
-        
-        # Third factor input
-        self.a_third_factor_in = InPort(shape=shape)
-
-
-
-
 class TernaryLIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process with *ternary* spiking
     output, i.e., +1, 0, and -1 spikes. When the voltage of a TernaryLIF neuron
