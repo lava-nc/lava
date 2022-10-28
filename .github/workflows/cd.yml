@@ -30,7 +30,7 @@ jobs:
 
     - name: Build artifacts 
       run: |
-        $PYTHONUSERBASE/bin/poetry build
+        pipx run poetry build
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
