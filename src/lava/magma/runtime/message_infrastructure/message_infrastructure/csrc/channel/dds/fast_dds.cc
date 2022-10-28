@@ -130,15 +130,6 @@ void FastDDSSubListener::on_subscription_matched(
 }
 
 void FastDDSSubListener::on_data_available(DataReader* reader) {
-  // SampleInfo info;
-  // DDSMetaData *data = new DDSMetaData();
-  // if (reader->read_next_sample(data, &info) == ReturnCode_t::RETCODE_OK){
-  //   if (info.valid_data) {
-  //     samples_++;
-  //     printf("samples: %d\n", samples_);
-  //   }
-  // }
-  // delete data;
 }
 
 
@@ -208,7 +199,6 @@ MetaDataPtr FastDDSSubscriber::Read() {
   SampleInfo info;
   int maxtime = 10;
   for (int i = 0; i < maxtime; i++) {
-    reader_->wait_for_unread_message(timeout);
     //if (reader_->wait_for_unread_message(timeout)) {
       if (ReturnCode_t::RETCODE_OK == reader_->take_next_sample(dds_metadata_.get(), &info)) {
         if (info.valid_data) {
