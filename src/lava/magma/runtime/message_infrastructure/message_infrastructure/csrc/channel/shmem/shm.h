@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <memory>
+#include <map>
 #include <set>
 #include <string>
 #include <atomic>
@@ -34,7 +35,6 @@ class SharedMemory {
   SharedMemory() {}
   SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
   SharedMemory(const size_t &mem_size, const int &shmfd);
-  ~SharedMemory();
   void Start();
   bool Load(HandleFn consume_fn);
   void Store(HandleFn store_fn);
@@ -59,7 +59,6 @@ class SharedMemory {
 class RwSharedMemory {
  public:
   RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
-  ~RwSharedMemory();
   void InitSemaphore();
   void Start();
   void Handle(HandleFn handle_fn);
@@ -80,13 +79,13 @@ using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
 class SharedMemManager {
  public:
-  ~SharedMemManager();
-
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
     int random = std::rand();
     std::string str = shm_str_ + std::to_string(random);
     int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
+    LAVA_DEBUG(LOG_SMMP, "Shm fd and name open: %s %d\n",
+               str.c_str(), shmfd);
     if (shmfd == -1) {
       LAVA_LOG_ERR("Create shared memory object failed.\n");
       exit(-1);
@@ -96,7 +95,7 @@ class SharedMemManager {
       LAVA_LOG_ERR("Resize shared memory segment failed.\n");
       exit(-1);
     }
-    shm_strs_.insert(str);
+    shm_fd_strs_.insert({shmfd, str});
     std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
     sem_strs_.insert(shm->GetReq());
     sem_strs_.insert(shm->GetAck());
@@ -104,14 +103,14 @@ class SharedMemManager {
     return shm;
   }
 
-  void DeleteSharedMemory(const std::string &shm_str);
+  void DeleteAllSharedMemory();
   friend SharedMemManager &GetSharedMemManager();
 
  private:
   SharedMemManager() {
     std::srand(std::time(nullptr));
   }
-  std::set<std::string> shm_strs_;
+  std::map<int, std::string> shm_fd_strs_;
   std::set<std::string> sem_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
