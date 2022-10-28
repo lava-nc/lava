@@ -66,7 +66,7 @@ class Testrf_izProcessModels(unittest.TestCase):
 
         num_steps = 100
         input = np.zeros(num_steps)
-        input[[0, 10, 20]] = 1  # Will ensure 2 spikes
+        input[[0, 10, 20]] = 1  # Will ensure 3 spikes
         _, real, imag, s_out = self.run_test(period, alpha, input)
         s_out = s_out.flatten() == 1  # change to bool
         self.assertGreaterEqual(s_out.sum(), 1)  # ensure network is spiking
@@ -85,7 +85,7 @@ class Testrf_izProcessModels(unittest.TestCase):
         state_exp = 6
         num_steps = 100
         input = np.zeros(num_steps)
-        input[[0, 10, 20]] = 1  # Will ensure 2 spikes
+        input[[0, 10, 20]] = 1  # Will ensure 3 spikes
         _, real, imag, s_out = self.run_test(period, alpha, input,
                                              tag="fixed_pt",
                                              state_exp=state_exp,

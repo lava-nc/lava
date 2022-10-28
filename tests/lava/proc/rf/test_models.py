@@ -15,10 +15,33 @@ from lava.proc.monitor.process import Monitor
 
 def rf_dynamics(real_state, imag_state, sin_decay, cos_decay, real_input,
                 imag_input, decay_bits):
-    """Fixed pt rf dynamics test function"""
+    """Fixed pt rf dynamics test function
+
+    Parameters
+    ----------
+    real_state : float
+        Starting real voltage
+    imag_state : float
+        Starting imag voltage
+    sin_decay : float
+        (1 - alpha) * sin(theta)
+    cos_decay : float
+        (1 - alpha) * cos(theta)
+    real_input : np.array
+        real input into neuron
+    imag_input : np.array
+        imag input into neuron
+    decay_bits : int
+        Downscale factor applied after voltage decay
+
+    Returns
+    -------
+    np.array, np.array
+        Observed real and imaginary voltage
+    """
     scale_fac = (1 << decay_bits)
 
-    def rtz(x):
+    def rtz(x):  # downscale voltage
         return (int(x / scale_fac) if x > 0
                 else -int((-x) / scale_fac))
     real = np.zeros_like(real_input)
@@ -82,8 +105,8 @@ class TestrfProcessModels(unittest.TestCase):
         return input, real, imag, s_out
 
     def test_float_no_decay(self):
-        """Neuron should fire from a single input and then spike periodicaly
-           for the remainder of the simulation
+        """Verify that a neuron with no voltage decay spikes
+            periodicaly due a single input pulse
         """
         period = 10
         alpha = 0
@@ -98,8 +121,8 @@ class TestrfProcessModels(unittest.TestCase):
                              s_out.flatten().tolist())
 
     def test_float_decay(self):
-        """Neuron recieves an input pulse. The decay of
-           the observed real voltage should match the alpha parameter.
+        """Neuron recieves an input pulse. The decay of the observed real
+           voltage should match the alpha parameter at the real peaks.
         """
         period = 10
         alpha = .07
@@ -116,9 +139,9 @@ class TestrfProcessModels(unittest.TestCase):
                              ideal_real.tolist()[0:num_steps:period])
 
     def test_fixed_pm_no_decay(self):
-        """Neuron with no alpha decay should spike periodically due
-           to a single input spike. It does not spike over the
-           whole simulation though due to fixed point precision errors
+        """Test that a fixed point rf neuron with no decay matches a for-loop
+           implementation of the same rf neuron. The neuron does not spike
+           over the the whole period due to fixed point precision errors
         """
         alpha = 0
         vth = .5  # choose a low voltage threshold to achieve repeat spiking
@@ -126,11 +149,9 @@ class TestrfProcessModels(unittest.TestCase):
         state_exp = 6
         period = 10
 
-        num_steps = 1000
+        num_steps = 100
         input = np.zeros(num_steps)
         input[0] = 1  # spike at first timestep
-        decay_bits = 12
-        state_exp = 6
 
         _, _, _, s_out = self.run_test(period, alpha, input, vth=vth,
                                        state_exp=state_exp,
@@ -138,8 +159,6 @@ class TestrfProcessModels(unittest.TestCase):
                                        tag="fixed_pt")
 
         # real, imag voltages
-        ri_volt = np.zeros((2, 1), dtype=np.int32)
-        ri_volt[0][0] = (1 << state_exp)  # scale initial voltage
         sin_decay = (1 - alpha) * np.sin(np.pi * 2 * 1 / period)
         cos_decay = (1 - alpha) * np.cos(np.pi * 2 * 1 / period)
 
@@ -152,6 +171,8 @@ class TestrfProcessModels(unittest.TestCase):
                                  input * (1 << state_exp),
                                  np.zeros(num_steps),
                                  decay_bits)
+
+        # spiking function needs time delayed imaginary voltage
         old_imag = np.zeros(num_steps)
         old_imag[1:num_steps] = imag[:num_steps - 1]
         expected_spikes = (real >= (vth * (1 << state_exp))) \
@@ -160,11 +181,53 @@ class TestrfProcessModels(unittest.TestCase):
         self.assertListEqual(expected_spikes.tolist(),
                              s_out.flatten().tolist())
 
-    def test_fixed_pm_decay(self):
-        """Neuron recieves an input pulse. The decay of the observed
-           real voltage should match the alpha parameter. The oscillatory
-           internal state of the neuron is disabled for this test by
-           choosing a large neuron period
+    def test_fixed_pm_decay1(self):
+        """Test that a fixed point rf neuron with decay matches
+           a for-loop implementation of the same rf neuron
+        """
+        alpha = .05
+        vth = .5  # choose a low voltage threshold to achieve repeat spiking
+        decay_bits = 12
+        state_exp = 6
+        period = 10
+
+        num_steps = 100
+        input = np.zeros(num_steps)
+        input[0] = 2  # spike at first timestep
+
+        _, _, _, s_out = self.run_test(period, alpha, input, vth=vth,
+                                       state_exp=state_exp,
+                                       decay_bits=decay_bits,
+                                       tag="fixed_pt")
+
+        # real, imag voltages
+        sin_decay = (1 - alpha) * np.sin(np.pi * 2 * 1 / period)
+        cos_decay = (1 - alpha) * np.cos(np.pi * 2 * 1 / period)
+
+        # scale decays
+        sin_decay = int(sin_decay * (1 << decay_bits))
+        cos_decay = int(cos_decay * (1 << decay_bits))
+
+        # Run Test RF Dynamics
+        real, imag = rf_dynamics(0, 0, sin_decay, cos_decay,
+                                 input * (1 << state_exp),
+                                 np.zeros(num_steps),
+                                 decay_bits)
+
+        # spiking function needs time delayed imaginary voltage
+        old_imag = np.zeros(num_steps)
+        old_imag[1:num_steps] = imag[:num_steps - 1]
+        expected_spikes = (real >= (vth * (1 << state_exp))) \
+            * (imag >= 0) * (old_imag < 0)
+
+        self.assertListEqual(expected_spikes.tolist(),
+                             s_out.flatten().tolist())
+
+    def test_fixed_pm_decay2(self):
+        """Neuron recieves an input pulse. The decay of the observed real
+           voltage should match the alpha parameter. The oscillatory internal
+           state of the neuron is disabled for this test by choosing a large
+           neuron period
         """
         alpha = 0.07
         vth = 1.1
