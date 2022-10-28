@@ -51,11 +51,13 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         a_in_data = self.a_in.recv()
+
         self.subthr_dynamics(activation_in=a_in_data)
-        s_out = self.spiking_activation()
-        self.reset_voltage(spike_vector=s_out)
-        self.s_out.send(s_out)
+        self.s_out_buff = self.spiking_activation()
+        self.reset_voltage(spike_vector=self.s_out_buff)
+        self.s_out.send(self.s_out_buff)
 
 
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
@@ -176,6 +178,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
