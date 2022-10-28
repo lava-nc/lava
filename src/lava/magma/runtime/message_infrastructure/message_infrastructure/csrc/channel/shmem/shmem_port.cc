@@ -65,7 +65,9 @@ void ShmemRecvPort::QueueRecv() {
     bool ret = false;
     if (this->recvqueue->AvailableCount() > 0) {
       ret = shm_->Load([this](void* data){
-        this->recvqueue->Push(data);
+      void *ptr = malloc(this->nbytes_);
+      std::memcpy(ptr, data, this->nbytes_);
+        this->recvqueue->Push(ptr);
       });
     }
     if (!ret) {
