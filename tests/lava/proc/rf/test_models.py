@@ -113,7 +113,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         num_steps = 100
         input = np.zeros(num_steps)
-        input[0] = 1  # spike at first timestep
+        input[0] = 1.01  # spike at first timestep
         _, _, _, s_out = self.run_test(period, alpha, input)
         expected_spikes = np.zeros((num_steps))
         expected_spikes[10:num_steps:period] = 1
