@@ -4,7 +4,8 @@
 
 from MessageInfrastructurePywrapper import SendPort as CppSendPort
 from MessageInfrastructurePywrapper import Channel as CppChannel
-from MessageInfrastructurePywrapper import GetRPCChannel as CppRPCChannel
+from MessageInfrastructurePywrapper import support_grpc_channel
+
 from MessageInfrastructurePywrapper import AbstractTransferPort
 import numpy as np
 
@@ -44,9 +45,10 @@ class Channel(CppChannel):
     def src_port(self):
         return SendPort(super().src_port)
 
+if support_grpc_channel():
+    from MessageInfrastructurePywrapper import GetRPCChannel as CppRPCChannel
+    class GetRPCChannel(CppRPCChannel):
 
-class GetRPCChannel(CppRPCChannel):
-
-    @property
-    def src_port(self):
-        return SendPort(super().src_port)
+        @property
+        def src_port(self):
+            return SendPort(super().src_port)

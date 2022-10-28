@@ -94,6 +94,13 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("dst_port", &GetRPCChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
 #endif
+  m.def("support_grpc_channel", [](){
+#if defined(GRPC_CHANNEL)
+    return true;
+#else
+    return false;
+#endif
+  });
   py::class_<SendPortProxy, PortProxy,
              std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())

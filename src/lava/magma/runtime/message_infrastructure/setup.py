@@ -116,7 +116,8 @@ class CMakeBuild(build_ext):
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            self.parallel = multiprocessing.cpu_count() if not self.parallel else self.parallel
+            self.parallel = multiprocessing.cpu_count() if not self.parallel \
+                else self.parallel
             build_args += [f"-j{self.parallel}"]
 
         build_temp = os.path.join(self.build_temp, ext.name)

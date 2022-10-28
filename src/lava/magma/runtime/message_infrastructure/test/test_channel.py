@@ -14,7 +14,8 @@ from message_infrastructure import (
     Channel,
     SendPort,
     RecvPort,
-    GetRPCChannel
+    SupportGRPCChannel,
+    ChannelQueueSize
 )
 
 
@@ -62,14 +63,13 @@ class TestChannel(unittest.TestCase):
     def test_shmemchannel(self):
         mp = MultiProcessing()
         mp.start()
-        size = 5
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_shmem_channel'
 
         shmem_channel = Channel(
             ChannelBackend.SHMEMCHANNEL,
-            size,
+            ChannelQueueSize,
             nbytes,
             name,
             name)
@@ -89,14 +89,13 @@ class TestChannel(unittest.TestCase):
         mp.stop(True)
 
     def test_single_process_shmemchannel(self):
-        size = 5
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_shmem_channel'
 
         shmem_channel = Channel(
             ChannelBackend.SHMEMCHANNEL,
-            size,
+            ChannelQueueSize,
             nbytes,
             name,
             name)
@@ -119,14 +118,13 @@ class TestChannel(unittest.TestCase):
     def test_socketchannel(self):
         mp = MultiProcessing()
         mp.start()
-        size = 3
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_socket_channel'
 
         socket_channel = Channel(
             ChannelBackend.SOCKETCHANNEL,
-            size,
+            ChannelQueueSize,
             nbytes,
             name,
             name)
@@ -146,15 +144,13 @@ class TestChannel(unittest.TestCase):
         mp.stop(True)
 
     def test_single_process_socketchannel(self):
-
-        size = 3
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'
 
         socket_channel = Channel(
             ChannelBackend.SOCKETCHANNEL,
-            size,
+            ChannelQueueSize,
             nbytes,
             name,
             name)
@@ -174,10 +170,11 @@ class TestChannel(unittest.TestCase):
         send_port.join()
         recv_port.join()
 
+    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
+        from message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
         mp.start()
-        size = 5
         name = 'test_grpc_channel'
         url = '127.13.2.2:'
         port = 8003
@@ -186,7 +183,7 @@ class TestChannel(unittest.TestCase):
             port,
             name,
             name,
-            size)
+            ChannelQueueSize)
 
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
@@ -202,8 +199,9 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop(True)
 
+    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_single_process_grpcchannel(self):
-        size = 3
+        from message_infrastructure import GetRPCChannel
         predata = prepare_data()
         name = 'test_single_process_grpc_channel'
         url = '127.13.2.2:'
@@ -213,7 +211,7 @@ class TestChannel(unittest.TestCase):
             port,
             name,
             name,
-            size)
+            ChannelQueueSize)
 
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port

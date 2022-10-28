@@ -8,7 +8,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-option(GRPC_CHANNEL "Use grpc_channel" ON)
+option(GRPC_CHANNEL "Use grpc_channel" OFF)
 if(GRPC_CHANNEL)
   add_definitions(-DGRPC_CHANNEL)
 endif()
@@ -111,8 +111,8 @@ if(PY_WRAPPER)
 
   pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
   target_include_directories(MessageInfrastructurePywrapper PUBLIC
-                                ${NUMPY_INCLUDE_DIRS}
-                              )
+                            ${NUMPY_INCLUDE_DIRS}
+                            )
   target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
 endif()
 
