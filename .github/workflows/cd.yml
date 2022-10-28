@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 env:
-  ci-action-version: 'v1.1'
+  ci-action-version: 'v1.2'
 
 jobs:
   build-artifacts:
