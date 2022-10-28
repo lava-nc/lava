@@ -18,6 +18,10 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+#if defined(GRPC_CHANNEL)
+using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
+#endif
+
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<MultiProcessing> (m, "CppMultiProcessing")
     .def(py::init<>())
@@ -85,6 +89,22 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
+#if defined(GRPC_CHANNEL)
+  py::class_<GetRPCChannelProxy, GetRPCChannelProxyPtr> (m, "GetRPCChannel")
+    .def(py::init<std::string, int, std::string, std::string, size_t>())
+    .def(py::init<std::string, std::string, size_t>())
+    .def_property_readonly("src_port", &GetRPCChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &GetRPCChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
+#endif
+  m.def("support_grpc_channel", [](){
+#if defined(GRPC_CHANNEL)
+    return true;
+#else
+    return false;
+#endif
+  });
   py::class_<SendPortProxy, PortProxy,
              std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())

@@ -28,6 +28,26 @@ class ChannelProxy {
   RecvPortProxyPtr recv_port_ = nullptr;
 };
 
+#if defined(GRPC_CHANNEL)
+class GetRPCChannelProxy {
+ public:
+  GetRPCChannelProxy(const std::string &url,
+                     const int &port,
+                     const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size);
+  GetRPCChannelProxy(const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size);
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
+ private:
+  ChannelType channel_type = ChannelType::RPCCHANNEL;
+  AbstractChannelPtr channel_ = nullptr;
+  SendPortProxyPtr send_port_ = nullptr;
+  RecvPortProxyPtr recv_port_ = nullptr;
+};
+#endif
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_PROXY_H_
