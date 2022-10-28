@@ -49,7 +49,7 @@ python = ">=3.8, <3.11"
 
 numpy = "^1.22.2"
 scipy = "^1.8.0"
-networkx = "<=2.8"
+networkx = "<=2.8.7"
 asteval = "^0.9.27"
 
 [tool.poetry.dev-dependencies]
