@@ -34,7 +34,7 @@ using grpcchannel::GrpcMetaData;
 using ThreadPtr = std::shared_ptr<std::thread>;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
-class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
+class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
  public:
   GrpcChannelServerImpl(const std::string& name,
                         const size_t &size);
@@ -55,7 +55,7 @@ class GrpcChannelServerImpl final: public GrpcChannelServer::Service{
 
 using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
-class GrpcRecvPort final : public AbstractRecvPort{
+class GrpcRecvPort final : public AbstractRecvPort {
  public:
   GrpcRecvPort(const std::string& name,
                const size_t &size,
@@ -65,12 +65,12 @@ class GrpcRecvPort final : public AbstractRecvPort{
     MetaDataPtr Peek();
     void Join();
     bool Probe();
-    void GrpcMetaData2MetaData(MetaDataPtr metadata, GrpcMetaDataPtr grpcdata);
+
  private:
   ServerBuilder builder_;
   std::atomic_bool done_;
   std::unique_ptr<Server> server_;
-  ServerImplPtr serviceptr_;
+  ServerImplPtr service_ptr_;
   std::string url_;
   std::string name_;
   size_t size_;
@@ -78,21 +78,18 @@ class GrpcRecvPort final : public AbstractRecvPort{
 
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
-class GrpcSendPort final : public AbstractSendPort{
+class GrpcSendPort final : public AbstractSendPort {
  public:
   GrpcSendPort(const std::string &name,
                const size_t &size,
                const std::string& url)
-               :name_(name),
-               size_(size),
-               done_(false),
-               url_(url) {}
+  :name_(name), size_(size), done_(false), url_(url)
+  {}
 
   void Start();
   void Send(MetaDataPtr metadata);
   void Join();
   bool Probe();
-  GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata);
 
  private:
   std::shared_ptr<Channel> channel_;

@@ -18,6 +18,8 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
+
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<MultiProcessing> (m, "CppMultiProcessing")
     .def(py::init<>())
@@ -86,7 +88,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
 #if defined(GRPC_CHANNEL)
-  py::class_<GetRPCChannelProxy, std::shared_ptr<GetRPCChannelProxy>> (m, "GetRPCChannel")
+  py::class_<GetRPCChannelProxy, GetRPCChannelProxyPtr> (m, "GetRPCChannel")
     .def(py::init<std::string, int, std::string, std::string, size_t>())
     .def(py::init<std::string, std::string, size_t>())
     .def_property_readonly("src_port", &GetRPCChannelProxy::GetSendPort,

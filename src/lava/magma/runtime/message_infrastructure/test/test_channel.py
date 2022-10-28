@@ -23,6 +23,9 @@ def prepare_data():
     return np.random.random_sample((2, 4))
 
 
+const_data = prepare_data()
+
+
 def actor_stop(name):
     pass
 
@@ -34,7 +37,7 @@ def send_proc(*args, **kwargs):
     if not isinstance(port, SendPort):
         raise AssertionError()
     port.start()
-    port.send(prepare_data())
+    port.send(const_data)
     port.join()
     actor.status_stopped()
 
@@ -47,7 +50,7 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     data = port.recv()
-    if not np.array_equal(data, prepare_data()):
+    if not np.array_equal(data, const_data):
         raise AssertionError()
     port.join()
     actor.status_stopped()
@@ -63,8 +66,7 @@ class TestChannel(unittest.TestCase):
     def test_shmemchannel(self):
         mp = MultiProcessing()
         mp.start()
-        predata = prepare_data()
-        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
         name = 'test_shmem_channel'
 
         shmem_channel = Channel(
@@ -118,8 +120,7 @@ class TestChannel(unittest.TestCase):
     def test_socketchannel(self):
         mp = MultiProcessing()
         mp.start()
-        predata = prepare_data()
-        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
         name = 'test_socket_channel'
 
         socket_channel = Channel(
@@ -176,7 +177,7 @@ class TestChannel(unittest.TestCase):
         mp = MultiProcessing()
         mp.start()
         name = 'test_grpc_channel'
-        url = '127.13.2.2:'
+        url = '127.13.2.2'
         port = 8003
         grpc_channel = GetRPCChannel(
             url,
@@ -204,7 +205,7 @@ class TestChannel(unittest.TestCase):
         from message_infrastructure import GetRPCChannel
         predata = prepare_data()
         name = 'test_single_process_grpc_channel'
-        url = '127.13.2.2:'
+        url = '127.13.2.2'
         port = 8002
         grpc_channel = GetRPCChannel(
             url,
