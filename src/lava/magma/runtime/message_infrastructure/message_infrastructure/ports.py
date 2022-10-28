@@ -42,7 +42,6 @@ class SendPort(AbstractTransferPort):
 if support_grpc_channel():
     from MessageInfrastructurePywrapper import GetRPCChannel as CppRPCChannel
 
-
     class GetRPCChannel(CppRPCChannel):
 
         @property
