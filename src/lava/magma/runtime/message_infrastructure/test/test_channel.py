@@ -215,10 +215,10 @@ class TestChannel(unittest.TestCase):
 
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
-        
+
         send_port.start()
         recv_port.start()
-        
+
         send_port.send(predata)
         resdata = recv_port.recv()
 
