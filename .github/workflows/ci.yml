@@ -10,6 +10,9 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.1
@@ -28,6 +31,9 @@ jobs:
     name: Security Lint Code
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.1
@@ -48,6 +54,9 @@ jobs:
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.1
