@@ -38,7 +38,7 @@ class GrpcManager {
 
  private:
   GrpcManager() {}
-  std::string base_url_ = "127.11.2.78:";
+  std::string base_url_ = "127.11.2.78";
   int base_port_ = 8000;
   int port_num_ = 0;
   static GrpcManager grpcm_;
