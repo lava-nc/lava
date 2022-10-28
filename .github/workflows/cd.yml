@@ -2,9 +2,6 @@ name: Run CD
 on:
   workflow_dispatch:
 
-env:
-  ci-action-version: 'v1.2'
-
 jobs:
   build-artifacts:
     name: Build Artifacts
@@ -15,16 +12,8 @@ jobs:
       with:
         lfs: true
 
-    - name: Get composite run steps repository
-      uses: actions/checkout@v3
-      with:
-        repository: lava-nc/ci-setup-composite-action
-        ref: ${{ env.ci-action-version }}
-        ssh-key: ${{ secrets.DEPLOY_KEY }}
-        path: .github/ci-setup-composite-action
-
-    - name: Setup CI environment
-      uses: ./.github/ci-setup-composite-action
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
 
