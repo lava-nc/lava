@@ -18,7 +18,9 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+#if defined(GRPC_CHANNEL)
 using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
+#endif
 
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<MultiProcessing> (m, "CppMultiProcessing")
