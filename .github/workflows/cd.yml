@@ -104,6 +104,7 @@ jobs:
           tar -xvf $artifact
           mv ./lava*/tests .
           mv ./lava*/tutorials .
+          export C_INCLUDE_PATH=\$C_INCLUDE_PATH:$(python3 -c "import nxcore; print(nxcore.__path__[0])")/include
           python -m unittest -vv
           deactivate
           cd ../
@@ -125,6 +126,7 @@ jobs:
           tar -xvf $artifact
           mv ./lava*/tests .
           mv ./lava*/tutorials .
+          export C_INCLUDE_PATH=\$C_INCLUDE_PATH:$(python3 -c "import nxcore; print(nxcore.__path__[0])")/include
           python -m unittest -vv
           deactivate
           cd ../
