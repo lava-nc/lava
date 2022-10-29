@@ -81,6 +81,8 @@ class SuperSpikeLIF(LearningNeuronProcess, AbstractLIF):
         # Third factor input
         self.a_third_factor_in = InPort(shape=shape)
 
+        self.v_port = OutPort(shape=(1,))
+
 
 @implements(proc=SuperSpikeLIF, protocol=LoihiProtocol)
 @requires(CPU)
@@ -93,6 +95,8 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
     s_error_out : np.ndarray = LavaPyType(float, float)
+
+    v_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     # third factor input
     a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -110,8 +114,8 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         This is the error signal propogated from the input. 
         """
         # Decay constants for error
-        error_tau_rise = 20
-        error_tau_decay = 80
+        error_tau_rise = 200
+        error_tau_decay = 72
 
         # Spike error at each time step
         error = s_error_in - self.s_out_buff        
@@ -119,7 +123,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
 
         # error trace updated with rise constant
         self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
-
+        
         # Decaying error trace
         self.s_error_out = np.exp(-1 / error_tau_decay) * self.s_error_out
 
@@ -132,7 +136,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         For SuperSpike:
         This is calculating the surrogate gradient of the membrane potential. 
         """
-        h_i = (self.v - self.vth)
+        h_i = 1000 * (self.v - self.vth)
         surrogate_v = np.power((1 + np.abs(h_i)), (-2))
 
         return surrogate_v
@@ -152,6 +156,8 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
+
+        self.v_port.send(self.v)
 
         if self.time_step % self.proc_params['learning_rule'].t_epoch == 0:
             self.y1 = self.y1 & False
@@ -235,7 +241,10 @@ class MyMonitor(AbstractProcess):
         self.pre_spikes = Var(shape=shape_pre_buffer, init=np.zeros(shape_pre_buffer))
         self.post_spikes_port = InPort(shape=shape_post)
         self.post_spikes = Var(shape=shape_post_buffer, init=np.zeros(shape_post_buffer))
-        
+
+        self.lif_mem_voltage_port = InPort(shape=shape_pre)
+        self.lif_mem_voltage = Var(shape=shape_pre_buffer, init=np.zeros(shape_pre_buffer))
+
         self.learning_dense_x1_port = InPort(shape=shape_pre)
         self.learning_dense_x1 = Var(shape=shape_pre_buffer, init=np.zeros(shape_pre_buffer))
         self.learning_dense_x2_port = InPort(shape=shape_pre)
@@ -262,6 +271,8 @@ class MyMonitorPM(PyLoihiProcessModel):
     pre_spikes: np.ndarray = LavaPyType(float, float)
     post_spikes_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     post_spikes: np.ndarray = LavaPyType(float, float)
+    lif_mem_voltage_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE,float)
+    lif_mem_voltage: np.ndarray = LavaPyType(float, float)
         
     learning_dense_x1_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE,float)
     learning_dense_x1: np.ndarray = LavaPyType(float, float)
@@ -285,6 +296,7 @@ class MyMonitorPM(PyLoihiProcessModel):
     def run_spk(self):
         pre_spikes = self.pre_spikes_port.recv()
         post_spikes = self.post_spikes_port.recv()
+        lif_mem_voltage = self.lif_mem_voltage_port.recv()
         learning_dense_x1 = self.learning_dense_x1_port.recv()
         learning_dense_x2 = self.learning_dense_x2_port.recv()
         learning_dense_y2 = self.learning_dense_y2_port.recv()
@@ -295,6 +307,7 @@ class MyMonitorPM(PyLoihiProcessModel):
         
         self.pre_spikes[..., self.time_step % self._buffer_size] = pre_spikes
         self.post_spikes[..., self.time_step % self._buffer_size] = post_spikes
+        self.lif_mem_voltage[..., self.time_step % self._buffer_size] = lif_mem_voltage
         self.learning_dense_x1[..., self.time_step % self._buffer_size] = learning_dense_x1
         self.learning_dense_x2[..., self.time_step % self._buffer_size] = learning_dense_x2
         self.learning_dense_y2[..., self.time_step % self._buffer_size] = learning_dense_y2
@@ -321,6 +334,31 @@ def plot_spikes(spikes, legend, colors):
     plt.xlabel("Time steps")
     plt.ylabel("Neurons")
     plt.yticks(ticks=offsets, labels=legend)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.9)
+    plt.minorticks_on()
+    plt.grid()
+    
+    plt.show()
+
+def plot_spikes_shorter(spikes, legend, colors, x_ticks):
+    offsets = list(range(1, len(spikes) + 1))
+    
+    plt.figure(figsize=(20, 3))
+    
+    spikes_plot = plt.eventplot(positions=spikes, 
+                                lineoffsets=offsets,
+                                linelength=0.9,
+                                colors=colors)
+    
+    plt.title("Spike arrival")
+    plt.xlabel("Time steps")
+    plt.ylabel("Neurons")
+    plt.xticks(ticks=x_ticks)
+    plt.yticks(ticks=offsets, labels=legend)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.9)
+    plt.minorticks_on()
     plt.grid()
     
     plt.show()
@@ -334,6 +372,9 @@ def plot_time_series(time, time_series, ylabel, title, figsize, color):
     plt.title(title)
     plt.xlabel("Time steps")
     plt.ylabel(ylabel)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.9)
+    plt.minorticks_on()
     plt.grid()
     
     plt.show()
@@ -349,14 +390,18 @@ def plot_time_series_combo(time, time_series, ylabel, title, figsize, colors, sp
     if target:
         ax3=plt.subplot(111)
     for s in range(len(spikes)):
-        ax2.axvspan(xmin=spikes[s], xmax=spikes[s]+0.1, color=colors[1], alpha=0.5)  
+        ax2.axvspan(xmin=spikes[s], xmax=spikes[s]+0.1, color=colors[1])  
         if target:
-            ax3.axvspan(xmin=spikes_target[s], xmax=spikes_target[s]+0.1, color=colors[2], alpha=0.5)  
+            for u in range(len(spikes_target)):
+                ax3.axvspan(xmin=spikes_target[u], xmax=spikes_target[u]+0.1, color=colors[2])  
         
 
     plt.title(title)
     plt.xlabel("Time steps")
     plt.ylabel(ylabel)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.9)
+    plt.minorticks_on()
 
     
     plt.show()
