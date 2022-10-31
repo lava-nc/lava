@@ -67,8 +67,8 @@ class Builder:
 
 class TestChannel(unittest.TestCase):
 
-    #@unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
-    #@unittest.skip("")
+    # @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
+    # @unittest.skip("")
     def test_grpcchannel(self):
         from message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
