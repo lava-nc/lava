@@ -85,7 +85,9 @@ class LavaPyType:
         if self.num_bits_exp and not self.exp_var:
             raise ValueError("Provided number of bits for exponent but no"
                              + " name for exponent variable.")
-        if self.exp_var and not self.num_bits_exp:
+        if (self.exp_var and not self.num_bits_exp) and self.num_bits_exp != 0:
+            # Evaluates to true if exp_var given and num_bits_exp None.
+            # If num_bits_exp is greater or equalt than 0, evaluates to False.
             raise ValueError("Provided name for exponent variable but not"
                              + " number of bits for exponent..")
 
