@@ -603,16 +603,19 @@ class Float2FixedConverter:
                     if var in self.monitors[p_id].keys():
                         lower_val = np.quantile(domain, self.quantiles[0])
                         higher_val = np.quantile(domain, self.quantiles[1])
-                        dyn_range = np.array([lower_val, higher_val])
+                        dyn_range = (float(lower_val), float(higher_val))
                     else:
-                        dyn_range = np.array([np.min(domain), np.max(domain)])
+                        dyn_range = (float(np.min(domain)),
+                                     float(np.max(domain)))
 
                     # Calculate slopes for linear mapping of var.
                     # If an entry in rep_range or dyn_range is zero, inf will
                     # be filled in.
-                    not_zero_cond = (rep_range != 0) * (dyn_range != 0)
-                    slopes_var = np.divide(rep_range, dyn_range,
-                                           out=np.inf * np.ones_like(dyn_range),
+                    dyn_range_arr = np.array(dyn_range)
+                    not_zero_cond = ((rep_range != 0) * (dyn_range_arr != 0))
+                    slopes_var = np.divide(rep_range, dyn_range_arr,
+                                           out=(np.inf
+                                                * np.ones_like(dyn_range_arr)),
                                            where=not_zero_cond)
 
                     # Take absolute value. Only positive slopes are allowed.
