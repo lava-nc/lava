@@ -5,7 +5,7 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.process.process import AbstractProcess, LogConfig
+from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
@@ -23,10 +23,11 @@ class AbstractLIF(AbstractProcess):
                  bias_mant: ty.Union[float, list, np.ndarray],
                  bias_exp: ty.Union[float, list, np.ndarray],
                  name: str,
-                 log_config: LogConfig) -> None:
+                 log_config: LogConfig,
+                 **kwargs) -> None:
         super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant, bias_exp=bias_exp, name=name,
-                         log_config=log_config)
+                         bias_mant=bias_mant, bias_exp=bias_exp,
+                         name=name, log_config=log_config, **kwargs)
 
         self.shape = shape
         self.a_in = InPort(shape=shape)
@@ -90,11 +91,12 @@ class LIF(AbstractLIF):
             bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None) -> None:
+            log_config: ty.Optional[LogConfig] = None,
+            **kwargs) -> None:
         super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
-                         log_config=log_config)
+                         log_config=log_config, **kwargs)
 
         self.vth = Var(shape=(1,), init=vth)
 

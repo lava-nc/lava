@@ -9,7 +9,7 @@ from lava.magma.core.model.precision import Precision
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.lif.process import LIF, TernaryLIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF
 
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
@@ -52,11 +52,13 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         a_in_data = self.a_in.recv()
+
         self.subthr_dynamics(activation_in=a_in_data)
-        s_out = self.spiking_activation()
-        self.reset_voltage(spike_vector=s_out)
-        self.s_out.send(s_out)
+        self.s_out_buff = self.spiking_activation()
+        self.reset_voltage(spike_vector=self.s_out_buff)
+        self.s_out.send(self.s_out_buff)
 
 
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
@@ -201,6 +203,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
+        super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
@@ -351,3 +354,110 @@ class PyTernLifModelFixed(AbstractPyLifModelFixed):
         """Reset voltage of all spiking neurons to 0.
         """
         self.v[spike_vector != 0] = 0  # Reset voltage to 0 wherever we spiked
+
+
+@implements(proc=LIFReset, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class PyLifResetModelFloat(AbstractPyLifModelFloat):
+    """Implementation of Leaky-Integrate-and-Fire neural process with reset
+    in floating point precision.
+    """
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    vth: float = LavaPyType(float, float)
+
+    def __init__(self, proc_params):
+        super(PyLifResetModelFloat, self).__init__(proc_params)
+        self.reset_interval = proc_params['reset_interval']
+        self.reset_offset = (proc_params['reset_offset']) % self.reset_interval
+
+    def spiking_activation(self):
+        """Spiking activation function for LIF.
+        """
+        return self.v > self.vth
+
+    def run_spk(self):
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
+        # Receive synaptic input
+        a_in_data = self.a_in.recv()
+
+        if (self.time_step % self.reset_interval) == self.reset_offset:
+            self.u *= 0
+            self.v *= 0
+
+        self.subthr_dynamics(activation_in=a_in_data)
+
+        s_out = self.spiking_activation()
+
+        # Reset voltage of spiked neurons to 0
+        self.reset_voltage(spike_vector=s_out)
+        self.s_out.send(s_out)
+
+
+@implements(proc=LIFReset, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('bit_accurate_loihi', 'fixed_pt')
+class PyLifResetModelBitAcc(AbstractPyLifModelFixed):
+    """Implementation of Leaky-Integrate-and-Fire neural process with reset
+    bit-accurate with Loihi's hardware LIF dynamics, which means, it mimics
+    Loihi behaviour.
+
+    Precisions of state variables
+
+    - du: unsigned 12-bit integer (0 to 4095)
+    - dv: unsigned 12-bit integer (0 to 4095)
+    - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
+      bias.
+    - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
+    - vth: unsigned 17-bit integer (0 to 131071).
+
+    """
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: int = LavaPyType(int, np.int32, precision=17)
+
+    def __init__(self, proc_params):
+        super(PyLifResetModelBitAcc, self).__init__(proc_params)
+        self.effective_vth = 0
+        self.reset_interval = proc_params['reset_interval']
+        self.reset_offset = (proc_params['reset_offset']) % self.reset_interval
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.isthrscaled = True
+
+    def spiking_activation(self):
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
+
+    def run_spk(self):
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
+        # Receive synaptic input
+        a_in_data = self.a_in.recv()
+
+        if (self.time_step % self.reset_interval) == self.reset_offset:
+            self.u *= 0
+            self.v *= 0
+
+        self.scale_bias()
+
+        if not self.isthrscaled:
+            self.scale_threshold()
+
+        self.subthr_dynamics(activation_in=a_in_data)
+
+        s_out = self.spiking_activation()
+
+        # Reset voltage of spiked neurons to 0
+        self.reset_voltage(spike_vector=s_out)
+        self.s_out.send(s_out)
