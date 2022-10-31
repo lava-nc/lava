@@ -46,7 +46,7 @@ class DoubleExponentialSuperSpikeLoihi(Loihi3FLearningRule):
 
         dd = f"t * u0 - u0 * {self.eligibility_trace_decay_tau} * d"
 
-        dw = f"{self.learning_rate} * u0 * y2 * t"
+        dw = f"{self.learning_rate} * u0 * y2 * d"
 
         super().__init__(
             dw=dw,

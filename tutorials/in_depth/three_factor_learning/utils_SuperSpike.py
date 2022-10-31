@@ -114,15 +114,15 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         This is the error signal propogated from the input. 
         """
         # Decay constants for error
-        error_tau_rise = 200
-        error_tau_decay = 72
+        # error_tau_rise = 200
+        error_tau_decay = 10
 
         # Spike error at each time step
         error = s_error_in - self.s_out_buff        
         self.s_error_out = self.s_error_out + error
 
         # error trace updated with rise constant
-        self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
+        # self.s_error_out = np.exp(-1 / error_tau_rise) * self.s_error_out
         
         # Decaying error trace
         self.s_error_out = np.exp(-1 / error_tau_decay) * self.s_error_out
@@ -136,7 +136,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         For SuperSpike:
         This is calculating the surrogate gradient of the membrane potential. 
         """
-        h_i = 1000 * (self.v - self.vth)
+        h_i = 0.1 * (self.v - self.vth)
         surrogate_v = np.power((1 + np.abs(h_i)), (-2))
 
         return surrogate_v
