@@ -11,10 +11,12 @@ from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import AbstractTransferPort
 from MessageInfrastructurePywrapper import support_grpc_channel
+from MessageInfrastructurePywrapper import support_dds_channel
 from .ports import SendPort, Channel
 
 ChannelQueueSize = 32
 SupportGRPCChannel = support_grpc_channel()
+SupportDDSChannel = support_dds_channel()
 
 if SupportGRPCChannel:
     from .ports import GetRPCChannel

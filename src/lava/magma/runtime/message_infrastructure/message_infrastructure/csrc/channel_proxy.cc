@@ -61,4 +61,26 @@ RecvPortProxyPtr GetRPCChannelProxy::GetRecvPort() {
     return recv_port_;
 }
 #endif
+
+GetDDSChannelProxy::GetDDSChannelProxy(const int &dds_depth,
+                                       const size_t &nbytes,
+                                       const std::string &topic_name,
+                                       const DDSTransportType
+                                             &transport_type) {
+  ChannelFactory &channel_factory = GetChannelFactory(dds_depth,
+                                                      nbytes,
+                                                      topic_name,
+                                                      transport_type);
+  channel_ = Channel_factory.GetDefDDSChannel();
+  send_port_ = std::make_shared<SendPortProxy>(channel_type,
+                                               channel_->GetSendPort());
+  recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
+                                               channel_->GetRecvPort());
+}
+SendPortProxyPtr GetDDSChannelProxy::GetSendPort() {
+    return send_port_;
+}
+RecvPortProxyPtr GetDDSChannelProxy::GetRecvPort() {
+    return recv_port_;
+}
 }  // namespace message_infrastructure

@@ -30,7 +30,10 @@ using DDSSubscriberPtr = std::shared_ptr<DDSSubscriber>;
 
 class DDS {
  public:
-  DDS(const size_t &max_samples, const size_t &nbytes, const std::string &topic_name);
+  DDS(const size_t &max_samples,
+      const size_t &nbytes,
+      const std::string &topic_name,
+      const DDSTransportType &dds_transfer_type);
   DDSPublisherPtr dds_publisher_ = nullptr;
   DDSSubscriberPtr dds_subscriber_ = nullptr;
 };
@@ -42,7 +45,8 @@ class DDSManager {
   ~DDSManager();
   DDSPtr AllocDDS(const size_t &size,
                        const size_t &nbytes,
-                       const std::string &topic_name);
+                       const std::string &topic_name,
+                       const DDSTransportType &dds_transfer_type);
   void DeleteAllDDS();
   friend DDSManager &GetDDSManager();
 

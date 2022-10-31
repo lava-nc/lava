@@ -105,6 +105,23 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     return false;
 #endif
   });
+
+#if defined(DDS_CHANNEL)
+  py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
+    .def(py::init<int, size_t, std::string, DDSTransportType>())
+    .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
+#endif
+  m.def("support_dds_channel", [](){
+#if defined(DDS_CHANNEL)
+    return true;
+#else
+    return false;
+#endif
+  });
+
   py::class_<SendPortProxy, PortProxy,
              std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())

@@ -27,6 +27,12 @@ enum ChannelType {
   SOCKETCHANNEL = 3
 };
 
+enum DDSTransportType {
+  SharedMemory = 0,
+  TCP = 1,
+  UDP = 2
+};
+
 struct MetaData {
   int64_t nd;
   int64_t type;

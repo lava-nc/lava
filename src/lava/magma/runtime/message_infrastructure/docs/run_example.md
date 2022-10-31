@@ -36,8 +36,8 @@ export LD_LIBRARY_PATH="~Fast-DDS/install/lib"
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=~/Fast-DDS/install \
 -DDDS_CHANNEL=ON \
--DDDS_BACKEND="fast_dds" \
--DDDS_TRANSFER_TYPE="SHARED_MEM" ..
+-DDDS_BACKEND=fast_dds \
+-DDDS_TRANSFER_TYPE=SHARED_MEM ..
 make
 # DDS_CHANNEL: set "ON" to enable the DDS_CHANNEL support
 # CMAKE_INSTALL_PREFIX: DDS install Path

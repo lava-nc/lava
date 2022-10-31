@@ -32,12 +32,6 @@ class ChannelFactory {
                                 const std::string &src_name,
                                 const std::string &dst_name) {
     switch (channel_type) {
-      case DDSCHANNEL:
-        #ifdef DDS_CHANNEL_ENABLE
-        printf("Channel factory: get dds channel\n");
-        return GetDDSChannel(size, nbytes, src_name);
-        #endif
-        break;
       case SOCKETCHANNEL:
         return GetSocketChannel(nbytes, src_name, dst_name);
       default:
@@ -47,7 +41,17 @@ class ChannelFactory {
     return NULL;
   }
 
-  friend ChannelFactory& GetChannelFactory();
+#if defined(DDS_CHANNEL)
+  AbstractChannelPtr GetDDSChannel(const int &dds_depth,
+                                   const size_t &nbytes,
+                                   const std::string &topic_name,
+                                   const DDSTransportType &transport_type) {
+    return std::make_shared<DDSChannel>(dds_depth,
+                                        nbytes,
+                                        topic_name,
+                                        transport_type);
+  }
+#endif
 
 #if defined(GRPC_CHANNEL)
   AbstractChannelPtr GetRPCChannel(const std::string &url,
@@ -65,6 +69,7 @@ class ChannelFactory {
   }
 #endif
 
+  friend ChannelFactory& GetChannelFactory();
  private:
   ChannelFactory() {}
   ChannelFactory(const ChannelFactory&) {}

@@ -44,11 +44,13 @@ class FastDDSPublisher final : public DDSPublisher {
  public:
   FastDDSPublisher(const size_t &max_samples,
                    const size_t &nbytes,
-                   const std::string &topic_name) :
+                   const std::string &topic_name,
+                   const DDSTransportType &dds_transfer_type) :
                    type_(new DDSMetaDataPubSubType()),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
-                   topic_name_(topic_name)
+                   topic_name_(topic_name),
+                   dds_transfer_type_(dds_transfer_type)
                     {};
   ~FastDDSPublisher();
   int Init();
@@ -65,6 +67,7 @@ class FastDDSPublisher final : public DDSPublisher {
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
   eprosima::fastdds::dds::DataWriter* writer_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
+  DDSTransportType dds_transfer_type_;
   bool stop_;
   int max_samples_;
   size_t nbytes_;
@@ -91,11 +94,13 @@ class FastDDSSubscriber final : public DDSSubscriber {
  public:
   FastDDSSubscriber(const size_t &max_samples,
                    const size_t &nbytes,
-                   const std::string &topic_name) :
+                   const std::string &topic_name,
+                   const DDSTransportType &dds_transfer_type) :
                    type_(new DDSMetaDataPubSubType()),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
-                   topic_name_(topic_name)
+                   topic_name_(topic_name),
+                   dds_transfer_type_(dds_transfer_type)
                     {};
   ~FastDDSSubscriber();
   int Init();
@@ -111,6 +116,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
   eprosima::fastdds::dds::DataReader* reader_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
+  DDSTransportType dds_transfer_type_;
   int max_samples_;
   size_t nbytes_;
   std::string topic_name_;

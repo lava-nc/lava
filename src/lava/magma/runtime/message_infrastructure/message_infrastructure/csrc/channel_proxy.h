@@ -48,6 +48,23 @@ class GetRPCChannelProxy {
   RecvPortProxyPtr recv_port_ = nullptr;
 };
 #endif
+
+#if defined(DDS_CHANNEL)
+class GetDDSChannelProxy {
+ public:
+  GetDDSChannelProxy(const int &dds_depth,
+                     const size_t &nbytes,
+                     const std::string &topic_name,
+                     const DDSTransportType &transport_type);
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
+ private:
+  AbstractChannelPtr channel_ = nullptr;
+  SendPortProxyPtr send_port_ = nullptr;
+  RecvPortProxyPtr recv_port_ = nullptr;
+};
+#endif
+
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_PROXY_H_

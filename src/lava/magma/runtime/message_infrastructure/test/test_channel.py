@@ -229,6 +229,34 @@ class TestChannel(unittest.TestCase):
         send_port.join()
         recv_port.join()
 
+    @unittest.skipIf(not SupportDDSChannel, "Not support grpc channel.")
+    def test_ddschannel(self):
+        mp = MultiProcessing()
+        mp.start()
+        nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
+        name = 'test_dds_channel'
+
+        dds_channel = Channel(
+            ChannelBackend.DDSCHANNEL,
+            ChannelQueueSize,
+            nbytes,
+            name,
+            name)
+
+        send_port = dds_channel.src_port
+        recv_port = dds_channel.dst_port
+
+        recv_port_fn = partial(recv_proc, port=recv_port)
+        send_port_fn = partial(send_proc, port=send_port)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
+
+        time.sleep(0.1)
+        mp.stop(True)
+       
 
 if __name__ == "__main__":
     unittest.main()
