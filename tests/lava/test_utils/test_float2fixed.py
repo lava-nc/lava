@@ -490,7 +490,7 @@ class ProcVarPyProcModelFixed(PyLoihiProcessModel):
                                constant=False, scale_domain=0)
 
 
-class Float2Fixed(unittest.TestCase):
+class TestFloat2FixedConverter(unittest.TestCase):
 
     def test_converter_constructor(self):
         """Check if Float2Fixed Converter is correctly instantiated."""
