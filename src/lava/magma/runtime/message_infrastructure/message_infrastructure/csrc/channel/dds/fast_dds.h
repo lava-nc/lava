@@ -26,14 +26,14 @@ namespace message_infrastructure {
 class FastDDSPubListener final : public
                                 eprosima::fastdds::dds::DataWriterListener {
  public:
-  FastDDSPubListener() : matched_(0), first_connected_(false) {}
+  FastDDSPubListener() : matched_(false), first_connected_(false) {}
   ~FastDDSPubListener() override {}
   void on_publication_matched(
     eprosima::fastdds::dds::DataWriter* writer,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info
   ) override;
 
-  int matched_;
+  bool matched_;
   bool first_connected_;
   eprosima::fastdds::dds::TypeSupport type_;
 };
@@ -53,6 +53,7 @@ class FastDDSPublisher final : public DDSPublisher {
   ~FastDDSPublisher();
   int Init();
   bool Publish(MetaDataPtr metadata);
+  void Stop();
  private:
   void InitParticipant(); // Add type for shm, tcp or others
   void InitDataWriter();
@@ -76,7 +77,7 @@ class FastDDSSubListener final : public
   FastDDSSubListener() : matched_(0), samples_(0) {}
   ~FastDDSSubListener() override{}
   void on_data_available(
-                eprosima::fastdds::dds::DataReader* reader) override;
+                eprosima::fastdds::dds::DataReader* reader) override {};
   void on_subscription_matched(
                 eprosima::fastdds::dds::DataReader* reader,
                 const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;

@@ -95,17 +95,24 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
   return false;
 }
 
+void FastDDSPublisher::Stop() {
+  printf("stop publisher and do something\n");
+  while(listener_->matched_) {
+    helper::Sleep();
+  }
+}
+
 void FastDDSPubListener::on_publication_matched(
         eprosima::fastdds::dds::DataWriter*,
         const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
-    matched_ = info.total_count;
+    matched_ = true;
     first_connected_ = true;
     printf("Publisher matched.\n");
   }
   else if (info.current_count_change == -1) {
-    matched_ = info.total_count;
-    printf("Publisher unmatched.\n");
+    matched_ = false;
+    printf("Publisher unmatched. matched_:%d\n", matched_);
   }
   else
   {
@@ -122,16 +129,12 @@ void FastDDSSubListener::on_subscription_matched(
   }
   else if (info.current_count_change == -1) {
     matched_ = info.total_count;
-    printf("Subscriber unmatched\n");
+    printf("Subscriber unmatched. matched_:%d\n", matched_);
   }
   else {
     LAVA_LOG_ERR("Subscriber number is not matched\n");
   }
 }
-
-void FastDDSSubListener::on_data_available(DataReader* reader) {
-}
-
 
 FastDDSSubscriber::~FastDDSSubscriber() {
   subscriber_->delete_datareader(reader_);
@@ -195,33 +198,25 @@ int FastDDSSubscriber::Init() {
 }
 
 MetaDataPtr FastDDSSubscriber::Read() {
-  eprosima::fastrtps::Duration_t timeout (5, 0);
   SampleInfo info;
-  int maxtime = 10;
-  for (int i = 0; i < maxtime; i++) {
-    //if (reader_->wait_for_unread_message(timeout)) {
-      if (ReturnCode_t::RETCODE_OK == reader_->take_next_sample(dds_metadata_.get(), &info)) {
-        if (info.valid_data) {
-          // Recv data here
-          MetaDataPtr metadata = std::make_shared<MetaData>();
-          memcpy(metadata.get(), dds_metadata_->mdata().data(), sizeof(MetaData));
-          printf("Allocating %d size\n", metadata->elsize * metadata->total_size);
-          void *ptr = malloc(metadata->elsize * metadata->total_size);
-          memcpy(ptr, dds_metadata_->mdata().data()+sizeof(MetaData),
-                                          metadata->elsize * metadata->total_size);
-          metadata->mdata = ptr;
-          printf("Data Recieved\n");
-          return metadata;
-        }
-        // else {
-        //   printf("Remote writer die\n");
-        // }
-      // }
-      // break;
-    }
-    else {
-      printf("%i: didn't recv data\n", i);
-    }
+  while (ReturnCode_t::RETCODE_OK != reader_->take_next_sample(dds_metadata_.get(), &info)) {
+    helper::Sleep();
+  }
+
+  if (info.valid_data) {
+    // Recv data here
+    MetaDataPtr metadata = std::make_shared<MetaData>();
+    memcpy(metadata.get(), dds_metadata_->mdata().data(), sizeof(MetaData));
+    printf("Allocating %d size\n", metadata->elsize * metadata->total_size);
+    void *ptr = malloc(metadata->elsize * metadata->total_size);
+    memcpy(ptr, dds_metadata_->mdata().data()+sizeof(MetaData),
+                                    metadata->elsize * metadata->total_size);
+    metadata->mdata = ptr;
+    printf("Data Recieved\n");
+    return metadata;
+  }
+  else {
+      printf("Remote writer die\n");
   }
 
   LAVA_LOG_ERR("time out and no data received\n");

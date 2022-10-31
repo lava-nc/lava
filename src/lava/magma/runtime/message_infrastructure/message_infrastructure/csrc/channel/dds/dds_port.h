@@ -29,6 +29,7 @@ class DDSSendPort final : public AbstractSendPort {
     }
   }
   void Join() {
+    publisher_->Stop();
     done_.store(true);
   }
   bool Probe() {
