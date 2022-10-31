@@ -16,8 +16,11 @@ using namespace eprosima::fastdds::rtps;
 using namespace eprosima::fastrtps::rtps;
 
 FastDDSPublisher::~FastDDSPublisher() {
-  publisher_->delete_datawriter(writer_);
+  if (writer_ != nullptr)
+    publisher_->delete_datawriter(writer_);
+  if (publisher_ != nullptr)
   participant_->delete_publisher(publisher_);
+  if (topic_ != nullptr)
   participant_->delete_topic(topic_);
   DomainParticipantFactory::get_instance()->delete_participant(participant_);
 }
@@ -137,9 +140,12 @@ void FastDDSSubListener::on_subscription_matched(
 }
 
 FastDDSSubscriber::~FastDDSSubscriber() {
-  subscriber_->delete_datareader(reader_);
-  participant_->delete_topic(topic_);
-  participant_->delete_subscriber(subscriber_);
+  if (reader_ != nullptr)
+    subscriber_->delete_datareader(reader_);
+  if (topic_ != nullptr)
+    participant_->delete_topic(topic_);
+  if (subscriber_ != nullptr)
+    participant_->delete_subscriber(subscriber_);
   DomainParticipantFactory::get_instance()->delete_participant(participant_);
 }
 

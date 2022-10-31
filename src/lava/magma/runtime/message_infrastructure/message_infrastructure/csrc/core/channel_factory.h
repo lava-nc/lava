@@ -15,7 +15,7 @@
 #include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
 #endif
 
-#ifdef DDS_CHANNEL_ENABLE
+#ifdef DDS_CHANNEL
 #include <message_infrastructure/csrc/channel/dds/dds_channel.h>
 #endif
 
@@ -42,7 +42,7 @@ class ChannelFactory {
   }
 
 #if defined(DDS_CHANNEL)
-  AbstractChannelPtr GetDDSChannel(const int &dds_depth,
+  AbstractChannelPtr GetDefDDSChannel(const int &dds_depth,
                                    const size_t &nbytes,
                                    const std::string &topic_name,
                                    const DDSTransportType &transport_type) {

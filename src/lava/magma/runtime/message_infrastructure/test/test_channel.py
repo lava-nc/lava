@@ -15,6 +15,7 @@ from message_infrastructure import (
     SendPort,
     RecvPort,
     SupportGRPCChannel,
+    SupportDDSChannel,
     ChannelQueueSize
 )
 
@@ -231,17 +232,18 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(not SupportDDSChannel, "Not support grpc channel.")
     def test_ddschannel(self):
+        from message_infrastructure import GetDDSChannel
+        from message_infrastructure import DDSTransportType
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
         name = 'test_dds_channel'
 
-        dds_channel = Channel(
-            ChannelBackend.DDSCHANNEL,
+        dds_channel = GetDDSChannel(
             ChannelQueueSize,
             nbytes,
             name,
-            name)
+            DDSTransportType.DDSSHM)
 
         send_port = dds_channel.src_port
         recv_port = dds_channel.dst_port
@@ -259,4 +261,5 @@ class TestChannel(unittest.TestCase):
        
 
 if __name__ == "__main__":
+    print(SupportDDSChannel)
     unittest.main()

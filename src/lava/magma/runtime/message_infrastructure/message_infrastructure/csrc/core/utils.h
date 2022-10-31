@@ -28,9 +28,9 @@ enum ChannelType {
 };
 
 enum DDSTransportType {
-  SharedMemory = 0,
-  TCP = 1,
-  UDP = 2
+  DDSSHM = 0,
+  DDSTCP = 1,
+  DDSUDP = 2
 };
 
 struct MetaData {

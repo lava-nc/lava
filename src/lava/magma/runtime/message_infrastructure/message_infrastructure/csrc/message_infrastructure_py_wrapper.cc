@@ -22,6 +22,10 @@ namespace py = pybind11;
 using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
 #endif
 
+#if defined(DDS_CHANNEL)
+using GetDDSChannelProxyPtr = std::shared_ptr<GetDDSChannelProxy>;
+#endif
+
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<MultiProcessing> (m, "CppMultiProcessing")
     .def(py::init<>())
@@ -105,6 +109,12 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     return false;
 #endif
   });
+
+  py::enum_<DDSTransportType> (m, "DDSTransportType")
+    .value("DDSSHM", DDSSHM)
+    .value("DDSTCP", DDSTCP)
+    .value("DDSUDP", DDSUDP)
+    .export_values();
 
 #if defined(DDS_CHANNEL)
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
