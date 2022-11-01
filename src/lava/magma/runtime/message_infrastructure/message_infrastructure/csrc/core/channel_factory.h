@@ -11,6 +11,9 @@
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
 #include <message_infrastructure/csrc/channel/socket/socket.h>
 #include <message_infrastructure/csrc/channel/socket/socket_channel.h>
+#if defined(GRPC_CHANNEL)
+#include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
+#endif
 
 #include <string>
 #include <memory>
@@ -19,15 +22,12 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
-  AbstractChannelPtr GetChannel(
-      const ChannelType &channel_type,
-      const size_t &size,
-      const size_t &nbytes,
-      const std::string &src_name,
-      const std::string &dst_name) {
+  AbstractChannelPtr GetChannel(const ChannelType &channel_type,
+                                const size_t &size,
+                                const size_t &nbytes,
+                                const std::string &src_name,
+                                const std::string &dst_name) {
     switch (channel_type) {
-      case RPCCHANNEL:
-        break;
       case DDSCHANNEL:
         break;
       case SOCKETCHANNEL:
@@ -37,7 +37,24 @@ class ChannelFactory {
     }
     return NULL;
   }
+
   friend ChannelFactory& GetChannelFactory();
+
+#if defined(GRPC_CHANNEL)
+  AbstractChannelPtr GetRPCChannel(const std::string &url,
+                                   const int &port,
+                                   const std::string &src_name,
+                                   const std::string &dst_name,
+                                   const size_t &size) {
+    return std::make_shared<GrpcChannel>(url, port, src_name, dst_name, size);
+  }
+
+  AbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
+                                      const std::string &dst_name,
+                                      const size_t &size) {
+    return std::make_shared<GrpcChannel>(src_name, dst_name, size);
+  }
+#endif
 
  private:
   ChannelFactory() {}
