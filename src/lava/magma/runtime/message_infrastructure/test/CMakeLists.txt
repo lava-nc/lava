@@ -4,7 +4,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG release-1.12.1
 )
-find_package(pybind11 REQUIRED)
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
@@ -23,7 +22,6 @@ target_link_libraries(
   GTest::gtest_main
   message_infrastructure
   rt
-  pybind11::embed
 )
 
 include(GoogleTest)
