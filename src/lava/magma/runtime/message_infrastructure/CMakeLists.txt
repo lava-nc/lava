@@ -107,8 +107,8 @@ option(FASTDDS_ENABLE "enable FastDDS" OFF)
 option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
 
 if(DDS_CHANNEL)
-
   target_compile_definitions(message_infrastructure PUBLIC DDS_CHANNEL)
+  set(COMMON_DDS_DESTINATION "${CMAKE_BINARY_DIR}/install")
 
   set(DDS_CHANNEL_SRCS
     "message_infrastructure/csrc/channel/dds/dds.cc"
@@ -123,6 +123,8 @@ if(DDS_CHANNEL)
   endif()
 
   if(FASTDDS_ENABLE)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
+    add_definitions(-DFASTDDS)
     set(FASTDDS_SRC
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
@@ -131,15 +133,12 @@ if(DDS_CHANNEL)
     set(FASTDDS_SRC "")
   endif()
 
-  add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS} ${FASTDDS_SRC} ${CycloneDDS_SRC})
-  target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
-
-  if(FASTDDS_ENABLE)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
-    target_compile_definitions(dds_channel PRIVATE FASTDDS)
-  endif()
-
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
+    add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS} ${FASTDDS_SRC} ${CycloneDDS_SRC})
+    target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
+    target_include_directories(dds_channel PUBLIC ${COMMON_DDS_DESTINATION}/include)
+    file(GLOB DDS_SHARED_LIBS "${COMMON_DDS_DESTINATION}/lib/*.so")
+    target_link_libraries(dds_channel INTERFACE ${DDS_SHARED_LIBS})
     target_link_libraries(message_infrastructure dds_channel)
   endif()
 
