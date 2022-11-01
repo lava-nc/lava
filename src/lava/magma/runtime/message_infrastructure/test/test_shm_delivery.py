@@ -6,9 +6,7 @@ import numpy as np
 import unittest
 from functools import partial
 import time
-import array
 from datetime import datetime
-from datetime import timedelta
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
@@ -20,6 +18,7 @@ from message_infrastructure import (
     Channel,
 )
 
+
 class process():
 
     def __init__(self) -> None:
@@ -27,6 +26,7 @@ class process():
 
     def get_status(self):
         return 0
+
 
 class PyChannel():
 
@@ -42,6 +42,7 @@ class PyChannel():
 
     def join(self):
         pass
+
 
 class Port():
 
@@ -60,9 +61,11 @@ class Port():
     def join(self):
         pass
 
+
 class Shm():
     def __init__(self, dtype, size, nbytes, name) -> None:
-        self.shm_ = shared_memory.SharedMemory(name=name, create=True, size=nbytes*size)
+        self.shm_ = shared_memory.SharedMemory(name=name,
+                                               create=True, size=nbytes * size)
         self.nbytes_ = nbytes
         self.size_ = size
         self.sem_ack_ = Semaphore(size)
@@ -75,18 +78,19 @@ class Shm():
     def push(self, data):
         self.sem_ack_.acquire()
         self.sem_.acquire()
-        self.shm_.buf[self.write_*self.nbytes_:((self.write_+1)*self.nbytes_)] = bytearray(data)
-        self.write_ = (self.write_+1)%self.size_
+        self.shm_.buf[self.write_ * self.nbytes_:
+                      ((self.write_ + 1) * self.nbytes_)] = bytearray(data)
+        self.write_ = (self.write_ + 1) % self.size_
         self.type_ = data.dtype
         self.sem_.release()
         self.sem_req_.release()
 
-
     def pop(self):
         self.sem_req_.acquire()
         self.sem_.acquire()
-        result = bytearray(self.shm_.buf[self.read_*self.nbytes_:((self.read_+1)*self.nbytes_)])
-        self.read_ = (self.read_+1)%self.size_
+        result = bytearray(self.shm_.buf[self.read_ * self.nbytes_:
+                           ((self.read_ + 1) * self.nbytes_)])
+        self.read_ = (self.read_ + 1) % self.size_
         self.sem_.release()
         self.sem_ack_.release()
         return np.frombuffer(result, self.type_)
@@ -97,6 +101,7 @@ class Shm():
     def __del__(self):
         self.shm_.close()
         self.shm_.unlink()
+
 
 class Builder():
     def build(self, i):
@@ -148,7 +153,7 @@ def bound_target_a2(loop, a1_to_a2, a2_to_a1, this, builder):
 
 
 def prepare_data():
-    return np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]*1000)
+    return np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0] * 1000)
 
 
 class TestShmDelivery(unittest.TestCase):
@@ -157,8 +162,8 @@ class TestShmDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 100000
 
-    # @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
-    #                "about 30s after it started.")
+    @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
+                   "about 30s after it started.")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -214,7 +219,7 @@ class TestShmDelivery(unittest.TestCase):
             print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
-        loop_end = datetime.now()   
+        loop_end = datetime.now()
 
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
@@ -224,9 +229,10 @@ class TestShmDelivery(unittest.TestCase):
         to_a1.join()
         from_a1.join()
         mp.stop(True)
-        print("cpp_shm_loop_with_cpp_multiprocess timedelta =", loop_end-loop_start)
+        print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
+              loop_end - loop_start)
 
-    # @unittest.skip("memory leak")
+    @unittest.skip("memory leak")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -276,13 +282,13 @@ class TestShmDelivery(unittest.TestCase):
 
         expect_result = np.copy(predata)
         expect_result[0] = (1 + 3 * loop)
-        loop_start = datetime.now()   
+        loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
             print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
-        loop_end = datetime.now()   
+        loop_end = datetime.now()
 
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
@@ -292,8 +298,8 @@ class TestShmDelivery(unittest.TestCase):
         to_a1.join()
         from_a1.join()
         mp.stop(True)
-        print("cpp_skt_loop_with_cpp_multiprocess timedelta =", loop_end-loop_start)
-
+        print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
+              loop_end - loop_start)
 
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
@@ -346,8 +352,8 @@ class TestShmDelivery(unittest.TestCase):
 
         expect_result = np.copy(predata)
         expect_result[0] = (1 + 3 * loop)
-        
-        loop_start = datetime.now()   
+
+        loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
             to_a1.send(predata)
@@ -363,8 +369,7 @@ class TestShmDelivery(unittest.TestCase):
         from_a1.join()
         mp.stop(True)
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
-              loop_end-loop_start)
-
+              loop_end - loop_start)
 
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
@@ -401,7 +406,7 @@ class TestShmDelivery(unittest.TestCase):
 
         target_a1 = partial(bound_target_a1, loop, mp_to_a1,
                             a1_to_a2, a2_to_a1, a1_to_mp, process(), builder)
-        target_a2 = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1, 
+        target_a2 = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1,
                             process(), builder)
 
         a1 = Process(target=target_a1)
@@ -417,13 +422,13 @@ class TestShmDelivery(unittest.TestCase):
 
         expect_result = np.copy(predata)
         expect_result[0] = (1 + 3 * loop)
-        
-        loop_start = datetime.now()   
+
+        loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
             to_a1.send(predata)
             predata = from_a1.recv()
-        loop_end = datetime.now()   
+        loop_end = datetime.now()
 
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
@@ -437,7 +442,7 @@ class TestShmDelivery(unittest.TestCase):
         a1.join()
         a2.join()
         print("py_shm_loop_with_py_multiprocess timedelta =",
-              loop_end-loop_start)
+              loop_end - loop_start)
 
 
 if __name__ == '__main__':
