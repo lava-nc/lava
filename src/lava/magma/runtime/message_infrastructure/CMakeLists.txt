@@ -103,29 +103,52 @@ target_link_libraries(message_infrastructure
 endif()
 
 option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
+option(FASTDDS_ENABLE "enable FastDDS" OFF)
+option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
+
 if(DDS_CHANNEL)
-    # set build environment
-    message("DDS_CHANNEL Enable, DDS_BACKEND: ${DDS_BACKEND}, DDS_TRANSFER_TYPE: ${DDS_TRANSFER_TYPE}")
-    if(DDS_BACKEND STREQUAL "fast_dds")
-        find_package(fastcdr REQUIRED)
-        find_package(fastrtps REQUIRED)
-        find_package(foonathan_memory REQUIRED)
-    endif()
-    set(DDS_CHANNEL_SRCS
+
+  target_compile_definitions(message_infrastructure PUBLIC DDS_CHANNEL)
+
+  set(DDS_CHANNEL_SRCS
     "message_infrastructure/csrc/channel/dds/dds.cc"
     "message_infrastructure/csrc/channel/dds/dds_channel.cc"
     "message_infrastructure/csrc/channel/dds/dds_port.cc"
-    # workaround to use DDS_BACKEND named src and change *.cxx to *.cc
-    "message_infrastructure/csrc/channel/dds/${DDS_BACKEND}.cc"
-    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadata.cc"
-    "message_infrastructure/csrc/channel/dds/protos/${DDS_BACKEND}/metadataPubSubTypes.cc"
-    )
-    add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS})
-    target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
-    target_compile_definitions(dds_channel PRIVATE ${DDS_TRANSFER_TYPE} ${DDS_BACKEND} )
-    target_link_libraries(dds_channel fastrtps fastcdr foonathan_memory)
-    target_compile_definitions(message_infrastructure PUBLIC DDS_CHANNEL)
+  )
+
+  if(CycloneDDS_ENABLE)
+    set(CycloneDDS_SRC
+      "message_infrastructure/csrc/channel/dds/fast_dds.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc")
+  else()
+    set(CycloneDDS_SRC "")
+  endif()
+
+  if(FASTDDS_ENABLE)
+    set(FASTDDS_SRC
+      "message_infrastructure/csrc/channel/dds/fast_dds.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc")
+  else()
+    set(FASTDDS_SRC "")
+  endif()
+
+  add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS} ${FASTDDS_SRC} ${CycloneDDS_SRC})
+  target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
+
+  if(FASTDDS_ENABLE)
+    set(FastDDS_FETCHCONTENT 1)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds_common.cmake)
+
+    target_compile_definitions(dds_channel PRIVATE FASTDDS)
+    target_link_libraries(dds_channel foonathan_memory fastcdr)
+    # target_link_libraries(dds_channel foonathan_memory fastcdr fastrtps)
+  endif()
+
+  if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
     target_link_libraries(message_infrastructure dds_channel)
+  endif()
 endif()
 
 if(PY_WRAPPER)
