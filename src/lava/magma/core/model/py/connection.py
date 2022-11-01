@@ -350,13 +350,15 @@ class LearningConnection:
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
             y1 = self.s_in_y1.recv()
             y2 = self.s_in_y2.recv()
-            y3 = self.s_in_y3.recv().astype(bool)
+            y3 = self.s_in_y3.recv()
 
-            self._record_post_spike_times(y3)
+            s_in_bap = self.s_in_bap.recv().astype(bool)
+            self._record_post_spike_times(s_in_bap)
 
             y_traces = self._y_traces
             y_traces[0, :] = y1
             y_traces[1, :] = y2
+            y_traces[2, :] = y3
             self._set_y_traces(y_traces)
 
         self._update_trace_randoms()

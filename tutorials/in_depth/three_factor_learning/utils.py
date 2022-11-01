@@ -124,14 +124,12 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         a_graded_in = self.a_graded_reward_in.recv()
 
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
-        self.y3 = self.y3.astype(bool) | self.s_out_buff.astype(bool)
 
         self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
-        if self.time_step % self.proc_params['learning_rule'].t_epoch == 0:
-            self.y3 = self.y3 & False
+        self.s_out_bap.send(self.s_out_buff)
 
 
 def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
