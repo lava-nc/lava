@@ -117,10 +117,7 @@ if(DDS_CHANNEL)
   )
 
   if(CycloneDDS_ENABLE)
-    set(CycloneDDS_SRC
-      "message_infrastructure/csrc/channel/dds/fast_dds.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc")
+    set(CycloneDDS_SRC "")
   else()
     set(CycloneDDS_SRC "")
   endif()
@@ -138,17 +135,14 @@ if(DDS_CHANNEL)
   target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
 
   if(FASTDDS_ENABLE)
-    set(FastDDS_FETCHCONTENT 1)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds_common.cmake)
-
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
     target_compile_definitions(dds_channel PRIVATE FASTDDS)
-    target_link_libraries(dds_channel foonathan_memory fastcdr)
-    # target_link_libraries(dds_channel foonathan_memory fastcdr fastrtps)
   endif()
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
     target_link_libraries(message_infrastructure dds_channel)
   endif()
+
 endif()
 
 if(PY_WRAPPER)
