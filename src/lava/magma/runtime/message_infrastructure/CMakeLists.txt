@@ -134,6 +134,7 @@ if(DDS_CHANNEL)
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
     add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS} ${FASTDDS_SRC} ${CycloneDDS_SRC})
+    add_dependencies(dds_channel foonathan_memory fastcdr fastrtps)
     target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
     target_include_directories(dds_channel PUBLIC ${COMMON_DDS_DESTINATION}/include)
     file(GLOB DDS_SHARED_LIBS "${COMMON_DDS_DESTINATION}/lib/*.so")
