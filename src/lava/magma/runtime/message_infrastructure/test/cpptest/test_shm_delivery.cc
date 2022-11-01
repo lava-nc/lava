@@ -76,9 +76,8 @@ void target_fn_a2_bound(
   }
 
 TEST(TestShmDelivery, ShmLoop) {
-  GTEST_SKIP();  // subprocess segment fault, and hang
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = 10000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
     SHMEMCHANNEL, 2, 8, "mp_to_a1", "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(

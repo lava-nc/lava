@@ -33,8 +33,9 @@ using HandleFn = std::function<void(void *)>;
 class SharedMemory {
  public:
   SharedMemory() {}
-  SharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
-  SharedMemory(const size_t &mem_size, const int &shmfd);
+  SharedMemory(const size_t &mem_size, void* mmap, const int &key);
+  SharedMemory(const size_t &mem_size, void* mmap);
+  ~SharedMemory();
   void Start();
   bool Load(HandleFn consume_fn);
   void Store(HandleFn store_fn);
@@ -46,19 +47,17 @@ class SharedMemory {
 
  private:
   size_t size_;
-  int shmfd_;
   std::string req_name_ = "req";
   std::string ack_name_ = "ack";
   sem_t *req_;
   sem_t *ack_;
-  void *data_;
-
-  void* MemMap();
+  void *data_ = NULL;
 };
 
 class RwSharedMemory {
  public:
-  RwSharedMemory(const size_t &mem_size, const int &shmfd, const int &key);
+  RwSharedMemory(const size_t &mem_size, void* mmap, const int &key);
+  ~RwSharedMemory();
   void InitSemaphore();
   void Start();
   void Handle(HandleFn handle_fn);
@@ -66,12 +65,9 @@ class RwSharedMemory {
 
  private:
   size_t size_;
-  int shmfd_;
   std::string sem_name_ = "sem";
   sem_t *sem_;
   void *data_;
-
-  void *GetData();
 };
 
 using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
@@ -96,7 +92,14 @@ class SharedMemManager {
       exit(-1);
     }
     shm_fd_strs_.insert({shmfd, str});
-    std::shared_ptr<T> shm = std::make_shared<T>(mem_size, shmfd, random);
+    void *mmap_address = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,
+                       MAP_SHARED, shmfd, 0);
+    if (mmap_address == reinterpret_cast<void*>(-1)) {
+      LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
+      LAVA_DUMP(1, "size: %ld, shmfd_: %d\n", mem_size, shmfd);
+    }
+    std::shared_ptr<T> shm =
+      std::make_shared<T>(mem_size, mmap_address, random);
     sem_strs_.insert(shm->GetReq());
     sem_strs_.insert(shm->GetAck());
     shm->InitSemaphore();
