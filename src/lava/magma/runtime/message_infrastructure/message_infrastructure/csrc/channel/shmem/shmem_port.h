@@ -57,7 +57,7 @@ class ShmemRecvPort final : public AbstractRecvPort {
   SharedMemoryPtr shm_ = nullptr;
   int idx_ = 0;
   std::atomic_bool done_;
-  std::shared_ptr<RecvQueue<void*>> recvqueue;
+  std::shared_ptr<RecvQueue<void*>> recv_queue_;
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 

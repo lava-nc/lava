@@ -50,10 +50,10 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const size_t &size,
                 const size_t &nbytes)
   : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false) {
-  recvqueue = std::make_shared<RecvQueue<void*>>(name_, size_);
+  recv_queue_ = std::make_shared<RecvQueue<void*>>(name_, size_);
 }
 ShmemRecvPort::~ShmemRecvPort() {
-  recvqueue->Free();
+  recv_queue_->Free();
 }
 void ShmemRecvPort::Start() {
   recv_queue_thread_ = std::make_shared<std::thread>(
@@ -63,11 +63,11 @@ void ShmemRecvPort::Start() {
 void ShmemRecvPort::QueueRecv() {
   while (!done_.load()) {
     bool ret = false;
-    if (this->recvqueue->AvailableCount() > 0) {
+    if (this->recv_queue_->AvailableCount() > 0) {
       ret = shm_->Load([this](void* data){
         void *ptr = malloc(this->nbytes_);
         std::memcpy(ptr, data, this->nbytes_);
-        this->recvqueue->Push(ptr);
+        this->recv_queue_->Push(ptr);
       });
     }
     if (!ret) {
@@ -78,11 +78,11 @@ void ShmemRecvPort::QueueRecv() {
 }
 
 bool ShmemRecvPort::Probe() {
-  return recvqueue->Probe();
+  return recv_queue_->Probe();
 }
 
 MetaDataPtr ShmemRecvPort::Recv() {
-  char *cptr = reinterpret_cast<char *>(recvqueue->Pop(true));
+  char *cptr = reinterpret_cast<char *>(recv_queue_->Pop(true));
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
   metadata_res->mdata = reinterpret_cast<void*>(cptr + sizeof(MetaData));
@@ -93,12 +93,12 @@ void ShmemRecvPort::Join() {
   if (!done_) {
     done_ = true;
     recv_queue_thread_->join();
-    recvqueue->Stop();
+    recv_queue_->Stop();
   }
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
-  char *cptr = reinterpret_cast<char *>(recvqueue->Front());
+  char *cptr = reinterpret_cast<char *>(recv_queue_->Front());
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
   metadata_res->mdata = reinterpret_cast<void*>(cptr + sizeof(MetaData));
