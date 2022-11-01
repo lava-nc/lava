@@ -32,7 +32,7 @@ ctest --verbose
 
 ## Build with DDS_CHANNEL
 ```shell
-export LD_LIBRARY_PATH="~Fast-DDS/install/lib"
+export LD_LIBRARY_PATH="~/Fast-DDS/install/lib"
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=~/Fast-DDS/install \
 -DDDS_CHANNEL=ON \
