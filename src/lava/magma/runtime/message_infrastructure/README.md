@@ -28,12 +28,21 @@ $ cmake .. -DPY_WRAPPER=OFF
 $ cmake .. -DGRPC_CHANNEL=ON
 ```
 
-Note : If your env is using http/https proxy, please unable the proxy to use grpc channel.<br>
+Note :
+- If your env is using http/https proxy, please unable the proxy to use grpc channel.<br>
 You could use the commands in your ternimal,
+  ```bash
+  $ unset http_proxy
+  $ unset https_proxy
+  ```
+- When you use grpc channel at main and sub processes together, pls refer to [this link](https://github.com/grpc/grpc/blob/master/doc/fork_support.md) to set env.
+
+#### (4) build with cpp unit tests
+
 ```bash
-$ unset http_proxy
-$ unset https_proxy
+$ cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
+
 ### 3. Compile with makefile
 Run the command,
 ```bash
