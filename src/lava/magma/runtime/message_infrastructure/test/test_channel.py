@@ -177,7 +177,7 @@ class TestChannel(unittest.TestCase):
         mp = MultiProcessing()
         mp.start()
         name = 'test_grpc_channel'
-        url = '127.13.2.2'
+        url = '127.13.2.11'
         port = 8003
         grpc_channel = GetRPCChannel(
             url,
@@ -205,7 +205,7 @@ class TestChannel(unittest.TestCase):
         from message_infrastructure import GetRPCChannel
         predata = prepare_data()
         name = 'test_single_process_grpc_channel'
-        url = '127.13.2.2'
+        url = '127.13.2.11'
         port = 8002
         grpc_channel = GetRPCChannel(
             url,
