@@ -258,7 +258,7 @@ class TestChannel(unittest.TestCase):
 
         time.sleep(0.1)
         mp.stop(True)
-       
+
 
 if __name__ == "__main__":
     print(SupportDDSChannel)

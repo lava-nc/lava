@@ -8,6 +8,10 @@
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.h>
+#include <message_infrastructure/csrc/core/utils.h>
+
+#include <memory>
+#include <string>
 
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
@@ -19,7 +23,6 @@
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
-#include <message_infrastructure/csrc/core/utils.h>
 
 namespace message_infrastructure {
 
@@ -30,8 +33,7 @@ class FastDDSPubListener final : public
   ~FastDDSPubListener() override {}
   void on_publication_matched(
     eprosima::fastdds::dds::DataWriter* writer,
-    const eprosima::fastdds::dds::PublicationMatchedStatus& info
-  ) override;
+    const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;
 
   bool matched_;
   bool first_connected_;
@@ -56,10 +58,11 @@ class FastDDSPublisher final : public DDSPublisher {
   int Init();
   bool Publish(MetaDataPtr metadata);
   void Stop();
+
  private:
-  void InitParticipant(); // Add type for shm, tcp or others
+  void InitParticipant();  // Add type for shm, tcp or others
   void InitDataWriter();
-  
+
   FastDDSPubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
@@ -78,12 +81,12 @@ class FastDDSSubListener final : public
                          eprosima::fastdds::dds::DataReaderListener {
  public:
   FastDDSSubListener() : matched_(0), samples_(0) {}
-  ~FastDDSSubListener() override{}
+  ~FastDDSSubListener() override {}
   void on_data_available(
-                eprosima::fastdds::dds::DataReader* reader) override {};
+       eprosima::fastdds::dds::DataReader* reader) override {};
   void on_subscription_matched(
-                eprosima::fastdds::dds::DataReader* reader,
-                const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
+       eprosima::fastdds::dds::DataReader* reader,
+       const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
   int matched_;
   uint32_t samples_;
 };
@@ -106,6 +109,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   int Init();
   void Run();
   MetaDataPtr Read();
+
  private:
   void InitParticipant();
   void InitDataReader();
@@ -124,4 +128,4 @@ class FastDDSSubscriber final : public DDSSubscriber {
 
 }  // namespace message_infrastructure
 
-#endif
+#endif  // CHANNEL_DDS_FAST_DDS_H_

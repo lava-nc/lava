@@ -27,4 +27,4 @@ AbstractSendPortPtr DDSChannel::GetSendPort() {
 AbstractRecvPortPtr DDSChannel::GetRecvPort() {
   return recv_port_;
 }
-}
+}  // namespace message_infrastructure

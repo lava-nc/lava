@@ -18,7 +18,7 @@ namespace message_infrastructure {
 
 class DDSChannel : public AbstractChannel {
  public:
-  DDSChannel(){}
+  DDSChannel() {}
   DDSChannel(const size_t &depth,
              const size_t &nbytes,
              const std::string &topic_name,

@@ -6,6 +6,7 @@
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #endif
 #include <message_infrastructure/csrc/channel/dds/dds.h>
+#include <string>
 
 namespace message_infrastructure {
 DDSPtr DDSManager::AllocDDS(const size_t &depth,
@@ -17,7 +18,10 @@ DDSPtr DDSManager::AllocDDS(const size_t &depth,
     return nullptr;
   }
   dds_topics_.insert(topic_name);
-  DDSPtr dds = std::make_shared<DDS>(depth, nbytes, topic_name, dds_transfer_type);
+  DDSPtr dds = std::make_shared<DDS>(depth,
+                                     nbytes,
+                                     topic_name,
+                                     dds_transfer_type);
   ddss_.push_back(dds);
   return dds;
 }
@@ -53,4 +57,5 @@ DDSManager& GetDDSManager() {
   DDSManager &dds_manager = DDSManager::dds_manager_;
   return dds_manager;
 }
-}  // message_infrastructure
+
+}  // namespace message_infrastructure

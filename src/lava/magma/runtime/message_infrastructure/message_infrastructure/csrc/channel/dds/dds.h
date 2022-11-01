@@ -9,6 +9,8 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
 #include <set>
+#include <string>
+#include <vector>
 
 namespace message_infrastructure {
 class DDSPublisher {
@@ -51,7 +53,7 @@ class DDSManager {
   friend DDSManager &GetDDSManager();
 
  private:
-  DDSManager(){};
+  DDSManager() {}
   std::vector<DDSPtr> ddss_;
   std::set<std::string> dds_topics_;
   static DDSManager dds_manager_;
@@ -60,6 +62,6 @@ class DDSManager {
 DDSManager& GetDDSManager();
 using DDSManagerPtr = std::shared_ptr<DDSManager>;
 
-} // namespace message_infrastructure
+}  // namespace message_infrastructure
 
 #endif  // CHANNEL_DDS_DDS_H_

@@ -113,7 +113,6 @@ if(DDS_CHANNEL)
   set(DDS_CHANNEL_SRCS
     "message_infrastructure/csrc/channel/dds/dds.cc"
     "message_infrastructure/csrc/channel/dds/dds_channel.cc"
-    "message_infrastructure/csrc/channel/dds/dds_port.cc"
   )
 
   if(CycloneDDS_ENABLE)

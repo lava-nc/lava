@@ -6,14 +6,14 @@
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
-#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 
 namespace message_infrastructure {
 
-using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastdds::rtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds::dds;  // NOLINT
+using namespace eprosima::fastdds::rtps;  // NOLINT
+using namespace eprosima::fastrtps::rtps;  // NOLINT
 
 FastDDSPublisher::~FastDDSPublisher() {
   if (writer_ != nullptr)
@@ -36,7 +36,9 @@ int FastDDSPublisher::Init() {
   if (publisher_ == nullptr)
     return -2;
 
-  topic_ = participant_->create_topic(topic_name_, "DDSMetaData", TOPIC_QOS_DEFAULT);
+  topic_ = participant_->create_topic(topic_name_,
+                                      "DDSMetaData",
+                                      TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return -3;
 
@@ -44,7 +46,7 @@ int FastDDSPublisher::Init() {
   InitDataWriter();
   if (writer_ == nullptr)
     return -4;
-  
+
   printf("Init Publisher Successfully, topic name: %s\n", topic_name_.c_str());
   return 0;
 }
@@ -64,19 +66,25 @@ void FastDDSPublisher::InitDataWriter() {
 
 void FastDDSPublisher::InitParticipant() {
   DomainParticipantQos pqos;
-  pqos.wire_protocol().builtin.discovery_config.discoveryProtocol = DiscoveryProtocol_t::SIMPLE;
-  pqos.wire_protocol().builtin.discovery_config.use_SIMPLE_EndpointDiscoveryProtocol = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationReaderANDSubscriptionWriter = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
-  pqos.wire_protocol().builtin.discovery_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
+  pqos.wire_protocol().builtin.discovery_config
+                      .discoveryProtocol = DiscoveryProtocol_t::SIMPLE;
+  pqos.wire_protocol().builtin.discovery_config
+                      .use_SIMPLE_EndpointDiscoveryProtocol = true;
+  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP
+                      .use_PublicationReaderANDSubscriptionWriter = true;
+  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP
+                      .use_PublicationWriterANDSubscriptionReader = true;
+  pqos.wire_protocol().builtin.discovery_config.leaseDuration =
+                       eprosima::fastrtps::c_TimeInfinite;
   pqos.transport().use_builtin_transports = false;
   pqos.name("Participant pub" + topic_name_);
-  
+
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
   shm_transport->segment_size(2 * 1024 * 1024);
   pqos.transport().user_transports.push_back(shm_transport);
 
-  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
+  participant_ = DomainParticipantFactory::get_instance()
+                                           ->create_participant(0, pqos);
 }
 
 bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
@@ -86,10 +94,9 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
     memcpy(&dds_metadata_->mdata()[sizeof(MetaData)], metadata->mdata,
             metadata->elsize * metadata->total_size);
     printf("medata copied %d mdata\n", metadata->elsize * metadata->total_size);
-    if(writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
+    if (writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
       printf("what error?\n");
-    }
-    else {
+    } else {
       printf("Publish a data\n");
     }
     return true;
@@ -100,7 +107,7 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
 
 void FastDDSPublisher::Stop() {
   printf("stop publisher and do something\n");
-  while(listener_->matched_) {
+  while (listener_->matched_) {
     helper::Sleep();
   }
 }
@@ -112,14 +119,11 @@ void FastDDSPubListener::on_publication_matched(
     matched_ = true;
     first_connected_ = true;
     printf("Publisher matched.\n");
-  }
-  else if (info.current_count_change == -1) {
+  } else if (info.current_count_change == -1) {
     matched_ = false;
     printf("Publisher unmatched. matched_:%d\n", matched_);
-  }
-  else
-  {
-    LAVA_LOG_ERR(" is not a valid value for PublicationMatchedStatus current count change\n");
+  } else {
+    LAVA_LOG_ERR("Publistener status error\n");
   }
 }
 
@@ -129,12 +133,10 @@ void FastDDSSubListener::on_subscription_matched(
   if (info.current_count_change == 1) {
     matched_ = info.total_count;
     printf("Subscriber matched.\n");
-  }
-  else if (info.current_count_change == -1) {
+  } else if (info.current_count_change == -1) {
     matched_ = info.total_count;
     printf("Subscriber unmatched. matched_:%d\n", matched_);
-  }
-  else {
+  } else {
     LAVA_LOG_ERR("Subscriber number is not matched\n");
   }
 }
@@ -151,19 +153,25 @@ FastDDSSubscriber::~FastDDSSubscriber() {
 
 void FastDDSSubscriber::InitParticipant() {
   DomainParticipantQos pqos;
-  pqos.wire_protocol().builtin.discovery_config.discoveryProtocol = DiscoveryProtocol_t::SIMPLE;
-  pqos.wire_protocol().builtin.discovery_config.use_SIMPLE_EndpointDiscoveryProtocol = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationReaderANDSubscriptionWriter = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.use_PublicationWriterANDSubscriptionReader = true;
-  pqos.wire_protocol().builtin.discovery_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
+  pqos.wire_protocol().builtin.discovery_config.discoveryProtocol
+                       = DiscoveryProtocol_t::SIMPLE;
+  pqos.wire_protocol().builtin.discovery_config.
+                       use_SIMPLE_EndpointDiscoveryProtocol = true;
+  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.
+                       use_PublicationReaderANDSubscriptionWriter = true;
+  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP.
+                       use_PublicationWriterANDSubscriptionReader = true;
+  pqos.wire_protocol().builtin.discovery_config.leaseDuration
+                       = eprosima::fastrtps::c_TimeInfinite;
   pqos.transport().use_builtin_transports = false;
   pqos.name("Participant sub" + topic_name_);
-  
+
   auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * 1024 * 1024); // TODO: size
+  shm_transport->segment_size(2 * 1024 * 1024);  // TODO(hongda): size
   pqos.transport().user_transports.push_back(shm_transport);
 
-  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
+  participant_ = DomainParticipantFactory::get_instance()
+                                           ->create_participant(0, pqos);
 }
 
 void FastDDSSubscriber::InitDataReader() {
@@ -190,7 +198,9 @@ int FastDDSSubscriber::Init() {
   if (subscriber_ == nullptr)
     return -2;
 
-  topic_ = participant_->create_topic(topic_name_, "DDSMetaData", TOPIC_QOS_DEFAULT);
+  topic_ = participant_->create_topic(topic_name_,
+                                      "DDSMetaData",
+                                      TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return -3;
 
@@ -205,7 +215,8 @@ int FastDDSSubscriber::Init() {
 
 MetaDataPtr FastDDSSubscriber::Read() {
   SampleInfo info;
-  while (ReturnCode_t::RETCODE_OK != reader_->take_next_sample(dds_metadata_.get(), &info)) {
+  while (ReturnCode_t::RETCODE_OK != reader_
+         ->take_next_sample(dds_metadata_.get(), &info)) {
     helper::Sleep();
   }
 
@@ -220,14 +231,12 @@ MetaDataPtr FastDDSSubscriber::Read() {
     metadata->mdata = ptr;
     printf("Data Recieved\n");
     return metadata;
-  }
-  else {
+  } else {
       printf("Remote writer die\n");
   }
 
   LAVA_LOG_ERR("time out and no data received\n");
   return nullptr;
-
 }
 
 }  // namespace message_infrastructure

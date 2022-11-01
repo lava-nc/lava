@@ -57,6 +57,7 @@ if support_dds_channel():
         def src_port(self):
             return SendPort(super().src_port)
 
+
 class Channel(CppChannel):
 
     @property

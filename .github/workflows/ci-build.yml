@@ -54,8 +54,8 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         source $VENV
-        cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ --root=csrc src/lava/magma/runtime/message_infrastructure/message_infrastructure/ src/lava/magma/runtime/message_infrastructure/test/
-
+        cpplint --recursive --quiet --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ --root=csrc --exclude=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/channel/dds/protos src/lava/magma/runtime/message_infrastructure/message_infrastructure/ src/lava/magma/runtime/message_infrastructure/test/
+        
   security-lint:
     name: Security Lint Code
     runs-on: ubuntu-latest
@@ -205,7 +205,7 @@ jobs:
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
       run: |
-        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib"
+        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib:${LD_LIBRARY_PATH}"
         build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
@@ -213,6 +213,5 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         source $VENV
-        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib"
         python3 -m pip install ipykernel
         pytest test/

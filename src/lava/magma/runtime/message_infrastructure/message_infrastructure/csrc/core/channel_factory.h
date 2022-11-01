@@ -70,6 +70,7 @@ class ChannelFactory {
 #endif
 
   friend ChannelFactory& GetChannelFactory();
+
  private:
   ChannelFactory() {}
   ChannelFactory(const ChannelFactory&) {}

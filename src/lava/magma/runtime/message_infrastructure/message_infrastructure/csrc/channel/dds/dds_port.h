@@ -9,6 +9,7 @@
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <atomic>
+#include <memory>
 
 namespace message_infrastructure {
 
@@ -24,7 +25,7 @@ class DDSSendPort final : public AbstractSendPort {
     done_.store(false);
   }
   void Send(MetaDataPtr metadata) {
-    while(!publisher_->Publish(metadata)) {
+    while (!publisher_->Publish(metadata)) {
       helper::Sleep();
     }
   }
@@ -35,6 +36,7 @@ class DDSSendPort final : public AbstractSendPort {
   bool Probe() {
     return false;
   }
+
  private:
   DDSPublisherPtr publisher_;
   std::atomic_bool done_;
@@ -76,4 +78,4 @@ using DDSRecvPortPtr = std::shared_ptr<DDSRecvPort>;
 
 }  // namespace message_infrastructure
 
-#endif  //CHANNEL_DDS_DDS_PORT_H_
+#endif  // CHANNEL_DDS_DDS_PORT_H_
