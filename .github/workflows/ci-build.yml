@@ -204,12 +204,15 @@ jobs:
 
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
+      run: |
+        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib"
+        build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: runner.os == 'Linux'
       run: |
         source $VENV
+        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib"
         python3 -m pip install ipykernel
         pytest test/
