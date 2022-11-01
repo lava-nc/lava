@@ -161,6 +161,7 @@ jobs:
     env:
       DEBUG: 1
       CMAKE_ARGS: "-DGRPC_CHANNEL=ON"
+      GRPC_ENABLE_FORK_SUPPORT: true
 
     strategy:
       matrix:
