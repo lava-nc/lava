@@ -162,6 +162,7 @@ jobs:
       DEBUG: 1
       CMAKE_ARGS: "-DGRPC_CHANNEL=ON"
       GRPC_ENABLE_FORK_SUPPORT: true
+      GRPC_POLL_STRATEGY: "poll"
 
     strategy:
       matrix:
