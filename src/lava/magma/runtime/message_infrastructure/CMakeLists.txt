@@ -3,6 +3,7 @@ project(message_passing)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
@@ -72,8 +73,9 @@ endif()
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
+
 target_compile_definitions(message_infrastructure PRIVATE GRPC_CHANNEL)
-target_compile_definitions(message_infrastructure PRIVATE
+target_compile_definitions(message_infrastructure PUBLIC
                             $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
@@ -82,7 +84,7 @@ target_compile_definitions(message_infrastructure PRIVATE
                             $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
                           )
 
-target_compile_definitions(message_infrastructure PRIVATE
+target_compile_definitions(message_infrastructure PUBLIC
                           $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
                           )
 
