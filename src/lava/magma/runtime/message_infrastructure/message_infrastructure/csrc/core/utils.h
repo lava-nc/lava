@@ -33,6 +33,11 @@ enum DDSTransportType {
   DDSUDP = 2
 };
 
+enum DDSBackendType {
+  FASTDDSBackend = 0,
+  CycloneDDSBackend = 1
+};
+
 struct MetaData {
   int64_t nd;
   int64_t type;

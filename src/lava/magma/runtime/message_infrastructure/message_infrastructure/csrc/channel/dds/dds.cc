@@ -12,7 +12,8 @@ namespace message_infrastructure {
 DDSPtr DDSManager::AllocDDS(const size_t &depth,
                      const size_t &nbytes,
                      const std::string &topic_name,
-                     const DDSTransportType &dds_transfer_type) {
+                     const DDSTransportType &dds_transfer_type,
+                     const DDSBackendType &dds_backend) {
   if (dds_topics_.find(topic_name) != dds_topics_.end()) {
     LAVA_LOG_ERR("The topic %s has already been used\n", topic_name.c_str());
     return nullptr;
@@ -21,7 +22,8 @@ DDSPtr DDSManager::AllocDDS(const size_t &depth,
   DDSPtr dds = std::make_shared<DDS>(depth,
                                      nbytes,
                                      topic_name,
-                                     dds_transfer_type);
+                                     dds_transfer_type,
+                                     dds_backend);
   ddss_.push_back(dds);
   return dds;
 }
@@ -35,10 +37,10 @@ DDSManager::~DDSManager() {
   DeleteAllDDS();
 }
 
-DDS::DDS(const size_t &max_samples,
-         const size_t &nbytes,
-         const std::string &topic_name,
-         const DDSTransportType &dds_transfer_type) {
+void DDS::CreateFastDDSBackend(const size_t &max_samples,
+                               const size_t &nbytes,
+                               const std::string &topic_name,
+                               const DDSTransportType &dds_transfer_type) {
 #if defined(FASTDDS)
   dds_publisher_ = std::make_shared<FastDDSPublisher>(max_samples,
                                                       nbytes,
@@ -48,7 +50,32 @@ DDS::DDS(const size_t &max_samples,
                                                         nbytes,
                                                         topic_name,
                                                         dds_transfer_type);
+#else
+  LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
+  exit(-1);
 #endif
+}
+
+void DDS::CreateCycloneDDSBackend(const size_t &max_samples,
+                                  const size_t &nbytes,
+                                  const std::string &topic_name,
+                                  const DDSTransportType &dds_transfer_type) {
+  LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
+  exit(-1);
+}
+
+DDS::DDS(const size_t &max_samples,
+         const size_t &nbytes,
+         const std::string &topic_name,
+         const DDSTransportType &dds_transfer_type,
+         const DDSBackendType &dds_backend) {
+  if (dds_backend == FASTDDSBackend) {
+    CreateFastDDSBackend(max_samples, nbytes, topic_name, dds_transfer_type);
+  } else if (dds_backend == CycloneDDSBackend) {
+    CreateCycloneDDSBackend(max_samples, nbytes, topic_name, dds_transfer_type);
+  } else {
+    LAVA_LOG_ERR("Not support DDSBackendType provided, %d\n", dds_backend);
+  }
 }
 
 DDSManager DDSManager::dds_manager_;

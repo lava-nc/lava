@@ -116,9 +116,14 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("DDSUDP", DDSUDP)
     .export_values();
 
+  py::enum_<DDSBackendType> (m, "DDSBackendType")
+    .value("FASTDDSBackend", FASTDDSBackend)
+    .value("CycloneDDSBackend", CycloneDDSBackend)
+    .export_values();
+
 #if defined(DDS_CHANNEL)
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
-    .def(py::init<int, size_t, std::string, DDSTransportType>())
+    .def(py::init<int, size_t, std::string, DDSTransportType, DDSBackendType>())
     .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,

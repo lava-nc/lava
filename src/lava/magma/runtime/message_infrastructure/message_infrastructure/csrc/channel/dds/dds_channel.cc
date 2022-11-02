@@ -12,9 +12,14 @@ namespace message_infrastructure {
 DDSChannel::DDSChannel(const size_t &depth,
                        const size_t &nbytes,
                        const std::string &topic_name,
-                       const DDSTransportType &dds_transfer_type) {
+                       const DDSTransportType &dds_transfer_type,
+                       const DDSBackendType &dds_backend) {
   LAVA_DEBUG(LOG_DDS, "Creating DDSChannel...\n");
-  dds_ = GetDDSManager().AllocDDS(depth, nbytes, topic_name, dds_transfer_type);
+  dds_ = GetDDSManager().AllocDDS(depth,
+                                  nbytes,
+                                  topic_name,
+                                  dds_transfer_type,
+                                  dds_backend);
   send_port_ = std::make_shared<DDSSendPort>(dds_);
   recv_port_ = std::make_shared<DDSRecvPort>(dds_);
 }

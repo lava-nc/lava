@@ -67,12 +67,14 @@ GetDDSChannelProxy::GetDDSChannelProxy(const int &dds_depth,
                                        const size_t &nbytes,
                                        const std::string &topic_name,
                                        const DDSTransportType
-                                             &transport_type) {
+                                             &transport_type,
+                                       const DDSBackendType &dds_backend) {
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetDefDDSChannel(dds_depth,
                                               nbytes,
                                               topic_name,
-                                              transport_type);
+                                              transport_type,
+                                              dds_backend);
   send_port_ = std::make_shared<SendPortProxy>(ChannelType::DDSCHANNEL,
                                                channel_->GetSendPort());
   recv_port_ = std::make_shared<RecvPortProxy>(ChannelType::DDSCHANNEL,

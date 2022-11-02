@@ -55,7 +55,8 @@ class GetDDSChannelProxy {
   GetDDSChannelProxy(const int &dds_depth,
                      const size_t &nbytes,
                      const std::string &topic_name,
-                     const DDSTransportType &transport_type);
+                     const DDSTransportType &transport_type,
+                     const DDSBackendType &dds_backend);
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:

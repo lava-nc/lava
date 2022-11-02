@@ -94,7 +94,7 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
     memcpy(&dds_metadata_->mdata()[0], metadata.get(), sizeof(MetaData));
     memcpy(&dds_metadata_->mdata()[sizeof(MetaData)], metadata->mdata,
             metadata->elsize * metadata->total_size);
-    LAVA_DEBUG(LOG_DDS, "FastDDS: medata copied %d mdata\n",
+    LAVA_DEBUG(LOG_DDS, "FastDDS: medata copied %ld mdata\n",
                          metadata->elsize * metadata->total_size);
     if (writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
       LAVA_LOG_WARN(LOG_DDS, "Publisher write return not OK, Why work?\n");
@@ -227,7 +227,7 @@ MetaDataPtr FastDDSSubscriber::Read() {
     // Recv data here
     MetaDataPtr metadata = std::make_shared<MetaData>();
     memcpy(metadata.get(), dds_metadata_->mdata().data(), sizeof(MetaData));
-    LAVA_DEBUG(LOG_DDS, "Allocating %d size\n",
+    LAVA_DEBUG(LOG_DDS, "Allocating %ld size\n",
                         metadata->elsize * metadata->total_size);
     void *ptr = malloc(metadata->elsize * metadata->total_size);
     memcpy(ptr,
