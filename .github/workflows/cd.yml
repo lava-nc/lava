@@ -2,9 +2,6 @@ name: Run CD
 on:
   workflow_dispatch:
 
-env:
-  ci-action-version: 'v1.1'
-
 jobs:
   build-artifacts:
     name: Build Artifacts
@@ -15,22 +12,14 @@ jobs:
       with:
         lfs: true
 
-    - name: Get composite run steps repository
-      uses: actions/checkout@v3
-      with:
-        repository: lava-nc/ci-setup-composite-action
-        ref: ${{ env.ci-action-version }}
-        ssh-key: ${{ secrets.DEPLOY_KEY }}
-        path: .github/ci-setup-composite-action
-
-    - name: Setup CI environment
-      uses: ./.github/ci-setup-composite-action
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
 
     - name: Build artifacts 
       run: |
-        $PYTHONUSERBASE/bin/poetry build
+        pipx run poetry build
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
@@ -109,7 +98,7 @@ jobs:
           python3.9 -m venv artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
-          pip install nbconvert>=7.2.2 pytest>=7.2.0
+          pip install nbconvert>=7.2.2 pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0 nbconvert>=7.2.2
           artifact=$(ls | grep lava | grep tar)
           pip install --no-input $artifact          
           tar -xvf $artifact
@@ -128,7 +117,7 @@ jobs:
           python3.9 -m venv artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
-          pip install nbconvert>=7.2.2 pytest>=7.2.0
+          pip install nbconvert>=7.2.2 pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0 nbconvert>=7.2.2
           artifact=$(ls | grep lava | grep whl)
           pip install --no-input $artifact
           # Change $artifact to tar.gz
