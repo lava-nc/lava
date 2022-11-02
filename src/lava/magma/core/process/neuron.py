@@ -23,14 +23,10 @@ class LearningNeuronProcess:
     """
     def __init__(self,
                  shape: ty.Tuple[int, ...],
-                 learning_rule: LoihiLearningRule,
                  *args,
                  **kwargs):
 
         kwargs['shape'] = shape
-        kwargs["learning_rule"] = learning_rule
-
-        self.learning_rule = learning_rule
 
         # Learning Ports
         # Port for backprop action potentials

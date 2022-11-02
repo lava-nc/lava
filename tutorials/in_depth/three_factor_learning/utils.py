@@ -63,13 +63,12 @@ class RSTDPLIF(LearningNeuronProcess, AbstractLIF):
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
-            learning_rule: RewardModulatedSTDP = None,
             **kwargs) -> None:
         super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
                          log_config=log_config,
-                         learning_rule=learning_rule, **kwargs)
+                         **kwargs)
         self.vth = Var(shape=(1,), init=vth)
 
         self.a_graded_reward_in = InPort(shape=shape)
@@ -97,14 +96,6 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return self.v > self.vth
 
-    def filter_spike_trains(self):
-        """Filters the spike trains with an exponential filter."""
-
-        y1_impulse = self.proc_params['learning_rule'].post_trace_kernel_magnitude
-        y1_tau = self.proc_params['learning_rule'].post_trace_decay_tau
-
-        return self.y1 * np.exp(-1 / y1_tau) + self.s_out_buff * y1_impulse
-
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
         """Generate's a third factor Reward traces based on
         Graded input spikes to the Learning LIF process.
@@ -116,28 +107,49 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
+        s_out_y1: sends the post-synaptic spike times.
+        s_out_y2: sends the graded third-factor reward signal.
         """
-        self.y1 = self.filter_spike_trains()
-
         super().run_spk()
 
         a_graded_in = self.a_graded_reward_in.recv()
 
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
-        self.s_out_y1.send(self.y1)
+        self.s_out_y1.send(self.s_out_buff)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
-        self.s_out_bap.send(self.s_out_buff)
 
+def generate_post_spikes(pre_spike_times, 
+        num_steps, spike_prob_post):
+    """generates specific post synaptic spikes to
+    demonstrate potentiation and depression.
+    """
+    pre_synaptic_spikes = np.where(pre_spike_times==1)[1]
+
+    spike_raster_post = np.zeros((len(spike_prob_post), num_steps))
+
+    for ts in range(num_steps):
+        for pre_ts in pre_synaptic_spikes:
+            if ts in range(pre_ts, pre_ts+20):
+                if np.random.rand(1) < spike_prob_post[0]:
+                    spike_raster_post[0][ts] = 1
+
+    for ts in range(num_steps):
+        for pre_ts in pre_synaptic_spikes:
+            if ts in range(pre_ts-12, pre_ts-2):
+                if np.random.rand(1) < spike_prob_post[1]:
+                    spike_raster_post[1][ts] = 1
+    
+    return spike_raster_post
 
 def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     offsets = list(range(1, len(spikes) + 1))
     num_x_ticks = np.arange(0, num_steps+1, 25)
     
     plt.figure(figsize=figsize)
-    
+
     spikes_plot = plt.eventplot(positions=spikes, 
                                 lineoffsets=offsets,
                                 linelength=0.9,
@@ -183,7 +195,47 @@ def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, titl
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
     plt.grid(which='major', color='lightgray', linewidth=0.8)
     plt.minorticks_on()
+    plt.xlim(0, len(time_series_y1))
 
     plt.legend(loc=leg_loc)
+    
+    plt.show()
+
+def plot_spikes_time_series(time, time_series, spikes, figsize, legend, colors, title, num_steps):
+
+    offsets = list(range(1, len(spikes) + 1))
+    num_x_ticks = np.arange(0, num_steps+1, 25)
+    
+    plt.figure(figsize=figsize)
+    
+    plt.subplot(211)
+    plt.eventplot(positions=spikes, 
+                  lineoffsets=offsets,
+                  linelength=0.9,
+                  colors=colors)
+
+    plt.title("Spike Arrival")
+    plt.xlabel("Time steps")
+
+    plt.xticks(num_x_ticks)
+    plt.xlim(0, num_steps)
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.8)
+    plt.minorticks_on()
+    
+    plt.yticks(ticks=offsets, labels=legend)
+    plt.tight_layout(pad=3.0)
+
+    plt.subplot(212)
+    plt.step(time, time_series, color=colors)
+   
+    plt.title(title[0])
+    plt.xlabel("Time steps")
+    plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
+    plt.grid(which='major', color='lightgray', linewidth=0.8)
+    plt.minorticks_on()
+    plt.margins(x=0)
+
+    plt.ylabel("Trace Value")
     
     plt.show()

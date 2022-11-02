@@ -74,10 +74,12 @@ class RewardModulatedSTDP(Loihi3FLearningRule):
 
         # Trace impulse values
         x1_impulse = pre_trace_kernel_magnitude
+        y1_impulse = post_trace_kernel_magnitude
 
         # Trace decay constants
         x1_tau = self.pre_trace_decay_tau
-
+        y1_tau = self.post_trace_decay_tau
+        
         # Eligibility trace represented as dt
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 + " \
              f"{self.learning_rate} * {self.A_minus} * y0 * x1 - " \
@@ -91,6 +93,8 @@ class RewardModulatedSTDP(Loihi3FLearningRule):
             dt=dt,
             x1_impulse=x1_impulse,
             x1_tau=x1_tau,
+            y1_impulse=y1_impulse,
+            y1_tau=y1_tau,
             *args,
             **kwargs
         )
