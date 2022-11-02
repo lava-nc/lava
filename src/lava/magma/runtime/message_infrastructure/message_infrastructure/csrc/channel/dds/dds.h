@@ -46,9 +46,9 @@ class DDSManager {
  public:
   ~DDSManager();
   DDSPtr AllocDDS(const size_t &size,
-                       const size_t &nbytes,
-                       const std::string &topic_name,
-                       const DDSTransportType &dds_transfer_type);
+                  const size_t &nbytes,
+                  const std::string &topic_name,
+                  const DDSTransportType &dds_transfer_type);
   void DeleteAllDDS();
   friend DDSManager &GetDDSManager();
 
