@@ -30,11 +30,11 @@ void target_fn_a1_bound(
     to_a2->Start();
     auto from_a2 = a2_to_a1->GetRecvPort();
     from_a2->Start();
-    printf("actor1, loop: %d\n", loop);
+    LAVA_DUMP(1, "actor1, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      printf("actor1 waitting\n");
+      LAVA_DUMP(1, "actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
-      printf("actor1 recviced\n");
+      LAVA_DUMP(1, "actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
       // free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
@@ -60,11 +60,11 @@ void target_fn_a2_bound(
     from_a1->Start();
     auto to_a1   = a2_to_a1->GetSendPort();
     to_a1->Start();
-    printf("actor2, loop: %d\n", loop);
+    LAVA_DUMP(1, "actor2, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      printf("actor2 waitting\n");
+      LAVA_DUMP(1, "actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
-      printf("actor2 recviced\n");
+      LAVA_DUMP(1, "actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
       // free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
@@ -131,25 +131,25 @@ TEST(TestDDSDelivery, DDSLoop) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
-  printf("main process loop: %d\n", loop);
+  LAVA_DUMP(1, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
-    printf("wait for response, remain loop: %d\n", loop);
+    LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
 
     // to_a1->Join();
-    printf("metadata:\n");
-    printf("nd: %ld\n", mptr->nd);
-    printf("type: %ld\n", mptr->type);
-    printf("elsize: %ld\n", mptr->elsize);
-    printf("total_size: %ld\n", mptr->total_size);
-    printf("dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(1, "metadata:\n");
+    LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
+    LAVA_DUMP(1, "type: %ld\n", mptr->type);
+    LAVA_DUMP(1, "elsize: %ld\n", mptr->elsize);
+    LAVA_DUMP(1, "total_size: %ld\n", mptr->total_size);
+    LAVA_DUMP(1, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
     mptr->dims[0], mptr->dims[1], mptr->dims[2], mptr->dims[3], mptr->dims[4]);
-    printf("strides: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(1, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
     mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
     mptr->strides[4]);
-    printf("mdata: %p, *mdata: %ld\n", mptr->mdata,
+    LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
     // free(reinterpret_cast<char*>(metadata->mdata)-sizeof(MetaData));
     metadata = mptr;
@@ -158,12 +158,12 @@ TEST(TestDDSDelivery, DDSLoop) {
   // free(reinterpret_cast<char*>(mptr->mdata)-sizeof(MetaData));
   from_a1->Join();
   mp.Stop(true);
-  printf("cpp loop timedelta: %ld", (end_time - start_time));
-  printf("exit\n");
+  LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));
+  LAVA_DUMP(1, "exit\n");
 }
 
 TEST(TestDDSSingleProcess, DDS1Process) {
-	printf("TestDDSSingleProcess starts.\n");
+	LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
 																	.GetDefDDSChannel(5,
 																										8,
@@ -194,32 +194,27 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   while (loop--) {
     send_port->Send(metadata);
 	  (*reinterpret_cast<int64_t*>(metadata->mdata))++;
-    printf("wait for response, remain loop: %d\n", loop);
+    LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = recv_port->Recv();
 
-    printf("metadata:\n");
-    printf("nd: %ld\n", mptr->nd);
-    printf("type: %ld\n", mptr->type);
-    printf("elsize: %ld\n", mptr->elsize);
-    printf("total_size: %ld\n", mptr->total_size);
-    printf("dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(1, "metadata:\n");
+    LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
+    LAVA_DUMP(1, "type: %ld\n", mptr->type);
+    LAVA_DUMP(1, "elsize: %ld\n", mptr->elsize);
+    LAVA_DUMP(1, "total_size: %ld\n", mptr->total_size);
+    LAVA_DUMP(1, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
     mptr->dims[0], mptr->dims[1], mptr->dims[2], mptr->dims[3], mptr->dims[4]);
-    printf("strides: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(1, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
     mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
     mptr->strides[4]);
-    printf("mdata: %p, *mdata: %ld\n", mptr->mdata,
+    LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
     free(reinterpret_cast<char*>(mptr->mdata));
   }
-  printf("Loop finished.\n");
   const clock_t end_time = std::clock();
-  printf("Send_port Start Joining.\n");
-  send_port->Join();
-  printf("Send_port Joined.\n");
-  printf("Recv_port Start Joining.\n");
   recv_port->Join();
-  printf("Recv_port Joined.\n");
-  printf("cpp loop timedelta: %ld", (end_time - start_time));
-  printf("exit\n");
+  send_port->Join();
+  LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));
+  LAVA_DUMP(1, "exit\n");
 }
 }  // namespace message_infrastructure
