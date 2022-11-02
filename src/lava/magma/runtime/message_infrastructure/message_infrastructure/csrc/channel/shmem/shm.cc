@@ -7,17 +7,21 @@
 namespace message_infrastructure {
 
 SharedMemory::SharedMemory(const size_t &mem_size,
-                           const int &shmfd,
+                           void* mmap,
                            const int &key) {
-  shmfd_ = shmfd;
+  data_ = mmap;
   size_ = mem_size;
   req_name_ += std::to_string(key);
   ack_name_ += std::to_string(key);
 }
 
-SharedMemory::SharedMemory(const size_t &mem_size, const int &shmfd) {
-  shmfd_ = shmfd;
+SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
+  data_ = mmap;
   size_ = mem_size;
+}
+
+SharedMemory::~SharedMemory() {
+  munmap(data_, size_);
 }
 
 void SharedMemory::InitSemaphore() {
@@ -30,14 +34,14 @@ void SharedMemory::Start() {
 
 void SharedMemory::Store(HandleFn store_fn) {
   sem_wait(ack_);
-  store_fn(MemMap());
+  store_fn(data_);
   sem_post(req_);
 }
 
 bool SharedMemory::Load(HandleFn consume_fn) {
   bool ret = false;
   if (!sem_trywait(req_)) {
-    consume_fn(MemMap());
+    consume_fn(data_);
     sem_post(ack_);
     ret = true;
   }
@@ -57,21 +61,19 @@ std::string SharedMemory::GetAck() {
   return ack_name_;
 }
 
-void* SharedMemory::MemMap() {
-  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE,
-                       MAP_SHARED, shmfd_, 0));
-}
-
-
 int SharedMemory::GetDataElem(int offset) {
   return static_cast<int>(*(reinterpret_cast<char*>(data_) + offset));
 }
 
 RwSharedMemory::RwSharedMemory(const size_t &mem_size,
-                               const int &shmfd,
+                               void* mmap,
                                const int &key)
-  : size_(mem_size), shmfd_(shmfd) {
+  : size_(mem_size), data_(mmap) {
   sem_name_ += std::to_string(key);
+}
+
+RwSharedMemory::~RwSharedMemory() {
+  munmap(data_, size_);
 }
 
 void RwSharedMemory::InitSemaphore() {
@@ -84,17 +86,12 @@ void RwSharedMemory::Start() {
 
 void RwSharedMemory::Handle(HandleFn handle_fn) {
   sem_wait(sem_);
-  handle_fn(GetData());
+  handle_fn(data_);
   sem_post(sem_);
 }
 
 void RwSharedMemory::Close() {
   LAVA_ASSERT_INT(sem_close(sem_), 0);
-}
-
-void* RwSharedMemory::GetData() {
-  return (data_ = mmap(NULL, size_, PROT_READ | PROT_WRITE,
-                       MAP_SHARED, shmfd_, 0));
 }
 
 void SharedMemManager::DeleteAllSharedMemory() {

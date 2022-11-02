@@ -1,0 +1,20 @@
+diff --git a/src/lava/magma/runtime/message_infrastructure/CMakeLists.txt b/src/lava/magma/runtime/message_infrastructure/CMakeLists.txt
+index 761d2f6..8f6aeb6 100644
+--- a/src/lava/magma/runtime/message_infrastructure/CMakeLists.txt
++++ b/src/lava/magma/runtime/message_infrastructure/CMakeLists.txt
+@@ -138,7 +138,7 @@ if(DDS_CHANNEL)
+     add_library(dds_channel SHARED ${DDS_CHANNEL_SRCS} ${FASTDDS_SRC} ${CycloneDDS_SRC})
+     add_dependencies(dds_channel foonathan_memory fastcdr fastrtps)
+     target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
+-    target_include_directories(dds_channel PUBLIC ${COMMON_DDS_DESTINATION}/include)
++    target_include_directories(dds_channel INTERFACE ${COMMON_DDS_DESTINATION}/include)
+     file(GLOB DDS_SHARED_LIBS "${COMMON_DDS_DESTINATION}/lib/*.so")
+     target_link_libraries(dds_channel PUBLIC ${DDS_SHARED_LIBS})
+     target_link_libraries(message_infrastructure dds_channel)
+@@ -166,4 +166,4 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+   add_subdirectory(test)
+ else()
+   message("not debug mode and disable cpp unit test")
+-endif()
+\ No newline at end of file
++endif()
