@@ -190,10 +190,12 @@ TEST(TestDDSSingleProcess, DDS1Process) {
 
   MetaDataPtr mptr;
   const clock_t start_time = std::clock();
-	int loop = 100;
+	int loop = 10;
+	int i = 0;
   while (loop--) {
+		if(!(loop % 1000))
+			printf("At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
-	  (*reinterpret_cast<int64_t*>(metadata->mdata))++;
     LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = recv_port->Recv();
 
@@ -209,6 +211,8 @@ TEST(TestDDSSingleProcess, DDS1Process) {
     mptr->strides[4]);
     LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
+		EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata), *reinterpret_cast<int64_t*>(metadata->mdata));
+	  (*reinterpret_cast<int64_t*>(metadata->mdata))++;
     free(reinterpret_cast<char*>(mptr->mdata));
   }
   const clock_t end_time = std::clock();
