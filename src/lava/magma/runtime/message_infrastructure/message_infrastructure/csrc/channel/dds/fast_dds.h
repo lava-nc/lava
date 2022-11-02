@@ -37,7 +37,6 @@ class FastDDSPubListener final : public
 
   bool matched_;
   bool first_connected_;
-  eprosima::fastdds::dds::TypeSupport type_;
 };
 
 using FastDDSPubListenerPtr = std::shared_ptr<FastDDSPubListener>;
@@ -52,8 +51,7 @@ class FastDDSPublisher final : public DDSPublisher {
                    max_samples_(max_samples),
                    nbytes_(nbytes),
                    topic_name_(topic_name),
-                   dds_transfer_type_(dds_transfer_type)
-                    {};
+                   dds_transfer_type_(dds_transfer_type) {}
   ~FastDDSPublisher();
   int Init();
   bool Publish(MetaDataPtr metadata);
