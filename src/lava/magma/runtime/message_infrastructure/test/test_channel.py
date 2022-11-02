@@ -200,35 +200,6 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop(True)
 
-    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
-    def test_single_process_grpcchannel(self):
-        from message_infrastructure import GetRPCChannel
-        predata = prepare_data()
-        name = 'test_single_process_grpc_channel'
-        url = '127.13.2.11'
-        port = 8002
-        grpc_channel = GetRPCChannel(
-            url,
-            port,
-            name,
-            name,
-            ChannelQueueSize)
-
-        send_port = grpc_channel.src_port
-        recv_port = grpc_channel.dst_port
-
-        send_port.start()
-        recv_port.start()
-
-        send_port.send(predata)
-        resdata = recv_port.recv()
-
-        if not np.array_equal(resdata, predata):
-            raise AssertionError()
-
-        send_port.join()
-        recv_port.join()
-
 
 if __name__ == "__main__":
     unittest.main()
