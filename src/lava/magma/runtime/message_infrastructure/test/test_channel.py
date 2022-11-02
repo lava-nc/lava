@@ -205,6 +205,7 @@ class TestChannel(unittest.TestCase):
     def test_ddschannel(self):
         from message_infrastructure import GetDDSChannel
         from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
@@ -214,7 +215,8 @@ class TestChannel(unittest.TestCase):
             ChannelQueueSize,
             nbytes,
             name,
-            DDSTransportType.DDSSHM)
+            DDSTransportType.DDSSHM,
+            DDSBackendType.FASTDDSBackend)
 
         send_port = dds_channel.src_port
         recv_port = dds_channel.dst_port

@@ -140,7 +140,7 @@ if(DDS_CHANNEL)
     target_include_directories(dds_channel PUBLIC ${PROJECT_SOURCE_DIR})
     target_include_directories(dds_channel PUBLIC ${COMMON_DDS_DESTINATION}/include)
     file(GLOB DDS_SHARED_LIBS "${COMMON_DDS_DESTINATION}/lib/*.so")
-    target_link_libraries(dds_channel INTERFACE ${DDS_SHARED_LIBS})
+    target_link_libraries(dds_channel PUBLIC ${DDS_SHARED_LIBS})
     target_link_libraries(message_infrastructure dds_channel)
   endif()
 
