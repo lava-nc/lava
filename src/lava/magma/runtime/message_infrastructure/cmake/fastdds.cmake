@@ -5,7 +5,7 @@ ExternalProject_Add(
   foonathan_memory
   GIT_REPOSITORY https://github.com/eProsima/foonathan_memory_vendor.git
   SOURCE_DIR ${CMAKE_BINARY_DIR}/foonathan_memory
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${COMMON_DDS_DESTINATION} -DBUILD_SHARED_LIBS=ON
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${COMMON_DDS_DESTINATION}
 )
 
 ExternalProject_Add(
