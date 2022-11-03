@@ -37,11 +37,11 @@ void target_fn_a1_bound(
       LAVA_DUMP(1, "actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
-      free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
+      free(reinterpret_cast<char*>(data->mdata));
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_mp->Send(data);
-      free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
+      free(reinterpret_cast<char*>(data->mdata));
     }
     from_mp->Join();
     from_a2->Join();
@@ -67,7 +67,7 @@ void target_fn_a2_bound(
       LAVA_DUMP(1, "actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
-      free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
+      free(reinterpret_cast<char*>(data->mdata));
     }
     from_a1->Join();
     while (!actor_ptr->GetStatus()) {
@@ -78,14 +78,15 @@ void target_fn_a2_bound(
 TEST(TestShmDelivery, ShmLoop) {
   MultiProcessing mp;
   int loop = 10000;
+  const int queue_size = 1;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, 2, 8, "mp_to_a1", "mp_to_a1");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t), "mp_to_a1", "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, 2, 8, "a1_to_mp", "a1_to_mp");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a1_to_mp", "a1_to_mp");
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, 2, 8, "a1_to_a2", "a1_to_a2");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a1_to_a2", "a1_to_a2");
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, 2, 8, "a2_to_a1", "a2_to_a1");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a2_to_a1", "a2_to_a1");
 
   auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -109,8 +110,7 @@ TEST(TestShmDelivery, ShmLoop) {
   metadata->dims[0] = 1;
   metadata->strides[0] = 1;
   metadata->mdata =
-    (reinterpret_cast<char*>
-    (malloc(sizeof(int64_t)+sizeof(MetaData)))+sizeof(MetaData));
+    (reinterpret_cast<char*>(malloc(sizeof(int64_t))));
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
@@ -118,6 +118,7 @@ TEST(TestShmDelivery, ShmLoop) {
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
+    free(reinterpret_cast<char*>(metadata->mdata));
     LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
 
@@ -134,11 +135,10 @@ TEST(TestShmDelivery, ShmLoop) {
     mptr->strides[4]);
     LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
-    free(reinterpret_cast<char*>(metadata->mdata)-sizeof(MetaData));
     metadata = mptr;
   }
   const clock_t end_time = std::clock();
-  free(reinterpret_cast<char*>(mptr->mdata)-sizeof(MetaData));
+  free(reinterpret_cast<char*>(mptr->mdata));
   from_a1->Join();
   mp.Stop(true);
   LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));
