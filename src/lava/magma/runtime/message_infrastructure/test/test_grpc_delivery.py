@@ -92,22 +92,22 @@ class TestChannel(unittest.TestCase):
         mp.start()
         loop = 10000
         a1_to_a2 = GetRPCChannel(
-            '127.13.2.11',
+            '127.13.2.15',
             8003,
             'a1_to_a2',
             'a1_to_a2', 8)
         a2_to_a1 = GetRPCChannel(
-            '127.13.2.12',
+            '127.13.2.16',
             8004,
             'a2_to_a1',
             'a2_to_a1', 8)
         mp_to_a1 = GetRPCChannel(
-            '127.13.2.13',
+            '127.13.2.17',
             8005,
             'mp_to_a1',
             'mp_to_a1', 8)
         a1_to_mp = GetRPCChannel(
-            '127.13.2.14',
+            '127.13.2.18',
             8006,
             'a1_to_mp',
             'a1_to_mp', 8)
