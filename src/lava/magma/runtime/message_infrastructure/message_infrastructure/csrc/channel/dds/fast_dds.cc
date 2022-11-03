@@ -244,4 +244,11 @@ MetaDataPtr FastDDSSubscriber::Read() {
   return nullptr;
 }
 
+void FastDDSSubscriber::Stop() {
+  if (reader_ != nullptr)
+    subscriber_->delete_datareader(reader_);
+  if (subscriber_ != nullptr)
+    participant_->delete_subscriber(subscriber_);
+}
+
 }  // namespace message_infrastructure

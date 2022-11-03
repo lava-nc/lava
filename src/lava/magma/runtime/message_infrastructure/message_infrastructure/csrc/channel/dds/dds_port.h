@@ -59,6 +59,7 @@ class DDSRecvPort final : public AbstractRecvPort {
     return subscriber_->Read();
   }
   void Join() {
+    subscriber_->Stop();
     done_.store(true);
   }
   MetaDataPtr Peek() {

@@ -26,6 +26,7 @@ class DDSSubscriber {
  public:
   virtual int Init() = 0;
   virtual MetaDataPtr Read() = 0;
+  virtual void Stop() = 0;
 };
 
 using DDSSubscriberPtr = std::shared_ptr<DDSSubscriber>;

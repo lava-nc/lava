@@ -106,6 +106,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   ~FastDDSSubscriber();
   int Init();
   void Run();
+  void Stop();
   MetaDataPtr Read();
 
  private:
