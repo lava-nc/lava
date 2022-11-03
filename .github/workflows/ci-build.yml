@@ -160,7 +160,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     env:
       DEBUG: 1
-      CMAKE_ARGS: "-DGRPC_CHANNEL=ON -DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON"
+      CMAKE_ARGS: "-DGRPC_CHANNEL=ON"
 
     strategy:
       matrix:
