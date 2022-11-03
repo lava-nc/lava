@@ -17,6 +17,11 @@
 
 namespace message_infrastructure {
 
+template<>
+void RecvQueue<MetaDataPtr>::FreeData(MetaDataPtr data) {
+  free(data->mdata);
+}
+
 ShmemSendPort::ShmemSendPort(const std::string &name,
                 SharedMemoryPtr shm,
                 const size_t &size,
@@ -50,11 +55,12 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const size_t &size,
                 const size_t &nbytes)
   : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false) {
-  recv_queue_ = std::make_shared<RecvQueue<void*>>(name_, size_);
+  recv_queue_ = std::make_shared<RecvQueue<MetaDataPtr>>(name_, size_);
 }
+
 ShmemRecvPort::~ShmemRecvPort() {
-  recv_queue_->Free();
 }
+
 void ShmemRecvPort::Start() {
   recv_queue_thread_ = std::make_shared<std::thread>(
                        &message_infrastructure::ShmemRecvPort::QueueRecv, this);
@@ -65,9 +71,13 @@ void ShmemRecvPort::QueueRecv() {
     bool ret = false;
     if (this->recv_queue_->AvailableCount() > 0) {
       ret = shm_->Load([this](void* data){
-        void *ptr = malloc(this->nbytes_);
-        std::memcpy(ptr, data, this->nbytes_);
-        this->recv_queue_->Push(ptr);
+        MetaDataPtr metadata_res = std::make_shared<MetaData>();
+        std::memcpy(metadata_res.get(), data, sizeof(MetaData));
+        metadata_res->mdata = malloc(this->nbytes_ - sizeof(MetaData));
+        std::memcpy(metadata_res->mdata,
+          reinterpret_cast<char *>(data) + sizeof(MetaData),
+          this->nbytes_ - sizeof(MetaData));
+        this->recv_queue_->Push(metadata_res);
       });
     }
     if (!ret) {
@@ -82,11 +92,7 @@ bool ShmemRecvPort::Probe() {
 }
 
 MetaDataPtr ShmemRecvPort::Recv() {
-  char *cptr = reinterpret_cast<char *>(recv_queue_->Pop(true));
-  MetaDataPtr metadata_res = std::make_shared<MetaData>();
-  std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
-  metadata_res->mdata = reinterpret_cast<void*>(cptr + sizeof(MetaData));
-  return metadata_res;
+  return recv_queue_->Pop(true);
 }
 
 void ShmemRecvPort::Join() {
@@ -98,11 +104,40 @@ void ShmemRecvPort::Join() {
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
-  char *cptr = reinterpret_cast<char *>(recv_queue_->Front());
+  return recv_queue_->Front();
+}
+
+ShmemBlockRecvPort::ShmemBlockRecvPort(const std::string &name,
+  SharedMemoryPtr shm, const size_t &nbytes)
+  : AbstractRecvPort(name, 1, nbytes), shm_(shm)
+{}
+
+MetaDataPtr ShmemBlockRecvPort::Recv() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
-  std::memcpy(metadata_res.get(), cptr, sizeof(MetaData));
-  metadata_res->mdata = reinterpret_cast<void*>(cptr + sizeof(MetaData));
+  shm_->BlockLoad([&metadata_res, this](void* data){
+    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
+    void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
+    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
+      this->nbytes_ - sizeof(MetaData));
+    metadata_res->mdata = ptr;
+  });
   return metadata_res;
+}
+
+MetaDataPtr ShmemBlockRecvPort::Peek() {
+  MetaDataPtr metadata_res = std::make_shared<MetaData>();
+  shm_->Read([&metadata_res, this](void* data){
+    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
+    void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
+    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
+      this->nbytes_ - sizeof(MetaData));
+    metadata_res->mdata = ptr;
+  });
+  return metadata_res;
+}
+
+bool ShmemBlockRecvPort::Probe() {
+  return shm_->TryProbe();
 }
 
 }  // namespace message_infrastructure

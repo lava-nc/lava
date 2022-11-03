@@ -44,6 +44,10 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
 
 }  // namespace
 
+template<>
+void RecvQueue<GrpcMetaDataPtr>::FreeData(GrpcMetaDataPtr data)
+{}
+
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size)
   :name_(name), size_(size), done_(false) {

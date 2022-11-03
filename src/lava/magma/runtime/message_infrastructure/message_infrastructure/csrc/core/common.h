@@ -18,10 +18,12 @@ namespace message_infrastructure {
 template<class T>
 class RecvQueue{
  public:
-  RecvQueue(const std::string& name,
-            const size_t &size)
-    : name_(name), size_(size), read_index_(0), write_index_(0), done_(false)  {
+  RecvQueue(const std::string& name, const size_t &size)
+    : name_(name), size_(size), read_index_(0), write_index_(0), done_(false) {
     array_.resize(size_);
+  }
+  ~RecvQueue() {
+    Free();
   }
   void Push(T val) {
     auto const curr_write_index = write_index_.load(std::memory_order_relaxed);
@@ -88,8 +90,10 @@ class RecvQueue{
         min = curr_write_index + 1;
         max = curr_read_index + 1;
       }
-      for (int i = min; i < max; i++)
-        if (array_[i]) free(array_[i]);
+      for (int i = min; i < max; i++) {
+        FreeData(array_[i]);
+        array_[i] = nullptr;
+      }
       read_index_.store(0, std::memory_order_release);
       write_index_.store(0, std::memory_order_release);
     }
@@ -108,6 +112,8 @@ class RecvQueue{
   std::string name_;
   size_t size_;
   std::atomic_bool done_;
+
+  void FreeData(T data);
 };
 
 }  // namespace message_infrastructure
