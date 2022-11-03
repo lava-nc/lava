@@ -38,8 +38,11 @@ class SharedMemory {
   ~SharedMemory();
   void Start();
   bool Load(HandleFn consume_fn);
+  void BlockLoad(HandleFn consume_fn);
+  void Read(HandleFn consume_fn);
   void Store(HandleFn store_fn);
   void Close();
+  bool TryProbe();
   void InitSemaphore();
   int GetDataElem(int offset);
   std::string GetReq();

@@ -18,8 +18,13 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
 
   send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_,
                                                size, shmem_size);
-  recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_,
-                                              size, shmem_size);
+  if (size > 1) {
+    recv_port_ = std::make_shared<ShmemRecvPort>(dst_name, shm_,
+                                                 size, shmem_size);
+  } else {
+    recv_port_ = std::make_shared<ShmemBlockRecvPort>(dst_name, shm_,
+                                                      shmem_size);
+  }
 }
 
 AbstractSendPortPtr ShmemChannel::GetSendPort() {

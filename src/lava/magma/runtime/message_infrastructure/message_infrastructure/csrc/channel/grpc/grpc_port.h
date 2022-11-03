@@ -34,6 +34,8 @@ using grpcchannel::GrpcMetaData;
 using ThreadPtr = std::shared_ptr<std::thread>;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
+template class RecvQueue<GrpcMetaDataPtr>;
+
 class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
  public:
   GrpcChannelServerImpl(const std::string& name,

@@ -19,6 +19,8 @@ namespace message_infrastructure {
 
 using ThreadPtr = std::shared_ptr<std::thread>;
 
+template class RecvQueue<MetaDataPtr>;
+
 class ShmemSendPort final : public AbstractSendPort {
  public:
   ShmemSendPort(const std::string &name,
@@ -32,12 +34,27 @@ class ShmemSendPort final : public AbstractSendPort {
 
  private:
   SharedMemoryPtr shm_ = nullptr;
-  int idx_ = 0;
   std::atomic_bool done_;
   ThreadPtr ack_callback_thread_ = nullptr;
 };
 
 using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
+
+class ShmemBlockRecvPort final : public AbstractRecvPort {
+ public:
+  ShmemBlockRecvPort(const std::string &name,
+                     SharedMemoryPtr shm,
+                     const size_t &nbytes);
+  ~ShmemBlockRecvPort() {}
+  void Start() {}
+  bool Probe();
+  MetaDataPtr Recv();
+  void Join() {}
+  MetaDataPtr Peek();
+
+ private:
+  SharedMemoryPtr shm_ = nullptr;
+};
 
 class ShmemRecvPort final : public AbstractRecvPort {
  public:
@@ -55,9 +72,8 @@ class ShmemRecvPort final : public AbstractRecvPort {
 
  private:
   SharedMemoryPtr shm_ = nullptr;
-  int idx_ = 0;
   std::atomic_bool done_;
-  std::shared_ptr<RecvQueue<void*>> recv_queue_;
+  std::shared_ptr<RecvQueue<MetaDataPtr>> recv_queue_;
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 
