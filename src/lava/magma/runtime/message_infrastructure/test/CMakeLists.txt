@@ -16,7 +16,7 @@ if(GRPC_CHANNEL)
     cpptest/test_multiprocessing.cc
     cpptest/test_grpc_delivery.cc
     # cpptest/test_channel.cc
-    cpptest/test_shm_delivery.cc
+    # cpptest/test_shm_delivery.cc
   )
 else()
   add_executable(

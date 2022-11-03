@@ -26,7 +26,17 @@ class ChannelFactory {
                                 const size_t &size,
                                 const size_t &nbytes,
                                 const std::string &src_name,
-                                const std::string &dst_name);
+                                const std::string &dst_name) {
+    switch (channel_type) {
+      case DDSCHANNEL:
+        break;
+      case SOCKETCHANNEL:
+        return GetSocketChannel(nbytes, src_name, dst_name);
+      default:
+        return GetShmemChannel(size, nbytes, src_name, dst_name);
+    }
+    return NULL;
+  }
 
   friend ChannelFactory& GetChannelFactory();
 
@@ -35,11 +45,15 @@ class ChannelFactory {
                                    const int &port,
                                    const std::string &src_name,
                                    const std::string &dst_name,
-                                   const size_t &size);
+                                   const size_t &size) {
+    return std::make_shared<GrpcChannel>(url, port, src_name, dst_name, size);
+  }
 
   AbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
                                       const std::string &dst_name,
-                                      const size_t &size);
+                                      const size_t &size) {
+    return std::make_shared<GrpcChannel>(src_name, dst_name, size);
+  }
 #endif
 
  private:
@@ -48,9 +62,13 @@ class ChannelFactory {
   static ChannelFactory channel_factory_;
 };
 
-ChannelFactory& GetChannelFactory();
+ChannelFactory ChannelFactory::channel_factory_;
+
+ChannelFactory& GetChannelFactory() {
+  ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
+  return channel_factory;
+}
 
 }  // namespace message_infrastructure
 
-#endif  // CORE_CHANNEL_FACTORY_H
-
+#endif  // CORE_CHANNEL_FACTORY_H_
