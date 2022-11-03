@@ -8,6 +8,8 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <gtest/gtest.h>
 
+#define LOOPTIMES (10000)
+
 namespace message_infrastructure {
 
 void stop_fn() {
@@ -37,12 +39,14 @@ void target_fn_a1_bound(
       LAVA_DUMP(1, "actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_mp->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
+    to_mp->Join();
+    to_a2->Join();
     from_mp->Join();
     from_a2->Join();
     while (!actor_ptr->GetStatus()) {
@@ -67,18 +71,91 @@ void target_fn_a2_bound(
       LAVA_DUMP(1, "actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
+    to_a1->Join();
     from_a1->Join();
     while (!actor_ptr->GetStatus()) {
       helper::Sleep();
     }
   }
 
+TEST(TestShmDelivery, SktLoop) {
+  MultiProcessing mp;
+  const int queue_size = 1;
+  int loop = LOOPTIMES;
+  AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t), "mp_to_a1", "mp_to_a1");
+  AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t), "a1_to_mp", "a1_to_mp");
+  AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t), "a1_to_a2", "a1_to_a2");
+  AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t), "a2_to_a1", "a2_to_a1");
+
+  auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
+                                mp_to_a1, a1_to_mp, a1_to_a2,
+                                a2_to_a1, std::placeholders::_1);
+  auto target_fn_a2 = std::bind(&target_fn_a2_bound, loop, a1_to_a2,
+                                a2_to_a1, std::placeholders::_1);
+
+  int actor1 = mp.BuildActor(target_fn_a1);
+  int actor2 = mp.BuildActor(target_fn_a2);
+
+  auto to_a1   = mp_to_a1->GetSendPort();
+  to_a1->Start();
+  auto from_a1 = a1_to_mp->GetRecvPort();
+  from_a1->Start();
+
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  metadata->nd = 1;
+  metadata->type = 7;
+  metadata->elsize = 8;
+  metadata->total_size = 1;
+  metadata->dims[0] = 1;
+  metadata->strides[0] = 1;
+  metadata->mdata =
+    malloc(sizeof(int64_t));
+  *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+
+  MetaDataPtr mptr;
+  LAVA_DUMP(1, "main process loop: %d\n", loop);
+  const clock_t start_time = std::clock();
+  while (loop--) {
+    to_a1->Send(metadata);
+    free(metadata->mdata);
+    LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
+    mptr = from_a1->Recv();
+
+
+    LAVA_DUMP(1, "metadata:\n");
+    LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
+    LAVA_DUMP(1, "type: %ld\n", mptr->type);
+    LAVA_DUMP(1, "elsize: %ld\n", mptr->elsize);
+    LAVA_DUMP(1, "total_size: %ld\n", mptr->total_size);
+    LAVA_DUMP(1, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    mptr->dims[0], mptr->dims[1], mptr->dims[2], mptr->dims[3], mptr->dims[4]);
+    LAVA_DUMP(1, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
+    mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
+    mptr->strides[4]);
+    LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
+              *reinterpret_cast<int64_t*>(mptr->mdata));
+    metadata = mptr;
+  }
+  const clock_t end_time = std::clock();
+  free(mptr->mdata);
+  to_a1->Join();
+  from_a1->Join();
+  mp.Stop(true);
+  std::printf("Socket cpp loop timedelta: %f\n",
+            (end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC));
+  LAVA_DUMP(1, "exit\n");
+}
+
 TEST(TestShmDelivery, ShmLoop) {
   MultiProcessing mp;
-  int loop = 10000;
   const int queue_size = 1;
+  int loop = LOOPTIMES;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
     SHMEMCHANNEL, queue_size, sizeof(int64_t), "mp_to_a1", "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
@@ -110,7 +187,7 @@ TEST(TestShmDelivery, ShmLoop) {
   metadata->dims[0] = 1;
   metadata->strides[0] = 1;
   metadata->mdata =
-    (reinterpret_cast<char*>(malloc(sizeof(int64_t))));
+    malloc(sizeof(int64_t));
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
@@ -118,7 +195,7 @@ TEST(TestShmDelivery, ShmLoop) {
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
-    free(reinterpret_cast<char*>(metadata->mdata));
+    free(metadata->mdata);
     LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
 
@@ -138,10 +215,11 @@ TEST(TestShmDelivery, ShmLoop) {
     metadata = mptr;
   }
   const clock_t end_time = std::clock();
-  free(reinterpret_cast<char*>(mptr->mdata));
+  free(mptr->mdata);
   from_a1->Join();
   mp.Stop(true);
-  LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));
+  std::printf("Shm cpp loop timedelta: %f\n",
+            (end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC));
   LAVA_DUMP(1, "exit\n");
 }
 

@@ -92,7 +92,7 @@ const int tricky_var = trick();
 
 MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
-  LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
+  // LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
   if (!PyArray_Check(obj)) {
     LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
     exit(-1);
@@ -159,7 +159,31 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   if (!array)
     return py::cast(0);
 
-  return py::reinterpret_borrow<py::object>(array);
+  // void *tempMetadata = std::malloc(sizeof(struct MetaData));
+  // std::memcpy(tempMetadata, metadata.get(), sizeof(struct MetaData));
+
+  PyObject *capsule = PyCapsule_New(metadata->mdata, NULL, [](PyObject *capsule){
+    void *memory = PyCapsule_GetPointer(capsule, NULL);
+    // void *memory = metadata->mdata;
+    // int offset = 120;  // sizeof(Metadata);
+    // LAVA_LOG(1, "%d\n", *((uint64_t*)memory-1)&(~(0x7)));
+    // LAVA_LOG(1, "%d\n", (((metadata->elsize * metadata->total_size)+7)/8)*8);
+    // if ((*((uint64_t*)memory-1)&(~(0x7))-16) == (((metadata->elsize * metadata->total_size)+7)/8)*8)
+    //   offset = sizeof(struct MetaData);
+    // LAVA_LOG(1, "metadata: %p\n", metadata);
+    // LAVA_LOG(1, "memory: %p, memory-offset: %p\n", memory, (char*)memory-offset);
+    // // free(metadata);
+    // free((char*)memory-offset);
+    // if ((*(uint64_t*)((*((uint64_t*)memory-1) & (~0x7))+(char*)memory-8))&0x1) {
+    //   LAVA_DEBUG(LOG_LAYER, "free memory.\n");
+    free(memory);
+    // }
+    LAVA_DEBUG(LOG_LAYER, "PyObject cleaned.\n");
+  });
+  PyArray_SetBaseObject((PyArrayObject *)array, capsule);
+  // LAVA_DEBUG(LOG_LAYER, "PyObject ref count: %ld\n", array->ob_refcnt);
+
+  return py::reinterpret_steal<py::object>(array);
 }
 
 }  // namespace message_infrastructure

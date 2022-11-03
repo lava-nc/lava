@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+# import profile
+# from guppy import hpy
 import numpy as np
 import unittest
 from functools import partial
@@ -10,6 +12,12 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
+# from memory_profiler import profile
+# import gc
+# import sys
+# import objgraph
+# import random
+# from pympler import tracker, summary, muppy
 
 from message_infrastructure.multiprocessing import MultiProcessing
 
@@ -162,8 +170,7 @@ class TestShmDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 100000
 
-    @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
-                   "about 30s after it started.")
+    @unittest.skip("")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -216,11 +223,9 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -232,7 +237,7 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("memory leak")
+    @unittest.skip("")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -285,7 +290,6 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
@@ -301,6 +305,7 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+    @unittest.skip("")
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
 
@@ -371,6 +376,7 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+    @unittest.skip("")
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
 
@@ -443,6 +449,32 @@ class TestShmDelivery(unittest.TestCase):
         a2.join()
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
+
+    # @unittest.skip("reproduce (1)the remain of mmap to shm issue, (2)open sem failed")
+    def test_loop_channel(self):
+        loop = self.loop_
+        mp = MultiProcessing()
+        mp.start()
+        predata = prepare_data()
+        queue_size = 2
+        nbytes = np.prod(predata.shape) * predata.dtype.itemsize
+        _ = Channel(
+            ChannelBackend.SHMEMCHANNEL,
+            queue_size,
+            nbytes,
+            "mp_to_a1",
+            "mp_to_a1")
+        while loop > 0:
+            loop = loop - 1
+            print(loop)
+            mp.stop(True)
+            _ = Channel(
+                ChannelBackend.SHMEMCHANNEL,
+                queue_size,
+                nbytes,
+                "mp_to_a1" + str(loop),
+                "mp_to_a1" + str(loop))
+        mp.stop(True)
 
 
 if __name__ == '__main__':

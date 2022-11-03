@@ -27,6 +27,9 @@ SharedMemory::~SharedMemory() {
 void SharedMemory::InitSemaphore() {
   req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
   ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
+  if (req_ == SEM_FAILED || ack_ == SEM_FAILED) {
+    LAVA_LOG_ERR("Sem open failed\n");
+  }
 }
 
 void SharedMemory::Start() {
