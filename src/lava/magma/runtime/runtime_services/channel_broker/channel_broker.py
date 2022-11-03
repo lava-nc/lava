@@ -174,7 +174,8 @@ class ChannelBroker(AbstractChannelBroker):
         return self.board.hosts[host_idx].createChannel(
             name=channel_name,
             messageSize=message_size,
-            numElements=number_elements
+            numElements=number_elements,
+            slack=1
         )
 
     def create_channel(self,
