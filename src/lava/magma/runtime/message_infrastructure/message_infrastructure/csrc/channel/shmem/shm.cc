@@ -21,15 +21,27 @@ SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
 }
 
 SharedMemory::~SharedMemory() {
+  // Close();
   munmap(data_, size_);
 }
 
-void SharedMemory::InitSemaphore() {
-  req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
-  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
-  if (req_ == SEM_FAILED || ack_ == SEM_FAILED) {
-    LAVA_LOG_ERR("Sem open failed\n");
-  }
+void SharedMemory::InitSemaphore(sem_t* req, sem_t * ack) {
+  // req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
+  // ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
+  // if (req_ != SEM_FAILED) {
+  //   LAVA_LOG(LOG_SMMP, "Open sem req_, namd: %s\n", req_name_.c_str());
+  // } else {
+  //   LAVA_LOG_ERR("Open sem req_ failed, name: %s, errno: %d\n",
+  //                req_name_.c_str(), errno);
+  // }
+  // if (ack_ != SEM_FAILED) {
+  //   LAVA_LOG(LOG_SMMP, "Open sem ack_, namd: %s\n", ack_name_.c_str());
+  // } else {
+  //   LAVA_LOG_ERR("Open sem ack_ failed, name: %s, errno: %d\n",
+  //                ack_name_.c_str(), errno);
+  // }
+  req_ = req;
+  ack_ = ack;
 }
 
 void SharedMemory::Start() {
@@ -68,10 +80,13 @@ bool SharedMemory::TryProbe() {
   sem_getvalue(req_, &val);
   return val > 0;
 }
-
+  char __size[__SIZEOF_SEM_T];
+  long int __align;
 void SharedMemory::Close() {
-  LAVA_ASSERT_INT(sem_close(req_), 0);
-  LAVA_ASSERT_INT(sem_close(ack_), 0);
+  // LAVA_DUMP(LOG_SMMP, "req_->__size: %p %p %p %p\nreq_->__align: %ld\n", req_->__size[0], req_->__size[1], req_->__size[2], req_->__size[3], req_->__align);
+  // LAVA_DUMP(LOG_SMMP, "ack_->__size: %p %p %p %p\nack_->__align: %ld\n", ack_->__size[0], ack_->__size[1], ack_->__size[2], ack_->__size[3], ack_->__align);
+  // LAVA_ASSERT_INT(sem_close(req_), 0);
+  // LAVA_ASSERT_INT(sem_close(ack_), 0);
 }
 
 std::string SharedMemory::GetReq() {
@@ -94,6 +109,7 @@ RwSharedMemory::RwSharedMemory(const size_t &mem_size,
 }
 
 RwSharedMemory::~RwSharedMemory() {
+  Close();
   munmap(data_, size_);
 }
 
@@ -122,15 +138,22 @@ void SharedMemManager::DeleteAllSharedMemory() {
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of sem to free: %zd.\n",
              sem_strs_.size());
   for (auto const& it : shm_fd_strs_) {
-    LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
     LAVA_DEBUG(LOG_SMMP, "Shm fd and name close: %s %d\n",
                it.second.c_str(), it.first);
+    LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
     LAVA_ASSERT_INT(close(it.first), 0);
   }
-  for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
-    LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
+  // for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
+  //   LAVA_DEBUG(LOG_SMMP, "Sem name unlink: %s\n", it->c_str());
+  //   LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
+  // }
+  for (auto const& it : sem_d_strs_) {
+    LAVA_DEBUG(LOG_SMMP, "Sem close and unlink: %s\n", it.second.c_str());
+    LAVA_ASSERT_INT(sem_close(it.first), 0);
+    LAVA_ASSERT_INT(sem_unlink(it.second.c_str()), 0);
   }
-  sem_strs_.clear();
+  // sem_strs_.clear();
+  sem_d_strs_.clear();
   shm_fd_strs_.clear();
 }
 

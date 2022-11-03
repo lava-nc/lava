@@ -74,6 +74,11 @@ void ShmemRecvPort::QueueRecv() {
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
         std::memcpy(metadata_res.get(), data, sizeof(MetaData));
         metadata_res->mdata = malloc(this->nbytes_ - sizeof(MetaData));
+        if (metadata_res->mdata == NULL) {
+          LAVA_LOG_ERR("Malloc failed.\n");
+        } else {
+          LAVA_LOG(LOG_SMMP, "Malloc memory: %p\n", metadata_res->mdata);
+        }
         std::memcpy(metadata_res->mdata,
           reinterpret_cast<char *>(data) + sizeof(MetaData),
           this->nbytes_ - sizeof(MetaData));
@@ -97,14 +102,28 @@ MetaDataPtr ShmemRecvPort::Recv() {
 
 void ShmemRecvPort::Join() {
   if (!done_) {
+    LAVA_LOG(LOG_SMMP, "pre shmem recv port join.\n");
+    LAVA_LOG(LOG_SMMP, "this->id: %d\n", std::this_thread::get_id());
+    LAVA_LOG(LOG_SMMP, "this->id: %d\n", recv_queue_thread_->get_id());
     done_ = true;
-    recv_queue_thread_->join();
+    if (recv_queue_thread_->joinable()) {
+      LAVA_LOG(LOG_SMMP, "pre shmem recv queue join.\n");
+      try{
+        recv_queue_thread_->join();
+      }
+      catch(std::exception&e){
+        LAVA_LOG_ERR("join error\n");
+      }
+      LAVA_LOG(LOG_SMMP, "post shmem recv queue join.\n");
+    }
     recv_queue_->Stop();
+    LAVA_LOG(LOG_SMMP, "post shmem recv port join.\n");
   }
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
-  return recv_queue_->Front();
+  MetaDataPtr metadata = recv_queue_->Front();
+    return metadata;
 }
 
 ShmemBlockRecvPort::ShmemBlockRecvPort(const std::string &name,
@@ -117,6 +136,11 @@ MetaDataPtr ShmemBlockRecvPort::Recv() {
   shm_->BlockLoad([&metadata_res, this](void* data){
     std::memcpy(metadata_res.get(), data, sizeof(MetaData));
     void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
+    if (ptr == NULL) {
+      LAVA_LOG_ERR("Malloc failed.\n");
+    } else {
+      LAVA_LOG(LOG_SMMP, "Malloc memory: %p\n", ptr);
+    }
     std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
       this->nbytes_ - sizeof(MetaData));
     metadata_res->mdata = ptr;
@@ -129,6 +153,11 @@ MetaDataPtr ShmemBlockRecvPort::Peek() {
   shm_->Read([&metadata_res, this](void* data){
     std::memcpy(metadata_res.get(), data, sizeof(MetaData));
     void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
+    if (ptr == NULL) {
+      LAVA_LOG_ERR("Malloc failed.\n");
+    } else {
+      LAVA_LOG(LOG_SMMP, "Malloc memory: %p\n", ptr);
+    }
     std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
       this->nbytes_ - sizeof(MetaData));
     metadata_res->mdata = ptr;

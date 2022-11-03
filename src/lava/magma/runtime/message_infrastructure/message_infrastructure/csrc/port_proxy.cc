@@ -72,6 +72,11 @@ void RecvPortProxy::Join() {
 }
 py::object RecvPortProxy::Peek() {
   MetaDataPtr metadata = recv_port_->Peek();
+  if (channel_type_ == SHMEMCHANNEL) {
+    // shmem channel peek will not get a copy of the data,
+    // so it should not be cleaned.
+    return MDataToObject_(metadata, false);
+  }
   return MDataToObject_(metadata);
 }
 std::string RecvPortProxy::Name() {
@@ -133,7 +138,8 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
   return metadata;
 }
 
-py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
+py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata,
+                                         bool cleaner) {
   if (metadata == NULL)
     return py::cast(0);
 
@@ -159,30 +165,23 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   if (!array)
     return py::cast(0);
 
-  // void *tempMetadata = std::malloc(sizeof(struct MetaData));
-  // std::memcpy(tempMetadata, metadata.get(), sizeof(struct MetaData));
+  PyObject *capsule = NULL;
+  if (cleaner) {
+    LAVA_DEBUG(LOG_LAYER, "Set memory clean, memory: %p\n", metadata->mdata);
+    capsule = PyCapsule_New(metadata->mdata, NULL,
+                                      [](PyObject *capsule){
+      void *memory = PyCapsule_GetPointer(capsule, NULL);
+      LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p.\n", memory);
+      free(memory);
+    });
+  } else {
+    capsule = PyCapsule_New(metadata->mdata, NULL,
+                                      [](PyObject *capsule){
+      LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, without cleaning.\n");
+    });
+  }
 
-  PyObject *capsule = PyCapsule_New(metadata->mdata, NULL, [](PyObject *capsule){
-    void *memory = PyCapsule_GetPointer(capsule, NULL);
-    // void *memory = metadata->mdata;
-    // int offset = 120;  // sizeof(Metadata);
-    // LAVA_LOG(1, "%d\n", *((uint64_t*)memory-1)&(~(0x7)));
-    // LAVA_LOG(1, "%d\n", (((metadata->elsize * metadata->total_size)+7)/8)*8);
-    // if ((*((uint64_t*)memory-1)&(~(0x7))-16) == (((metadata->elsize * metadata->total_size)+7)/8)*8)
-    //   offset = sizeof(struct MetaData);
-    // LAVA_LOG(1, "metadata: %p\n", metadata);
-    // LAVA_LOG(1, "memory: %p, memory-offset: %p\n", memory, (char*)memory-offset);
-    // // free(metadata);
-    // free((char*)memory-offset);
-    // if ((*(uint64_t*)((*((uint64_t*)memory-1) & (~0x7))+(char*)memory-8))&0x1) {
-    //   LAVA_DEBUG(LOG_LAYER, "free memory.\n");
-    free(memory);
-    // }
-    LAVA_DEBUG(LOG_LAYER, "PyObject cleaned.\n");
-  });
-  PyArray_SetBaseObject((PyArrayObject *)array, capsule);
-  // LAVA_DEBUG(LOG_LAYER, "PyObject ref count: %ld\n", array->ob_refcnt);
-
+  PyArray_SetBaseObject(reinterpret_cast<PyArrayObject *>(array), capsule);
   return py::reinterpret_steal<py::object>(array);
 }
 

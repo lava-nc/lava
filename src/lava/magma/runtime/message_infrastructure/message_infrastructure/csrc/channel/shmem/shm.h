@@ -43,7 +43,7 @@ class SharedMemory {
   void Store(HandleFn store_fn);
   void Close();
   bool TryProbe();
-  void InitSemaphore();
+  void InitSemaphore(sem_t* req, sem_t * ack);
   int GetDataElem(int offset);
   std::string GetReq();
   std::string GetAck();
@@ -104,9 +104,27 @@ class SharedMemManager {
     }
     std::shared_ptr<T> shm =
       std::make_shared<T>(mem_size, mmap_address, random);
-    sem_strs_.insert(shm->GetReq());
-    sem_strs_.insert(shm->GetAck());
-    shm->InitSemaphore();
+    std::string req_str = shm->GetReq();
+    std::string ack_str = shm->GetAck();
+    sem_t *req = sem_open(req_str.c_str(), O_CREAT, 0644, 0);
+    if (req != SEM_FAILED) {
+      LAVA_LOG(LOG_SMMP, "Open sem req, namd: %s\n", req_str.c_str());
+    } else {
+      LAVA_LOG_ERR("Open sem req failed, name: %s, errno: %d\n",
+                  req_str.c_str(), errno);
+    }
+    sem_t *ack = sem_open(ack_str.c_str(), O_CREAT, 0644, 1);
+    if (ack != SEM_FAILED) {
+      LAVA_LOG(LOG_SMMP, "Open sem ack, namd: %s\n", ack_str.c_str());
+    } else {
+      LAVA_LOG_ERR("Open sem ack failed, name: %s, errno: %d\n",
+                  ack_str.c_str(), errno);
+    }
+    sem_d_strs_.insert({req, req_str});
+    sem_d_strs_.insert({ack, ack_str});
+    // sem_strs_.insert(shm->GetReq());
+    // sem_strs_.insert(shm->GetAck());
+    shm->InitSemaphore(req, ack);
     return shm;
   }
 
@@ -118,6 +136,7 @@ class SharedMemManager {
     std::srand(std::time(nullptr));
   }
   std::map<int, std::string> shm_fd_strs_;
+  std::map<sem_t*, std::string> sem_d_strs_;
   std::set<std::string> sem_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";

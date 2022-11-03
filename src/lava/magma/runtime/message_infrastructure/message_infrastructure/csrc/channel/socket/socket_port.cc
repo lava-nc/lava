@@ -80,6 +80,11 @@ MetaDataPtr SocketRecvPort::Recv() {
     return metadata;
   }
   void *mdata = malloc(nbytes_);
+    if (mdata == NULL) {
+      LAVA_LOG_ERR("Malloc failed.\n");
+    } else {
+      LAVA_LOG(LOG_SMMP, "Malloc memory: %p\n", mdata);
+    }
   ret = SocketRead(socket_.second, mdata, nbytes_);
   metadata->mdata = mdata;
   if (!ret) {

@@ -8,18 +8,21 @@
 namespace message_infrastructure {
 
 int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
+  LAVA_LOG(LOG_MP, "prebuild actor\n");
   AbstractActor::ActorPtr actor = new PosixActor(target_fn);
   int ret = actor->Create();
   actors_.push_back(actor);
+  LAVA_LOG(LOG_MP, "postbuild actor\n");
   return ret;
 }
 
 void MultiProcessing::Stop(bool block) {
+  LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
   for (auto actor : actors_) {
     actor->Control(ActorCmd::CmdStop);
   }
 
-  LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
+
   if (block) {
     for (auto actor : actors_) {
       actor->Wait();
