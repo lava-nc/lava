@@ -38,7 +38,7 @@ AbstractChannelPtr ChannelFactory::GetDefRPCChannel(const std::string &src_name,
 }
 #endif
 
-extern ChannelFactory ChannelFactory::channel_factory_;
+ChannelFactory ChannelFactory::channel_factory_;
 
 ChannelFactory& GetChannelFactory() {
   ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
