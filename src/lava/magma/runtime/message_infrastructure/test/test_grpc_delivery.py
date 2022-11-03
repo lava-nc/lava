@@ -85,7 +85,8 @@ def target_fn2(*args, **kwargs):
     actor.status_stopped()
 
 
-class TestChannel(unittest.TestCase):
+class TestGrpcDelivery(unittest.TestCase):
+    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
         from message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
@@ -138,16 +139,14 @@ class TestChannel(unittest.TestCase):
             to_a1.send(data)
             data = from_a1.recv()
             loop -= 1
-            print("mainloop:", loop)
-            print("mp_recv_data_from_actor1", data)
         loop_end_time = datetime.now()
+        from_a1.join()
+        to_a1.join()
+        mp.stop(True)
         if not np.array_equal(expect_result, data):
             print("expect: ", expect_result)
             print("result: ", data)
             raise AssertionError()
-        from_a1.join()
-        to_a1.join()
-        mp.stop(True)
         print("cpp_grpc_loop_with_cpp_multiprocess timedelta =",
               loop_end_time - loop_start_time)
 

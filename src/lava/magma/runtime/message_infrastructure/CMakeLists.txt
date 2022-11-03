@@ -30,6 +30,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/core/multiprocessing.cc"
   "message_infrastructure/csrc/core/abstract_port_implementation.cc"
   "message_infrastructure/csrc/core/ports.cc"
+  "message_infrastructure/csrc/core/channel_factory.cc"
   "message_infrastructure/csrc/core/message_infrastructure_logging.cc"
   "message_infrastructure/csrc/actor/posix_actor.cc"
   "message_infrastructure/csrc/channel/shmem/shm.cc"
@@ -38,6 +39,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/channel/socket/socket.cc"
   "message_infrastructure/csrc/channel/socket/socket_channel.cc"
   "message_infrastructure/csrc/channel/socket/socket_port.cc"
+
 )
 
 

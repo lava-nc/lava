@@ -12,7 +12,7 @@
 
 namespace message_infrastructure {
 
-void stop_fn() {
+static void stop_fn() {
   // exit(0);
 }
 
@@ -101,7 +101,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetRPCChannel(
   "127.13.2.12", 8005, "a1_to_mp", "a1_to_mp", 6);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetRPCChannel(
-    "127.13.2.13", 8003, "a1_to_a2", "a1_to_a2", 6);
+  "127.13.2.13", 8003, "a1_to_a2", "a1_to_a2", 6);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetRPCChannel(
   "127.13.2.14", 8005, "a2_to_a1", "a2_to_a1", 6);
   auto target_fn_a1 = std::bind(&target_fn1,
@@ -118,7 +118,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
                                 std::placeholders::_1);
   int actor1 = mp.BuildActor(target_fn_a1);
   int actor2 = mp.BuildActor(target_fn_a2);
-  auto to_a1   = mp_to_a1->GetSendPort();
+  auto to_a1 = mp_to_a1->GetSendPort();
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
@@ -146,16 +146,17 @@ TEST(TestGRPCChannel, GRPCLoop) {
   }
 
   const clock_t end_time = std::clock();
-  if (*reinterpret_cast<int64_t*>(metadata->mdata) != expect_result) {
+  to_a1->Join();
+  from_a1->Join();
+  int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
+  free(reinterpret_cast<char*>(metadata->mdata));
+  mp.Stop(true);
+  if (result != expect_result) {
     LAVA_DUMP(1, "expect_result: %d\n", expect_result);
-    LAVA_DUMP(1, "result: %ld\n", *reinterpret_cast<int64_t*>(metadata->mdata));
+    LAVA_DUMP(1, "result: %ld\n", result);
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  to_a1->Join();
-  from_a1->Join();
-  free(reinterpret_cast<char*>(metadata->mdata));
-  mp.Stop(true);
   LAVA_DUMP(1, "cpp loop timedelta: %ld\n", (end_time - start_time));
   LAVA_DUMP(1, "exit\n");
 }
