@@ -112,8 +112,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
 
   py::enum_<DDSTransportType> (m, "DDSTransportType")
     .value("DDSSHM", DDSSHM)
-    .value("DDSTCP", DDSTCP)
-    .value("DDSUDP", DDSUDP)
+    .value("DDSTCPv4", DDSTCPv4)
+    .value("DDSTCPv6", DDSTCPv6)
+    .value("DDSUDPv4", DDSUDPv4)
+    .value("DDSUDPv6", DDSUDPv6)
     .export_values();
 
   py::enum_<DDSBackendType> (m, "DDSBackendType")

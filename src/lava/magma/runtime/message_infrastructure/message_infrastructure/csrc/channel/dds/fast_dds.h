@@ -8,6 +8,7 @@
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.h>
+
 #include <message_infrastructure/csrc/core/utils.h>
 
 #include <memory>
@@ -18,16 +19,27 @@
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
+#include <fastdds/dds/topic/TypeSupport.hpp>
 
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
+#include <fastdds/rtps/transport/TransportDescriptorInterface.h>
+
+// Default Parameters
+// Transport
+#define SHM_SEGMENT_SIZE (2*1024*1024)
+#define NON_BLOCKING_SEND (false)
+#define UDP_OUT_PORT  (0)
+#define TCP_PORT 10
+#define TCPv4_IP ("11.22.33.44")
+// QOS
 
 namespace message_infrastructure {
 
 class FastDDSPubListener final : public
-                                eprosima::fastdds::dds::DataWriterListener {
+                                 eprosima::fastdds::dds::DataWriterListener {
  public:
   FastDDSPubListener() : matched_(false), first_connected_(false) {}
   ~FastDDSPubListener() override {}
@@ -35,7 +47,7 @@ class FastDDSPubListener final : public
     eprosima::fastdds::dds::DataWriter* writer,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;
 
-  bool matched_;
+  int matched_;
   bool first_connected_;
 };
 
@@ -48,18 +60,19 @@ class FastDDSPublisher final : public DDSPublisher {
                    const std::string &topic_name,
                    const DDSTransportType &dds_transfer_type) :
                    type_(new DDSMetaDataPubSubType()),
+                   stop_(true),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
                    topic_name_(topic_name),
                    dds_transfer_type_(dds_transfer_type) {}
-  ~FastDDSPublisher();
+  ~FastDDSPublisher() override;
   int Init();
   bool Publish(MetaDataPtr metadata);
-  void Stop();
+  void Stop();  // Can Init again
 
  private:
-  void InitParticipant();  // Add type for shm, tcp or others
   void InitDataWriter();
+  void InitParticipant();
 
   FastDDSPubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_;
@@ -68,11 +81,13 @@ class FastDDSPublisher final : public DDSPublisher {
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
   eprosima::fastdds::dds::DataWriter* writer_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
-  DDSTransportType dds_transfer_type_;
-  bool stop_;
-  int max_samples_;
+
+  size_t max_samples_;
   size_t nbytes_;
   std::string topic_name_;
+  DDSTransportType dds_transfer_type_;
+
+  bool stop_;
 };
 
 class FastDDSSubListener final : public
@@ -98,12 +113,13 @@ class FastDDSSubscriber final : public DDSSubscriber {
                    const std::string &topic_name,
                    const DDSTransportType &dds_transfer_type) :
                    type_(new DDSMetaDataPubSubType()),
+                   stop_(true),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
                    topic_name_(topic_name),
                    dds_transfer_type_(dds_transfer_type)
                     {};
-  ~FastDDSSubscriber();
+  ~FastDDSSubscriber() override;
   int Init();
   void Run();
   void Stop();
@@ -123,8 +139,11 @@ class FastDDSSubscriber final : public DDSSubscriber {
   int max_samples_;
   size_t nbytes_;
   std::string topic_name_;
+  bool stop_;
 };
 
+std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>
+GetTransportDescriptor(const DDSTransportType &dds_type);
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_DDS_FAST_DDS_H_

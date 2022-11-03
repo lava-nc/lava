@@ -6,8 +6,14 @@
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
-#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+
+#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
+#include <fastdds/rtps/transport/TCPv4TransportDescriptor.h>
+#include <fastdds/rtps/transport/TCPv6TransportDescriptor.h>
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+#include <fastdds/rtps/transport/UDPv6TransportDescriptor.h>
+#include <fastrtps/Domain.h>
 
 namespace message_infrastructure {
 
@@ -16,39 +22,42 @@ using namespace eprosima::fastdds::rtps;  // NOLINT
 using namespace eprosima::fastrtps::rtps;  // NOLINT
 
 FastDDSPublisher::~FastDDSPublisher() {
-  if (writer_ != nullptr)
-    publisher_->delete_datawriter(writer_);
-  if (publisher_ != nullptr)
-  participant_->delete_publisher(publisher_);
-  if (topic_ != nullptr)
-  participant_->delete_topic(topic_);
-  DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  LAVA_LOG(LOG_DDS, "FastDDS Publisher releasing...\n");
+  if (listener_->matched_ > 0) {
+    LAVA_LOG_ERR("Still %d DataReader Listen\n", listener_->matched_);
+  }
+  if (!stop_) {
+    LAVA_LOG_WARN(LOG_DDS, "Please stop Publisher before release it next time\n");
+    Stop();
+  }
+  LAVA_DEBUG(LOG_DDS, "FastDDS Publisher released\n");
 }
 
 int FastDDSPublisher::Init() {
   dds_metadata_ = std::make_shared<DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
-    return -1;
+    return DDSInitErrorType::DDSParticipantError;
 
   type_.register_type(participant_);
   publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT);
   if (publisher_ == nullptr)
-    return -2;
+    return DDSInitErrorType::DDSPublisherError;
 
   topic_ = participant_->create_topic(topic_name_,
                                       "DDSMetaData",
                                       TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
-    return -3;
+    return DDSInitErrorType::DDSTopicError;
 
   listener_ = std::make_shared<FastDDSPubListener>();
   InitDataWriter();
   if (writer_ == nullptr)
-    return -4;
+    return DDSInitErrorType::DDSDataWriterError;
 
   LAVA_LOG(LOG_DDS, "Init Fast DDS Publisher Successfully, topic name: %s\n",
                     topic_name_.c_str());
+  stop_ = false;
   return 0;
 }
 
@@ -80,9 +89,20 @@ void FastDDSPublisher::InitParticipant() {
   pqos.transport().use_builtin_transports = false;
   pqos.name("Participant pub" + topic_name_);
 
-  auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * 1024 * 1024);
-  pqos.transport().user_transports.push_back(shm_transport);
+  auto transport_descriptor = GetTransportDescriptor(dds_transfer_type_);
+  if (nullptr == transport_descriptor) {
+    LAVA_LOG_ERR("Fatal: Create Transport Fault, exit\n");
+    exit(-1);
+  }
+  pqos.transport().user_transports.push_back(transport_descriptor);
+  
+  if (dds_transfer_type_ == DDSTransportType::DDSTCPv4) {
+    Locator_t initial_peer_locator;
+    initial_peer_locator.kind = LOCATOR_KIND_TCPv4;
+    IPLocator::setIPv4(initial_peer_locator, TCPv4_IP);
+    initial_peer_locator.port = TCP_PORT;
+    pqos.wire_protocol().builtin.initialPeersList.push_back(initial_peer_locator);
+  }
 
   participant_ = DomainParticipantFactory::get_instance()
                                            ->create_participant(0, pqos);
@@ -109,21 +129,36 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
 
 void FastDDSPublisher::Stop() {
   LAVA_LOG(LOG_DDS, "Stop FastDDS Publisher, waiting unmatched...\n");
-  while (listener_->matched_) {
+  while (listener_->matched_ > 0) {
     helper::Sleep();
   }
+  if (writer_ != nullptr){
+    publisher_->delete_datawriter(writer_);
+  }
+  if (publisher_ != nullptr){
+    participant_->delete_publisher(publisher_);
+  }
+  if (topic_ != nullptr){
+    topic_->close();
+    participant_->delete_topic(topic_);
+  }
+  if (participant_ != nullptr){
+    DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  }
+  stop_ = true;
 }
 
 void FastDDSPubListener::on_publication_matched(
         eprosima::fastdds::dds::DataWriter*,
         const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
-    matched_ = true;
+    matched_++;
     first_connected_ = true;
-    LAVA_LOG(LOG_DDS, "FastDDS Publisher matched.\n");
+    LAVA_LOG(LOG_DDS, "FastDDS DataReader %d matched.\n", matched_);
+
   } else if (info.current_count_change == -1) {
-    matched_ = false;
-    LAVA_LOG(LOG_DDS, "FastDDS Publisher unmatched. matched_:%d\n", matched_);
+    matched_--;
+    LAVA_LOG(LOG_DDS, "FastDDS DataReader unmatched. matched_:%d\n", matched_);
   } else {
     LAVA_LOG_ERR("FastDDS Publistener status error\n");
   }
@@ -133,24 +168,23 @@ void FastDDSSubListener::on_subscription_matched(
         DataReader*,
         const SubscriptionMatchedStatus& info) {
   if (info.current_count_change == 1) {
-    matched_ = info.total_count;
-    LAVA_LOG(LOG_DDS, "FastDDS Subscriber matched.\n");
+    matched_++;
+    LAVA_LOG(LOG_DDS, "FastDDS DataWriter %d matched.\n", matched_);
   } else if (info.current_count_change == -1) {
-    matched_ = info.total_count;
-    LAVA_LOG(LOG_DDS, "FastDDS Subscriber unmatched. matched_:%d\n", matched_);
+    matched_--;
+    LAVA_LOG(LOG_DDS, "FastDDS DataWriter unmatched. matched_:%d\n", matched_);
   } else {
     LAVA_LOG_ERR("Subscriber number is not matched\n");
   }
 }
 
 FastDDSSubscriber::~FastDDSSubscriber() {
-  if (reader_ != nullptr)
-    subscriber_->delete_datareader(reader_);
-  if (topic_ != nullptr)
-    participant_->delete_topic(topic_);
-  if (subscriber_ != nullptr)
-    participant_->delete_subscriber(subscriber_);
-  DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  LAVA_LOG(LOG_DDS, "FastDDS Subscriber Releasing...\n");
+  if (!stop_) {
+    LAVA_LOG_WARN(LOG_DDS, "Please stop Subscriber before release it next time\n");
+    Stop();
+  }
+  LAVA_DEBUG(LOG_DDS, "FastDDS Subscriber Released...\n");
 }
 
 void FastDDSSubscriber::InitParticipant() {
@@ -168,9 +202,12 @@ void FastDDSSubscriber::InitParticipant() {
   pqos.transport().use_builtin_transports = false;
   pqos.name("Participant sub" + topic_name_);
 
-  auto shm_transport = std::make_shared<SharedMemTransportDescriptor>();
-  shm_transport->segment_size(2 * 1024 * 1024);  // TODO(hongda): size
-  pqos.transport().user_transports.push_back(shm_transport);
+  auto transport_descriptor = GetTransportDescriptor(dds_transfer_type_);
+  if (nullptr == transport_descriptor) {
+    LAVA_LOG_ERR("Fatal: Create Transport Fault, exit\n");
+    exit(-1);
+  }
+  pqos.transport().user_transports.push_back(transport_descriptor);
 
   participant_ = DomainParticipantFactory::get_instance()
                                            ->create_participant(0, pqos);
@@ -188,31 +225,31 @@ void FastDDSSubscriber::InitDataReader() {
   reader_ = subscriber_->create_datareader(topic_, rqos, listener_.get());
 }
 
-
 int FastDDSSubscriber::Init() {
   dds_metadata_ = std::make_shared<DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
-    return -1;
+    return DDSInitErrorType::DDSParticipantError;
 
   type_.register_type(participant_);
   subscriber_ = participant_->create_subscriber(SUBSCRIBER_QOS_DEFAULT);
   if (subscriber_ == nullptr)
-    return -2;
+    return DDSInitErrorType::DDSSubscriberError;
 
   topic_ = participant_->create_topic(topic_name_,
                                       "DDSMetaData",
                                       TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
-    return -3;
+    return DDSInitErrorType::DDSTopicError;
 
   listener_ = std::make_shared<FastDDSSubListener>();
   InitDataReader();
   if (reader_ == nullptr)
-    return -4;
+    return DDSInitErrorType::DDSDataReaderError;
 
   LAVA_LOG(LOG_DDS, "Init FastDDS Subscriber Successfully, topic name: %s\n",
                     topic_name_.c_str());
+  stop_ = false;
   return 0;
 }
 
@@ -245,10 +282,58 @@ MetaDataPtr FastDDSSubscriber::Read() {
 }
 
 void FastDDSSubscriber::Stop() {
-  if (reader_ != nullptr)
+  LAVA_LOG(LOG_DDS, "Subscriber Stop and release\n");
+  bool valid = true;
+  if (reader_ != nullptr){
     subscriber_->delete_datareader(reader_);
-  if (subscriber_ != nullptr)
+  } else {
+    valid = false;
+  }
+  if (topic_ != nullptr){
+    participant_->delete_topic(topic_);
+  } else {
+    valid = false;
+  }
+  if (subscriber_ != nullptr) {
     participant_->delete_subscriber(subscriber_);
+  } else {
+    valid = false;
+  }
+  if (participant_ != nullptr){
+    DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  } else {
+    valid = false;
+  }
+  if (!valid) {
+    LAVA_LOG_ERR("Stop function is not valid\n");
+  }
+  stop_ = true;
+}
+
+std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>
+GetTransportDescriptor(const DDSTransportType &dds_type) {
+  if (dds_type == DDSTransportType::DDSSHM) {
+    LAVA_LOG(LOG_DDS, "Shared Memory Transport Descriptor\n");
+    auto transport = std::make_shared<SharedMemTransportDescriptor>();
+    transport->segment_size(SHM_SEGMENT_SIZE);
+    return transport;
+  } else if (dds_type == DDSTransportType::DDSTCPv4) {
+    LAVA_LOG(LOG_DDS, "TCPv4 Transport Descriptor\n");
+    auto transport = std::make_shared<TCPv4TransportDescriptor>();
+    transport->set_WAN_address(TCPv4_IP);
+    transport->add_listener_port(TCP_PORT);
+    transport->interfaceWhiteList.push_back(TCPv4_IP); // loopback
+    return transport;
+  } else if (dds_type == DDSTransportType::DDSUDPv4) {
+    LAVA_LOG(LOG_DDS, "UDPv4 Transport Descriptor\n");
+    auto transport = std::make_shared<UDPv4TransportDescriptor>();
+    transport->m_output_udp_socket = UDP_OUT_PORT;
+    transport->non_blocking_send = NON_BLOCKING_SEND;
+    return transport;
+  } else {
+    LAVA_LOG_ERR("TransportType %d has not supported\n", dds_type);
+  }
+  return nullptr;
 }
 
 }  // namespace message_infrastructure

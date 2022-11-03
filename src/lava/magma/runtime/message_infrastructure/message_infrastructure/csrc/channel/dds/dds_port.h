@@ -22,7 +22,6 @@ class DDSSendPort final : public AbstractSendPort {
       LAVA_LOG_ERR("Publisher Init return error, %d\n", flag);
       exit(-1);
     }
-    done_.store(false);
   }
   void Send(MetaDataPtr metadata) {
     while (!publisher_->Publish(metadata)) {
@@ -31,7 +30,6 @@ class DDSSendPort final : public AbstractSendPort {
   }
   void Join() {
     publisher_->Stop();
-    done_.store(true);
   }
   bool Probe() {
     return false;
@@ -39,7 +37,6 @@ class DDSSendPort final : public AbstractSendPort {
 
  private:
   DDSPublisherPtr publisher_;
-  std::atomic_bool done_;
 };
 
 using DDSSendPortPtr = std::shared_ptr<DDSSendPort>;
@@ -53,14 +50,12 @@ class DDSRecvPort final : public AbstractRecvPort {
       LAVA_LOG_ERR("Publisher Init return error, %d\n", flag);
       exit(-1);
     }
-    done_.store(false);
   }
   MetaDataPtr Recv() {
     return subscriber_->Read();
   }
   void Join() {
     subscriber_->Stop();
-    done_.store(true);
   }
   MetaDataPtr Peek() {
     // RecvQueue not achieved, cannot just peek the data
@@ -72,7 +67,6 @@ class DDSRecvPort final : public AbstractRecvPort {
 
  private:
   DDSSubscriberPtr subscriber_;
-  std::atomic_bool done_;
 };
 
 using DDSRecvPortPtr = std::shared_ptr<DDSRecvPort>;

@@ -29,13 +29,24 @@ enum ChannelType {
 
 enum DDSTransportType {
   DDSSHM = 0,
-  DDSTCP = 1,
-  DDSUDP = 2
+  DDSTCPv4 = 1,
+  DDSTCPv6 = 2,
+  DDSUDPv4 = 3,
+  DDSUDPv6 = 4
 };
 
 enum DDSBackendType {
   FASTDDSBackend = 0,
   CycloneDDSBackend = 1
+};
+
+enum DDSInitErrorType {
+  DDSParticipantError = 1,
+  DDSPublisherError = 2,
+  DDSSubscriberError = 3,
+  DDSTopicError = 4,
+  DDSDataWriterError = 5,
+  DDSDataReaderError = 6
 };
 
 struct MetaData {

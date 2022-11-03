@@ -18,6 +18,7 @@ class DDSPublisher {
   virtual int Init() = 0;
   virtual bool Publish(MetaDataPtr metadata) = 0;
   virtual void Stop() = 0;
+  virtual ~DDSPublisher() {}
 };
 
 using DDSPublisherPtr = std::shared_ptr<DDSPublisher>;
@@ -27,6 +28,7 @@ class DDSSubscriber {
   virtual int Init() = 0;
   virtual MetaDataPtr Read() = 0;
   virtual void Stop() = 0;
+  virtual ~DDSSubscriber() {}
 };
 
 using DDSSubscriberPtr = std::shared_ptr<DDSSubscriber>;
