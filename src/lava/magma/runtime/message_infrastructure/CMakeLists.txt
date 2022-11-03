@@ -14,6 +14,11 @@ if(GRPC_CHANNEL)
   add_definitions(-DGRPC_CHANNEL)
 endif()
 
+option(ENABLE_MM_PAUSE "Use _mm_pause for sleep." OFF)
+if(ENABLE_MM_PAUSE)
+  add_definitions(-DENABLE_MM_PAUSE)
+endif()
+
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
   find_package(pybind11 REQUIRED)
