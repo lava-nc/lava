@@ -118,13 +118,13 @@ class TestrfProcessModels(unittest.TestCase):
 
         # observe differences in spike times
         spike_idx = np.argwhere(s_out[0, :])
-        s_diffs = [abs(j - i) for i, j in zip(spike_idx[:-1], spike_idx[1:])]
+        s_diffs = [j - i for i, j in zip(spike_idx[:-1], spike_idx[1:])]
 
         # Ensure correct spike count
         self.assertTrue((num_steps - 1) / period, s_out.size)
         # We should see a spike at timestep 'period'. However, due to floating
         # point math, the spikes might occur +/- 1 timesteps around real peak
-        self.assertTrue(np.all(np.array(s_diffs) < (period + 2)))
+        self.assertTrue(np.all(np.array(s_diffs) <= (period + 2)))
 
     def test_float_decay(self):
         """Neuron recieves an input pulse. The decay of the observed real
