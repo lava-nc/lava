@@ -6,9 +6,6 @@
 #define CHANNEL_DDS_FAST_DDS_H_
 
 #include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.h>
-
 #include <message_infrastructure/csrc/core/utils.h>
 
 #include <memory>
@@ -26,6 +23,8 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
 #include <fastdds/rtps/transport/TransportDescriptorInterface.h>
+#include <fastrtps/types/DynamicDataFactory.h>
+#include <fastrtps/xmlparser/XMLProfileManager.h>
 
 // Default Parameters
 // Transport
@@ -35,6 +34,7 @@
 #define TCP_PORT 10
 #define TCPv4_IP ("11.22.33.44")
 // QOS
+#define XML_FILE_PATH ("message_infrastructure/csrc/channel/dds/protos/metadata.xml")
 
 namespace message_infrastructure {
 
@@ -59,7 +59,6 @@ class FastDDSPublisher final : public DDSPublisher {
                    const size_t &nbytes,
                    const std::string &topic_name,
                    const DDSTransportType &dds_transfer_type) :
-                   type_(new DDSMetaDataPubSubType()),
                    stop_(true),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
@@ -75,7 +74,7 @@ class FastDDSPublisher final : public DDSPublisher {
   void InitParticipant();
 
   FastDDSPubListenerPtr listener_ = nullptr;
-  std::shared_ptr<DDSMetaData> dds_metadata_;
+  eprosima::fastrtps::types::DynamicData_ptr dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Publisher* publisher_ = nullptr;
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
@@ -112,7 +111,6 @@ class FastDDSSubscriber final : public DDSSubscriber {
                    const size_t &nbytes,
                    const std::string &topic_name,
                    const DDSTransportType &dds_transfer_type) :
-                   type_(new DDSMetaDataPubSubType()),
                    stop_(true),
                    max_samples_(max_samples),
                    nbytes_(nbytes),
@@ -129,7 +127,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   void InitParticipant();
   void InitDataReader();
   FastDDSSubListenerPtr listener_ = nullptr;
-  std::shared_ptr<DDSMetaData> dds_metadata_;
+  eprosima::fastrtps::types::DynamicData_ptr dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Subscriber* subscriber_ = nullptr;
   eprosima::fastdds::dds::Topic* topic_ = nullptr;

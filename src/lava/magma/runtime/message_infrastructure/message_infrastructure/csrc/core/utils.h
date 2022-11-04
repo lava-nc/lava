@@ -46,7 +46,8 @@ enum DDSInitErrorType {
   DDSSubscriberError = 3,
   DDSTopicError = 4,
   DDSDataWriterError = 5,
-  DDSDataReaderError = 6
+  DDSDataReaderError = 6,
+  DDSTypeParserError = 7
 };
 
 struct MetaData {
