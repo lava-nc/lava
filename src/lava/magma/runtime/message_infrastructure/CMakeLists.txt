@@ -38,9 +38,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
   "message_infrastructure/csrc/channel/socket/socket.cc"
   "message_infrastructure/csrc/channel/socket/socket_channel.cc"
-  "message_infrastructure/csrc/channel/socket/socket_port.cc"
-
-)
+  "message_infrastructure/csrc/channel/socket/socket_port.cc")
 
 
 if(GRPC_CHANNEL)
@@ -81,7 +79,6 @@ endif()
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
 
-# target_compile_definitions(message_infrastructure PRIVATE GRPC_CHANNEL)
 target_compile_definitions(message_infrastructure PUBLIC
                             $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>
