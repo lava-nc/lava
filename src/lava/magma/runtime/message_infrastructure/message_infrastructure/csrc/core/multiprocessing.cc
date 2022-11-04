@@ -4,6 +4,9 @@
 
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#if defined(GRPC_CHANNEL)
+#include <message_infrastructure/csrc/channel/grpc/grpc.h>
+#endif
 
 namespace message_infrastructure {
 
@@ -26,6 +29,10 @@ void MultiProcessing::Stop(bool block) {
     }
   }
   GetSharedMemManager().DeleteAllSharedMemory();
+
+#if defined(GRPC_CHANNEL)
+  GetGrpcManager().Release();
+#endif
 }
 
 void MultiProcessing::CheckActor() {

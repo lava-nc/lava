@@ -15,14 +15,13 @@ add_executable(
   cpptest/test_multiprocessing.cc
   # cpptest/test_channel.cc
   cpptest/test_shm_delivery.cc
-)
+  $<$<BOOL:${GRPC_CHANNEL}>:cpptest/test_grpc_delivery.cc>)
 
 target_link_libraries(
   test_messaging_infrastructure
   GTest::gtest_main
   message_infrastructure
-  rt
-)
+  rt)
 
 include(GoogleTest)
 gtest_discover_tests(test_messaging_infrastructure PROPERTIES TIMEOUT 10)

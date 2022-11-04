@@ -9,37 +9,40 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 #include <string>
-#include <vector>
 #include <set>
 #include <memory>
 
 namespace message_infrastructure {
 
+#define DEFAULT_GRPC_URL "0.0.0.0:"
+#define DEFAULT_GRPC_PORT 8000
+
 class GrpcManager {
  public:
   ~GrpcManager();
   bool CheckURL(const std::string &url) {
-    if (url_set_.count(url)) {
+    if (url_set_.find(url) != url_set_.end()) {
       return false;
     }
     url_set_.insert(url);
     return true;
   }
   std::string AllocURL() {
-    std::string url = base_url_ + std::to_string(base_port_ + port_num_);
-    port_num_++;
+    std::string url = DEFAULT_GRPC_URL +
+      std::to_string(DEFAULT_GRPC_PORT + port_num_);
     while (!CheckURL(url)) {
-      std::string url = base_url_ + std::to_string(base_port_ + port_num_);
+      url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num_);
       port_num_++;
     }
     return url;
+  }
+  void Release() {
+    url_set_.clear();
   }
   friend GrpcManager &GetGrpcManager();
 
  private:
   GrpcManager() {}
-  std::string base_url_ = "127.11.2.78";
-  int base_port_ = 8000;
   int port_num_ = 0;
   static GrpcManager grpcm_;
   std::set<std::string> url_set_;
