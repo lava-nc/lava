@@ -52,14 +52,14 @@ class DDSRecvPort final : public AbstractRecvPort {
     }
   }
   MetaDataPtr Recv() {
-    return subscriber_->Read();
+    return subscriber_->Recv(false);
   }
   void Join() {
     subscriber_->Stop();
   }
   MetaDataPtr Peek() {
     // RecvQueue not achieved, cannot just peek the data
-    return Recv();
+    return subscriber_->Recv(true);
   }
   bool Probe() {
     return false;

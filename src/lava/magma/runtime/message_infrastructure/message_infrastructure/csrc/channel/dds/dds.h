@@ -26,7 +26,7 @@ using DDSPublisherPtr = std::shared_ptr<DDSPublisher>;
 class DDSSubscriber {
  public:
   virtual int Init() = 0;
-  virtual MetaDataPtr Read() = 0;
+  virtual MetaDataPtr Recv(bool keep) = 0;
   virtual void Stop() = 0;
   virtual ~DDSSubscriber() {}
 };

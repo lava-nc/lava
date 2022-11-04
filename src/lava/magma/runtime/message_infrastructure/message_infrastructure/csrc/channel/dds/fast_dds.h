@@ -123,7 +123,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   int Init();
   void Run();
   void Stop();
-  MetaDataPtr Read();
+  MetaDataPtr Recv(bool keep);
 
  private:
   void InitParticipant();
