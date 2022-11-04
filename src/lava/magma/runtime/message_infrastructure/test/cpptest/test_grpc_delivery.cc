@@ -99,11 +99,11 @@ TEST(TestGRPCChannel, GRPCLoop) {
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetRPCChannel(
   "127.13.2.11", 8001, "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetRPCChannel(
-  "127.13.2.12", 8005, "a1_to_mp", "a1_to_mp", 6);
+  "127.13.2.12", 8002, "a1_to_mp", "a1_to_mp", 6);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetRPCChannel(
   "127.13.2.13", 8003, "a1_to_a2", "a1_to_a2", 6);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetRPCChannel(
-  "127.13.2.14", 8005, "a2_to_a1", "a2_to_a1", 6);
+  "127.13.2.14", 8003, "a2_to_a1", "a2_to_a1", 6);
   auto target_fn_a1 = std::bind(&target_fn1,
                                 loop,
                                 mp_to_a1,

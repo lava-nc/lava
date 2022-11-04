@@ -93,23 +93,23 @@ class TestGrpcDelivery(unittest.TestCase):
         mp.start()
         loop = 10000
         a1_to_a2 = GetRPCChannel(
-            '127.13.2.15',
-            8003,
+            '127.13.2.11',
+            8001,
             'a1_to_a2',
             'a1_to_a2', 8)
         a2_to_a1 = GetRPCChannel(
-            '127.13.2.16',
-            8004,
+            '127.13.2.12',
+            8002,
             'a2_to_a1',
             'a2_to_a1', 8)
         mp_to_a1 = GetRPCChannel(
-            '127.13.2.17',
-            8005,
+            '127.13.2.13',
+            8003,
             'mp_to_a1',
             'mp_to_a1', 8)
         a1_to_mp = GetRPCChannel(
-            '127.13.2.18',
-            8006,
+            '127.13.2.14',
+            8004,
             'a1_to_mp',
             'a1_to_mp', 8)
 
