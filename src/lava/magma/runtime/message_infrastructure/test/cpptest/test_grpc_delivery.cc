@@ -81,28 +81,16 @@ void target_fn2(
   }
 
 TEST(TestGRPCChannel, GRPCLoop) {
-  MetaDataPtr metadata = std::make_shared<MetaData>();
-  metadata->nd = 1;
-  metadata->type = 7;
-  metadata->elsize = 8;
-  metadata->total_size = 1;
-  metadata->dims[0] = 1;
-  metadata->strides[0] = 1;
-  metadata->mdata =
-    reinterpret_cast<char*>
-    (malloc(sizeof(int64_t)));
-  *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
   MultiProcessing mp;
   int loop = 10000;
-  std::string ip_addr = "0.0.0.0";
-  AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetRPCChannel(
-    ip_addr, 8001, "mp_to_a1", "mp_to_a1", 6);
-  AbstractChannelPtr a1_to_mp = GetChannelFactory().GetRPCChannel(
-    ip_addr, 8002, "a1_to_mp", "a1_to_mp", 6);
-  AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetRPCChannel(
-    ip_addr, 8003, "a1_to_a2", "a1_to_a2", 6);
-  AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetRPCChannel(
-    ip_addr, 8004, "a2_to_a1", "a2_to_a1", 6);
+  AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
+    "mp_to_a1", "mp_to_a1", 6);
+  AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
+    "a1_to_mp", "a1_to_mp", 6);
+  AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetDefRPCChannel(
+    "a1_to_a2", "a1_to_a2", 6);
+  AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetDefRPCChannel(
+    "a2_to_a1", "a2_to_a1", 6);
   auto target_fn_a1 = std::bind(&target_fn1,
                                 loop,
                                 mp_to_a1,
@@ -121,6 +109,19 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
+
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  metadata->nd = 1;
+  metadata->type = 7;
+  metadata->elsize = 8;
+  metadata->total_size = 1;
+  metadata->dims[0] = 1;
+  metadata->strides[0] = 1;
+  metadata->mdata =
+    reinterpret_cast<char*>
+    (malloc(sizeof(int64_t)));
+  *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+
   MetaDataPtr mptr;
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();

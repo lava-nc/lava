@@ -118,7 +118,6 @@ void GrpcRecvPort::Join() {
     done_ = true;
     service_ptr_->Stop();
     server_->Shutdown();
-    GetGrpcManager().Release(url_);
   }
 }
 
