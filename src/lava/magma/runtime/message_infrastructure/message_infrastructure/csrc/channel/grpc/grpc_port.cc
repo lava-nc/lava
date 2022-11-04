@@ -4,6 +4,7 @@
 
 #include <message_infrastructure/csrc/channel/grpc/grpc_port.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/channel/grpc/grpc.h>
 
 namespace message_infrastructure {
 
@@ -117,6 +118,7 @@ void GrpcRecvPort::Join() {
     done_ = true;
     service_ptr_->Stop();
     server_->Shutdown();
+    GetGrpcManager().Release(url_);
   }
 }
 

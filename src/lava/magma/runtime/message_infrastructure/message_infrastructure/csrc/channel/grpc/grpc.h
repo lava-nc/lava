@@ -34,6 +34,9 @@ class GrpcManager {
     }
     return url;
   }
+  void Release(const std::string &url) {
+    url_set_.erase(url);
+  }
   friend GrpcManager &GetGrpcManager();
 
  private:
