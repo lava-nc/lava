@@ -72,13 +72,13 @@ TEST(TestDDSDelivery, DDSLoop) {
   MultiProcessing mp;
   int loop = 100000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
-	 .GetDefDDSChannel(5, 8, "mp_to_a1", DDSSHM, FASTDDSBackend);
+    .GetDefDDSChannel(5, 8, "mp_to_a1", DDSSHM, FASTDDSBackend);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()
-	 .GetDefDDSChannel(5, 8, "a1_to_mp", DDSSHM, FASTDDSBackend);
+    .GetDefDDSChannel(5, 8, "a1_to_mp", DDSSHM, FASTDDSBackend);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory()
-	 .GetDefDDSChannel(5, 8, "a1_to_a2", DDSSHM, FASTDDSBackend);
+    .GetDefDDSChannel(5, 8, "a1_to_a2", DDSSHM, FASTDDSBackend);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory()
-	 .GetDefDDSChannel(5, 8, "a2_to_a1", DDSSHM, FASTDDSBackend);
+    .GetDefDDSChannel(5, 8, "a2_to_a1", DDSSHM, FASTDDSBackend);
 
   auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -120,13 +120,9 @@ TEST(TestDDSDelivery, DDSLoop) {
 }
 
 TEST(TestDDSSingleProcess, DDS1Process) {
-	LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
+  LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
-																	.GetDefDDSChannel(5,
-																										8,
-																										"test_DDSChannel0",
-																										DDSSHM,
-																										FASTDDSBackend);
+    .GetDefDDSChannel(5, 8, "test_DDSChannel", DDSSHM, FASTDDSBackend);
 
   auto send_port = dds_channel->GetSendPort();
   send_port->Start();
@@ -146,15 +142,16 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
-	int loop = 100000;
-	int i = 0;
+  int loop = 100000;
+  int i = 0;
   while (loop--) {
-		if(!(loop % 1000))
-			printf("At iteration : %d * 1000\n", i++);
+    if (!(loop % 1000))
+      printf("At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
     mptr = recv_port->Recv();
-		EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata), *reinterpret_cast<int64_t*>(metadata->mdata));
-	  (*reinterpret_cast<int64_t*>(metadata->mdata))++;
+    EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),
+              *reinterpret_cast<int64_t*>(metadata->mdata));
+    (*reinterpret_cast<int64_t*>(metadata->mdata))++;
     free(reinterpret_cast<char*>(mptr->mdata));
   }
   recv_port->Join();
