@@ -10,6 +10,7 @@
 
 #include <string>
 #include <set>
+#include <memory>
 
 namespace message_infrastructure {
 
@@ -27,7 +28,8 @@ class GrpcManager {
     return true;
   }
   std::string AllocURL() {
-    std::string url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num_);
+    std::string url = DEFAULT_GRPC_URL +
+      std::to_string(DEFAULT_GRPC_PORT + port_num_);
     while (!CheckURL(url)) {
       url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num_);
       port_num_++;
