@@ -55,6 +55,7 @@ class SharedMemory {
   sem_t *req_;
   sem_t *ack_;
   void *data_ = NULL;
+  int alloc_pid_;
 };
 
 class RwSharedMemory {

@@ -40,10 +40,15 @@ std::vector<AbstractActor::ActorPtr>& MultiProcessing::GetActors() {
 }
 
 MultiProcessing::~MultiProcessing() {
+  LAVA_LOG(LOG_MP, "MultiProcess destructs\n");
   for (auto actor : actors_) {
     delete actor;
   }
   GetSharedMemManager().DeleteAllSharedMemory();
+}
+
+MultiProcessing::MultiProcessing() {
+  LAVA_LOG(LOG_MP, "MultiProcess constructs\n");
 }
 
 }  // namespace message_infrastructure

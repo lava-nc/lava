@@ -16,7 +16,7 @@ AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
 }
 
 AbstractActor::~AbstractActor() {
-  ctl_shm_->Close();
+  // ctl_shm_->Close();
 }
 
 void AbstractActor::Control(const ActorCmd cmd) {
@@ -40,9 +40,12 @@ void AbstractActor::HandleCmd() {
         this->actore_status_
           .store(static_cast<int>(ActorStatus::StatusRunning));
       }
+      LAVA_LOG(LOG_MP, "Actor receives a cmd: %d\n", *ctrl_status);
     });
     if (!ret) {
       helper::Sleep();
+    } else {
+      LAVA_LOG(LOG_MP, "Actor modifys: ActorStatus:%d\n", GetStatus());
     }
   }
 }
@@ -84,6 +87,7 @@ void AbstractActor::Run() {
   }
   if (stop_fn_ != nullptr &&
     actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
+    LAVA_LOG(LOG_ACTOR, "Stop_fn\n");
     stop_fn_();
   }
   LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);

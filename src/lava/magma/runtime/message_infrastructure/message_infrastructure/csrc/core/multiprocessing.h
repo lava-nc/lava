@@ -13,6 +13,7 @@ namespace message_infrastructure {
 
 class MultiProcessing {
  public:
+  MultiProcessing();
   ~MultiProcessing();
   void Stop(bool block);
   int BuildActor(AbstractActor::TargetFn target_fn);

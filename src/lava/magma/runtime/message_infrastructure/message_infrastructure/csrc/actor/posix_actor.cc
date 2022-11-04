@@ -71,6 +71,7 @@ int PosixActor::Create() {
     this->pid_ = getpid();
     Run();
     this->~PosixActor();
+    LAVA_LOG(LOG_ACTOR, "exit\n");
     exit(0);
   }
   LAVA_LOG_ERR("Cannot allocate new pid for the process\n");

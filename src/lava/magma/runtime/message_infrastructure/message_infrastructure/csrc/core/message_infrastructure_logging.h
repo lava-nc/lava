@@ -121,7 +121,7 @@
   if (int r = (result) != expectation) { \
     LAVA_LOG_ERR("Assert failed, %d get, %d except. Errno: %d\n", \
                  r, 0, errno); \
-    exit(-1); \
+    exit(0); \
   } \
 } while (0)
 

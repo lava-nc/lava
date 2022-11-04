@@ -13,6 +13,7 @@ SharedMemory::SharedMemory(const size_t &mem_size,
   size_ = mem_size;
   req_name_ += std::to_string(key);
   ack_name_ += std::to_string(key);
+  alloc_pid_ = getpid();
 }
 
 SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
@@ -21,6 +22,9 @@ SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
 }
 
 SharedMemory::~SharedMemory() {
+  if (alloc_pid_ == getpid()) {
+    Close();
+  }
   munmap(data_, size_);
 }
 
