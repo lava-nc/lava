@@ -119,9 +119,9 @@ void SharedMemManager::DeleteAllSharedMemory() {
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of sem to free: %zd.\n",
              sem_strs_.size());
   for (auto const& it : shm_fd_strs_) {
-    LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
     LAVA_DEBUG(LOG_SMMP, "Shm fd and name close: %s %d\n",
                it.second.c_str(), it.first);
+    LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
     LAVA_ASSERT_INT(close(it.first), 0);
   }
   for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {

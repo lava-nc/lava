@@ -162,8 +162,7 @@ class TestShmDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 100000
 
-    @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
-                   "about 30s after it started.")
+
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -216,23 +215,23 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
+
+        to_a1.join()
+        from_a1.join()
+        mp.stop(True)
 
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
             raise AssertionError()
 
-        to_a1.join()
-        from_a1.join()
-        mp.stop(True)
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("memory leak")
+
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -285,21 +284,22 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
+
+        to_a1.join()
+        from_a1.join()
+        mp.stop(True)
 
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
             raise AssertionError()
 
-        to_a1.join()
-        from_a1.join()
-        mp.stop(True)
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
+
 
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
@@ -360,16 +360,18 @@ class TestShmDelivery(unittest.TestCase):
             predata = from_a1.recv()
         loop_end = datetime.now()
 
+        to_a1.join()
+        from_a1.join()
+        mp.stop(True)
+
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
             raise AssertionError()
 
-        to_a1.join()
-        from_a1.join()
-        mp.stop(True)
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
+
 
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
@@ -430,17 +432,18 @@ class TestShmDelivery(unittest.TestCase):
             predata = from_a1.recv()
         loop_end = datetime.now()
 
-        if not np.array_equal(expect_result, predata):
-            print("expect: ", expect_result)
-            print("result: ", predata)
-            raise AssertionError()
-
         to_a1.join()
         from_a1.join()
         a1.terminate()
         a2.terminate()
         a1.join()
         a2.join()
+
+        if not np.array_equal(expect_result, predata):
+            print("expect: ", expect_result)
+            print("result: ", predata)
+            raise AssertionError()
+
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
 

@@ -31,6 +31,11 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   metadata->elsize = grpcdata->elsize();
   metadata->total_size = grpcdata->total_size();
   void* data = malloc(metadata->elsize * metadata->total_size);
+  if (data == NULL) {
+    LAVA_LOG_ERR("Malloc failed.\n");
+  } else {
+    LAVA_DEBUG(LOG_SMMP, "Malloc memory: %p\n", data);
+  }
   for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);

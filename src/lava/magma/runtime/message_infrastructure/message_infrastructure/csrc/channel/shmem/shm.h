@@ -97,6 +97,7 @@ class SharedMemManager {
     shm_fd_strs_.insert({shmfd, str});
     void *mmap_address = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,
                        MAP_SHARED, shmfd, 0);
+    LAVA_DEBUG(LOG_SMMP, "mmap, shm: %s, fd: %d\n", str.c_str(), shmfd);
     if (mmap_address == reinterpret_cast<void*>(-1)) {
       LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
       LAVA_DUMP(1, "size: %ld, shmfd_: %d\n", mem_size, shmfd);
