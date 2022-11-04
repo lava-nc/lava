@@ -5,7 +5,6 @@
 import numpy as np
 import unittest
 from functools import partial
-import time
 from datetime import datetime
 
 from message_infrastructure.multiprocessing import MultiProcessing

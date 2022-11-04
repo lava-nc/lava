@@ -49,7 +49,6 @@ void target_fn1(
     to_mp->Join();
     to_a2->Join();
     from_a2->Join();
-    // actor_ptr->SetStatus(ActorStatus::StatusStopped);
     while (!actor_ptr->GetStatus()) {
       helper::Sleep();
     }
@@ -76,7 +75,6 @@ void target_fn2(
     }
     from_a1->Join();
     to_a1->Join();
-    actor_ptr->SetStatus(ActorStatus::StatusStopped);
     while (!actor_ptr->GetStatus()) {
       helper::Sleep();
     }
@@ -96,14 +94,15 @@ TEST(TestGRPCChannel, GRPCLoop) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
   MultiProcessing mp;
   int loop = 10000;
+  std::string ip_addr = "0.0.0.0";
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetRPCChannel(
-  "127.13.2.11", 8001, "mp_to_a1", "mp_to_a1", 6);
+    ip_addr, 8001, "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetRPCChannel(
-  "127.13.2.12", 8002, "a1_to_mp", "a1_to_mp", 6);
+    ip_addr, 8002, "a1_to_mp", "a1_to_mp", 6);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetRPCChannel(
-  "127.13.2.13", 8003, "a1_to_a2", "a1_to_a2", 6);
+    ip_addr, 8003, "a1_to_a2", "a1_to_a2", 6);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetRPCChannel(
-  "127.13.2.14", 8003, "a2_to_a1", "a2_to_a1", 6);
+    ip_addr, 8004, "a2_to_a1", "a2_to_a1", 6);
   auto target_fn_a1 = std::bind(&target_fn1,
                                 loop,
                                 mp_to_a1,
@@ -123,7 +122,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
   MetaDataPtr mptr;
-  int expect_result = 1+loop*3;
+  int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
@@ -144,7 +143,6 @@ TEST(TestGRPCChannel, GRPCLoop) {
     free(reinterpret_cast<char*>(metadata->mdata));
     metadata = mptr;
   }
-
   const clock_t end_time = std::clock();
   to_a1->Join();
   from_a1->Join();

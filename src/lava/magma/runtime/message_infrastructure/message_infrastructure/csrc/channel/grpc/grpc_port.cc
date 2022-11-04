@@ -135,6 +135,7 @@ void GrpcSendPort::Send(MetaDataPtr metadata) {
   GrpcMetaData request = MetaData2GrpcMetaData(metadata);
   DataReply reply;
   ClientContext context;
+  context.set_wait_for_ready(true);
   Status status = stub_->RecvArrayData(&context, request, &reply);
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!");
