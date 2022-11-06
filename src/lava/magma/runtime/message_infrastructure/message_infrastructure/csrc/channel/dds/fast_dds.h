@@ -8,8 +8,8 @@
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.h>
 #include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.h>
-
 #include <message_infrastructure/csrc/core/utils.h>
+#include <fastdds/rtps/transport/TransportDescriptorInterface.h>
 
 #include <memory>
 #include <string>
@@ -20,12 +20,9 @@
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
-
-#include <fastdds/rtps/transport/TransportDescriptorInterface.h>
 
 // Default Parameters
 // Transport
