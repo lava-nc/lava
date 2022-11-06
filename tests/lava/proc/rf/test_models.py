@@ -124,7 +124,7 @@ class TestrfProcessModels(unittest.TestCase):
         self.assertTrue((num_steps - 1) / period, s_out.size)
         # We should see a spike at timestep 'period'. However, due to floating
         # point math, the spikes might occur +/- 1 timesteps around real peak
-        self.assertTrue(np.all(np.array(s_diffs) - period) <= 2)
+        self.assertTrue(np.all(np.abs(np.array(s_diffs) - period) <= 2))
 
     def test_float_decay(self):
         """Neuron recieves an input pulse. The decay of the observed real
