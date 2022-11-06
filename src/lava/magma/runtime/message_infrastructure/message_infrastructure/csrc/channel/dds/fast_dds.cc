@@ -25,9 +25,6 @@ using namespace eprosima::fastrtps::rtps;  // NOLINT
 
 FastDDSPublisher::~FastDDSPublisher() {
   LAVA_LOG(LOG_DDS, "FastDDS Publisher releasing...\n");
-  if (listener_->matched_ > 0) {
-    LAVA_LOG_ERR("Still %d DataReader Listen\n", listener_->matched_);
-  }
   if (!stop_) {
     LAVA_LOG_WARN(LOG_DDS, "Please stop Publisher before release it next time\n");
     Stop();
