@@ -5,5 +5,5 @@ struct DDSMetaData {
   long long total_size;
   long long dims[5];
   long long strides[5];
-  string mdata;
+  sequence<char> mdata;
 };

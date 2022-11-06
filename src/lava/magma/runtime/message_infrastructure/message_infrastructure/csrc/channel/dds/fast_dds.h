@@ -32,8 +32,8 @@
 #define SHM_SEGMENT_SIZE (2*1024*1024)
 #define NON_BLOCKING_SEND (false)
 #define UDP_OUT_PORT  (0)
-#define TCP_PORT 10
-#define TCPv4_IP ("11.22.33.44")
+#define TCP_PORT 46
+#define TCPv4_IP ("0.0.0.0")
 // QOS
 
 namespace message_infrastructure {

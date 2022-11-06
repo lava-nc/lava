@@ -15,6 +15,8 @@
 #include <fastdds/rtps/transport/UDPv6TransportDescriptor.h>
 #include <fastrtps/Domain.h>
 
+#include <vector>
+
 namespace message_infrastructure {
 
 using namespace eprosima::fastdds::dds;  // NOLINT
@@ -64,7 +66,7 @@ int FastDDSPublisher::Init() {
 void FastDDSPublisher::InitDataWriter() {
   DataWriterQos wqos;
   wqos.history().kind = KEEP_LAST_HISTORY_QOS;
-  wqos.history().depth = 30;
+  wqos.history().depth = max_samples_;
   wqos.resource_limits().max_samples = max_samples_;
   wqos.resource_limits().allocated_samples = max_samples_/2;
   wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = 2;
@@ -117,8 +119,9 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
     dds_metadata_->total_size(metadata->total_size);
     memcpy(&dds_metadata_->dims()[0], metadata->dims, sizeof(metadata->dims));
     memcpy(&dds_metadata_->strides()[0], metadata->strides, sizeof(metadata->strides));
-    std::string mdata((char*)metadata->mdata, nbytes_);
+    dds_metadata_->mdata(std::vector<char>((char*)metadata->mdata, (char*)metadata->mdata+nbytes_));
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher copied\n");
+    printf("Publish mdata size:%d\n", dds_metadata_->mdata().size());
 
     if (writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
       LAVA_LOG_WARN(LOG_DDS, "Publisher write return not OK, Why work?\n");
@@ -220,7 +223,7 @@ void FastDDSSubscriber::InitParticipant() {
 void FastDDSSubscriber::InitDataReader() {
   DataReaderQos rqos;
   rqos.history().kind = KEEP_LAST_HISTORY_QOS;
-  rqos.history().depth = 30;
+  rqos.history().depth = max_samples_;
   rqos.resource_limits().max_samples = max_samples_;
   rqos.resource_limits().allocated_samples = max_samples_/2;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
@@ -264,7 +267,7 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
   if (keep) {
     LAVA_DEBUG(LOG_DDS, "Keep the data recieved\n");
     while (ReturnCode_t::RETCODE_OK != reader_
-            ->take(mdata_seq, infos, 1)) {
+            ->read(mdata_seq, infos, 1)) {
       helper::Sleep();
     }
   } else {
