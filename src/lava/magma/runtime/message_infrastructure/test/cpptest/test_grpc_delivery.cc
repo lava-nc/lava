@@ -82,7 +82,7 @@ void target_fn2(
 
 TEST(TestGRPCChannel, GRPCLoop) {
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = 10000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
     "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
@@ -109,21 +109,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
-
-  // MetaDataPtr metadata = std::make_shared<MetaData>();
-  // metadata->nd = 1;
-  // metadata->type = 7;
-  // metadata->elsize = 8;
-  // metadata->total_size = 1;
-  // metadata->dims[0] = 1;
-  // metadata->strides[0] = 1;
-  // metadata->mdata =
-  //   reinterpret_cast<char*>
-  //   (malloc(sizeof(int64_t)));
-  // *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
-
   int64_t array_[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-
   MetaDataPtr metadata = std::make_shared<MetaData>();
   metadata->nd = 1;
   metadata->type = 7;
@@ -134,17 +120,15 @@ TEST(TestGRPCChannel, GRPCLoop) {
   metadata->mdata =
     reinterpret_cast<char*>
     (malloc(sizeof(int64_t)*10));
-
   std::memcpy(metadata->mdata,
               reinterpret_cast<char*>(array_),
               metadata->elsize * metadata->total_size);
-
   MetaDataPtr mptr;
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
-    // LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
+    LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
     LAVA_DUMP(1, "metadata:\n");
     LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
@@ -161,8 +145,8 @@ TEST(TestGRPCChannel, GRPCLoop) {
       LAVA_DUMP(1, "grpc mdata: %p, grpc *mdata: %ld\n", ptr, *ptr);
       ptr++;
     }
-    // LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
-    //           *reinterpret_cast<int64_t*>(mptr->mdata));
+    LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
+              *reinterpret_cast<int64_t*>(mptr->mdata));
     free(reinterpret_cast<char*>(metadata->mdata));
     metadata = mptr;
   }
@@ -178,8 +162,10 @@ TEST(TestGRPCChannel, GRPCLoop) {
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  printf("grpc cpp loop timedelta: %ld ms\n", (end_time - start_time));
-  LAVA_DUMP(1, "cpp loop timedelta: %ld\n", (end_time - start_time));
+  printf("grpc cpp loop timedelta: %f s\n",
+        ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
+  LAVA_DUMP(1, "grpc cpp loop timedelta: %f",
+           ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(1, "exit\n");
 }
 
