@@ -7,6 +7,7 @@
 #include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <gtest/gtest.h>
+#include <cstring>
 
 namespace message_infrastructure {
 
@@ -77,16 +78,16 @@ void target_fn_a2_bound(
 
 TEST(TestShmDelivery, ShmLoop) {
   MultiProcessing mp;
-  int loop = 10000;
+  int loop = 100000;
   const int queue_size = 1;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t), "mp_to_a1", "mp_to_a1");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10, "mp_to_a1", "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a1_to_mp", "a1_to_mp");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10, "a1_to_mp", "a1_to_mp");
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a1_to_a2", "a1_to_a2");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10, "a1_to_a2", "a1_to_a2");
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t), "a2_to_a1", "a2_to_a1");
+    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10, "a2_to_a1", "a2_to_a1");
 
   auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -102,19 +103,38 @@ TEST(TestShmDelivery, ShmLoop) {
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
 
+  // MetaDataPtr metadata = std::make_shared<MetaData>();
+  // metadata->nd = 1;
+  // metadata->type = 7;
+  // metadata->elsize = 8;
+  // metadata->total_size = 1;
+  // metadata->dims[0] = 1;
+  // metadata->strides[0] = 1;
+  // metadata->mdata =
+  //   (reinterpret_cast<char*>(malloc(sizeof(int64_t))));
+  // *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+
+  int64_t array_[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+
   MetaDataPtr metadata = std::make_shared<MetaData>();
   metadata->nd = 1;
   metadata->type = 7;
   metadata->elsize = 8;
-  metadata->total_size = 1;
-  metadata->dims[0] = 1;
+  metadata->total_size = 10;
+  metadata->dims[0] = 10;
   metadata->strides[0] = 1;
   metadata->mdata =
-    (reinterpret_cast<char*>(malloc(sizeof(int64_t))));
-  *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+    reinterpret_cast<char*>
+    (malloc(sizeof(int64_t)*10));
+
+  std::memcpy(metadata->mdata,
+              reinterpret_cast<char*>(array_),
+              metadata->elsize * metadata->total_size);
+
 
   MetaDataPtr mptr;
   LAVA_DUMP(1, "main process loop: %d\n", loop);
+  int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
@@ -122,7 +142,7 @@ TEST(TestShmDelivery, ShmLoop) {
     LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
 
-    // to_a1->Join();
+    to_a1->Join();
     LAVA_DUMP(1, "metadata:\n");
     LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
     LAVA_DUMP(1, "type: %ld\n", mptr->type);
@@ -135,12 +155,25 @@ TEST(TestShmDelivery, ShmLoop) {
     mptr->strides[4]);
     LAVA_DUMP(1, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
+    int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
+    for (int i = 0; i < 10; i++) {
+      LAVA_DUMP(1, "shm mdata: %p, shm *mdata: %ld\n", ptr, *ptr);
+      ptr++;
+    }
     metadata = mptr;
   }
   const clock_t end_time = std::clock();
+  int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
   free(reinterpret_cast<char*>(mptr->mdata));
   from_a1->Join();
   mp.Stop(true);
+  if (result != expect_result) {
+    LAVA_DUMP(1, "expect_result: %d\n", expect_result);
+    LAVA_DUMP(1, "result: %ld\n", result);
+    LAVA_LOG_ERR("result != expect_result");
+    throw;
+  }
+  printf("shm cpp loop timedelta: %ld ms\n", (end_time - start_time));
   LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));
   LAVA_DUMP(1, "exit\n");
 }
