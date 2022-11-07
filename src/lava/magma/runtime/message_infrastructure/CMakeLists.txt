@@ -98,6 +98,8 @@ if(DDS_CHANNEL)
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
     add_definitions(-DDDS_CHANNEL)
+  else()
+    message(FATAL_ERROR "Please enable DDS backend, (FASTDDS_ENABLE or CycloneDDS_ENABLE)")
   endif()
 else()
   set(FASTDDS_ENABLE OFF)
