@@ -43,7 +43,7 @@ int FastDDSPublisher::Init() {
     return DDSInitErrorType::DDSPublisherError;
 
   topic_ = participant_->create_topic(topic_name_,
-                                      "DDSMetaData",
+                                      DDS_DATATYPE_NAME,
                                       TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return DDSInitErrorType::DDSTopicError;
@@ -64,9 +64,9 @@ void FastDDSPublisher::InitDataWriter() {
   wqos.history().kind = KEEP_LAST_HISTORY_QOS;
   wqos.history().depth = max_samples_;
   wqos.resource_limits().max_samples = max_samples_;
-  wqos.resource_limits().allocated_samples = max_samples_/2;
-  wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = 2;
-  wqos.reliable_writer_qos().times.heartbeatPeriod.nanosec = 200 * 1000 * 1000;
+  wqos.resource_limits().allocated_samples = max_samples_ / 2;
+  wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = HEARTBEAT_PERIOD_SECONDS;
+  wqos.reliable_writer_qos().times.heartbeatPeriod.nanosec = HEARTBEAT_PERIOD_NANOSEC;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
   writer_ = publisher_->create_datawriter(topic_, wqos, listener_.get());
@@ -223,7 +223,7 @@ void FastDDSSubscriber::InitDataReader() {
   rqos.history().kind = KEEP_LAST_HISTORY_QOS;
   rqos.history().depth = max_samples_;
   rqos.resource_limits().max_samples = max_samples_;
-  rqos.resource_limits().allocated_samples = max_samples_/2;
+  rqos.resource_limits().allocated_samples = max_samples_ / 2;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
 
@@ -242,7 +242,7 @@ int FastDDSSubscriber::Init() {
     return DDSInitErrorType::DDSSubscriberError;
 
   topic_ = participant_->create_topic(topic_name_,
-                                      "DDSMetaData",
+                                      DDS_DATATYPE_NAME,
                                       TOPIC_QOS_DEFAULT);
   if (topic_ == nullptr)
     return DDSInitErrorType::DDSTopicError;

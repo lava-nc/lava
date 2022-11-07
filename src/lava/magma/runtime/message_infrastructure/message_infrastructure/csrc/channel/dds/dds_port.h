@@ -5,9 +5,6 @@
 #ifndef CHANNEL_DDS_DDS_PORT_H_
 #define CHANNEL_DDS_DDS_PORT_H_
 
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <atomic>
 #include <memory>
 
@@ -58,7 +55,6 @@ class DDSRecvPort final : public AbstractRecvPort {
     subscriber_->Stop();
   }
   MetaDataPtr Peek() {
-    // RecvQueue not achieved, cannot just peek the data
     return subscriber_->Recv(true);
   }
   bool Probe() {
