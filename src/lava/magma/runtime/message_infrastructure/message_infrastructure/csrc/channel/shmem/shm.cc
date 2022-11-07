@@ -48,6 +48,24 @@ bool SharedMemory::Load(HandleFn consume_fn) {
   return ret;
 }
 
+void SharedMemory::BlockLoad(HandleFn consume_fn) {
+  sem_wait(req_);
+  consume_fn(data_);
+  sem_post(ack_);
+}
+
+void SharedMemory::Read(HandleFn consume_fn) {
+  sem_wait(req_);
+  consume_fn(data_);
+  sem_post(req_);
+}
+
+bool SharedMemory::TryProbe() {
+  int val;
+  sem_getvalue(req_, &val);
+  return val > 0;
+}
+
 void SharedMemory::Close() {
   LAVA_ASSERT_INT(sem_close(req_), 0);
   LAVA_ASSERT_INT(sem_close(ack_), 0);

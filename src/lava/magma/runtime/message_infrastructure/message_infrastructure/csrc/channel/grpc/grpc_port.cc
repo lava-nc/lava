@@ -4,6 +4,7 @@
 
 #include <message_infrastructure/csrc/channel/grpc/grpc_port.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/channel/grpc/grpc.h>
 
 namespace message_infrastructure {
 
@@ -43,6 +44,10 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
 }
 
 }  // namespace
+
+template<>
+void RecvQueue<GrpcMetaDataPtr>::FreeData(GrpcMetaDataPtr data)
+{}
 
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size)
@@ -129,6 +134,7 @@ void GrpcSendPort::Send(MetaDataPtr metadata) {
   GrpcMetaData request = MetaData2GrpcMetaData(metadata);
   DataReply reply;
   ClientContext context;
+  context.set_wait_for_ready(true);
   Status status = stub_->RecvArrayData(&context, request, &reply);
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!");

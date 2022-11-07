@@ -14,6 +14,11 @@ if(GRPC_CHANNEL)
   add_definitions(-DGRPC_CHANNEL)
 endif()
 
+option(ENABLE_MM_PAUSE "Use _mm_pause for sleep." OFF)
+if(ENABLE_MM_PAUSE)
+  add_definitions(-DENABLE_MM_PAUSE)
+endif()
+
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
   find_package(pybind11 REQUIRED)
@@ -25,6 +30,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/core/multiprocessing.cc"
   "message_infrastructure/csrc/core/abstract_port_implementation.cc"
   "message_infrastructure/csrc/core/ports.cc"
+  "message_infrastructure/csrc/core/channel_factory.cc"
   "message_infrastructure/csrc/core/message_infrastructure_logging.cc"
   "message_infrastructure/csrc/actor/posix_actor.cc"
   "message_infrastructure/csrc/channel/shmem/shm.cc"
@@ -32,8 +38,7 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
   "message_infrastructure/csrc/channel/socket/socket.cc"
   "message_infrastructure/csrc/channel/socket/socket_channel.cc"
-  "message_infrastructure/csrc/channel/socket/socket_port.cc"
-)
+  "message_infrastructure/csrc/channel/socket/socket_port.cc")
 
 if(GRPC_CHANNEL)
   set(GRPC_FETCHCONTENT 1)
@@ -108,8 +113,6 @@ add_library(message_infrastructure SHARED
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
 
-target_compile_definitions(message_infrastructure PRIVATE GRPC_CHANNEL)
-target_compile_definitions(message_infrastructure PRIVATE DDS_CHANNEL)
 target_compile_definitions(message_infrastructure PUBLIC
                             $<$<STREQUAL:${MSG_LOG_LEVEL},all>:MSG_LOG_LEVEL_ALL>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},warn>:MSG_LOG_LEVEL_WARN>

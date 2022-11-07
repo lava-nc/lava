@@ -30,16 +30,7 @@ class ChannelFactory {
                                 const size_t &size,
                                 const size_t &nbytes,
                                 const std::string &src_name,
-                                const std::string &dst_name) {
-    switch (channel_type) {
-      case SOCKETCHANNEL:
-        return GetSocketChannel(nbytes, src_name, dst_name);
-      default:
-        return GetShmemChannel(size, nbytes, src_name, dst_name);
-    }
-    LAVA_LOG_ERR("Get Channel error\n");
-    return NULL;
-  }
+                                const std::string &dst_name);
 
 #if defined(DDS_CHANNEL)
   AbstractChannelPtr GetDefDDSChannel(const int &dds_depth,
@@ -60,15 +51,11 @@ class ChannelFactory {
                                    const int &port,
                                    const std::string &src_name,
                                    const std::string &dst_name,
-                                   const size_t &size) {
-    return std::make_shared<GrpcChannel>(url, port, src_name, dst_name, size);
-  }
+                                   const size_t &size);
 
   AbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
                                       const std::string &dst_name,
-                                      const size_t &size) {
-    return std::make_shared<GrpcChannel>(src_name, dst_name, size);
-  }
+                                      const size_t &size);
 #endif
 
   friend ChannelFactory& GetChannelFactory();
@@ -79,12 +66,7 @@ class ChannelFactory {
   static ChannelFactory channel_factory_;
 };
 
-ChannelFactory ChannelFactory::channel_factory_;
-
-ChannelFactory& GetChannelFactory() {
-  ChannelFactory &channel_factory = ChannelFactory::channel_factory_;
-  return channel_factory;
-}
+ChannelFactory& GetChannelFactory();
 
 }  // namespace message_infrastructure
 
