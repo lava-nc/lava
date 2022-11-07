@@ -110,6 +110,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
 #endif
   });
 
+#if defined(DDS_CHANNEL)
   py::enum_<DDSTransportType> (m, "DDSTransportType")
     .value("DDSSHM", DDSSHM)
     .value("DDSTCPv4", DDSTCPv4)
@@ -123,7 +124,6 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .value("CycloneDDSBackend", CycloneDDSBackend)
     .export_values();
 
-#if defined(DDS_CHANNEL)
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
     .def(py::init<std::string, DDSTransportType, DDSBackendType, size_t>())
     .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
@@ -131,6 +131,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
 #endif
+
   m.def("support_dds_channel", [](){
 #if defined(DDS_CHANNEL)
     return true;

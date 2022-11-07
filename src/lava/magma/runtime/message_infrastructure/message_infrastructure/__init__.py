@@ -11,8 +11,6 @@ from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import AbstractTransferPort
 from MessageInfrastructurePywrapper import support_grpc_channel
-from MessageInfrastructurePywrapper import DDSTransportType
-from MessageInfrastructurePywrapper import DDSBackendType
 from MessageInfrastructurePywrapper import support_dds_channel
 from .ports import SendPort, Channel
 
@@ -24,3 +22,5 @@ if SupportGRPCChannel:
     from .ports import GetRPCChannel
 if SupportDDSChannel:
     from .ports import GetDDSChannel
+    from MessageInfrastructurePywrapper import DDSTransportType
+    from MessageInfrastructurePywrapper import DDSBackendType

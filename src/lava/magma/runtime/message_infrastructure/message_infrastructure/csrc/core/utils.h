@@ -31,29 +31,6 @@ enum ChannelType {
   SOCKETCHANNEL = 3
 };
 
-enum DDSTransportType {
-  DDSSHM = 0,
-  DDSTCPv4 = 1,
-  DDSTCPv6 = 2,
-  DDSUDPv4 = 3,
-  DDSUDPv6 = 4
-};
-
-enum DDSBackendType {
-  FASTDDSBackend = 0,
-  CycloneDDSBackend = 1
-};
-
-enum DDSInitErrorType {
-  DDSParticipantError = 1,
-  DDSPublisherError = 2,
-  DDSSubscriberError = 3,
-  DDSTopicError = 4,
-  DDSDataWriterError = 5,
-  DDSDataReaderError = 6,
-  DDSTypeParserError = 7
-};
-
 struct MetaData {
   int64_t nd;
   int64_t type;
