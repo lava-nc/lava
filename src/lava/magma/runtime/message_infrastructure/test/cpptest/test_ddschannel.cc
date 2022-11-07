@@ -53,13 +53,13 @@ void dds_target_fn_a2_bound(int loop,
   actor_ptr->SetStopFn(dds_stop_fn);
   auto from_a1 = a1_to_a2->GetRecvPort();
   from_a1->Start();
-  auto to_a1   = a2_to_a1->GetSendPort();
+  auto to_a1 = a2_to_a1->GetSendPort();
   to_a1->Start();
   while ((loop--)&&!actor_ptr->GetStatus()) {
     MetaDataPtr data = from_a1->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a1->Send(data);
-    // free(reinterpret_cast<char*>(data->mdata)-sizeof(MetaData));
+    free(data->mdata);
   }
   from_a1->Join();
   to_a1->Join();
@@ -101,9 +101,7 @@ TEST(TestDDSDelivery, DDSLoop) {
   metadata->total_size = 1;
   metadata->dims[0] = 1;
   metadata->strides[0] = 1;
-  metadata->mdata =
-    (reinterpret_cast<char*>
-    (malloc(sizeof(int64_t)+sizeof(MetaData)))+sizeof(MetaData));
+  metadata->mdata = reinterpret_cast<char*> (malloc(sizeof(int64_t)));
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
@@ -152,7 +150,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
     EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),
               *reinterpret_cast<int64_t*>(metadata->mdata));
     (*reinterpret_cast<int64_t*>(metadata->mdata))++;
-    free(reinterpret_cast<char*>(mptr->mdata));
+    free(mptr->mdata);
   }
   recv_port->Join();
   send_port->Join();
