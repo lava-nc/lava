@@ -194,7 +194,7 @@ jobs:
     - name: Install dependencies
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root libssl-dev
+      run: poetry install --no-interaction --no-root
 
     - name: Install message_infrastructure
       working-directory: ./src/lava/magma/runtime/message_infrastructure
