@@ -65,8 +65,10 @@ void FastDDSPublisher::InitDataWriter() {
   wqos.history().depth = max_samples_;
   wqos.resource_limits().max_samples = max_samples_;
   wqos.resource_limits().allocated_samples = max_samples_ / 2;
-  wqos.reliable_writer_qos().times.heartbeatPeriod.seconds = HEARTBEAT_PERIOD_SECONDS;
-  wqos.reliable_writer_qos().times.heartbeatPeriod.nanosec = HEARTBEAT_PERIOD_NANOSEC;
+  wqos.reliable_writer_qos().times
+                            .heartbeatPeriod.seconds = HEARTBEAT_PERIOD_SECONDS;
+  wqos.reliable_writer_qos().times
+                            .heartbeatPeriod.nanosec = HEARTBEAT_PERIOD_NANOSEC;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
   writer_ = publisher_->create_datawriter(topic_, wqos, listener_.get());
@@ -118,9 +120,10 @@ bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
     memcpy(&dds_metadata_->strides()[0],
            metadata->strides,
            sizeof(metadata->strides));
+    size_t nbytes = metadata->elsize * metadata->total_size;
     dds_metadata_->mdata(std::vector<char>(
                    reinterpret_cast<char*>(metadata->mdata),
-                   reinterpret_cast<char*>(metadata->mdata) + nbytes_));
+                   reinterpret_cast<char*>(metadata->mdata) + nbytes));
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher copied\n");
 
     if (writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
@@ -289,9 +292,9 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
     memcpy(metadata->strides,
            dds_metadata.strides().data(),
            sizeof(metadata->strides));
-
-    void *ptr = malloc(nbytes_);
-    memcpy(ptr, dds_metadata.mdata().data(), nbytes_);
+    int nbytes = metadata->elsize * metadata->total_size;
+    void *ptr = malloc(nbytes);
+    memcpy(ptr, dds_metadata.mdata().data(), nbytes);
     metadata->mdata = ptr;
     reader_->return_loan(mdata_seq, infos);
     LAVA_DEBUG(LOG_DDS, "Data Recieved\n");

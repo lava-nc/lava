@@ -125,7 +125,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
 
 #if defined(DDS_CHANNEL)
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
-    .def(py::init<int, size_t, std::string, DDSTransportType, DDSBackendType>())
+    .def(py::init<std::string, DDSTransportType, DDSBackendType, size_t>())
     .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,

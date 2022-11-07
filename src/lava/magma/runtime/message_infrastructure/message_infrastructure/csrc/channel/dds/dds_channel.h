@@ -19,11 +19,10 @@ namespace message_infrastructure {
 class DDSChannel : public AbstractChannel {
  public:
   DDSChannel() {}
-  DDSChannel(const size_t &depth,
-             const size_t &nbytes,
-             const std::string &topic_name,
+  DDSChannel(const std::string &topic_name,
              const DDSTransportType &dds_transfer_type,
-             const DDSBackendType &dds_backend);
+             const DDSBackendType &dds_backend,
+             const size_t &size);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
 

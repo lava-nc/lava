@@ -74,13 +74,13 @@ TEST(TestDDSDelivery, DDSLoop) {
   MultiProcessing mp;
   int loop = 100000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
-    .GetDefDDSChannel(5, 8, "mp_to_a1", DDSSHM, FASTDDSBackend);
+    .GetDDSChannel("mp_to_a1", DDSSHM, FASTDDSBackend, 5);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()
-    .GetDefDDSChannel(5, 8, "a1_to_mp", DDSSHM, FASTDDSBackend);
+    .GetDDSChannel("a1_to_mp", DDSSHM, FASTDDSBackend, 5);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory()
-    .GetDefDDSChannel(5, 8, "a1_to_a2", DDSSHM, FASTDDSBackend);
+    .GetDDSChannel("a1_to_a2", DDSSHM, FASTDDSBackend, 5);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory()
-    .GetDefDDSChannel(5, 8, "a2_to_a1", DDSSHM, FASTDDSBackend);
+    .GetDDSChannel("a2_to_a1", DDSSHM, FASTDDSBackend, 5);
 
   auto target_fn_a1 = std::bind(&dds_target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -122,7 +122,7 @@ TEST(TestDDSDelivery, DDSLoop) {
 TEST(TestDDSSingleProcess, DDS1Process) {
   LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
-    .GetDefDDSChannel(5, 8, "test_DDSChannel", DDSSHM, FASTDDSBackend);
+    .GetDDSChannel("test_DDSChannel", DDSSHM, FASTDDSBackend, 5);
 
   auto send_port = dds_channel->GetSendPort();
   send_port->Start();

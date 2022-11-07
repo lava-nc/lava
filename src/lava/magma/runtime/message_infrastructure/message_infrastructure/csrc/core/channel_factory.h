@@ -33,17 +33,10 @@ class ChannelFactory {
                                 const std::string &dst_name);
 
 #if defined(DDS_CHANNEL)
-  AbstractChannelPtr GetDefDDSChannel(const int &dds_depth,
-                                   const size_t &nbytes,
-                                   const std::string &topic_name,
+  AbstractChannelPtr GetDDSChannel(const std::string &topic_name,
                                    const DDSTransportType &transport_type,
-                                   const DDSBackendType &dds_backend) {
-    return std::make_shared<DDSChannel>(dds_depth,
-                                        nbytes,
-                                        topic_name,
-                                        transport_type,
-                                        dds_backend);
-  }
+                                   const DDSBackendType &dds_backend,
+                                   const size_t &size);
 #endif
 
 #if defined(GRPC_CHANNEL)

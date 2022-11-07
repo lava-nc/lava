@@ -212,11 +212,10 @@ class TestChannel(unittest.TestCase):
         name = 'test_dds_channel'
 
         dds_channel = GetDDSChannel(
-            ChannelQueueSize,
-            nbytes,
             name,
             DDSTransportType.DDSSHM,
-            DDSBackendType.FASTDDSBackend)
+            DDSBackendType.FASTDDSBackend,
+            ChannelQueueSize)
 
         send_port = dds_channel.src_port
         recv_port = dds_channel.dst_port

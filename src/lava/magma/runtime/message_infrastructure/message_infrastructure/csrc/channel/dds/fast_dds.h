@@ -55,16 +55,14 @@ using FastDDSPubListenerPtr = std::shared_ptr<FastDDSPubListener>;
 
 class FastDDSPublisher final : public DDSPublisher {
  public:
-  FastDDSPublisher(const size_t &max_samples,
-                   const size_t &nbytes,
-                   const std::string &topic_name,
-                   const DDSTransportType &dds_transfer_type) :
+  FastDDSPublisher(const std::string &topic_name,
+                   const DDSTransportType &dds_transfer_type,
+                   const size_t &max_samples) :
                    type_(new DDSMetaDataPubSubType()),
                    stop_(true),
-                   max_samples_(max_samples),
-                   nbytes_(nbytes),
                    topic_name_(topic_name),
-                   dds_transfer_type_(dds_transfer_type) {}
+                   dds_transfer_type_(dds_transfer_type),
+                   max_samples_(max_samples) {}
   ~FastDDSPublisher() override;
   int Init();
   bool Publish(MetaDataPtr metadata);
@@ -82,10 +80,9 @@ class FastDDSPublisher final : public DDSPublisher {
   eprosima::fastdds::dds::DataWriter* writer_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
 
-  size_t max_samples_;
-  size_t nbytes_;
   std::string topic_name_;
   DDSTransportType dds_transfer_type_;
+  size_t max_samples_;
 
   bool stop_;
 };
@@ -108,17 +105,14 @@ using FastDDSSubListenerPtr = std::shared_ptr<FastDDSSubListener>;
 
 class FastDDSSubscriber final : public DDSSubscriber {
  public:
-  FastDDSSubscriber(const size_t &max_samples,
-                   const size_t &nbytes,
-                   const std::string &topic_name,
-                   const DDSTransportType &dds_transfer_type) :
-                   type_(new DDSMetaDataPubSubType()),
-                   stop_(true),
-                   max_samples_(max_samples),
-                   nbytes_(nbytes),
-                   topic_name_(topic_name),
-                   dds_transfer_type_(dds_transfer_type)
-                    {};
+  FastDDSSubscriber(const std::string &topic_name,
+                    const DDSTransportType &dds_transfer_type,
+                    const size_t &max_samples) :
+                    type_(new DDSMetaDataPubSubType()),
+                    stop_(true),
+                    topic_name_(topic_name),
+                    dds_transfer_type_(dds_transfer_type),
+                    max_samples_(max_samples) {}
   ~FastDDSSubscriber() override;
   int Init();
   void Stop();
@@ -134,10 +128,10 @@ class FastDDSSubscriber final : public DDSSubscriber {
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
   eprosima::fastdds::dds::DataReader* reader_ = nullptr;
   eprosima::fastdds::dds::TypeSupport type_;
-  DDSTransportType dds_transfer_type_;
-  int max_samples_;
-  size_t nbytes_;
+
   std::string topic_name_;
+  DDSTransportType dds_transfer_type_;
+  size_t max_samples_;
   bool stop_;
 };
 

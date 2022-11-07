@@ -35,23 +35,20 @@ using DDSSubscriberPtr = std::shared_ptr<DDSSubscriber>;
 
 class DDS {
  public:
-  DDS(const size_t &max_samples,
-      const size_t &nbytes,
-      const std::string &topic_name,
+  DDS(const std::string &topic_name,
       const DDSTransportType &dds_transfer_type,
-      const DDSBackendType &dds_backend);
+      const DDSBackendType &dds_backend,
+      const size_t &max_samples);
   DDSPublisherPtr dds_publisher_ = nullptr;
   DDSSubscriberPtr dds_subscriber_ = nullptr;
 
  private:
-  void CreateFastDDSBackend(const size_t &max_samples,
-                            const size_t &nbytes,
-                            const std::string &topic_name,
-                            const DDSTransportType &dds_transfer_type);
-  void CreateCycloneDDSBackend(const size_t &max_samples,
-                               const size_t &nbytes,
-                               const std::string &topic_name,
-                               const DDSTransportType &dds_transfer_type);
+  void CreateFastDDSBackend(const std::string &topic_name,
+                            const DDSTransportType &dds_transfer_type,
+                            const size_t &max_samples);
+  void CreateCycloneDDSBackend(const std::string &topic_name,
+                               const DDSTransportType &dds_transfer_type,
+                               const size_t &max_samples);
 };
 
 using DDSPtr = std::shared_ptr<DDS>;
@@ -59,11 +56,10 @@ using DDSPtr = std::shared_ptr<DDS>;
 class DDSManager {
  public:
   ~DDSManager();
-  DDSPtr AllocDDS(const size_t &size,
-                  const size_t &nbytes,
-                  const std::string &topic_name,
+  DDSPtr AllocDDS(const std::string &topic_name,
                   const DDSTransportType &dds_transfer_type,
-                  const DDSBackendType &dds_backend);
+                  const DDSBackendType &dds_backend,
+                  const size_t &max_samples);
   void DeleteAllDDS();
   friend DDSManager &GetDDSManager();
 
