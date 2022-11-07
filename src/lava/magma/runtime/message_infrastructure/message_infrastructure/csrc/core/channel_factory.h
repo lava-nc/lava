@@ -15,6 +15,10 @@
 #include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
 #endif
 
+#ifdef DDS_CHANNEL
+#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
+#endif
+
 #include <string>
 #include <memory>
 
@@ -28,7 +32,12 @@ class ChannelFactory {
                                 const std::string &src_name,
                                 const std::string &dst_name);
 
-  friend ChannelFactory& GetChannelFactory();
+#if defined(DDS_CHANNEL)
+  AbstractChannelPtr GetDDSChannel(const std::string &topic_name,
+                                   const DDSTransportType &transport_type,
+                                   const DDSBackendType &dds_backend,
+                                   const size_t &size);
+#endif
 
 #if defined(GRPC_CHANNEL)
   AbstractChannelPtr GetRPCChannel(const std::string &url,
@@ -41,6 +50,8 @@ class ChannelFactory {
                                       const std::string &dst_name,
                                       const size_t &size);
 #endif
+
+  friend ChannelFactory& GetChannelFactory();
 
  private:
   ChannelFactory() {}

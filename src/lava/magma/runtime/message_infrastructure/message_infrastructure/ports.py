@@ -5,6 +5,7 @@
 from MessageInfrastructurePywrapper import SendPort as CppSendPort
 from MessageInfrastructurePywrapper import Channel as CppChannel
 from MessageInfrastructurePywrapper import support_grpc_channel
+from MessageInfrastructurePywrapper import support_dds_channel
 
 from MessageInfrastructurePywrapper import AbstractTransferPort
 import numpy as np
@@ -44,6 +45,14 @@ if support_grpc_channel():
 
     class GetRPCChannel(CppRPCChannel):
 
+        @property
+        def src_port(self):
+            return SendPort(super().src_port)
+
+if support_dds_channel():
+    from MessageInfrastructurePywrapper import GetDDSChannel as CppDDSChannel
+
+    class GetDDSChannel(CppDDSChannel):
         @property
         def src_port(self):
             return SendPort(super().src_port)

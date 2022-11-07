@@ -44,6 +44,7 @@
 #define LOG_LAYER (1)
 #define LOG_SMMP  (1)  // log for shmemport
 #define LOG_SKP   (1)  // log for socketport
+#define LOG_DDS   (1)  // lof for DDS Channel
 
 #if defined(MSG_LOG_LEVEL)
 #elif defined(MSG_LOG_LEVEL_ALL)
