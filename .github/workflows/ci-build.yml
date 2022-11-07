@@ -194,9 +194,7 @@ jobs:
     - name: Install dependencies
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: |
-        apt install libasio-dev libtinyxml2-dev
-        poetry install --no-interaction --no-root libssl-dev
+      run: poetry install --no-interaction --no-root libssl-dev
 
     - name: Install message_infrastructure
       working-directory: ./src/lava/magma/runtime/message_infrastructure
@@ -204,9 +202,7 @@ jobs:
 
     - name: Run message infrastructure cpp unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      run: |
-        export LD_LIBRARY_PATH="./src/lava/magma/runtime/message_infrastructure/build/install/lib:${LD_LIBRARY_PATH}"
-        build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
+      run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure
