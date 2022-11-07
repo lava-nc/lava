@@ -33,9 +33,11 @@ void dds_target_fn_a1_bound(int loop,
     MetaDataPtr data = from_mp->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a2->Send(data);
+    free(data->mdata);
     data = from_a2->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_mp->Send(data);
+    free(data->mdata);
   }
   from_mp->Join();
   from_a2->Join();
@@ -144,7 +146,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   int i = 0;
   while (loop--) {
     if (!(loop % 1000))
-      printf("At iteration : %d * 1000\n", i++);
+      LAVA_DUMP(LOG_DDS, "At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
     mptr = recv_port->Recv();
     EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),
