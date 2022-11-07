@@ -108,7 +108,7 @@ void FastDDSPublisher::InitParticipant() {
 }
 
 bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
-  if (listener_->first_connected_ || listener_->matched_ > 0) {
+  if (listener_->matched_ > 0) {
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher start publishing...\n");
     dds_metadata_->nd(metadata->nd);
     dds_metadata_->type(metadata->type);
@@ -159,7 +159,6 @@ void FastDDSPubListener::on_publication_matched(
         const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
     matched_++;
-    first_connected_ = true;
     LAVA_DEBUG(LOG_DDS, "FastDDS DataReader %d matched.\n", matched_);
 
   } else if (info.current_count_change == -1) {

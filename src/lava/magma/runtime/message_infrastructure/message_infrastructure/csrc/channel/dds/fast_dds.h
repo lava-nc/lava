@@ -38,14 +38,13 @@ namespace message_infrastructure {
 class FastDDSPubListener final : public
                                  eprosima::fastdds::dds::DataWriterListener {
  public:
-  FastDDSPubListener() : matched_(false), first_connected_(false) {}
+  FastDDSPubListener() : matched_(false) {}
   ~FastDDSPubListener() override {}
   void on_publication_matched(
     eprosima::fastdds::dds::DataWriter* writer,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;
 
   int matched_;
-  bool first_connected_;
 };
 
 using FastDDSPubListenerPtr = std::shared_ptr<FastDDSPubListener>;
@@ -118,7 +117,6 @@ class FastDDSSubscriber final : public DDSSubscriber {
                     {};
   ~FastDDSSubscriber() override;
   int Init();
-  void Run();
   void Stop();
   MetaDataPtr Recv(bool keep);
 
