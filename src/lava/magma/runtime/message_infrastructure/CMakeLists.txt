@@ -40,7 +40,6 @@ set(MESSAGE_INFRASTRUCTURE_SRCS
   "message_infrastructure/csrc/channel/socket/socket_channel.cc"
   "message_infrastructure/csrc/channel/socket/socket_port.cc")
 
-
 if(GRPC_CHANNEL)
   set(GRPC_FETCHCONTENT 1)
   set(GRPC_TAG v1.49.1)
@@ -69,12 +68,49 @@ if(GRPC_CHANNEL)
     "message_infrastructure/csrc/channel/grpc/grpc_port.cc"
     "message_infrastructure/csrc/channel/grpc/grpc_channel.cc"
     ${grpc_proto_srcs}
-    ${grpc_srcs}
-  )
-  add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS} ${GRPC_CHANNEL_SRCS})
-else()
-  add_library(message_infrastructure SHARED ${MESSAGE_INFRASTRUCTURE_SRCS})
+    ${grpc_srcs})
 endif()
+
+option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
+option(FASTDDS_ENABLE "enable FastDDS" OFF)
+option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
+
+if(DDS_CHANNEL)
+  set(COMMON_DDS_DESTINATION "${CMAKE_BINARY_DIR}/install")
+  set(COMMON_DDS_INC "${COMMON_DDS_DESTINATION}/include")
+  set(DDS_CHANNEL_SRCS
+    "message_infrastructure/csrc/channel/dds/dds.cc"
+    "message_infrastructure/csrc/channel/dds/dds_channel.cc")
+
+  if(CycloneDDS_ENABLE)
+    set(CycloneDDS_SRC "")
+  endif()
+
+  if(FASTDDS_ENABLE)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
+    add_definitions(-DFASTDDS)
+    set(FASTDDS_SRC
+      "message_infrastructure/csrc/channel/dds/fast_dds.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc"
+      ${DDS_CHANNEL_SRCS})
+  endif()
+
+  if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
+    add_definitions(-DDDS_CHANNEL)
+  else()
+    message(FATAL_ERROR "Please enable DDS backend, (FASTDDS_ENABLE or CycloneDDS_ENABLE)")
+  endif()
+else()
+  set(FASTDDS_ENABLE OFF)
+  set(CycloneDDS_ENABLE OFF)
+endif()
+
+add_library(message_infrastructure SHARED
+  ${MESSAGE_INFRASTRUCTURE_SRCS}
+  $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>
+  $<$<BOOL:${FASTDDS_ENABLE}>:${FASTDDS_SRC}>
+  $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>)
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
@@ -85,40 +121,40 @@ target_compile_definitions(message_infrastructure PUBLIC
                             $<$<STREQUAL:${MSG_LOG_LEVEL},dump>:MSG_LOG_LEVEL_DUMP>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},info>:MSG_LOG_LEVEL_INFO>
                             $<$<STREQUAL:${MSG_LOG_LEVEL},err>:MSG_LOG_LEVEL_ERRO>
-                            $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>
-                          )
+                            $<$<STREQUAL:${MSG_LOG_LEVEL},debug>:MSG_LOG_LEVEL_ALL>)
 
 target_compile_definitions(message_infrastructure PUBLIC
-                          $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>
-                          )
+                          $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>)
 
 target_include_directories(message_infrastructure PUBLIC
                           ${PROJECT_SOURCE_DIR}
-                          )
+                          $<BUILD_INTERFACE:${COMMON_DDS_INC}>)
+
+target_link_libraries(message_infrastructure
+                      rt)
 if(GRPC_CHANNEL)
   target_link_libraries(message_infrastructure
-                        rt
                         ${_REFLECTION}
                         ${_GRPC_GRPCPP}
-                        ${_PROTOBUF_LIBPROTOBUF}
-                        )
-else()
-target_link_libraries(message_infrastructure
-                      rt
-                      )
+                        ${_PROTOBUF_LIBPROTOBUF})
+endif()
+
+if(FASTDDS_ENABLE)
+  add_dependencies(message_infrastructure foonathan_memory fastcdr fastrtps)
+  target_link_libraries(message_infrastructure
+    ${COMMON_DDS_DESTINATION}/lib/libfastcdr.so
+    ${COMMON_DDS_DESTINATION}/lib/libfastrtps.so)
 endif()
 
 if(PY_WRAPPER)
   set(PY_WRAPPER_SRCS
         "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
         "message_infrastructure/csrc/channel_proxy.cc"
-        "message_infrastructure/csrc/port_proxy.cc"
-      )
+        "message_infrastructure/csrc/port_proxy.cc")
 
   pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
   target_include_directories(MessageInfrastructurePywrapper PUBLIC
-                            ${NUMPY_INCLUDE_DIRS}
-                            )
+                            ${NUMPY_INCLUDE_DIRS})
   target_link_libraries(MessageInfrastructurePywrapper PRIVATE message_infrastructure)
 endif()
 

@@ -22,6 +22,10 @@ namespace py = pybind11;
 using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
 #endif
 
+#if defined(DDS_CHANNEL)
+using GetDDSChannelProxyPtr = std::shared_ptr<GetDDSChannelProxy>;
+#endif
+
 PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<MultiProcessing> (m, "CppMultiProcessing")
     .def(py::init<>())
@@ -105,6 +109,37 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     return false;
 #endif
   });
+
+#if defined(DDS_CHANNEL)
+  py::enum_<DDSTransportType> (m, "DDSTransportType")
+    .value("DDSSHM", DDSSHM)
+    .value("DDSTCPv4", DDSTCPv4)
+    .value("DDSTCPv6", DDSTCPv6)
+    .value("DDSUDPv4", DDSUDPv4)
+    .value("DDSUDPv6", DDSUDPv6)
+    .export_values();
+
+  py::enum_<DDSBackendType> (m, "DDSBackendType")
+    .value("FASTDDSBackend", FASTDDSBackend)
+    .value("CycloneDDSBackend", CycloneDDSBackend)
+    .export_values();
+
+  py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
+    .def(py::init<std::string, DDSTransportType, DDSBackendType, size_t>())
+    .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
+#endif
+
+  m.def("support_dds_channel", [](){
+#if defined(DDS_CHANNEL)
+    return true;
+#else
+    return false;
+#endif
+  });
+
   py::class_<SendPortProxy, PortProxy,
              std::shared_ptr<SendPortProxy>> (m, "SendPort")
     .def(py::init<>())
