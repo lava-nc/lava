@@ -154,8 +154,9 @@ def bound_target_a2(loop, a1_to_a2, a2_to_a1, this, builder):
 
 
 def prepare_data():
-    arr1 = np.array([1]*9990)
-    arr2 = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
+    arr1 = np.array([1] * 9990)
+    arr2 = np.array([1, 2, 3, 4, 5,
+                    6, 7, 8, 9, 0])
     return np.concatenate((arr2, arr1))
 
 
@@ -163,10 +164,9 @@ class TestShmDelivery(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)
-        self.loop_ = 10000
+        self.loop_ = 100000
 
-    # @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
-    #                "about 30s after it started.")
+    # @unittest.skip("(cpp_shm_loop_with_cpp_multiprocess")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -222,7 +222,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("cpp_shm_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -234,8 +234,7 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-
-    # @unittest.skip("memory leak")
+    # @unittest.skip("cpp_skt_loop_with_cpp_multiprocess")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -291,7 +290,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("cpp_skt_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -303,7 +302,7 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip(" ")
+    # @unittest.skip("py_shm_loop_with_cpp_multiprocess")
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
 
@@ -362,7 +361,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("py_shm_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -374,7 +373,7 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip(" ")
+    # @unittest.skip("test_py_shm_loop_with_py_multiprocess")
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
 
@@ -433,7 +432,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("py_shm_loop_with_py_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -448,11 +447,11 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip(" ")
-    def test_grpcchannel(self): 
+    @unittest.skip("cpp_grpc_loop_with_cpp_multiprocess")
+    def test_grpcchannel(self):
         mp = MultiProcessing()
         mp.start()
-        loop = 10000
+        loop = self.loop_
         a1_to_a2 = GetRPCChannel(
             '127.13.2.11',
             8001,
@@ -493,6 +492,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(data)
             data = from_a1.recv()
             loop -= 1
+        print("cpp_grpc_loop_with_cpp_multiprocess result = ", data[0])
         loop_end_time = datetime.now()
         from_a1.join()
         to_a1.join()
