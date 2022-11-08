@@ -79,7 +79,10 @@ MetaDataPtr SocketRecvPort::Recv() {
     metadata.reset();
     return metadata;
   }
-  void *mdata = malloc(nbytes_);
+  void *mdata = std::calloc(nbytes_, 1);
+  if (mdata == NULL) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
   ret = SocketRead(socket_.second, mdata, nbytes_);
   metadata->mdata = mdata;
   if (!ret) {

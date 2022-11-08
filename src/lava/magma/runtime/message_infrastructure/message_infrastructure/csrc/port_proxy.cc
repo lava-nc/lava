@@ -158,8 +158,18 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
 
   if (!array)
     return py::cast(0);
-
-  return py::reinterpret_borrow<py::object>(array);
+  LAVA_DEBUG(LOG_LAYER, "Set PyObject capsule, mdata: %p\n", metadata->mdata);
+  PyObject *capsule = PyCapsule_New(metadata->mdata, NULL,
+                                      [](PyObject *capsule){
+      void *memory = PyCapsule_GetPointer(capsule, NULL);
+      LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
+                 memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
+      free(memory);
+    });
+  LAVA_ASSERT_INT(PyArray_SetBaseObject(
+                  reinterpret_cast<PyArrayObject *>(array),
+                  capsule), 0);
+  return py::reinterpret_steal<py::object>(array);
 }
 
 }  // namespace message_infrastructure

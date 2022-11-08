@@ -162,8 +162,6 @@ class TestShmDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 100000
 
-    @unittest.skip("(memory leak)hang issue, while loop=83713/83714, "
-                   "about 30s after it started.")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -232,7 +230,6 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("memory leak")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
