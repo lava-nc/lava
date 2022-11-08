@@ -4,7 +4,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG release-1.12.1
 )
-
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
@@ -15,14 +14,15 @@ add_executable(
   test_messaging_infrastructure
   cpptest/test_multiprocessing.cc
   # cpptest/test_channel.cc
-)
+  cpptest/test_shm_delivery.cc
+  $<$<BOOL:${GRPC_CHANNEL}>:cpptest/test_grpc_delivery.cc>
+  $<$<BOOL:${DDS_CHANNEL}>:cpptest/test_ddschannel.cc>)
 
 target_link_libraries(
   test_messaging_infrastructure
   GTest::gtest_main
   message_infrastructure
-  rt
-)
+  rt)
 
 include(GoogleTest)
 gtest_discover_tests(test_messaging_infrastructure PROPERTIES TIMEOUT 10)

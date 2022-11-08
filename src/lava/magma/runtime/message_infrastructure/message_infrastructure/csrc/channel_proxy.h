@@ -8,6 +8,9 @@
 #include <message_infrastructure/csrc/core/abstract_channel.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/port_proxy.h>
+#if defined(DDS_CHANNEL)
+#include <message_infrastructure/csrc/channel/dds/dds.h>
+#endif
 
 #include <string>
 
@@ -27,6 +30,43 @@ class ChannelProxy {
   SendPortProxyPtr send_port_ = nullptr;
   RecvPortProxyPtr recv_port_ = nullptr;
 };
+
+#if defined(GRPC_CHANNEL)
+class GetRPCChannelProxy {
+ public:
+  GetRPCChannelProxy(const std::string &url,
+                     const int &port,
+                     const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size);
+  GetRPCChannelProxy(const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size);
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
+ private:
+  ChannelType channel_type = ChannelType::RPCCHANNEL;
+  AbstractChannelPtr channel_ = nullptr;
+  SendPortProxyPtr send_port_ = nullptr;
+  RecvPortProxyPtr recv_port_ = nullptr;
+};
+#endif
+
+#if defined(DDS_CHANNEL)
+class GetDDSChannelProxy {
+ public:
+  GetDDSChannelProxy(const std::string &topic_name,
+                     const DDSTransportType &transport_type,
+                     const DDSBackendType &dds_backend,
+                     const size_t &size);
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
+ private:
+  AbstractChannelPtr channel_ = nullptr;
+  SendPortProxyPtr send_port_ = nullptr;
+  RecvPortProxyPtr recv_port_ = nullptr;
+};
+#endif
 
 }  // namespace message_infrastructure
 
