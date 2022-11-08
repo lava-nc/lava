@@ -8,7 +8,9 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LearningLIF
+
+from lava.magma.core.model.py.neuron import LearningNeuronModelFloat, LearningNeuronModelFixed
 
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
@@ -430,3 +432,42 @@ class PyLifResetModelBitAcc(AbstractPyLifModelFixed):
         # Reset voltage of spiked neurons to 0
         self.reset_voltage(spike_vector=s_out)
         self.s_out.send(s_out)
+
+
+@implements(proc=LearningLIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('bit_accurate_loihi', 'fixed_pt')
+class PyLearningLIFModelFixed(LearningNeuronModelFixed, AbstractPyLifModelFixed):
+    """Implementation of Leaky-Integrate-and-Fire neural
+    process in fixed point precision with learning enabled.
+    """
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: int = LavaPyType(int, np.int32, precision=17)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        self.effective_vth = 0
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.isthrscaled = True
+
+    def spiking_activation(self):
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
+
+    def run_spk(self) -> None:
+        """Calculates the third factor trace and sends it to the
+        Dense process for learning.
+        """
+        super().run_spk()
+        #self.s_out_y1.send(self.y1)
+        #self.s_out_y2.send(self.y2)
+        #self.s_out_y3.send(self.y3)
+

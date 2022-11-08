@@ -13,15 +13,9 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 class Dense(AbstractProcess):
-    def __init__(self,
-                 *,
-                 weights: np.ndarray,
-                 name: ty.Optional[str] = None,
-                 num_message_bits: ty.Optional[int] = 0,
-                 log_config: ty.Optional[LogConfig] = None,
-                 **kwargs) -> None:
-        """Dense connections between neurons. Realizes the following abstract
-        behavior: a_out = weights * s_in
+
+    """Dense connections between neurons. Realizes the following abstract
+    behavior: a_out = weights * s_in
 
     Parameters
     ----------
@@ -59,6 +53,13 @@ class Dense(AbstractProcess):
         spikes as binary spikes (num_message_bits = 0) or as graded
         spikes (num_message_bits > 0). Default is 0.
         """
+    def __init__(self,
+                 *,
+                 weights: np.ndarray,
+                 name: ty.Optional[str] = None,
+                 num_message_bits: ty.Optional[int] = 0,
+                 log_config: ty.Optional[LogConfig] = None,
+                 **kwargs) -> None:
 
         super().__init__(weights=weights,
                          num_message_bits=num_message_bits,

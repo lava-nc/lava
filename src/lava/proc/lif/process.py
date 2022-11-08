@@ -5,11 +5,15 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.learning.learning_rule import LoihiLearningRule, Loihi2FLearningRule
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
+
+from lava.magma.core.process.neuron import LearningNeuronProcess
+
+from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 
 
 class AbstractLIF(AbstractProcess):
@@ -103,14 +107,9 @@ class LIF(AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
 
 
-class PlasticLIF(AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process.
 
-    LIF dynamics abstracts to:
-    u[t] = u[t-1] * (1-du) + a_in         # neuron current
-    v[t] = v[t-1] * (1-dv) + u[t] + bias  # neuron voltage
-    s_out = v[t] > vth                    # spike if threshold is exceeded
-    v[t] = 0                              # reset at spike
+class LearningLIF(LearningNeuronProcess, AbstractLIF):
+    """Leaky-Integrate-and-Fire (LIF) neural Process with RSTDP learning rule.
 
     Parameters
     ----------
@@ -136,11 +135,6 @@ class PlasticLIF(AbstractLIF):
         Currently, only a single threshold can be set for the entire
         population of neurons.
 
-    Example
-    -------
-    >>> lif = LIF(shape=(200, 15), du=10, dv=5)
-    This will create 200x15 LIF neurons that all have the same current decay
-    of 10 and voltage decay of 5.
     """
     def __init__(
             self,
@@ -155,14 +149,15 @@ class PlasticLIF(AbstractLIF):
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
-            learning_rule: LoihiLearningRule = None) -> None:
+            learning_rule: Loihi2FLearningRule = None,
+            **kwargs) -> None:
         super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
                          bias_mant=bias_mant,
                          bias_exp=bias_exp, name=name,
                          log_config=log_config,
-                         learning_rule=learning_rule)
-
+                         learning_rule=learning_rule, **kwargs)
         self.vth = Var(shape=(1,), init=vth)
+
 
 
 class TernaryLIF(AbstractLIF):
