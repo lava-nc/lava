@@ -118,6 +118,8 @@ MetaDataPtr ShmemRecvPort::Peek() {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
   }
   LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr);
+  // memcpy to avoid double free
+  // or maintain a address:refcount map
   std::memcpy(ptr, metadata_res->mdata, mem_size);
   MetaDataPtr metadata = std::make_shared<MetaData>();
   std::memcpy(metadata.get(), metadata_res.get(), sizeof(MetaData));

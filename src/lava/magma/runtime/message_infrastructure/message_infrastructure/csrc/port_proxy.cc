@@ -163,7 +163,7 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
                                       [](PyObject *capsule){
       void *memory = PyCapsule_GetPointer(capsule, NULL);
       LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
-                 memory, *((uint64_t*)memory - 1)&(~0x7));
+                 memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
       free(memory);
     });
   LAVA_ASSERT_INT(PyArray_SetBaseObject(
