@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#if defined(FASTDDS)
+#if defined(FASTDDS_ENABLE)
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #endif
 #include <message_infrastructure/csrc/channel/dds/dds.h>
@@ -38,7 +38,7 @@ DDSManager::~DDSManager() {
 void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                const DDSTransportType &dds_transfer_type,
                                const size_t &max_samples) {
-#if defined(FASTDDS)
+#if defined(FASTDDS_ENBLE)
   dds_publisher_ = std::make_shared<FastDDSPublisher>(topic_name,
                                                       dds_transfer_type,
                                                       max_samples);

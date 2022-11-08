@@ -88,7 +88,7 @@ if(DDS_CHANNEL)
 
   if(FASTDDS_ENABLE)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
-    add_definitions(-DFASTDDS)
+    add_definitions(-DFASTDDS_ENABLE)
     set(FASTDDS_SRC
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
