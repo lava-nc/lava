@@ -22,6 +22,19 @@ AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,
   return NULL;
 }
 
+#if defined(DDS_CHANNEL)
+AbstractChannelPtr ChannelFactory::GetDDSChannel(
+                                   const std::string &topic_name,
+                                   const DDSTransportType &transport_type,
+                                   const DDSBackendType &dds_backend,
+                                   const size_t &size) {
+  return std::make_shared<DDSChannel>(topic_name,
+                                      transport_type,
+                                      dds_backend,
+                                      size);
+}
+#endif
+
 #if defined(GRPC_CHANNEL)
 AbstractChannelPtr ChannelFactory::GetRPCChannel(const std::string &url,
                                                  const int &port,

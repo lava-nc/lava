@@ -43,6 +43,12 @@ You could use the commands in your ternimal,
 $ cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
 
+#### (5) If you want to enable DDS channel, run the command:
+```bash
+$cmake .. -DDDS_CHANNEL=ON -D<DDS_BACKEND>_ENABLE=ON
+# [DDS_BACKEND: FASTDDS, CycloneDDS ..., only support FASTDDS now]
+``` 
+
 ### 3. Compile with makefile
 Run the command,
 ```bash
