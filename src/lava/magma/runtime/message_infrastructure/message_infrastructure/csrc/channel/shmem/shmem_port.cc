@@ -18,6 +18,21 @@
 
 namespace message_infrastructure {
 
+namespace {
+
+void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
+  std::memcpy(ptr.get(), p, sizeof(MetaData));
+  ptr->mdata = std::calloc(nbytes, 1);
+  if (ptr->mdata == NULL) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
+  LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr->mdata);
+  std::memcpy(ptr->mdata,
+    reinterpret_cast<char *>(p) + sizeof(MetaData), nbytes);
+}
+
+}  // namespace
+
 template<>
 void RecvQueue<MetaDataPtr>::FreeData(MetaDataPtr data) {
   free(data->mdata);
@@ -73,17 +88,8 @@ void ShmemRecvPort::QueueRecv() {
     if (this->recv_queue_->AvailableCount() > 0) {
       ret = shm_->Load([this](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
-        std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-        int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
-        LAVA_DEBUG(LOG_SMMP, "memory allocates, size: %d\n", mem_size+16);
-        metadata_res->mdata = std::calloc(mem_size, 1);
-        if (metadata_res->mdata == NULL) {
-          LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
-        }
-        LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", metadata_res->mdata);
-        std::memcpy(metadata_res->mdata,
-          reinterpret_cast<char *>(data) + sizeof(MetaData),
-          this->nbytes_ - sizeof(MetaData));
+        MetaDataPtrFromPointer(metadata_res, data,
+                               this->nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
       });
     }
@@ -135,16 +141,8 @@ ShmemBlockRecvPort::ShmemBlockRecvPort(const std::string &name,
 MetaDataPtr ShmemBlockRecvPort::Recv() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->BlockLoad([&metadata_res, this](void* data){
-    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-    int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
-    void *ptr = std::calloc(mem_size, 1);
-    if (ptr == NULL) {
-      LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
-    }
-    LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr);
-    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
-      this->nbytes_ - sizeof(MetaData));
-    metadata_res->mdata = ptr;
+    MetaDataPtrFromPointer(metadata_res, data,
+                           this->nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }
@@ -152,16 +150,8 @@ MetaDataPtr ShmemBlockRecvPort::Recv() {
 MetaDataPtr ShmemBlockRecvPort::Peek() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->Read([&metadata_res, this](void* data){
-    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-    int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
-    void *ptr = std::calloc(mem_size, 1);
-    if (ptr == NULL) {
-      LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
-    }
-    LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr);
-    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
-      this->nbytes_ - sizeof(MetaData));
-    metadata_res->mdata = ptr;
+    MetaDataPtrFromPointer(metadata_res, data,
+                           this->nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }
