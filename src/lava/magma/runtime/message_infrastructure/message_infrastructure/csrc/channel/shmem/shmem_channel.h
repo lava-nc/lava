@@ -27,7 +27,7 @@ class ShmemChannel : public AbstractChannel {
  private:
   SharedMemoryPtr shm_ = nullptr;
   ShmemSendPortPtr send_port_ = nullptr;
-  ShmemRecvPortPtr recv_port_ = nullptr;
+  AbstractRecvPortPtr recv_port_ = nullptr;
 };
 
 std::shared_ptr<ShmemChannel> GetShmemChannel(const size_t &size,

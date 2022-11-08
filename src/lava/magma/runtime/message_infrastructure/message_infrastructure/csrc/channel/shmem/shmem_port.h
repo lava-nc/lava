@@ -7,6 +7,7 @@
 
 #include <message_infrastructure/csrc/core/abstract_port.h>
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
+#include <message_infrastructure/csrc/core/common.h>
 
 #include <string>
 #include <vector>
@@ -17,6 +18,8 @@
 namespace message_infrastructure {
 
 using ThreadPtr = std::shared_ptr<std::thread>;
+
+template class RecvQueue<MetaDataPtr>;
 
 class ShmemSendPort final : public AbstractSendPort {
  public:
@@ -31,39 +34,27 @@ class ShmemSendPort final : public AbstractSendPort {
 
  private:
   SharedMemoryPtr shm_ = nullptr;
-  int idx_ = 0;
   std::atomic_bool done_;
   ThreadPtr ack_callback_thread_ = nullptr;
 };
 
 using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
 
-class ShmemRecvQueue {
+class ShmemBlockRecvPort final : public AbstractRecvPort {
  public:
-  ShmemRecvQueue(const std::string& name,
-                 const size_t &size,
-                 const size_t &nbytes);
-  ~ShmemRecvQueue();
-  void Push(void* src);
-  void* Pop(bool block);
-  void* Front();
+  ShmemBlockRecvPort(const std::string &name,
+                     SharedMemoryPtr shm,
+                     const size_t &nbytes);
+  ~ShmemBlockRecvPort() {}
+  void Start() {}
   bool Probe();
-  bool Empty();
-  int AvailableCount();
-  void Free();
-  void Stop();
+  MetaDataPtr Recv();
+  void Join() {}
+  MetaDataPtr Peek();
 
  private:
-  std::string name_;
-  size_t size_;
-  size_t nbytes_;
-  std::vector<void *> array_;
-  std::atomic<uint32_t> read_index_;
-  std::atomic<uint32_t> write_index_;
-  std::atomic_bool done_;
+  SharedMemoryPtr shm_ = nullptr;
 };
-
-using ShmemRecvQueuePtr = std::shared_ptr<ShmemRecvQueue>;
 
 class ShmemRecvPort final : public AbstractRecvPort {
  public:
@@ -71,6 +62,7 @@ class ShmemRecvPort final : public AbstractRecvPort {
                 SharedMemoryPtr shm,
                 const size_t &size,
                 const size_t &nbytes);
+  ~ShmemRecvPort();
   void Start();
   bool Probe();
   MetaDataPtr Recv();
@@ -80,9 +72,8 @@ class ShmemRecvPort final : public AbstractRecvPort {
 
  private:
   SharedMemoryPtr shm_ = nullptr;
-  int idx_ = 0;
   std::atomic_bool done_;
-  ShmemRecvQueuePtr queue_ = nullptr;
+  std::shared_ptr<RecvQueue<MetaDataPtr>> recv_queue_;
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 

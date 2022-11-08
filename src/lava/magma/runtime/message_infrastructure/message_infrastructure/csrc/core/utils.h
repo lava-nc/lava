@@ -9,8 +9,12 @@
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
 
+#if defined(ENABLE_MM_PAUSE)
+#include <immintrin.h>
+#endif
+
 #define MAX_ARRAY_DIMS (5)
-#define SLEEP_US (1)
+#define SLEEP_NS (1)
 
 namespace message_infrastructure {
 
@@ -42,7 +46,11 @@ using MetaDataPtr = std::shared_ptr<MetaData>;
 namespace helper {
 
 static void Sleep() {
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+#if defined(ENABLE_MM_PAUSE)
+  _mm_pause();
+#else
+  std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_NS));
+#endif
 }
 }
 }  // namespace message_infrastructure

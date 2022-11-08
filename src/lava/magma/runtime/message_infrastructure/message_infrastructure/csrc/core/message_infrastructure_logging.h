@@ -44,6 +44,7 @@
 #define LOG_LAYER (1)
 #define LOG_SMMP  (1)  // log for shmemport
 #define LOG_SKP   (1)  // log for socketport
+#define LOG_DDS   (1)  // lof for DDS Channel
 
 #if defined(MSG_LOG_LEVEL)
 #elif defined(MSG_LOG_LEVEL_ALL)
@@ -115,6 +116,14 @@
 
 #define LAVA_LOG_ERR(_fmt, ...) do { \
   DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
+} while (0)
+
+#define LAVA_ASSERT_INT(result, expectation) do { \
+  if (int r = (result) != expectation) { \
+    LAVA_LOG_ERR("Assert failed, %d get, %d except. Errno: %d\n", \
+                 r, 0, errno); \
+    exit(-1); \
+  } \
 } while (0)
 
 namespace message_infrastructure {
