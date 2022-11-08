@@ -37,11 +37,11 @@ void target_fn_a1_bound(
       LAVA_DUMP(1, "actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_mp->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
     from_mp->Join();
     from_a2->Join();
@@ -67,7 +67,7 @@ void target_fn_a2_bound(
       LAVA_DUMP(1, "actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
     from_a1->Join();
     while (!actor_ptr->GetStatus()) {
@@ -110,7 +110,7 @@ TEST(TestShmDelivery, ShmLoop) {
   metadata->dims[0] = 1;
   metadata->strides[0] = 1;
   metadata->mdata =
-    (reinterpret_cast<char*>(malloc(sizeof(int64_t))));
+    malloc(sizeof(int64_t));
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
@@ -118,7 +118,7 @@ TEST(TestShmDelivery, ShmLoop) {
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
-    free(reinterpret_cast<char*>(metadata->mdata));
+    free(metadata->mdata);
     LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
 
@@ -138,7 +138,7 @@ TEST(TestShmDelivery, ShmLoop) {
     metadata = mptr;
   }
   const clock_t end_time = std::clock();
-  free(reinterpret_cast<char*>(mptr->mdata));
+  free(mptr->mdata);
   from_a1->Join();
   mp.Stop(true);
   LAVA_DUMP(1, "cpp loop timedelta: %ld", (end_time - start_time));

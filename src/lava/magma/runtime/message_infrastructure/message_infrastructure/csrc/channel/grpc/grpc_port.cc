@@ -31,7 +31,10 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   metadata->type = grpcdata->type();
   metadata->elsize = grpcdata->elsize();
   metadata->total_size = grpcdata->total_size();
-  void* data = malloc(metadata->elsize * metadata->total_size);
+  void* data = std::calloc(metadata->elsize * metadata->total_size, 1);
+  if (data == NULL) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
   for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
