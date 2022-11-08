@@ -234,7 +234,10 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/test/test_all_delivery.py
     # @unittest.skip("memory leak")
+=======
+>>>>>>> e5d7d79c31f8ed129374ee0f0d998559ba63034c:src/lava/magma/runtime/message_infrastructure/test/test_shm_delivery.py
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()

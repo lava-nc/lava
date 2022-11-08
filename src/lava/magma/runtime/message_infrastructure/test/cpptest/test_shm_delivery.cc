@@ -38,11 +38,11 @@ void target_fn_a1_bound(
       // LAVA_DUMP(1, "shm actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_mp->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
     from_mp->Join();
     from_a2->Join();
@@ -68,7 +68,7 @@ void target_fn_a2_bound(
       // LAVA_DUMP(1, "shm actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
-      free(reinterpret_cast<char*>(data->mdata));
+      free(data->mdata);
     }
     from_a1->Join();
     while (!actor_ptr->GetStatus()) {
@@ -115,6 +115,7 @@ TEST(TestShmDelivery, ShmLoop) {
   std::memcpy(metadata->mdata,
               reinterpret_cast<char*>(array_),
               metadata->elsize * metadata->total_size);
+
   MetaDataPtr mptr;
   LAVA_DUMP(1, "main process loop: %d\n", loop);
   int expect_result = 1 + loop * 3;

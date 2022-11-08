@@ -115,11 +115,13 @@ class SharedMemManager {
  private:
   SharedMemManager() {
     std::srand(std::time(nullptr));
+    alloc_pid_ = getpid();
   }
   std::map<int, std::string> shm_fd_strs_;
   std::set<std::string> sem_strs_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
+  int alloc_pid_;
 };
 
 SharedMemManager& GetSharedMemManager();

@@ -293,7 +293,10 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
            dds_metadata.strides().data(),
            sizeof(metadata->strides));
     int nbytes = metadata->elsize * metadata->total_size;
-    void *ptr = malloc(nbytes);
+    void *ptr = std::calloc(nbytes, 1);
+    if (data == NULL) {
+      LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+    }
     memcpy(ptr, dds_metadata.mdata().data(), nbytes);
     metadata->mdata = ptr;
     reader_->return_loan(mdata_seq, infos);
