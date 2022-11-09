@@ -83,7 +83,10 @@ if(DDS_CHANNEL)
     "message_infrastructure/csrc/channel/dds/dds_channel.cc")
 
   if(CycloneDDS_ENABLE)
-    set(CycloneDDS_SRC "")
+    find_package(CycloneDDS-CXX REQUIRED)
+    idlcxx_generate(TARGET ddscxxmetadata FILES message_infrastructure/csrc/channel/dds/protos/metadata.idl WARNINGS no-implicit-extensibility)
+    add_definitions(-DCycloneDDS_ENABLE)
+    set(CycloneDDS_SRC "message_infrastructure/csrc/channel/dds/cyclone_dds.cc")
   endif()
 
   if(FASTDDS_ENABLE)
@@ -92,8 +95,7 @@ if(DDS_CHANNEL)
     set(FASTDDS_SRC
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc"
-      ${DDS_CHANNEL_SRCS})
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc")
   endif()
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
@@ -108,9 +110,10 @@ endif()
 
 add_library(message_infrastructure SHARED
   ${MESSAGE_INFRASTRUCTURE_SRCS}
-  $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>
+  ${DDS_CHANNEL_SRCS}
+  $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>
   $<$<BOOL:${FASTDDS_ENABLE}>:${FASTDDS_SRC}>
-  $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>)
+  $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>)
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
@@ -137,6 +140,10 @@ if(GRPC_CHANNEL)
                         ${_REFLECTION}
                         ${_GRPC_GRPCPP}
                         ${_PROTOBUF_LIBPROTOBUF})
+endif()
+
+if(CycloneDDS_ENABLE)
+  target_link_libraries(message_infrastructure ddscxxmetadata CycloneDDS-CXX::ddscxx)
 endif()
 
 if(FASTDDS_ENABLE)

@@ -234,7 +234,6 @@ void FastDDSSubscriber::InitDataReader() {
 }
 
 int FastDDSSubscriber::Init() {
-  dds_metadata_ = std::make_shared<DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
     return DDSInitErrorType::DDSParticipantError;
