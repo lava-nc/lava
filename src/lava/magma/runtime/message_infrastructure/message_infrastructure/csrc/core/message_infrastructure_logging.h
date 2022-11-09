@@ -65,11 +65,11 @@
     int length = 0; \
     char *log_data = reinterpret_cast<char *> \
                       (malloc(sizeof(char)*MAX_SIZE_PER_LOG_MSG)); \
-    if (log_data != NULL) { \
+    if (log_data != nullptr) { \
       length = std::snprintf(log_data, \
                              MAX_SIZE_PER_LOG_MSG, _fmt, ## __VA_ARGS__); \
     } \
-    if (log_data == NULL || length <0) { \
+    if (log_data == nullptr || length <0) { \
       GetLogInstance()->LogWrite(LogMsg(std::string(LOG_MSG_SUBSTITUTION), \
                                         __FILE__, \
                                         __LINE__, \
