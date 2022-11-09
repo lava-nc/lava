@@ -447,7 +447,7 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("cpp_grpc_loop_with_cpp_multiprocess")
+    # @unittest.skip("cpp_grpc_loop_with_cpp_multiprocess")
     def test_grpcchannel(self):
         mp = MultiProcessing()
         mp.start()

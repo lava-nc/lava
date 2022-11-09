@@ -34,9 +34,9 @@ void grpc_target_fn1(
     from_a2->Start();
     LAVA_DUMP(1, "grpc actor1, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      // LAVA_DUMP(1, "grpc actor1 waitting\n");
+      LAVA_DUMP(LOG_UTTEST, "grpc actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
-      // LAVA_DUMP(1, "grpc actor1 recviced\n");
+      LAVA_DUMP(LOG_UTTEST, "grpc actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a2->Send(data);
       free(reinterpret_cast<char*>(data->mdata));
@@ -64,11 +64,11 @@ void grpc_target_fn2(
     auto from_a1 = a1_to_a2->GetRecvPort();
     from_a1->Start();
     to_a1->Start();
-    // LAVA_DUMP(1, "grpc actor2, loop: %d\n", loop);
+    LAVA_DUMP(LOG_UTTEST, "grpc actor2, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      // LAVA_DUMP(1, "grpc actor2 waitting\n");
+      LAVA_DUMP(LOG_UTTEST, "grpc actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
-      // LAVA_DUMP(1, "grpc actor2 recviced\n");
+      LAVA_DUMP(LOG_UTTEST, "grpc actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
       to_a1->Send(data);
       free(reinterpret_cast<char*>(data->mdata));
@@ -82,7 +82,7 @@ void grpc_target_fn2(
 
 TEST(TestGRPCChannel, GRPCLoop) {
   MultiProcessing mp;
-  int loop = 10000;
+  int loop = 100000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
     "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
@@ -130,26 +130,22 @@ TEST(TestGRPCChannel, GRPCLoop) {
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
-    // LAVA_DUMP(1, "wait for response, remain loop: %d\n", loop);
+    LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
-    // LAVA_DUMP(1, "metadata:\n");
-    // LAVA_DUMP(1, "nd: %ld\n", mptr->nd);
-    // LAVA_DUMP(1, "type: %ld\n", mptr->type);
-    // LAVA_DUMP(1, "elsize: %ld\n", mptr->elsize);
-    // LAVA_DUMP(1, "total_size: %ld\n", mptr->total_size);
-    // LAVA_DUMP(1, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
-              // mptr->dims[0], mptr->dims[1], mptr->dims[2],
-              // mptr->dims[3], mptr->dims[4]);
-    // LAVA_DUMP(1, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
-    // mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
-    // mptr->strides[4]);
+    LAVA_DUMP(LOG_UTTEST, "metadata:\n");
+    LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", mptr->nd);
+    LAVA_DUMP(LOG_UTTEST, "type: %ld\n", mptr->type);
+    LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", mptr->elsize);
+    LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", mptr->total_size);
+    LAVA_DUMP(LOG_UTTEST, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
+              mptr->dims[0], mptr->dims[1], mptr->dims[2],
+              mptr->dims[3], mptr->dims[4]);
+    LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
+    mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
+    mptr->strides[4]);
     int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
-    // for (int i = 0; i < 20; i++) {
-    //   LAVA_DUMP(1, "grpc mdata: %p, grpc *mdata: %ld\n", ptr, *ptr);
-    //   ptr++;
-    // }
-    // LAVA_DUMP(1, "grpc mdata: %p, grpc *mdata: %ld\n", mptr->mdata,
-    //           *reinterpret_cast<int64_t*>(mptr->mdata));
+    LAVA_DUMP(LOG_UTTEST, "grpc mdata: %p, grpc *mdata: %ld\n", mptr->mdata,
+              *reinterpret_cast<int64_t*>(mptr->mdata));
     free(reinterpret_cast<char*>(metadata->mdata));
     metadata = mptr;
   }
@@ -157,20 +153,20 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
-  printf("grpc result =%ld", result);
+  printf("grpc result =%ld\n", result);
   free(reinterpret_cast<char*>(metadata->mdata));
   mp.Stop(true);
   if (result != expect_result) {
-    LAVA_DUMP(1, "expect_result: %d\n", expect_result);
-    LAVA_DUMP(1, "result: %ld\n", result);
+    LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
+    LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
   printf("grpc cpp loop timedelta: %f s\n",
         ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
-  LAVA_DUMP(1, "grpc cpp loop timedelta: %f",
+  LAVA_DUMP(LOG_UTTEST, "grpc cpp loop timedelta: %f",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
-  LAVA_DUMP(1, "exit\n");
+  LAVA_DUMP(LOG_UTTEST, "exit\n");
 }
 
 }  // namespace message_infrastructure

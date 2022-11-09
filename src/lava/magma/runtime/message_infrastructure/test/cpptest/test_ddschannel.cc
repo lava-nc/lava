@@ -107,7 +107,7 @@ TEST(TestDDSDelivery, DDSLoop) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
-  LAVA_DUMP(1, "main process loop: %d\n", loop);
+  LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
@@ -120,7 +120,7 @@ TEST(TestDDSDelivery, DDSLoop) {
 }
 
 TEST(TestDDSSingleProcess, DDS1Process) {
-  LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
+  LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
     .GetDDSChannel("test_DDSChannel", DDSSHM, FASTDDSBackend, 5);
 
@@ -146,7 +146,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   int i = 0;
   while (loop--) {
     if (!(loop % 1000))
-      LAVA_DUMP(LOG_DDS, "At iteration : %d * 1000\n", i++);
+      LAVA_DUMP(LOG_UTTEST, "At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
     mptr = recv_port->Recv();
     EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),
