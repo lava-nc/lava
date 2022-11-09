@@ -155,7 +155,7 @@ TEST(TestSocketChannel, SocketLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
-  printf("socket result =%ld", result);
+  LAVA_DUMP(LOG_UTTEST, "socket result =%ld", result);
   free(reinterpret_cast<char*>(metadata->mdata));
   mp.Stop(true);
   if (result != expect_result) {
@@ -164,8 +164,6 @@ TEST(TestSocketChannel, SocketLoop) {
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  printf("socket cpp loop timedelta: %f s\n",
-        ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "socket cpp loop timedelta: %f",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");

@@ -144,7 +144,7 @@ TEST(TestShmDelivery, ShmLoop) {
   }
   const clock_t end_time = std::clock();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
-  printf("shm result =%ld", result);
+  LAVA_DUMP(LOG_UTTEST, "shm result =%ld", result);
   free(reinterpret_cast<char*>(mptr->mdata));
   from_a1->Join();
   mp.Stop(true);
@@ -154,8 +154,6 @@ TEST(TestShmDelivery, ShmLoop) {
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  printf("shm cpp loop timedelta: %f s\n",
-        ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "shm cpp loop timedelta: %f",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");

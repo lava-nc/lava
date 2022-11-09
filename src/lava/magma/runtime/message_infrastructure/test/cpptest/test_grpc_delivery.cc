@@ -153,7 +153,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
-  printf("grpc result =%ld\n", result);
+  LAVA_DUMP(LOG_UTTEST, "grpc result =%ld\n", result);
   free(reinterpret_cast<char*>(metadata->mdata));
   mp.Stop(true);
   if (result != expect_result) {
@@ -162,8 +162,6 @@ TEST(TestGRPCChannel, GRPCLoop) {
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  printf("grpc cpp loop timedelta: %f s\n",
-        ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "grpc cpp loop timedelta: %f",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");

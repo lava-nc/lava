@@ -166,7 +166,6 @@ class TestShmDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 100000
 
-    # @unittest.skip("(cpp_shm_loop_with_cpp_multiprocess")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -234,7 +233,6 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip("cpp_skt_loop_with_cpp_multiprocess")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -302,7 +300,6 @@ class TestShmDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip("py_shm_loop_with_cpp_multiprocess")
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
 
@@ -373,7 +370,6 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip("test_py_shm_loop_with_py_multiprocess")
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
 
@@ -447,7 +443,7 @@ class TestShmDelivery(unittest.TestCase):
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
 
-    # @unittest.skip("cpp_grpc_loop_with_cpp_multiprocess")
+    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
         mp = MultiProcessing()
         mp.start()
