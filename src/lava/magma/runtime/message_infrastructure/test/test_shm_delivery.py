@@ -214,7 +214,6 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
@@ -282,7 +281,6 @@ class TestShmDelivery(unittest.TestCase):
         loop_start = datetime.now()
         while loop > 0:
             loop = loop - 1
-            print(loop)
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()

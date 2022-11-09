@@ -27,8 +27,8 @@ class GrpcChannel : public AbstractChannel {
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:
-  GrpcSendPortPtr send_port_ = NULL;
-  GrpcRecvPortPtr recv_port_ = NULL;
+  GrpcSendPortPtr send_port_ = nullptr;
+  GrpcRecvPortPtr recv_port_ = nullptr;
 };
 
 using GrpcChannelPtr = std::shared_ptr<GrpcChannel>;

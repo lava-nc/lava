@@ -40,7 +40,7 @@ class RecvQueue{
     while (block && Empty()) {
       helper::Sleep();
       if (done_)
-        return NULL;
+        return nullptr;
     }
     auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
     assert(curr_read_index != write_index_.load(std::memory_order_acquire));
@@ -67,7 +67,7 @@ class RecvQueue{
     while (Empty()) {
       helper::Sleep();
       if (done_)
-        return NULL;
+        return nullptr;
     }
     auto curr_read_index = read_index_.load(std::memory_order_acquire);
     T ptr = array_[curr_read_index];

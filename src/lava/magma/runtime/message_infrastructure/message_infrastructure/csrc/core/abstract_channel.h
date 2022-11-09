@@ -17,10 +17,10 @@ class AbstractChannel {
   ChannelType channel_type_;
 
   virtual AbstractSendPortPtr GetSendPort() {
-    return NULL;
+    return nullptr;
   }
   virtual AbstractRecvPortPtr GetRecvPort() {
-    return NULL;
+    return nullptr;
   }
 };
 
