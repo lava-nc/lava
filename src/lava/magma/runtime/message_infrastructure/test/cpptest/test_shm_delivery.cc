@@ -125,18 +125,17 @@ TEST(TestShmDelivery, ShmLoop) {
     free(reinterpret_cast<char*>(metadata->mdata));
     LAVA_DUMP(LOG_UTTEST, "shm wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
-    to_a1->Join();
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", mptr->nd);
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", mptr->type);
     LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", mptr->elsize);
     LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", mptr->total_size);
-    LAVA_DUMP(LOG_UTTEST, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(LOG_UTTEST,"dims: {%ld, %ld, %ld, %ld, %ld}\n",
               mptr->dims[0], mptr->dims[1], mptr->dims[2],
               mptr->dims[3], mptr->dims[4]);
     LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
-    mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
-    mptr->strides[4]);
+              mptr->strides[0], mptr->strides[1], mptr->strides[2],
+              mptr->strides[3], mptr->strides[4]);
     LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
     int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
@@ -146,6 +145,7 @@ TEST(TestShmDelivery, ShmLoop) {
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
   LAVA_DUMP(LOG_UTTEST, "shm result =%ld", result);
   free(reinterpret_cast<char*>(mptr->mdata));
+  to_a1->Join();
   from_a1->Join();
   mp.Stop(true);
   if (result != expect_result) {

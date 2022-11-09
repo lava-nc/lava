@@ -137,12 +137,12 @@ TEST(TestGRPCChannel, GRPCLoop) {
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", mptr->type);
     LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", mptr->elsize);
     LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", mptr->total_size);
-    LAVA_DUMP(LOG_UTTEST, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(LOG_UTTEST,"dims: {%ld, %ld, %ld, %ld, %ld}\n",
               mptr->dims[0], mptr->dims[1], mptr->dims[2],
               mptr->dims[3], mptr->dims[4]);
     LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
-    mptr->strides[0], mptr->strides[1], mptr->strides[2], mptr->strides[3],
-    mptr->strides[4]);
+              mptr->strides[0], mptr->strides[1], mptr->strides[2],
+              mptr->strides[3], mptr->strides[4]);
     int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
     LAVA_DUMP(LOG_UTTEST, "grpc mdata: %p, grpc *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
