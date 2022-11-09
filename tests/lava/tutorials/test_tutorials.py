@@ -255,7 +255,7 @@ class TestTutorials(unittest.TestCase):
         self._run_notebook("tutorial06_hierarchical_processes.ipynb")
 
     @unittest.skipIf(system_name != "linux", "Tests work on linux")
-    def test_in_depth_10_three_factor_learning(self):
+    def test_in_depth_07_remote_memory_access(self):
         """Test tutorial in depth remote memory access."""
         self._run_notebook("tutorial07_remote_memory_access.ipynb")
 
@@ -274,6 +274,11 @@ class TestTutorials(unittest.TestCase):
         """Test tutorial three factor learning 01."""
         self._run_notebook(
             "three_factor_learning/tutorial01_Reward_Modulated_STDP.ipynb")
+
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_10_custom_learning_rules(self):
+        """Test tutorial sigma_delta_neurons."""
+        self._run_notebook("tutorial10_sigma_delta_neurons.ipynb")
 
 
 if __name__ == "__main__":
