@@ -52,10 +52,9 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            error_message = np.array([1])
-            shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='one_pm')
-            err = np.ndarray(error_message.shape, dtype=error_message.dtype, buffer=shm.buf)
-            err[:] = error_message[:]
+            shm = shared_memory.SharedMemory(name='error_block2')
+            err = np.ndarray((1,), buffer=shm.buf)
+            err[0] += 1
             shm.close()
 
 # A minimal PyProcModel implementing P2
@@ -69,10 +68,9 @@ class PyProcModel2(PyLoihiProcessModel):
         if self.time_step > 1:
             # Raise exception
             #raise TypeError("All the error info")
-            error_message = np.array([2])
-            shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='two_pm')
-            err = np.ndarray(error_message.shape, dtype=error_message.dtype, buffer=shm.buf)
-            err[:] = error_message[:]
+            shm = shared_memory.SharedMemory(name='error_block2')
+            err = np.ndarray((1,), buffer=shm.buf)
+            err[0] += 1
             shm.close()
 
 
@@ -88,6 +86,13 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
+
+    # def create_shmem_block(self):
+    #     error_message = np.array([0])
+    #     shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='error_block2')
+    #     err = np.ndarray(error_message.shape, dtype=np.int64, buffer=shm.buf)
+    #     err[:] = error_message[:]
+    #     shm.close()
 
     #@unittest.skip("Cannot capture child process exception. Need to amend ut.")
     def test_one_pm(self):
@@ -107,16 +112,16 @@ class TestExceptionHandling(unittest.TestCase):
         # Run the network for another time step -> expect exception
         # with self.assertRaises(RuntimeError) as context:
         proc.run(condition=run_steps, run_cfg=run_cfg)
-        existing_shm = shared_memory.SharedMemory(name='one_pm')
+        existing_shm = shared_memory.SharedMemory(name='error_block2')
         
-        res = np.ndarray((1,), dtype=np.int64, buffer=existing_shm.buf)
+        res = np.ndarray((1,), buffer=existing_shm.buf)
   
         # exception = context.exception
         self.assertEqual(res[0], 1)
 
-        del res
+        #del res
         existing_shm.close()
-        existing_shm.unlink()
+        #existing_shm.unlink()
 
         # 1 exception in the ProcessModel expected
         # self.assertTrue('1 Exception(s) occurred' in str(exception))
@@ -144,9 +149,9 @@ class TestExceptionHandling(unittest.TestCase):
         # with self.assertRaises(RuntimeError) as context:
         sender.run(condition=run_steps, run_cfg=run_cfg)
 
-        existing_shm = shared_memory.SharedMemory(name='two_pm')
+        existing_shm = shared_memory.SharedMemory(name='error_block2')
         
-        res = np.ndarray((1,), dtype=np.int64, buffer=existing_shm.buf)
+        res = np.ndarray((1,), buffer=existing_shm.buf)
   
         # exception = context.exception
         self.assertEqual(res[0], 2)
@@ -189,6 +194,13 @@ class TestExceptionHandling(unittest.TestCase):
         # 2 Exceptions in the ProcessModels expected
         self.assertTrue('2 Exception(s) occurred' in str(exception))
 
+def create_shmem_block():
+        error_message = np.zeros(shape=(1,))
+        shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='error_block2')
+        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+        err[:] = error_message[:]
+        shm.close()
 
 if __name__ == '__main__':
+    create_shmem_block()
     unittest.main(buffer=True)
