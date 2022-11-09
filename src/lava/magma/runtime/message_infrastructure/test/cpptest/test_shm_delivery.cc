@@ -130,7 +130,7 @@ TEST(TestShmDelivery, ShmLoop) {
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", mptr->type);
     LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", mptr->elsize);
     LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", mptr->total_size);
-    LAVA_DUMP(LOG_UTTEST,"dims: {%ld, %ld, %ld, %ld, %ld}\n",
+    LAVA_DUMP(LOG_UTTEST, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
               mptr->dims[0], mptr->dims[1], mptr->dims[2],
               mptr->dims[3], mptr->dims[4]);
     LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
