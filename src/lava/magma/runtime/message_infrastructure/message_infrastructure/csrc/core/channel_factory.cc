@@ -19,7 +19,7 @@ AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,
     default:
       return GetShmemChannel(size, nbytes, src_name, dst_name);
   }
-  return NULL;
+  return nullptr;
 }
 
 #if defined(DDS_CHANNEL)

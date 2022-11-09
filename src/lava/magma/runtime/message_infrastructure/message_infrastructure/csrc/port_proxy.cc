@@ -134,7 +134,7 @@ MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
 }
 
 py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
-  if (metadata == NULL)
+  if (metadata == nullptr)
     return py::cast(0);
 
   std::vector<npy_intp> dims(metadata->nd);
@@ -159,9 +159,9 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   if (!array)
     return py::cast(0);
   LAVA_DEBUG(LOG_LAYER, "Set PyObject capsule, mdata: %p\n", metadata->mdata);
-  PyObject *capsule = PyCapsule_New(metadata->mdata, NULL,
+  PyObject *capsule = PyCapsule_New(metadata->mdata, nullptr,
                                       [](PyObject *capsule){
-      void *memory = PyCapsule_GetPointer(capsule, NULL);
+      void *memory = PyCapsule_GetPointer(capsule, nullptr);
       LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
                  memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
       free(memory);

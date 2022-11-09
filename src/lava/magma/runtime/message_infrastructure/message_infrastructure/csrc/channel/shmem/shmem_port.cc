@@ -23,7 +23,7 @@ namespace {
 void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
   std::memcpy(ptr.get(), p, sizeof(MetaData));
   ptr->mdata = std::calloc(nbytes, 1);
-  if (ptr->mdata == NULL) {
+  if (ptr->mdata == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
   }
   LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr->mdata);
@@ -120,7 +120,7 @@ MetaDataPtr ShmemRecvPort::Peek() {
   MetaDataPtr metadata_res = recv_queue_->Front();
   int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
   void * ptr = std::calloc(mem_size, 1);
-  if (ptr == NULL) {
+  if (ptr == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
   }
   LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr);

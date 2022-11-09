@@ -25,8 +25,8 @@ class SocketChannel : public AbstractChannel {
   AbstractRecvPortPtr GetRecvPort();
  private:
   SocketPair skt_;
-  SocketSendPortPtr send_port_ = NULL;
-  SocketRecvPortPtr recv_port_ = NULL;
+  SocketSendPortPtr send_port_ = nullptr;
+  SocketRecvPortPtr recv_port_ = nullptr;
 };
 
 using SocketChannelPtr = std::shared_ptr<SocketChannel>;
