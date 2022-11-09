@@ -54,7 +54,7 @@ class SharedMemory {
   std::string ack_name_ = "ack";
   sem_t *req_;
   sem_t *ack_;
-  void *data_ = NULL;
+  void *data_ = nullptr;
 };
 
 class RwSharedMemory {
@@ -95,7 +95,7 @@ class SharedMemManager {
       exit(-1);
     }
     shm_fd_strs_.insert({shmfd, str});
-    void *mmap_address = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,
+    void *mmap_address = mmap(nullptr, mem_size, PROT_READ | PROT_WRITE,
                        MAP_SHARED, shmfd, 0);
     if (mmap_address == reinterpret_cast<void*>(-1)) {
       LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
