@@ -473,7 +473,8 @@ class TestShmDelivery(unittest.TestCase):
             'a1_to_mp',
             'a1_to_mp', 8)
 
-        recv_port_fn = partial(bound_target_a1, loop, mp_to_a1, a1_to_a2, a2_to_a1, a1_to_mp)
+        recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
+                               a1_to_a2, a2_to_a1, a1_to_mp)
         send_port_fn = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1)
 
         builder1 = Builder()
