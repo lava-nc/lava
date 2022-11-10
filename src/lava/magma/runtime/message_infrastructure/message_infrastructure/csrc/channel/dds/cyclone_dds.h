@@ -40,10 +40,10 @@ class CycloneDDSPublisher final : public DDSPublisher {
   // void InitParticipant();
   CycloneDDSPubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_ = nullptr;
-  std::shared_ptr<dds::domain::DomainParticipant> participant_ = nullptr;
-  std::shared_ptr<dds::topic::Topic<DDSMetaData>> topic_ = nullptr;
-  std::shared_ptr<dds::pub::Publisher> publisher_ = nullptr;
-  std::shared_ptr<dds::pub::DataWriter<DDSMetaData>> writer_ = nullptr;
+  dds::domain::DomainParticipant participant_ = dds::core::null;
+  dds::topic::Topic<DDSMetaData> topic_ = dds::core::null;
+  dds::pub::Publisher publisher_ = dds::core::null;
+  dds::pub::DataWriter<DDSMetaData> writer_ = dds::core::null;
 
   std::string topic_name_;
   DDSTransportType dds_transfer_type_;
@@ -78,10 +78,11 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
   // void InitParticipant();
   // void InitDataReader();
   CycloneDDSSubListenerPtr listener_ = nullptr;
-  std::shared_ptr<dds::domain::DomainParticipant> participant_ = nullptr;
-  std::shared_ptr<dds::topic::Topic<DDSMetaData>> topic_ = nullptr;
-  std::shared_ptr<dds::sub::Subscriber> subscriber_ = nullptr;
-  std::shared_ptr<dds::sub::DataReader<DDSMetaData>> reader_ = nullptr;
+  dds::domain::DomainParticipant participant_ = dds::core::null;
+  dds::topic::Topic<DDSMetaData> topic_ = dds::core::null;
+  dds::sub::Subscriber subscriber_ = dds::core::null;
+  dds::sub::DataReader<DDSMetaData> reader_ = dds::core::null;
+  std::shared_ptr<dds::sub::DataReader<DDSMetaData>::Selector> selector_ = nullptr;
 
   std::string topic_name_;
   DDSTransportType dds_transfer_type_;
