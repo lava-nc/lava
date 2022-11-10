@@ -12,9 +12,15 @@
 
 namespace message_infrastructure {
 
-class CycloneDDSPubListener{
+class CycloneDDSPubListener final : public dds::pub::NoOpDataWriterListener<DDSMetaData>{
  public:
   CycloneDDSPubListener() : matched_(0) {}
+  void on_offered_incompatible_qos(
+    dds::pub::DataWriter<DDSMetaData>& writer,
+    const dds::core::status::OfferedIncompatibleQosStatus&  status) override;
+  void on_publication_matched(
+    dds::pub::DataWriter<DDSMetaData> &writer,
+    const dds::core::status::PublicationMatchedStatus &info) override;
   ~CycloneDDSPubListener() {}
   int matched_;
 };
@@ -52,10 +58,13 @@ class CycloneDDSPublisher final : public DDSPublisher {
   bool stop_;
 };
 
-class CycloneDDSSubListener {
+class CycloneDDSSubListener final : public dds::sub::NoOpDataReaderListener<DDSMetaData>{
  public:
   CycloneDDSSubListener() : matched_(0) {}
   ~CycloneDDSSubListener() {}
+  void on_subscription_matched(
+        dds::sub::DataReader<DDSMetaData> &reader,
+        const dds::core::status::SubscriptionMatchedStatus &info) override;
   int matched_;
 };
 
