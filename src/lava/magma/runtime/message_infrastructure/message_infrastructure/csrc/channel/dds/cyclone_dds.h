@@ -39,7 +39,7 @@ class CycloneDDSPublisher final : public DDSPublisher {
   // void InitDataWriter();
   // void InitParticipant();
   CycloneDDSPubListenerPtr listener_ = nullptr;
-  std::shared_ptr<DDSMetaData> dds_metadata_;
+  std::shared_ptr<DDSMetaData> dds_metadata_ = nullptr;
   std::shared_ptr<dds::domain::DomainParticipant> participant_ = nullptr;
   std::shared_ptr<dds::topic::Topic<DDSMetaData>> topic_ = nullptr;
   std::shared_ptr<dds::pub::Publisher> publisher_ = nullptr;

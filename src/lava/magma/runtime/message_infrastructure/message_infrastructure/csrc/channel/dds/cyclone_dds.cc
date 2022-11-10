@@ -13,8 +13,9 @@ namespace message_infrastructure {
 using namespace org::eclipse::cyclonedds;
 
 int CycloneDDSPublisher::Init() {
+  dds_metadata_ = std::make_shared<DDSMetaData>();
   participant_ = std::make_shared<dds::domain::DomainParticipant>(domain::default_id());
-  topic_ = std::make_shared<dds::topic::Topic<DDSMetaData>>(*participant_.get(), "dds_example");
+  topic_ = std::make_shared<dds::topic::Topic<DDSMetaData>>(*participant_.get(), "DDSMetaData_TOPIC");
   publisher_ = std::make_shared<dds::pub::Publisher>(*participant_.get());
   writer_ = std::make_shared<dds::pub::DataWriter<DDSMetaData>>(*publisher_.get(), *topic_.get());
 
@@ -27,11 +28,13 @@ bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
   dds_metadata_->type(metadata->type);
   dds_metadata_->elsize(metadata->elsize);
   dds_metadata_->total_size(metadata->total_size);
+  printf("copy array...\n");
   memcpy(&dds_metadata_->dims()[0], metadata->dims, sizeof(metadata->dims));
   memcpy(&dds_metadata_->strides()[0],
           metadata->strides,
           sizeof(metadata->strides));
   size_t nbytes = metadata->elsize * metadata->total_size;
+  printf("copy mdata\n");
   dds_metadata_->mdata(std::vector<char>(
                   reinterpret_cast<char*>(metadata->mdata),
                   reinterpret_cast<char*>(metadata->mdata) + nbytes));
@@ -41,6 +44,7 @@ bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
   }
   LAVA_DEBUG(LOG_DDS, "CycloneDDS datawriter find subscriber\n");
   writer_->write(*dds_metadata_.get());
+  LAVA_DEBUG(LOG_DDS, "datawriter send the data\n");
   return true;
 }
 
@@ -55,15 +59,16 @@ CycloneDDSPublisher::~CycloneDDSPublisher() {
 }
 
 int CycloneDDSSubscriber::Init() {
+  printf("subscriber init\n");
   participant_ = std::make_shared<dds::domain::DomainParticipant>(domain::default_id());
-  topic_ = std::make_shared<dds::topic::Topic<DDSMetaData>>(*participant_.get(), "dds_example");
+  topic_ = std::make_shared<dds::topic::Topic<DDSMetaData>>(*participant_.get(), "DDSMetaData_TOPIC");
   subscriber_ = std::make_shared<dds::sub::Subscriber>(*participant_.get());
   reader_ = std::make_shared<dds::sub::DataReader<DDSMetaData>>(*subscriber_.get(), *topic_.get());
   return 0;
 }
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
-  LAVA_LOG(LOG_DDS, "CycloneDDS recving...");
+  LAVA_LOG(LOG_DDS, "CycloneDDS recving...\n");
   auto dds_sample = std::make_shared<dds::sub::Sample<DDSMetaData>>();
   // dds::sub::LoanedSamples<DDSMetaData> samples;
   // do {
@@ -91,11 +96,12 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   } else {
     LAVA_LOG_ERR("time out and no data received\n");
   }
+  LAVA_DEBUG(LOG_DDS, "Recieved OK\n");
   return nullptr;
 }
 
 void CycloneDDSSubscriber::Stop() {
-  LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release...");
+  LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release...\n");
 }
 
 CycloneDDSSubscriber::~CycloneDDSSubscriber() {

@@ -5,6 +5,9 @@
 #if defined(FASTDDS_ENABLE)
 #include <message_infrastructure/csrc/channel/dds/fast_dds.h>
 #endif
+#if defined(CycloneDDS_ENABLE)
+#include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
+#endif
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <string>
 
@@ -46,7 +49,7 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                                         dds_transfer_type,
                                                         max_samples);
 #else
-  LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
+  LAVA_LOG_ERR("FastDDS is not enable, exit!\n");
   exit(-1);
 #endif
 }
@@ -54,8 +57,17 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
 void DDS::CreateCycloneDDSBackend(const std::string &topic_name,
                                   const DDSTransportType &dds_transfer_type,
                                   const size_t &max_samples) {
+#if defined(CycloneDDS_ENABLE)
+  dds_publisher_ = std::make_shared<CycloneDDSPublisher>(topic_name,
+                                                         dds_transfer_type,
+                                                         max_samples);
+  dds_subscriber_ = std::make_shared<CycloneDDSSubscriber>(topic_name,
+                                                           dds_transfer_type,
+                                                           max_samples);
+#else
   LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
   exit(-1);
+#endif
 }
 
 DDS::DDS(const std::string &topic_name,
