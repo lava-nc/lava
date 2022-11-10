@@ -55,6 +55,18 @@ using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 using SendPortList = std::list<AbstractSendPortPtr>;
 using RecvPortList = std::list<AbstractRecvPortPtr>;
 
+class GrpcAbstractSendPort : public AbstractPort {
+ public:
+  using AbstractPort::AbstractPort;
+  virtual ~GrpcAbstractSendPort() = default;
+  virtual void Start() = 0;
+  virtual void Send(GrpcMetaDataPtr data) = 0;
+  virtual void Join() = 0;
+};
+
+using GrpcAbstractSendPortPtr = std::shared_ptr<GrpcAbstractSendPort>;
+using GrpcSendPortList = std::list<GrpcAbstractSendPortPtr>;
+
 }  // namespace message_infrastructure
 
 #endif  // CORE_ABSTRACT_PORT_H_

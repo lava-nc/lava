@@ -39,8 +39,8 @@ GetRPCChannelProxy::GetRPCChannelProxy(const std::string &url,
                                        const size_t &size) {
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetRPCChannel(url, port, src_name, dst_name, size);
-  send_port_ = std::make_shared<SendPortProxy>(channel_type,
-                                               channel_->GetSendPort());
+  send_port_ = std::make_shared<GrpcSendPortProxy>(channel_type,
+                                                   channel_->GetSendPort());
   recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
                                                channel_->GetRecvPort());
 }
@@ -49,12 +49,12 @@ GetRPCChannelProxy::GetRPCChannelProxy(const std::string &src_name,
                                        const size_t &size) {
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetDefRPCChannel(src_name, dst_name, size);
-  send_port_ = std::make_shared<SendPortProxy>(channel_type,
-                                               channel_->GetSendPort());
+  send_port_ = std::make_shared<GrpcSendPortProxy>(channel_type,
+                                                   channel_->GetSendPort());
   recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
                                                channel_->GetRecvPort());
 }
-SendPortProxyPtr GetRPCChannelProxy::GetSendPort() {
+GrpcSendPortProxyPtr GetRPCChannelProxy::GetSendPort() {
     return send_port_;
 }
 RecvPortProxyPtr GetRPCChannelProxy::GetRecvPort() {

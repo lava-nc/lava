@@ -42,12 +42,12 @@ class GetRPCChannelProxy {
   GetRPCChannelProxy(const std::string &src_name,
                      const std::string &dst_name,
                      const size_t &size);
-  SendPortProxyPtr GetSendPort();
+  GrpcSendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:
   ChannelType channel_type = ChannelType::RPCCHANNEL;
-  AbstractChannelPtr channel_ = nullptr;
-  SendPortProxyPtr send_port_ = nullptr;
+  GrpcAbstractChannelPtr channel_ = nullptr;
+  GrpcSendPortProxyPtr send_port_ = nullptr;
   RecvPortProxyPtr recv_port_ = nullptr;
 };
 #endif

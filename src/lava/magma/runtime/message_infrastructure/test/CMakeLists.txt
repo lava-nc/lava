@@ -12,12 +12,13 @@ include_directories(../message_infrastructure/csrc)
 
 add_executable(
   test_messaging_infrastructure
-  cpptest/test_multiprocessing.cc
+  # cpptest/test_multiprocessing.cc
   cpptest/test_channel.cc
   cpptest/test_shm_delivery.cc
   cpptest/test_socket_delivery.cc
-  $<$<BOOL:${GRPC_CHANNEL}>:cpptest/test_grpc_delivery.cc>
-  $<$<BOOL:${DDS_CHANNEL}>:cpptest/test_ddschannel.cc>)
+  # $<$<BOOL:${GRPC_CHANNEL}>:cpptest/test_grpc_delivery.cc>
+  $<$<BOOL:${DDS_CHANNEL}>:cpptest/test_ddschannel.cc>
+  )
 
 
 target_link_libraries(

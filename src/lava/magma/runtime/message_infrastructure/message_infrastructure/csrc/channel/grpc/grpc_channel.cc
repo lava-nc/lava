@@ -34,7 +34,7 @@ GrpcChannel::GrpcChannel(const std::string &src_name,
   recv_port_ = std::make_shared<GrpcRecvPort>(dst_name, size, url_);
 }
 
-AbstractSendPortPtr GrpcChannel::GetSendPort() {
+GrpcAbstractSendPortPtr GrpcChannel::GetSendPort() {
   return send_port_;
 }
 

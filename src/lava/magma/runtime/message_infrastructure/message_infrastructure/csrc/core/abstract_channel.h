@@ -26,6 +26,21 @@ class AbstractChannel {
 
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;
 
+class GrpcAbstractChannel {
+ public:
+  virtual ~GrpcAbstractChannel() = default;
+  ChannelType channel_type_;
+
+  virtual GrpcAbstractSendPortPtr GetSendPort() {
+    return nullptr;
+  }
+  virtual AbstractRecvPortPtr GetRecvPort() {
+    return nullptr;
+  }
+};
+
+using GrpcAbstractChannelPtr = std::shared_ptr<GrpcAbstractChannel>;
+
 }  // namespace message_infrastructure
 
 #endif  // CORE_ABSTRACT_CHANNEL_H_

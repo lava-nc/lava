@@ -160,11 +160,11 @@ def prepare_data():
     return np.concatenate((arr2, arr1))
 
 
-class TestShmDelivery(unittest.TestCase):
+class TestDelivery(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)
-        self.loop_ = 1000
+        self.loop_ = 100000
 
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
@@ -232,6 +232,7 @@ class TestShmDelivery(unittest.TestCase):
         mp.stop(True)
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
+
 
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_

@@ -35,7 +35,7 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   if (data == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
   }
-  for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
+  for (int i = 0; i < metadata->nd; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
   }
@@ -133,12 +133,12 @@ void GrpcSendPort::Start() {
   stub_ = GrpcChannelServer::NewStub(channel_);
 }
 
-void GrpcSendPort::Send(MetaDataPtr metadata) {
-  GrpcMetaData request = MetaData2GrpcMetaData(metadata);
+void GrpcSendPort::Send(GrpcMetaDataPtr metadata) {
+  // GrpcMetaData request = MetaData2GrpcMetaData(metadata);
   DataReply reply;
   ClientContext context;
   context.set_wait_for_ready(true);
-  Status status = stub_->RecvArrayData(&context, request, &reply);
+  Status status = stub_->RecvArrayData(&context, *metadata, &reply);
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!");
   }

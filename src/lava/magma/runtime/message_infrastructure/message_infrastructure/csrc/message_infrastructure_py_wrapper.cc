@@ -161,6 +161,16 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &RecvPortProxy::Join)
     .def_property_readonly("name", &RecvPortProxy::Name)
     .def("size", &RecvPortProxy::Size);
+  py::class_<GrpcSendPortProxy, PortProxy,
+             std::shared_ptr<GrpcSendPortProxy>> (m, "GrpcSendPort")
+    .def(py::init<>())
+    .def("get_channel_type", &GrpcSendPortProxy::GetChannelType)
+    .def("start", &GrpcSendPortProxy::Start)
+    .def("probe", &GrpcSendPortProxy::Probe)
+    .def("send", &GrpcSendPortProxy::Send)
+    .def("join", &GrpcSendPortProxy::Join)
+    .def_property_readonly("name", &GrpcSendPortProxy::Name)
+    .def("size", &GrpcSendPortProxy::Size);
 }
 
 }  // namespace message_infrastructure

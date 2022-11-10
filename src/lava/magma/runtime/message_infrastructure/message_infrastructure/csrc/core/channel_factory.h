@@ -40,15 +40,15 @@ class ChannelFactory {
 #endif
 
 #if defined(GRPC_CHANNEL)
-  AbstractChannelPtr GetRPCChannel(const std::string &url,
-                                   const int &port,
-                                   const std::string &src_name,
-                                   const std::string &dst_name,
-                                   const size_t &size);
+  GrpcAbstractChannelPtr GetRPCChannel(const std::string &url,
+                                       const int &port,
+                                       const std::string &src_name,
+                                       const std::string &dst_name,
+                                       const size_t &size);
 
-  AbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
-                                      const std::string &dst_name,
-                                      const size_t &size);
+  GrpcAbstractChannelPtr GetDefRPCChannel(const std::string &src_name,
+                                          const std::string &dst_name,
+                                          const size_t &size);
 #endif
 
   friend ChannelFactory& GetChannelFactory();

@@ -80,7 +80,7 @@ class GrpcRecvPort final : public AbstractRecvPort {
 
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
-class GrpcSendPort final : public AbstractSendPort {
+class GrpcSendPort final : public GrpcAbstractSendPort {
  public:
   GrpcSendPort(const std::string &name,
                const size_t &size,
@@ -89,7 +89,7 @@ class GrpcSendPort final : public AbstractSendPort {
   {}
 
   void Start();
-  void Send(MetaDataPtr metadata);
+  void Send(GrpcMetaDataPtr metadata);
   void Join();
   bool Probe();
 

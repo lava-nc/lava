@@ -5,6 +5,8 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
+#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
+
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
@@ -42,6 +44,8 @@ struct MetaData {
 };
 
 using MetaDataPtr = std::shared_ptr<MetaData>;
+using grpcchannel::GrpcMetaData;
+using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 namespace helper {
 
