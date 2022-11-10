@@ -167,6 +167,8 @@ class MessageInfrastructureLog {
   std::queue<LogMsg> log_queue_;
 };
 
+// MessageInfrastructureLog object should be handled by multiple actors.
+// Use std::shared_ptr.
 using MessageInfrastructureLogPtr = std::shared_ptr<MessageInfrastructureLog>;
 
 MessageInfrastructureLogPtr GetLogInstance();

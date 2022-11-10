@@ -24,6 +24,8 @@ class AbstractChannel {
   }
 };
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;
 
 }  // namespace message_infrastructure

@@ -31,6 +31,8 @@ class GrpcChannel : public AbstractChannel {
   GrpcRecvPortPtr recv_port_ = nullptr;
 };
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 using GrpcChannelPtr = std::shared_ptr<GrpcChannel>;
 
 }  // namespace message_infrastructure

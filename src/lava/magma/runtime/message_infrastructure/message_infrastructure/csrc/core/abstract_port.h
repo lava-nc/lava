@@ -50,6 +50,8 @@ class AbstractRecvPort : public AbstractPort {
   virtual void Join() = 0;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using AbstractSendPortPtr = std::shared_ptr<AbstractSendPort>;
 using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 using SendPortList = std::list<AbstractSendPortPtr>;
