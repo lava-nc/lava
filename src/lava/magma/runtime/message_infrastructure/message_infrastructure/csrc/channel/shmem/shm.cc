@@ -21,12 +21,12 @@ SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
 }
 
 SharedMemory::~SharedMemory() {
-  munmap(data_, size_);
+  // munmap(data_, size_);
 }
 
-void SharedMemory::InitSemaphore() {
-  req_ = sem_open(req_name_.c_str(), O_CREAT, 0644, 0);
-  ack_ = sem_open(ack_name_.c_str(), O_CREAT, 0644, 1);
+void SharedMemory::InitSemaphore(sem_t *req, sem_t *ack) {
+  req_ = req;
+  ack_ = ack;
 }
 
 void SharedMemory::Start() {
@@ -119,18 +119,26 @@ void SharedMemManager::DeleteAllSharedMemory() {
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of shm to free: %zd.\n",
              shm_fd_strs_.size());
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of sem to free: %zd.\n",
-             sem_strs_.size());
+             sem_p_strs_.size());
   for (auto const& it : shm_fd_strs_) {
     LAVA_ASSERT_INT(shm_unlink(it.second.c_str()), 0);
     LAVA_DEBUG(LOG_SMMP, "Shm fd and name close: %s %d\n",
                it.second.c_str(), it.first);
     LAVA_ASSERT_INT(close(it.first), 0);
   }
-  for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
-    LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
+  // for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
+  //   LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
+  // }
+  for (auto const& it : shm_mmap_) {
+    LAVA_ASSERT_INT(munmap(it.first, it.second), 0);
   }
-  sem_strs_.clear();
+  for (auto const& it : sem_p_strs_) {
+    LAVA_ASSERT_INT(sem_close(it.first), 0);
+    LAVA_ASSERT_INT(sem_unlink(it.second.c_str()), 0);
+  }
+  sem_p_strs_.clear();
   shm_fd_strs_.clear();
+  shm_mmap_.clear();
 }
 
 SharedMemManager SharedMemManager::smm_;

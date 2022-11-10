@@ -16,7 +16,7 @@ AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
 }
 
 AbstractActor::~AbstractActor() {
-  ctl_shm_->Close();
+  // ctl_shm_->Close();
 }
 
 void AbstractActor::Control(const ActorCmd cmd) {

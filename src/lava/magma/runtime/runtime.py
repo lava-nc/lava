@@ -360,8 +360,8 @@ class Runtime:
     def stop(self):
         """Stops an ongoing or paused run."""
         if self._is_started:
-            self._messaging_infrastructure.stop(True)
             self.join()
+            self._messaging_infrastructure.stop(True)
             self._is_running = False
             self._is_started = False
             # Send messages to RuntimeServices to stop as soon as possible.
