@@ -10,12 +10,13 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-
+from message_infrastructure import GetRPCChannel
 from message_infrastructure.multiprocessing import MultiProcessing
 
 from message_infrastructure import (
     ChannelBackend,
     Channel,
+    SupportGRPCChannel
 )
 
 
@@ -153,21 +154,24 @@ def bound_target_a2(loop, a1_to_a2, a2_to_a1, this, builder):
 
 
 def prepare_data():
-    return np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0] * 1000)
+    arr1 = np.array([1] * 9990)
+    arr2 = np.array([1, 2, 3, 4, 5,
+                    6, 7, 8, 9, 0])
+    return np.concatenate((arr2, arr1))
 
 
 class TestShmDelivery(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)
-        self.loop_ = 100000
+        self.loop_ = 1000
 
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
         predata = prepare_data()
-        queue_size = 2
+        queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         mp_to_a1 = Channel(
             ChannelBackend.SHMEMCHANNEL,
@@ -217,7 +221,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("cpp_shm_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -284,7 +288,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("cpp_skt_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -303,7 +307,7 @@ class TestShmDelivery(unittest.TestCase):
         mp.start()
 
         predata = prepare_data()
-        queue_size = 2
+        queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         mp_to_a1 = PyChannel(
             predata.dtype,
@@ -354,7 +358,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("py_shm_loop_with_cpp_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -370,7 +374,7 @@ class TestShmDelivery(unittest.TestCase):
         loop = self.loop_
 
         predata = prepare_data()
-        queue_size = 2
+        queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         mp_to_a1 = PyChannel(
             predata.dtype,
@@ -424,7 +428,7 @@ class TestShmDelivery(unittest.TestCase):
             to_a1.send(predata)
             predata = from_a1.recv()
         loop_end = datetime.now()
-
+        print("py_shm_loop_with_py_multiprocess result = ", predata[0])
         if not np.array_equal(expect_result, predata):
             print("expect: ", expect_result)
             print("result: ", predata)
@@ -438,6 +442,64 @@ class TestShmDelivery(unittest.TestCase):
         a2.join()
         print("py_shm_loop_with_py_multiprocess timedelta =",
               loop_end - loop_start)
+
+    @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
+    def test_grpcchannel(self):
+        mp = MultiProcessing()
+        mp.start()
+        loop = self.loop_
+        a1_to_a2 = GetRPCChannel(
+            '127.13.2.11',
+            8001,
+            'a1_to_a2',
+            'a1_to_a2', 8)
+        a2_to_a1 = GetRPCChannel(
+            '127.13.2.12',
+            8002,
+            'a2_to_a1',
+            'a2_to_a1', 8)
+        mp_to_a1 = GetRPCChannel(
+            '127.13.2.13',
+            8003,
+            'mp_to_a1',
+            'mp_to_a1', 8)
+        a1_to_mp = GetRPCChannel(
+            '127.13.2.14',
+            8004,
+            'a1_to_mp',
+            'a1_to_mp', 8)
+
+        recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
+                               a1_to_a2, a2_to_a1, a1_to_mp)
+        send_port_fn = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
+        to_a1 = mp_to_a1.src_port
+        from_a1 = a1_to_mp.dst_port
+        to_a1.start()
+        from_a1.start()
+        data = prepare_data()
+        expect_result = prepare_data()
+        expect_result[0] = (1 + 3 * loop)
+        loop_start_time = datetime.now()
+        while loop:
+            to_a1.send(data)
+            data = from_a1.recv()
+            loop -= 1
+        print("cpp_grpc_loop_with_cpp_multiprocess result = ", data[0])
+        loop_end_time = datetime.now()
+        from_a1.join()
+        to_a1.join()
+        mp.stop(True)
+        if not np.array_equal(expect_result, data):
+            print("expect: ", expect_result)
+            print("result: ", data)
+            raise AssertionError()
+        print("cpp_grpc_loop_with_cpp_multiprocess timedelta =",
+              loop_end_time - loop_start_time)
 
 
 if __name__ == '__main__':
