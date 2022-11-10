@@ -32,6 +32,8 @@ class SocketSendPort final : public AbstractSendPort {
   SocketPair socket_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using SocketSendPortPtr = std::shared_ptr<SocketSendPort>;
 
 class SocketRecvPort final : public AbstractRecvPort {
@@ -52,6 +54,8 @@ class SocketRecvPort final : public AbstractRecvPort {
   SocketPair socket_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using SocketRecvPortPtr = std::shared_ptr<SocketRecvPort>;
 
 }  // namespace message_infrastructure

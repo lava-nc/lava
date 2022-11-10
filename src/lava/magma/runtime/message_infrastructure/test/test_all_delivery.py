@@ -164,7 +164,7 @@ class TestDelivery(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)
-        self.loop_ = 100000
+        self.loop_ = 1000
 
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_

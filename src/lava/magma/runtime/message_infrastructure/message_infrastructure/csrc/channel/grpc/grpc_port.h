@@ -78,6 +78,8 @@ class GrpcRecvPort final : public AbstractRecvPort {
   size_t size_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
 class GrpcSendPort final : public GrpcAbstractSendPort {
@@ -103,6 +105,8 @@ class GrpcSendPort final : public GrpcAbstractSendPort {
   size_t size_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using GrpcSendPortPtr = std::shared_ptr<GrpcSendPort>;
 
 }  // namespace message_infrastructure

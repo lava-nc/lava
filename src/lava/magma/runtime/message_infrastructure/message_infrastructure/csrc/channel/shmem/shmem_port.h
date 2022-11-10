@@ -38,6 +38,8 @@ class ShmemSendPort final : public AbstractSendPort {
   ThreadPtr ack_callback_thread_ = nullptr;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using ShmemSendPortPtr = std::shared_ptr<ShmemSendPort>;
 
 class ShmemBlockRecvPort final : public AbstractRecvPort {
@@ -77,6 +79,8 @@ class ShmemRecvPort final : public AbstractRecvPort {
   ThreadPtr recv_queue_thread_ = nullptr;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using ShmemRecvPortPtr = std::shared_ptr<ShmemRecvPort>;
 
 }  // namespace message_infrastructure

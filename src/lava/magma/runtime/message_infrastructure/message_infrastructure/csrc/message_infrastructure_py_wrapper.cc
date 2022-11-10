@@ -18,6 +18,8 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 #if defined(GRPC_CHANNEL)
 using GetRPCChannelProxyPtr = std::shared_ptr<GetRPCChannelProxy>;
 #endif

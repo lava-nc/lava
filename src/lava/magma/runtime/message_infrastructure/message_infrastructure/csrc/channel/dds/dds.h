@@ -45,6 +45,9 @@ class DDSPublisher {
   virtual ~DDSPublisher() {}
 };
 
+// DDSPublisher object needs to be transfered to DDSPort.
+// Also need to be handled in DDS class.
+// Use std::shared_ptr.
 using DDSPublisherPtr = std::shared_ptr<DDSPublisher>;
 
 class DDSSubscriber {
@@ -55,6 +58,9 @@ class DDSSubscriber {
   virtual ~DDSSubscriber() {}
 };
 
+// DDSSubscriber object needs to be transfered to DDSPort.
+// Also need to be handled in DDS class.
+// Use std::shared_ptr.
 using DDSSubscriberPtr = std::shared_ptr<DDSSubscriber>;
 
 class DDS {
@@ -75,6 +81,9 @@ class DDS {
                                const size_t &max_samples);
 };
 
+// DDS object needs to be transfered to DDSPort.
+// Also need to be handled in DDSManager.
+// Use std::shared_ptr.
 using DDSPtr = std::shared_ptr<DDS>;
 
 class DDSManager {
@@ -95,6 +104,9 @@ class DDSManager {
 };
 
 DDSManager& GetDDSManager();
+
+// DDSManager object should be handled by multiple actors.
+// Use std::shared_ptr.
 using DDSManagerPtr = std::shared_ptr<DDSManager>;
 
 }  // namespace message_infrastructure
