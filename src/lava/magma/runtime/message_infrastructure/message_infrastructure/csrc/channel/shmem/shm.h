@@ -73,6 +73,10 @@ class RwSharedMemory {
   void *data_;
 };
 
+// SharedMemory object needs to be transfered to ShmemPort.
+// RwSharedMemory object needs to be transfered to ShmemPort.
+// Also need to be handled in SharedMemManager.
+// Use std::shared_ptr.
 using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
 using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
@@ -134,6 +138,8 @@ class SharedMemManager {
 
 SharedMemManager& GetSharedMemManager();
 
+// SharedMemManager object should be handled by multiple actors.
+// Use std::shared_ptr.
 using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure

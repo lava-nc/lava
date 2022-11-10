@@ -45,6 +45,7 @@
 #define LOG_SMMP  (1)  // log for shmemport
 #define LOG_SKP   (1)  // log for socketport
 #define LOG_DDS   (1)  // lof for DDS Channel
+#define LOG_UTTEST   (1)
 
 #if defined(MSG_LOG_LEVEL)
 #elif defined(MSG_LOG_LEVEL_ALL)
@@ -166,6 +167,8 @@ class MessageInfrastructureLog {
   std::queue<LogMsg> log_queue_;
 };
 
+// MessageInfrastructureLog object should be handled by multiple actors.
+// Use std::shared_ptr.
 using MessageInfrastructureLogPtr = std::shared_ptr<MessageInfrastructureLog>;
 
 MessageInfrastructureLogPtr GetLogInstance();

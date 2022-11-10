@@ -160,12 +160,12 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
     return py::cast(0);
   LAVA_DEBUG(LOG_LAYER, "Set PyObject capsule, mdata: %p\n", metadata->mdata);
   PyObject *capsule = PyCapsule_New(metadata->mdata, nullptr,
-                                      [](PyObject *capsule){
-      void *memory = PyCapsule_GetPointer(capsule, nullptr);
-      LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
-                 memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
-      free(memory);
-    });
+                                      [](PyObject *capsule) {
+    void *memory = PyCapsule_GetPointer(capsule, nullptr);
+    LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
+                memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
+    free(memory);});
+  LAVA_ASSERT_INT((nullptr == capsule) ? (free(metadata->mdata), 1) : 0, 0);
   LAVA_ASSERT_INT(PyArray_SetBaseObject(
                   reinterpret_cast<PyArrayObject *>(array),
                   capsule), 0);

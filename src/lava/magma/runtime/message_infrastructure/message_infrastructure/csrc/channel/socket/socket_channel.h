@@ -29,6 +29,8 @@ class SocketChannel : public AbstractChannel {
   SocketRecvPortPtr recv_port_ = nullptr;
 };
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 using SocketChannelPtr = std::shared_ptr<SocketChannel>;
 
 SocketChannelPtr GetSocketChannel(const size_t &nbytes,

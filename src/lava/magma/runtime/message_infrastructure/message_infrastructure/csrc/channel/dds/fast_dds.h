@@ -51,6 +51,9 @@ class FastDDSPubListener final : public
   int matched_;
 };
 
+// FastDDSPubListener object needs to be transfered to DDSPort.
+// Also need to be handled in DDS class.
+// Use std::shared_ptr.
 using FastDDSPubListenerPtr = std::shared_ptr<FastDDSPubListener>;
 
 class FastDDSPublisher final : public DDSPublisher {
@@ -101,6 +104,9 @@ class FastDDSSubListener final : public
   uint32_t samples_;
 };
 
+// FastDDSSubListener object needs to be transfered to DDSPort.
+// Also need to be handled in DDS class.
+// Use std::shared_ptr.
 using FastDDSSubListenerPtr = std::shared_ptr<FastDDSSubListener>;
 
 class FastDDSSubscriber final : public DDSSubscriber {

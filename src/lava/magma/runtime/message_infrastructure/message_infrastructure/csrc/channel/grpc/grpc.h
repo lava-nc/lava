@@ -50,6 +50,8 @@ class GrpcManager {
 
 GrpcManager& GetGrpcManager();
 
+// GrpcManager object should be handled by multiple actors.
+// Use std::shared_ptr.
 using GrpcManagerPtr = std::shared_ptr<GrpcManager>;
 
 }  // namespace message_infrastructure

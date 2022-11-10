@@ -55,6 +55,8 @@ class SktManager {
 
 SktManager& GetSktManager();
 
+// SktManager object should be handled by multiple actors.
+// Use std::shared_ptr.
 using SktManagerPtr = std::shared_ptr<SktManager>;
 
 }  // namespace message_infrastructure
