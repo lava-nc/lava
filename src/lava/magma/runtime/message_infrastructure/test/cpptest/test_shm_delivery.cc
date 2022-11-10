@@ -78,7 +78,7 @@ void target_fn_a2_bound(
 
 TEST(TestShmDelivery, ShmLoop) {
   MultiProcessing mp;
-  int loop = 10000;
+  int loop = 1000;
   const int queue_size = 1;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
     SHMEMCHANNEL, queue_size, sizeof(int64_t)*10000, "mp_to_a1", "mp_to_a1");

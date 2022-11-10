@@ -82,7 +82,7 @@ void grpc_target_fn2(
 
 TEST(TestGRPCChannel, GRPCLoop) {
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = 1000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
     "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(

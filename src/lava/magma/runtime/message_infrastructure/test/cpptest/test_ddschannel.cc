@@ -142,7 +142,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
-  int loop = 100000;
+  int loop = 1000;
   int i = 0;
   while (loop--) {
     if (!(loop % 1000))
