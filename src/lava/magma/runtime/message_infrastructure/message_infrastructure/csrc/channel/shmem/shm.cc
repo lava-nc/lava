@@ -21,7 +21,6 @@ SharedMemory::SharedMemory(const size_t &mem_size, void* mmap) {
 }
 
 SharedMemory::~SharedMemory() {
-  // munmap(data_, size_);
 }
 
 void SharedMemory::InitSemaphore(sem_t *req, sem_t *ack) {
@@ -126,9 +125,6 @@ void SharedMemManager::DeleteAllSharedMemory() {
                it.second.c_str(), it.first);
     LAVA_ASSERT_INT(close(it.first), 0);
   }
-  // for (auto it = sem_strs_.begin(); it != sem_strs_.end(); it++) {
-  //   LAVA_ASSERT_INT(sem_unlink(it->c_str()), 0);
-  // }
   for (auto const& it : shm_mmap_) {
     LAVA_ASSERT_INT(munmap(it.first, it.second), 0);
   }

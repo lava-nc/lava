@@ -108,8 +108,6 @@ class SharedMemManager {
     shm_mmap_.insert({mmap_address, mem_size});
     std::shared_ptr<T> shm =
       std::make_shared<T>(mem_size, mmap_address, random);
-    // sem_strs_.insert(shm->GetReq());
-    // sem_strs_.insert(shm->GetAck());
     std::string req_name = shm->GetReq();
     std::string ack_name = shm->GetAck();
     sem_t *req = sem_open(req_name.c_str(), O_CREAT, 0644, 0);
