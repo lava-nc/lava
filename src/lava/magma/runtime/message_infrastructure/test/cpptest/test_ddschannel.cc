@@ -97,14 +97,21 @@ TEST(TestDDSDelivery, DDSLoop) {
   from_a1->Start();
 
   MetaDataPtr metadata = std::make_shared<MetaData>();
-  metadata->nd = 1;
-  metadata->type = 7;
-  metadata->elsize = 8;
-  metadata->total_size = 1;
-  metadata->dims[0] = 1;
-  metadata->strides[0] = 1;
-  metadata->mdata = reinterpret_cast<char*> (malloc(sizeof(int64_t)));
-  *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+  // metadata->nd = 1;
+  // metadata->type = NPY_TYPES::NPY_LONG;
+  // metadata->elsize = 8;
+  // metadata->total_size = 1;
+  // metadata->dims[0] = 1;
+  // metadata->strides[0] = 1;
+  // metadata->mdata =
+  //   malloc(sizeof(int64_t));
+  // *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
+  int64_t *array = reinterpret_cast<int64_t*>(malloc(sizeof(int64_t)));
+  *array = 1;
+  int dims[] = {1, 0, 0, 0, 0};
+  int nd = 1;
+
+  GET_METADATA(metadata, array, nd, NPY_TYPES::NPY_LONG, dims);
 
   MetaDataPtr mptr;
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);

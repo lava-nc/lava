@@ -16,6 +16,25 @@
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_NS (1)
 
+#define NPY_ATTR_DEPRECATE(text)
+
+#define GET_METADATA(metadataptr, array, nd, dtype, dims) do { \
+    if (nd > 0) { \
+        for (int i = 0; i < nd ; i++) { \
+            metadataptr->dims[i] = dims[i]; \
+        } \
+        int product = 1; \
+        for (int i = 0; i < nd; i++) { \
+            metadataptr->strides[nd-i-1] = product; \
+            product*= metadataptr->dims[nd-i-1]; \
+        } \
+        metadataptr->total_size = product; \
+        metadataptr->elsize = sizeof(*array); \
+        metadataptr->type = dtype; \
+        metadataptr->mdata = reinterpret_cast<void*>(array); \
+    } \
+} while (0)
+
 namespace message_infrastructure {
 
 enum ProcessType {
@@ -29,6 +48,32 @@ enum ChannelType {
   RPCCHANNEL = 1,
   DDSCHANNEL = 2,
   SOCKETCHANNEL = 3
+};
+
+enum NPY_TYPES {    NPY_BOOL = 0,
+                    NPY_BYTE, NPY_UBYTE,
+                    NPY_SHORT, NPY_USHORT,
+                    NPY_INT, NPY_UINT,
+                    NPY_LONG, NPY_ULONG,
+                    NPY_LONGLONG, NPY_ULONGLONG,
+                    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+                    NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
+                    NPY_OBJECT = 17,
+                    NPY_STRING, NPY_UNICODE,
+                    NPY_VOID,
+                    /*
+                     * New 1.6 types appended, may be integrated
+                     * into the above in 2.0.
+                     */
+                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF,
+
+                    NPY_NTYPES,
+                    NPY_NOTYPE,
+                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
+                    NPY_USERDEF = 256,  /* leave room for characters */
+
+                    /* The number of types not including the new 1.6 types */
+                    NPY_NTYPES_ABI_COMPATIBLE = 21
 };
 
 struct MetaData {

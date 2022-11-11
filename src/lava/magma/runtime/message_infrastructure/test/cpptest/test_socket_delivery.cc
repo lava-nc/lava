@@ -114,49 +114,38 @@ TEST(TestSocketChannel, SocketLoop) {
   std::fill(array_ + 10, array_ + 10000, 1);
 
   MetaDataPtr metadata = std::make_shared<MetaData>();
-  metadata->nd = 1;
-  metadata->type = 7;
-  metadata->elsize = 8;
-  metadata->total_size = 10000;
-  metadata->dims[0] = 10000;
-  metadata->strides[0] = 1;
-  metadata->mdata =
-    reinterpret_cast<char*>
-    (malloc(sizeof(int64_t)*10000));
-  std::memcpy(metadata->mdata,
-              reinterpret_cast<char*>(array_),
-              metadata->elsize * metadata->total_size);
-  MetaDataPtr mptr;
+  int64_t* array = reinterpret_cast<int64_t*>(array_);
+  int dims[] = {10000, 0, 0, 0, 0};
+  int nd = 1;
+
+  GET_METADATA(metadata, array, nd, NPY_TYPES::NPY_LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
-
+  to_a1->Send(metadata);
   while (loop--) {
-    to_a1->Send(metadata);
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
-    mptr = from_a1->Recv();
+    metadata = from_a1->Recv();
+    to_a1->Send(metadata);
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
-    LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", mptr->nd);
-    LAVA_DUMP(LOG_UTTEST, "type: %ld\n", mptr->type);
-    LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", mptr->elsize);
-    LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", mptr->total_size);
+    LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
+    LAVA_DUMP(LOG_UTTEST, "type: %ld\n", metadata->type);
+    LAVA_DUMP(LOG_UTTEST, "elsize: %ld\n", metadata->elsize);
+    LAVA_DUMP(LOG_UTTEST, "total_size: %ld\n", metadata->total_size);
     LAVA_DUMP(LOG_UTTEST, "dims: {%ld, %ld, %ld, %ld, %ld}\n",
-              mptr->dims[0], mptr->dims[1], mptr->dims[2],
-              mptr->dims[3], mptr->dims[4]);
+              metadata->dims[0], metadata->dims[1], metadata->dims[2],
+              metadata->dims[3], metadata->dims[4]);
     LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
-              mptr->strides[0], mptr->strides[1], mptr->strides[2],
-              mptr->strides[3], mptr->strides[4]);
-    int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
-    LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", mptr->mdata,
-              *reinterpret_cast<int64_t*>(mptr->mdata));
+              metadata->strides[0], metadata->strides[1], metadata->strides[2],
+              metadata->strides[3], metadata->strides[4]);
+    LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", metadata->mdata,
+              *reinterpret_cast<int64_t*>(metadata->mdata));
     free(reinterpret_cast<char*>(metadata->mdata));
-    metadata = mptr;
   }
   const clock_t end_time = std::clock();
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
   LAVA_DUMP(LOG_UTTEST, "socket result =%ld", result);
-  free(reinterpret_cast<char*>(metadata->mdata));
   mp.Stop(true);
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
@@ -164,7 +153,7 @@ TEST(TestSocketChannel, SocketLoop) {
     LAVA_LOG_ERR("result != expect_result");
     throw;
   }
-  LAVA_DUMP(LOG_UTTEST, "socket cpp loop timedelta: %f",
+  std::printf("socket cpp loop timedelta: %f",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");
 }
