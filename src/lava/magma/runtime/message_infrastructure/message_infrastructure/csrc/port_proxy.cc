@@ -170,7 +170,7 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   return py::reinterpret_steal<py::object>(array);
 }
 
-
+#if defined(GRPC_CHANNEL)
 ChannelType GrpcSendPortProxy::GetChannelType() {
   return channel_type_;
 }
@@ -232,5 +232,6 @@ GrpcMetaDataPtr GrpcSendPortProxy::GrpcMDataFromObject_(py::object* object) {
   grpcdata->set_value(data, element_size_in_bytes*tsize);
   return grpcdata;
 }
+#endif
 
 }  // namespace message_infrastructure

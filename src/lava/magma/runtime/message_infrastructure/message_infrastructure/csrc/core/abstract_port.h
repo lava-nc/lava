@@ -57,6 +57,7 @@ using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 using SendPortList = std::list<AbstractSendPortPtr>;
 using RecvPortList = std::list<AbstractRecvPortPtr>;
 
+#if defined(GRPC_CHANNEL)
 class GrpcAbstractSendPort : public AbstractPort {
  public:
   using AbstractPort::AbstractPort;
@@ -68,7 +69,7 @@ class GrpcAbstractSendPort : public AbstractPort {
 
 using GrpcAbstractSendPortPtr = std::shared_ptr<GrpcAbstractSendPort>;
 using GrpcSendPortList = std::list<GrpcAbstractSendPortPtr>;
-
+#endif
 }  // namespace message_infrastructure
 
 #endif  // CORE_ABSTRACT_PORT_H_

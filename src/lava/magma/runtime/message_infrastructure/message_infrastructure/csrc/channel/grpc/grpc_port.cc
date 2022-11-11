@@ -10,21 +10,6 @@ namespace message_infrastructure {
 
 namespace {
 
-GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata) {
-  GrpcMetaData grpcdata;
-  grpcdata.set_nd(metadata->nd);
-  grpcdata.set_type(metadata->type);
-  grpcdata.set_elsize(metadata->elsize);
-  grpcdata.set_total_size(metadata->total_size);
-  char* data = reinterpret_cast<char*>(metadata->mdata);
-  for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
-    grpcdata.add_dims(metadata->dims[i]);
-    grpcdata.add_strides(metadata->strides[i]);
-  }
-  grpcdata.set_value(data, metadata->elsize*metadata->total_size);
-  return grpcdata;
-}
-
 MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   MetaDataPtr metadata = std::make_shared<MetaData>();
   metadata->nd = grpcdata->nd();
@@ -134,7 +119,6 @@ void GrpcSendPort::Start() {
 }
 
 void GrpcSendPort::Send(GrpcMetaDataPtr metadata) {
-  // GrpcMetaData request = MetaData2GrpcMetaData(metadata);
   DataReply reply;
   ClientContext context;
   context.set_wait_for_ready(true);

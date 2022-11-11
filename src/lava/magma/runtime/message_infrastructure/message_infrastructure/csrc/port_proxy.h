@@ -69,6 +69,7 @@ using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
 using SendPortProxyList = std::vector<SendPortProxyPtr>;
 using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 
+#if defined(GRPC_CHANNEL)
 class GrpcSendPortProxy : public PortProxy {
  public:
   GrpcSendPortProxy() {}
@@ -91,7 +92,7 @@ class GrpcSendPortProxy : public PortProxy {
 
 using GrpcSendPortProxyPtr = std::shared_ptr<GrpcSendPortProxy>;
 using GrpcSendPortProxyList = std::vector<GrpcSendPortProxyPtr>;
-
+#endif
 }  // namespace message_infrastructure
 
 #endif  // PORT_PROXY_H_

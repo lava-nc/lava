@@ -12,7 +12,7 @@ include_directories(../message_infrastructure/csrc)
 
 add_executable(
   test_messaging_infrastructure
-  # cpptest/test_multiprocessing.cc
+  cpptest/test_multiprocessing.cc
   cpptest/test_channel.cc
   cpptest/test_shm_delivery.cc
   cpptest/test_socket_delivery.cc

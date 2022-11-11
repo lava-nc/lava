@@ -28,6 +28,7 @@ class AbstractChannel {
 // Use std::shared_ptr.
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;
 
+#if defined(GRPC_CHANNEL)
 class GrpcAbstractChannel {
  public:
   virtual ~GrpcAbstractChannel() = default;
@@ -42,7 +43,7 @@ class GrpcAbstractChannel {
 };
 
 using GrpcAbstractChannelPtr = std::shared_ptr<GrpcAbstractChannel>;
-
+#endif
 }  // namespace message_infrastructure
 
 #endif  // CORE_ABSTRACT_CHANNEL_H_
