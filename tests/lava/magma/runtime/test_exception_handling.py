@@ -5,7 +5,7 @@
 import logging
 from multiprocessing import shared_memory
 from multiprocessing.dummy import Process
-from symbol import except_clause
+# from symbol import except_clause
 import unittest
 import numpy as np
 
@@ -56,6 +56,7 @@ class PyProcModel1(PyLoihiProcessModel):
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
             shm.close()
+
 
 # A minimal PyProcModel implementing P2
 @implements(proc=P2, protocol=LoihiProtocol)
