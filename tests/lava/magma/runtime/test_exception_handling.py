@@ -67,7 +67,7 @@ class PyProcModel2(PyLoihiProcessModel):
     def run_spk(self):
         if self.time_step > 1:
             # Raise exception
-            #raise TypeError("All the error info")
+            # raise TypeError("All the error info")
             shm = shared_memory.SharedMemory(name='error_block')
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
@@ -89,7 +89,9 @@ class TestExceptionHandling(unittest.TestCase):
 
     # def create_shmem_block(self):
     #     error_message = np.array([0])
-    #     shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='error_block')
+    #     shm = shared_memory.SharedMemory(create=True,
+    #                                     size=error_message.nbytes,
+    #                                     name='error_block')
     #     err = np.ndarray(error_message.shape, dtype=np.int64, buffer=shm.buf)
     #     err[:] = error_message[:]
     #     shm.close()
@@ -121,7 +123,7 @@ class TestExceptionHandling(unittest.TestCase):
         # exception = context.exception
         self.assertEqual(res[0], 1)
 
-        #del res
+        # del res
         existing_shm.close()
         #existing_shm.unlink()
 
@@ -154,9 +156,9 @@ class TestExceptionHandling(unittest.TestCase):
         sender.run(condition=run_steps, run_cfg=run_cfg)
 
         existing_shm = shared_memory.SharedMemory(name='error_block')
-        
+
         res = np.ndarray((1,), buffer=existing_shm.buf)
-  
+
         # exception = context.exception
         self.assertEqual(res[0], 2)
 
@@ -200,12 +202,16 @@ class TestExceptionHandling(unittest.TestCase):
         # 2 Exceptions in the ProcessModels expected
         self.assertTrue('2 Exception(s) occurred' in str(exception))
 
+
 def create_shmem_block():
     error_message = np.zeros(shape=(1,))
-    shm = shared_memory.SharedMemory(create=True, size=error_message.nbytes, name='error_block')
+    shm = shared_memory.SharedMemory(create=True,
+                                     size=error_message.nbytes,
+                                     name='error_block')
     err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
     err[:] = error_message[:]
     shm.close()
+
 
 def reset_error_count():
     """Connects to existing SharedMemory and resets error count"""
@@ -213,6 +219,7 @@ def reset_error_count():
     err = np.ndarray((1,), buffer=existing_shm.buf)
     err[0] = 0
     existing_shm.close()
+
 
 if __name__ == '__main__':
     create_shmem_block()
