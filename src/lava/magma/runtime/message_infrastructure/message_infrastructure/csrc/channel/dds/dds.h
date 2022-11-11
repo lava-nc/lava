@@ -12,6 +12,19 @@
 #include <string>
 #include <vector>
 
+// Default Parameters
+// Transport
+#define SHM_SEGMENT_SIZE (2*1024*1024)
+#define NON_BLOCKING_SEND (false)
+#define UDP_OUT_PORT  (0)
+#define TCP_PORT 46
+#define TCPv4_IP ("0.0.0.0")
+// QOS
+#define HEARTBEAT_PERIOD_SECONDS (2)
+#define HEARTBEAT_PERIOD_NANOSEC (200 * 1000 * 1000)
+// Topic
+#define DDS_DATATYPE_NAME "DDSMetaData"
+
 namespace message_infrastructure {
 
 enum DDSTransportType {

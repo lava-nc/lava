@@ -41,7 +41,7 @@ DDSManager::~DDSManager() {
 void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                const DDSTransportType &dds_transfer_type,
                                const size_t &max_samples) {
-#if defined(FASTDDS_ENBLE)
+#if defined(FASTDDS_ENABLE)
   dds_publisher_ = std::make_shared<FastDDSPublisher>(topic_name,
                                                       dds_transfer_type,
                                                       max_samples);

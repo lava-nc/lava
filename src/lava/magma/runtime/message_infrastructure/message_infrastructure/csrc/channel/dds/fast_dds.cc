@@ -163,7 +163,6 @@ void FastDDSPubListener::on_publication_matched(
   if (info.current_count_change == 1) {
     matched_++;
     LAVA_DEBUG(LOG_DDS, "FastDDS DataReader %d matched.\n", matched_);
-
   } else if (info.current_count_change == -1) {
     matched_--;
     LAVA_DEBUG(LOG_DDS, "FastDDS DataReader unmatched, remain:%d\n", matched_);
