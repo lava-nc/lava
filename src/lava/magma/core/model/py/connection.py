@@ -1196,6 +1196,8 @@ class LearningConnectionModelFloat(LearningConnection):
             ]
         )
 
+        self.evaluated_traces = np.zeros((3, 5, self._shape[0], self._shape[1]))
+
     def _init_randoms(self):
         pass
 
@@ -1323,6 +1325,7 @@ class LearningConnectionModelFloat(LearningConnection):
 
         t_epoch = self._learning_rule.t_epoch
 
+        # TODO use those being initialized before
         x1_impulse = self._learning_rule.x1_impulse
         x2_impulse = self._learning_rule.x2_impulse
         x_impulses = np.atleast_2d([x1_impulse, x2_impulse]).T
@@ -1374,73 +1377,72 @@ class LearningConnectionModelFloat(LearningConnection):
         y_trace_hist = np.array(y_trace_hist)
 
         # expand dimensionality to weight matrix
-        evaluated_traces = np.zeros((3, 5, self._shape[0], self._shape[1]))
 
-        evaluated_traces[0, 0] = (
+        self.evaluated_traces[0, 0] = (
             x_trace_hist[self.tx, 0]
             .diagonal()
             .repeat(self._shape[0], 0)
             .reshape(self._shape, order="F")
         )
-        evaluated_traces[0, 1] = (
+        self.evaluated_traces[0, 1] = (
             x_trace_hist[self.tx, 1]
             .diagonal()
             .repeat(self._shape[0], 0)
             .reshape(self._shape, order="F")
         )
-        evaluated_traces[0, 2] = y_trace_hist[self.tx, 0].T
-        evaluated_traces[0, 3] = y_trace_hist[self.tx, 1].T
-        evaluated_traces[0, 4] = y_trace_hist[self.tx, 2].T
+        self.evaluated_traces[0, 2] = y_trace_hist[self.tx, 0].T
+        self.evaluated_traces[0, 3] = y_trace_hist[self.tx, 1].T
+        self.evaluated_traces[0, 4] = y_trace_hist[self.tx, 2].T
 
-        evaluated_traces[1, 0] = x_trace_hist[self.ty, 0]
-        evaluated_traces[1, 1] = x_trace_hist[self.ty, 1]
-        evaluated_traces[1, 2] = (
+        self.evaluated_traces[1, 0] = x_trace_hist[self.ty, 0]
+        self.evaluated_traces[1, 1] = x_trace_hist[self.ty, 1]
+        self.evaluated_traces[1, 2] = (
             y_trace_hist[self.ty, 0]
             .diagonal()
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
-        evaluated_traces[1, 3] = (
+        self.evaluated_traces[1, 3] = (
             y_trace_hist[self.ty, 1]
             .diagonal()
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
-        evaluated_traces[1, 4] = (
+        self.evaluated_traces[1, 4] = (
             y_trace_hist[self.ty, 2]
             .diagonal()
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
 
-        evaluated_traces[2, 0] = (
+        self.evaluated_traces[2, 0] = (
             x_trace_hist[-1, 0]
             .repeat(self._shape[0], 0)
             .reshape(self._shape, order="F")
         )
-        evaluated_traces[2, 1] = (
+        self.evaluated_traces[2, 1] = (
             x_trace_hist[-1, 1]
             .repeat(self._shape[0], 0)
             .reshape(self._shape, order="F")
         )
-        evaluated_traces[2, 2] = (
+        self.evaluated_traces[2, 2] = (
             y_trace_hist[-1, 0]
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
-        evaluated_traces[2, 3] = (
+        self.evaluated_traces[2, 3] = (
             y_trace_hist[-1, 1]
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
-        evaluated_traces[2, 4] = (
+        self.evaluated_traces[2, 4] = (
             y_trace_hist[-1, 2]
             .repeat(self._shape[1], 0)
             .reshape(self._shape, order="C")
         )
 
         # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        applier_args["traces"] = evaluated_traces
+        applier_args["traces"] = self.evaluated_traces
 
         return applier_args
 
