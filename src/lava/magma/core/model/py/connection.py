@@ -34,46 +34,46 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 class LearningConnection:
     """Base class for plastic connection ProcessModels.
 
-       This class provides commonly used functions for simulating the Loihi
-       learning engine. It is subclasses for floating and fixed point
-       simulations.
+    This class provides commonly used functions for simulating the Loihi
+    learning engine. It is subclasses for floating and fixed point
+    simulations.
 
-       To summarize the behavior:
+    To summarize the behavior:
 
-       Spiking phase:
-       run_spk:
+    Spiking phase:
+    run_spk:
 
-           (1) (Dense) Send activations from past time step to post-synaptic
-           neuron Process.
-           (2) (Dense) Compute activations to be sent on next time step.
-           (3) (Dense) Receive spikes from pre-synaptic neuron Process.
-           (4) (Dense) Record within-epoch pre-synaptic spiking time.
-           Update pre-synaptic traces if more than one spike during the epoch.
-           (5) Receive spikes from post-synaptic neuron Process.
-           (6) Record within-epoch pre-synaptic spiking time.
-           Update pre-synaptic traces if more than one spike during the epoch.
-           (7) Advance trace random generators.
+        (1) (Dense) Send activations from past time step to post-synaptic
+        neuron Process.
+        (2) (Dense) Compute activations to be sent on next time step.
+        (3) (Dense) Receive spikes from pre-synaptic neuron Process.
+        (4) (Dense) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (5) Receive spikes from post-synaptic neuron Process.
+        (6) Record within-epoch pre-synaptic spiking time.
+        Update pre-synaptic traces if more than one spike during the epoch.
+        (7) Advance trace random generators.
 
-       Learning phase:
-       run_lrn:
+    Learning phase:
+    run_lrn:
 
-           (1) Advance synaptic variable random generators.
-           (2) Compute updates for each active synaptic variable,
-           according to associated learning rule,
-           based on the state of Vars representing dependencies and factors.
-           (3) Update traces based on within-epoch spiking times and trace
-           configuration parameters (impulse, decay).
-           (4) Reset within-epoch spiking times and dependency Vars
+        (1) Advance synaptic variable random generators.
+        (2) Compute updates for each active synaptic variable,
+        according to associated learning rule,
+        based on the state of Vars representing dependencies and factors.
+        (3) Update traces based on within-epoch spiking times and trace
+        configuration parameters (impulse, decay).
+        (4) Reset within-epoch spiking times and dependency Vars
 
-       Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
-       delay in this connections Process. It can be adapted according to its
-       learning rule (learned), but it will not affect synaptic activity.
+    Note: The synaptic variable tag_2 currently DOES NOT induce synaptic
+    delay in this connections Process. It can be adapted according to its
+    learning rule (learned), but it will not affect synaptic activity.
 
-       Parameters
-       ----------
-       proc_params: dict
-           Parameters from the ProcessModel
-       """
+    Parameters
+    ----------
+    proc_params: dict
+        Parameters from the ProcessModel
+    """
 
     # Learning Ports
     s_in_bap = None
@@ -230,16 +230,18 @@ class LearningConnection:
         """Build and store boolean numpy arrays specifying which x and y
         traces are active."""
         # Shape : (2, )
-        self._active_x_traces = \
-            self._active_x_traces_per_dependency[0] \
-            | self._active_x_traces_per_dependency[1] \
+        self._active_x_traces = (
+            self._active_x_traces_per_dependency[0]
+            | self._active_x_traces_per_dependency[1]
             | self._active_x_traces_per_dependency[2]
+        )
 
         # Shape : (3, )
-        self._active_y_traces = \
-            self._active_y_traces_per_dependency[0] \
-            | self._active_y_traces_per_dependency[1] \
+        self._active_y_traces = (
+            self._active_y_traces_per_dependency[0]
+            | self._active_y_traces_per_dependency[1]
             | self._active_y_traces_per_dependency[2]
+        )
 
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplier for each active learning
@@ -668,7 +670,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2**k
                 == 0
                 else 0
             )
@@ -1285,21 +1287,6 @@ class LearningConnectionModelFloat(LearningConnection):
         Second dimension representing the trace that is evaluated
         (x1, x2, y1, y2, y3).
         """
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        # Shape of active_x_traces_per_dependency : (3, 2) ->
-        # (3, 2, 1, 1)
-        active_x_traces_per_dep_broad = np.broadcast_to(
-            self._active_x_traces_per_dependency[:, :, np.newaxis, np.newaxis],
-            self._shape_x_traces_per_dep_broad,
-        )
-
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        # Shape of active_y_traces_per_dependency : (3, 3) ->
-        # (3, 3, 1, 1)
-        active_y_traces_per_dep_broad = np.broadcast_to(
-            self._active_y_traces_per_dependency[:, :, np.newaxis, np.newaxis],
-            self._shape_y_traces_per_dep_broad,
-        )
 
         # Shape x0: (num_pre_neurons, ) -> (1, num_pre_neurons)
         # Shape y0: (num_post_neurons, ) -> (num_post_neurons, 1)
@@ -1321,7 +1308,7 @@ class LearningConnectionModelFloat(LearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
+                if int(self.time_step / self._learning_rule.t_epoch) % 2**k
                 == 0
                 else 0
             )
@@ -1329,138 +1316,133 @@ class LearningConnectionModelFloat(LearningConnection):
             # Shape: (0, )
             applier_args["u"] = u
 
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        # Shape of tx : (num_pre_neurons, ) ->
-        # (1, 1, 1, num_pre_neurons)
-        t_spikes_x = np.where(
-            active_x_traces_per_dep_broad,
-            self.tx[np.newaxis, np.newaxis, np.newaxis, :],
-            0,
+        # TODO move the following decay part to evaluate_trace function
+        # Gather all necessary information to decay traces
+        x_traces = self._x_traces
+        y_traces = self._y_traces
+
+        t_epoch = self._learning_rule.t_epoch
+
+        x1_impulse = self._learning_rule.x1_impulse
+        x2_impulse = self._learning_rule.x2_impulse
+        x_impulses = np.atleast_2d([x1_impulse, x2_impulse]).T
+
+        y1_impulse = self._learning_rule.y1_impulse
+        y2_impulse = self._learning_rule.y2_impulse
+        y3_impulse = self._learning_rule.y3_impulse
+        y_impulses = np.atleast_2d([y1_impulse, y2_impulse, y3_impulse]).T
+
+        x1_tau = self._learning_rule.x1_tau
+        x2_tau = self._learning_rule.x2_tau
+        x_taus = np.array([x1_tau, x2_tau])
+
+        y1_tau = self._learning_rule.y1_tau
+        y2_tau = self._learning_rule.y2_tau
+        y3_tau = self._learning_rule.y3_tau
+        y_taus = np.array([y1_tau, y2_tau, y3_tau])
+
+        # get spike times
+        t_spike_x = np.array(self.tx) - 1
+        t_spike_y = np.array(self.ty) - 1
+
+        # most naive algorithm to decay traces
+        # TODO decay only for important time-steps
+        # TODO do not decay for tau=0
+        x_trace_hist = [x_traces]
+        y_trace_hist = [y_traces]
+        for t in range(t_epoch):
+            x_trace_hist.append(
+                self._decay_trace(x_trace_hist[-1].T, 1, x_taus).T
+            )
+            y_trace_hist.append(
+                self._decay_trace(y_trace_hist[-1].T, 1, y_taus).T
+            )
+
+            # add impulses if spike happens in this timestep
+            x_spike_ids = np.where(t_spike_x == t)[0]
+            x_trace_hist[-1][:, x_spike_ids] += x_impulses
+
+            y_spike_ids = np.where(t_spike_y == t)[0]
+            y_trace_hist[-1][:, y_spike_ids] += y_impulses
+
+        # set traces to last value
+        self._set_x_traces(x_trace_hist[-1])
+        self._set_y_traces(y_trace_hist[-1])
+
+        # TODO, use arrays from the beginning to avoid data mingling here
+        x_trace_hist = np.array(x_trace_hist)
+        y_trace_hist = np.array(y_trace_hist)
+
+        # expand dimensionality to weight matrix
+        evaluated_traces = np.zeros((3, 5, self._shape[0], self._shape[1]))
+
+        evaluated_traces[0, 0] = (
+            x_trace_hist[self.tx, 0]
+            .diagonal()
+            .repeat(self._shape[0], 0)
+            .reshape(self._shape, order="F")
         )
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        # Shape of ty : (num_post_neurons, ) ->
-        # (1, 1, num_post_neurons, 1)
-        t_spikes_y = np.where(
-            active_y_traces_per_dep_broad,
-            self.ty[np.newaxis, np.newaxis, :, np.newaxis],
-            0,
+        evaluated_traces[0, 1] = (
+            x_trace_hist[self.tx, 1]
+            .diagonal()
+            .repeat(self._shape[0], 0)
+            .reshape(self._shape, order="F")
+        )
+        evaluated_traces[0, 2] = y_trace_hist[self.tx, 0].T
+        evaluated_traces[0, 3] = y_trace_hist[self.tx, 1].T
+        evaluated_traces[0, 4] = y_trace_hist[self.tx, 2].T
+
+        evaluated_traces[1, 0] = x_trace_hist[self.ty, 0]
+        evaluated_traces[1, 1] = x_trace_hist[self.ty, 1]
+        evaluated_traces[1, 2] = (
+            y_trace_hist[self.ty, 0]
+            .diagonal()
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
+        )
+        evaluated_traces[1, 3] = (
+            y_trace_hist[self.ty, 1]
+            .diagonal()
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
+        )
+        evaluated_traces[1, 4] = (
+            y_trace_hist[self.ty, 2]
+            .diagonal()
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
         )
 
-        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        # Shape of t_eval[0, :, :, :] : (5, num_post_neurons, num_pre_neurons)
-        # Shape of tx : (num_pre_neurons, ) ->
-        # (1, 1, num_pre_neurons)
-        # Shape of ty : (num_post_neurons, ) ->
-        # (1, num_post_neurons, 1)
-        t_eval = np.zeros(self._shape_traces_per_dep_broad, dtype=int)
-        t_eval[0, :, :, :] = self.tx[np.newaxis, np.newaxis, :]
-        t_eval[1, :, :, :] = self.ty[np.newaxis, :, np.newaxis]
-        t_eval[2, :, :, :] = self._learning_rule.t_epoch
-
-        # Shape: (3, 2, num_post_neurons, num_pre_neurons)
-        # Shape of _x_traces: (2, num_pre_neurons) ->
-        # (1, 2, 1, num_pre_neurons)
-        x_traces = np.where(
-            active_x_traces_per_dep_broad,
-            self._x_traces[np.newaxis, :, np.newaxis, :],
-            0.0,
+        evaluated_traces[2, 0] = (
+            x_trace_hist[-1, 0]
+            .repeat(self._shape[0], 0)
+            .reshape(self._shape, order="F")
         )
-        # Shape: (3, 3, num_post_neurons, num_pre_neurons)
-        # Shape of _y_traces: (3, num_post_neurons) ->
-        # (1, 3, 1, num_post_neurons)
-        y_traces = np.where(
-            active_y_traces_per_dep_broad,
-            self._y_traces[np.newaxis, :, :, np.newaxis],
-            0.0,
+        evaluated_traces[2, 1] = (
+            x_trace_hist[-1, 1]
+            .repeat(self._shape[0], 0)
+            .reshape(self._shape, order="F")
         )
-        # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        # Shape of concat(x_traces, y_traces):
-        # (3, 5, num_post_neurons, num_pre_neurons)
-        # Shape of t_eval: (3, 5, num_post_neurons, num_pre_neurons)
-        # Shape of concat(t_spikes_x, t_spikes_y):
-        # (3, 5, num_post_neurons, num_pre_neurons)
-        # Shape of concat(_x_impulses, _y_impulses) and _taus:
-        # (5, ) -> (1, 5, 1, 1)
-        evaluated_traces = self._evaluate_trace(
-            np.concatenate((x_traces, y_traces), axis=1),
-            np.concatenate((t_spikes_x, t_spikes_y), axis=1),
-            t_eval,
-            np.concatenate((self._x_impulses, self._y_impulses), axis=0)[
-                np.newaxis, :, np.newaxis, np.newaxis
-            ],
-            np.concatenate((self._x_taus, self._y_taus), axis=0)[
-                np.newaxis, :, np.newaxis, np.newaxis
-            ],
+        evaluated_traces[2, 2] = (
+            y_trace_hist[-1, 0]
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
+        )
+        evaluated_traces[2, 3] = (
+            y_trace_hist[-1, 1]
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
+        )
+        evaluated_traces[2, 4] = (
+            y_trace_hist[-1, 2]
+            .repeat(self._shape[1], 0)
+            .reshape(self._shape, order="C")
         )
 
         # Shape: (3, 5, num_post_neurons, num_pre_neurons)
         applier_args["traces"] = evaluated_traces
 
         return applier_args
-
-    def _evaluate_trace(
-        self,
-        trace_values: np.ndarray,
-        t_spikes: np.ndarray,
-        t_eval: np.ndarray,
-        trace_impulses: np.ndarray,
-        trace_taus: np.ndarray,
-    ) -> np.ndarray:
-        """Evaluate a trace at given within-epoch time steps, given
-        within-epoch spike timings.
-
-        (1) If t_spikes > 0, decay to t_spikes,
-        addition of trace impulse value, decay to t_eval.
-
-        (2) If t_spikes == 0, decay to t_eval.
-
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values at the beginning of the epoch.
-        t_spikes : ndarray
-            Within-epoch spike timings.
-        t_eval: ndarray
-            Within-epoch evaluation time steps.
-        trace_impulses: ndarray
-            Trace impulse values.
-        trace_taus: ndarray
-            Trace decay time constants.
-
-        Returns
-        ----------
-        result : ndarray
-            Evaluated trace values.
-        """
-        broad_impulses = np.broadcast_to(trace_impulses, trace_values.shape)
-        broad_taus = np.broadcast_to(trace_taus, trace_values.shape)
-
-        t_diff = t_eval - t_spikes
-
-        decay_only = ((t_spikes == 0) | (t_diff < 0)) & (broad_taus > 0)
-        decay_spike_decay = (t_spikes != 0) & (t_diff >= 0) & (broad_taus > 0)
-
-        result = trace_values.copy()
-
-        result[decay_only] = self._decay_trace(
-            trace_values[decay_only], t_eval[decay_only], broad_taus[decay_only]
-        )
-
-        result[decay_spike_decay] = self._decay_trace(
-            result[decay_spike_decay],
-            t_spikes[decay_spike_decay],
-            broad_taus[decay_spike_decay],
-        )
-
-        result[decay_spike_decay] += broad_impulses[decay_spike_decay]
-
-        result[decay_spike_decay] = self._decay_trace(
-            result[decay_spike_decay],
-            t_diff[decay_spike_decay],
-            broad_taus[decay_spike_decay],
-        )
-
-        return result
 
     @staticmethod
     def _decay_trace(
@@ -1521,51 +1503,3 @@ class LearningConnectionModelFloat(LearningConnection):
                 f"'tag_1', or 'tag_2'."
                 f"Got {synaptic_variable_name=}."
             )
-
-    def _update_traces(self) -> None:
-        """Update all traces at the end of the learning epoch."""
-        # Shape: (2, num_pre_neurons)
-        active_x_traces_broad = np.broadcast_to(
-            self._active_x_traces[:, np.newaxis], self._shape_x_traces
-        )
-        # Shape: (3, num_post_neurons)
-        active_y_traces_broad = np.broadcast_to(
-            self._active_y_traces[:, np.newaxis], self._shape_y_traces
-        )
-
-        # Shape: (2, num_pre_neurons)
-        t_spikes_x = np.where(active_x_traces_broad, self.tx, 0)
-        # Shape: (3, num_post_neurons)
-        t_spikes_y = np.where(active_y_traces_broad, self.ty, 0)
-
-        # Shape: (2, num_pre_neurons)
-        t_eval_x = np.where(
-            active_x_traces_broad, self._learning_rule.t_epoch, 0
-        )
-        # Shape: (3, num_post_neurons)
-        t_eval_y = np.where(
-            active_y_traces_broad, self._learning_rule.t_epoch, 0
-        )
-
-        # Shape: (2, num_pre_neurons)
-        # Shape of _x_impulses and _x_taus: (2, ) -> (2, 1)
-        self._set_x_traces(
-            self._evaluate_trace(
-                self._x_traces,
-                t_spikes_x,
-                t_eval_x,
-                self._x_impulses[:, np.newaxis],
-                self._x_taus[:, np.newaxis],
-            )
-        )
-        # Shape: (3, num_post_neurons)
-        # Shape of _x_impulses and _x_taus: (3, ) -> (3, 1)
-        self._set_y_traces(
-            self._evaluate_trace(
-                self._y_traces,
-                t_spikes_y,
-                t_eval_y,
-                self._y_impulses[:, np.newaxis],
-                self._y_taus[:, np.newaxis],
-            )
-        )
