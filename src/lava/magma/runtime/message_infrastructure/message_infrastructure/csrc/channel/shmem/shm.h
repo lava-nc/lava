@@ -43,7 +43,7 @@ class SharedMemory {
   void Store(HandleFn store_fn);
   void Close();
   bool TryProbe();
-  void InitSemaphore();
+  void InitSemaphore(sem_t* req, sem_t *ack);
   int GetDataElem(int offset);
   std::string GetReq();
   std::string GetAck();
@@ -105,11 +105,16 @@ class SharedMemManager {
       LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
       LAVA_DUMP(1, "size: %ld, shmfd_: %d\n", mem_size, shmfd);
     }
+    shm_mmap_.insert({mmap_address, mem_size});
     std::shared_ptr<T> shm =
       std::make_shared<T>(mem_size, mmap_address, random);
-    sem_strs_.insert(shm->GetReq());
-    sem_strs_.insert(shm->GetAck());
-    shm->InitSemaphore();
+    std::string req_name = shm->GetReq();
+    std::string ack_name = shm->GetAck();
+    sem_t *req = sem_open(req_name.c_str(), O_CREAT, 0644, 0);
+    sem_t *ack = sem_open(ack_name.c_str(), O_CREAT, 0644, 1);
+    shm->InitSemaphore(req, ack);
+    sem_p_strs_.insert({req, req_name});
+    sem_p_strs_.insert({ack, ack_name});
     return shm;
   }
 
@@ -122,7 +127,8 @@ class SharedMemManager {
     alloc_pid_ = getpid();
   }
   std::map<int, std::string> shm_fd_strs_;
-  std::set<std::string> sem_strs_;
+  std::map<sem_t*, std::string> sem_p_strs_;
+  std::map<void*, int64_t> shm_mmap_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
   int alloc_pid_;
