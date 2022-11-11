@@ -16,24 +16,28 @@
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_NS (1)
 
-#define NPY_ATTR_DEPRECATE(text)
+#define SIZEOF_CHAR       (sizeof(char))
+#define SIZEOF_UCHAR      (SIZEOF_CHAR)
 
-#define GET_METADATA(metadataptr, array, nd, dtype, dims) do { \
-    if (nd > 0) { \
-        for (int i = 0; i < nd ; i++) { \
-            metadataptr->dims[i] = dims[i]; \
-        } \
-        int product = 1; \
-        for (int i = 0; i < nd; i++) { \
-            metadataptr->strides[nd-i-1] = product; \
-            product*= metadataptr->dims[nd-i-1]; \
-        } \
-        metadataptr->total_size = product; \
-        metadataptr->elsize = sizeof(*array); \
-        metadataptr->type = dtype; \
-        metadataptr->mdata = reinterpret_cast<void*>(array); \
-    } \
-} while (0)
+#define SIZEOF_BOOL       (SIZEOF_UCHAR)
+#define SIZEOF_BYTE       (SIZEOF_CHAR)
+#define SIZEOF_UBYTE      (SIZEOF_UCHAR)
+#define SIZEOF_SHORT      (sizeof(short))  // NOLINT
+#define SIZEOF_USHORT     (sizeof(u_short))
+#define SIZEOF_INT        (sizeof(int))
+#define SIZEOF_UINT       (sizeof(uint))
+#define SIZEOF_LONG       (sizeof(long))  // NOLINT
+#define SIZEOF_ULONG      (sizeof(ulong))
+#define SIZEOF_LONGLONG   (sizeof(long long))  // NOLINT
+#define SIZEOF_ULONGLONG  (sizeof(ulong long))  // NOLINT
+#define SIZEOF_FLOAT      (sizeof(float))
+#define SIZEOF_DOUBLE     (sizeof(double))
+#define SIZEOF_LONGDOUBLE (sizeof(long double))
+#define SIZEOF_NULL       (0)
+// the length of string is unknown
+#define SIZEOF_STRING     (-1)
+
+#define SIZEOF(TYPE) (SIZEOF_ARRAY[TYPE])
 
 namespace message_infrastructure {
 
@@ -50,31 +54,39 @@ enum ChannelType {
   SOCKETCHANNEL = 3
 };
 
-enum NPY_TYPES {    NPY_BOOL = 0,
-                    NPY_BYTE, NPY_UBYTE,
-                    NPY_SHORT, NPY_USHORT,
-                    NPY_INT, NPY_UINT,
-                    NPY_LONG, NPY_ULONG,
-                    NPY_LONGLONG, NPY_ULONGLONG,
-                    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
-                    NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-                    NPY_OBJECT = 17,
-                    NPY_STRING, NPY_UNICODE,
-                    NPY_VOID,
-                    /*
-                     * New 1.6 types appended, may be integrated
-                     * into the above in 2.0.
-                     */
-                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF,
-
-                    NPY_NTYPES,
-                    NPY_NOTYPE,
-                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
-                    NPY_USERDEF = 256,  /* leave room for characters */
-
-                    /* The number of types not including the new 1.6 types */
-                    NPY_NTYPES_ABI_COMPATIBLE = 21
+enum METADATA_TYPES { BOOL = 0,
+                      BYTE, UBYTE,
+                      SHORT, USHORT,
+                      INT, UINT,
+                      LONG, ULONG,
+                      LONGLONG, ULONGLONG,
+                      FLOAT, DOUBLE, LONGDOUBLE,
+                      // align the value of STRING to
+                      // NPY_STRING in ndarraytypes.h
+                      STRING = 18
 };
+
+static int64_t SIZEOF_ARRAY[message_infrastructure::METADATA_TYPES::STRING+1] =
+  { SIZEOF_BOOL,
+    SIZEOF_BYTE,
+    SIZEOF_UBYTE,
+    SIZEOF_SHORT,
+    SIZEOF_USHORT,
+    SIZEOF_INT,
+    SIZEOF_UINT,
+    SIZEOF_LONG,
+    SIZEOF_ULONG,
+    SIZEOF_LONGLONG,
+    SIZEOF_ULONGLONG,
+    SIZEOF_FLOAT,
+    SIZEOF_DOUBLE,
+    SIZEOF_LONGDOUBLE,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_STRING
+  };
 
 struct MetaData {
   int64_t nd;
@@ -89,6 +101,28 @@ struct MetaData {
 // Incase Peek() and Recv() operations of ports will reuse Metadata.
 // Use std::shared_ptr.
 using MetaDataPtr = std::shared_ptr<MetaData>;
+
+inline void GetMetadata(const MetaDataPtr &metadataptr,
+                        void *array,
+                        const int64_t &nd,
+                        const int64_t &dtype,
+                        int64_t *dims) {
+  if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
+    return;
+  }
+  for (int i = 0; i < nd ; i++) {
+      metadataptr->dims[i] = dims[i];
+  }
+  int product = 1;
+  for (int i = 0; i < nd; i++) {
+      metadataptr->strides[nd-i-1] = product;
+      product*= metadataptr->dims[nd-i-1];
+  }
+  metadataptr->total_size = product;
+  metadataptr->elsize = SIZEOF(dtype);
+  metadataptr->type = dtype;
+  metadataptr->mdata = array;
+}
 
 namespace helper {
 

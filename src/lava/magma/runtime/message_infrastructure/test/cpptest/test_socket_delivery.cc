@@ -115,10 +115,10 @@ TEST(TestSocketChannel, SocketLoop) {
 
   MetaDataPtr metadata = std::make_shared<MetaData>();
   int64_t* array = reinterpret_cast<int64_t*>(array_);
-  int dims[] = {10000, 0, 0, 0, 0};
-  int nd = 1;
+  int64_t dims[] = {10000, 0, 0, 0, 0};
+  int64_t nd = 1;
 
-  GET_METADATA(metadata, array, nd, NPY_TYPES::NPY_LONG, dims);
+  GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   to_a1->Send(metadata);
