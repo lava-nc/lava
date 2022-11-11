@@ -37,6 +37,7 @@ class AbstractSendPort : public AbstractPort {
   virtual ~AbstractSendPort() = default;
   virtual void Start() = 0;
   virtual void Send(MetaDataPtr data) = 0;
+  virtual void Send(GrpcMetaDataPtr data) = 0;
   virtual void Join() = 0;
 };
 

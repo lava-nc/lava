@@ -23,6 +23,7 @@ class SocketSendPort final : public AbstractSendPort {
                  name_(name), nbytes_(nbytes), socket_(socket) {}
   void Start();
   void Send(MetaDataPtr metadata);
+  void Send(GrpcMetaDataPtr metadata) {}
   void Join();
   bool Probe();
 

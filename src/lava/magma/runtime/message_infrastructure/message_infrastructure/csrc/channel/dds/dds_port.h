@@ -25,6 +25,7 @@ class DDSSendPort final : public AbstractSendPort {
       helper::Sleep();
     }
   }
+  void Send(GrpcMetaDataPtr metadata) {}
   void Join() {
     publisher_->Stop();
   }

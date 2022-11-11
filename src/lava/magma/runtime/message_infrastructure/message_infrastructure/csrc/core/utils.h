@@ -5,6 +5,8 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
+#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
+
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
@@ -44,7 +46,8 @@ struct MetaData {
 // Incase Peek() and Recv() operations of ports will reuse Metadata.
 // Use std::shared_ptr.
 using MetaDataPtr = std::shared_ptr<MetaData>;
-
+using grpcchannel::GrpcMetaData;
+using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 namespace helper {
 
 static void Sleep() {

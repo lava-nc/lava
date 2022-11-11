@@ -35,6 +35,7 @@ class SendPortProxy : public PortProxy {
 
  private:
   MetaDataPtr MDataFromObject_(py::object* object);
+  GrpcMetaDataPtr GrpcMDataFromObject_(py::object* object);
   ChannelType channel_type_;
   AbstractSendPortPtr send_port_;
 };

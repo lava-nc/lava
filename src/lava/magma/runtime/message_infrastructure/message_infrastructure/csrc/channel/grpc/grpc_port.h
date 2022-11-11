@@ -29,10 +29,8 @@ using grpc::ClientContext;
 using grpc::Status;
 using grpcchannel::DataReply;
 using grpcchannel::GrpcChannelServer;
-using grpcchannel::GrpcMetaData;
 
 using ThreadPtr = std::shared_ptr<std::thread>;
-using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 template class RecvQueue<GrpcMetaDataPtr>;
 
@@ -92,6 +90,7 @@ class GrpcSendPort final : public AbstractSendPort {
 
   void Start();
   void Send(MetaDataPtr metadata);
+  void Send(GrpcMetaDataPtr metadata);
   void Join();
   bool Probe();
 
