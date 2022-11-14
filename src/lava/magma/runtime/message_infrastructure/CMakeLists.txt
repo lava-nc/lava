@@ -83,10 +83,20 @@ if(DDS_CHANNEL)
     "message_infrastructure/csrc/channel/dds/dds_channel.cc")
 
   if(CycloneDDS_ENABLE)
-    find_package(CycloneDDS-CXX REQUIRED)
-    idlcxx_generate(TARGET ddscxxmetadata FILES message_infrastructure/csrc/channel/dds/protos/metadata.idl WARNINGS no-implicit-extensibility)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cyclonedds.cmake)
+    set(CYCLONE_DDS_INC "${COMMON_DDS_DESTINATION}/include/ddscxx")
+    set(ICEORYX_INC "${COMMON_DDS_DESTINATION}/include/iceoryx/v2.0.2")
+    add_custom_target(CycloneDDS_metdata ALL
+                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
+    add_dependencies(CycloneDDS_metdata cyclonedds-cxx)
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp"
+                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/metadata.idl
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds)
+
     add_definitions(-DCycloneDDS_ENABLE)
-    set(CycloneDDS_SRC "message_infrastructure/csrc/channel/dds/cyclone_dds.cc")
+    set(CycloneDDS_SRC
+      "message_infrastructure/csrc/channel/dds/cyclone_dds.cc"
+      "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
   endif()
 
   if(FASTDDS_ENABLE)
@@ -131,7 +141,9 @@ target_compile_definitions(message_infrastructure PUBLIC
 
 target_include_directories(message_infrastructure PUBLIC
                           ${PROJECT_SOURCE_DIR}
-                          $<BUILD_INTERFACE:${COMMON_DDS_INC}>)
+                          $<BUILD_INTERFACE:${COMMON_DDS_INC}>
+                          $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>
+                          $<BUILD_INTERFACE:${ICEORYX_INC}>)
 
 target_link_libraries(message_infrastructure
                       rt)
@@ -143,7 +155,10 @@ if(GRPC_CHANNEL)
 endif()
 
 if(CycloneDDS_ENABLE)
-  target_link_libraries(message_infrastructure ddscxxmetadata CycloneDDS-CXX::ddscxx)
+  add_dependencies(message_infrastructure cyclonedds-cxx CycloneDDS_metdata)
+  target_link_libraries(message_infrastructure
+    ${COMMON_DDS_DESTINATION}/lib/libddsc.so
+    ${COMMON_DDS_DESTINATION}/lib/libddscxx.so)
 endif()
 
 if(FASTDDS_ENABLE)
