@@ -149,10 +149,10 @@ TEST(TestGRPCChannel, GRPCLoop) {
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
     LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);
-    LAVA_LOG_ERR("result != expect_result");
+    LAVA_LOG_ERR("result != expect_result\n");
     throw;
   }
-  LAVA_DUMP(LOG_UTTEST, "grpc cpp loop timedelta: %f",
+  std::printf("grpc cpp loop timedelta: %f\n",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");
 }

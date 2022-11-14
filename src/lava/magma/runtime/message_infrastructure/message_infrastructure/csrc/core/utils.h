@@ -5,6 +5,7 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
@@ -108,6 +109,7 @@ inline void GetMetadata(const MetaDataPtr &metadataptr,
                         const int64_t &dtype,
                         int64_t *dims) {
   if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
+    LAVA_LOG_ERR("invalid nd: %ld\n", nd);
     return;
   }
   for (int i = 0; i < nd ; i++) {
@@ -115,8 +117,8 @@ inline void GetMetadata(const MetaDataPtr &metadataptr,
   }
   int product = 1;
   for (int i = 0; i < nd; i++) {
-      metadataptr->strides[nd-i-1] = product;
-      product*= metadataptr->dims[nd-i-1];
+      metadataptr->strides[nd - i - 1] = product;
+      product *= metadataptr->dims[nd - i - 1];
   }
   metadataptr->total_size = product;
   metadataptr->elsize = SIZEOF(dtype);
