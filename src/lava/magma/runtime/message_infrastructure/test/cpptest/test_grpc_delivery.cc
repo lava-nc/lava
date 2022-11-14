@@ -16,7 +16,6 @@ static void stop_fn() {
   // exit(0);
 }
 
-
 GrpcMetaDataPtr MetaData2GrpcMetaData(MetaDataPtr metadata) {
   GrpcMetaDataPtr grpcdata = std::make_shared<GrpcMetaData>();
   grpcdata->set_nd(metadata->nd);
@@ -136,11 +135,10 @@ TEST(TestGRPCChannel, GRPCLoop) {
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
-  to_a1->Send(metadata);
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
+    to_a1->Send(MetaData2GrpcMetaData(metadata));
     metadata = from_a1->Recv();
-    to_a1->Send(metadata);
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", metadata->type);

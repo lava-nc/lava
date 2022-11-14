@@ -72,7 +72,7 @@ void dds_target_fn_a2_bound(int loop,
 
 TEST(TestDDSDelivery, DDSLoop) {
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = 1000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
     .GetDDSChannel("mp_to_a1", DDSSHM, FASTDDSBackend, 5);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()

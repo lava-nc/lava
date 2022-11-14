@@ -125,7 +125,7 @@ void GrpcSendPort::Send(DataPtr grpcdata) {
   context.set_wait_for_ready(true);
   Status status = stub_->RecvArrayData(&context, *data, &reply);
   if (!reply.ack()) {
-    LAVA_LOG_ERR("Send fail!");
+    LAVA_LOG_ERR("Send fail!\n");
   }
 }
 
