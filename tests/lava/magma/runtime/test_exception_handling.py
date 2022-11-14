@@ -152,14 +152,14 @@ class TestExceptionHandling(unittest.TestCase):
         # # Run the network for another time step -> expect exception
         # # with self.assertRaises(RuntimeError) as context:
         # proc.run(condition=run_steps, run_cfg=run_cfg)
-        # existing_shm = shared_memory.SharedMemory(name='error_block')
+        existing_shm = shared_memory.SharedMemory(name='error_block')
 
         # res = np.ndarray((1,), buffer=existing_shm.buf)
 
         # # exception = context.exception
         # self.assertEqual(res[0], 1)
 
-        # existing_shm.close()
+        existing_shm.close()
         # self.destroy_shared_memory()
 
     @unittest.skip("Cannot capture child process exception. Need to amend ut")
