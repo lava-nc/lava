@@ -20,7 +20,6 @@ add_executable(
   $<$<BOOL:${DDS_CHANNEL}>:cpptest/test_ddschannel.cc>)
 
 
-
 target_link_libraries(
   test_messaging_infrastructure
   GTest::gtest_main

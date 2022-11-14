@@ -160,7 +160,7 @@ def prepare_data():
     return np.concatenate((arr2, arr1))
 
 
-class TestDelivery(unittest.TestCase):
+class TestAllDelivery(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)

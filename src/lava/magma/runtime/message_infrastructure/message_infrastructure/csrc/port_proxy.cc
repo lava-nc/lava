@@ -28,12 +28,10 @@ DataPtr GrpcMDataFromObject_(py::object* object) {
   if (!PyArray_ISWRITEABLE(array)) {
     LAVA_LOG(LOG_LAYER, "The array is not writeable\n");
   }
-  // var from numpy
   int32_t ndim = PyArray_NDIM(array);
   auto dims = PyArray_DIMS(array);
   auto strides = PyArray_STRIDES(array);
   void* data_ptr = PyArray_DATA(array);
-  // auto dtype = PyArray_Type(array);  // no work
   auto dtype = array->descr->type_num;
   auto element_size_in_bytes = PyArray_ITEMSIZE(array);
   auto tsize = PyArray_SIZE(array);
@@ -175,8 +173,6 @@ DataPtr SendPortProxy::DataFromObject_(py::object* object) {
 #if defined(GRPC_CHANNEL)
   if (channel_type_== ChannelType::RPCCHANNEL) {
     return GrpcMDataFromObject_(object);
-  } else {
-    return MDataFromObject_(object);
   }
 #endif
   return MDataFromObject_(object);

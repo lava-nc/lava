@@ -36,6 +36,21 @@ using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 template class RecvQueue<GrpcMetaDataPtr>;
 
+inline GrpcMetaDataPtr MetaData2GrpcMetaData(MetaDataPtr metadata) {
+  GrpcMetaDataPtr grpcdata = std::make_shared<GrpcMetaData>();
+  grpcdata->set_nd(metadata->nd);
+  grpcdata->set_type(metadata->type);
+  grpcdata->set_elsize(metadata->elsize);
+  grpcdata->set_total_size(metadata->total_size);
+  // char* data = reinterpret_cast<char*>(metadata->mdata);
+  for (int i = 0; i < metadata->nd; i++) {
+    grpcdata->add_dims(metadata->dims[i]);
+    grpcdata->add_strides(metadata->strides[i]);
+  }
+  grpcdata->set_value(metadata->mdata, metadata->elsize*metadata->total_size);
+  return grpcdata;
+}
+
 class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
  public:
   GrpcChannelServerImpl(const std::string& name,

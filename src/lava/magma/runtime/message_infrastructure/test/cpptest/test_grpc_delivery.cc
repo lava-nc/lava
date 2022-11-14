@@ -16,21 +16,6 @@ static void stop_fn() {
   // exit(0);
 }
 
-GrpcMetaDataPtr MetaData2GrpcMetaData(MetaDataPtr metadata) {
-  GrpcMetaDataPtr grpcdata = std::make_shared<GrpcMetaData>();
-  grpcdata->set_nd(metadata->nd);
-  grpcdata->set_type(metadata->type);
-  grpcdata->set_elsize(metadata->elsize);
-  grpcdata->set_total_size(metadata->total_size);
-  // char* data = reinterpret_cast<char*>(metadata->mdata);
-  for (int i = 0; i < metadata->nd; i++) {
-    grpcdata->add_dims(metadata->dims[i]);
-    grpcdata->add_strides(metadata->strides[i]);
-  }
-  grpcdata->set_value(metadata->mdata, metadata->elsize*metadata->total_size);
-  return grpcdata;
-}
-
 void grpc_target_fn1(
   int loop,
   AbstractChannelPtr mp_to_a1,
@@ -162,7 +147,6 @@ TEST(TestGRPCChannel, GRPCLoop) {
   mp.Stop(true);
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
-    printf("result: %ld\n", result);
     LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);
     LAVA_LOG_ERR("result != expect_result\n");
     throw;
