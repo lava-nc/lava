@@ -71,6 +71,7 @@ void FastDDSPublisher::InitDataWriter() {
                             .heartbeatPeriod.nanosec = HEARTBEAT_PERIOD_NANOSEC;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
+  wqos.endpoint().history_memory_policy = PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
   writer_ = publisher_->create_datawriter(topic_, wqos, listener_.get());
 }
 
@@ -228,6 +229,7 @@ void FastDDSSubscriber::InitDataReader() {
   rqos.resource_limits().allocated_samples = max_samples_ / 2;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+  rqos.endpoint().history_memory_policy = PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
   reader_ = subscriber_->create_datareader(topic_, rqos, listener_.get());
 }
