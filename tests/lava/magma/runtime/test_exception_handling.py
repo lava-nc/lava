@@ -88,25 +88,25 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
-    def setUp(self):
-        """Creates a shared memory block"""
-        error_message = np.zeros(shape=(1,))
-        shm = shared_memory.SharedMemory(create=True,
-                                         size=error_message.nbytes,
-                                         name='error_block')
-        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
-        err[:] = error_message[:]
-        shm.close()
-        self.shm_name = shm.name
+    # def setUp(self):
+    #     """Creates a shared memory block"""
+    #     error_message = np.zeros(shape=(1,))
+    #     shm = shared_memory.SharedMemory(create=True,
+    #                                      size=error_message.nbytes,
+    #                                      name='error_block')
+    #     err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+    #     err[:] = error_message[:]
+    #     shm.close()
+    #     self.shm_name = shm.name
 
-    def tearDown(self):
-        """Destroys the shared memory block"""
-        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
-        existing_shm.unlink()
+    # def tearDown(self):
+    #     """Destroys the shared memory block"""
+    #     existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+    #     existing_shm.unlink()
 
     def reset_error_count(self):
         """Connects to existing SharedMemory and resets error count"""
-        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        existing_shm = shared_memory.SharedMemory(name='error_block')
         err = np.ndarray((1,), buffer=existing_shm.buf)
         err[0] = 0
         existing_shm.close()
@@ -115,7 +115,7 @@ class TestExceptionHandling(unittest.TestCase):
         """Verifies that the shared memory block is created"""
         self.assertTrue(os.path.exists("/dev/shm/error_block"))
         os.system("sudo chmod 666 /dev/shm/error_block")
-        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        existing_shm = shared_memory.SharedMemory(name='error_block')
         time.sleep(1)
         existing_shm.close()
 
@@ -140,7 +140,7 @@ class TestExceptionHandling(unittest.TestCase):
         # Run the network for another time step -> expect exception
         # with self.assertRaises(RuntimeError) as context:
         proc.run(condition=run_steps, run_cfg=run_cfg)
-        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        existing_shm = shared_memory.SharedMemory(name='error_block')
 
         res = np.ndarray((1,), buffer=existing_shm.buf)
 
@@ -236,6 +236,6 @@ def delete_shmem_block():
 
 
 if __name__ == '__main__':
-    # create_shmem_block()
+    create_shmem_block()
     unittest.main(buffer=False)
-    # delete_shmem_block()
+    delete_shmem_block()
