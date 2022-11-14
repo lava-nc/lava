@@ -52,11 +52,15 @@ void SocketSendPort::Start() {}
 void SocketSendPort::Send(DataPtr metadata) {
   bool ret = false;
   while (!ret) {
-    ret = SocketWrite(socket_.first, reinterpret_cast<MetaData*>(metadata.get()),sizeof(MetaData));
+    ret = SocketWrite(socket_.first,
+                      reinterpret_cast<MetaData*>(metadata.get()),
+                      sizeof(MetaData));
   }
   ret = false;
   while (!ret) {
-    ret = SocketWrite(socket_.first, reinterpret_cast<MetaData*>(metadata.get())->mdata, nbytes_);
+    ret = SocketWrite(socket_.first,
+                      reinterpret_cast<MetaData*>(metadata.get())->mdata,
+                      nbytes_);
   }
 }
 void SocketSendPort::Join() {
