@@ -81,9 +81,9 @@ bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
 void CycloneDDSPublisher::Stop() {
   LAVA_LOG(LOG_DDS, "Stop CycloneDDS Publisher, waiting unmatched...\n");
   // This will cost very long time...
-  // while (listener_->matched_ > 0) {
-  //   helper::Sleep();
-  // }
+  while (listener_->matched_ > 0) {
+    helper::Sleep();
+  }
   // TODO: Delete
 }
 CycloneDDSPublisher::~CycloneDDSPublisher() {

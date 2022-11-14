@@ -11,16 +11,18 @@ from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
 from MessageInfrastructurePywrapper import RecvPort
 from MessageInfrastructurePywrapper import AbstractTransferPort
 from MessageInfrastructurePywrapper import support_grpc_channel
-from MessageInfrastructurePywrapper import support_dds_channel
+from MessageInfrastructurePywrapper import support_fastdds_channel
+from MessageInfrastructurePywrapper import support_cyclonedds_channel
 from .ports import SendPort, Channel
 
 ChannelQueueSize = 32
 SupportGRPCChannel = support_grpc_channel()
-SupportDDSChannel = support_dds_channel()
+SupportFastDDSChannel = support_fastdds_channel()
+SupportCycloneDDSChannel = support_cyclonedds_channel()
 
 if SupportGRPCChannel:
     from .ports import GetRPCChannel
-if SupportDDSChannel:
+if SupportFastDDSChannel or SupportCycloneDDSChannel:
     from .ports import GetDDSChannel
     from MessageInfrastructurePywrapper import DDSTransportType
     from MessageInfrastructurePywrapper import DDSBackendType

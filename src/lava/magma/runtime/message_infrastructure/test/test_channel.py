@@ -15,7 +15,8 @@ from message_infrastructure import (
     SendPort,
     RecvPort,
     SupportGRPCChannel,
-    SupportDDSChannel,
+    SupportFastDDSChannel,
+    SupportCycloneDDSChannel,
     ChannelQueueSize
 )
 
@@ -61,6 +62,31 @@ class Builder:
     def build(self):
         pass
 
+def ddschannel_protocol(transfer_type, backend, topic_name):
+    from message_infrastructure import GetDDSChannel
+    from message_infrastructure import DDSTransportType
+    from message_infrastructure import DDSBackendType
+    mp = MultiProcessing()
+    mp.start()
+    dds_channel = GetDDSChannel(
+        topic_name,
+        transfer_type,
+        backend,
+        ChannelQueueSize)
+
+    send_port = dds_channel.src_port
+    recv_port = dds_channel.dst_port
+
+    recv_port_fn = partial(recv_proc, port=recv_port)
+    send_port_fn = partial(send_proc, port=send_port)
+
+    builder1 = Builder()
+    builder2 = Builder()
+    mp.build_actor(recv_port_fn, builder1)
+    mp.build_actor(send_port_fn, builder2)
+
+    time.sleep(0.1)
+    mp.stop(True)
 
 class TestChannel(unittest.TestCase):
 
@@ -201,35 +227,37 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop(True)
 
-    @unittest.skipIf(not SupportDDSChannel, "Not support grpc channel.")
-    def test_ddschannel(self):
-        from message_infrastructure import GetDDSChannel
+    @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
+    def test_fastdds_channel_shm(self):
         from message_infrastructure import DDSTransportType
         from message_infrastructure import DDSBackendType
-        mp = MultiProcessing()
-        mp.start()
-        nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
-        name = 'test_dds_channel'
+        ddschannel_protocol(DDSTransportType.DDSSHM,
+                            DDSBackendType.FASTDDSBackend,
+                            "test_fastdds_channel_shm")
 
-        dds_channel = GetDDSChannel(
-            name,
-            DDSTransportType.DDSSHM,
-            DDSBackendType.FASTDDSBackend,
-            ChannelQueueSize)
+    @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
+    def test_fastdds_channel_udpv4(self):
+        from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
+        ddschannel_protocol(DDSTransportType.DDSUDPv4,
+                            DDSBackendType.FASTDDSBackend,
+                            "test_fastdds_channel_udpv4")
 
-        send_port = dds_channel.src_port
-        recv_port = dds_channel.dst_port
+    @unittest.skipIf(not SupportCycloneDDSChannel, "Not support cyclonedds channel.")
+    def test_cyclonedds_channel_shm(self):
+        from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
+        ddschannel_protocol(DDSTransportType.DDSSHM,
+                            DDSBackendType.CycloneDDSBackend,
+                            "test_cyclonedds_shm")
 
-        recv_port_fn = partial(recv_proc, port=recv_port)
-        send_port_fn = partial(send_proc, port=send_port)
-
-        builder1 = Builder()
-        builder2 = Builder()
-        mp.build_actor(recv_port_fn, builder1)
-        mp.build_actor(send_port_fn, builder2)
-
-        time.sleep(0.1)
-        mp.stop(True)
+    @unittest.skipIf(not SupportCycloneDDSChannel, "Not support cyclonedds channel.")
+    def test_cyclonedds_channel_udpv4(self):
+        from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
+        ddschannel_protocol(DDSTransportType.DDSUDPv4,
+                            DDSBackendType.CycloneDDSBackend,
+                            "test_cyclonedds_udpv4")
 
 
 if __name__ == "__main__":
