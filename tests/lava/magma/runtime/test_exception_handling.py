@@ -8,6 +8,7 @@ from multiprocessing import shared_memory
 import unittest
 import numpy as np
 import os
+import time
 
 
 from lava.magma.core.decorator import implements, requires, tag
@@ -114,6 +115,9 @@ class TestExceptionHandling(unittest.TestCase):
         """Verifies that the shared memory block is created"""
         self.assertTrue(os.path.exists("/dev/shm/error_block"))
         os.system("sudo chmod 666 /dev/shm/error_block")
+        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        time.sleep(1)
+        existing_shm.close()
 
     @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_one_pm(self):
