@@ -20,8 +20,8 @@ class DDSSendPort final : public AbstractSendPort {
       exit(-1);
     }
   }
-  void Send(MetaDataPtr metadata) {
-    while (!publisher_->Publish(metadata)) {
+  void Send(DataPtr data) {
+    while (!publisher_->Publish(data)) {
       helper::Sleep();
     }
   }

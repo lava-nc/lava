@@ -28,7 +28,7 @@ class ShmemSendPort final : public AbstractSendPort {
                 const size_t &size,
                 const size_t &nbytes);
   void Start();
-  void Send(MetaDataPtr metadata);
+  void Send(DataPtr metadata);
   void Join();
   bool Probe();
 

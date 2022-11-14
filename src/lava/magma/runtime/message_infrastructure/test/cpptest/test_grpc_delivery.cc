@@ -38,11 +38,11 @@ void grpc_target_fn1(
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a2->Send(data);
+      to_a2->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_mp->Send(data);
+      to_mp->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_mp->Join();
@@ -70,7 +70,7 @@ void grpc_target_fn2(
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a1->Send(data);
+      to_a1->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_a1->Join();
@@ -120,11 +120,10 @@ TEST(TestGRPCChannel, GRPCLoop) {
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
-  to_a1->Send(metadata);
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
+    to_a1->Send(MetaData2GrpcMetaData(metadata));
     metadata = from_a1->Recv();
-    to_a1->Send(metadata);
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", metadata->type);

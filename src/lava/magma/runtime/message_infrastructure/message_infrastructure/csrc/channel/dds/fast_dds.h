@@ -68,7 +68,7 @@ class FastDDSPublisher final : public DDSPublisher {
                    max_samples_(max_samples) {}
   ~FastDDSPublisher() override;
   int Init();
-  bool Publish(MetaDataPtr metadata);
+  bool Publish(DataPtr data);
   void Stop();  // Can Init again
 
  private:

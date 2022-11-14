@@ -36,7 +36,7 @@ class AbstractSendPort : public AbstractPort {
   using AbstractPort::AbstractPort;
   virtual ~AbstractSendPort() = default;
   virtual void Start() = 0;
-  virtual void Send(MetaDataPtr data) = 0;
+  virtual void Send(DataPtr data) = 0;
   virtual void Join() = 0;
 };
 

@@ -15,6 +15,85 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+#if defined(GRPC_CHANNEL)
+DataPtr GrpcMDataFromObject_(py::object* object) {
+  PyObject *obj = object->ptr();
+  LAVA_LOG(LOG_LAYER, "start GrpcMDataFromObject\n");
+  if (!PyArray_Check(obj)) {
+    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
+    exit(-1);
+  }
+  LAVA_LOG(LOG_LAYER, "check obj achieved\n");
+  auto array = reinterpret_cast<PyArrayObject*> (obj);
+  if (!PyArray_ISWRITEABLE(array)) {
+    LAVA_LOG(LOG_LAYER, "The array is not writeable\n");
+  }
+  int32_t ndim = PyArray_NDIM(array);
+  auto dims = PyArray_DIMS(array);
+  auto strides = PyArray_STRIDES(array);
+  void* data_ptr = PyArray_DATA(array);
+  auto dtype = array->descr->type_num;
+  auto element_size_in_bytes = PyArray_ITEMSIZE(array);
+  auto tsize = PyArray_SIZE(array);
+  // set grpcdata
+  GrpcMetaDataPtr grpcdata = std::make_shared<GrpcMetaData>();
+  grpcdata->set_nd(ndim);
+  grpcdata->set_type(dtype);
+  grpcdata->set_elsize(element_size_in_bytes);
+  grpcdata->set_total_size(tsize);
+  for (int i = 0; i < ndim; i++) {
+    grpcdata->add_dims(dims[i]);
+    grpcdata->add_strides(strides[i]/element_size_in_bytes);
+    if (strides[i] % element_size_in_bytes != 0) {
+      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
+    }
+  }
+  char* data = reinterpret_cast<char*>(data_ptr);
+  grpcdata->set_value(data, element_size_in_bytes*tsize);
+  return grpcdata;
+}
+#endif
+
+DataPtr MDataFromObject_(py::object* object) {
+  PyObject *obj = object->ptr();
+  LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
+  if (!PyArray_Check(obj)) {
+    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
+    exit(-1);
+  }
+  LAVA_LOG(LOG_LAYER, "check obj achieved\n");
+
+  auto array = reinterpret_cast<PyArrayObject*> (obj);
+  if (!PyArray_ISWRITEABLE(array)) {
+    LAVA_LOG(LOG_LAYER, "The array is not writeable\n");
+  }
+
+  // var from numpy
+  int32_t ndim = PyArray_NDIM(array);
+  auto dims = PyArray_DIMS(array);
+  auto strides = PyArray_STRIDES(array);
+  void* data_ptr = PyArray_DATA(array);
+  // auto dtype = PyArray_Type(array);  // no work
+  auto dtype = array->descr->type_num;
+  auto element_size_in_bytes = PyArray_ITEMSIZE(array);
+  auto tsize = PyArray_SIZE(array);
+  // set metadata
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  metadata->nd = ndim;
+  for (int i = 0; i < ndim; i++) {
+    metadata->dims[i] = dims[i];
+    metadata->strides[i] = strides[i]/element_size_in_bytes;
+    if (strides[i] % element_size_in_bytes != 0) {
+      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
+    }
+  }
+  metadata->type = dtype;
+  metadata->mdata = data_ptr;
+  metadata->elsize = element_size_in_bytes;
+  metadata->total_size = tsize;
+  return metadata;
+}
+
 void MetaDataDump(MetaDataPtr metadata) {
   int64_t *dims = metadata->dims;
   int64_t *strides = metadata->strides;
@@ -41,8 +120,8 @@ bool SendPortProxy::Probe() {
   return send_port_->Probe();
 }
 void SendPortProxy::Send(py::object* object) {
-  MetaDataPtr metadata = MDataFromObject_(object);
-  send_port_->Send(metadata);
+  DataPtr data = DataFromObject_(object);
+  send_port_->Send(data);
 }
 void SendPortProxy::Join() {
   send_port_->Join();
@@ -90,47 +169,13 @@ int trick() {
 
 const int tricky_var = trick();
 
-MetaDataPtr SendPortProxy::MDataFromObject_(py::object* object) {
-  PyObject *obj = object->ptr();
-  LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
-  if (!PyArray_Check(obj)) {
-    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
-    exit(-1);
+DataPtr SendPortProxy::DataFromObject_(py::object* object) {
+#if defined(GRPC_CHANNEL)
+  if (channel_type_== ChannelType::RPCCHANNEL) {
+    return GrpcMDataFromObject_(object);
   }
-
-  LAVA_LOG(LOG_LAYER, "check obj achieved\n");
-
-  auto array = reinterpret_cast<PyArrayObject*> (obj);
-  if (!PyArray_ISWRITEABLE(array)) {
-    LAVA_LOG(LOG_LAYER, "The array is not writeable\n");
-  }
-
-  // var from numpy
-  int32_t ndim = PyArray_NDIM(array);
-  auto dims = PyArray_DIMS(array);
-  auto strides = PyArray_STRIDES(array);
-  void* data_ptr = PyArray_DATA(array);
-  // auto dtype = PyArray_Type(array);  // no work
-  auto dtype = array->descr->type_num;
-  auto element_size_in_bytes = PyArray_ITEMSIZE(array);
-  auto tsize = PyArray_SIZE(array);
-
-  // set metadata
-  MetaDataPtr metadata = std::make_shared<MetaData>();
-  metadata->nd = ndim;
-  for (int i = 0; i < ndim; i++) {
-    metadata->dims[i] = dims[i];
-    metadata->strides[i] = strides[i]/element_size_in_bytes;
-    if (strides[i] % element_size_in_bytes != 0) {
-      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
-    }
-  }
-  metadata->type = dtype;
-  metadata->mdata = data_ptr;
-  metadata->elsize = element_size_in_bytes;
-  metadata->total_size = tsize;
-
-  return metadata;
+#endif
+  return MDataFromObject_(object);
 }
 
 py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
