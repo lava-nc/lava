@@ -123,7 +123,16 @@ class TestExceptionHandling(unittest.TestCase):
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
-        self.create_shared_memory()
+        # self.create_shared_memory()
+        # Create Shared Memory
+        error_message = np.zeros(shape=(1,))
+        shm = shared_memory.SharedMemory(create=True,
+                                         size=error_message.nbytes,
+                                         name='error_block')
+        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+        err[:] = error_message[:]
+        shm.close()
+
         self.verify_file_exists()
         # Resets error count to 0
         self.reset_error_count()
@@ -149,7 +158,7 @@ class TestExceptionHandling(unittest.TestCase):
         self.assertEqual(res[0], 1)
 
         existing_shm.close()
-        self.destroy_shared_memory()
+        # self.destroy_shared_memory()
 
     @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_two_pm(self):
