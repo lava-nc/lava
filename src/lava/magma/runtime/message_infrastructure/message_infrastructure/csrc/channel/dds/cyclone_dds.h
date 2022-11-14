@@ -74,10 +74,11 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
  public:
   CycloneDDSSubscriber(const std::string &topic_name,
                        const DDSTransportType &dds_transfer_type,
-                       const size_t &max_sample_number) :
+                       const size_t &max_sample) :
                        stop_(true),
                        topic_name_(topic_name),
-                       dds_transfer_type_(dds_transfer_type) {}
+                       dds_transfer_type_(dds_transfer_type),
+                       max_samples_(max_sample){}
   ~CycloneDDSSubscriber() override;
   int Init();
   void Stop();
