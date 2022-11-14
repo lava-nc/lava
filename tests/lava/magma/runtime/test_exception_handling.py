@@ -139,15 +139,15 @@ class TestExceptionHandling(unittest.TestCase):
         # Resets error count to 0
         # self.reset_error_count()
 
-        # # Create an instance of P1
-        # proc = P1()
+        # Create an instance of P1
+        proc = P1()
 
-        # run_steps = RunSteps(num_steps=1)
-        # run_cfg = Loihi1SimCfg(
-        #     loglevel=logging.CRITICAL)
+        run_steps = RunSteps(num_steps=1)
+        run_cfg = Loihi1SimCfg(
+            loglevel=logging.CRITICAL)
 
-        # # Run the network for 1 time step -> no exception
-        # proc.run(condition=run_steps, run_cfg=run_cfg)
+        # Run the network for 1 time step -> no exception
+        proc.run(condition=run_steps, run_cfg=run_cfg)
 
         # # Run the network for another time step -> expect exception
         # # with self.assertRaises(RuntimeError) as context:
