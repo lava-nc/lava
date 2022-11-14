@@ -133,9 +133,11 @@ class TestExceptionHandling(unittest.TestCase):
         err[:] = error_message[:]
         shm.close()
 
-        self.verify_file_exists()
+        self.assertTrue(os.path.exists("/dev/shm/error_block"))
+
+        # self.verify_file_exists()
         # Resets error count to 0
-        self.reset_error_count()
+        # self.reset_error_count()
 
         # Create an instance of P1
         proc = P1()
