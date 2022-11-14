@@ -111,7 +111,7 @@ class TestExceptionHandling(unittest.TestCase):
         err[0] = 0
         existing_shm.close()
 
-    def test_verify_file_exists(self):
+    def verify_file_exists(self):
         """Verifies that the shared memory block is created"""
         self.assertTrue(os.path.exists("/dev/shm/error_block"))
         os.system("sudo chmod 666 /dev/shm/error_block")
@@ -119,10 +119,11 @@ class TestExceptionHandling(unittest.TestCase):
         time.sleep(1)
         existing_shm.close()
 
-    @unittest.skip("Cannot capture child process exception. Need to amend ut")
+    # @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
+        self.verify_file_exists()
         # Resets error count to 0
         self.reset_error_count()
 
