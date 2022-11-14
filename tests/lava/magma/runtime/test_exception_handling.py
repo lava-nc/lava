@@ -113,7 +113,7 @@ class TestExceptionHandling(unittest.TestCase):
     def verify_file_exists(self):
         """Verifies that the shared memory block is created"""
         self.assertTrue(os.path.exists("/dev/shm/error_block"))
-        os.system("sudo chmod 777 /dev/shm/error_block")
+        os.system("sudo chmod 666 /dev/shm/error_block")
 
     # @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_one_pm(self):
