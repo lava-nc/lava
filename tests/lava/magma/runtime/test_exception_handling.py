@@ -88,21 +88,21 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
-    # def setUp(self):
-    #     """Creates a shared memory block"""
-    #     error_message = np.zeros(shape=(1,))
-    #     shm = shared_memory.SharedMemory(create=True,
-    #                                      size=error_message.nbytes,
-    #                                      name='error_block')
-    #     err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
-    #     err[:] = error_message[:]
-    #     shm.close()
-    #     self.shm_name = shm.name
+    def create_shared_memory(self):
+        """Creates a shared memory block"""
+        error_message = np.zeros(shape=(1,))
+        shm = shared_memory.SharedMemory(create=True,
+                                         size=error_message.nbytes,
+                                         name='error_block')
+        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+        err[:] = error_message[:]
+        shm.close()
+        self.shm_name = shm.name
 
-    # def tearDown(self):
-    #     """Destroys the shared memory block"""
-    #     existing_shm = shared_memory.SharedMemory(name=self.shm_name)
-    #     existing_shm.unlink()
+    def destroy_shared_memory(self):
+        """Destroys the shared memory block"""
+        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        existing_shm.unlink()
 
     def reset_error_count(self):
         """Connects to existing SharedMemory and resets error count"""
@@ -123,6 +123,7 @@ class TestExceptionHandling(unittest.TestCase):
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
+        self.create_shared_memory()
         self.verify_file_exists()
         # Resets error count to 0
         self.reset_error_count()
@@ -148,6 +149,7 @@ class TestExceptionHandling(unittest.TestCase):
         self.assertEqual(res[0], 1)
 
         existing_shm.close()
+        self.destroy_shared_memory()
 
     @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_two_pm(self):
@@ -236,6 +238,6 @@ def delete_shmem_block():
 
 
 if __name__ == '__main__':
-    create_shmem_block()
+    # create_shmem_block()
     unittest.main(buffer=False)
-    delete_shmem_block()
+    # delete_shmem_block()
