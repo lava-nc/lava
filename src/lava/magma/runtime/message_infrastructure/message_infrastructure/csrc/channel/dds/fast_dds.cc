@@ -109,7 +109,8 @@ void FastDDSPublisher::InitParticipant() {
                                            ->create_participant(0, pqos);
 }
 
-bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
+bool FastDDSPublisher::Publish(DataPtr data) {
+  MetaData* metadata = reinterpret_cast<MetaData*>(data.get());
   if (listener_->matched_ > 0) {
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher start publishing...\n");
     dds_metadata_->nd(metadata->nd);

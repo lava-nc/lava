@@ -34,7 +34,7 @@ class SendPortProxy : public PortProxy {
   size_t Size();
 
  private:
-  MetaDataPtr MDataFromObject_(py::object* object);
+  DataPtr DataFromObject_(py::object* object);
   ChannelType channel_type_;
   AbstractSendPortPtr send_port_;
 };
@@ -69,30 +69,6 @@ using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
 using SendPortProxyList = std::vector<SendPortProxyPtr>;
 using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 
-#if defined(GRPC_CHANNEL)
-class GrpcSendPortProxy : public PortProxy {
- public:
-  GrpcSendPortProxy() {}
-  GrpcSendPortProxy(ChannelType channel_type,
-                    GrpcAbstractSendPortPtr send_port) :
-                    channel_type_(channel_type), send_port_(send_port) {}
-  ChannelType GetChannelType();
-  void Start();
-  bool Probe();
-  void Send(py::object* object);
-  void Join();
-  std::string Name();
-  size_t Size();
-
- private:
-  GrpcMetaDataPtr GrpcMDataFromObject_(py::object* object);
-  ChannelType channel_type_;
-  GrpcAbstractSendPortPtr send_port_;
-};
-
-using GrpcSendPortProxyPtr = std::shared_ptr<GrpcSendPortProxy>;
-using GrpcSendPortProxyList = std::vector<GrpcSendPortProxyPtr>;
-#endif
 }  // namespace message_infrastructure
 
 #endif  // PORT_PROXY_H_

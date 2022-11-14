@@ -40,7 +40,7 @@ enum DDSInitErrorType {
 class DDSPublisher {
  public:
   virtual int Init() = 0;
-  virtual bool Publish(MetaDataPtr metadata) = 0;
+  virtual bool Publish(DataPtr data) = 0;
   virtual void Stop() = 0;
   virtual ~DDSPublisher() {}
 };

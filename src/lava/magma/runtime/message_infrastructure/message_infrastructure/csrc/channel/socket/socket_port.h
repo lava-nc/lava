@@ -22,7 +22,7 @@ class SocketSendPort final : public AbstractSendPort {
                  const size_t &nbytes) :
                  name_(name), nbytes_(nbytes), socket_(socket) {}
   void Start();
-  void Send(MetaDataPtr metadata);
+  void Send(DataPtr metadata);
   void Join();
   bool Probe();
 

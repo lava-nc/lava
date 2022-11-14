@@ -118,11 +118,12 @@ void GrpcSendPort::Start() {
   stub_ = GrpcChannelServer::NewStub(channel_);
 }
 
-void GrpcSendPort::Send(GrpcMetaDataPtr metadata) {
+void GrpcSendPort::Send(DataPtr grpcdata) {
+  GrpcMetaData* data = reinterpret_cast<GrpcMetaData*>(grpcdata.get());
   DataReply reply;
   ClientContext context;
   context.set_wait_for_ready(true);
-  Status status = stub_->RecvArrayData(&context, *metadata, &reply);
+  Status status = stub_->RecvArrayData(&context, *data, &reply);
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!");
   }

@@ -48,6 +48,7 @@ struct MetaData {
 // Incase Peek() and Recv() operations of ports will reuse Metadata.
 // Use std::shared_ptr.
 using MetaDataPtr = std::shared_ptr<MetaData>;
+using DataPtr = std::shared_ptr<void>;
 
 #if defined(GRPC_CHANNEL)
 using grpcchannel::GrpcMetaData;

@@ -36,7 +36,7 @@ AbstractChannelPtr ChannelFactory::GetDDSChannel(
 #endif
 
 #if defined(GRPC_CHANNEL)
-GrpcAbstractChannelPtr ChannelFactory::GetRPCChannel(
+AbstractChannelPtr ChannelFactory::GetRPCChannel(
                                        const std::string &url,
                                        const int &port,
                                        const std::string &src_name,
@@ -45,7 +45,7 @@ GrpcAbstractChannelPtr ChannelFactory::GetRPCChannel(
   return std::make_shared<GrpcChannel>(url, port, src_name, dst_name, size);
 }
 
-GrpcAbstractChannelPtr ChannelFactory::GetDefRPCChannel(
+AbstractChannelPtr ChannelFactory::GetDefRPCChannel(
                                        const std::string &src_name,
                                        const std::string &dst_name,
                                        const size_t &size) {

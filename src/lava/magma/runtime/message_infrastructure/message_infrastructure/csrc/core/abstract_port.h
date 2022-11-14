@@ -36,7 +36,7 @@ class AbstractSendPort : public AbstractPort {
   using AbstractPort::AbstractPort;
   virtual ~AbstractSendPort() = default;
   virtual void Start() = 0;
-  virtual void Send(MetaDataPtr data) = 0;
+  virtual void Send(DataPtr data) = 0;
   virtual void Join() = 0;
 };
 
@@ -57,19 +57,6 @@ using AbstractRecvPortPtr = std::shared_ptr<AbstractRecvPort>;
 using SendPortList = std::list<AbstractSendPortPtr>;
 using RecvPortList = std::list<AbstractRecvPortPtr>;
 
-#if defined(GRPC_CHANNEL)
-class GrpcAbstractSendPort : public AbstractPort {
- public:
-  using AbstractPort::AbstractPort;
-  virtual ~GrpcAbstractSendPort() = default;
-  virtual void Start() = 0;
-  virtual void Send(GrpcMetaDataPtr data) = 0;
-  virtual void Join() = 0;
-};
-
-using GrpcAbstractSendPortPtr = std::shared_ptr<GrpcAbstractSendPort>;
-using GrpcSendPortList = std::list<GrpcAbstractSendPortPtr>;
-#endif
 }  // namespace message_infrastructure
 
 #endif  // CORE_ABSTRACT_PORT_H_

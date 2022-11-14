@@ -16,6 +16,22 @@ static void stop_fn() {
   // exit(0);
 }
 
+
+GrpcMetaDataPtr MetaData2GrpcMetaData(MetaDataPtr metadata) {
+  GrpcMetaDataPtr grpcdata = std::make_shared<GrpcMetaData>();
+  grpcdata->set_nd(metadata->nd);
+  grpcdata->set_type(metadata->type);
+  grpcdata->set_elsize(metadata->elsize);
+  grpcdata->set_total_size(metadata->total_size);
+  // char* data = reinterpret_cast<char*>(metadata->mdata);
+  for (int i = 0; i < metadata->nd; i++) {
+    grpcdata->add_dims(metadata->dims[i]);
+    grpcdata->add_strides(metadata->strides[i]);
+  }
+  grpcdata->set_value(metadata->mdata, metadata->elsize*metadata->total_size);
+  return grpcdata;
+}
+
 void grpc_target_fn1(
   int loop,
   AbstractChannelPtr mp_to_a1,
@@ -38,11 +54,11 @@ void grpc_target_fn1(
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a2->Send(data);
+      to_a2->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_mp->Send(data);
+      to_mp->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_mp->Join();
@@ -70,7 +86,7 @@ void grpc_target_fn2(
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a1->Send(data);
+      to_a1->Send(MetaData2GrpcMetaData(data));
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_a1->Join();
@@ -125,11 +141,13 @@ TEST(TestGRPCChannel, GRPCLoop) {
   std::memcpy(metadata->mdata,
               reinterpret_cast<char*>(array_),
               metadata->elsize * metadata->total_size);
+  GrpcMetaDataPtr grpcdata = MetaData2GrpcMetaData(metadata);
+
   MetaDataPtr mptr;
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
-    to_a1->Send(metadata);
+    to_a1->Send(grpcdata);
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
     mptr = from_a1->Recv();
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
@@ -146,8 +164,10 @@ TEST(TestGRPCChannel, GRPCLoop) {
     int64_t *ptr = reinterpret_cast<int64_t*>(mptr->mdata);
     LAVA_DUMP(LOG_UTTEST, "grpc mdata: %p, grpc *mdata: %ld\n", mptr->mdata,
               *reinterpret_cast<int64_t*>(mptr->mdata));
+    printf("grpc mdata: %p, grpc *mdata: %ld\n", mptr->mdata,
+              *reinterpret_cast<int64_t*>(mptr->mdata));
     free(reinterpret_cast<char*>(metadata->mdata));
-    metadata = mptr;
+    grpcdata = MetaData2GrpcMetaData(mptr);
   }
   const clock_t end_time = std::clock();
   to_a1->Join();
@@ -158,6 +178,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   mp.Stop(true);
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
+    printf("result: %ld\n", result);
     LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);
     LAVA_LOG_ERR("result != expect_result");
     throw;
