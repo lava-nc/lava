@@ -8,7 +8,7 @@
 #if defined(GRPC_CHANNEL)
 #include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
 #endif
-
+#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
@@ -19,6 +19,29 @@
 
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_NS (1)
+
+#define SIZEOF_CHAR       (sizeof(char))
+#define SIZEOF_UCHAR      (SIZEOF_CHAR)
+
+#define SIZEOF_BOOL       (SIZEOF_UCHAR)
+#define SIZEOF_BYTE       (SIZEOF_CHAR)
+#define SIZEOF_UBYTE      (SIZEOF_UCHAR)
+#define SIZEOF_SHORT      (sizeof(short))  // NOLINT
+#define SIZEOF_USHORT     (sizeof(u_short))
+#define SIZEOF_INT        (sizeof(int))
+#define SIZEOF_UINT       (sizeof(uint))
+#define SIZEOF_LONG       (sizeof(long))  // NOLINT
+#define SIZEOF_ULONG      (sizeof(ulong))
+#define SIZEOF_LONGLONG   (sizeof(long long))  // NOLINT
+#define SIZEOF_ULONGLONG  (sizeof(ulong long))  // NOLINT
+#define SIZEOF_FLOAT      (sizeof(float))
+#define SIZEOF_DOUBLE     (sizeof(double))
+#define SIZEOF_LONGDOUBLE (sizeof(long double))
+#define SIZEOF_NULL       (0)
+// the length of string is unknown
+#define SIZEOF_STRING     (-1)
+
+#define SIZEOF(TYPE) (SIZEOF_ARRAY[TYPE])
 
 namespace message_infrastructure {
 
@@ -34,6 +57,40 @@ enum ChannelType {
   DDSCHANNEL = 2,
   SOCKETCHANNEL = 3
 };
+
+enum METADATA_TYPES { BOOL = 0,
+                      BYTE, UBYTE,
+                      SHORT, USHORT,
+                      INT, UINT,
+                      LONG, ULONG,
+                      LONGLONG, ULONGLONG,
+                      FLOAT, DOUBLE, LONGDOUBLE,
+                      // align the value of STRING to
+                      // NPY_STRING in ndarraytypes.h
+                      STRING = 18
+};
+
+static int64_t SIZEOF_ARRAY[message_infrastructure::METADATA_TYPES::STRING+1] =
+  { SIZEOF_BOOL,
+    SIZEOF_BYTE,
+    SIZEOF_UBYTE,
+    SIZEOF_SHORT,
+    SIZEOF_USHORT,
+    SIZEOF_INT,
+    SIZEOF_UINT,
+    SIZEOF_LONG,
+    SIZEOF_ULONG,
+    SIZEOF_LONGLONG,
+    SIZEOF_ULONGLONG,
+    SIZEOF_FLOAT,
+    SIZEOF_DOUBLE,
+    SIZEOF_LONGDOUBLE,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_NULL,
+    SIZEOF_STRING
+  };
 
 struct MetaData {
   int64_t nd;
@@ -54,6 +111,29 @@ using DataPtr = std::shared_ptr<void>;
 using grpcchannel::GrpcMetaData;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 #endif
+
+inline void GetMetadata(const MetaDataPtr &metadataptr,
+                        void *array,
+                        const int64_t &nd,
+                        const int64_t &dtype,
+                        int64_t *dims) {
+  if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
+    LAVA_LOG_ERR("invalid nd: %ld\n", nd);
+    return;
+  }
+  for (int i = 0; i < nd ; i++) {
+      metadataptr->dims[i] = dims[i];
+  }
+  int product = 1;
+  for (int i = 0; i < nd; i++) {
+      metadataptr->strides[nd - i - 1] = product;
+      product *= metadataptr->dims[nd - i - 1];
+  }
+  metadataptr->total_size = product;
+  metadataptr->elsize = SIZEOF(dtype);
+  metadataptr->type = dtype;
+  metadataptr->mdata = array;
+}
 
 namespace helper {
 
