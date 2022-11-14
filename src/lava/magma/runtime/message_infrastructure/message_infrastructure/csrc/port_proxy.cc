@@ -15,6 +15,7 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
+#if defined(GRPC_CHANNEL)
 DataPtr GrpcMDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
   LAVA_LOG(LOG_LAYER, "start GrpcMDataFromObject\n");
@@ -53,6 +54,7 @@ DataPtr GrpcMDataFromObject_(py::object* object) {
   grpcdata->set_value(data, element_size_in_bytes*tsize);
   return grpcdata;
 }
+#endif
 
 DataPtr MDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
