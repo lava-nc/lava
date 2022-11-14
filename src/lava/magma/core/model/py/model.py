@@ -496,12 +496,6 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         REQ_STOP = enum_to_np(-5)
         """Signifies Request of STOP"""
 
-    def _pause(self):
-        """
-        Command handler for Pause Command.
-        """
-        pass
-
     def check_for_stop_cmd(self) -> bool:
         """
         Checks if the RS has sent a STOP command.
@@ -511,6 +505,18 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
             if enum_equal(cmd, MGMT_COMMAND.STOP):
                 self.service_to_process.recv()
                 self._stop()
+                return True
+        return False
+
+    def check_for_pause_cmd(self) -> bool:
+        """
+        Checks if the RS has sent a PAUSE command.
+        """
+        if self.service_to_process.probe():
+            cmd = self.service_to_process.peek()
+            if enum_equal(cmd, MGMT_COMMAND.PAUSE):
+                self.service_to_process.recv()
+                self._pause()
                 return True
         return False
 

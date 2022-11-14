@@ -421,6 +421,9 @@ class AsyncPyRuntimeService(PyRuntimeService):
         return rcv_msgs
 
     def _handle_pause(self):
+        self._send_pm_cmd(MGMT_COMMAND.PAUSE)
+        self._get_pm_resp()
+        self._get_pm_resp()
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
