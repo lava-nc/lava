@@ -35,15 +35,19 @@ void CycloneDDSPubListener::on_publication_matched(
 }
 
 int CycloneDDSPublisher::Init() {
-
   dds_metadata_ = std::make_shared<DDSMetaData>();
+  // cyclone participantqos only has usedata and factory policy.
   participant_ = dds::domain::DomainParticipant(domain::default_id());
   topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
   publisher_ = dds::pub::Publisher(participant_);
   listener_ = std::make_shared<CycloneDDSPubListener>();
+  dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
+  wqos << dds::core::policy::History::KeepLast(max_samples_)
+       << dds::core::policy::Reliability::Reliable()
+       << dds::core::policy::Durability::Volatile(); // volatile for shm
   writer_ = dds::pub::DataWriter<DDSMetaData>(publisher_,
                                               topic_,
-                                              publisher_.default_datawriter_qos(),
+                                              wqos,
                                               listener_.get(),
                                               dds::core::status::StatusMask::all());
   stop_ = false;
@@ -77,9 +81,9 @@ bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
 void CycloneDDSPublisher::Stop() {
   LAVA_LOG(LOG_DDS, "Stop CycloneDDS Publisher, waiting unmatched...\n");
   // This will cost very long time...
-  while (listener_->matched_ > 0) {
-    helper::Sleep();
-  }
+  // while (listener_->matched_ > 0) {
+  //   helper::Sleep();
+  // }
   // TODO: Delete
 }
 CycloneDDSPublisher::~CycloneDDSPublisher() {
@@ -106,9 +110,15 @@ int CycloneDDSSubscriber::Init() {
   topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
   subscriber_ = dds::sub::Subscriber(participant_);
   listener_ = std::make_shared<CycloneDDSSubListener>();
+  dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
+  rqos << dds::core::policy::History::KeepLast(max_samples_)
+       << dds::core::policy::Reliability::Reliable()
+       << dds::core::policy::Durability::Volatile();
+  dds::core::policy::History history;
+
   reader_ = dds::sub::DataReader<DDSMetaData>(subscriber_,
                                               topic_,
-                                              subscriber_.default_datareader_qos(),
+                                              rqos,
                                               listener_.get(),
                                               dds::core::status::StatusMask::all());
   selector_ = std::make_shared<dds::sub::DataReader<DDSMetaData>::Selector>(reader_);
