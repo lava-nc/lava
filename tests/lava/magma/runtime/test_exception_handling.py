@@ -97,25 +97,25 @@ class TestExceptionHandling(unittest.TestCase):
         err[:] = error_message[:]
         shm.close()
         self.shm_name = shm.name
-    
+
     def tearDown(self):
         """Destroys the shared memory block"""
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
         existing_shm.unlink()
-    
+
     def reset_error_count(self):
         """Connects to existing SharedMemory and resets error count"""
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
         err = np.ndarray((1,), buffer=existing_shm.buf)
         err[0] = 0
         existing_shm.close()
-    
+
     def verify_file_exists(self):
         """Verifies that the shared memory block is created"""
         self.assertTrue(os.path.exists("/dev/shm/error_block"))
         # os.system("sudo chmod 666 /dev/shm/error_block")
 
-    # @unittest.skip("Cannot capture child process exception. Need to amend ut")
+    @unittest.skip("Cannot capture child process exception. Need to amend ut")
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
@@ -222,7 +222,6 @@ def create_shmem_block():
     err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
     err[:] = error_message[:]
     shm.close()
-
 
 
 def delete_shmem_block():
