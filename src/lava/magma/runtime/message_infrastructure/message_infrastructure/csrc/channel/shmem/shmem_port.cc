@@ -49,12 +49,14 @@ void ShmemSendPort::Start() {
   shm_->Start();
 }
 
-void ShmemSendPort::Send(MetaDataPtr metadata) {
+void ShmemSendPort::Send(DataPtr metadata) {
   shm_->Store([this, &metadata](void* data){
     char* cptr = reinterpret_cast<char*>(data);
     std::memcpy(cptr, metadata.get(), sizeof(MetaData));
     cptr += sizeof(MetaData);
-    std::memcpy(cptr, metadata->mdata, this->nbytes_ - sizeof(MetaData));
+    std::memcpy(cptr,
+                reinterpret_cast<MetaData*>(metadata.get())->mdata,
+                this->nbytes_ - sizeof(MetaData));
   });
 }
 

@@ -5,6 +5,9 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
+#if defined(GRPC_CHANNEL)
+#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
+#endif
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
 #include <chrono>  // NOLINT
@@ -102,6 +105,35 @@ struct MetaData {
 // Incase Peek() and Recv() operations of ports will reuse Metadata.
 // Use std::shared_ptr.
 using MetaDataPtr = std::shared_ptr<MetaData>;
+using DataPtr = std::shared_ptr<void>;
+
+#if defined(GRPC_CHANNEL)
+using grpcchannel::GrpcMetaData;
+using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
+#endif
+
+inline void GetMetadata(const MetaDataPtr &metadataptr,
+                        void *array,
+                        const int64_t &nd,
+                        const int64_t &dtype,
+                        int64_t *dims) {
+  if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
+    LAVA_LOG_ERR("invalid nd: %ld\n", nd);
+    return;
+  }
+  for (int i = 0; i < nd ; i++) {
+      metadataptr->dims[i] = dims[i];
+  }
+  int product = 1;
+  for (int i = 0; i < nd; i++) {
+      metadataptr->strides[nd - i - 1] = product;
+      product *= metadataptr->dims[nd - i - 1];
+  }
+  metadataptr->total_size = product;
+  metadataptr->elsize = SIZEOF(dtype);
+  metadataptr->type = dtype;
+  metadataptr->mdata = array;
+}
 
 inline void GetMetadata(const MetaDataPtr &metadataptr,
                         void *array,
