@@ -22,19 +22,18 @@ void CycloneDDSPubListener::on_publication_matched(
   dds::pub::DataWriter<DDSMetaData>& writer,
   const dds::core::status::PublicationMatchedStatus &info) {
   if (info.current_count_change() == 1) {
-    matched_++;
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader %d matched.\n", matched_);
-    LAVA_LOG(LOG_DDS, "current count: %d, total count: %d\n", info.current_count(), info.total_count());
+    matched_.store(info.current_count(), std::memory_order_release);
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader %d matched.\n", matched_.load(std::memory_order_release));
   } else if (info.current_count_change() == -1) {
-    matched_--;
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader unmatched. left:%d\n", matched_);
-    LAVA_LOG(LOG_DDS, "current count: %d, total count: %d\n", info.current_count(), info.total_count());
+    matched_.store(info.current_count(), std::memory_order_release);
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader unmatched. left:%d\n", matched_.load(std::memory_order_release));
   } else {
     LAVA_LOG_ERR("CycloneDDS Publistener MatchedStatus error\n");
   }
 }
 
 int CycloneDDSPublisher::Init() {
+  LAVA_LOG(LOG_DDS, "publisher init\n");
   dds_metadata_ = std::make_shared<DDSMetaData>();
   // cyclone participantqos only has usedata and factory policy.
   participant_ = dds::domain::DomainParticipant(domain::default_id());
@@ -42,7 +41,7 @@ int CycloneDDSPublisher::Init() {
   publisher_ = dds::pub::Publisher(participant_);
   listener_ = std::make_shared<CycloneDDSPubListener>();
   dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
-  wqos << dds::core::policy::History::KeepAll()
+  wqos << dds::core::policy::History::KeepLast(32)
        << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(5))
        << dds::core::policy::Durability::Volatile(); // volatile for shm
   writer_ = dds::pub::DataWriter<DDSMetaData>(publisher_,
@@ -55,56 +54,67 @@ int CycloneDDSPublisher::Init() {
 }
 
 bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
-  if (listener_->matched_ > 0) {
-    LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing...\n");
-    dds_metadata_->nd(metadata->nd);
-    dds_metadata_->type(metadata->type);
-    dds_metadata_->elsize(metadata->elsize);
-    dds_metadata_->total_size(metadata->total_size);
-
-    memcpy(&dds_metadata_->dims()[0], metadata->dims, sizeof(metadata->dims));
-    memcpy(&dds_metadata_->strides()[0],
-            metadata->strides,
-            sizeof(metadata->strides));
-    size_t nbytes = metadata->elsize * metadata->total_size;
-    dds_metadata_->mdata(std::vector<char>(
-                    reinterpret_cast<char*>(metadata->mdata),
-                    reinterpret_cast<char*>(metadata->mdata) + nbytes));
-    LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher copied\n");
-    writer_.write(*dds_metadata_.get());
-    LAVA_DEBUG(LOG_DDS, "datawriter send the data\n");
-    return true;
+  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing, matched:%d\n", listener_->matched_.load(std::memory_order_release));
+  LAVA_DEBUG(LOG_DDS, "writer_ matched: %d\n", writer_.publication_matched_status().current_count());
+  while (listener_->matched_.load(std::memory_order_release) == 0) {
+    helper::Sleep();
   }
-  return false;
+  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher find matched reader\n");
+  dds_metadata_->nd(metadata->nd);
+  dds_metadata_->type(metadata->type);
+  dds_metadata_->elsize(metadata->elsize);
+  dds_metadata_->total_size(metadata->total_size);
+
+  memcpy(&dds_metadata_->dims()[0], metadata->dims, sizeof(metadata->dims));
+  memcpy(&dds_metadata_->strides()[0],
+          metadata->strides,
+          sizeof(metadata->strides));
+  size_t nbytes = metadata->elsize * metadata->total_size;
+  dds_metadata_->mdata(std::vector<char>(
+                  reinterpret_cast<char*>(metadata->mdata),
+                  reinterpret_cast<char*>(metadata->mdata) + nbytes));
+  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher copied\n");
+  writer_.write(*dds_metadata_.get());
+  LAVA_DEBUG(LOG_DDS, "datawriter send the data\n");
+  return true;
 }
 
 void CycloneDDSPublisher::Stop() {
   LAVA_LOG(LOG_DDS, "Stop CycloneDDS Publisher, waiting unmatched...\n");
-  // This will cost very long time...
-  if (stop_)
+  if (stop_) {
     return;
+  }
   while (listener_->matched_ > 0) {
     helper::Sleep();
   }
+  try {
+    writer_.~DataWriter();
+    participant_ = dds::core::null;
+    publisher_ = dds::core::null;
+    topic_ = dds::core::null;
+    writer_ = dds::core::null;
+  } catch (const dds::core::Exception& e) {
+    std::cerr << "=== [Publisher] Exception: " << e.what() << std::endl;
+  }
   stop_ = true;
-  // TODO: Delete
 }
 CycloneDDSPublisher::~CycloneDDSPublisher() {
+  if(!stop_) {
+    Stop();
+  }
 }
 
 void CycloneDDSSubListener::on_subscription_matched(
     dds::sub::DataReader<DDSMetaData> &reader,
     const dds::core::status::SubscriptionMatchedStatus &info) {
   if (info.current_count_change() == 1) {
-    matched_++;
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter %d matched.\n", matched_);
-    LAVA_LOG(LOG_DDS, "current count: %d, total count: %d\n", info.current_count(), info.total_count());
+    matched_.store(info.current_count(), std::memory_order_release);
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter %d matched.\n", info.current_count());
   } else if (info.current_count_change() == -1) {
-    matched_--;
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter unmatched. left:%d\n", matched_);
-    LAVA_LOG(LOG_DDS, "current count: %d, total count: %d\n", info.current_count(), info.total_count());
+    matched_.store(info.current_count(), std::memory_order_release);
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter unmatched. left:%d\n", info.current_count());
   } else {
-    LAVA_LOG_ERR("CycloneDDS Publistener MatchedStatus error\n");
+    LAVA_LOG_ERR("CycloneDDS Sublistener MatchedStatus error\n");
   }
 }
 int CycloneDDSSubscriber::Init() {
@@ -114,7 +124,7 @@ int CycloneDDSSubscriber::Init() {
   subscriber_ = dds::sub::Subscriber(participant_);
   listener_ = std::make_shared<CycloneDDSSubListener>();
   dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
-  rqos << dds::core::policy::History::KeepAll()
+  rqos << dds::core::policy::History::KeepLast(32)
        << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(5))
        << dds::core::policy::Durability::Volatile();
   dds::core::policy::History history;
@@ -131,10 +141,11 @@ int CycloneDDSSubscriber::Init() {
 }
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
-  LAVA_LOG(LOG_DDS, "CycloneDDS recving...\n");
-  while(listener_->matched_ <= 0) {
-    helper::Sleep();
-  }
+  LAVA_DEBUG(LOG_DDS, "CycloneDDS recving...\n");
+  // while(listener_->matched_ <= 0) {
+  //   helper::Sleep();
+  // }
+  // LAVA_DEBUG(LOG_DDS, "CycloneDDS Writer Matched.\n");
   dds::sub::LoanedSamples<DDSMetaData> samples;
   if (keep) {
     while ((samples = selector_->read()).length() <= 0) {
@@ -179,18 +190,20 @@ void CycloneDDSSubscriber::Stop() {
     return;
   LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release...\n");
   try {
-    participant_.close();
-    subscriber_.close();
-    topic_.close();
-    reader_.close();
+    reader_.~DataReader();
+    participant_ = dds::core::null;
+    subscriber_ = dds::core::null;
+    topic_ = dds::core::null;
+    reader_ = dds::core::null;
   } catch (const dds::core::Exception& e) {
     std::cerr << "=== [Publisher] Exception: " << e.what() << std::endl;
   }
-
   stop_ = true;
 }
 
 CycloneDDSSubscriber::~CycloneDDSSubscriber() {
-
+  if (!stop_) {
+    Stop();
+  }
 }
 }  // namespace message_infrastructure

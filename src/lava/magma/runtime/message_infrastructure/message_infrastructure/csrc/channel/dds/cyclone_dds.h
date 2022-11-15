@@ -9,6 +9,7 @@
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.hpp>
 #include <dds/dds.hpp>
+#include <atomic>
 
 namespace message_infrastructure {
 
@@ -22,7 +23,7 @@ class CycloneDDSPubListener final : public dds::pub::NoOpDataWriterListener<DDSM
     dds::pub::DataWriter<DDSMetaData> &writer,
     const dds::core::status::PublicationMatchedStatus &info) override;
   ~CycloneDDSPubListener() {}
-  int matched_;
+  std::atomic_uint32_t matched_;
 };
 
 using CycloneDDSPubListenerPtr = std::shared_ptr<CycloneDDSPubListener>;
@@ -65,7 +66,7 @@ class CycloneDDSSubListener final : public dds::sub::NoOpDataReaderListener<DDSM
   void on_subscription_matched(
         dds::sub::DataReader<DDSMetaData> &reader,
         const dds::core::status::SubscriptionMatchedStatus &info) override;
-  int matched_;
+  std::atomic_uint32_t matched_;
 };
 
 using CycloneDDSSubListenerPtr = std::shared_ptr<CycloneDDSSubListener>;

@@ -10,8 +10,8 @@
 
 namespace message_infrastructure {
 
-const size_t DATA_LENGTH = 100;
-const uint32_t loop_number = 1;
+const size_t DATA_LENGTH = 10000;
+const uint32_t loop_number = 10000;
 const size_t DEPTH = 32;
 
 void dds_stop_fn() {
