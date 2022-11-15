@@ -120,7 +120,6 @@ TEST(TestGRPCChannel, GRPCLoop) {
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
-  to_a1->Send(metadata);
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
     to_a1->Send(MetaData2GrpcMetaData(metadata));
