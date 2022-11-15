@@ -135,29 +135,6 @@ inline void GetMetadata(const MetaDataPtr &metadataptr,
   metadataptr->mdata = array;
 }
 
-inline void GetMetadata(const MetaDataPtr &metadataptr,
-                        void *array,
-                        const int64_t &nd,
-                        const int64_t &dtype,
-                        int64_t *dims) {
-  if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
-    LAVA_LOG_ERR("invalid nd: %ld\n", nd);
-    return;
-  }
-  for (int i = 0; i < nd ; i++) {
-      metadataptr->dims[i] = dims[i];
-  }
-  int product = 1;
-  for (int i = 0; i < nd; i++) {
-      metadataptr->strides[nd - i - 1] = product;
-      product *= metadataptr->dims[nd - i - 1];
-  }
-  metadataptr->total_size = product;
-  metadataptr->elsize = SIZEOF(dtype);
-  metadataptr->type = dtype;
-  metadataptr->mdata = array;
-}
-
 namespace helper {
 
 static void Sleep() {
