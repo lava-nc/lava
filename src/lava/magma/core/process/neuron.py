@@ -1,5 +1,5 @@
 import typing as ty
-from lava.magma.core.process.ports.ports import OutPort
+from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.variable import Var
 
@@ -33,6 +33,8 @@ class LearningNeuronProcess:
         self.learning_rule = learning_rule
 
         # Learning Ports
+        self.a_in_reward = InPort(shape=(shape[0],))
+
         # Port for backprop action potentials
         self.s_out_bap = OutPort(shape=(shape[0],))
 
