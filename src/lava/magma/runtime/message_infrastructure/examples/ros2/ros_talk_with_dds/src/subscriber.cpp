@@ -15,7 +15,7 @@ public:
   : Node("minimal_subscriber")
   {
     subscription_ = this->create_subscription<ddsmetadata::msg::DDSMetaData>(
-      "dds_topic", rclcpp::SensorDataQoS(), std::bind(&MinimalSubscriber::topic_callback, this, _1));
+      "dds_topic", rclcpp::SystemDefaultsQoS(), std::bind(&MinimalSubscriber::topic_callback, this, _1));
   }
 
 private:
