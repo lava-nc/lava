@@ -91,8 +91,8 @@ if(DDS_CHANNEL)
     add_definitions(-DFASTDDS)
     set(FASTDDS_SRC
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaData.cc"
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.cc"
       ${DDS_CHANNEL_SRCS})
   endif()
 
