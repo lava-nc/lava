@@ -443,6 +443,7 @@ class PyLearningLIFModelFixed(LearningNeuronModelFixed, AbstractPyLifModelFixed)
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    a_in_reward: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
     vth: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
