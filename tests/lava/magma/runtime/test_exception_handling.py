@@ -125,15 +125,15 @@ class TestExceptionHandling(unittest.TestCase):
         runtime."""
         # self.create_shared_memory()
         # Create Shared Memory
-        error_message = np.zeros(shape=(1,))
-        shm = shared_memory.SharedMemory(create=True,
-                                         size=error_message.nbytes,
-                                         name='error_block')
-        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
-        err[:] = error_message[:]
-        shm.close()
+        # error_message = np.zeros(shape=(1,))
+        # shm = shared_memory.SharedMemory(create=True,
+        #                                  size=error_message.nbytes,
+        #                                  name='error_block')
+        # err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+        # err[:] = error_message[:]
+        # shm.close()
 
-        self.assertTrue(os.path.exists("/dev/shm/error_block"))
+        # self.assertTrue(os.path.exists("/dev/shm/error_block"))
 
         # self.verify_file_exists()
         # Resets error count to 0
@@ -149,17 +149,17 @@ class TestExceptionHandling(unittest.TestCase):
         # Run the network for 1 time step -> no exception
         proc.run(condition=run_steps, run_cfg=run_cfg)
 
-        # # Run the network for another time step -> expect exception
-        # # with self.assertRaises(RuntimeError) as context:
-        # proc.run(condition=run_steps, run_cfg=run_cfg)
-        existing_shm = shared_memory.SharedMemory(name='error_block')
+        # Run the network for another time step -> expect exception
+        # with self.assertRaises(RuntimeError) as context:
+        proc.run(condition=run_steps, run_cfg=run_cfg)
+        # existing_shm = shared_memory.SharedMemory(name='error_block')
 
         # res = np.ndarray((1,), buffer=existing_shm.buf)
 
         # # exception = context.exception
         # self.assertEqual(res[0], 1)
 
-        existing_shm.close()
+        # existing_shm.close()
         # self.destroy_shared_memory()
 
     @unittest.skip("Cannot capture child process exception. Need to amend ut")
