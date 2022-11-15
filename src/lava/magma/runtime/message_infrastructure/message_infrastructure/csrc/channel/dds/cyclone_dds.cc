@@ -41,8 +41,8 @@ int CycloneDDSPublisher::Init() {
   publisher_ = dds::pub::Publisher(participant_);
   listener_ = std::make_shared<CycloneDDSPubListener>();
   dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
-  wqos << dds::core::policy::History::KeepLast(32)
-       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(5))
+  wqos << dds::core::policy::History::KeepLast(max_samples_)
+       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(HEARTBEAT_PERIOD_SECONDS))
        << dds::core::policy::Durability::Volatile(); // volatile for shm
   writer_ = dds::pub::DataWriter<DDSMetaData>(publisher_,
                                               topic_,
@@ -56,7 +56,7 @@ int CycloneDDSPublisher::Init() {
 bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing, matched:%d\n", listener_->matched_.load(std::memory_order_release));
   LAVA_DEBUG(LOG_DDS, "writer_ matched: %d\n", writer_.publication_matched_status().current_count());
-  while (listener_->matched_.load(std::memory_order_release) == 0) {
+  while (writer_.publication_matched_status().current_count() == 0) {
     helper::Sleep();
   }
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher find matched reader\n");
@@ -84,7 +84,7 @@ void CycloneDDSPublisher::Stop() {
   if (stop_) {
     return;
   }
-  while (listener_->matched_ > 0) {
+  while (writer_.publication_matched_status().current_count() > 0) {
     helper::Sleep();
   }
   try {
@@ -124,8 +124,8 @@ int CycloneDDSSubscriber::Init() {
   subscriber_ = dds::sub::Subscriber(participant_);
   listener_ = std::make_shared<CycloneDDSSubListener>();
   dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
-  rqos << dds::core::policy::History::KeepLast(32)
-       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(5))
+  rqos << dds::core::policy::History::KeepLast(max_samples_)
+       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(HEARTBEAT_PERIOD_SECONDS))
        << dds::core::policy::Durability::Volatile();
   dds::core::policy::History history;
 
