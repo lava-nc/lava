@@ -85,7 +85,6 @@ if(DDS_CHANNEL)
   if(CycloneDDS_ENABLE)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cyclonedds.cmake)
     set(CYCLONE_DDS_INC "${COMMON_DDS_DESTINATION}/include/ddscxx")
-    set(ICEORYX_INC "${COMMON_DDS_DESTINATION}/include/iceoryx/v2.0.2")
     add_custom_target(CycloneDDS_metdata ALL
                       DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
     add_dependencies(CycloneDDS_metdata cyclonedds-cxx)
@@ -142,8 +141,7 @@ target_compile_definitions(message_infrastructure PUBLIC
 target_include_directories(message_infrastructure PUBLIC
                           ${PROJECT_SOURCE_DIR}
                           $<BUILD_INTERFACE:${COMMON_DDS_INC}>
-                          $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>
-                          $<BUILD_INTERFACE:${ICEORYX_INC}>)
+                          $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>)
 
 target_link_libraries(message_infrastructure
                       rt)

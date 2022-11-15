@@ -21,12 +21,11 @@ void CycloneDDSPubListener::on_offered_incompatible_qos(
 void CycloneDDSPubListener::on_publication_matched(
   dds::pub::DataWriter<DDSMetaData>& writer,
   const dds::core::status::PublicationMatchedStatus &info) {
+  matched_.store(info.current_count());
   if (info.current_count_change() == 1) {
-    matched_.store(info.current_count(), std::memory_order_release);
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader %d matched.\n", matched_.load(std::memory_order_release));
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader %d matched.\n", matched_.load());
   } else if (info.current_count_change() == -1) {
-    matched_.store(info.current_count(), std::memory_order_release);
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader unmatched. left:%d\n", matched_.load(std::memory_order_release));
+    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader unmatched. left:%d\n", matched_.load());
   } else {
     LAVA_LOG_ERR("CycloneDDS Publistener MatchedStatus error\n");
   }
@@ -54,9 +53,9 @@ int CycloneDDSPublisher::Init() {
 }
 
 bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
-  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing, matched:%d\n", listener_->matched_.load(std::memory_order_release));
+  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing, matched:%d\n", listener_->matched_.load());
   LAVA_DEBUG(LOG_DDS, "writer_ matched: %d\n", writer_.publication_matched_status().current_count());
-  while (writer_.publication_matched_status().current_count() == 0) {
+  while (listener_->matched_.load() == 0) {
     helper::Sleep();
   }
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher find matched reader\n");

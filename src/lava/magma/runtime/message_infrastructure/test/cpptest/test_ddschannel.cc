@@ -148,9 +148,6 @@ TEST(TestDDSDelivery, FastDDSUDPv4Loop) {
 #endif
 
 #if defined(CycloneDDS_ENABLE)
-TEST(TestDDSDelivery, CycloneDDSSHMLoop) {
-  dds_protocol("cyclone_shm_", DDSSHM, CycloneDDSBackend);
-}
 TEST(TestDDSDelivery, CycloneDDSUDPv4Loop) {
   dds_protocol("cyclone_UDPv4", DDSUDPv4, CycloneDDSBackend);
 }
