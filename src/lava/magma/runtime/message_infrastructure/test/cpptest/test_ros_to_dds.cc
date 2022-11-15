@@ -6,22 +6,22 @@
 #include <message_infrastructure/csrc/core/channel_factory.h>
 #include <message_infrastructure/csrc/channel/dds/dds_channel.h>
 
-using namespace message_infrastructure;
+using namespace message_infrastructure;  // NOLINT
 
 #define LOOP_NUM 100
 
 int main() {
-	auto dds_channel = GetChannelFactory()
+  auto dds_channel = GetChannelFactory()
     .GetDDSChannel("rt/dds_topic", DDSUDPv4, FASTDDSBackend, 10);
     // .GetDDSChannel("rt/dds_topic", DDSSHM, FASTDDSBackend, 10);
-	auto dds_recv = dds_channel->GetRecvPort();
-	int loop = LOOP_NUM;
+  auto dds_recv = dds_channel->GetRecvPort();
+  int loop = LOOP_NUM;
 
-	dds_recv->Start();
-	while (loop--) {
-		MetaDataPtr res = dds_recv->Recv();
-		printf("DDS recv : %d\n", *reinterpret_cast<int64_t*>(res->mdata));
-	}
-	dds_recv->Join();
-	return 0;
+  dds_recv->Start();
+  while (loop--) {
+    MetaDataPtr res = dds_recv->Recv();
+    printf("DDS recv : %d\n", *reinterpret_cast<int64_t*>(res->mdata));
+  }
+  dds_recv->Join();
+  return 0;
 }
