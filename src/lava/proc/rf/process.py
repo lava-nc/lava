@@ -68,8 +68,8 @@ class RF(AbstractProcess):
         if state_exp > 0:
             vth = int(vth * (1 << state_exp))
         if decay_bits > 0:
-            sin_decay = int(sin_decay * (1 << decay_bits))
-            cos_decay = int(cos_decay * (1 << decay_bits))
+            sin_decay = np.int32(sin_decay * (1 << decay_bits))
+            cos_decay = np.int32(cos_decay * (1 << decay_bits))
 
         self.a_real_in = InPort(shape=shape)
         self.a_imag_in = InPort(shape=shape)
