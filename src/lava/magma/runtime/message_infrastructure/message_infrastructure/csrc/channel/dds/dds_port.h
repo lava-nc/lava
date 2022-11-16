@@ -20,8 +20,8 @@ class DDSSendPort final : public AbstractSendPort {
       exit(-1);
     }
   }
-  void Send(MetaDataPtr metadata) {
-    while (!publisher_->Publish(metadata)) {
+  void Send(DataPtr data) {
+    while (!publisher_->Publish(data)) {
       helper::Sleep();
     }
   }
@@ -36,6 +36,8 @@ class DDSSendPort final : public AbstractSendPort {
   DDSPublisherPtr publisher_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using DDSSendPortPtr = std::shared_ptr<DDSSendPort>;
 
 class DDSRecvPort final : public AbstractRecvPort {

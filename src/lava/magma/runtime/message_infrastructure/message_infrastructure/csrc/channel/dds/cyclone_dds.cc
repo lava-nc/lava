@@ -60,7 +60,7 @@ int CycloneDDSPublisher::Init() {
   return 0;
 }
 
-bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
+bool CycloneDDSPublisher::Publish(DataPtr data) {
   LAVA_DEBUG(LOG_DDS,
              "CycloneDDS publisher start publishing, matched:%d\n",
              listener_->matched_.load());
@@ -71,6 +71,7 @@ bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
     helper::Sleep();
   }
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher find matched reader\n");
+  MetaData* metadata = reinterpret_cast<MetaData*>(data.get());
   dds_metadata_->nd(metadata->nd);
   dds_metadata_->type(metadata->type);
   dds_metadata_->elsize(metadata->elsize);

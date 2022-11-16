@@ -45,6 +45,7 @@
 #define LOG_SMMP  (1)  // log for shmemport
 #define LOG_SKP   (1)  // log for socketport
 #define LOG_DDS   (1)  // lof for DDS Channel
+#define LOG_UTTEST   (1)
 
 #if defined(MSG_LOG_LEVEL)
 #elif defined(MSG_LOG_LEVEL_ALL)
@@ -64,11 +65,11 @@
     int length = 0; \
     char *log_data = reinterpret_cast<char *> \
                       (malloc(sizeof(char)*MAX_SIZE_PER_LOG_MSG)); \
-    if (log_data != NULL) { \
+    if (log_data != nullptr) { \
       length = std::snprintf(log_data, \
                              MAX_SIZE_PER_LOG_MSG, _fmt, ## __VA_ARGS__); \
     } \
-    if (log_data == NULL || length <0) { \
+    if (log_data == nullptr || length <0) { \
       GetLogInstance()->LogWrite(LogMsg(std::string(LOG_MSG_SUBSTITUTION), \
                                         __FILE__, \
                                         __LINE__, \
@@ -166,6 +167,8 @@ class MessageInfrastructureLog {
   std::queue<LogMsg> log_queue_;
 };
 
+// MessageInfrastructureLog object should be handled by multiple actors.
+// Use std::shared_ptr.
 using MessageInfrastructureLogPtr = std::shared_ptr<MessageInfrastructureLog>;
 
 MessageInfrastructureLogPtr GetLogInstance();

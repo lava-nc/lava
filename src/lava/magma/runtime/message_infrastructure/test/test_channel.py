@@ -245,7 +245,7 @@ class TestChannel(unittest.TestCase):
                             DDSBackendType.FASTDDSBackend,
                             "test_fastdds_channel_udpv4")
 
-    @unittest.skipIf(not SupportCycloneDDSChannel, \
+    @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
     def test_cyclonedds_channel_shm(self):
         from message_infrastructure import DDSTransportType
@@ -254,7 +254,7 @@ class TestChannel(unittest.TestCase):
                             DDSBackendType.CycloneDDSBackend,
                             "test_cyclonedds_shm")
 
-    @unittest.skipIf(not SupportCycloneDDSChannel, \
+    @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
     def test_cyclonedds_channel_udpv4(self):
         from message_infrastructure import DDSTransportType

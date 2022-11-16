@@ -14,8 +14,24 @@
 #include <condition_variable>  // NOLINT
 #include <cassert>
 #include <cstring>
+#include <cstdlib>
 
 namespace message_infrastructure {
+
+namespace {
+
+void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
+  std::memcpy(ptr.get(), p, sizeof(MetaData));
+  ptr->mdata = std::calloc(nbytes, 1);
+  if (ptr->mdata == nullptr) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
+  LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr->mdata);
+  std::memcpy(ptr->mdata,
+    reinterpret_cast<char *>(p) + sizeof(MetaData), nbytes);
+}
+
+}  // namespace
 
 template<>
 void RecvQueue<MetaDataPtr>::FreeData(MetaDataPtr data) {
@@ -33,12 +49,14 @@ void ShmemSendPort::Start() {
   shm_->Start();
 }
 
-void ShmemSendPort::Send(MetaDataPtr metadata) {
+void ShmemSendPort::Send(DataPtr metadata) {
   shm_->Store([this, &metadata](void* data){
     char* cptr = reinterpret_cast<char*>(data);
     std::memcpy(cptr, metadata.get(), sizeof(MetaData));
     cptr += sizeof(MetaData);
-    std::memcpy(cptr, metadata->mdata, this->nbytes_ - sizeof(MetaData));
+    std::memcpy(cptr,
+                reinterpret_cast<MetaData*>(metadata.get())->mdata,
+                this->nbytes_ - sizeof(MetaData));
   });
 }
 
@@ -72,11 +90,8 @@ void ShmemRecvPort::QueueRecv() {
     if (this->recv_queue_->AvailableCount() > 0) {
       ret = shm_->Load([this](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
-        std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-        metadata_res->mdata = malloc(this->nbytes_ - sizeof(MetaData));
-        std::memcpy(metadata_res->mdata,
-          reinterpret_cast<char *>(data) + sizeof(MetaData),
-          this->nbytes_ - sizeof(MetaData));
+        MetaDataPtrFromPointer(metadata_res, data,
+                               this->nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
       });
     }
@@ -104,7 +119,20 @@ void ShmemRecvPort::Join() {
 }
 
 MetaDataPtr ShmemRecvPort::Peek() {
-  return recv_queue_->Front();
+  MetaDataPtr metadata_res = recv_queue_->Front();
+  int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
+  void * ptr = std::calloc(mem_size, 1);
+  if (ptr == nullptr) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
+  LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr);
+  // memcpy to avoid double free
+  // or maintain a address:refcount map
+  std::memcpy(ptr, metadata_res->mdata, mem_size);
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  std::memcpy(metadata.get(), metadata_res.get(), sizeof(MetaData));
+  metadata->mdata = ptr;
+  return metadata;
 }
 
 ShmemBlockRecvPort::ShmemBlockRecvPort(const std::string &name,
@@ -115,11 +143,8 @@ ShmemBlockRecvPort::ShmemBlockRecvPort(const std::string &name,
 MetaDataPtr ShmemBlockRecvPort::Recv() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->BlockLoad([&metadata_res, this](void* data){
-    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-    void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
-    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
-      this->nbytes_ - sizeof(MetaData));
-    metadata_res->mdata = ptr;
+    MetaDataPtrFromPointer(metadata_res, data,
+                           this->nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }
@@ -127,11 +152,8 @@ MetaDataPtr ShmemBlockRecvPort::Recv() {
 MetaDataPtr ShmemBlockRecvPort::Peek() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->Read([&metadata_res, this](void* data){
-    std::memcpy(metadata_res.get(), data, sizeof(MetaData));
-    void *ptr = malloc(this->nbytes_ - sizeof(MetaData));
-    std::memcpy(ptr, reinterpret_cast<char *>(data) + sizeof(MetaData),
-      this->nbytes_ - sizeof(MetaData));
-    metadata_res->mdata = ptr;
+    MetaDataPtrFromPointer(metadata_res, data,
+                           this->nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }

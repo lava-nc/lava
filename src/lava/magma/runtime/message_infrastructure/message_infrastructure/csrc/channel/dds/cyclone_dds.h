@@ -42,7 +42,7 @@ class CycloneDDSPublisher final : public DDSPublisher {
                       max_samples_(max_sample) {}
   ~CycloneDDSPublisher() override;
   int Init();
-  bool Publish(MetaDataPtr metadata);
+  bool Publish(DataPtr metadata);
   void Stop();  // Can Init again
 
  private:

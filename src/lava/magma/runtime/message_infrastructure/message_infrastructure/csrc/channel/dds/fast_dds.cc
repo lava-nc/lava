@@ -110,7 +110,8 @@ void FastDDSPublisher::InitParticipant() {
                                            ->create_participant(0, pqos);
 }
 
-bool FastDDSPublisher::Publish(MetaDataPtr metadata) {
+bool FastDDSPublisher::Publish(DataPtr data) {
+  MetaData* metadata = reinterpret_cast<MetaData*>(data.get());
   if (listener_->matched_ > 0) {
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher start publishing...\n");
     dds_metadata_->nd(metadata->nd);
@@ -293,7 +294,10 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
            dds_metadata.strides().data(),
            sizeof(metadata->strides));
     int nbytes = metadata->elsize * metadata->total_size;
-    void *ptr = malloc(nbytes);
+    void *ptr = std::calloc(nbytes, 1);
+    if (ptr == nullptr) {
+      LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+    }
     memcpy(ptr, dds_metadata.mdata().data(), nbytes);
     metadata->mdata = ptr;
     reader_->return_loan(mdata_seq, infos);

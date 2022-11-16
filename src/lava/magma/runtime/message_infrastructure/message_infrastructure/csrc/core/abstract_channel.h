@@ -17,13 +17,15 @@ class AbstractChannel {
   ChannelType channel_type_;
 
   virtual AbstractSendPortPtr GetSendPort() {
-    return NULL;
+    return nullptr;
   }
   virtual AbstractRecvPortPtr GetRecvPort() {
-    return NULL;
+    return nullptr;
   }
 };
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 using AbstractChannelPtr = std::shared_ptr<AbstractChannel>;
 
 }  // namespace message_infrastructure

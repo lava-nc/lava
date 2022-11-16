@@ -34,7 +34,7 @@ class SendPortProxy : public PortProxy {
   size_t Size();
 
  private:
-  MetaDataPtr MDataFromObject_(py::object* object);
+  DataPtr DataFromObject_(py::object* object);
   ChannelType channel_type_;
   AbstractSendPortPtr send_port_;
 };
@@ -62,6 +62,8 @@ class RecvPortProxy : public PortProxy {
   AbstractRecvPortPtr recv_port_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
 using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
 using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
 using SendPortProxyList = std::vector<SendPortProxyPtr>;

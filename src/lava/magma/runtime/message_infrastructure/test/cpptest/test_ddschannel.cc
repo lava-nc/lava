@@ -11,7 +11,7 @@
 namespace message_infrastructure {
 
 const size_t DATA_LENGTH = 10000;
-const uint32_t loop_number = 10000;
+const uint32_t loop_number = 1;
 const size_t DEPTH = 32;
 
 void dds_stop_fn() {
@@ -117,16 +117,12 @@ void dds_protocol(std::string topic_name,
   int64_t array_[DATA_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
   std::fill(array_ + 10, array_ + DATA_LENGTH, 1);
   MetaDataPtr metadata = std::make_shared<MetaData>();
-  metadata->nd = 1;
-  metadata->type = 7;
-  metadata->elsize = 8;
-  metadata->total_size = DATA_LENGTH;
-  metadata->dims[0] = 1;
-  metadata->strides[0] = 1;
-  metadata->mdata = reinterpret_cast<char*>(&array_[0]);
+  int64_t dims[] = {DATA_LENGTH, 0, 0, 0, 0};
+  int64_t nd = 1;
+  GetMetadata(metadata, &array_[0], nd, METADATA_TYPES::LONG, dims);
 
   MetaDataPtr mptr;
-  LAVA_DUMP(1, "main process loop: %d\n", loop);
+  LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
@@ -155,7 +151,7 @@ TEST(TestDDSDelivery, CycloneDDSUDPv4Loop) {
 
 TEST(TestDDSSingleProcess, DDS1Process) {
   GTEST_SKIP();
-  LAVA_DUMP(1, "TestDDSSingleProcess starts.\n");
+  LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
     .GetDDSChannel("test_DDSChannel", DDSSHM, FASTDDSBackend, 5);
 
@@ -181,7 +177,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   int i = 0;
   while (loop--) {
     if (!(loop % 1000))
-      LAVA_DUMP(LOG_DDS, "At iteration : %d * 1000\n", i++);
+      LAVA_DUMP(LOG_UTTEST, "At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
     mptr = recv_port->Recv();
     EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),

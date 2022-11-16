@@ -10,29 +10,17 @@ namespace message_infrastructure {
 
 namespace {
 
-GrpcMetaData MetaData2GrpcMetaData(MetaDataPtr metadata) {
-  GrpcMetaData grpcdata;
-  grpcdata.set_nd(metadata->nd);
-  grpcdata.set_type(metadata->type);
-  grpcdata.set_elsize(metadata->elsize);
-  grpcdata.set_total_size(metadata->total_size);
-  char* data = reinterpret_cast<char*>(metadata->mdata);
-  for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
-    grpcdata.add_dims(metadata->dims[i]);
-    grpcdata.add_strides(metadata->strides[i]);
-  }
-  grpcdata.set_value(data, metadata->elsize*metadata->total_size);
-  return grpcdata;
-}
-
 MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   MetaDataPtr metadata = std::make_shared<MetaData>();
   metadata->nd = grpcdata->nd();
   metadata->type = grpcdata->type();
   metadata->elsize = grpcdata->elsize();
   metadata->total_size = grpcdata->total_size();
-  void* data = malloc(metadata->elsize * metadata->total_size);
-  for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
+  void* data = std::calloc(metadata->elsize * metadata->total_size, 1);
+  if (data == nullptr) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
+  for (int i = 0; i < metadata->nd; i++) {
     metadata->dims[i] = grpcdata->dims(i);
     metadata->strides[i] = grpcdata->strides(i);
   }
@@ -130,14 +118,14 @@ void GrpcSendPort::Start() {
   stub_ = GrpcChannelServer::NewStub(channel_);
 }
 
-void GrpcSendPort::Send(MetaDataPtr metadata) {
-  GrpcMetaData request = MetaData2GrpcMetaData(metadata);
+void GrpcSendPort::Send(DataPtr grpcdata) {
+  GrpcMetaData* data = reinterpret_cast<GrpcMetaData*>(grpcdata.get());
   DataReply reply;
   ClientContext context;
   context.set_wait_for_ready(true);
-  Status status = stub_->RecvArrayData(&context, request, &reply);
+  Status status = stub_->RecvArrayData(&context, *data, &reply);
   if (!reply.ack()) {
-    LAVA_LOG_ERR("Send fail!");
+    LAVA_LOG_ERR("Send fail!\n");
   }
 }
 

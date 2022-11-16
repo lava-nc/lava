@@ -26,7 +26,7 @@ bool SocketWrite(int fd, void* data, size_t size) {
       LAVA_LOG_ERR("Write socket failed.\n");
       return false;
     }
-    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %zd",
+    LAVA_LOG_ERR("Write socket error, expected size: %zd, got size: %d",
                  size, length);
     return false;
   }
@@ -41,7 +41,7 @@ bool SocketRead(int fd, void* data, size_t size) {
       LAVA_LOG_ERR("Read socket failed.\n");
       return false;
     }
-    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd",
+    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %d",
                  size, length);
     return false;
   }
@@ -49,14 +49,18 @@ bool SocketRead(int fd, void* data, size_t size) {
 }
 
 void SocketSendPort::Start() {}
-void SocketSendPort::Send(MetaDataPtr metadata) {
+void SocketSendPort::Send(DataPtr metadata) {
   bool ret = false;
   while (!ret) {
-    ret = SocketWrite(socket_.first, metadata.get(), sizeof(MetaData));
+    ret = SocketWrite(socket_.first,
+                      reinterpret_cast<MetaData*>(metadata.get()),
+                      sizeof(MetaData));
   }
   ret = false;
   while (!ret) {
-    ret = SocketWrite(socket_.first, metadata->mdata, nbytes_);
+    ret = SocketWrite(socket_.first,
+                      reinterpret_cast<MetaData*>(metadata.get())->mdata,
+                      nbytes_);
   }
 }
 void SocketSendPort::Join() {
@@ -79,7 +83,10 @@ MetaDataPtr SocketRecvPort::Recv() {
     metadata.reset();
     return metadata;
   }
-  void *mdata = malloc(nbytes_);
+  void *mdata = std::calloc(nbytes_, 1);
+  if (mdata == nullptr) {
+    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+  }
   ret = SocketRead(socket_.second, mdata, nbytes_);
   metadata->mdata = mdata;
   if (!ret) {

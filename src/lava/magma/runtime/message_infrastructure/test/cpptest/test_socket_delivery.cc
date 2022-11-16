@@ -4,19 +4,19 @@
 
 #include <message_infrastructure/csrc/core/channel_factory.h>
 #include <message_infrastructure/csrc/core/multiprocessing.h>
-#include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
+#include <message_infrastructure/csrc/channel/socket/socket_channel.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <cstring>
 
 namespace message_infrastructure {
-
 static void stop_fn() {
   // exit(0);
 }
 
-void grpc_target_fn1(
+void soket_target_fn1(
   int loop,
   AbstractChannelPtr mp_to_a1,
   AbstractChannelPtr a1_to_mp,
@@ -32,17 +32,17 @@ void grpc_target_fn1(
     to_mp->Start();
     to_a2->Start();
     from_a2->Start();
-    LAVA_DUMP(1, "grpc actor1, loop: %d\n", loop);
+    LAVA_DUMP(LOG_UTTEST, "socket actor1, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      LAVA_DUMP(LOG_UTTEST, "grpc actor1 waitting\n");
+      LAVA_DUMP(LOG_UTTEST, "soket actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
-      LAVA_DUMP(LOG_UTTEST, "grpc actor1 recviced\n");
+      LAVA_DUMP(LOG_UTTEST, "socket actor1 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a2->Send(MetaData2GrpcMetaData(data));
+      to_a2->Send(data);
       free(reinterpret_cast<char*>(data->mdata));
       data = from_a2->Recv();
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_mp->Send(MetaData2GrpcMetaData(data));
+      to_mp->Send(data);
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_mp->Join();
@@ -54,7 +54,7 @@ void grpc_target_fn1(
     }
   }
 
-void grpc_target_fn2(
+void soket_target_fn2(
   int loop,
   AbstractChannelPtr a1_to_a2,
   AbstractChannelPtr a2_to_a1,
@@ -64,13 +64,13 @@ void grpc_target_fn2(
     auto from_a1 = a1_to_a2->GetRecvPort();
     from_a1->Start();
     to_a1->Start();
-    LAVA_DUMP(LOG_UTTEST, "grpc actor2, loop: %d\n", loop);
+    LAVA_DUMP(1, "socket actor2, loop: %d\n", loop);
     while ((loop--)&&!actor_ptr->GetStatus()) {
-      LAVA_DUMP(LOG_UTTEST, "grpc actor2 waitting\n");
+      LAVA_DUMP(LOG_UTTEST, "socket actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
-      LAVA_DUMP(LOG_UTTEST, "grpc actor2 recviced\n");
+      LAVA_DUMP(LOG_UTTEST, "socket actor2 recviced\n");
       (*reinterpret_cast<int64_t*>(data->mdata))++;
-      to_a1->Send(MetaData2GrpcMetaData(data));
+      to_a1->Send(data);
       free(reinterpret_cast<char*>(data->mdata));
     }
     from_a1->Join();
@@ -80,25 +80,26 @@ void grpc_target_fn2(
     }
   }
 
-TEST(TestGRPCChannel, GRPCLoop) {
+TEST(TestSocketChannel, SocketLoop) {
   MultiProcessing mp;
   int loop = 1000;
-  AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
-    "mp_to_a1", "mp_to_a1", 6);
-  AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
-    "a1_to_mp", "a1_to_mp", 6);
-  AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetDefRPCChannel(
-    "a1_to_a2", "a1_to_a2", 6);
-  AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetDefRPCChannel(
-    "a2_to_a1", "a2_to_a1", 6);
-  auto target_fn_a1 = std::bind(&grpc_target_fn1,
+  const int queue_size = 1;
+  AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "mp_to_a1", "mp_to_a1");
+  AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_mp", "a1_to_mp");
+  AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_a2", "a1_to_a2");
+  AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
+    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a2_to_a1", "a2_to_a1");
+  auto target_fn_a1 = std::bind(&soket_target_fn1,
                                 loop,
                                 mp_to_a1,
                                 a1_to_mp,
                                 a1_to_a2,
                                 a2_to_a1,
                                 std::placeholders::_1);
-  auto target_fn_a2 = std::bind(&grpc_target_fn2,
+  auto target_fn_a2 = std::bind(&soket_target_fn2,
                                 loop,
                                 a1_to_a2,
                                 a2_to_a1,
@@ -120,10 +121,11 @@ TEST(TestGRPCChannel, GRPCLoop) {
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
+  to_a1->Send(metadata);
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
-    to_a1->Send(MetaData2GrpcMetaData(metadata));
     metadata = from_a1->Recv();
+    to_a1->Send(metadata);
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", metadata->type);
@@ -135,7 +137,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
     LAVA_DUMP(LOG_UTTEST, "strides: {%ld, %ld, %ld, %ld, %ld}\n",
               metadata->strides[0], metadata->strides[1], metadata->strides[2],
               metadata->strides[3], metadata->strides[4]);
-    LAVA_DUMP(LOG_UTTEST, "grpc mdata: %p, grpc *mdata: %ld\n", metadata->mdata,
+    LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", metadata->mdata,
               *reinterpret_cast<int64_t*>(metadata->mdata));
     free(reinterpret_cast<char*>(metadata->mdata));
   }
@@ -143,7 +145,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
-  LAVA_DUMP(LOG_UTTEST, "grpc result =%ld\n", result);
+  LAVA_DUMP(LOG_UTTEST, "socket result =%ld", result);
   mp.Stop(true);
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
@@ -151,7 +153,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
     LAVA_LOG_ERR("result != expect_result\n");
     throw;
   }
-  std::printf("grpc cpp loop timedelta: %f\n",
+  std::printf("socket cpp loop timedelta: %f\n",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
   LAVA_DUMP(LOG_UTTEST, "exit\n");
 }

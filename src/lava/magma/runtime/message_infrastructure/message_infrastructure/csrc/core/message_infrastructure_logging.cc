@@ -47,8 +47,8 @@ std::string LogMsg::GetEntireLogMsg(const int &pid) {
 
 MessageInfrastructureLog::MessageInfrastructureLog() {
   char *log_path = getenv("MSG_LOG_PATH");
-  if (log_path == NULL) {
-    log_path = getcwd(NULL, 0);
+  if (log_path == nullptr) {
+    log_path = getcwd(nullptr, 0);
     log_path_ = log_path;
     free(log_path);
     return;

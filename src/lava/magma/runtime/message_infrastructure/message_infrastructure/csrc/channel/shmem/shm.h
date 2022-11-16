@@ -43,7 +43,7 @@ class SharedMemory {
   void Store(HandleFn store_fn);
   void Close();
   bool TryProbe();
-  void InitSemaphore();
+  void InitSemaphore(sem_t* req, sem_t *ack);
   int GetDataElem(int offset);
   std::string GetReq();
   std::string GetAck();
@@ -54,7 +54,7 @@ class SharedMemory {
   std::string ack_name_ = "ack";
   sem_t *req_;
   sem_t *ack_;
-  void *data_ = NULL;
+  void *data_ = nullptr;
 };
 
 class RwSharedMemory {
@@ -73,6 +73,10 @@ class RwSharedMemory {
   void *data_;
 };
 
+// SharedMemory object needs to be transfered to ShmemPort.
+// RwSharedMemory object needs to be transfered to ShmemPort.
+// Also need to be handled in SharedMemManager.
+// Use std::shared_ptr.
 using SharedMemoryPtr = std::shared_ptr<SharedMemory>;
 using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
@@ -95,17 +99,22 @@ class SharedMemManager {
       exit(-1);
     }
     shm_fd_strs_.insert({shmfd, str});
-    void *mmap_address = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,
+    void *mmap_address = mmap(nullptr, mem_size, PROT_READ | PROT_WRITE,
                        MAP_SHARED, shmfd, 0);
     if (mmap_address == reinterpret_cast<void*>(-1)) {
       LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
       LAVA_DUMP(1, "size: %ld, shmfd_: %d\n", mem_size, shmfd);
     }
+    shm_mmap_.insert({mmap_address, mem_size});
     std::shared_ptr<T> shm =
       std::make_shared<T>(mem_size, mmap_address, random);
-    sem_strs_.insert(shm->GetReq());
-    sem_strs_.insert(shm->GetAck());
-    shm->InitSemaphore();
+    std::string req_name = shm->GetReq();
+    std::string ack_name = shm->GetAck();
+    sem_t *req = sem_open(req_name.c_str(), O_CREAT, 0644, 0);
+    sem_t *ack = sem_open(ack_name.c_str(), O_CREAT, 0644, 1);
+    shm->InitSemaphore(req, ack);
+    sem_p_strs_.insert({req, req_name});
+    sem_p_strs_.insert({ack, ack_name});
     return shm;
   }
 
@@ -115,15 +124,20 @@ class SharedMemManager {
  private:
   SharedMemManager() {
     std::srand(std::time(nullptr));
+    alloc_pid_ = getpid();
   }
   std::map<int, std::string> shm_fd_strs_;
-  std::set<std::string> sem_strs_;
+  std::map<sem_t*, std::string> sem_p_strs_;
+  std::map<void*, int64_t> shm_mmap_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
+  int alloc_pid_;
 };
 
 SharedMemManager& GetSharedMemManager();
 
+// SharedMemManager object should be handled by multiple actors.
+// Use std::shared_ptr.
 using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure

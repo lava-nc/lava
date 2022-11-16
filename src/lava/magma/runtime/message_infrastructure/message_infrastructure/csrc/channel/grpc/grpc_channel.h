@@ -27,10 +27,12 @@ class GrpcChannel : public AbstractChannel {
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:
-  GrpcSendPortPtr send_port_ = NULL;
-  GrpcRecvPortPtr recv_port_ = NULL;
+  GrpcSendPortPtr send_port_ = nullptr;
+  GrpcRecvPortPtr recv_port_ = nullptr;
 };
 
+// Users should be allowed to copy channel objects.
+// Use std::shared_ptr.
 using GrpcChannelPtr = std::shared_ptr<GrpcChannel>;
 
 }  // namespace message_infrastructure
