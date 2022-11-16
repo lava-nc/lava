@@ -83,7 +83,7 @@ void CycloneDDSPublisher::Stop() {
   if (stop_) {
     return;
   }
-  while (writer_.publication_matched_status().current_count() > 0) {
+  while (listener_->matched_.load() > 0) {
     helper::Sleep();
   }
   try {
