@@ -10,6 +10,10 @@
 
 namespace message_infrastructure {
 
+const size_t DATA_LENGTH = 10000;
+const uint32_t loop_number = 1000;
+const size_t DEPTH = 32;
+
 void dds_stop_fn() {
   // exit(0);
 }
@@ -70,17 +74,31 @@ void dds_target_fn_a2_bound(int loop,
   }
 }
 
-TEST(TestDDSDelivery, DDSLoop) {
+void dds_protocol(std::string topic_name,
+                  DDSTransportType transfer_type,
+                  DDSBackendType dds_backend) {
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = loop_number;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
-    .GetDDSChannel("mp_to_a1", DDSSHM, FASTDDSBackend, 5);
+    .GetDDSChannel(topic_name + "mp_to_a1",
+                   transfer_type,
+                   dds_backend,
+                   DEPTH);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()
-    .GetDDSChannel("a1_to_mp", DDSSHM, FASTDDSBackend, 5);
+    .GetDDSChannel(topic_name + "a1_to_mp",
+                   transfer_type,
+                   dds_backend,
+                   DEPTH);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory()
-    .GetDDSChannel("a1_to_a2", DDSSHM, FASTDDSBackend, 5);
+    .GetDDSChannel(topic_name + "a1_to_a2",
+                   transfer_type,
+                   dds_backend,
+                   DEPTH);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory()
-    .GetDDSChannel("a2_to_a1", DDSSHM, FASTDDSBackend, 5);
+    .GetDDSChannel(topic_name + "a2_to_a1",
+                   transfer_type,
+                   dds_backend,
+                   DEPTH);
 
   auto target_fn_a1 = std::bind(&dds_target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -96,14 +114,14 @@ TEST(TestDDSDelivery, DDSLoop) {
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
 
+  int64_t array_[DATA_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+  std::fill(array_ + 10, array_ + DATA_LENGTH, 1);
+
   MetaDataPtr metadata = std::make_shared<MetaData>();
-  int64_t *array = reinterpret_cast<int64_t*>(malloc(sizeof(int64_t)));
-  *array = 1;
-  int64_t dims[] = {1, 0, 0, 0, 0};
+  int64_t* array = reinterpret_cast<int64_t*>(array_);
+  int64_t dims[] = {DATA_LENGTH, 0, 0, 0, 0};
   int64_t nd = 1;
-
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
-
   MetaDataPtr mptr;
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
@@ -112,12 +130,33 @@ TEST(TestDDSDelivery, DDSLoop) {
     mptr = from_a1->Recv();
     metadata = mptr;
   }
+  const clock_t end_time = std::clock();
   from_a1->Join();
   to_a1->Join();
   mp.Stop(true);
+
+  std::printf("dds cpp loop timedelta: %f\n",
+           ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
+  LAVA_DUMP(LOG_UTTEST, "exit\n");
 }
 
+#if defined(FASTDDS_ENABLE)
+TEST(TestDDSDelivery, FastDDSSHMLoop) {
+  dds_protocol("fast_shm_", DDSSHM, FASTDDSBackend);
+}
+TEST(TestDDSDelivery, FastDDSUDPv4Loop) {
+  dds_protocol("fast_UDPv4", DDSUDPv4, FASTDDSBackend);
+}
+#endif
+
+#if defined(CycloneDDS_ENABLE)
+TEST(TestDDSDelivery, CycloneDDSUDPv4Loop) {
+  dds_protocol("cyclone_UDPv4", DDSUDPv4, CycloneDDSBackend);
+}
+#endif
+
 TEST(TestDDSSingleProcess, DDS1Process) {
+  GTEST_SKIP();
   LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
     .GetDDSChannel("test_DDSChannel", DDSSHM, FASTDDSBackend, 5);
@@ -140,7 +179,7 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   *reinterpret_cast<int64_t*>(metadata->mdata) = 1;
 
   MetaDataPtr mptr;
-  int loop = 1000;
+  int loop = loop_number;
   int i = 0;
   while (loop--) {
     if (!(loop % 1000))

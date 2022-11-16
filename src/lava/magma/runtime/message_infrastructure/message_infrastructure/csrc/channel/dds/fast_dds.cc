@@ -70,7 +70,7 @@ void FastDDSPublisher::InitDataWriter() {
   wqos.reliable_writer_qos().times
                             .heartbeatPeriod.nanosec = HEARTBEAT_PERIOD_NANOSEC;
   wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-  wqos.publish_mode().kind = SYNCHRONOUS_PUBLISH_MODE;
+  wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
   wqos.endpoint().history_memory_policy = PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
   writer_ = publisher_->create_datawriter(topic_, wqos, listener_.get());
 }
@@ -155,7 +155,6 @@ void FastDDSPubListener::on_publication_matched(
   if (info.current_count_change == 1) {
     matched_++;
     LAVA_DEBUG(LOG_DDS, "FastDDS DataReader %d matched.\n", matched_);
-
   } else if (info.current_count_change == -1) {
     matched_--;
     LAVA_DEBUG(LOG_DDS, "FastDDS DataReader unmatched, remain:%d\n", matched_);
@@ -226,7 +225,6 @@ void FastDDSSubscriber::InitDataReader() {
 }
 
 int FastDDSSubscriber::Init() {
-  dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
     return DDSInitErrorType::DDSParticipantError;

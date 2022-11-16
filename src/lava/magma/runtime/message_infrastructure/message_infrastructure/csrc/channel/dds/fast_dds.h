@@ -24,19 +24,6 @@
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
-// Default Parameters
-// Transport
-#define SHM_SEGMENT_SIZE (2*1024*1024)
-#define NON_BLOCKING_SEND (false)
-#define UDP_OUT_PORT  (0)
-#define TCP_PORT 46
-#define TCPv4_IP ("0.0.0.0")
-// QOS
-#define HEARTBEAT_PERIOD_SECONDS (2)
-#define HEARTBEAT_PERIOD_NANOSEC (200 * 1000 * 1000)
-// Topic
-#define DDS_DATATYPE_NAME "ddsmetadata::msg::dds_::DDSMetaData_"
-
 namespace message_infrastructure {
 
 class FastDDSPubListener final : public
@@ -93,7 +80,7 @@ class FastDDSPublisher final : public DDSPublisher {
 class FastDDSSubListener final : public
                          eprosima::fastdds::dds::DataReaderListener {
  public:
-  FastDDSSubListener() : matched_(0), samples_(0) {}
+  FastDDSSubListener() : matched_(0) {}
   ~FastDDSSubListener() override {}
   void on_data_available(
        eprosima::fastdds::dds::DataReader* reader) override {};
@@ -101,7 +88,6 @@ class FastDDSSubListener final : public
        eprosima::fastdds::dds::DataReader* reader,
        const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
   int matched_;
-  uint32_t samples_;
 };
 
 // FastDDSSubListener object needs to be transfered to DDSPort.
@@ -128,7 +114,6 @@ class FastDDSSubscriber final : public DDSSubscriber {
   void InitParticipant();
   void InitDataReader();
   FastDDSSubListenerPtr listener_ = nullptr;
-  std::shared_ptr<ddsmetadata::msg::DDSMetaData> dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Subscriber* subscriber_ = nullptr;
   eprosima::fastdds::dds::Topic* topic_ = nullptr;

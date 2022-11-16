@@ -82,18 +82,35 @@ if(DDS_CHANNEL)
     "message_infrastructure/csrc/channel/dds/dds.cc"
     "message_infrastructure/csrc/channel/dds/dds_channel.cc")
 
+  if(FASTDDS_ENABLE AND CycloneDDS_ENABLE)
+	  message(FATAL_ERROR "Cannot enable Backend FASTDDS and CycloneDDS togeter")
+  endif()
+
   if(CycloneDDS_ENABLE)
-    set(CycloneDDS_SRC "")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cyclonedds.cmake)
+    set(CYCLONE_DDS_INC "${COMMON_DDS_DESTINATION}/include/ddscxx")
+    add_custom_target(CycloneDDS_metdata ALL
+                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
+    add_dependencies(CycloneDDS_metdata cyclonedds-cxx)
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp"
+                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/metadata.idl
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds)
+
+    add_definitions(-DCycloneDDS_ENABLE)
+    set(CycloneDDS_SRC
+      ${DDS_CHANNEL_SRCS}
+      "message_infrastructure/csrc/channel/dds/cyclone_dds.cc"
+      "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
   endif()
 
   if(FASTDDS_ENABLE)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
-    add_definitions(-DFASTDDS)
+    add_definitions(-DFASTDDS_ENABLE)
     set(FASTDDS_SRC
+      ${DDS_CHANNEL_SRCS}
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaData.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.cc"
-      ${DDS_CHANNEL_SRCS})
+      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.cc")
   endif()
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
@@ -108,9 +125,9 @@ endif()
 
 add_library(message_infrastructure SHARED
   ${MESSAGE_INFRASTRUCTURE_SRCS}
-  $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>
+  $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>
   $<$<BOOL:${FASTDDS_ENABLE}>:${FASTDDS_SRC}>
-  $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>)
+  $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>)
 
 set(MSG_LOG_LEVEL err CACHE STRING "Default vaule: err, error log only.")
 set(MSG_LOG_FILE_ENABLE 0 CACHE STRING "Default value: 0, print onto console only.")
@@ -128,7 +145,8 @@ target_compile_definitions(message_infrastructure PUBLIC
 
 target_include_directories(message_infrastructure PUBLIC
                           ${PROJECT_SOURCE_DIR}
-                          $<BUILD_INTERFACE:${COMMON_DDS_INC}>)
+                          $<BUILD_INTERFACE:${COMMON_DDS_INC}>
+                          $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>)
 
 target_link_libraries(message_infrastructure
                       rt)
@@ -137,6 +155,13 @@ if(GRPC_CHANNEL)
                         ${_REFLECTION}
                         ${_GRPC_GRPCPP}
                         ${_PROTOBUF_LIBPROTOBUF})
+endif()
+
+if(CycloneDDS_ENABLE)
+  add_dependencies(message_infrastructure cyclonedds-cxx CycloneDDS_metdata)
+  target_link_libraries(message_infrastructure
+    ${COMMON_DDS_DESTINATION}/lib/libddsc.so
+    ${COMMON_DDS_DESTINATION}/lib/libddscxx.so)
 endif()
 
 if(FASTDDS_ENABLE)
