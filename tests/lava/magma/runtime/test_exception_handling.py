@@ -128,10 +128,9 @@ class TestExceptionHandling(unittest.TestCase):
         # Check that the error count has increased to 1
         existing_shm = shared_memory.SharedMemory(name='error_block')
         res = np.ndarray((1,), buffer=existing_shm.buf)
-        self.assertEqual(res[0], 1)
         existing_shm.close()
-
         proc.stop()
+        self.assertEqual(res[0], 1)
 
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
@@ -156,11 +155,10 @@ class TestExceptionHandling(unittest.TestCase):
         # Check that the error count has increased to 2
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
         res = np.ndarray((1,), buffer=existing_shm.buf)
-        self.assertEqual(res[0], 2)
         existing_shm.close()
-
         sender.stop()
         recv.stop()
+        self.assertEqual(res[0], 2)
 
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
@@ -186,12 +184,11 @@ class TestExceptionHandling(unittest.TestCase):
         # Check that the error count has increased to 2
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
         res = np.ndarray((1,), buffer=existing_shm.buf)
-        self.assertEqual(res[0], 2)
         existing_shm.close()
-
         sender.stop()
         recv1.stop()
         recv2.stop()
+        self.assertEqual(res[0], 2)
 
 
 if __name__ == '__main__':
