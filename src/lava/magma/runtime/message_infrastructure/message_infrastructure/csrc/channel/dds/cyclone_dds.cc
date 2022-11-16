@@ -44,7 +44,8 @@ int CycloneDDSPublisher::Init() {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
-  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_, topic_name_);
+  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_,
+                                                            topic_name_);
   publisher_ = dds::pub::Publisher(participant_);
   listener_ = std::make_shared<CycloneDDSPubListener>();
   dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
@@ -140,7 +141,8 @@ int CycloneDDSSubscriber::Init() {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
-  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_, topic_name_);
+  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_,
+                                                            topic_name_);
   subscriber_ = dds::sub::Subscriber(participant_);
   listener_ = std::make_shared<CycloneDDSSubListener>();
   dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
@@ -156,8 +158,8 @@ int CycloneDDSSubscriber::Init() {
             rqos,
             listener_.get(),
             dds::core::status::StatusMask::all());
-  selector_ =
-    std::make_shared<dds::sub::DataReader<ddsmetadata::msg::DDSMetaData>::Selector>(reader_);
+  selector_ = std::make_shared<dds::sub::
+              DataReader<ddsmetadata::msg::DDSMetaData>::Selector>(reader_);
   selector_->max_samples(1);
   stop_ = false;
   return 0;

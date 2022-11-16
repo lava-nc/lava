@@ -16,7 +16,7 @@
 namespace message_infrastructure {
 
 class CycloneDDSPubListener final : public
-                            dds::pub::NoOpDataWriterListener<ddsmetadata::msg::DDSMetaData>{
+      dds::pub::NoOpDataWriterListener<ddsmetadata::msg::DDSMetaData>{
  public:
   CycloneDDSPubListener() : matched_(0) {}
   void on_offered_incompatible_qos(
