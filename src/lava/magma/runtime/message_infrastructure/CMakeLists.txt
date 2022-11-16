@@ -90,17 +90,17 @@ if(DDS_CHANNEL)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cyclonedds.cmake)
     set(CYCLONE_DDS_INC "${COMMON_DDS_DESTINATION}/include/ddscxx")
     add_custom_target(CycloneDDS_metdata ALL
-                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
+                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
     add_dependencies(CycloneDDS_metdata cyclonedds-cxx)
-    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp"
-                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/metadata.idl
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp"
+                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/DDSMetaData.idl
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds)
 
     add_definitions(-DCycloneDDS_ENABLE)
     set(CycloneDDS_SRC
       ${DDS_CHANNEL_SRCS}
       "message_infrastructure/csrc/channel/dds/cyclone_dds.cc"
-      "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
+      "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
   endif()
 
   if(FASTDDS_ENABLE)
