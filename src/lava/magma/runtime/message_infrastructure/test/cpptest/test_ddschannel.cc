@@ -113,7 +113,7 @@ void dds_protocol(std::string topic_name,
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
-  
+
   int64_t array_[DATA_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
   std::fill(array_ + 10, array_ + DATA_LENGTH, 1);
   MetaDataPtr metadata = std::make_shared<MetaData>();

@@ -7,13 +7,16 @@
 
 #include <message_infrastructure/csrc/channel/dds/dds.h>
 #include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.hpp>
-#include <dds/dds.hpp>
 #include <atomic>
+#include <memory>
+#include <string>
+#include <dds/dds.hpp>
+#include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.hpp>
 
 namespace message_infrastructure {
 
-class CycloneDDSPubListener final : public dds::pub::NoOpDataWriterListener<DDSMetaData>{
+class CycloneDDSPubListener final : public
+                            dds::pub::NoOpDataWriterListener<DDSMetaData>{
  public:
   CycloneDDSPubListener() : matched_(0) {}
   void on_offered_incompatible_qos(
@@ -43,8 +46,6 @@ class CycloneDDSPublisher final : public DDSPublisher {
   void Stop();  // Can Init again
 
  private:
-  // void InitDataWriter();
-  // void InitParticipant();
   CycloneDDSPubListenerPtr listener_ = nullptr;
   std::shared_ptr<DDSMetaData> dds_metadata_ = nullptr;
   dds::domain::DomainParticipant participant_ = dds::core::null;
@@ -59,7 +60,8 @@ class CycloneDDSPublisher final : public DDSPublisher {
   bool stop_;
 };
 
-class CycloneDDSSubListener final : public dds::sub::NoOpDataReaderListener<DDSMetaData>{
+class CycloneDDSSubListener final : public
+      dds::sub::NoOpDataReaderListener<DDSMetaData>{
  public:
   CycloneDDSSubListener() : matched_(0) {}
   ~CycloneDDSSubListener() {}
@@ -79,21 +81,20 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
                        stop_(true),
                        topic_name_(topic_name),
                        dds_transfer_type_(dds_transfer_type),
-                       max_samples_(max_sample){}
+                       max_samples_(max_sample) {}
   ~CycloneDDSSubscriber() override;
   int Init();
   void Stop();
   MetaDataPtr Recv(bool keep);
 
  private:
-  // void InitParticipant();
-  // void InitDataReader();
   CycloneDDSSubListenerPtr listener_ = nullptr;
   dds::domain::DomainParticipant participant_ = dds::core::null;
   dds::topic::Topic<DDSMetaData> topic_ = dds::core::null;
   dds::sub::Subscriber subscriber_ = dds::core::null;
   dds::sub::DataReader<DDSMetaData> reader_ = dds::core::null;
-  std::shared_ptr<dds::sub::DataReader<DDSMetaData>::Selector> selector_ = nullptr;
+  std::shared_ptr<dds::sub::DataReader<DDSMetaData>::Selector>
+                 selector_ = nullptr;
 
   std::string topic_name_;
   DDSTransportType dds_transfer_type_;
@@ -102,6 +103,5 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
 };
 
 }  // namespace message_infrastructure
-
 
 #endif  // CHANNEL_DDS_CYCLONE_DDS_H_

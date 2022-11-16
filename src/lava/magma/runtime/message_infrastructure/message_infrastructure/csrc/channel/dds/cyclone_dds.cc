@@ -10,12 +10,14 @@
 
 namespace message_infrastructure {
 
-using namespace org::eclipse::cyclonedds;
+using namespace org::eclipse::cyclonedds;  // NOLINT
 
 void CycloneDDSPubListener::on_offered_incompatible_qos(
   dds::pub::DataWriter<DDSMetaData>& writer,
   const dds::core::status::OfferedIncompatibleQosStatus& status) {
-  LAVA_LOG_WARN(LOG_DDS, "incompatiable qos found, count: %d\n", status.total_count());
+  LAVA_LOG_WARN(LOG_DDS,
+                "incompatiable qos found, count: %d\n",
+                status.total_count());
 }
 
 void CycloneDDSPubListener::on_publication_matched(
@@ -23,9 +25,13 @@ void CycloneDDSPubListener::on_publication_matched(
   const dds::core::status::PublicationMatchedStatus &info) {
   matched_.store(info.current_count());
   if (info.current_count_change() == 1) {
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader %d matched.\n", matched_.load());
+    LAVA_LOG(LOG_DDS,
+             "CycloneDDS DataReader %d matched.\n",
+             matched_.load());
   } else if (info.current_count_change() == -1) {
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataReader unmatched. left:%d\n", matched_.load());
+    LAVA_LOG(LOG_DDS,
+             "CycloneDDS DataReader unmatched. left:%d\n",
+             matched_.load());
   } else {
     LAVA_LOG_ERR("CycloneDDS Publistener MatchedStatus error\n");
   }
@@ -41,20 +47,26 @@ int CycloneDDSPublisher::Init() {
   listener_ = std::make_shared<CycloneDDSPubListener>();
   dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
   wqos << dds::core::policy::History::KeepLast(max_samples_)
-       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(HEARTBEAT_PERIOD_SECONDS))
-       << dds::core::policy::Durability::Volatile(); // volatile for shm
-  writer_ = dds::pub::DataWriter<DDSMetaData>(publisher_,
-                                              topic_,
-                                              wqos,
-                                              listener_.get(),
-                                              dds::core::status::StatusMask::all());
+       << dds::core::policy::Reliability::Reliable(dds::core::Duration
+                                        ::from_secs(HEARTBEAT_PERIOD_SECONDS))
+       << dds::core::policy::Durability::Volatile();
+  writer_ = dds::pub::DataWriter<DDSMetaData>(
+            publisher_,
+            topic_,
+            wqos,
+            listener_.get(),
+            dds::core::status::StatusMask::all());
   stop_ = false;
   return 0;
 }
 
 bool CycloneDDSPublisher::Publish(MetaDataPtr metadata) {
-  LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher start publishing, matched:%d\n", listener_->matched_.load());
-  LAVA_DEBUG(LOG_DDS, "writer_ matched: %d\n", writer_.publication_matched_status().current_count());
+  LAVA_DEBUG(LOG_DDS,
+             "CycloneDDS publisher start publishing, matched:%d\n",
+             listener_->matched_.load());
+  LAVA_DEBUG(LOG_DDS,
+             "writer_ matched: %d\n",
+             writer_.publication_matched_status().current_count());
   while (listener_->matched_.load() == 0) {
     helper::Sleep();
   }
@@ -98,7 +110,7 @@ void CycloneDDSPublisher::Stop() {
   stop_ = true;
 }
 CycloneDDSPublisher::~CycloneDDSPublisher() {
-  if(!stop_) {
+  if (!stop_) {
     Stop();
   }
 }
@@ -108,10 +120,14 @@ void CycloneDDSSubListener::on_subscription_matched(
     const dds::core::status::SubscriptionMatchedStatus &info) {
   if (info.current_count_change() == 1) {
     matched_.store(info.current_count(), std::memory_order_release);
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter %d matched.\n", info.current_count());
+    LAVA_LOG(LOG_DDS,
+             "CycloneDDS DataWriter %d matched.\n",
+             info.current_count());
   } else if (info.current_count_change() == -1) {
     matched_.store(info.current_count(), std::memory_order_release);
-    LAVA_LOG(LOG_DDS, "CycloneDDS DataWriter unmatched. left:%d\n", info.current_count());
+    LAVA_LOG(LOG_DDS,
+             "CycloneDDS DataWriter unmatched. left:%d\n",
+             info.current_count());
   } else {
     LAVA_LOG_ERR("CycloneDDS Sublistener MatchedStatus error\n");
   }
@@ -124,16 +140,19 @@ int CycloneDDSSubscriber::Init() {
   listener_ = std::make_shared<CycloneDDSSubListener>();
   dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
   rqos << dds::core::policy::History::KeepLast(max_samples_)
-       << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(HEARTBEAT_PERIOD_SECONDS))
+       << dds::core::policy::Reliability::Reliable(dds::core::Duration
+                                        ::from_secs(HEARTBEAT_PERIOD_SECONDS))
        << dds::core::policy::Durability::Volatile();
   dds::core::policy::History history;
 
-  reader_ = dds::sub::DataReader<DDSMetaData>(subscriber_,
-                                              topic_,
-                                              rqos,
-                                              listener_.get(),
-                                              dds::core::status::StatusMask::all());
-  selector_ = std::make_shared<dds::sub::DataReader<DDSMetaData>::Selector>(reader_);
+  reader_ = dds::sub::DataReader<DDSMetaData>(
+            subscriber_,
+            topic_,
+            rqos,
+            listener_.get(),
+            dds::core::status::StatusMask::all());
+  selector_ =
+    std::make_shared<dds::sub::DataReader<DDSMetaData>::Selector>(reader_);
   selector_->max_samples(1);
   stop_ = false;
   return 0;
@@ -141,10 +160,6 @@ int CycloneDDSSubscriber::Init() {
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   LAVA_DEBUG(LOG_DDS, "CycloneDDS recving...\n");
-  // while(listener_->matched_ <= 0) {
-  //   helper::Sleep();
-  // }
-  // LAVA_DEBUG(LOG_DDS, "CycloneDDS Writer Matched.\n");
   dds::sub::LoanedSamples<DDSMetaData> samples;
   if (keep) {
     while ((samples = selector_->read()).length() <= 0) {
@@ -161,7 +176,7 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
     exit(-1);
   }
   auto iter = samples.begin();
-  if(iter->info().valid()) {
+  if (iter->info().valid()) {
     MetaDataPtr metadata = std::make_shared<MetaData>();
     auto dds_metadata = iter->data();
     metadata->nd = dds_metadata.nd();
@@ -205,4 +220,5 @@ CycloneDDSSubscriber::~CycloneDDSSubscriber() {
     Stop();
   }
 }
+
 }  // namespace message_infrastructure
