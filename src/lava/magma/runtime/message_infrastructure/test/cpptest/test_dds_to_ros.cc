@@ -13,7 +13,6 @@ using namespace message_infrastructure;  // NOLINT
 int main() {
   auto dds_channel = GetChannelFactory()
     .GetDDSChannel("rt/dds_topic", DDSUDPv4, FASTDDSBackend, 10);
-    // .GetDDSChannel("rt/dds_topic", DDSSHM, FASTDDSBackend, 10);
   auto dds_send = dds_channel->GetSendPort();
   int loop = LOOP_NUM;
 
@@ -29,7 +28,7 @@ int main() {
   while (loop--) {
     *reinterpret_cast<int64_t*>(metadata->mdata) = loop;
     dds_send->Send(metadata);
-    printf("DDS send : %d\n", loop);
+    printf("DDS send : '%d'\n", loop);
     sleep(0.1);
   }
   dds_send->Join();

@@ -13,14 +13,13 @@ using namespace message_infrastructure;  // NOLINT
 int main() {
   auto dds_channel = GetChannelFactory()
     .GetDDSChannel("rt/dds_topic", DDSUDPv4, FASTDDSBackend, 10);
-    // .GetDDSChannel("rt/dds_topic", DDSSHM, FASTDDSBackend, 10);
   auto dds_recv = dds_channel->GetRecvPort();
   int loop = LOOP_NUM;
 
   dds_recv->Start();
   while (loop--) {
     MetaDataPtr res = dds_recv->Recv();
-    printf("DDS recv : %ld\n", *reinterpret_cast<int64_t*>(res->mdata));
+    printf("DDS recv : '%ld'\n", *reinterpret_cast<int64_t*>(res->mdata));
   }
   dds_recv->Join();
   return 0;

@@ -21,15 +21,16 @@ from message_infrastructure import (
     DDSBackendType
 )
 
+
 def prepare_data():
     return np.random.random_sample((2, 4))
+
 
 def test_ddschannel():
     name = 'rt/dds_topic'
 
     dds_channel = GetDDSChannel(
         name,
-        # DDSTransportType.DDSSHM,
         DDSTransportType.DDSUDPv4,
         DDSBackendType.FASTDDSBackend,
         ChannelQueueSize)
@@ -39,6 +40,7 @@ def test_ddschannel():
     for i in range(100):
         send_port.send(prepare_data())
     send_port.join()
+
 
 if __name__ == "__main__":
     test_ddschannel()

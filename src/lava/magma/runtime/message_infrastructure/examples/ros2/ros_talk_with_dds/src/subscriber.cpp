@@ -24,7 +24,7 @@ private:
     unsigned char* ptr = reinterpret_cast<unsigned char*> (malloc(sizeof(int64_t)));
     for(int i = 0; i < 8; i++)
             *(ptr + i) = metadata->mdata[i];
-    RCLCPP_INFO(this->get_logger(), "ROS2 heard: '%Ld'", *reinterpret_cast<int64_t*>(ptr));
+    RCLCPP_INFO(this->get_logger(), "ROS2 heard: '%ld'", *reinterpret_cast<int64_t*>(ptr));
   }
   rclcpp::Subscription<ddsmetadata::msg::DDSMetaData>::SharedPtr subscription_;
 };
