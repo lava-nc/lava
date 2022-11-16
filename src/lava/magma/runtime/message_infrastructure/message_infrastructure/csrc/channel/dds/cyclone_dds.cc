@@ -118,16 +118,15 @@ CycloneDDSPublisher::~CycloneDDSPublisher() {
 void CycloneDDSSubListener::on_subscription_matched(
     dds::sub::DataReader<DDSMetaData> &reader,
     const dds::core::status::SubscriptionMatchedStatus &info) {
+  matched_.store(info.current_count());
   if (info.current_count_change() == 1) {
-    matched_.store(info.current_count(), std::memory_order_release);
     LAVA_LOG(LOG_DDS,
              "CycloneDDS DataWriter %d matched.\n",
-             info.current_count());
+             matched_.load());
   } else if (info.current_count_change() == -1) {
-    matched_.store(info.current_count(), std::memory_order_release);
     LAVA_LOG(LOG_DDS,
              "CycloneDDS DataWriter unmatched. left:%d\n",
-             info.current_count());
+             matched_.load());
   } else {
     LAVA_LOG_ERR("CycloneDDS Sublistener MatchedStatus error\n");
   }
