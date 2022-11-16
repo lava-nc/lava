@@ -3,9 +3,9 @@
 <package format="3">
   <name>ddsmetadata</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>This package is for henerating ddsmetadata for msg_lib dds port talking with ROS2 node.</description>
   <maintainer email="he.xu@intel.com">root</maintainer>
-  <license>TODO: License declaration</license>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

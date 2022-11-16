@@ -3,9 +3,9 @@
 <package format="3">
   <name>ros_talk_with_dds</name>
   <version>0.0.0</version>
-  <description>TODO</description>
+  <description>This package is for testing msg_lib dds port talking with ROS2 node.</description>
   <maintainer email="he.xu@intel.com">root</maintainer>
-  <license>TODO</license>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
