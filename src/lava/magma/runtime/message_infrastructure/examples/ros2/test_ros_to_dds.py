@@ -21,9 +21,8 @@ from message_infrastructure import (
     DDSBackendType
 )
 
-def test_ddschannel(self):
-    nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
-    name = 'test_dds_to_ros'
+def test_ddschannel():
+    name = 'rt/dds_topic'
 
     dds_channel = GetDDSChannel(
         name,
@@ -38,3 +37,6 @@ def test_ddschannel(self):
         res = recv_port.recv()
         print(res)
     recv_port.join()
+
+if __name__ == "__main__":
+    test_ddschannel()
