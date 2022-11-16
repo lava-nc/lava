@@ -41,6 +41,9 @@ int CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
   dds_metadata_ = std::make_shared<DDSMetaData>();
   // cyclone participantqos only has usedata and factory policy.
+  if (dds_transfer_type_ != DDSUDPv4) {
+    LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
+  }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
   topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
   publisher_ = dds::pub::Publisher(participant_);
@@ -134,6 +137,9 @@ void CycloneDDSSubListener::on_subscription_matched(
 }
 int CycloneDDSSubscriber::Init() {
   LAVA_LOG(LOG_DDS, "subscriber init\n");
+  if (dds_transfer_type_ != DDSUDPv4) {
+    LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
+  }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
   topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
   subscriber_ = dds::sub::Subscriber(participant_);
