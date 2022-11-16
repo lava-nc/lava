@@ -90,7 +90,7 @@ class TestExceptionHandling(unittest.TestCase):
     def setUpClass(cls):
         global _shm_ack
         _shm_ack = Semaphore(1)
-    
+
     @classmethod
     def tearDownClass(cls):
         del globals()['_shm_ack']
