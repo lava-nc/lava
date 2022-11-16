@@ -4,6 +4,8 @@
 
 import logging
 import unittest
+import numpy as np
+from multiprocessing import shared_memory, Semaphore
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -47,8 +49,12 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            # Raise exception
-            raise AssertionError("All the error info")
+            shm = shared_memory.SharedMemory(name='error_block')
+            _shm_ack.acquire()
+            err = np.ndarray((1,), buffer=shm.buf)
+            err[0] += 1
+            _shm_ack.release()
+            shm.close()
 
 
 # A minimal PyProcModel implementing P2
@@ -60,8 +66,12 @@ class PyProcModel2(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            # Raise exception
-            raise TypeError("All the error info")
+            shm = shared_memory.SharedMemory(name='error_block')
+            _shm_ack.acquire()
+            err = np.ndarray((1,), buffer=shm.buf)
+            err[0] += 1
+            _shm_ack.release()
+            shm.close()
 
 
 # A minimal PyProcModel implementing P3
@@ -76,12 +86,40 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        global _shm_ack
+        _shm_ack = Semaphore(1)
 
-    @unittest.skip("Cannot capture child process exception. Need to amend ut.")
+    @classmethod
+    def tearDownClass(cls):
+        del globals()['_shm_ack']
+
+    def setUp(self):
+        """
+        Creates a shared memory block.
+        Runs as part of unit test method.
+        """
+        error_message = np.zeros(shape=(1,))
+        shm = shared_memory.SharedMemory(create=True,
+                                         size=error_message.nbytes,
+                                         name='error_block')
+        err = np.ndarray(error_message.shape, dtype=np.float64, buffer=shm.buf)
+        err[:] = error_message[:]
+        shm.close()
+        self.shm_name = shm.name
+
+    def tearDown(self):
+        """
+        Destroys the shared memory block.
+        Runs as part of unit test method.
+        """
+        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        existing_shm.unlink()
+
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
-
         # Create an instance of P1
         proc = P1()
 
@@ -93,19 +131,18 @@ class TestExceptionHandling(unittest.TestCase):
         proc.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
-        with self.assertRaises(RuntimeError) as context:
-            proc.run(condition=run_steps, run_cfg=run_cfg)
+        proc.run(condition=run_steps, run_cfg=run_cfg)
 
-        exception = context.exception
-        self.assertEqual(RuntimeError, type(exception))
-        # 1 exception in the ProcessModel expected
-        self.assertTrue('1 Exception(s) occurred' in str(exception))
+        # Check that the error count has increased to 1
+        existing_shm = shared_memory.SharedMemory(name='error_block')
+        res = np.copy(np.frombuffer(existing_shm.buf))
+        existing_shm.close()
+        proc.stop()
+        self.assertEqual(res[0], 1)
 
-    @unittest.skip("Cannot capture child process exception. Need to amend ut.")
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
         runtime."""
-
         # Create a sender instance of P1 and a receiver instance of P2
         sender = P1()
         recv = P2()
@@ -121,19 +158,19 @@ class TestExceptionHandling(unittest.TestCase):
         sender.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
-        with self.assertRaises(RuntimeError) as context:
-            sender.run(condition=run_steps, run_cfg=run_cfg)
+        sender.run(condition=run_steps, run_cfg=run_cfg)
 
-        exception = context.exception
-        self.assertEqual(RuntimeError, type(exception))
-        # 2 Exceptions in the ProcessModels expected
-        self.assertTrue('2 Exception(s) occurred' in str(exception))
+        # Check that the error count has increased to 2
+        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        res = np.copy(np.frombuffer(existing_shm.buf))
+        existing_shm.close()
+        sender.stop()
+        recv.stop()
+        self.assertEqual(res[0], 2)
 
-    @unittest.skip("Cannot capture child process exception. Need to amend ut.")
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
         runtime."""
-
         # Create a sender instance of P1 and receiver instances of P2 and P3
         sender = P1()
         recv1 = P2()
@@ -150,14 +187,17 @@ class TestExceptionHandling(unittest.TestCase):
         sender.run(condition=run_steps, run_cfg=run_cfg)
 
         # Run the network for another time step -> expect exception
-        with self.assertRaises(RuntimeError) as context:
-            sender.run(condition=run_steps, run_cfg=run_cfg)
+        sender.run(condition=run_steps, run_cfg=run_cfg)
 
-        exception = context.exception
-        self.assertEqual(RuntimeError, type(exception))
-        # 2 Exceptions in the ProcessModels expected
-        self.assertTrue('2 Exception(s) occurred' in str(exception))
+        # Check that the error count has increased to 2
+        existing_shm = shared_memory.SharedMemory(name=self.shm_name)
+        res = np.copy(np.frombuffer(existing_shm.buf))
+        existing_shm.close()
+        sender.stop()
+        recv1.stop()
+        recv2.stop()
+        self.assertEqual(res[0], 2)
 
 
 if __name__ == '__main__':
-    unittest.main(buffer=True)
+    unittest.main(buffer=False)
