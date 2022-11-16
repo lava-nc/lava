@@ -14,7 +14,6 @@ from message_infrastructure import (
     Channel,
     SendPort,
     RecvPort,
-    SupportDDSChannel,
     ChannelQueueSize,
     GetDDSChannel,
     DDSTransportType,
