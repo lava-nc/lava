@@ -6,7 +6,6 @@ import logging
 import unittest
 import numpy as np
 from multiprocessing import shared_memory, Semaphore
-_shm_ack = Semaphore(1)
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -50,12 +49,12 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            _shm_ack.acquire()
             shm = shared_memory.SharedMemory(name='error_block')
+            _shm_ack.acquire()
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
-            shm.close()
             _shm_ack.release()
+            shm.close()
 
 
 # A minimal PyProcModel implementing P2
@@ -67,12 +66,12 @@ class PyProcModel2(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            _shm_ack.acquire()
             shm = shared_memory.SharedMemory(name='error_block')
+            _shm_ack.acquire()
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
-            shm.close()
             _shm_ack.release()
+            shm.close()
 
 
 # A minimal PyProcModel implementing P3
@@ -87,6 +86,15 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        global _shm_ack
+        _shm_ack = Semaphore(1)
+    
+    @classmethod
+    def tearDownClass(cls):
+        del globals()['_shm_ack']
+
     def setUp(self):
         """
         Creates a shared memory block.
