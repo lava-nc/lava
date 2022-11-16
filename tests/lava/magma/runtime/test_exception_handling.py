@@ -3,11 +3,10 @@
 # See: https://spdx.org/licenses/
 
 import logging
-from multiprocessing import shared_memory
 import unittest
 import numpy as np
-import time
-
+from multiprocessing import shared_memory, Semaphore
+_shm_ack = Semaphore(1)
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -51,10 +50,12 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
+            _shm_ack.acquire()
             shm = shared_memory.SharedMemory(name='error_block')
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
             shm.close()
+            _shm_ack.release()
 
 
 # A minimal PyProcModel implementing P2
@@ -66,12 +67,12 @@ class PyProcModel2(PyLoihiProcessModel):
 
     def run_spk(self):
         if self.time_step > 1:
-            # Raise exception
-            # raise TypeError("All the error info")
+            _shm_ack.acquire()
             shm = shared_memory.SharedMemory(name='error_block')
             err = np.ndarray((1,), buffer=shm.buf)
             err[0] += 1
             shm.close()
+            _shm_ack.release()
 
 
 # A minimal PyProcModel implementing P3
@@ -91,7 +92,6 @@ class TestExceptionHandling(unittest.TestCase):
         Creates a shared memory block.
         Runs as part of unit test method.
         """
-        time.sleep(1)
         error_message = np.zeros(shape=(1,))
         shm = shared_memory.SharedMemory(create=True,
                                          size=error_message.nbytes,
