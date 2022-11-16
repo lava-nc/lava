@@ -131,6 +131,8 @@ class TestExceptionHandling(unittest.TestCase):
         self.assertEqual(res[0], 1)
         existing_shm.close()
 
+        proc.stop()
+
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
         runtime."""
@@ -156,6 +158,9 @@ class TestExceptionHandling(unittest.TestCase):
         res = np.ndarray((1,), buffer=existing_shm.buf)
         self.assertEqual(res[0], 2)
         existing_shm.close()
+
+        sender.stop()
+        recv.stop()
 
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
@@ -183,6 +188,10 @@ class TestExceptionHandling(unittest.TestCase):
         res = np.ndarray((1,), buffer=existing_shm.buf)
         self.assertEqual(res[0], 2)
         existing_shm.close()
+
+        sender.stop()
+        recv1.stop()
+        recv2.stop()
 
 
 if __name__ == '__main__':
