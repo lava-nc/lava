@@ -4,10 +4,8 @@
 
 import logging
 from multiprocessing import shared_memory
-# from symbol import except_clause
 import unittest
 import numpy as np
-import os
 import time
 
 
@@ -93,6 +91,7 @@ class TestExceptionHandling(unittest.TestCase):
         Creates a shared memory block.
         Runs as part of unit test method.
         """
+        time.sleep(1)
         error_message = np.zeros(shape=(1,))
         shm = shared_memory.SharedMemory(create=True,
                                          size=error_message.nbytes,
