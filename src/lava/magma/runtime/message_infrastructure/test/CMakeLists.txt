@@ -26,5 +26,23 @@ target_link_libraries(
   message_infrastructure
   rt)
 
+if(FASTDDS_ENABLE)
+  add_executable(
+    test_dds_to_ros
+    cpptest/test_dds_to_ros.cc)
+
+  add_executable(
+    test_ros_to_dds
+    cpptest/test_ros_to_dds.cc)
+
+  target_link_libraries(
+    test_dds_to_ros
+    message_infrastructure)
+
+  target_link_libraries(
+    test_ros_to_dds
+    message_infrastructure)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(test_messaging_infrastructure PROPERTIES TIMEOUT 10)

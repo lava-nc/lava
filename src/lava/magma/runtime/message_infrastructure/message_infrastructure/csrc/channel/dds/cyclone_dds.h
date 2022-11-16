@@ -11,19 +11,19 @@
 #include <memory>
 #include <string>
 #include <dds/dds.hpp>
-#include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.hpp>
+#include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.hpp>
 
 namespace message_infrastructure {
 
 class CycloneDDSPubListener final : public
-                            dds::pub::NoOpDataWriterListener<DDSMetaData>{
+      dds::pub::NoOpDataWriterListener<ddsmetadata::msg::DDSMetaData>{
  public:
   CycloneDDSPubListener() : matched_(0) {}
   void on_offered_incompatible_qos(
-    dds::pub::DataWriter<DDSMetaData>& writer,
+    dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData>& writer,
     const dds::core::status::OfferedIncompatibleQosStatus&  status) override;
   void on_publication_matched(
-    dds::pub::DataWriter<DDSMetaData> &writer,
+    dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData> &writer,
     const dds::core::status::PublicationMatchedStatus &info) override;
   ~CycloneDDSPubListener() {}
   std::atomic_uint32_t matched_;
@@ -47,11 +47,11 @@ class CycloneDDSPublisher final : public DDSPublisher {
 
  private:
   CycloneDDSPubListenerPtr listener_ = nullptr;
-  std::shared_ptr<DDSMetaData> dds_metadata_ = nullptr;
+  std::shared_ptr<ddsmetadata::msg::DDSMetaData> dds_metadata_ = nullptr;
   dds::domain::DomainParticipant participant_ = dds::core::null;
-  dds::topic::Topic<DDSMetaData> topic_ = dds::core::null;
+  dds::topic::Topic<ddsmetadata::msg::DDSMetaData> topic_ = dds::core::null;
   dds::pub::Publisher publisher_ = dds::core::null;
-  dds::pub::DataWriter<DDSMetaData> writer_ = dds::core::null;
+  dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData> writer_ = dds::core::null;
 
   std::string topic_name_;
   DDSTransportType dds_transfer_type_;
@@ -61,12 +61,12 @@ class CycloneDDSPublisher final : public DDSPublisher {
 };
 
 class CycloneDDSSubListener final : public
-      dds::sub::NoOpDataReaderListener<DDSMetaData>{
+      dds::sub::NoOpDataReaderListener<ddsmetadata::msg::DDSMetaData>{
  public:
   CycloneDDSSubListener() : matched_(0) {}
   ~CycloneDDSSubListener() {}
   void on_subscription_matched(
-        dds::sub::DataReader<DDSMetaData> &reader,
+        dds::sub::DataReader<ddsmetadata::msg::DDSMetaData> &reader,
         const dds::core::status::SubscriptionMatchedStatus &info) override;
   std::atomic_uint32_t matched_;
 };
@@ -90,10 +90,10 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
  private:
   CycloneDDSSubListenerPtr listener_ = nullptr;
   dds::domain::DomainParticipant participant_ = dds::core::null;
-  dds::topic::Topic<DDSMetaData> topic_ = dds::core::null;
+  dds::topic::Topic<ddsmetadata::msg::DDSMetaData> topic_ = dds::core::null;
   dds::sub::Subscriber subscriber_ = dds::core::null;
-  dds::sub::DataReader<DDSMetaData> reader_ = dds::core::null;
-  std::shared_ptr<dds::sub::DataReader<DDSMetaData>::Selector>
+  dds::sub::DataReader<ddsmetadata::msg::DDSMetaData> reader_ = dds::core::null;
+  std::shared_ptr<dds::sub::DataReader<ddsmetadata::msg::DDSMetaData>::Selector>
                  selector_ = nullptr;
 
   std::string topic_name_;

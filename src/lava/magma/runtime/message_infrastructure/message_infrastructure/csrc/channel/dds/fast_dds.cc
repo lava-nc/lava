@@ -32,7 +32,7 @@ FastDDSPublisher::~FastDDSPublisher() {
 }
 
 int FastDDSPublisher::Init() {
-  dds_metadata_ = std::make_shared<DDSMetaData>();
+  dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
     return DDSInitErrorType::DDSParticipantError;
@@ -61,7 +61,7 @@ int FastDDSPublisher::Init() {
 
 void FastDDSPublisher::InitDataWriter() {
   DataWriterQos wqos;
-  wqos.history().kind = KEEP_LAST_HISTORY_QOS;
+  wqos.history().kind = KEEP_ALL_HISTORY_QOS;
   wqos.history().depth = max_samples_;
   wqos.resource_limits().max_samples = max_samples_;
   wqos.resource_limits().allocated_samples = max_samples_ / 2;
@@ -77,16 +77,6 @@ void FastDDSPublisher::InitDataWriter() {
 
 void FastDDSPublisher::InitParticipant() {
   DomainParticipantQos pqos;
-  pqos.wire_protocol().builtin.discovery_config
-                      .discoveryProtocol = DiscoveryProtocol_t::SIMPLE;
-  pqos.wire_protocol().builtin.discovery_config
-                      .use_SIMPLE_EndpointDiscoveryProtocol = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP
-                      .use_PublicationReaderANDSubscriptionWriter = true;
-  pqos.wire_protocol().builtin.discovery_config.m_simpleEDP
-                      .use_PublicationWriterANDSubscriptionReader = true;
-  pqos.wire_protocol().builtin.discovery_config.leaseDuration =
-                       eprosima::fastrtps::c_TimeInfinite;
   pqos.transport().use_builtin_transports = false;
   pqos.name("Participant pub" + topic_name_);
 
@@ -123,9 +113,9 @@ bool FastDDSPublisher::Publish(DataPtr data) {
            metadata->strides,
            sizeof(metadata->strides));
     size_t nbytes = metadata->elsize * metadata->total_size;
-    dds_metadata_->mdata(std::vector<char>(
-                   reinterpret_cast<char*>(metadata->mdata),
-                   reinterpret_cast<char*>(metadata->mdata) + nbytes));
+    dds_metadata_->mdata(std::vector<unsigned char>(
+                   reinterpret_cast<unsigned char*>(metadata->mdata),
+                   reinterpret_cast<unsigned char*>(metadata->mdata) + nbytes));
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher copied\n");
 
     if (writer_->write(dds_metadata_.get()) != ReturnCode_t::RETCODE_OK) {
@@ -224,14 +214,13 @@ void FastDDSSubscriber::InitParticipant() {
 
 void FastDDSSubscriber::InitDataReader() {
   DataReaderQos rqos;
-  rqos.history().kind = KEEP_LAST_HISTORY_QOS;
+  rqos.history().kind = KEEP_ALL_HISTORY_QOS;
   rqos.history().depth = max_samples_;
   rqos.resource_limits().max_samples = max_samples_;
   rqos.resource_limits().allocated_samples = max_samples_ / 2;
   rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
   rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
   rqos.endpoint().history_memory_policy = PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
-
   reader_ = subscriber_->create_datareader(topic_, rqos, listener_.get());
 }
 
@@ -263,7 +252,7 @@ int FastDDSSubscriber::Init() {
 }
 
 MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
-  FASTDDS_CONST_SEQUENCE(MDataSeq, DDSMetaData);
+  FASTDDS_CONST_SEQUENCE(MDataSeq, ddsmetadata::msg::DDSMetaData);
   MDataSeq mdata_seq;
   SampleInfoSeq infos;
   if (keep) {
@@ -283,7 +272,7 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
   LAVA_DEBUG(LOG_DDS, "Return the data recieved\n");
   LAVA_DEBUG(LOG_DDS, "INFO length: %d\n", infos.length());
   if (infos[0].valid_data) {
-    const DDSMetaData& dds_metadata = mdata_seq[0];
+    const ddsmetadata::msg::DDSMetaData& dds_metadata = mdata_seq[0];
     MetaDataPtr metadata = std::make_shared<MetaData>();
     metadata->nd = dds_metadata.nd();
     metadata->type = dds_metadata.type();

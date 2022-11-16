@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+    <transport_descriptors>
+        <transport_descriptor>
+            <transport_id>TransportUDPv4</transport_id>
+            <type>UDPv4</type>
+            <non_blocking_send>false</non_blocking_send>
+            <output_port>0</output_port>
+        </transport_descriptor>
+
+        <transport_descriptor>
+            <transport_id>TransportSHM</transport_id>
+            <type>SHM</type>
+            <segment_size>2097152</segment_size>
+        </transport_descriptor>
+    </transport_descriptors>
+
+     <participant profile_name="participant_profile_ros2" is_default_profile="true">
+        <rtps>
+            <name>profile_for_ros2_context</name>
+            <userTransports>
+                <transport_id>TransportUDPv4</transport_id>
+            </userTransports>
+            <useBuiltinTransports>false</useBuiltinTransports>
+        </rtps>
+    </participant>
+
+    <data_writer profile_name="default publisher profile" is_default_profile="true">
+        <topic>
+            <historyQos>
+                <kind>KEEP_ALL</kind>
+                <depth>100</depth>
+            </historyQos>
+        </topic>
+        <qos>
+            <publishMode>
+                <kind>ASYNCHRONOUS</kind>
+            </publishMode>
+            <reliability>
+                <kind>RELIABLE</kind>
+            </reliability>
+        </qos>
+        <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+    </data_writer>
+    <data_reader profile_name="default subscriber profile" is_default_profile="true">
+        <topic>
+            <historyQos>
+                <kind>KEEP_ALL</kind>
+                <depth>100</depth>
+            </historyQos>
+        </topic>
+        <qos>
+            <durability>
+                <kind>TRANSIENT_LOCAL</kind>
+            </durability>
+            <reliability>
+                <kind>RELIABLE</kind>
+            </reliability>
+        </qos>
+        <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
+    </data_reader>
+</profiles>

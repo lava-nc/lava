@@ -23,7 +23,7 @@
 #define HEARTBEAT_PERIOD_SECONDS (2)
 #define HEARTBEAT_PERIOD_NANOSEC (200 * 1000 * 1000)
 // Topic
-#define DDS_DATATYPE_NAME "DDSMetaData"
+#define DDS_DATATYPE_NAME "ddsmetadata::msg::dds_::DDSMetaData_"
 
 namespace message_infrastructure {
 

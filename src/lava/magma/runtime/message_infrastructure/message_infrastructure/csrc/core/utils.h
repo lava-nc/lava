@@ -20,28 +20,28 @@
 #define MAX_ARRAY_DIMS (5)
 #define SLEEP_NS (1)
 
-#define SIZEOF_CHAR       (sizeof(char))
-#define SIZEOF_UCHAR      (SIZEOF_CHAR)
+#define LAVA_SIZEOF_CHAR       (sizeof(char))
+#define LAVA_SIZEOF_UCHAR      (LAVA_SIZEOF_CHAR)
 
-#define SIZEOF_BOOL       (SIZEOF_UCHAR)
-#define SIZEOF_BYTE       (SIZEOF_CHAR)
-#define SIZEOF_UBYTE      (SIZEOF_UCHAR)
-#define SIZEOF_SHORT      (sizeof(short))  // NOLINT
-#define SIZEOF_USHORT     (sizeof(u_short))
-#define SIZEOF_INT        (sizeof(int))
-#define SIZEOF_UINT       (sizeof(uint))
-#define SIZEOF_LONG       (sizeof(long))  // NOLINT
-#define SIZEOF_ULONG      (sizeof(ulong))
-#define SIZEOF_LONGLONG   (sizeof(long long))  // NOLINT
-#define SIZEOF_ULONGLONG  (sizeof(ulong long))  // NOLINT
-#define SIZEOF_FLOAT      (sizeof(float))
-#define SIZEOF_DOUBLE     (sizeof(double))
-#define SIZEOF_LONGDOUBLE (sizeof(long double))
-#define SIZEOF_NULL       (0)
+#define LAVA_SIZEOF_BOOL       (LAVA_SIZEOF_UCHAR)
+#define LAVA_SIZEOF_BYTE       (LAVA_SIZEOF_CHAR)
+#define LAVA_SIZEOF_UBYTE      (LAVA_SIZEOF_UCHAR)
+#define LAVA_SIZEOF_SHORT      (sizeof(short))  // NOLINT
+#define LAVA_SIZEOF_USHORT     (sizeof(u_short))
+#define LAVA_SIZEOF_INT        (sizeof(int))
+#define LAVA_SIZEOF_UINT       (sizeof(uint))
+#define LAVA_SIZEOF_LONG       (sizeof(long))  // NOLINT
+#define LAVA_SIZEOF_ULONG      (sizeof(ulong))
+#define LAVA_SIZEOF_LONGLONG   (sizeof(long long))  // NOLINT
+#define LAVA_SIZEOF_ULONGLONG  (sizeof(ulong long))  // NOLINT
+#define LAVA_SIZEOF_FLOAT      (sizeof(float))
+#define LAVA_SIZEOF_DOUBLE     (sizeof(double))
+#define LAVA_SIZEOF_LONGDOUBLE (sizeof(long double))
+#define LAVA_SIZEOF_NULL       (0)
 // the length of string is unknown
-#define SIZEOF_STRING     (-1)
+#define LAVA_SIZEOF_STRING     (-1)
 
-#define SIZEOF(TYPE) (SIZEOF_ARRAY[TYPE])
+#define SIZEOF(TYPE) (LAVA_SIZEOF_ARRAY[TYPE])
 
 namespace message_infrastructure {
 
@@ -70,26 +70,27 @@ enum METADATA_TYPES { BOOL = 0,
                       STRING = 18
 };
 
-static int64_t SIZEOF_ARRAY[message_infrastructure::METADATA_TYPES::STRING+1] =
-  { SIZEOF_BOOL,
-    SIZEOF_BYTE,
-    SIZEOF_UBYTE,
-    SIZEOF_SHORT,
-    SIZEOF_USHORT,
-    SIZEOF_INT,
-    SIZEOF_UINT,
-    SIZEOF_LONG,
-    SIZEOF_ULONG,
-    SIZEOF_LONGLONG,
-    SIZEOF_ULONGLONG,
-    SIZEOF_FLOAT,
-    SIZEOF_DOUBLE,
-    SIZEOF_LONGDOUBLE,
-    SIZEOF_NULL,
-    SIZEOF_NULL,
-    SIZEOF_NULL,
-    SIZEOF_NULL,
-    SIZEOF_STRING
+static int64_t LAVA_SIZEOF_ARRAY[message_infrastructure
+                                 ::METADATA_TYPES::STRING+1] =
+  { LAVA_SIZEOF_BOOL,
+    LAVA_SIZEOF_BYTE,
+    LAVA_SIZEOF_UBYTE,
+    LAVA_SIZEOF_SHORT,
+    LAVA_SIZEOF_USHORT,
+    LAVA_SIZEOF_INT,
+    LAVA_SIZEOF_UINT,
+    LAVA_SIZEOF_LONG,
+    LAVA_SIZEOF_ULONG,
+    LAVA_SIZEOF_LONGLONG,
+    LAVA_SIZEOF_ULONGLONG,
+    LAVA_SIZEOF_FLOAT,
+    LAVA_SIZEOF_DOUBLE,
+    LAVA_SIZEOF_LONGDOUBLE,
+    LAVA_SIZEOF_NULL,
+    LAVA_SIZEOF_NULL,
+    LAVA_SIZEOF_NULL,
+    LAVA_SIZEOF_NULL,
+    LAVA_SIZEOF_STRING
   };
 
 struct MetaData {

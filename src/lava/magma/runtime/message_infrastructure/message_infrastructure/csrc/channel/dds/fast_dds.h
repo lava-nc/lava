@@ -6,8 +6,8 @@
 #define CHANNEL_DDS_FAST_DDS_H_
 
 #include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.h>
+#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.h>
+#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaData.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <fastdds/rtps/transport/TransportDescriptorInterface.h>
 
@@ -48,7 +48,7 @@ class FastDDSPublisher final : public DDSPublisher {
   FastDDSPublisher(const std::string &topic_name,
                    const DDSTransportType &dds_transfer_type,
                    const size_t &max_samples) :
-                   type_(new DDSMetaDataPubSubType()),
+                   type_(new ddsmetadata::msg::DDSMetaDataPubSubType()),
                    stop_(true),
                    topic_name_(topic_name),
                    dds_transfer_type_(dds_transfer_type),
@@ -63,7 +63,7 @@ class FastDDSPublisher final : public DDSPublisher {
   void InitParticipant();
 
   FastDDSPubListenerPtr listener_ = nullptr;
-  std::shared_ptr<DDSMetaData> dds_metadata_;
+  std::shared_ptr<ddsmetadata::msg::DDSMetaData> dds_metadata_;
   eprosima::fastdds::dds::DomainParticipant* participant_ = nullptr;
   eprosima::fastdds::dds::Publisher* publisher_ = nullptr;
   eprosima::fastdds::dds::Topic* topic_ = nullptr;
@@ -100,7 +100,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
   FastDDSSubscriber(const std::string &topic_name,
                     const DDSTransportType &dds_transfer_type,
                     const size_t &max_samples) :
-                    type_(new DDSMetaDataPubSubType()),
+                    type_(new ddsmetadata::msg::DDSMetaDataPubSubType()),
                     stop_(true),
                     topic_name_(topic_name),
                     dds_transfer_type_(dds_transfer_type),

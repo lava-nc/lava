@@ -142,6 +142,7 @@ void dds_protocol(std::string topic_name,
 
 #if defined(FASTDDS_ENABLE)
 TEST(TestDDSDelivery, FastDDSSHMLoop) {
+  GTEST_SKIP();
   dds_protocol("fast_shm_", DDSSHM, FASTDDSBackend);
 }
 TEST(TestDDSDelivery, FastDDSUDPv4Loop) {

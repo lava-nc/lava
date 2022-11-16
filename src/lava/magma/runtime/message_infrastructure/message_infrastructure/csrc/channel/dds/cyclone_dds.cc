@@ -13,7 +13,7 @@ namespace message_infrastructure {
 using namespace org::eclipse::cyclonedds;  // NOLINT
 
 void CycloneDDSPubListener::on_offered_incompatible_qos(
-  dds::pub::DataWriter<DDSMetaData>& writer,
+  dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData>& writer,
   const dds::core::status::OfferedIncompatibleQosStatus& status) {
   LAVA_LOG_WARN(LOG_DDS,
                 "incompatiable qos found, count: %d\n",
@@ -21,7 +21,7 @@ void CycloneDDSPubListener::on_offered_incompatible_qos(
 }
 
 void CycloneDDSPubListener::on_publication_matched(
-  dds::pub::DataWriter<DDSMetaData>& writer,
+  dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData>& writer,
   const dds::core::status::PublicationMatchedStatus &info) {
   matched_.store(info.current_count());
   if (info.current_count_change() == 1) {
@@ -39,12 +39,13 @@ void CycloneDDSPubListener::on_publication_matched(
 
 int CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
-  dds_metadata_ = std::make_shared<DDSMetaData>();
+  dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   if (dds_transfer_type_ != DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
-  topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
+  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_,
+                                                            topic_name_);
   publisher_ = dds::pub::Publisher(participant_);
   listener_ = std::make_shared<CycloneDDSPubListener>();
   dds::pub::qos::DataWriterQos wqos = publisher_.default_datawriter_qos();
@@ -52,7 +53,7 @@ int CycloneDDSPublisher::Init() {
        << dds::core::policy::Reliability::Reliable(dds::core::Duration
                                         ::from_secs(HEARTBEAT_PERIOD_SECONDS))
        << dds::core::policy::Durability::Volatile();
-  writer_ = dds::pub::DataWriter<DDSMetaData>(
+  writer_ = dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData>(
             publisher_,
             topic_,
             wqos,
@@ -84,7 +85,7 @@ bool CycloneDDSPublisher::Publish(DataPtr data) {
           metadata->strides,
           sizeof(metadata->strides));
   size_t nbytes = metadata->elsize * metadata->total_size;
-  dds_metadata_->mdata(std::vector<char>(
+  dds_metadata_->mdata(std::vector<uint8_t>(
                   reinterpret_cast<char*>(metadata->mdata),
                   reinterpret_cast<char*>(metadata->mdata) + nbytes));
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher copied\n");
@@ -119,7 +120,7 @@ CycloneDDSPublisher::~CycloneDDSPublisher() {
 }
 
 void CycloneDDSSubListener::on_subscription_matched(
-    dds::sub::DataReader<DDSMetaData> &reader,
+    dds::sub::DataReader<ddsmetadata::msg::DDSMetaData> &reader,
     const dds::core::status::SubscriptionMatchedStatus &info) {
   matched_.store(info.current_count());
   if (info.current_count_change() == 1) {
@@ -140,7 +141,8 @@ int CycloneDDSSubscriber::Init() {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
-  topic_ = dds::topic::Topic<DDSMetaData>(participant_, topic_name_);
+  topic_ = dds::topic::Topic<ddsmetadata::msg::DDSMetaData>(participant_,
+                                                            topic_name_);
   subscriber_ = dds::sub::Subscriber(participant_);
   listener_ = std::make_shared<CycloneDDSSubListener>();
   dds::sub::qos::DataReaderQos rqos = subscriber_.default_datareader_qos();
@@ -150,14 +152,14 @@ int CycloneDDSSubscriber::Init() {
        << dds::core::policy::Durability::Volatile();
   dds::core::policy::History history;
 
-  reader_ = dds::sub::DataReader<DDSMetaData>(
+  reader_ = dds::sub::DataReader<ddsmetadata::msg::DDSMetaData>(
             subscriber_,
             topic_,
             rqos,
             listener_.get(),
             dds::core::status::StatusMask::all());
-  selector_ =
-    std::make_shared<dds::sub::DataReader<DDSMetaData>::Selector>(reader_);
+  selector_ = std::make_shared<dds::sub::
+              DataReader<ddsmetadata::msg::DDSMetaData>::Selector>(reader_);
   selector_->max_samples(1);
   stop_ = false;
   return 0;
@@ -165,7 +167,7 @@ int CycloneDDSSubscriber::Init() {
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   LAVA_DEBUG(LOG_DDS, "CycloneDDS recving...\n");
-  dds::sub::LoanedSamples<DDSMetaData> samples;
+  dds::sub::LoanedSamples<ddsmetadata::msg::DDSMetaData> samples;
   if (keep) {
     while ((samples = selector_->read()).length() <= 0) {
       helper::Sleep();
