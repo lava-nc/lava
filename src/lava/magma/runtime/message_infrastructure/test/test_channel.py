@@ -62,6 +62,7 @@ class Builder:
     def build(self):
         pass
 
+
 def ddschannel_protocol(transfer_type, backend, topic_name):
     from message_infrastructure import GetDDSChannel
     from message_infrastructure import DDSTransportType
@@ -87,6 +88,7 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
 
     time.sleep(0.1)
     mp.stop(True)
+
 
 class TestChannel(unittest.TestCase):
 
@@ -243,7 +245,8 @@ class TestChannel(unittest.TestCase):
                             DDSBackendType.FASTDDSBackend,
                             "test_fastdds_channel_udpv4")
 
-    @unittest.skipIf(not SupportCycloneDDSChannel, "Not support cyclonedds channel.")
+    @unittest.skipIf(not SupportCycloneDDSChannel, \
+                     "Not support cyclonedds channel.")
     def test_cyclonedds_channel_shm(self):
         from message_infrastructure import DDSTransportType
         from message_infrastructure import DDSBackendType
@@ -251,7 +254,8 @@ class TestChannel(unittest.TestCase):
                             DDSBackendType.CycloneDDSBackend,
                             "test_cyclonedds_shm")
 
-    @unittest.skipIf(not SupportCycloneDDSChannel, "Not support cyclonedds channel.")
+    @unittest.skipIf(not SupportCycloneDDSChannel, \
+                     "Not support cyclonedds channel.")
     def test_cyclonedds_channel_udpv4(self):
         from message_infrastructure import DDSTransportType
         from message_infrastructure import DDSBackendType
