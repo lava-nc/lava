@@ -127,7 +127,7 @@ class TestExceptionHandling(unittest.TestCase):
 
         # Check that the error count has increased to 1
         existing_shm = shared_memory.SharedMemory(name='error_block')
-        res = np.ndarray((1,), buffer=existing_shm.buf)
+        res = np.copy(np.frombuffer(existing_shm.buf))
         existing_shm.close()
         proc.stop()
         self.assertEqual(res[0], 1)
@@ -154,7 +154,7 @@ class TestExceptionHandling(unittest.TestCase):
 
         # Check that the error count has increased to 2
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
-        res = np.ndarray((1,), buffer=existing_shm.buf)
+        res = np.copy(np.frombuffer(existing_shm.buf))
         existing_shm.close()
         sender.stop()
         recv.stop()
@@ -183,7 +183,7 @@ class TestExceptionHandling(unittest.TestCase):
 
         # Check that the error count has increased to 2
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
-        res = np.ndarray((1,), buffer=existing_shm.buf)
+        res = np.copy(np.frombuffer(existing_shm.buf))
         existing_shm.close()
         sender.stop()
         recv1.stop()
