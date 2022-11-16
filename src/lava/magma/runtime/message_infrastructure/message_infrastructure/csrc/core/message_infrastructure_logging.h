@@ -81,7 +81,7 @@
                                         _level)); \
     } \
     free(log_data); \
-    std::printf("%s", _level); \
+    std::printf("%s[%d] ", _level, getpid()); \
     std::printf(_fmt, ## __VA_ARGS__); \
 } while (0)
 #else

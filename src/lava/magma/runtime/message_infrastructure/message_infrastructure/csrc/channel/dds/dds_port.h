@@ -46,7 +46,7 @@ class DDSRecvPort final : public AbstractRecvPort {
   void Start() {
     int flag = subscriber_->Init();
     if (flag) {
-      LAVA_LOG_ERR("Publisher Init return error, %d\n", flag);
+      LAVA_LOG_ERR("Subscriber Init return error, %d\n", flag);
       exit(-1);
     }
   }

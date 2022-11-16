@@ -134,8 +134,16 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
                                        py::return_value_policy::reference);
 #endif
 
-  m.def("support_dds_channel", [](){
-#if defined(DDS_CHANNEL)
+  m.def("support_fastdds_channel", [](){
+#if defined(FASTDDS_ENABLE)
+    return true;
+#else
+    return false;
+#endif
+  });
+
+  m.def("support_cyclonedds_channel", [](){
+#if defined(CycloneDDS_ENABLE)
     return true;
 #else
     return false;
