@@ -40,7 +40,6 @@ void CycloneDDSPubListener::on_publication_matched(
 int CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
   dds_metadata_ = std::make_shared<DDSMetaData>();
-  // cyclone participantqos only has usedata and factory policy.
   if (dds_transfer_type_ != DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
@@ -109,7 +108,7 @@ void CycloneDDSPublisher::Stop() {
     topic_ = dds::core::null;
     writer_ = dds::core::null;
   } catch (const dds::core::Exception& e) {
-    std::cerr << "=== [Publisher] Exception: " << e.what() << std::endl;
+    LAVA_LOG_ERR("DDS Exception: %s\n", e.what());
   }
   stop_ = true;
 }
@@ -216,7 +215,7 @@ void CycloneDDSSubscriber::Stop() {
     topic_ = dds::core::null;
     reader_ = dds::core::null;
   } catch (const dds::core::Exception& e) {
-    std::cerr << "=== [Publisher] Exception: " << e.what() << std::endl;
+    LAVA_LOG_ERR("DDS Exception: %s\n", e.what());
   }
   stop_ = true;
 }

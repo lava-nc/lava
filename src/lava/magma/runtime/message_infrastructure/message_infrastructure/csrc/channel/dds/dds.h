@@ -14,7 +14,7 @@
 
 // Default Parameters
 // Transport
-#define SHM_SEGMENT_SIZE (2*1024*1024)
+#define SHM_SEGMENT_SIZE (2 * 1024 * 1024)
 #define NON_BLOCKING_SEND (false)
 #define UDP_OUT_PORT  (0)
 #define TCP_PORT 46

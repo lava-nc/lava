@@ -98,6 +98,7 @@ if(DDS_CHANNEL)
 
     add_definitions(-DCycloneDDS_ENABLE)
     set(CycloneDDS_SRC
+      ${DDS_CHANNEL_SRCS}
       "message_infrastructure/csrc/channel/dds/cyclone_dds.cc"
       "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/metadata.cpp")
   endif()
@@ -106,6 +107,7 @@ if(DDS_CHANNEL)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fastdds.cmake)
     add_definitions(-DFASTDDS_ENABLE)
     set(FASTDDS_SRC
+      ${DDS_CHANNEL_SRCS}
       "message_infrastructure/csrc/channel/dds/fast_dds.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadata.cc"
       "message_infrastructure/csrc/channel/dds/protos/fast_dds/metadataPubSubTypes.cc")
@@ -123,7 +125,6 @@ endif()
 
 add_library(message_infrastructure SHARED
   ${MESSAGE_INFRASTRUCTURE_SRCS}
-  ${DDS_CHANNEL_SRCS}
   $<$<BOOL:${CycloneDDS_ENABLE}>:${CycloneDDS_SRC}>
   $<$<BOOL:${FASTDDS_ENABLE}>:${FASTDDS_SRC}>
   $<$<BOOL:${GRPC_CHANNEL}>:${GRPC_CHANNEL_SRCS}>)

@@ -11,7 +11,7 @@
 namespace message_infrastructure {
 
 const size_t DATA_LENGTH = 10000;
-const uint32_t loop_number = 1;
+const uint32_t loop_number = 1000;
 const size_t DEPTH = 32;
 
 void dds_stop_fn() {
@@ -116,11 +116,12 @@ void dds_protocol(std::string topic_name,
 
   int64_t array_[DATA_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
   std::fill(array_ + 10, array_ + DATA_LENGTH, 1);
+
   MetaDataPtr metadata = std::make_shared<MetaData>();
+  int64_t* array = reinterpret_cast<int64_t*>(array_);
   int64_t dims[] = {DATA_LENGTH, 0, 0, 0, 0};
   int64_t nd = 1;
-  GetMetadata(metadata, &array_[0], nd, METADATA_TYPES::LONG, dims);
-
+  GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   MetaDataPtr mptr;
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
@@ -129,9 +130,14 @@ void dds_protocol(std::string topic_name,
     mptr = from_a1->Recv();
     metadata = mptr;
   }
+  const clock_t end_time = std::clock();
   from_a1->Join();
   to_a1->Join();
   mp.Stop(true);
+
+  std::printf("dds cpp loop timedelta: %f\n",
+           ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));
+  LAVA_DUMP(LOG_UTTEST, "exit\n");
 }
 
 #if defined(FASTDDS_ENABLE)
