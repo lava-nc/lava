@@ -238,8 +238,7 @@ class TestTutorials(unittest.TestCase):
         """Test tutorial in depth process models."""
         self._run_notebook("tutorial03_process_models.ipynb")
 
-    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
-    @unittest.skip("Dead issue?")
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_04__execution(self):
         """Test tutorial in depth execution."""
         self._run_notebook("tutorial04_execution.ipynb")
