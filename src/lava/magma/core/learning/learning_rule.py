@@ -98,9 +98,9 @@ class LoihiLearningRule:
 
         # TODO this is needed because the string get transformed to a PS immediatelty.
         # TODO I would like to change that.
-        self._dw_str = "dw = " + str(dw)
-        self._dd_str = "dd = " + str(dd)
-        self._dt_str = "dt = " + str(dt)
+        self._dw_str = None if dw is None else "dw = " + str(dw)
+        self._dd_str = None if dd is None else "dd = " + str(dd)
+        self._dt_str = None if dt is None else "dt = " + str(dt)
 
         # dict of string learning rules
         str_learning_rules = {
