@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <string>
 #include <vector>
+#include <mutex>
 
 // Default Parameters
 // Transport
@@ -115,16 +116,13 @@ class DDSManager {
  private:
   DDSManager() = default;
   ~DDSManager();
+  std::mutex dds_lock_;
   std::vector<DDSPtr> ddss_;
   std::unordered_set<std::string> dds_topics_;
   static DDSManager dds_manager_;
 };
 
 DDSManager& GetDDSManagerSingleton();
-
-// DDSManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using DDSManagerPtr = std::shared_ptr<DDSManager>;
 
 }  // namespace message_infrastructure
 

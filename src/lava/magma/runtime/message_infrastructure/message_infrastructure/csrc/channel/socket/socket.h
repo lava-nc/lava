@@ -34,18 +34,7 @@ class SktManager {
   SktManager& operator=(const SktManager&) = delete;
   SktManager& operator=(SktManager&&) = delete;
 
-  SocketPair AllocChannelSocket(size_t nbytes) {
-    SocketPair skt_pair;
-    int socket[2];
-    int err = socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, socket);
-    if (err == -1) {
-        LAVA_LOG_FATAL("Create socket object failed.\n");
-    }
-    skt_pair.first = socket[0];
-    skt_pair.second = socket[1];
-    sockets_.push_back(skt_pair);
-    return skt_pair;
-  }
+  SocketPair AllocChannelSocket(size_t nbytes);
 
   friend SktManager &GetSktManagerSingleton();
 
@@ -57,10 +46,6 @@ class SktManager {
 };
 
 SktManager& GetSktManagerSingleton();
-
-// SktManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using SktManagerPtr = std::shared_ptr<SktManager>;
 
 }  // namespace message_infrastructure
 

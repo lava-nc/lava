@@ -86,39 +86,8 @@ class SharedMemManager {
   SharedMemManager(SharedMemManager&&) = delete;
   SharedMemManager& operator=(const SharedMemManager&) = delete;
   SharedMemManager& operator=(SharedMemManager&&) = delete;
-  template<typename T>
-  std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
-    int random = std::rand();
-    std::string str = shm_str_ + std::to_string(random);
-    int shmfd = shm_open(str.c_str(), SHM_FLAG, SHM_MODE);
-    LAVA_DEBUG(LOG_SMMP, "Shm fd and name open: %s %d\n",
-               str.c_str(), shmfd);
-    if (shmfd == -1) {
-      LAVA_LOG_FATAL("Create shared memory object failed.\n");
-    }
-    int err = ftruncate(shmfd, mem_size);
-    if (err == -1) {
-      LAVA_LOG_FATAL("Resize shared memory segment failed.\n");
-    }
-    shm_fd_strs_.insert({shmfd, str});
-    void *mmap_address = mmap(nullptr, mem_size, PROT_READ | PROT_WRITE,
-                       MAP_SHARED, shmfd, 0);
-    if (mmap_address == reinterpret_cast<void*>(-1)) {
-      LAVA_LOG_ERR("Get shmem address error, errno: %d\n", errno);
-      LAVA_DUMP(1, "size: %ld, shmfd_: %d\n", mem_size, shmfd);
-    }
-    shm_mmap_.insert({mmap_address, mem_size});
-    std::shared_ptr<T> shm =
-      std::make_shared<T>(mem_size, mmap_address, random);
-    std::string req_name = shm->GetReq();
-    std::string ack_name = shm->GetAck();
-    sem_t *req = sem_open(req_name.c_str(), O_CREAT, 0644, 0);
-    sem_t *ack = sem_open(ack_name.c_str(), O_CREAT, 0644, 1);
-    shm->InitSemaphore(req, ack);
-    sem_p_strs_.insert({req, req_name});
-    sem_p_strs_.insert({ack, ack_name});
-    return shm;
-  }
+  template <typename T>
+  std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size);
 
   void DeleteAllSharedMemory();
   friend SharedMemManager &GetSharedMemManagerSingleton();
@@ -138,10 +107,6 @@ class SharedMemManager {
 };
 
 SharedMemManager& GetSharedMemManagerSingleton();
-
-// SharedMemManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using SharedMemManagerPtr = std::shared_ptr<SharedMemManager>;
 
 }  // namespace message_infrastructure
 

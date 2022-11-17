@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_set>
 #include <memory>
+#include <atomic>
 
 namespace message_infrastructure {
 
@@ -24,31 +25,16 @@ class GrpcManager {
   GrpcManager& operator=(const GrpcManager&) = delete;
   GrpcManager& operator=(GrpcManager&&) = delete;
 
-  bool CheckURL(const std::string &url) {
-    if (url_set_.find(url) != url_set_.end()) {
-      return false;
-    }
-    url_set_.insert(url);
-    return true;
-  }
-  std::string AllocURL() {
-    std::string url = DEFAULT_GRPC_URL +
-      std::to_string(DEFAULT_GRPC_PORT + port_num_);
-    while (!CheckURL(url)) {
-      url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num_);
-      port_num_++;
-    }
-    return url;
-  }
-  void Release() {
-    url_set_.clear();
-  }
+  bool CheckURL(const std::string &url);
+  std::string AllocURL();
+  void Release();
   friend GrpcManager &GetGrpcManagerSingleton();
 
- private:
+private:
   GrpcManager() = default;
   ~GrpcManager();
-  int port_num_ = 0;
+  std::mutex grpc_lock_;
+  std::atomic<uint32_t> port_num_;
   static GrpcManager grpcm_;
   std::unordered_set<std::string> url_set_;
 };
