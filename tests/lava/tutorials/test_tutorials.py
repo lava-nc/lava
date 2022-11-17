@@ -209,15 +209,13 @@ class TestTutorials(unittest.TestCase):
             "tutorial00_tour_through_lava.ipynb", e2e_tutorial=True
         )
 
-    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
-    @unittest.skip("Dead issue?")
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_end_to_end_01_mnist(self):
         """Test tutorial end to end 01 mnist."""
         self._run_notebook(
             "tutorial01_mnist_digit_classification.ipynb", e2e_tutorial=True
         )
 
-    @unittest.skip("Dead issue?")
     def test_end_to_end_02_ei_network(self):
         """Test tutorial end to end 02 E/I network."""
         self._run_notebook(
@@ -225,8 +223,7 @@ class TestTutorials(unittest.TestCase):
             e2e_tutorial=True
         )
 
-    # @unittest.skip("Tutorial is text only and does not contain code")
-    @unittest.skip("Dead issue?")
+    @unittest.skip("Tutorial is text only and does not contain code")
     def test_in_depth_01_install_lava(self):
         """Test tutorial in depth install lava."""
         self._run_notebook("tutorial01_installing_lava.ipynb")
@@ -236,9 +233,7 @@ class TestTutorials(unittest.TestCase):
         """Test tutorial in depth processes"""
         self._run_notebook("tutorial02_processes.ipynb")
 
-    # @unittest.skipIf(system_name != "linux", "Tests work on linux")
-    @unittest.skip("This case will cause a shmemleak,"
-                   " due to the shm_open in a subprocess(actor)")
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_03_process_models(self):
         """Test tutorial in depth process models."""
         self._run_notebook("tutorial03_process_models.ipynb")
