@@ -13,13 +13,17 @@ from lava.magma.core.process.neuron import LearningNeuronProcess
 from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.model.py.neuron import LearningNeuronModelFloat
+from lava.magma.core.model.py.neuron import (
+    LearningNeuronModelFloat, LearningNeuronModelFixed
+)
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
-from lava.proc.lif.models import AbstractPyLifModelFloat
+from lava.proc.lif.models import (
+    AbstractPyLifModelFloat, AbstractPyLifModelFixed
+)
 
 
 class RSTDPLIF(LearningNeuronProcess, AbstractLIF):
@@ -71,18 +75,19 @@ class RSTDPLIF(LearningNeuronProcess, AbstractLIF):
                          **kwargs)
         self.vth = Var(shape=(1,), init=vth)
 
-        self.a_graded_reward_in = InPort(shape=shape)
+        self.a_third_factor_in = InPort(shape=shape)
 
 
 @implements(proc=RSTDPLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
-class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
+class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural
-    process in floating point precision with learning enabled.
+    process in floating point precision with learning enabled
+    to do R-STDP.
     """
     # Graded reward input spikes
-    a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
@@ -97,8 +102,8 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         return self.v > self.vth
 
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
-        """Generate's a third factor Reward traces based on
-        Graded input spikes to the Learning LIF process.
+        """Generate's a third factor reward traces based on
+        graded input spikes to the Learning LIF process.
 
         Currently, the third factor resembles the input graded spike.
         """
@@ -112,7 +117,79 @@ class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         """
         super().run_spk()
 
-        a_graded_in = self.a_graded_reward_in.recv()
+        a_graded_in = self.a_third_factor_in.recv()
+
+        self.y2 = self.calculate_third_factor_trace(a_graded_in)
+
+        self.s_out_y1.send(self.s_out_buff)
+        self.s_out_y2.send(self.y2)
+        self.s_out_y3.send(self.y3)
+
+
+@implements(proc=RSTDPLIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('bit_accurate_loihi', 'fixed_pt')
+class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
+    """Implementation of RSTDP Leaky-Integrate-and-Fire neural
+    process bit-accurate with Loihi's hardware LIF dynamics,
+    which means, it mimics Loihi behaviour bit-by-bit.
+
+    Currently missing features (compared to Loihi 1 hardware):
+
+    - refractory period after spiking
+    - axonal delays
+
+    Precisions of state variables
+
+    - du: unsigned 12-bit integer (0 to 4095)
+    - dv: unsigned 12-bit integer (0 to 4095)
+    - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
+      bias.
+    - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
+    - vth: unsigned 17-bit integer (0 to 131071).
+
+    """
+    # Graded reward input spikes
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: int = LavaPyType(int, np.int32, precision=17)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        self.effective_vth = 0
+        self.s_out_buff = np.zeros(proc_params['shape'])
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.isthrscaled = True
+
+    def spiking_activation(self):
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
+    
+    def calculate_third_factor_trace(self, s_graded_in: float) -> float:
+        """Generate's a third factor reward traces based on
+        graded input spikes to the Learning LIF process.
+
+        Currently, the third factor resembles the input graded spike.
+        """
+        return s_graded_in
+
+    def run_spk(self) -> None:
+        """Calculates the third factor trace and sends it to the
+        Dense process for learning.
+        s_out_y1: sends the post-synaptic spike times.
+        s_out_y2: sends the graded third-factor reward signal.
+        """
+        super().run_spk()
+
+        a_graded_in = self.a_third_factor_in.recv()
 
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 

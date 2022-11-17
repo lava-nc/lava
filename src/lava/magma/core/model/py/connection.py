@@ -348,7 +348,7 @@ class LearningConnection:
             s_in_bap = self.s_in_bap.recv().astype(bool)
             self._record_post_spike_times(s_in_bap)
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
-            s_in_bap = self.s_in_y1.recv().astype(bool)
+            s_in_bap = self.s_in_bap.recv().astype(bool)
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
 
