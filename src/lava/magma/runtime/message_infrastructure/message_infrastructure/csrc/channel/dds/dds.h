@@ -114,7 +114,7 @@ class DDSManager {
 
  private:
   DDSManager() = default;
-  ~DDSManager() = default;
+  ~DDSManager();
   std::vector<DDSPtr> ddss_;
   std::set<std::string> dds_topics_;
   static DDSManager dds_manager_;

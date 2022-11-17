@@ -51,7 +51,7 @@ class SktManager {
 
  private:
   SktManager() = default;
-  ~SktManager() = default;
+  ~SktManager();
   std::vector<SocketPair> sockets_;
   static SktManager sktm_;
 };

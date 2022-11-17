@@ -47,7 +47,7 @@ class GrpcManager {
 
  private:
   GrpcManager() = default;
-  ~GrpcManager() = default;
+  ~GrpcManager();
   int port_num_ = 0;
   static GrpcManager grpcm_;
   std::set<std::string> url_set_;
