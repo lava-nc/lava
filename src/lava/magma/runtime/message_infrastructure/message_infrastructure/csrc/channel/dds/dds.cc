@@ -49,8 +49,7 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                                         dds_transfer_type,
                                                         max_samples);
 #else
-  LAVA_LOG_ERR("FastDDS is not enable, exit!\n");
-  exit(-1);
+  LAVA_LOG_FATAL("FastDDS is not enable, exit!\n");
 #endif
 }
 
@@ -65,8 +64,7 @@ void DDS::CreateCycloneDDSBackend(const std::string &topic_name,
                                                            dds_transfer_type,
                                                            max_samples);
 #else
-  LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
-  exit(-1);
+  LAVA_LOG_FATAL("CycloneDDS is not enable, exit!\n");
 #endif
 }
 

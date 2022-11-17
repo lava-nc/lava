@@ -39,8 +39,7 @@ class SktManager {
     int socket[2];
     int err = socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, socket);
     if (err == -1) {
-        LAVA_LOG_ERR("Create socket object failed.\n");
-        exit(-1);
+        LAVA_LOG_FATAL("Create socket object failed.\n");
     }
     skt_pair.first = socket[0];
     skt_pair.second = socket[1];

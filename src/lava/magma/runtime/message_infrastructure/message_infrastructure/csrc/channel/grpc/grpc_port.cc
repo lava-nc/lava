@@ -18,7 +18,7 @@ MetaDataPtr GrpcMetaData2MetaData(GrpcMetaDataPtr grpcdata) {
   metadata->total_size = grpcdata->total_size();
   void* data = std::calloc(metadata->elsize * metadata->total_size, 1);
   if (data == nullptr) {
-    LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
+    LAVA_LOG_FATAL("Memory alloc failed, errno: %d\n", errno);
   }
   for (int i = 0; i < metadata->nd; i++) {
     metadata->dims[i] = grpcdata->dims(i);

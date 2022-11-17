@@ -119,7 +119,7 @@ inline void GetMetadata(const MetaDataPtr &metadataptr,
                         const int64_t &dtype,
                         int64_t *dims) {
   if (nd <= 0 || nd > MAX_ARRAY_DIMS) {
-    LAVA_LOG_ERR("invalid nd: %ld\n", nd);
+    LAVA_LOG_ERR("Invalid nd: %ld\n", nd);
     return;
   }
   for (int i = 0; i < nd ; i++) {

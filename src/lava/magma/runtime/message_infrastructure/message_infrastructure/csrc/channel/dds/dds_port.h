@@ -16,8 +16,7 @@ class DDSSendPort final : public AbstractSendPort {
   void Start() {
     int flag = publisher_->Init();
     if (flag) {
-      LAVA_LOG_ERR("Publisher Init return error, %d\n", flag);
-      exit(-1);
+      LAVA_LOG_FATAL("Publisher Init return error, %d\n", flag);
     }
   }
   void Send(DataPtr data) {
@@ -46,8 +45,7 @@ class DDSRecvPort final : public AbstractRecvPort {
   void Start() {
     int flag = subscriber_->Init();
     if (flag) {
-      LAVA_LOG_ERR("Subscriber Init return error, %d\n", flag);
-      exit(-1);
+      LAVA_LOG_FATAL("Subscriber Init return error, %d\n", flag);
     }
   }
   MetaDataPtr Recv() {
