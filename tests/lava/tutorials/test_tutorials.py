@@ -281,6 +281,7 @@ class TestTutorials(unittest.TestCase):
         """Test floating- to fixed-point conversion.."""
         self._run_notebook("tutorial10_float2fixed_conversion.ipynb")
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_three_factor_learning_01(self):
         """Test tutorial three factor learning 01."""
         self._run_notebook(
