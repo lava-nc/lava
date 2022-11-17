@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <queue>
+#include <vector>
 
 #if _WIN32
 #inlcude <process.h>
