@@ -17,10 +17,12 @@ namespace message_infrastructure {
 
 class SocketSendPort final : public AbstractSendPort {
  public:
+  SocketSendPort() = delete;
   SocketSendPort(const std::string &name,
                  const SocketPair &socket,
                  const size_t &nbytes) :
                  name_(name), nbytes_(nbytes), socket_(socket) {}
+  ~SocketSendPort() override {}
   void Start();
   void Send(DataPtr metadata);
   void Join();
@@ -38,10 +40,12 @@ using SocketSendPortPtr = std::shared_ptr<SocketSendPort>;
 
 class SocketRecvPort final : public AbstractRecvPort {
  public:
+  SocketRecvPort() = delete;
   SocketRecvPort(const std::string &name,
                  const SocketPair &socket,
                  const size_t &nbytes) :
                  name_(name), nbytes_(nbytes), socket_(socket) {}
+  ~SocketRecvPort() override {}
   void Start();
   bool Probe();
   MetaDataPtr Recv();

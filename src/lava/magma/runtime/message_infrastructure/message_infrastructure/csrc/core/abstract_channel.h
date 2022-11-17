@@ -16,12 +16,8 @@ class AbstractChannel {
   virtual ~AbstractChannel() = default;
   ChannelType channel_type_;
 
-  virtual AbstractSendPortPtr GetSendPort() {
-    return nullptr;
-  }
-  virtual AbstractRecvPortPtr GetRecvPort() {
-    return nullptr;
-  }
+  virtual AbstractSendPortPtr GetSendPort() = 0;
+  virtual AbstractRecvPortPtr GetRecvPort() = 0;
 };
 
 // Users should be allowed to copy channel objects.

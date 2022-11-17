@@ -4,6 +4,7 @@
 
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/actor/posix_actor.h>
 #if defined(GRPC_CHANNEL)
 #include <message_infrastructure/csrc/channel/grpc/grpc.h>
 #endif
@@ -28,10 +29,10 @@ void MultiProcessing::Stop(bool block) {
       actor->Wait();
     }
   }
-  GetSharedMemManager().DeleteAllSharedMemory();
+  GetSharedMemManagerSingleton().DeleteAllSharedMemory();
 
 #if defined(GRPC_CHANNEL)
-  GetGrpcManager().Release();
+  GetGrpcManagerSingleton().Release();
 #endif
 }
 
@@ -50,7 +51,7 @@ MultiProcessing::~MultiProcessing() {
   for (auto actor : actors_) {
     delete actor;
   }
-  GetSharedMemManager().DeleteAllSharedMemory();
+  GetSharedMemManagerSingleton().DeleteAllSharedMemory();
 }
 
 }  // namespace message_infrastructure

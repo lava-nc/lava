@@ -15,7 +15,7 @@ namespace message_infrastructure {
 
 class GrpcChannel : public AbstractChannel {
  public:
-  GrpcChannel() {}
+  GrpcChannel() = delete;
   GrpcChannel(const std::string &url,
               const int &port,
               const std::string &src_name,
@@ -24,6 +24,7 @@ class GrpcChannel : public AbstractChannel {
   GrpcChannel(const std::string &src_name,
               const std::string &dst_name,
               const size_t &size);
+  ~GrpcChannel() override {}
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:

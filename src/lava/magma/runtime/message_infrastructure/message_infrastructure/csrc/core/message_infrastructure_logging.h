@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <queue>
+#include <vector>
 
 #if _WIN32
 #inlcude <process.h>
@@ -62,25 +63,23 @@
 
 #if defined(MSG_LOG_FILE_ENABLE)
 #define DEBUG_LOG_PRINT(_level, _fmt, ...) do { \
-    int length = 0; \
-    char *log_data = reinterpret_cast<char *> \
-                      (malloc(sizeof(char)*MAX_SIZE_PER_LOG_MSG)); \
-    if (log_data != nullptr) { \
-      length = std::snprintf(log_data, \
-                             MAX_SIZE_PER_LOG_MSG, _fmt, ## __VA_ARGS__); \
-    } \
-    if (log_data == nullptr || length <0) { \
+    std::vector<char> log_data(MAX_SIZE_PER_LOG_MSG); \
+    log_data.emplace_back('\0'); \
+    int length = std::snprintf(log_data.data(), \
+                            MAX_SIZE_PER_LOG_MSG, _fmt, ## __VA_ARGS__); \
+    log_data.resize(length); \
+    log_data.emplace_back('\0'); \
+    if (length < 0) { \
       GetLogInstance()->LogWrite(LogMsg(std::string(LOG_MSG_SUBSTITUTION), \
                                         __FILE__, \
                                         __LINE__, \
                                         _level)); \
     } else { \
-      GetLogInstance()->LogWrite(LogMsg(std::string(log_data), \
+      GetLogInstance()->LogWrite(LogMsg(std::string(log_data.data()), \
                                         __FILE__, \
                                         __LINE__, \
                                         _level)); \
     } \
-    free(log_data); \
     std::printf("%s[%d] ", _level, getpid()); \
     std::printf(_fmt, ## __VA_ARGS__); \
 } while (0)
@@ -117,6 +116,11 @@
 
 #define LAVA_LOG_ERR(_fmt, ...) do { \
   DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
+} while (0)
+
+#define LAVA_LOG_FATAL(_fmt, ...) do { \
+  DEBUG_LOG_PRINT("[CPP FATAL ERRO]", _fmt, ## __VA_ARGS__); \
+  exit(-1); \
 } while (0)
 
 #define LAVA_ASSERT_INT(result, expectation) do { \

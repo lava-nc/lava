@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/actor/posix_actor.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/utils.h>
 
@@ -17,7 +17,7 @@ int CheckSemaphore(sem_t *sem) {
   int sem_val;
   sem_getvalue(sem, &sem_val);
   if (sem_val < 0) {
-    LAVA_LOG_ERR("get the negtive sem value: %d\n", sem_val);
+    LAVA_LOG_ERR("Get the negtive sem value: %d\n", sem_val);
     return -1;
   }
   if (sem_val == 1) {
@@ -28,13 +28,17 @@ int CheckSemaphore(sem_t *sem) {
   return 0;
 }
 
+int PosixActor::GetPid() {
+  return this->pid_;
+}
+
 int PosixActor::Wait() {
   int status;
   int options = 0;
   int ret = waitpid(this->pid_, &status, options);
 
   if (ret < 0) {
-    LAVA_LOG_ERR("process %d waitpid error\n", this->pid_);
+    LAVA_LOG_ERR("Process %d waitpid error\n", this->pid_);
     return -1;
   }
 
@@ -67,7 +71,7 @@ int PosixActor::Create() {
 
   if (pid == 0) {
     LogClear();
-    LAVA_LOG(LOG_MP, "child, new process %d\n", getpid());
+    LAVA_LOG(LOG_MP, "Child, new process %d\n", getpid());
     this->pid_ = getpid();
     Run();
     this->~PosixActor();

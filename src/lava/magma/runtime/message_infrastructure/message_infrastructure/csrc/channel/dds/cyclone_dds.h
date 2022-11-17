@@ -25,7 +25,7 @@ class CycloneDDSPubListener final : public
   void on_publication_matched(
     dds::pub::DataWriter<ddsmetadata::msg::DDSMetaData> &writer,
     const dds::core::status::PublicationMatchedStatus &info) override;
-  ~CycloneDDSPubListener() {}
+  ~CycloneDDSPubListener() override {}
   std::atomic_uint32_t matched_;
 };
 

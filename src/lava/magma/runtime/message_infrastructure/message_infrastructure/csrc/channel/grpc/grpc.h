@@ -9,50 +9,34 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 #include <string>
-#include <set>
+#include <unordered_set>
 #include <memory>
+#include <atomic>
 
 namespace message_infrastructure {
 
-#define DEFAULT_GRPC_URL "0.0.0.0:"
-#define DEFAULT_GRPC_PORT 8000
-
 class GrpcManager {
  public:
-  ~GrpcManager();
-  bool CheckURL(const std::string &url) {
-    if (url_set_.find(url) != url_set_.end()) {
-      return false;
-    }
-    url_set_.insert(url);
-    return true;
-  }
-  std::string AllocURL() {
-    std::string url = DEFAULT_GRPC_URL +
-      std::to_string(DEFAULT_GRPC_PORT + port_num_);
-    while (!CheckURL(url)) {
-      url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num_);
-      port_num_++;
-    }
-    return url;
-  }
-  void Release() {
-    url_set_.clear();
-  }
-  friend GrpcManager &GetGrpcManager();
+  GrpcManager(const GrpcManager&) = delete;
+  GrpcManager(GrpcManager&&) = delete;
+  GrpcManager& operator=(const GrpcManager&) = delete;
+  GrpcManager& operator=(GrpcManager&&) = delete;
+
+  bool CheckURL(const std::string &url);
+  std::string AllocURL();
+  void Release();
+  friend GrpcManager &GetGrpcManagerSingleton();
 
  private:
-  GrpcManager() {}
-  int port_num_ = 0;
+  GrpcManager() = default;
+  ~GrpcManager();
+  std::mutex grpc_lock_;
+  std::atomic<uint32_t> port_num_;
   static GrpcManager grpcm_;
-  std::set<std::string> url_set_;
+  std::unordered_set<std::string> url_set_;
 };
 
-GrpcManager& GetGrpcManager();
-
-// GrpcManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using GrpcManagerPtr = std::shared_ptr<GrpcManager>;
+GrpcManager& GetGrpcManagerSingleton();
 
 }  // namespace message_infrastructure
 

@@ -10,12 +10,9 @@ namespace message_infrastructure {
 
 AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
   : target_fn_(target_fn) {
-  this->ctl_shm_ = GetSharedMemManager()
+  this->ctl_shm_ = GetSharedMemManagerSingleton()
     .AllocChannelSharedMemory<SharedMemory>(sizeof(int));
   this->ctl_shm_->Start();
-}
-
-AbstractActor::~AbstractActor() {
 }
 
 void AbstractActor::Control(const ActorCmd cmd) {

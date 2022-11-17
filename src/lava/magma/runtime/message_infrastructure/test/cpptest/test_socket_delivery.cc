@@ -151,7 +151,6 @@ TEST(TestSocketChannel, SocketLoop) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
     LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);
     LAVA_LOG_ERR("result != expect_result\n");
-    throw;
   }
   std::printf("socket cpp loop timedelta: %f\n",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));

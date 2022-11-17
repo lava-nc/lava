@@ -9,13 +9,16 @@
 #include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
 #endif
 #include <message_infrastructure/csrc/channel/dds/dds.h>
+#include <message_infrastructure/csrc/core/utils.h>
 #include <string>
+#include <mutex>  // NOLINT
 
 namespace message_infrastructure {
 DDSPtr DDSManager::AllocDDS(const std::string &topic_name,
                             const DDSTransportType &dds_transfer_type,
                             const DDSBackendType &dds_backend,
                             const size_t &max_samples) {
+  std::lock_guard<std::mutex> lg(dds_lock_);
   if (dds_topics_.find(topic_name) != dds_topics_.end()) {
     LAVA_LOG_ERR("The topic %s has already been used\n", topic_name.c_str());
     return nullptr;
@@ -49,8 +52,7 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                                         dds_transfer_type,
                                                         max_samples);
 #else
-  LAVA_LOG_ERR("FastDDS is not enable, exit!\n");
-  exit(-1);
+  LAVA_LOG_FATAL("FastDDS is not enable, exit!\n");
 #endif
 }
 
@@ -65,8 +67,7 @@ void DDS::CreateCycloneDDSBackend(const std::string &topic_name,
                                                            dds_transfer_type,
                                                            max_samples);
 #else
-  LAVA_LOG_ERR("CycloneDDS is not enable, exit!\n");
-  exit(-1);
+  LAVA_LOG_FATAL("CycloneDDS is not enable, exit!\n");
 #endif
 }
 
@@ -85,7 +86,7 @@ DDS::DDS(const std::string &topic_name,
 
 DDSManager DDSManager::dds_manager_;
 
-DDSManager& GetDDSManager() {
+DDSManager& GetDDSManagerSingleton() {
   DDSManager &dds_manager = DDSManager::dds_manager_;
   return dds_manager;
 }

@@ -29,35 +29,23 @@ using SocketPair = std::pair<int, int>;
 
 class SktManager {
  public:
-  ~SktManager();
+  SktManager(const SktManager&) = delete;
+  SktManager(SktManager&&) = delete;
+  SktManager& operator=(const SktManager&) = delete;
+  SktManager& operator=(SktManager&&) = delete;
 
-  SocketPair AllocChannelSocket(size_t nbytes) {
-    SocketPair skt_pair;
-    int socket[2];
-    int err = socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, socket);
-    if (err == -1) {
-        LAVA_LOG_ERR("Create socket object failed.\n");
-        exit(-1);
-    }
-    skt_pair.first = socket[0];
-    skt_pair.second = socket[1];
-    sockets_.push_back(skt_pair);
-    return skt_pair;
-  }
+  SocketPair AllocChannelSocket(size_t nbytes);
 
-  friend SktManager &GetSktManager();
+  friend SktManager &GetSktManagerSingleton();
 
  private:
-  SktManager() {}
+  SktManager() = default;
+  ~SktManager();
   std::vector<SocketPair> sockets_;
   static SktManager sktm_;
 };
 
-SktManager& GetSktManager();
-
-// SktManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using SktManagerPtr = std::shared_ptr<SktManager>;
+SktManager& GetSktManagerSingleton();
 
 }  // namespace message_infrastructure
 

@@ -20,7 +20,7 @@ DataPtr GrpcMDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
   LAVA_LOG(LOG_LAYER, "start GrpcMDataFromObject\n");
   if (!PyArray_Check(obj)) {
-    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
+    LAVA_LOG_FATAL("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
     exit(-1);
   }
   LAVA_LOG(LOG_LAYER, "check obj achieved\n");
@@ -45,7 +45,7 @@ DataPtr GrpcMDataFromObject_(py::object* object) {
     grpcdata->add_dims(dims[i]);
     grpcdata->add_strides(strides[i]/element_size_in_bytes);
     if (strides[i] % element_size_in_bytes != 0) {
-      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
+      LAVA_LOG_FATAL("Numpy array stride not a multiple of element bytes\n");
     }
   }
   char* data = reinterpret_cast<char*>(data_ptr);
@@ -58,8 +58,7 @@ DataPtr MDataFromObject_(py::object* object) {
   PyObject *obj = object->ptr();
   LAVA_LOG(LOG_LAYER, "start MDataFromObject\n");
   if (!PyArray_Check(obj)) {
-    LAVA_LOG_ERR("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
-    exit(-1);
+    LAVA_LOG_FATAL("The Object is not array tp is %s\n", Py_TYPE(obj)->tp_name);
   }
   LAVA_LOG(LOG_LAYER, "check obj achieved\n");
 
@@ -84,7 +83,7 @@ DataPtr MDataFromObject_(py::object* object) {
     metadata->dims[i] = dims[i];
     metadata->strides[i] = strides[i]/element_size_in_bytes;
     if (strides[i] % element_size_in_bytes != 0) {
-      LAVA_LOG_ERR("numpy array stride not a multiple of element bytes\n");
+      LAVA_LOG_ERR("Numpy array stride not a multiple of element bytes\n");
     }
   }
   metadata->type = dtype;
@@ -210,7 +209,7 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
     LAVA_DEBUG(LOG_LAYER, "PyObject cleaned, free memory: %p, size: %lu.\n",
                 memory, *(reinterpret_cast<uint64_t*>(memory) - 1)&(~0x7));
     free(memory);});
-  LAVA_ASSERT_INT((nullptr == capsule) ? (free(metadata->mdata), 1) : 0, 0);
+  LAVA_ASSERT_INT(nullptr == capsule, 0);
   LAVA_ASSERT_INT(PyArray_SetBaseObject(
                   reinterpret_cast<PyArrayObject *>(array),
                   capsule), 0);

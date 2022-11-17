@@ -179,8 +179,7 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   }
 
   if (samples.length() != 1) {
-    LAVA_LOG_ERR("FATAL: Cylones recv %d samples\n", samples.length());
-    exit(-1);
+    LAVA_LOG_FATAL("Cylones recv %d samples\n", samples.length());
   }
   auto iter = samples.begin();
   if (iter->info().valid()) {
@@ -201,7 +200,7 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
     LAVA_DEBUG(LOG_DDS, "Data Recieved\n");
     return metadata;
   } else {
-    LAVA_LOG_ERR("time out and no data received\n");
+    LAVA_LOG_ERR("Time out and no data received\n");
   }
   return nullptr;
 }

@@ -3,7 +3,17 @@
 // See: https://spdx.org/licenses/
 
 #include <message_infrastructure/csrc/core/channel_factory.h>
+#include <message_infrastructure/csrc/channel/shmem/shm.h>
+#include <message_infrastructure/csrc/channel/socket/socket.h>
+#include <message_infrastructure/csrc/channel/socket/socket_channel.h>
+#include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
+#if defined(GRPC_CHANNEL)
+#include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
+#endif
 
+#if defined(DDS_CHANNEL)
+#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
+#endif
 namespace message_infrastructure {
 
 AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,

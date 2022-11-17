@@ -17,10 +17,11 @@ namespace message_infrastructure {
 
 class SocketChannel : public AbstractChannel {
  public:
-  SocketChannel() {}
+  SocketChannel() = delete;
   SocketChannel(const std::string &src_name,
                 const std::string &dst_name,
                 const size_t &nbytes);
+  ~SocketChannel() override {}
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:

@@ -6,18 +6,7 @@
 #define CORE_CHANNEL_FACTORY_H_
 
 #include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
 #include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/channel/shmem/shm.h>
-#include <message_infrastructure/csrc/channel/socket/socket.h>
-#include <message_infrastructure/csrc/channel/socket/socket_channel.h>
-#if defined(GRPC_CHANNEL)
-#include <message_infrastructure/csrc/channel/grpc/grpc_channel.h>
-#endif
-
-#ifdef DDS_CHANNEL
-#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
-#endif
 
 #include <string>
 #include <memory>
@@ -26,6 +15,11 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
+  ChannelFactory(const ChannelFactory&) = delete;
+  ChannelFactory(ChannelFactory&&) = delete;
+  ChannelFactory& operator=(const ChannelFactory&) = delete;
+  ChannelFactory& operator=(ChannelFactory&&) = delete;
+
   AbstractChannelPtr GetChannel(const ChannelType &channel_type,
                                 const size_t &size,
                                 const size_t &nbytes,
@@ -54,8 +48,8 @@ class ChannelFactory {
   friend ChannelFactory& GetChannelFactory();
 
  private:
-  ChannelFactory() {}
-  ChannelFactory(const ChannelFactory&) {}
+  ~ChannelFactory() = default;
+  ChannelFactory() = default;
   static ChannelFactory channel_factory_;
 };
 

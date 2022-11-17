@@ -55,6 +55,7 @@ class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
  public:
   GrpcChannelServerImpl(const std::string& name,
                         const size_t &size);
+  ~GrpcChannelServerImpl() override {}
   Status RecvArrayData(ServerContext* context,
                        const GrpcMetaData* request,
                        DataReply* reply) override;
@@ -74,14 +75,16 @@ using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
 
 class GrpcRecvPort final : public AbstractRecvPort {
  public:
+  GrpcRecvPort() = delete;
   GrpcRecvPort(const std::string& name,
                const size_t &size,
                const std::string& url);
-    void Start();
-    MetaDataPtr Recv();
-    MetaDataPtr Peek();
-    void Join();
-    bool Probe();
+  ~GrpcRecvPort() override {}
+  void Start();
+  MetaDataPtr Recv();
+  MetaDataPtr Peek();
+  void Join();
+  bool Probe();
 
  private:
   ServerBuilder builder_;
@@ -99,11 +102,12 @@ using GrpcRecvPortPtr = std::shared_ptr<GrpcRecvPort>;
 
 class GrpcSendPort final : public AbstractSendPort {
  public:
+  GrpcSendPort() = delete;
   GrpcSendPort(const std::string &name,
                const size_t &size,
                const std::string& url)
-  :name_(name), size_(size), done_(false), url_(url)
-  {}
+  :name_(name), size_(size), done_(false), url_(url) {}
+  ~GrpcSendPort() override {}
 
   void Start();
   void Send(DataPtr grpcdata);
