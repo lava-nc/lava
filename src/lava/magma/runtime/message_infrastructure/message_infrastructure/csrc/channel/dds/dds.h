@@ -13,44 +13,7 @@
 #include <vector>
 #include <mutex>
 
-// Default Parameters
-// Transport
-#define SHM_SEGMENT_SIZE (2 * 1024 * 1024)
-#define NON_BLOCKING_SEND (false)
-#define UDP_OUT_PORT  (0)
-#define TCP_PORT 46
-#define TCPv4_IP ("0.0.0.0")
-// QOS
-#define HEARTBEAT_PERIOD_SECONDS (2)
-#define HEARTBEAT_PERIOD_NANOSEC (200 * 1000 * 1000)
-// Topic
-#define DDS_DATATYPE_NAME "ddsmetadata::msg::dds_::DDSMetaData_"
-
 namespace message_infrastructure {
-
-enum DDSTransportType {
-  DDSSHM = 0,
-  DDSTCPv4 = 1,
-  DDSTCPv6 = 2,
-  DDSUDPv4 = 3,
-  DDSUDPv6 = 4
-};
-
-enum DDSBackendType {
-  FASTDDSBackend = 0,
-  CycloneDDSBackend = 1
-};
-
-enum DDSInitErrorType {
-  DDSParticipantError = 1,
-  DDSPublisherError = 2,
-  DDSSubscriberError = 3,
-  DDSTopicError = 4,
-  DDSDataWriterError = 5,
-  DDSDataReaderError = 6,
-  DDSTypeParserError = 7
-};
-
 class DDSPublisher {
  public:
   virtual int Init() = 0;

@@ -15,9 +15,6 @@
 
 namespace message_infrastructure {
 
-#define DEFAULT_GRPC_URL "0.0.0.0:"
-#define DEFAULT_GRPC_PORT 8000
-
 class GrpcManager {
  public:
   GrpcManager(const GrpcManager&) = delete;
