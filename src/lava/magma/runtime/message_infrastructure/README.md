@@ -68,6 +68,9 @@ $ source setenv.sh
   ```
 - Run all tests
   ```bash
+  # when enable grpc channel, need to add following env:
+  # export GRPC_ENABLE_FORK_SUPPORT=true
+  # export GRPC_POLL_STRATEGY=poll
   $ pytest test/
   ```
 

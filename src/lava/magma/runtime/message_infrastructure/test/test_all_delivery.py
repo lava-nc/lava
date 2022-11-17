@@ -10,7 +10,6 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-from message_infrastructure import GetRPCChannel
 from message_infrastructure.multiprocessing import MultiProcessing
 
 from message_infrastructure import (
@@ -445,6 +444,7 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
+        from message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
