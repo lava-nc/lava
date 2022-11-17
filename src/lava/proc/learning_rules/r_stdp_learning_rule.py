@@ -79,7 +79,7 @@ class RewardModulatedSTDP(Loihi3FLearningRule):
         # Trace decay constants
         x1_tau = self.pre_trace_decay_tau
         y1_tau = self.post_trace_decay_tau
-        
+
         # Eligibility trace represented as dt
         dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 + " \
              f"{self.learning_rate} * {self.A_minus} * y0 * x1 - " \
