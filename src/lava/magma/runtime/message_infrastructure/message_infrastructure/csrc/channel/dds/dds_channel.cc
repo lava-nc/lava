@@ -14,7 +14,7 @@ DDSChannel::DDSChannel(const std::string &topic_name,
                        const DDSBackendType &dds_backend,
                        const size_t &size) {
   LAVA_DEBUG(LOG_DDS, "Creating DDSChannel...\n");
-  dds_ = GetDDSManager().AllocDDS(topic_name,
+  dds_ = GetDDSManagerSingleton().AllocDDS(topic_name,
                                   dds_transfer_type,
                                   dds_backend,
                                   size);

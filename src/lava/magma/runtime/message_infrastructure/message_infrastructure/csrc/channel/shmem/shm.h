@@ -123,7 +123,7 @@ class SharedMemManager {
   }
 
   void DeleteAllSharedMemory();
-  friend SharedMemManager &GetSharedMemManager();
+  friend SharedMemManager &GetSharedMemManagerSingleton();
 
  private:
   SharedMemManager() {
@@ -139,7 +139,7 @@ class SharedMemManager {
   int alloc_pid_;
 };
 
-SharedMemManager& GetSharedMemManager();
+SharedMemManager& GetSharedMemManagerSingleton();
 
 // SharedMemManager object should be handled by multiple actors.
 // Use std::shared_ptr.

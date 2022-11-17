@@ -85,7 +85,7 @@ DDS::DDS(const std::string &topic_name,
 
 DDSManager DDSManager::dds_manager_;
 
-DDSManager& GetDDSManager() {
+DDSManager& GetDDSManagerSingleton() {
   DDSManager &dds_manager = DDSManager::dds_manager_;
   return dds_manager;
 }

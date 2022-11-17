@@ -48,7 +48,7 @@ class SktManager {
     return skt_pair;
   }
 
-  friend SktManager &GetSktManager();
+  friend SktManager &GetSktManagerSingleton();
 
  private:
   SktManager() = default;
@@ -57,7 +57,7 @@ class SktManager {
   static SktManager sktm_;
 };
 
-SktManager& GetSktManager();
+SktManager& GetSktManagerSingleton();
 
 // SktManager object should be handled by multiple actors.
 // Use std::shared_ptr.

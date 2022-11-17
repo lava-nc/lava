@@ -13,7 +13,7 @@ ShmemChannel::ShmemChannel(const std::string &src_name,
                            const size_t &nbytes) {
   size_t shmem_size = nbytes + sizeof(MetaData);
 
-  shm_ = GetSharedMemManager().AllocChannelSharedMemory<SharedMemory>(
+  shm_ = GetSharedMemManagerSingleton().AllocChannelSharedMemory<SharedMemory>(
           shmem_size);
 
   send_port_ = std::make_shared<ShmemSendPort>(src_name, shm_,

@@ -139,7 +139,7 @@ void SharedMemManager::DeleteAllSharedMemory() {
 
 SharedMemManager SharedMemManager::smm_;
 
-SharedMemManager& GetSharedMemManager() {
+SharedMemManager& GetSharedMemManagerSingleton() {
   SharedMemManager &smm = SharedMemManager::smm_;
   return smm;
 }

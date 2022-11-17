@@ -28,10 +28,10 @@ void MultiProcessing::Stop(bool block) {
       actor->Wait();
     }
   }
-  GetSharedMemManager().DeleteAllSharedMemory();
+  GetSharedMemManagerSingleton().DeleteAllSharedMemory();
 
 #if defined(GRPC_CHANNEL)
-  GetGrpcManager().Release();
+  GetGrpcManagerSingleton().Release();
 #endif
 }
 
@@ -50,7 +50,7 @@ MultiProcessing::~MultiProcessing() {
   for (auto actor : actors_) {
     delete actor;
   }
-  GetSharedMemManager().DeleteAllSharedMemory();
+  GetSharedMemManagerSingleton().DeleteAllSharedMemory();
 }
 
 }  // namespace message_infrastructure

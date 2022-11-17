@@ -16,7 +16,7 @@ SktManager::~SktManager() {
 
 SktManager SktManager::sktm_;
 
-SktManager& GetSktManager() {
+SktManager& GetSktManagerSingleton() {
   SktManager &sktm = SktManager::sktm_;
   return sktm;
 }

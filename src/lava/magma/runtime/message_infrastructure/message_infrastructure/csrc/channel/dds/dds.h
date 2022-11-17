@@ -110,7 +110,7 @@ class DDSManager {
                   const DDSBackendType &dds_backend,
                   const size_t &max_samples);
   void DeleteAllDDS();
-  friend DDSManager &GetDDSManager();
+  friend DDSManager &GetDDSManagerSingleton();
 
  private:
   DDSManager() = default;
@@ -120,7 +120,7 @@ class DDSManager {
   static DDSManager dds_manager_;
 };
 
-DDSManager& GetDDSManager();
+DDSManager& GetDDSManagerSingleton();
 
 // DDSManager object should be handled by multiple actors.
 // Use std::shared_ptr.

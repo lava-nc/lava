@@ -43,7 +43,7 @@ class GrpcManager {
   void Release() {
     url_set_.clear();
   }
-  friend GrpcManager &GetGrpcManager();
+  friend GrpcManager &GetGrpcManagerSingleton();
 
  private:
   GrpcManager() = default;
@@ -53,7 +53,7 @@ class GrpcManager {
   std::set<std::string> url_set_;
 };
 
-GrpcManager& GetGrpcManager();
+GrpcManager& GetGrpcManagerSingleton();
 
 }  // namespace message_infrastructure
 

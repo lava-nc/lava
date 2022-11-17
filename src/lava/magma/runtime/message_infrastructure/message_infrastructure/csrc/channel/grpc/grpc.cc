@@ -10,7 +10,7 @@ GrpcManager GrpcManager::grpcm_;
 GrpcManager::~GrpcManager() {
   url_set_.clear();
 }
-GrpcManager& GetGrpcManager() {
+GrpcManager& GetGrpcManagerSingleton() {
   GrpcManager &grpcm = GrpcManager::grpcm_;
   return grpcm;
 }
