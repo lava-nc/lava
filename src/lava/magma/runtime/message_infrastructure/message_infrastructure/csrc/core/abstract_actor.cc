@@ -15,9 +15,6 @@ AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
   this->ctl_shm_->Start();
 }
 
-AbstractActor::~AbstractActor() {
-}
-
 void AbstractActor::Control(const ActorCmd cmd) {
   this->ctl_shm_->Store([cmd](void* data){
   auto ctrl_cmd = reinterpret_cast<int *>(data);

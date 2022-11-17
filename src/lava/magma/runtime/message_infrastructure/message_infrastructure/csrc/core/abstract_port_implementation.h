@@ -15,6 +15,7 @@ class AbstractPortImplementation {
                                       const RecvPortList &recv_ports);
   explicit AbstractPortImplementation(const RecvPortList &recv_ports);
   explicit AbstractPortImplementation(const SendPortList &send_ports);
+  virtual ~AbstractPortImplementation() = default;
   int Start();
   int Join();
 

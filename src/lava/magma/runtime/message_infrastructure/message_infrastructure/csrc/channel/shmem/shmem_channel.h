@@ -17,11 +17,12 @@ namespace message_infrastructure {
 
 class ShmemChannel : public AbstractChannel {
  public:
-  ShmemChannel() {}
+  ShmemChannel() = delete;
   ShmemChannel(const std::string &src_name,
                const std::string &dst_name,
                const size_t &size,
                const size_t &nbytes);
+  ~ShmemChannel() override {}
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
  private:

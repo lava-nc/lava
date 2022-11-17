@@ -46,7 +46,7 @@ class AbstractActor {
   using StopFn = std::function<void(void)>;
 
   explicit AbstractActor(TargetFn target_fn);
-  ~AbstractActor();
+  virtual ~AbstractActor() = default;
   virtual int ForceStop() = 0;
   virtual int Wait() = 0;
   virtual int Create() = 0;
@@ -74,19 +74,6 @@ class AbstractActor {
 };
 
 using SharedActorPtr = std::shared_ptr<AbstractActor>;
-
-class PosixActor final : public AbstractActor {
- public:
-  using AbstractActor::AbstractActor;
-  int GetPid() {
-    return this->pid_;
-  }
-  int Wait();
-  int ForceStop();
-  int Create();
-};
-
-using PosixActorPtr = PosixActor *;
 
 }  // namespace message_infrastructure
 

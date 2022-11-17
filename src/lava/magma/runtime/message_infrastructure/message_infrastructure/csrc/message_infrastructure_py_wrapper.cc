@@ -11,6 +11,7 @@
 #include <message_infrastructure/csrc/port_proxy.h>
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/channel_proxy.h>
+#include <message_infrastructure/csrc/actor/posix_actor.h>
 
 #include <memory>
 

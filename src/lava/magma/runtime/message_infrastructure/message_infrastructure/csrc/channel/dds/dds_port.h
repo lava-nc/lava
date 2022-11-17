@@ -12,7 +12,9 @@ namespace message_infrastructure {
 
 class DDSSendPort final : public AbstractSendPort {
  public:
+  DDSSendPort() = delete;
   DDSSendPort(DDSPtr dds) : publisher_(dds->dds_publisher_) {}
+  ~DDSSendPort() = default;
   void Start() {
     int flag = publisher_->Init();
     if (flag) {
@@ -41,7 +43,9 @@ using DDSSendPortPtr = std::shared_ptr<DDSSendPort>;
 
 class DDSRecvPort final : public AbstractRecvPort {
  public:
+  DDSRecvPort() = delete;
   DDSRecvPort(DDSPtr dds) : subscriber_(dds->dds_subscriber_) {}
+  ~DDSRecvPort() override {}
   void Start() {
     int flag = subscriber_->Init();
     if (flag) {

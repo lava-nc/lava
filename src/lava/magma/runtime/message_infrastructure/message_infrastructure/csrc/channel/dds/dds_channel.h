@@ -18,13 +18,14 @@ namespace message_infrastructure {
 
 class DDSChannel : public AbstractChannel {
  public:
-  DDSChannel() {}
-  DDSChannel(const std::string &topic_name,
-             const DDSTransportType &dds_transfer_type,
-             const DDSBackendType &dds_backend,
-             const size_t &size);
-  AbstractSendPortPtr GetSendPort();
-  AbstractRecvPortPtr GetRecvPort();
+   DDSChannel() = delete;
+   ~DDSChannel() override {}
+   DDSChannel(const std::string &topic_name,
+              const DDSTransportType &dds_transfer_type,
+              const DDSBackendType &dds_backend,
+              const size_t &size);
+   AbstractSendPortPtr GetSendPort();
+   AbstractRecvPortPtr GetRecvPort();
 
  private:
   DDSPtr dds_ = nullptr;

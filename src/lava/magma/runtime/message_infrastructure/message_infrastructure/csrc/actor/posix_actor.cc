@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/actor/posix_actor.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <message_infrastructure/csrc/core/utils.h>
 
@@ -26,6 +26,10 @@ int CheckSemaphore(sem_t *sem) {
   }
 
   return 0;
+}
+
+int PosixActor::GetPid() {
+  return this->pid_;
 }
 
 int PosixActor::Wait() {

@@ -26,6 +26,11 @@ namespace message_infrastructure {
 
 class ChannelFactory {
  public:
+  ChannelFactory(const ChannelFactory&) = delete;
+  ChannelFactory(ChannelFactory&&) = delete;
+  ChannelFactory& operator=(const ChannelFactory&) = delete;
+  ChannelFactory& operator=(ChannelFactory&&) = delete;
+
   AbstractChannelPtr GetChannel(const ChannelType &channel_type,
                                 const size_t &size,
                                 const size_t &nbytes,
@@ -54,8 +59,8 @@ class ChannelFactory {
   friend ChannelFactory& GetChannelFactory();
 
  private:
-  ChannelFactory() {}
-  ChannelFactory(const ChannelFactory&) {}
+  ~ChannelFactory() = default;
+  ChannelFactory() = default;
   static ChannelFactory channel_factory_;
 };
 

@@ -4,6 +4,7 @@
 
 #include <message_infrastructure/csrc/core/multiprocessing.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <message_infrastructure/csrc/actor/posix_actor.h>
 #if defined(GRPC_CHANNEL)
 #include <message_infrastructure/csrc/channel/grpc/grpc.h>
 #endif
