@@ -82,8 +82,7 @@ void FastDDSPublisher::InitParticipant() {
 
   auto transport_descriptor = GetTransportDescriptor(dds_transfer_type_);
   if (nullptr == transport_descriptor) {
-    LAVA_LOG_ERR("Fatal: Create Transport Fault, exit\n");
-    exit(-1);
+    LAVA_LOG_FATAL("Create Transport Fault, exit\n");
   }
   pqos.transport().user_transports.push_back(transport_descriptor);
 

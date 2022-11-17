@@ -94,13 +94,11 @@ class SharedMemManager {
     LAVA_DEBUG(LOG_SMMP, "Shm fd and name open: %s %d\n",
                str.c_str(), shmfd);
     if (shmfd == -1) {
-      LAVA_LOG_ERR("Create shared memory object failed.\n");
-      exit(-1);
+      LAVA_LOG_FATAL("Create shared memory object failed.\n");
     }
     int err = ftruncate(shmfd, mem_size);
     if (err == -1) {
-      LAVA_LOG_ERR("Resize shared memory segment failed.\n");
-      exit(-1);
+      LAVA_LOG_FATAL("Resize shared memory segment failed.\n");
     }
     shm_fd_strs_.insert({shmfd, str});
     void *mmap_address = mmap(nullptr, mem_size, PROT_READ | PROT_WRITE,

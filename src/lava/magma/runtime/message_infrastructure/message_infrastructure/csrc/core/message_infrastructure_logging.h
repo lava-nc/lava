@@ -119,6 +119,11 @@
   DEBUG_LOG_PRINT("[CPP ERRO]", _fmt, ## __VA_ARGS__); \
 } while (0)
 
+#define LAVA_LOG_FATAL(_fmt, ...) do { \
+  DEBUG_LOG_PRINT("[CPP FATAL ERRO]", _fmt, ## __VA_ARGS__); \
+  exit(-1); \
+} while (0)
+
 #define LAVA_ASSERT_INT(result, expectation) do { \
   if (int r = (result) != expectation) { \
     LAVA_LOG_ERR("Assert failed, %d get, %d except. Errno: %d\n", \
