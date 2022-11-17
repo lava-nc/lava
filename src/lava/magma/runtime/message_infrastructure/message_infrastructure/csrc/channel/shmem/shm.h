@@ -82,6 +82,10 @@ using RwSharedMemoryPtr = std::shared_ptr<RwSharedMemory>;
 
 class SharedMemManager {
  public:
+  SharedMemManager(const SharedMemManager&) = delete;
+  SharedMemManager(SharedMemManager&&) = delete;
+  SharedMemManager& operator=(const SharedMemManager&) = delete;
+  SharedMemManager& operator=(SharedMemManager&&) = delete;
   template<typename T>
   std::shared_ptr<T> AllocChannelSharedMemory(const size_t &mem_size) {
     int random = std::rand();
@@ -126,6 +130,7 @@ class SharedMemManager {
     std::srand(std::time(nullptr));
     alloc_pid_ = getpid();
   }
+  ~SharedMemManager() = default;
   std::map<int, std::string> shm_fd_strs_;
   std::map<sem_t*, std::string> sem_p_strs_;
   std::map<void*, int64_t> shm_mmap_;

@@ -19,7 +19,11 @@ namespace message_infrastructure {
 
 class GrpcManager {
  public:
-  ~GrpcManager();
+  GrpcManager(const GrpcManager&) = delete;
+  GrpcManager(GrpcManager&&) = delete;
+  GrpcManager& operator=(const GrpcManager&) = delete;
+  GrpcManager& operator=(GrpcManager&&) = delete;
+
   bool CheckURL(const std::string &url) {
     if (url_set_.find(url) != url_set_.end()) {
       return false;
@@ -42,17 +46,14 @@ class GrpcManager {
   friend GrpcManager &GetGrpcManager();
 
  private:
-  GrpcManager() {}
+  GrpcManager() = default;
+  ~GrpcManager() = default;
   int port_num_ = 0;
   static GrpcManager grpcm_;
   std::set<std::string> url_set_;
 };
 
 GrpcManager& GetGrpcManager();
-
-// GrpcManager object should be handled by multiple actors.
-// Use std::shared_ptr.
-using GrpcManagerPtr = std::shared_ptr<GrpcManager>;
 
 }  // namespace message_infrastructure
 

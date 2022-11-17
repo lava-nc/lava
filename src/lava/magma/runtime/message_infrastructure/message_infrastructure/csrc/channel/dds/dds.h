@@ -101,7 +101,10 @@ using DDSPtr = std::shared_ptr<DDS>;
 
 class DDSManager {
  public:
-  ~DDSManager();
+  DDSManager(const DDSManager&) = delete;
+  DDSManager(DDSManager&&) = delete;
+  DDSManager& operator=(const DDSManager&) = delete;
+  DDSManager& operator=(DDSManager&&) = delete;
   DDSPtr AllocDDS(const std::string &topic_name,
                   const DDSTransportType &dds_transfer_type,
                   const DDSBackendType &dds_backend,
@@ -110,7 +113,8 @@ class DDSManager {
   friend DDSManager &GetDDSManager();
 
  private:
-  DDSManager() {}
+  DDSManager() = default;
+  ~DDSManager() = default;
   std::vector<DDSPtr> ddss_;
   std::set<std::string> dds_topics_;
   static DDSManager dds_manager_;

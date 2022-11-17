@@ -29,7 +29,10 @@ using SocketPair = std::pair<int, int>;
 
 class SktManager {
  public:
-  ~SktManager();
+  SktManager(const SktManager&) = delete;
+  SktManager(SktManager&&) = delete;
+  SktManager& operator=(const SktManager&) = delete;
+  SktManager& operator=(SktManager&&) = delete;
 
   SocketPair AllocChannelSocket(size_t nbytes) {
     SocketPair skt_pair;
@@ -48,7 +51,8 @@ class SktManager {
   friend SktManager &GetSktManager();
 
  private:
-  SktManager() {}
+  SktManager() = default;
+  ~SktManager() = default;
   std::vector<SocketPair> sockets_;
   static SktManager sktm_;
 };
