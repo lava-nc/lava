@@ -11,7 +11,7 @@
 #include <unordered_set>
 #include <string>
 #include <vector>
-#include <mutex>
+#include <mutex>  // NOLINT
 
 namespace message_infrastructure {
 class DDSPublisher {

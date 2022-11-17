@@ -17,7 +17,7 @@ namespace message_infrastructure {
 class CppInPort : public AbstractPortImplementation {
  public:
   explicit CppInPort(const RecvPortList &recv_ports);
-  virtual ~CppInPort() override {}
+  virtual ~CppInPort() = default;
   bool Probe();
   virtual int Recv() = 0;
   virtual int Peek() = 0;
@@ -63,7 +63,7 @@ class CppInPortScalarSparse final : public CppInPort {
 class CppOutPort : public AbstractPortImplementation {
  public:
   explicit CppOutPort(const SendPortList &send_ports);
-  virtual ~CppOutPort() override {}
+  virtual ~CppOutPort() = default;
   virtual int Send() = 0;
   void Flush() {}
 };
@@ -105,7 +105,7 @@ class CppRefPort : public AbstractPortImplementation {
  public:
   explicit CppRefPort(const SendPortList &send_ports,
                       const RecvPortList &recv_ports);
-  virtual ~CppRefPort() override {}
+  virtual ~CppRefPort() = default;
   virtual int Read() = 0;
   virtual int Write() = 0;
   int Wait();
@@ -153,7 +153,7 @@ class CppVarPort : public AbstractPortImplementation {
   explicit CppVarPort(const std::string &name,
                       const SendPortList &send_ports,
                       const RecvPortList &recv_ports);
-  virtual ~CppVarPort() override {}
+  virtual ~CppVarPort() = default;
   virtual int Service() = 0;
   virtual int Recv()  = 0;
   virtual int Peek() = 0;

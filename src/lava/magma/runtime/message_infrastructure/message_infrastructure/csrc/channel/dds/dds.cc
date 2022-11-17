@@ -9,8 +9,9 @@
 #include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
 #endif
 #include <message_infrastructure/csrc/channel/dds/dds.h>
+#include <message_infrastructure/csrc/core/utils.h>
 #include <string>
-#include <mutex>
+#include <mutex>  // NOLINT
 
 namespace message_infrastructure {
 DDSPtr DDSManager::AllocDDS(const std::string &topic_name,

@@ -23,16 +23,16 @@ template class RecvQueue<MetaDataPtr>;
 
 class ShmemSendPort final : public AbstractSendPort {
  public:
-   ShmemSendPort() = delete;
-   ShmemSendPort(const std::string &name,
-                 SharedMemoryPtr shm,
-                 const size_t &size,
-                 const size_t &nbytes);
-   ~ShmemSendPort() override {}
-   void Start();
-   void Send(DataPtr metadata);
-   void Join();
-   bool Probe();
+  ShmemSendPort() = delete;
+  ShmemSendPort(const std::string &name,
+                SharedMemoryPtr shm,
+                const size_t &size,
+                const size_t &nbytes);
+  ~ShmemSendPort() override {}
+  void Start();
+  void Send(DataPtr metadata);
+  void Join();
+  bool Probe();
 
  private:
   SharedMemoryPtr shm_ = nullptr;

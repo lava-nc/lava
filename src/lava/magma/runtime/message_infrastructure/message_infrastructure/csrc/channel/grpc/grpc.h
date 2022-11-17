@@ -27,7 +27,7 @@ class GrpcManager {
   void Release();
   friend GrpcManager &GetGrpcManagerSingleton();
 
-private:
+ private:
   GrpcManager() = default;
   ~GrpcManager();
   std::mutex grpc_lock_;
