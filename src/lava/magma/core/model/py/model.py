@@ -478,6 +478,8 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         self._cmd_handlers.update({
             MGMT_COMMAND.RUN[0]: self._run_async
         })
+        self.req_pause: bool = False
+        self.req_stop: bool = False
 
     class Response:
         """
@@ -532,7 +534,15 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         Helper function to wrap run_async function
         """
         self.run_async()
-        self.process_to_service.send(PyAsyncProcessModel.Response.STATUS_DONE)
+        if self.req_stop:
+            self.process_to_service.send(PyAsyncProcessModel.Response.REQ_STOP)
+            self.req_stop = False
+        elif self.req_pause:
+            self.process_to_service.send(PyAsyncProcessModel.Response.REQ_PAUSE)
+            self.req_pause = False
+        else:
+            self.process_to_service.send(
+                PyAsyncProcessModel.Response.STATUS_DONE)
 
     def add_ports_for_polling(self):
         """
