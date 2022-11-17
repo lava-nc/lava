@@ -8,7 +8,7 @@
 #include <message_infrastructure/csrc/core/utils.h>
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -116,7 +116,7 @@ class DDSManager {
   DDSManager() = default;
   ~DDSManager();
   std::vector<DDSPtr> ddss_;
-  std::set<std::string> dds_topics_;
+  std::unordered_set<std::string> dds_topics_;
   static DDSManager dds_manager_;
 };
 

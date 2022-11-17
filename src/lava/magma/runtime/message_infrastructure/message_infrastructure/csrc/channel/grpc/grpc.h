@@ -9,7 +9,7 @@
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 
 #include <string>
-#include <set>
+#include <unordered_set>
 #include <memory>
 
 namespace message_infrastructure {
@@ -50,7 +50,7 @@ class GrpcManager {
   ~GrpcManager();
   int port_num_ = 0;
   static GrpcManager grpcm_;
-  std::set<std::string> url_set_;
+  std::unordered_set<std::string> url_set_;
 };
 
 GrpcManager& GetGrpcManagerSingleton();
