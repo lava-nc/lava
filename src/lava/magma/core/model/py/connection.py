@@ -367,8 +367,9 @@ class LearningConnection:
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
-        self._apply_learning_rules()
-        self._update_traces()
+        x_traces_history, y_traces_history = self._compute_trace_histories()
+        self._update_traces(x_traces_history, y_traces_history)
+        self._apply_learning_rules(x_traces_history, y_traces_history)
         self._reset_dependencies_and_spike_times()
 
     @abstractmethod
@@ -388,11 +389,19 @@ class LearningConnection:
         pass
 
     @abstractmethod
-    def _apply_learning_rules(self) -> None:
+    def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
+        pass
+    
+    @abstractmethod
+    def _apply_learning_rules(self, 
+                              x_traces_history: np.ndarray, 
+                              y_traces_history: np.ndarray) -> None:
         pass
 
     @abstractmethod
-    def _update_traces(self) -> None:
+    def _update_traces(self,
+                       x_traces_history: np.ndarray,
+                       y_traces_history: np.ndarray) -> None:
         pass
 
     def _reset_dependencies_and_spike_times(self) -> None:
@@ -1196,8 +1205,6 @@ class LearningConnectionModelFloat(LearningConnection):
             ]
         )
 
-        self.evaluated_traces = np.zeros((3, 5, self._shape[0], self._shape[1]))
-
     def _init_randoms(self):
         pass
 
@@ -1256,11 +1263,103 @@ class LearningConnectionModelFloat(LearningConnection):
         ts_offset = self._within_epoch_time_step()
         self.ty[s_in_bap] = ts_offset
 
-    def _apply_learning_rules(self) -> None:
+    def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
+        # TODO move the following decay part to evaluate_trace function
+        # Gather all necessary information to decay traces
+        x_traces = self._x_traces
+        y_traces = self._y_traces
+
+        t_epoch = self._learning_rule.t_epoch
+
+        # TODO use those being initialized before
+        x1_impulse = self._learning_rule.x1_impulse
+        x2_impulse = self._learning_rule.x2_impulse
+        x_impulses = np.atleast_2d([x1_impulse, x2_impulse]).T
+
+        y1_impulse = self._learning_rule.y1_impulse
+        y2_impulse = self._learning_rule.y2_impulse
+        y3_impulse = self._learning_rule.y3_impulse
+        y_impulses = np.atleast_2d([y1_impulse, y2_impulse, y3_impulse]).T
+
+        x1_tau = self._learning_rule.x1_tau
+        x2_tau = self._learning_rule.x2_tau
+        x_taus = np.array([x1_tau, x2_tau])
+
+        y1_tau = self._learning_rule.y1_tau
+        y2_tau = self._learning_rule.y2_tau
+        y3_tau = self._learning_rule.y3_tau
+        y_taus = np.array([y1_tau, y2_tau, y3_tau])
+
+        # get spike times
+        t_spike_x = np.array(self.tx) - 1
+        t_spike_y = np.array(self.ty) - 1
+
+        # most naive algorithm to decay traces
+        # TODO decay only for important time-steps
+        # TODO do not decay for tau=0
+        x_traces_history = np.full((t_epoch+1, ) + x_traces.shape, -1)
+        x_traces_history[0] = x_traces
+        y_traces_history = np.full((t_epoch + 1,) + x_traces.shape, -1)
+        y_traces_history[0] = y_traces
+
+        important_time_steps = set(self.tx).union(set(self.ty))
+        important_time_steps.remove(0)
+        important_time_steps.add(t_epoch)
+
+        for t in important_time_steps:
+            x_traces_history[t] = self._decay_trace(x_traces_history[0].T, 1, x_taus).T
+
+            x_traces_history.append(
+
+            )
+            y_traces_history.append(
+                self._decay_trace(y_traces_history[-1].T, 1, y_taus).T
+            )
+
+            # add impulses if spike happens in this timestep
+            x_spike_ids = np.where(t_spike_x == t)[0]
+            x_traces_history[-1][:, x_spike_ids] += x_impulses
+
+            y_spike_ids = np.where(t_spike_y == t)[0]
+            y_traces_history[-1][:, y_spike_ids] += y_impulses
+
+        # TODO, use arrays from the beginning to avoid data mingling here
+        x_traces_history = np.array(x_traces_history)
+        y_traces_history = np.array(y_traces_history)
+
+        return x_traces_history, y_traces_history
+
+    @staticmethod
+    def _decay_trace(
+            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
+    ) -> np.ndarray:
+        """Decay trace to a given within-epoch time step.
+
+        Parameters
+        ----------
+        trace_values : ndarray
+            Trace values to decay.
+        t : np.ndarray
+            Time steps to advance.
+        taus : int
+            Trace decay time constant
+
+        Returns
+        ----------
+        result : ndarray
+            Decayed trace values.
+
+        """
+        return np.exp(-t / taus) * trace_values
+
+    def _apply_learning_rules(self,
+                              x_traces_history: np.ndarray,
+                              y_traces_history: np.ndarray) -> None:
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
         learning rule."""
-        applier_args = self._extract_applier_args()
+        applier_args = self._extract_applier_args(x_traces_history, 
+                                                  y_traces_history)
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
@@ -1268,7 +1367,9 @@ class LearningConnectionModelFloat(LearningConnection):
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 
-    def _extract_applier_args(self) -> dict:
+    def _extract_applier_args(self,
+                              x_traces_history: np.ndarray,
+                              y_traces_history: np.ndarray) -> dict:
         """Extracts arguments for the LearningRuleApplierFloat.
 
         "u" is a scalar.
@@ -1318,156 +1419,114 @@ class LearningConnectionModelFloat(LearningConnection):
             # Shape: (0, )
             applier_args["u"] = u
 
-        # TODO move the following decay part to evaluate_trace function
-        # Gather all necessary information to decay traces
-        x_traces = self._x_traces
-        y_traces = self._y_traces
-
-        t_epoch = self._learning_rule.t_epoch
-
-        # TODO use those being initialized before
-        x1_impulse = self._learning_rule.x1_impulse
-        x2_impulse = self._learning_rule.x2_impulse
-        x_impulses = np.atleast_2d([x1_impulse, x2_impulse]).T
-
-        y1_impulse = self._learning_rule.y1_impulse
-        y2_impulse = self._learning_rule.y2_impulse
-        y3_impulse = self._learning_rule.y3_impulse
-        y_impulses = np.atleast_2d([y1_impulse, y2_impulse, y3_impulse]).T
-
-        x1_tau = self._learning_rule.x1_tau
-        x2_tau = self._learning_rule.x2_tau
-        x_taus = np.array([x1_tau, x2_tau])
-
-        y1_tau = self._learning_rule.y1_tau
-        y2_tau = self._learning_rule.y2_tau
-        y3_tau = self._learning_rule.y3_tau
-        y_taus = np.array([y1_tau, y2_tau, y3_tau])
-
-        # get spike times
-        t_spike_x = np.array(self.tx) - 1
-        t_spike_y = np.array(self.ty) - 1
-
-        # most naive algorithm to decay traces
-        # TODO decay only for important time-steps
-        # TODO do not decay for tau=0
-        x_trace_hist = [x_traces]
-        y_trace_hist = [y_traces]
-        for t in range(t_epoch):
-            x_trace_hist.append(
-                self._decay_trace(x_trace_hist[-1].T, 1, x_taus).T
-            )
-            y_trace_hist.append(
-                self._decay_trace(y_trace_hist[-1].T, 1, y_taus).T
-            )
-
-            # add impulses if spike happens in this timestep
-            x_spike_ids = np.where(t_spike_x == t)[0]
-            x_trace_hist[-1][:, x_spike_ids] += x_impulses
-
-            y_spike_ids = np.where(t_spike_y == t)[0]
-            y_trace_hist[-1][:, y_spike_ids] += y_impulses
-
-        # set traces to last value
-        self._set_x_traces(x_trace_hist[-1])
-        self._set_y_traces(y_trace_hist[-1])
-
-        # TODO, use arrays from the beginning to avoid data mingling here
-        x_trace_hist = np.array(x_trace_hist)
-        y_trace_hist = np.array(y_trace_hist)
-
-        # expand dimensionality to weight matrix
-
-        self.evaluated_traces[0, 0] = (
-            x_trace_hist[self.tx, 0]
-            .diagonal()
-            .repeat(self._shape[0], 0)
-            .reshape(self._shape, order="F")
-        )
-        self.evaluated_traces[0, 1] = (
-            x_trace_hist[self.tx, 1]
-            .diagonal()
-            .repeat(self._shape[0], 0)
-            .reshape(self._shape, order="F")
-        )
-        self.evaluated_traces[0, 2] = y_trace_hist[self.tx, 0].T
-        self.evaluated_traces[0, 3] = y_trace_hist[self.tx, 1].T
-        self.evaluated_traces[0, 4] = y_trace_hist[self.tx, 2].T
-
-        self.evaluated_traces[1, 0] = x_trace_hist[self.ty, 0]
-        self.evaluated_traces[1, 1] = x_trace_hist[self.ty, 1]
-        self.evaluated_traces[1, 2] = (
-            y_trace_hist[self.ty, 0]
-            .diagonal()
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-        self.evaluated_traces[1, 3] = (
-            y_trace_hist[self.ty, 1]
-            .diagonal()
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-        self.evaluated_traces[1, 4] = (
-            y_trace_hist[self.ty, 2]
-            .diagonal()
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-
-        self.evaluated_traces[2, 0] = (
-            x_trace_hist[-1, 0]
-            .repeat(self._shape[0], 0)
-            .reshape(self._shape, order="F")
-        )
-        self.evaluated_traces[2, 1] = (
-            x_trace_hist[-1, 1]
-            .repeat(self._shape[0], 0)
-            .reshape(self._shape, order="F")
-        )
-        self.evaluated_traces[2, 2] = (
-            y_trace_hist[-1, 0]
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-        self.evaluated_traces[2, 3] = (
-            y_trace_hist[-1, 1]
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-        self.evaluated_traces[2, 4] = (
-            y_trace_hist[-1, 2]
-            .repeat(self._shape[1], 0)
-            .reshape(self._shape, order="C")
-        )
-
         # Shape: (3, 5, num_post_neurons, num_pre_neurons)
-        applier_args["traces"] = self.evaluated_traces
+        applier_args["traces"] = \
+            self._extract_applier_evaluated_traces(x_traces_history,
+                                                   y_traces_history)
 
         return applier_args
+    
+    def _extract_applier_evaluated_traces(self,
+                                          x_traces_history: np.ndarray,
+                                          y_traces_history: np.ndarray) \
+            -> np.ndarray:
+        evaluated_traces = np.zeros((3, 5, self._shape[0], self._shape[1]))
+        # expand dimensionality to weight matrix
+        evaluated_traces[0, 0] = (
+            x_traces_history[self.tx, 0]
+                .diagonal()
+                .repeat(self._shape[0], 0)
+                .reshape(self._shape, order="F")
+        )
+        evaluated_traces[0, 1] = (
+            x_traces_history[self.tx, 1]
+                .diagonal()
+                .repeat(self._shape[0], 0)
+                .reshape(self._shape, order="F")
+        )
+        evaluated_traces[0, 2] = y_traces_history[self.tx, 0].T
+        evaluated_traces[0, 3] = y_traces_history[self.tx, 1].T
+        evaluated_traces[0, 4] = y_traces_history[self.tx, 2].T
 
-    @staticmethod
-    def _decay_trace(
-        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
-    ) -> np.ndarray:
-        """Decay trace to a given within-epoch time step.
+        evaluated_traces[1, 0] = x_traces_history[self.ty, 0]
+        evaluated_traces[1, 1] = x_traces_history[self.ty, 1]
+        evaluated_traces[1, 2] = (
+            y_traces_history[self.ty, 0]
+                .diagonal()
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
+        evaluated_traces[1, 3] = (
+            y_traces_history[self.ty, 1]
+                .diagonal()
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
+        evaluated_traces[1, 4] = (
+            y_traces_history[self.ty, 2]
+                .diagonal()
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
 
-        Parameters
-        ----------
-        trace_values : ndarray
-            Trace values to decay.
-        t : np.ndarray
-            Time steps to advance.
-        taus : int
-            Trace decay time constant
+        evaluated_traces[2, 0] = (
+            x_traces_history[-1, 0]
+                .repeat(self._shape[0], 0)
+                .reshape(self._shape, order="F")
+        )
+        evaluated_traces[2, 1] = (
+            x_traces_history[-1, 1]
+                .repeat(self._shape[0], 0)
+                .reshape(self._shape, order="F")
+        )
+        evaluated_traces[2, 2] = (
+            y_traces_history[-1, 0]
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
+        evaluated_traces[2, 3] = (
+            y_traces_history[-1, 1]
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
+        evaluated_traces[2, 4] = (
+            y_traces_history[-1, 2]
+                .repeat(self._shape[1], 0)
+                .reshape(self._shape, order="C")
+        )
 
-        Returns
-        ----------
-        result : ndarray
-            Decayed trace values.
+        print("self.tx.shape", self.tx.shape)
+        print("self.tx",self.tx)
+        print("x_traces_history.shape", x_traces_history.shape)
+        print("x_traces_history", x_traces_history)
+        print("x_traces_history[self.tx].shape", x_traces_history[self.tx].shape)
+        print("x_traces_history[self.tx]",x_traces_history[self.tx])
+        print("x_traces_history[self.tx, 0].shape", x_traces_history[self.tx, 0].shape)
+        print("x_traces_history[self.tx, 0]",x_traces_history[self.tx, 0])
+        print("x_traces_history[self.tx, 0].diagonal().shape",x_traces_history[self.tx, 0].diagonal().shape)
+        print("x_traces_history[self.tx, 0].diagonal()", x_traces_history[self.tx, 0].diagonal())
+        
+        print("self.ty.shape", self.ty.shape)
+        print("self.ty",self.ty)
+        print("y_traces_history.shape", y_traces_history.shape)
+        print("y_traces_history", y_traces_history)
+        print("y_traces_history[self.ty].shape", y_traces_history[self.ty].shape)
+        print("y_traces_history[self.ty]",y_traces_history[self.ty])
+        print("y_traces_history[self.ty, 0].shape", y_traces_history[self.ty, 0].shape)
+        print("y_traces_history[self.ty, 0]",y_traces_history[self.ty, 0])
+        print("y_traces_history[self.ty, 0].diagonal().shape",y_traces_history[self.ty, 0].diagonal().shape)
+        print("y_traces_history[self.ty, 0].diagonal()", y_traces_history[self.ty, 0].diagonal())
+        print("evaluated_traces.shape", evaluated_traces.shape)
+        print("evaluated_traces", evaluated_traces)
 
-        """
-        return np.exp(-t / taus) * trace_values
+        return evaluated_traces
+    
+    def _update_traces(self,
+                       x_traces_history: np.ndarray,
+                       y_traces_history: np.ndarray) -> None:
+        # set traces to last value
+        self._set_x_traces(x_traces_history[-1])
+        self._set_y_traces(y_traces_history[-1])
 
     def _saturate_synaptic_variable(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray

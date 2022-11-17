@@ -362,7 +362,7 @@ class TestSTDPSim(unittest.TestCase):
             A_minus=1,
             tau_plus=10,
             tau_minus=10,
-            t_epoch=1,
+            t_epoch=8,
         )
 
         num_pre_neurons = 3
