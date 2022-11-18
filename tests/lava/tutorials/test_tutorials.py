@@ -25,7 +25,7 @@ class TestTutorials(unittest.TestCase):
 
     def _execute_notebook(
         self, base_dir: str, path: str
-    ) -> ty.Tuple[ty.Type[nbformat.NotebookNode], ty.List[str]]:
+    ) -> int:
         """Execute a notebook via nbconvert and collect output.
 
         Parameters
@@ -37,8 +37,8 @@ class TestTutorials(unittest.TestCase):
 
         Returns
         -------
-        Tuple
-            (parsed nbformat.NotebookNode object, list of execution errors)
+        int
+            (return code)
         """
 
         cwd = os.getcwd()
@@ -90,7 +90,7 @@ class TestTutorials(unittest.TestCase):
 
     def _convert_and_execute_notebook(
         self, notebook: str, env: ty.Dict[str, str]
-    ) -> ty.Type[nbformat.NotebookNode]:
+    ):
         """Covert notebook and execute it.
 
         Parameters
