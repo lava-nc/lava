@@ -117,7 +117,7 @@ class TestTutorials(unittest.TestCase):
             ]
             subprocess.check_call(args, env=env)  # noqa: S603
             fout.seek(0)
-            return subprocess.run(["ipython", "-c", fout.read()], env=env)
+            return subprocess.run(["ipython", "-c", fout.read()], env=env) # noqa
 
     def _collect_errors_from_all_cells(
         self, result
@@ -136,7 +136,6 @@ class TestTutorials(unittest.TestCase):
         """
         if result.returncode != 0:
             result.check_returncode()
-        print(result.stdout)
         return result.returncode
 
     def _run_notebook(self, notebook: str, e2e_tutorial: bool = False):
