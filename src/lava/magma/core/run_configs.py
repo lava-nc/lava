@@ -31,23 +31,25 @@ if ty.TYPE_CHECKING:
 from abc import abstractmethod
 
 # TODO use those base classes to define callbacks. This makes sure, the user uses the correct signature.
-class PreRunFx:
+class CallbackFx:
     
     @abstractmethod
-    def callback(board = None, # TODO add typehint 
+    def pre_run_callback(self,
+                 board = None, # TODO add typehint
                  var_id_to_var_model_map: dict = None, 
                  *args, 
                  **kwargs):
         pass
-
-class PostRunFx:
 
     @abstractmethod
-    def callback(board = None, # TODO add typehint 
-                 var_id_to_var_model_map: dict = None, 
-                 *args, 
-                 **kwargs):
+    def post_run_callback(self,
+                         board = None, # TODO add typehint
+                         var_id_to_var_model_map: dict = None,
+                         *args,
+                         **kwargs):
         pass
+
+
 
 
 class RunConfig(ABC):
