@@ -24,13 +24,12 @@ bool GrpcManager::CheckURL(const std::string &url) {
   return true;
 }
 std::string GrpcManager::AllocURL() {
-  uint32_t port_num = port_num_.load();
-  std::string url = DEFAULT_GRPC_URL +
-                    std::to_string(DEFAULT_GRPC_PORT + port_num);
-  while (!CheckURL(url)) {
-    url = DEFAULT_GRPC_URL + std::to_string(DEFAULT_GRPC_PORT + port_num);
-    port_num_.store(port_num + 1);
-  }
+  std::string url;
+  do {
+    url = DEFAULT_GRPC_URL +
+      std::to_string(DEFAULT_GRPC_PORT + port_num_.load());
+    port_num_.fetch_add(1);
+  } while (!CheckURL(url));
   return url;
 }
 void GrpcManager::Release() {
