@@ -28,6 +28,27 @@ if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.core.model.model import AbstractProcessModel
 
+from abc import abstractmethod
+
+# TODO use those base classes to define callbacks. This makes sure, the user uses the correct signature.
+class PreRunFx:
+    
+    @abstractmethod
+    def callback(board = None, # TODO add typehint 
+                 var_id_to_var_model_map: dict = None, 
+                 *args, 
+                 **kwargs):
+        pass
+
+class PostRunFx:
+
+    @abstractmethod
+    def callback(board = None, # TODO add typehint 
+                 var_id_to_var_model_map: dict = None, 
+                 *args, 
+                 **kwargs):
+        pass
+
 
 class RunConfig(ABC):
     """Basic run configuration and base class for other run configurations.
