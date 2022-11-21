@@ -187,11 +187,12 @@ TEST(TestDDSSingleProcess, DDS1Process) {
     if (!(loop % 1000))
       LAVA_DUMP(LOG_UTTEST, "At iteration : %d * 1000\n", i++);
     send_port->Send(metadata);
+    free(metadata->mdata);
     mptr = recv_port->Recv();
     EXPECT_EQ(*reinterpret_cast<int64_t*>(mptr->mdata),
               *reinterpret_cast<int64_t*>(metadata->mdata));
-    (*reinterpret_cast<int64_t*>(metadata->mdata))++;
-    free(mptr->mdata);
+    (*reinterpret_cast<int64_t*>(mptr->mdata))++;
+    metadata = mptr;
   }
   recv_port->Join();
   send_port->Join();

@@ -133,6 +133,7 @@ TEST(TestShmDelivery, ShmLoop) {
   }
   const clock_t end_time = std::clock();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
+  free(reinterpret_cast<char*>(metadata->mdata));
   LAVA_DUMP(LOG_UTTEST, "shm result =%ld", result);
   to_a1->Join();
   from_a1->Join();

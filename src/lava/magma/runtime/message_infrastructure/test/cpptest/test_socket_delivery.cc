@@ -145,6 +145,7 @@ TEST(TestSocketChannel, SocketLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
+  free(reinterpret_cast<char*>(metadata->mdata));
   LAVA_DUMP(LOG_UTTEST, "socket result =%ld", result);
   mp.Stop(true);
   if (result != expect_result) {

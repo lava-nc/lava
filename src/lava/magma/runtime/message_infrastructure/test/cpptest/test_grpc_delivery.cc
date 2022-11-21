@@ -82,7 +82,7 @@ void grpc_target_fn2(
 
 TEST(TestGRPCChannel, GRPCLoop) {
   MultiProcessing mp;
-  int loop = 100000;
+  int loop = 1000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
     "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
@@ -141,6 +141,7 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Join();
   from_a1->Join();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);
+  free(reinterpret_cast<char*>(metadata->mdata));
   LAVA_DUMP(LOG_UTTEST, "grpc result =%ld\n", result);
   mp.Stop(true);
   if (result != expect_result) {
