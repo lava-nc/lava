@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 import numpy as np
+import matplotlib
 import unittest
 
 from lava.utils.float2fixed import Float2FixedConverter
@@ -1800,6 +1801,49 @@ class TestFloat2FixedConverter(unittest.TestCase):
         scaled_params = converter.scaled_params
         # Test scaled parameter dictionary.
         self.assertDictEqual(scaled_params, true_scaled_params)
+
+    def test_plot_var_create_figure(self):
+        """Test whether `plot_var' correctly creates a matplotlib.figure.Figure
+        object if none is passed.
+        """
+        # Create dummy ProcessID, Variable and domain
+        p_id = 0
+        var = 'v'
+        domain = np.random.normal(0, 1, 5)
+
+        conv_data = {p_id: {var: {'domain': domain}}}
+
+        # Instantiate and set up converter.
+        converter = Float2FixedConverter()
+        converter.conv_data = conv_data
+        converter.quantiles = (0, 1)
+
+        fig = converter.plot_var(p_id, var)
+
+        self.assertIsInstance(fig, matplotlib.figure.Figure)
+
+    def test_plot_var_reuse_figure(self):
+        """Test whether `plot_var' correctly reuses a matplotlib.figure.Figure
+        object if one is passed.
+        """
+        # Create matplotlib.figure.Figure object
+        fig = matplotlib.pyplot.figure()
+
+        # Create dummy ProcessID, Variable and domain
+        p_id = 0
+        var = 'v'
+        domain = np.random.normal(0, 1, 5)
+
+        conv_data = {p_id: {var: {'domain': domain}}}
+
+        # Instantiate and set up converter.
+        converter = Float2FixedConverter()
+        converter.conv_data = conv_data
+        converter.quantiles = (0, 1)
+
+        fig_return = converter.plot_var(p_id, var, fig=fig)
+
+        self.assertEqual(fig, fig_return)
 
 
 if __name__ == '__main__':

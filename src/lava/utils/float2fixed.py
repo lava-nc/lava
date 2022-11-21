@@ -14,6 +14,8 @@ from lava.proc import io
 from lava.magma.core.process.ports.ports import OutPort
 
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
 import inspect
 
 
@@ -151,6 +153,42 @@ class Float2FixedConverter:
         self.scaling_factors = self._find_scaling_factors()
         # Scale parameter from a floating- to a fixed-point representation.
         self.scaled_params = self._scale_parameters()
+
+    def plot_var(self, p_id, var, fig=None, bins='auto') -> Figure:
+        """Plot histogram of Variable values of Process after execution of
+        floating-point model in `fig'. Additionally, quantiles capping the
+        recored data for further processing are plotted in red.
+        The histogram is determined via `numpy.histogram'.
+        This function can only be executed after calling `convert'.
+
+        Parameters
+        ----------
+        p_id : int
+            ProcessID
+        var : string
+            Name of Variable
+        fig : matplotlib.figure.Figure
+        bins : int or string
+            Number of equal-width bins if bins is int
+        """
+        # Set up figure.
+        if not fig:
+            fig = plt.figure()
+
+        ax = fig.gca()
+
+        # Get data and calculate quantiles.
+        data = self.conv_data[p_id][var]['domain']
+        lower_val = np.quantile(data, self.quantiles[0])
+        higher_val = np.quantile(data, self.quantiles[1])
+
+        # Plot data.
+        ax.set_title(f'Process: {p_id}, Variable: ' + var)
+        ax.hist(data, bins=bins)
+        ax.axvline(lower_val, color='red')
+        ax.axvline(higher_val, color='red')
+
+        return fig
 
     def _set_procs(self, proc, find_connected_procs=True) -> None:
         """Set list of Lava Processes for conversion. Either pass a Lava
