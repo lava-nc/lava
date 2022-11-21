@@ -51,8 +51,9 @@ class Float2FixedConverter:
                               io.source.RingBuffer]
 
     def set_run_cfg(self, floating_pt_run_cfg, fixed_pt_run_cfg) -> None:
-        """Set run config for floating- and fixed-point ProcessModels
-        Parameters.
+        """Set run config for floating- and fixed-point ProcessModels.
+
+        Parameters
         ----------
 
         floating_pt_run_cfg : RunConfig
