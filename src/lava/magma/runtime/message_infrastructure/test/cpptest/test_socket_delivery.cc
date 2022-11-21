@@ -139,7 +139,6 @@ TEST(TestSocketChannel, SocketLoop) {
               metadata->strides[3], metadata->strides[4]);
     LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", metadata->mdata,
               *reinterpret_cast<int64_t*>(metadata->mdata));
-    
   }
   const clock_t end_time = std::clock();
   to_a1->Join();
