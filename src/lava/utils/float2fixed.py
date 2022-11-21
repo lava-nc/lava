@@ -26,12 +26,14 @@ class Float2FixedConverter:
     predefined fixed-point domain respecting the dynamical range of the
     variables as well as the representation constraints.
 
-    A simple usage example looks like
-    ```converter = Float2FixedConverter()
-       converter.set_run_cfg(fixed_pt_run_cfg=Loihi1SimCfg(
-                                            select_tag='fixed_pt'),
-                             floating_pt_run_cfg=Loihi1SimCfg())
-       converter.convert(procs, num_steps=200)```
+    A simple usage example - assuming procs already have been instantiated -
+    may look like:
+
+    >>> converter = Float2FixedConverter()
+    >>> converter.set_run_cfg(
+            fixed_pt_run_cfg=Loihi1SimCfg(select_tag='fixed_pt'),
+            floating_pt_run_cfg=Loihi1SimCfg())
+    >>> converter.convert(procs, num_steps=200)
     """
 
     def __init__(self):
