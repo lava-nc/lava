@@ -127,6 +127,7 @@ void dds_protocol(std::string topic_name,
   const clock_t start_time = std::clock();
   while (loop--) {
     to_a1->Send(metadata);
+    free(metadata->mdata);
     mptr = from_a1->Recv();
     metadata = mptr;
   }

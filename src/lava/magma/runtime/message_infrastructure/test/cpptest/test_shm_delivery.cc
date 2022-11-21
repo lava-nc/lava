@@ -112,11 +112,11 @@ TEST(TestShmDelivery, ShmLoop) {
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
-    to_a1->Send(metadata);
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "shm wait for response, remain loop: %d\n", loop);
-    metadata = from_a1->Recv();
     to_a1->Send(metadata);
+    free(reinterpret_cast<char*>(metadata->mdata));
+    metadata = from_a1->Recv();
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
     LAVA_DUMP(LOG_UTTEST, "type: %ld\n", metadata->type);
@@ -130,7 +130,6 @@ TEST(TestShmDelivery, ShmLoop) {
               metadata->strides[3], metadata->strides[4]);
     LAVA_DUMP(LOG_UTTEST, "mdata: %p, *mdata: %ld\n", metadata->mdata,
               *reinterpret_cast<int64_t*>(metadata->mdata));
-    free(reinterpret_cast<char*>(metadata->mdata));
   }
   const clock_t end_time = std::clock();
   int64_t result = *reinterpret_cast<int64_t*>(metadata->mdata);

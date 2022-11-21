@@ -133,7 +133,11 @@ inline void GetMetadata(const MetaDataPtr &metadataptr,
   metadataptr->total_size = product;
   metadataptr->elsize = SIZEOF(dtype);
   metadataptr->type = dtype;
-  metadataptr->mdata = array;
+  metadataptr->mdata =reinterpret_cast<char*>
+    (malloc(sizeof(int64_t)*dims[0]));
+  std::memcpy(metadataptr->mdata,
+              reinterpret_cast<char*>(array),
+              metadataptr->elsize * metadataptr->total_size);
 }
 
 namespace helper {

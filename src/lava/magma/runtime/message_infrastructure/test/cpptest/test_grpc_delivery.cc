@@ -82,7 +82,7 @@ void grpc_target_fn2(
 
 TEST(TestGRPCChannel, GRPCLoop) {
   MultiProcessing mp;
-  int loop = 1000;
+  int loop = 100000;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetDefRPCChannel(
     "mp_to_a1", "mp_to_a1", 6);
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetDefRPCChannel(
@@ -111,18 +111,17 @@ TEST(TestGRPCChannel, GRPCLoop) {
   from_a1->Start();
   int64_t array_[10000] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
   std::fill(array_ + 10, array_ + 10000, 1);
-
   MetaDataPtr metadata = std::make_shared<MetaData>();
   int64_t* array = reinterpret_cast<int64_t*>(array_);
   int64_t dims[] = {10000, 0, 0, 0, 0};
   int64_t nd = 1;
-
   GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
     LAVA_DUMP(LOG_UTTEST, "wait for response, remain loop: %d\n", loop);
     to_a1->Send(MetaData2GrpcMetaData(metadata));
+    free(reinterpret_cast<char*>(metadata->mdata));
     metadata = from_a1->Recv();
     LAVA_DUMP(LOG_UTTEST, "metadata:\n");
     LAVA_DUMP(LOG_UTTEST, "nd: %ld\n", metadata->nd);
@@ -137,7 +136,6 @@ TEST(TestGRPCChannel, GRPCLoop) {
               metadata->strides[3], metadata->strides[4]);
     LAVA_DUMP(LOG_UTTEST, "grpc mdata: %p, grpc *mdata: %ld\n", metadata->mdata,
               *reinterpret_cast<int64_t*>(metadata->mdata));
-    free(reinterpret_cast<char*>(metadata->mdata));
   }
   const clock_t end_time = std::clock();
   to_a1->Join();
