@@ -15,7 +15,10 @@ from message_infrastructure.multiprocessing import MultiProcessing
 from message_infrastructure import (
     ChannelBackend,
     Channel,
-    SupportGRPCChannel
+    SupportGRPCChannel,
+    SupportFastDDSChannel,
+    SupportCycloneDDSChannel,
+    ChannelQueueSize
 )
 
 
@@ -500,6 +503,140 @@ class TestAllDelivery(unittest.TestCase):
             raise AssertionError()
         print("cpp_grpc_loop_with_cpp_multiprocess timedelta =",
               loop_end_time - loop_start_time)
+
+    @unittest.skipIf(not SupportFastDDSChannel,
+                     "Not support FastDDS channel.")
+    def test_fastdds_channel(self):
+        from message_infrastructure import GetDDSChannel
+        from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
+        mp = MultiProcessing()
+        mp.start()
+        loop = self.loop_
+        a1_to_a2 = GetDDSChannel(
+            "a1_to_a2",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.FASTDDSBackend,
+            ChannelQueueSize
+        )
+        a2_to_a1 = GetDDSChannel(
+            "a2_to_a1",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.FASTDDSBackend,
+            ChannelQueueSize
+        )
+        mp_to_a1 = GetDDSChannel(
+            "mp_to_a1",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.FASTDDSBackend,
+            ChannelQueueSize
+        )
+        a1_to_mp = GetDDSChannel(
+            "a1_to_mp",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.FASTDDSBackend,
+            ChannelQueueSize
+        )
+
+        recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
+                               a1_to_a2, a2_to_a1, a1_to_mp)
+        send_port_fn = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
+        to_a1 = mp_to_a1.src_port
+        from_a1 = a1_to_mp.dst_port
+        to_a1.start()
+        from_a1.start()
+        data = prepare_data()
+        expect_result = prepare_data()
+        expect_result[0] = (1 + 3 * loop)
+        loop_start_time = datetime.now()
+        while loop:
+            to_a1.send(data)
+            data = from_a1.recv()
+            loop -= 1
+        print("cpp_fastdds_loop_with_cpp_multiprocess result = ", data[0])
+        loop_end_time = datetime.now()
+        if not np.array_equal(expect_result, data):
+            print("expect: ", expect_result)
+            print("result: ", data)
+            raise AssertionError()
+        print("cpp_fastdds_loop_with_cpp_multiprocess timedelta =",
+              loop_end_time - loop_start_time)
+        mp.stop()
+        from_a1.join()
+        to_a1.join()
+        time.sleep(0.1)
+
+    @unittest.skipIf(not SupportCycloneDDSChannel,
+                     "Not support CycloneDDS channel.")
+    def test_cyclonedds_channel(self):
+        from message_infrastructure import GetDDSChannel
+        from message_infrastructure import DDSTransportType
+        from message_infrastructure import DDSBackendType
+        mp = MultiProcessing()
+        mp.start()
+        loop = self.loop_
+        a1_to_a2 = GetDDSChannel(
+            "a1_to_a2",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.CycloneDDSBackend,
+            ChannelQueueSize
+        )
+        a2_to_a1 = GetDDSChannel(
+            "a2_to_a1",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.CycloneDDSBackend,
+            ChannelQueueSize
+        )
+        mp_to_a1 = GetDDSChannel(
+            "mp_to_a1",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.CycloneDDSBackend,
+            ChannelQueueSize
+        )
+        a1_to_mp = GetDDSChannel(
+            "a1_to_mp",
+            DDSTransportType.DDSUDPv4,
+            DDSBackendType.CycloneDDSBackend,
+            ChannelQueueSize
+        )
+
+        recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
+                               a1_to_a2, a2_to_a1, a1_to_mp)
+        send_port_fn = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1)
+
+        builder1 = Builder()
+        builder2 = Builder()
+        mp.build_actor(recv_port_fn, builder1)
+        mp.build_actor(send_port_fn, builder2)
+        to_a1 = mp_to_a1.src_port
+        from_a1 = a1_to_mp.dst_port
+        to_a1.start()
+        from_a1.start()
+        data = prepare_data()
+        expect_result = prepare_data()
+        expect_result[0] = (1 + 3 * loop)
+        loop_start_time = datetime.now()
+        while loop:
+            to_a1.send(data)
+            data = from_a1.recv()
+            loop -= 1
+        print("cpp_cyclonedds_loop_with_cpp_multiprocess result = ", data[0])
+        loop_end_time = datetime.now()
+        if not np.array_equal(expect_result, data):
+            print("expect: ", expect_result)
+            print("result: ", data)
+            raise AssertionError()
+        print("cpp_cylonedds_loop_with_cpp_multiprocess timedelta =",
+              loop_end_time - loop_start_time)
+        mp.stop()
+        from_a1.join()
+        to_a1.join()
+        time.sleep(0.1)
 
 
 if __name__ == '__main__':
