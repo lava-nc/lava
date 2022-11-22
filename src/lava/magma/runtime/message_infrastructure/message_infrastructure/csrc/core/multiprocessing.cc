@@ -18,19 +18,21 @@ int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
   return ret;
 }
 
-void MultiProcessing::Stop(bool block) {
+void MultiProcessing::Stop() {
   for (auto actor : actors_) {
     actor->Control(ActorCmd::CmdStop);
   }
-
   LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
-  if (block) {
+}
+
+void MultiProcessing::Cleanup(bool block)
+{
+   if (block) {
     for (auto actor : actors_) {
       actor->Wait();
     }
   }
   GetSharedMemManagerSingleton().DeleteAllSharedMemory();
-
 #if defined(GRPC_CHANNEL)
   GetGrpcManagerSingleton().Release();
 #endif
