@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from abc import ABC, abstractmethods
+from abc import ABC, abstractmethod
 try:
     from nxcore.arch.base.nxboard import NxBoard
 except ImportError:
