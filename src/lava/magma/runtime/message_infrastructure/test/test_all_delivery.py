@@ -505,7 +505,7 @@ class TestAllDelivery(unittest.TestCase):
               loop_end_time - loop_start_time)
 
     @unittest.skipIf(not SupportFastDDSChannel,
-                     "Not support CycloneDDS channel.")
+                     "Not support FastDDS channel.")
     def test_fastdds_channel(self):
         from message_infrastructure import GetDDSChannel
         from message_infrastructure import DDSTransportType
