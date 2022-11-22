@@ -10,7 +10,6 @@
 #endif
 #include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
 #include <memory>
-#include <cstring>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT
 
