@@ -9,6 +9,7 @@ from itertools import chain
 from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, \
     Loihi2NeuroCore, NeuroCore
 from lava.magma.core.model.py.model import AbstractPyProcessModel
+from lava.magma.core.callback_fx import CallbackFx
 
 try:
     from lava.magma.core.model.c.model import CLoihiProcessModel
@@ -376,16 +377,14 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
-                 pre_run_fxs: ty.List[ty.Callable] = [],
-                 post_run_fxs: ty.List[ty.Callable] = [],
+                 callback_fxs: ty.List[CallbackFx] = [],
                  embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.pre_run_fxs: ty.List[ty.Callable] = pre_run_fxs
-        self.post_run_fxs: ty.List[ty.Callable] = post_run_fxs
+        self.callback_fxs: ty.List[CallbackFx] = pre_run_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
@@ -439,18 +438,14 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
-                 pre_run_fxs: ty.List[ty.Callable] = None,
-                 post_run_fxs: ty.List[ty.Callable] = None,
+                 callback_fxs: ty.List[CallbackFx] = [],
                  embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.pre_run_fxs: ty.List[ty.Callable] = [] if not pre_run_fxs else \
-            pre_run_fxs
-        self.post_run_fxs: ty.List[ty.Callable] = [] if not post_run_fxs else \
-            post_run_fxs
+        self.callback_fxs: ty.List[CallbackFx] = pre_run_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
