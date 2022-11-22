@@ -4,7 +4,7 @@
 from __future__ import annotations
 import logging
 import typing as ty
-from abc import ABC, abstractmethod
+from abc import ABC
 from itertools import chain
 from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, \
     Loihi2NeuroCore, NeuroCore
@@ -27,26 +27,6 @@ from lava.magma.compiler.subcompilers.constants import \
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.core.model.model import AbstractProcessModel
-
-
-class CallbackFx(ABC):
-    """Base class for callback functions which are executed before
-    and after a run in the runtime service. The base class provides
-    the infrastructure to communicate information from runtime to
-    runtime service and vice versa as well as the abstract pre- and
-    post-callback methods, which needs to be overrwritten by the
-    special CallbackFx classes for each compute ressource.
-    
-    TODO: implement runtime <-> runtime_service channel communication.
-    """
-    
-    @abstractmethod
-    def pre_run_callback(self):
-        pass
-
-    @abstractmethod
-    def post_run_callback(self):
-        pass
 
 
 class RunConfig(ABC):
