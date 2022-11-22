@@ -377,14 +377,15 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
-                 callback_fxs: ty.List[CallbackFx] = [],
+                 callback_fxs: ty.List[CallbackFx] = None,
                  embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.callback_fxs: ty.List[CallbackFx] = callback_fxs
+        self.callback_fxs: ty.List[CallbackFx] = [] if not callback_fxs else \
+            callback_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
@@ -438,14 +439,15 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                      ty.Type[AbstractProcess], ty.Type[
                          AbstractProcessModel]]] = None,
                  loglevel: int = logging.WARNING,
-                 callback_fxs: ty.List[CallbackFx] = [],
+                 callback_fxs: ty.List[CallbackFx] = None,
                  embedded_allocation_order=EMBEDDED_ALLOCATION_ORDER.NORMAL):
         super().__init__(custom_sync_domains,
                          select_tag,
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.callback_fxs: ty.List[CallbackFx] = callback_fxs
+        self.callback_fxs: ty.List[CallbackFx] = [] if not callback_fxs else \
+            callback_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
