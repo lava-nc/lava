@@ -109,13 +109,14 @@ TEST(TestGRPCChannel, GRPCLoop) {
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
   from_a1->Start();
-  int64_t array_[10000] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-  std::fill(array_ + 10, array_ + 10000, 1);
   MetaDataPtr metadata = std::make_shared<MetaData>();
-  int64_t* array = reinterpret_cast<int64_t*>(array_);
   int64_t dims[] = {10000, 0, 0, 0, 0};
   int64_t nd = 1;
-  GetMetadata(metadata, array, nd, METADATA_TYPES::LONG, dims);
+  int64_t* array_ = reinterpret_cast<int64_t*>
+                    (malloc(sizeof(int64_t) * dims[0]));
+  memset(array_, 0, sizeof(int64_t) * dims[0]);
+  std::fill(array_, array_ + 10, 1);
+  GetMetadata(metadata, array_, nd, METADATA_TYPES::LONG, dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {
