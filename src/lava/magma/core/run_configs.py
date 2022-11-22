@@ -384,7 +384,7 @@ class Loihi1HwCfg(AbstractLoihiHWRunCfg):
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.callback_fxs: ty.List[CallbackFx] = pre_run_fxs
+        self.callback_fxs: ty.List[CallbackFx] = callback_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
@@ -445,7 +445,7 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
                          select_sub_proc_model,
                          exception_proc_model_map,
                          loglevel)
-        self.callback_fxs: ty.List[CallbackFx] = pre_run_fxs
+        self.callback_fxs: ty.List[CallbackFx] = callback_fxs
         self.embedded_allocation_order: EMBEDDED_ALLOCATION_ORDER = \
             embedded_allocation_order
 
