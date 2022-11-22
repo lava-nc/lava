@@ -25,9 +25,8 @@ void MultiProcessing::Stop() {
   LAVA_LOG(LOG_MP, "Send Stop cmd to Actors\n");
 }
 
-void MultiProcessing::Cleanup(bool block)
-{
-   if (block) {
+void MultiProcessing::Cleanup(bool block) {
+  if (block) {
     for (auto actor : actors_) {
       actor->Wait();
     }
