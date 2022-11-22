@@ -63,7 +63,8 @@ class TestMultiprocessing(unittest.TestCase):
             ret = mp.build_actor(bound_target_fn, builder)
 
         time.sleep(0.1)
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
 
 
 if __name__ == '__main__':

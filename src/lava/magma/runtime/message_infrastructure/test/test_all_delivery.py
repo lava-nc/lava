@@ -228,7 +228,8 @@ class TestAllDelivery(unittest.TestCase):
 
         to_a1.join()
         from_a1.join()
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
@@ -295,7 +296,8 @@ class TestAllDelivery(unittest.TestCase):
 
         to_a1.join()
         from_a1.join()
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
@@ -365,7 +367,8 @@ class TestAllDelivery(unittest.TestCase):
 
         to_a1.join()
         from_a1.join()
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
@@ -493,7 +496,8 @@ class TestAllDelivery(unittest.TestCase):
         loop_end_time = datetime.now()
         from_a1.join()
         to_a1.join()
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
         if not np.array_equal(expect_result, data):
             print("expect: ", expect_result)
             print("result: ", data)

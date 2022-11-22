@@ -87,7 +87,8 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
     mp.build_actor(send_port_fn, builder2)
 
     time.sleep(0.1)
-    mp.stop(True)
+    mp.stop()
+    mp.cleanup(True)
 
 
 class TestChannel(unittest.TestCase):
@@ -117,7 +118,8 @@ class TestChannel(unittest.TestCase):
         mp.build_actor(send_port_fn, builder2)
 
         time.sleep(0.1)
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
 
     def test_single_process_shmemchannel(self):
         predata = prepare_data()
@@ -171,7 +173,8 @@ class TestChannel(unittest.TestCase):
         mp.build_actor(send_port_fn, builder2)
 
         time.sleep(0.1)
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
 
     def test_single_process_socketchannel(self):
         predata = prepare_data()
@@ -227,7 +230,8 @@ class TestChannel(unittest.TestCase):
         mp.build_actor(send_port_fn, builder2)
 
         time.sleep(0.1)
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
 
     @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
     def test_fastdds_channel_shm(self):
