@@ -81,8 +81,8 @@ class RewardModulatedSTDP(Loihi3FLearningRule):
         y1_tau = self.post_trace_decay_tau
 
         # Eligibility trace represented as dt
-        dt = f"{self.learning_rate} * {self.A_plus} * x0 * y1 + " \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1 - " \
+        dt = f"{self.learning_rate} * {self.A_minus} * x0 * y1 + " \
+             f"{self.learning_rate} * {self.A_plus} * y0 * x1 - " \
              f"u0 * t * {self.eligibility_trace_decay_tau}"
 
         # Reward-modulated weight update

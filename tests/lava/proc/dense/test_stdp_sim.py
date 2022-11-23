@@ -345,65 +345,6 @@ class TestSTDPSim(unittest.TestCase):
             weight_after_run, np.array([[-79.35744962]])
         )
 
-    # def test_stdp_floating_large(self):
-    #     """Known value test. Run a simple learning dense layer between two LIF
-    #     population with multiple neurons and compare to the resulting weight
-    #     from previous runs."""
-    #     learning_rule = STDPLoihi(
-    #         learning_rate=1,
-    #         A_plus=-2,
-    #         A_minus=1,
-    #         tau_plus=10,
-    #         tau_minus=10,
-    #         t_epoch=4,
-    #     )
-    #
-    #     num_pre_neurons = 300
-    #     num_post_neurons = 200
-    #
-    #     np.random.seed(0)
-    #
-    #     weights_init = np.zeros((num_post_neurons, num_pre_neurons))
-    #
-    #     lif_0 = LIF(
-    #         shape=(num_pre_neurons,),
-    #         du=0,
-    #         dv=0,
-    #         vth=0.5,
-    #         bias_mant=np.random.rand(num_pre_neurons) * 0.2,
-    #     )
-    #
-    #     dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
-    #
-    #     lif_1 = LIF(
-    #         shape=(num_post_neurons,),
-    #         du=0,
-    #         dv=0,
-    #         vth=0.5,
-    #         bias_mant=np.random.rand(num_post_neurons) * 0.2,
-    #     )
-    #
-    #     lif_0.s_out.connect(dense.s_in)
-    #     dense.a_out.connect(lif_1.a_in)
-    #     lif_1.s_out.connect(dense.s_in_bap)
-    #
-    #     num_steps = 100
-    #
-    #     run_cfg = Loihi2SimCfg(select_tag="floating_pt")
-    #     run_cnd = RunSteps(num_steps=num_steps)
-    #     weight_before_run = dense.weights.get()
-    #
-    #     lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-    #
-    #     weight_after_run = dense.weights.get()
-    #     lif_0.stop()
-    #
-    #     weight_ground_truth = np.load("weight_after_run.npy", allow_pickle=True)
-    #     # np.save("weight_after_run.npy", weight_after_run)
-    #
-    #     np.testing.assert_almost_equal(weight_before_run, weights_init)
-    #     np.testing.assert_almost_equal(weight_after_run, weight_ground_truth)
-
     def test_stdp_floating_point_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
         population with multiple neurons and compare to the resulting weight
