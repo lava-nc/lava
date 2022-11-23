@@ -391,10 +391,10 @@ class LearningConnection:
     @abstractmethod
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
         pass
-    
+
     @abstractmethod
-    def _apply_learning_rules(self, 
-                              x_traces_history: np.ndarray, 
+    def _apply_learning_rules(self,
+                              x_traces_history: np.ndarray,
                               y_traces_history: np.ndarray) -> None:
         pass
 
@@ -614,7 +614,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
     def _update_synaptic_variable_random(self) -> None:
         """Update synaptic variable random generators."""
         self._conn_var_random.advance()
-        
+
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
         # Gather all necessary information to decay traces
         x_traces = self._x_traces
@@ -640,18 +640,20 @@ class LearningConnectionModelBitApproximate(LearningConnection):
 
         # most naive algorithm to decay traces
         # TODO decay only for important time-steps
-        x_traces_history = np.full((t_epoch+1, ) + x_traces.shape, np.nan, dtype=int)
+        x_traces_history = np.full((t_epoch + 1, ) + x_traces.shape, np.nan,
+                                   dtype=int)
         x_traces_history[0] = x_traces
-        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan, dtype=int)
+        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
+                                   dtype=int)
         y_traces_history[0] = y_traces
 
-        for t in range(1, t_epoch+1):
+        for t in range(1, t_epoch + 1):
             x_traces_history[t][x_taus != 0] = \
-                self._decay_trace(x_traces_history[t-1][x_taus != 0], 1,
+                self._decay_trace(x_traces_history[t - 1][x_taus != 0], 1,
                                   x_taus[x_taus != 0][:, np.newaxis],
                                   x_random.random_trace_decay)
             y_traces_history[t][y_taus != 0] = \
-                self._decay_trace(y_traces_history[t-1][y_taus != 0], 1,
+                self._decay_trace(y_traces_history[t - 1][y_taus != 0], 1,
                                   y_taus[y_taus != 0][:, np.newaxis],
                                   y_random.random_trace_decay)
 
@@ -664,7 +666,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
 
             y_spike_ids = np.where(t_spike_y == t)[0]
             y_traces_history[t][:, y_spike_ids] = \
-                self._add_impulse(y_traces_history[t][:, y_spike_ids], 
+                self._add_impulse(y_traces_history[t][:, y_spike_ids],
                                   y_random.random_impulse_addition,
                                   y_impulses_int, y_impulses_frac)
 
@@ -731,14 +733,14 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         trace_new = np.clip(trace_new, a_min=0, a_max=2 ** W_TRACE - 1)
 
         return trace_new
-    
+
     def _apply_learning_rules(self,
                               x_traces_history: np.ndarray,
                               y_traces_history: np.ndarray) -> None:
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
         learning rule."""
-        applier_args = self._extract_applier_args(x_traces_history, 
+        applier_args = self._extract_applier_args(x_traces_history,
                                                   y_traces_history)
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
@@ -761,7 +763,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
-    
+
     def _extract_applier_args(self,
                               x_traces_history: np.ndarray,
                               y_traces_history: np.ndarray) -> dict:
@@ -819,7 +821,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         applier_args.update(evaluated_traces)
 
         return applier_args
-    
+
     def _extract_applier_evaluated_traces(self,
                                           x_traces_history: np.ndarray,
                                           y_traces_history: np.ndarray) \
@@ -850,7 +852,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         # set traces to last value
         self._set_x_traces(x_traces_history[-1])
         self._set_y_traces(y_traces_history[-1])
-        
+
     def _saturate_synaptic_variable_accumulator(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
@@ -958,8 +960,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         result : ndarray
             Stochastically rounded synaptic variable values.
         """
-        exp_mant = 2 ** (
-                    W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
 
         integer_part = synaptic_variable_values / exp_mant
         fractional_part = integer_part % 1
@@ -1139,17 +1140,19 @@ class LearningConnectionModelFloat(LearningConnection):
 
         # most naive algorithm to decay traces
         # TODO decay only for important time-steps
-        x_traces_history = np.full((t_epoch+1, ) + x_traces.shape, np.nan, dtype=float)
+        x_traces_history = np.full((t_epoch + 1, ) + x_traces.shape, np.nan,
+                                   dtype=float)
         x_traces_history[0] = x_traces
-        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan, dtype=float)
+        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
+                                   dtype=float)
         y_traces_history[0] = y_traces
 
-        for t in range(1, t_epoch+1):
+        for t in range(1, t_epoch + 1):
             x_traces_history[t][x_taus != 0] = \
-                self._decay_trace(x_traces_history[t-1][x_taus != 0], 1,
+                self._decay_trace(x_traces_history[t - 1][x_taus != 0], 1,
                                   x_taus[x_taus != 0][:, np.newaxis])
             y_traces_history[t][y_taus != 0] = \
-                self._decay_trace(y_traces_history[t-1][y_taus != 0], 1,
+                self._decay_trace(y_traces_history[t - 1][y_taus != 0], 1,
                                   y_taus[y_taus != 0][:, np.newaxis])
 
             # add impulses if spike happens in this timestep
@@ -1190,7 +1193,7 @@ class LearningConnectionModelFloat(LearningConnection):
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
         learning rule."""
-        applier_args = self._extract_applier_args(x_traces_history, 
+        applier_args = self._extract_applier_args(x_traces_history,
                                                   y_traces_history)
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
@@ -1257,7 +1260,7 @@ class LearningConnectionModelFloat(LearningConnection):
         applier_args.update(evaluated_traces)
 
         return applier_args
-    
+
     def _extract_applier_evaluated_traces(self,
                                           x_traces_history: np.ndarray,
                                           y_traces_history: np.ndarray) \
@@ -1281,7 +1284,7 @@ class LearningConnectionModelFloat(LearningConnection):
         }
 
         return evaluated_traces
-    
+
     def _update_traces(self,
                        x_traces_history: np.ndarray,
                        y_traces_history: np.ndarray) -> None:
