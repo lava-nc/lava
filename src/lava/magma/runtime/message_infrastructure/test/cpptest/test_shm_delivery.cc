@@ -137,7 +137,8 @@ TEST(TestShmDelivery, ShmLoop) {
   LAVA_DUMP(LOG_UTTEST, "shm result =%ld", result);
   to_a1->Join();
   from_a1->Join();
-  mp.Stop(true);
+  mp.Stop();
+  mp.Cleanup(true);
   if (result != expect_result) {
     LAVA_DUMP(LOG_UTTEST, "expect_result: %d\n", expect_result);
     LAVA_DUMP(LOG_UTTEST, "result: %ld\n", result);

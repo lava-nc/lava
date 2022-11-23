@@ -51,7 +51,8 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
 
   // Stop any currently running actors
-  mp.Stop(true);
+  mp.Stop();
+  mp.Cleanup(true);
 }
 
 TEST(TestMultiprocessing, ActorStop) {
@@ -77,7 +78,8 @@ TEST(TestMultiprocessing, ActorStop) {
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
   std::cout << "Actor List Length --> " << actorList.size() << std::endl;
-  mp.Stop(true);
+  mp.Stop();
+  mp.Cleanup(true);
 }
 
 }  // namespace message_infrastructure

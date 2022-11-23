@@ -77,7 +77,8 @@ class TestChannelBlock(unittest.TestCase):
         mp.build_actor(send_port_fn, None)
 
         time.sleep(1)
-        mp.stop(True)
+        mp.stop()
+        mp.cleanup(True)
 
 
 if __name__ == "__main__":

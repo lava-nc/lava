@@ -133,7 +133,8 @@ void dds_protocol(std::string topic_name,
   const clock_t end_time = std::clock();
   from_a1->Join();
   to_a1->Join();
-  mp.Stop(true);
+  mp.Stop();
+  mp.Cleanup(true);
 
   std::printf("dds cpp loop timedelta: %f\n",
            ((end_time - start_time)/static_cast<double>(CLOCKS_PER_SEC)));

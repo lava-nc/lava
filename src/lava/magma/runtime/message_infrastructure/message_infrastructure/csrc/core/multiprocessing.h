@@ -14,12 +14,14 @@ namespace message_infrastructure {
 class MultiProcessing {
  public:
   ~MultiProcessing();
-  void Stop(bool block);
+  void Stop();
   int BuildActor(AbstractActor::TargetFn target_fn);
   void CheckActor();
+  void Cleanup(bool block);
   std::vector<AbstractActor::ActorPtr>& GetActors();
 
  private:
+  bool block_;
   std::vector<AbstractActor::ActorPtr> actors_;
 };
 
