@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='root',
     maintainer_email='he.xu@intel.com',
-    description='This package is for testing msg_lib dds port talking with ROS2 Python node',
+    description='For testing msg_lib dds port talking with ROS2 Python node',
     license='BSD-3-Clause',
     tests_require=['pytest'],
     entry_points={

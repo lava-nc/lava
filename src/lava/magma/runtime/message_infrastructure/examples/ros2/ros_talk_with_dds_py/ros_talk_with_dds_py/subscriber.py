@@ -8,6 +8,7 @@ from rclpy.qos import qos_profile_system_default
 
 from ddsmetadata.msg import DDSMetaData
 
+
 class MinimalSubscriber(Node):
 
     def __init__(self):
