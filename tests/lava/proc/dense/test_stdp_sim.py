@@ -209,8 +209,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=4,
+            A_plus=4,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=2,
@@ -251,8 +251,8 @@ class TestSTDPSim(unittest.TestCase):
         from previous runs."""
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
@@ -308,8 +308,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
@@ -351,8 +351,8 @@ class TestSTDPSim(unittest.TestCase):
         from previous runs."""
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
@@ -413,8 +413,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=2,
+            A_plus=2,
+            A_minus=-2,
             pre_trace_decay_tau=10,
             post_trace_decay_tau=10,
             pre_trace_kernel_magnitude=16,
@@ -477,8 +477,8 @@ class TestSTDPSim(unittest.TestCase):
         from previous runs."""
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=2,
+            A_plus=2,
+            A_minus=-2,
             pre_trace_decay_tau=10,
             post_trace_decay_tau=10,
             pre_trace_kernel_magnitude=16,
@@ -555,8 +555,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=4,
+            A_plus=4,
+            A_minus=-2,
             pre_trace_decay_tau=10,
             post_trace_decay_tau=10,
             pre_trace_kernel_magnitude=16,
@@ -614,8 +614,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=4,
+            A_plus=4,
+            A_minus=-2,
             pre_trace_decay_tau=10,
             post_trace_decay_tau=10,
             pre_trace_kernel_magnitude=20,
