@@ -28,19 +28,36 @@ target_link_libraries(
 
 if(FASTDDS_ENABLE)
   add_executable(
-    test_dds_to_ros
-    cpptest/test_dds_to_ros.cc)
+    test_fastdds_to_ros
+    cpptest/test_fastdds_to_ros.cc)
 
   add_executable(
-    test_ros_to_dds
-    cpptest/test_ros_to_dds.cc)
+    test_fastdds_from_ros
+    cpptest/test_fastdds_from_ros.cc)
 
   target_link_libraries(
-    test_dds_to_ros
+    test_fastdds_to_ros
     message_infrastructure)
 
   target_link_libraries(
-    test_ros_to_dds
+    test_fastdds_from_ros
+    message_infrastructure)
+
+elseif(CycloneDDS_ENABLE)
+  add_executable(
+    test_cyclonedds_to_ros
+    cpptest/test_cyclonedds_to_ros.cc)
+
+  add_executable(
+    test_cyclonedds_from_ros
+    cpptest/test_cyclonedds_from_ros.cc)
+
+  target_link_libraries(
+    test_cyclonedds_to_ros
+    message_infrastructure)
+
+  target_link_libraries(
+    test_cyclonedds_from_ros
     message_infrastructure)
 endif()
 
