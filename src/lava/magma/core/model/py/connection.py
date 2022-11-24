@@ -212,7 +212,7 @@ class LearningConnection:
                 elif trace == str_symbols.Y3:
                     trace_idx = 4
                 else:
-                    raise ValueError("Unknown Trace in ProcessModel")
+                    raise ValueError("Unknown Trace in ProcessModel.")
 
                 active_traces_per_dependency[dependency_idx, trace_idx] = True
 
@@ -365,16 +365,6 @@ class LearningConnection:
 
         self._update_trace_randoms()
 
-    def lrn_guard(self) -> bool:
-        return self.time_step % self._learning_rule.t_epoch == 0
-
-    def run_lrn(self) -> None:
-        self._update_synaptic_variable_random()
-        x_traces_history, y_traces_history = self._compute_trace_histories()
-        self._update_traces(x_traces_history, y_traces_history)
-        self._apply_learning_rules(x_traces_history, y_traces_history)
-        self._reset_dependencies_and_spike_times()
-
     @abstractmethod
     def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
         pass
@@ -387,6 +377,16 @@ class LearningConnection:
     def _update_trace_randoms(self) -> None:
         pass
 
+    def lrn_guard(self) -> bool:
+        return self.time_step % self._learning_rule.t_epoch == 0
+
+    def run_lrn(self) -> None:
+        self._update_synaptic_variable_random()
+        x_traces_history, y_traces_history = self._compute_trace_histories()
+        self._update_traces(x_traces_history, y_traces_history)
+        self._apply_learning_rules(x_traces_history, y_traces_history)
+        self._reset_dependencies_and_spike_times()
+
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
         pass
@@ -395,17 +395,81 @@ class LearningConnection:
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
         pass
 
+    def _update_traces(self,
+                       x_traces_history: np.ndarray,
+                       y_traces_history: np.ndarray) -> None:
+        """Update x and y traces to last values in the epoch history.
+
+        Parameters
+        ----------
+        x_traces_history : ndarray
+            History of x trace values within the epoch.
+        y_traces_history : np.ndarray
+            History of y trace values within the epoch.
+        """
+        # set traces to last value
+        self._set_x_traces(x_traces_history[-1])
+        self._set_y_traces(y_traces_history[-1])
+
     @abstractmethod
     def _apply_learning_rules(self,
                               x_traces_history: np.ndarray,
                               y_traces_history: np.ndarray) -> None:
         pass
 
-    @abstractmethod
-    def _update_traces(self,
-                       x_traces_history: np.ndarray,
-                       y_traces_history: np.ndarray) -> None:
-        pass
+    def _extract_applier_evaluated_traces(self,
+                                          x_traces_history: np.ndarray,
+                                          y_traces_history: np.ndarray) \
+            -> typing.Dict[str, np.ndarray]:
+        """Extract x and y trace values on time steps derived from each of
+        allowed dependencies.
+
+        Parameters
+        ----------
+        x_traces_history : ndarray
+            History of x trace values within the epoch.
+        y_traces_history : np.ndarray
+            History of y trace values within the epoch.
+
+        Returns
+        ----------
+        evaluated_traces : dict
+            x and y traces evaluated on time steps derived from dependencies
+        """
+        evaluated_traces = {
+            # Shape : (1, num_pre_neurons)
+            "x1_x0": x_traces_history[self.tx, 0].diagonal()[np.newaxis, :],
+            # Shape : (1, num_pre_neurons)
+            "x2_x0": x_traces_history[self.tx, 1].diagonal()[np.newaxis, :],
+            # Shape : (num_post_neurons, num_pre_neurons)
+            "y1_x0": y_traces_history[self.tx, 0].T,
+            # Shape : (num_post_neurons, num_pre_neurons)
+            "y2_x0": y_traces_history[self.tx, 1].T,
+            # Shape : (num_post_neurons, num_pre_neurons)
+            "y3_x0": y_traces_history[self.tx, 2].T,
+            # Shape : (num_post_neurons, num_pre_neurons)
+            "x1_y0": x_traces_history[self.ty, 0],
+            # Shape : (num_post_neurons, num_pre_neurons)
+            "x2_y0": x_traces_history[self.ty, 1],
+            # Shape : (num_post_neurons, 1)
+            "y1_y0": y_traces_history[self.ty, 0].diagonal()[:, np.newaxis],
+            # Shape : (num_post_neurons, 1)
+            "y2_y0": y_traces_history[self.ty, 1].diagonal()[:, np.newaxis],
+            # Shape : (num_post_neurons, 1)
+            "y3_y0": y_traces_history[self.ty, 2].diagonal()[:, np.newaxis],
+            # Shape : (1, num_pre_neurons)
+            "x1_u": x_traces_history[-1, 0][np.newaxis, :],
+            # Shape : (1, num_pre_neurons)
+            "x2_u": x_traces_history[-1, 1][np.newaxis, :],
+            # Shape : (num_post_neurons, 1)
+            "y1_u": y_traces_history[-1, 0][:, np.newaxis],
+            # Shape : (num_post_neurons, 1)
+            "y2_u": y_traces_history[-1, 1][:, np.newaxis],
+            # Shape : (num_post_neurons, 1)
+            "y3_u": y_traces_history[-1, 2][:, np.newaxis],
+        }
+
+        return evaluated_traces
 
     def _reset_dependencies_and_spike_times(self) -> None:
         """Reset all dependencies and within-epoch spike times."""
@@ -541,6 +605,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
     def _create_learning_rule_applier(
         self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
+        """Create a LearningRuleApplierBitApprox."""
         return LearningRuleApplierBitApprox(product_series)
 
     def _init_randoms(self) -> None:
@@ -619,6 +684,15 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         self._conn_var_random.advance()
 
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Compute history of x and y trace values within the past epoch.
+
+        Returns
+        ----------
+        x_traces_history : ndarray
+            History of x trace values within the epoch.
+        y_traces_history : np.ndarray
+            History of y trace values within the epoch.
+        """
         # Gather all necessary information to decay traces
         x_traces = self._x_traces
         y_traces = self._y_traces
@@ -782,13 +856,8 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         "weights":  (num_neurons_post, num_neurons_pre)
         "tag_2": (num_neurons_post, num_neurons_pre)
         "tag_1": (num_neurons_post, num_neurons_pre)
-        "traces": (3, 5, num_neurons_post, num_neurons_pre)
-
-        "traces" is of shape (3, 5, num_neurons_post, num_neurons_pre) with:
-        First dimension representing the within-epoch time step at which the
-        trace is evaluated (tx, ty, t_epoch).
-        Second dimension representing the trace that is evaluated
-        (x1, x2, y1, y2, y3).
+        "evaluated_traces": see _extract_applier_evaluated_traces method
+        for details.
         """
 
         # Shape x0: (num_pre_neurons, ) -> (1, num_pre_neurons)
@@ -824,37 +893,6 @@ class LearningConnectionModelBitApproximate(LearningConnection):
         applier_args.update(evaluated_traces)
 
         return applier_args
-
-    def _extract_applier_evaluated_traces(self,
-                                          x_traces_history: np.ndarray,
-                                          y_traces_history: np.ndarray) \
-            -> typing.Dict[str, np.ndarray]:
-        evaluated_traces = {
-            "x1_x0": x_traces_history[self.tx, 0].diagonal()[np.newaxis, :],
-            "x2_x0": x_traces_history[self.tx, 1].diagonal()[np.newaxis, :],
-            "y1_x0": y_traces_history[self.tx, 0].T,
-            "y2_x0": y_traces_history[self.tx, 1].T,
-            "y3_x0": y_traces_history[self.tx, 2].T,
-            "x1_y0": x_traces_history[self.ty, 0],
-            "x2_y0": x_traces_history[self.ty, 1],
-            "y1_y0": y_traces_history[self.ty, 0].diagonal()[:, np.newaxis],
-            "y2_y0": y_traces_history[self.ty, 1].diagonal()[:, np.newaxis],
-            "y3_y0": y_traces_history[self.ty, 2].diagonal()[:, np.newaxis],
-            "x1_u": x_traces_history[-1, 0][np.newaxis, :],
-            "x2_u": x_traces_history[-1, 1][np.newaxis, :],
-            "y1_u": y_traces_history[-1, 0][:, np.newaxis],
-            "y2_u": y_traces_history[-1, 1][:, np.newaxis],
-            "y3_u": y_traces_history[-1, 2][:, np.newaxis],
-        }
-
-        return evaluated_traces
-
-    def _update_traces(self,
-                       x_traces_history: np.ndarray,
-                       y_traces_history: np.ndarray) -> None:
-        # set traces to last value
-        self._set_x_traces(x_traces_history[-1])
-        self._set_y_traces(y_traces_history[-1])
 
     def _saturate_synaptic_variable_accumulator(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
@@ -895,6 +933,41 @@ class LearningConnectionModelBitApproximate(LearningConnection):
                 f"'tag_1', or 'tag_2'."
                 f"Got {synaptic_variable_name=}."
             )
+
+    @staticmethod
+    def _stochastic_round_synaptic_variable(
+            synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray,
+            random: float,
+    ) -> np.ndarray:
+        """Stochastically round synaptic variable after learning rule
+        application.
+
+        Parameters
+        ----------
+        synaptic_variable_name: str
+            Synaptic variable name.
+        synaptic_variable_values: ndarray
+            Synaptic variable values to stochastically round.
+
+        Returns
+        ----------
+        result : ndarray
+            Stochastically rounded synaptic variable values.
+        """
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
+
+        integer_part = synaptic_variable_values / exp_mant
+        fractional_part = integer_part % 1
+
+        integer_part = np.floor(integer_part)
+        integer_part = stochastic_round(integer_part, random,
+                                        fractional_part)
+        result = (integer_part * exp_mant).astype(
+            synaptic_variable_values.dtype
+        )
+
+        return result
 
     def _saturate_synaptic_variable(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
@@ -941,41 +1014,6 @@ class LearningConnectionModelBitApproximate(LearningConnection):
                 f"'tag_1', or 'tag_2'."
                 f"Got {synaptic_variable_name=}."
             )
-
-    @staticmethod
-    def _stochastic_round_synaptic_variable(
-            synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray,
-            random: float,
-    ) -> np.ndarray:
-        """Stochastically round synaptic variable after learning rule
-        application.
-
-        Parameters
-        ----------
-        synaptic_variable_name: str
-            Synaptic variable name.
-        synaptic_variable_values: ndarray
-            Synaptic variable values to stochastically round.
-
-        Returns
-        ----------
-        result : ndarray
-            Stochastically rounded synaptic variable values.
-        """
-        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
-
-        integer_part = synaptic_variable_values / exp_mant
-        fractional_part = integer_part % 1
-
-        integer_part = np.floor(integer_part)
-        integer_part = stochastic_round(integer_part, random,
-                                        fractional_part)
-        result = (integer_part * exp_mant).astype(
-            synaptic_variable_values.dtype
-        )
-
-        return result
 
 
 class LearningConnectionModelFloat(LearningConnection):
@@ -1066,19 +1104,11 @@ class LearningConnectionModelFloat(LearningConnection):
             ]
         )
 
-    def _init_randoms(self):
-        pass
-
     def _create_learning_rule_applier(
         self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
+        """Create a LearningRuleApplierFloat."""
         return LearningRuleApplierFloat(product_series)
-
-    def _update_trace_randoms(self) -> None:
-        pass
-
-    def _update_synaptic_variable_random(self) -> None:
-        pass
 
     def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
         """Record within-epoch spiking times of pre-synaptic neurons.
@@ -1125,6 +1155,15 @@ class LearningConnectionModelFloat(LearningConnection):
         self.ty[s_in_bap] = ts_offset
 
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Compute history of x and y trace values within the past epoch.
+
+        Returns
+        ----------
+        x_traces_history : ndarray
+            History of x trace values within the epoch.
+        y_traces_history : np.ndarray
+            History of y trace values within the epoch.
+        """
         # Gather all necessary information to decay traces
         x_traces = self._x_traces
         y_traces = self._y_traces
@@ -1220,13 +1259,8 @@ class LearningConnectionModelFloat(LearningConnection):
         "weights":  (num_neurons_post, num_neurons_pre)
         "tag_2": (num_neurons_post, num_neurons_pre)
         "tag_1": (num_neurons_post, num_neurons_pre)
-        "traces": (3, 5, num_neurons_post, num_neurons_pre)
-
-        "traces" is of shape (3, 5, num_neurons_post, num_neurons_pre) with:
-        First dimension representing the within-epoch time step at which the
-        trace is evaluated (tx, ty, t_epoch).
-        Second dimension representing the trace that is evaluated
-        (x1, x2, y1, y2, y3).
+        "evaluated_traces": see _extract_applier_evaluated_traces method
+        for details.
         """
 
         # Shape x0: (num_pre_neurons, ) -> (1, num_pre_neurons)
@@ -1263,37 +1297,6 @@ class LearningConnectionModelFloat(LearningConnection):
         applier_args.update(evaluated_traces)
 
         return applier_args
-
-    def _extract_applier_evaluated_traces(self,
-                                          x_traces_history: np.ndarray,
-                                          y_traces_history: np.ndarray) \
-            -> typing.Dict[str, np.ndarray]:
-        evaluated_traces = {
-            "x1_x0": x_traces_history[self.tx, 0].diagonal()[np.newaxis, :],
-            "x2_x0": x_traces_history[self.tx, 1].diagonal()[np.newaxis, :],
-            "y1_x0": y_traces_history[self.tx, 0].T,
-            "y2_x0": y_traces_history[self.tx, 1].T,
-            "y3_x0": y_traces_history[self.tx, 2].T,
-            "x1_y0": x_traces_history[self.ty, 0],
-            "x2_y0": x_traces_history[self.ty, 1],
-            "y1_y0": y_traces_history[self.ty, 0].diagonal()[:, np.newaxis],
-            "y2_y0": y_traces_history[self.ty, 1].diagonal()[:, np.newaxis],
-            "y3_y0": y_traces_history[self.ty, 2].diagonal()[:, np.newaxis],
-            "x1_u": x_traces_history[-1, 0][np.newaxis, :],
-            "x2_u": x_traces_history[-1, 1][np.newaxis, :],
-            "y1_u": y_traces_history[-1, 0][:, np.newaxis],
-            "y2_u": y_traces_history[-1, 1][:, np.newaxis],
-            "y3_u": y_traces_history[-1, 2][:, np.newaxis],
-        }
-
-        return evaluated_traces
-
-    def _update_traces(self,
-                       x_traces_history: np.ndarray,
-                       y_traces_history: np.ndarray) -> None:
-        # set traces to last value
-        self._set_x_traces(x_traces_history[-1])
-        self._set_y_traces(y_traces_history[-1])
 
     def _saturate_synaptic_variable(
         self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
