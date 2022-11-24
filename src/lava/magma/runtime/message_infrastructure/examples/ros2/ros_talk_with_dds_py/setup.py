@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'talker = ros_talk_with_dds_py.publisher:main',
-            'listener = ros_talk_with_dds_py.subscriber:main',
+            'ros_pub = ros_talk_with_dds_py.publisher:main',
+            'ros_sub = ros_talk_with_dds_py.subscriber:main',
         ],
     },
 )

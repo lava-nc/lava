@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ros_talk_with_dds)
+project(ros_talk_with_dds_cpp)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
