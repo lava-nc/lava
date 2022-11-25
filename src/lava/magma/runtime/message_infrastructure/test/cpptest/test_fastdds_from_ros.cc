@@ -19,7 +19,7 @@ int main() {
   dds_recv->Start();
   while (loop--) {
     MetaDataPtr res = dds_recv->Recv();
-    printf("DDS recv : '%ld'\n", *reinterpret_cast<int64_t*>(res->mdata));
+    printf("DDS recv : '%d'\n", *reinterpret_cast<char*>(res->mdata));
   }
   dds_recv->Join();
   return 0;

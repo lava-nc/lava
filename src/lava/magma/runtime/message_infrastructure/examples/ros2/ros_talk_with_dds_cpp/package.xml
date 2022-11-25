@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>ros_talk_with_dds</name>
+  <name>ros_talk_with_dds_cpp</name>
   <version>0.0.0</version>
-  <description>This package is for testing msg_lib dds port talking with ROS2 node.</description>
+  <description>This package is for testing msg_lib dds port talking with ROS2 CPP node.</description>
   <maintainer email="he.xu@intel.com">root</maintainer>
   <license>BSD-3-Clause</license>
 
