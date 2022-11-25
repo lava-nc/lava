@@ -20,7 +20,7 @@ from message_infrastructure import (
 )
 
 
-loop_number = 2
+loop_number = 2000
 
 
 def prepare_data():

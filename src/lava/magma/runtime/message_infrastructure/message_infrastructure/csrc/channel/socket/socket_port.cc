@@ -181,7 +181,7 @@ MetaDataPtr TempSocketRecvPort::Recv() {
   if (!flag) {
     LAVA_LOG_ERR("TempSkt Recv data header error\n");
   }
-  void *ptr = malloc(sizeof(data->elsize * data->total_size));
+  void *ptr = calloc(data->elsize * data->total_size, 1);
   flag = SocketRead(cfd, ptr, data->elsize * data->total_size);
   if (!flag) {
     LAVA_LOG_ERR("TempSkt Recv data error\n");
