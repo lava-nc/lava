@@ -14,13 +14,13 @@ from message_infrastructure import (
     Channel,
     SendPort,
     RecvPort,
-    SupportGRPCChannel,
-    SupportFastDDSChannel,
-    SupportCycloneDDSChannel,
     ChannelQueueSize,
     getTempRecvPort,
     getTempSendPort
 )
+
+
+loop_number = 2
 
 
 def prepare_data():
@@ -39,16 +39,15 @@ def recv_proc(*args, **kwargs):
     actor.set_stop_fn(partial(actor_stop, "send"))
     port = kwargs.pop("port")
     port.start()
-    path, recv_port = getTempRecvPort()
-    print("send", np.array([path]))
-    recv_port.start()
-    port.send(np.array([path]))
-    data = recv_port.recv()
-    print("recv:", data)
-    recv_port.join()
+    for i in range(loop_number):
+        path, recv_port = getTempRecvPort()
+        recv_port.start()
+        port.send(np.array([path]))
+        data = recv_port.recv()
+        recv_port.join()
+        if not np.array_equal(data, const_data):
+            raise AssertionError()
     port.join()
-    if not np.array_equal(data, const_data):
-        raise AssertionError()
     actor.status_stopped()
 
 
@@ -57,13 +56,12 @@ def send_proc(*args, **kwargs):
     actor.set_stop_fn(partial(actor_stop, "recv"))
     port = kwargs.pop("port")
     port.start()
-    path = port.recv()
-    print("recv", path)
-    send_port = getTempSendPort(str(path[0]))
-    send_port.start()
-    send_port.send(const_data)
-    print("Send:", const_data)
-    send_port.join()
+    for i in range(loop_number):
+        path = port.recv()
+        send_port = getTempSendPort(str(path[0]))
+        send_port.start()
+        send_port.send(const_data)
+        send_port.join()
     port.join()
     actor.status_stopped()
 
@@ -73,18 +71,18 @@ class Builder:
         pass
 
 
-class TestChannel(unittest.TestCase):
+class TestTempChannel(unittest.TestCase):
 
     def test_shmemchannel(self):
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
-        name = 'test_shmem_channel'
+        name = 'test_temp_channel'
 
         shmem_channel = Channel(
             ChannelBackend.SHMEMCHANNEL,
             ChannelQueueSize,
-            100,
+            128,
             name,
             name)
 
