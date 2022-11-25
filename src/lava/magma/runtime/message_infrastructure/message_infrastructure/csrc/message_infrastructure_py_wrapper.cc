@@ -97,7 +97,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
-  py::class_<TempChannelProxy, std::shared_ptr<TempChannelProxy>> (m, "TempChannel")
+  py::class_<TempChannelProxy, std::shared_ptr<TempChannelProxy>>
+      (m, "TempChannel")
     .def(py::init<std::string>())
     .def(py::init<>())
     .def_property_readonly("addr_path", &TempChannelProxy::GetAddrPath)

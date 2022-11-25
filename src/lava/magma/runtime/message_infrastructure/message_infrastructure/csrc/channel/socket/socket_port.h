@@ -65,7 +65,7 @@ using SocketRecvPortPtr = std::shared_ptr<SocketRecvPort>;
 class TempSocketSendPort final : public AbstractSendPort {
  public:
   TempSocketSendPort() = delete;
-  TempSocketSendPort(SocketFile &addr_path);
+  TempSocketSendPort(const SocketFile &addr_path);
   ~TempSocketSendPort() override {};
   void Start();
   void Send(DataPtr metadata);
@@ -80,7 +80,7 @@ using TempSocketSendPortPtr = std::shared_ptr<TempSocketSendPort>;
 class TempSocketRecvPort final : public AbstractRecvPort {
  public:
   TempSocketRecvPort() = delete;
-  TempSocketRecvPort(SocketFile &addr_path);
+  TempSocketRecvPort(const SocketFile &addr_path);
   ~TempSocketRecvPort() override {}
   void Start();
   bool Probe();

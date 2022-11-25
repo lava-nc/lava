@@ -27,7 +27,7 @@ void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
     LAVA_LOG_ERR("Recv %d data but max support %d lenght\n", len, nbytes);
     len = nbytes;
   }
-  LAVA_DEBUG(LOG_SMMP, "data len: %d, nbytes: %d, elsize %d, total %d\n", len, nbytes, ptr->elsize, ptr->total_size);
+  LAVA_DEBUG(LOG_SMMP, "data len: %d, nbytes: %d\n", len, nbytes);
   ptr->mdata = std::calloc(len, 1);
   if (ptr->mdata == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);

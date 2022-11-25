@@ -34,7 +34,7 @@ class ChannelProxy {
 class TempChannelProxy {
  public:
   TempChannelProxy();
-  TempChannelProxy(const std::string &addr_path);
+  explicit TempChannelProxy(const std::string &addr_path);
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
   std::string GetAddrPath();

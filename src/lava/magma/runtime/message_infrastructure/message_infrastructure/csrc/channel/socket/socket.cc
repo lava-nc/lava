@@ -35,13 +35,14 @@ SocketFile SktManager::AllocSocketFile(const std::string addr_path) {
     LAVA_DEBUG(LOG_SKP, "Creating Socket File\n");
     std::srand(std::time(nullptr));
     do {
-      skt_file = SKT_TEMP_PATH + std::to_string(rand());
+      skt_file = SKT_TEMP_PATH + std::to_string(std::rand());
     } while (std::filesystem::exists(skt_file));
   } else {
     skt_file = addr_path;
   }
   if (socket_files_.find(skt_file) != socket_files_.end()) {
-    LAVA_LOG_ERR("Skt File %d is alread used by the process\n", skt_file);
+    LAVA_LOG_ERR("Skt File %s is alread used by the process\n",
+                 skt_file.c_str());
   }
   socket_files_.insert(skt_file);
   return skt_file;

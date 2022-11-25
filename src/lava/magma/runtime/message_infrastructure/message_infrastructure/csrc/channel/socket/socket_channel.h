@@ -41,7 +41,7 @@ SocketChannelPtr GetSocketChannel(const size_t &nbytes,
 class TempSocketChannel : public AbstractChannel {
  public:
   TempSocketChannel() = delete;
-  TempSocketChannel(const std::string &addr_path);
+  explicit TempSocketChannel(const std::string &addr_path);
   ~TempSocketChannel() override {}
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();

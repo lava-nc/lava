@@ -104,7 +104,7 @@ MetaDataPtr SocketRecvPort::Peek() {
   return Recv();
 }
 
-TempSocketSendPort::TempSocketSendPort(SocketFile &addr_path) {
+TempSocketSendPort::TempSocketSendPort(const SocketFile &addr_path) {
   name_ = "SendPort" + addr_path;
   addr_path_ = addr_path;
   cfd_ = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -113,7 +113,7 @@ TempSocketSendPort::TempSocketSendPort(SocketFile &addr_path) {
   }
 
   size_t skt_addr_len = sizeof(sa_family_t) + addr_path_.size();
-  sockaddr *skt_addr = (sockaddr*)malloc(skt_addr_len);
+  sockaddr *skt_addr = reinterpret_cast<sockaddr*>(malloc(skt_addr_len));
   skt_addr->sa_family = AF_UNIX;
   memcpy(skt_addr->sa_data, addr_path.c_str(), addr_path_.size());
 
@@ -133,18 +133,22 @@ void TempSocketSendPort::Send(DataPtr data) {
   if (!flag) {
     LAVA_LOG_ERR("TempSkt Send data header Error\n");
   }
-  flag = SocketWrite(cfd_, metadata->mdata, metadata->total_size * metadata->elsize);
+  flag = SocketWrite(cfd_,
+                     metadata->mdata,
+                     metadata->total_size * metadata->elsize);
   if (!flag) {
     LAVA_LOG_ERR("TempSkt Send data error\n");
   }
-  LAVA_DEBUG(LOG_SKP, "Send %d data\n", metadata->total_size * metadata->elsize);
+  LAVA_DEBUG(LOG_SKP,
+             "Send %ld data\n",
+             metadata->total_size * metadata->elsize);
 }
 void TempSocketSendPort::Join() {
   close(cfd_);
   GetSktManagerSingleton().DeleteSocketFile(addr_path_);
 }
 
-TempSocketRecvPort::TempSocketRecvPort(SocketFile &addr_path) {
+TempSocketRecvPort::TempSocketRecvPort(const SocketFile &addr_path) {
   this->name_ = "RecvPort_" + addr_path;
   addr_path_ = addr_path;
   sfd_ = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -153,7 +157,7 @@ TempSocketRecvPort::TempSocketRecvPort(SocketFile &addr_path) {
   }
 
   size_t skt_addr_len = sizeof(sa_family_t) + addr_path_.size();
-  sockaddr *skt_addr = (sockaddr*)malloc(skt_addr_len);
+  sockaddr *skt_addr = reinterpret_cast<sockaddr*>(malloc(skt_addr_len));
   skt_addr->sa_family = AF_UNIX;
   memcpy(&skt_addr->sa_data[0], addr_path.c_str(), addr_path_.size());
   // printf("the path: %s, %d\n", &skt_addr->sa_data[0], addr_path_.size());
@@ -186,7 +190,7 @@ MetaDataPtr TempSocketRecvPort::Recv() {
   if (!flag) {
     LAVA_LOG_ERR("TempSkt Recv data error\n");
   }
-  LAVA_DEBUG(LOG_SKP, "Recv %d data\n", data->elsize* data->total_size);
+  LAVA_DEBUG(LOG_SKP, "Recv %ld data\n", data->elsize * data->total_size);
   data->mdata = ptr;
   close(cfd);
   return data;

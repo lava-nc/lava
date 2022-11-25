@@ -7,6 +7,7 @@
 
 #include <message_infrastructure/csrc/core/abstract_port.h>
 #include <memory>
+#include <string>
 
 
 namespace message_infrastructure {
