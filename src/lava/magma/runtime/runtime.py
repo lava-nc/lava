@@ -12,7 +12,9 @@ import numpy as np
 from message_infrastructure import (RecvPort,
                                     SendPort,
                                     Actor,
-                                    Channel)
+                                    Channel,
+                                    getTempSendPort,
+                                    getTempRecvPort)
 
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from message_infrastructure.message_interface_enum import ActorType
@@ -415,16 +417,13 @@ class Runtime:
             buffer: np.ndarray = value
             if idx:
                 buffer = buffer[idx]
-            buffer_shape: ty.Tuple[int, ...] = buffer.shape
-            num_items: int = np.prod(buffer_shape).item()
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: SendPort = self.runtime_to_service[runtime_srv_id]
-            data_port.send(enum_to_np(num_items))
-            for i in range(num_items):
-                data_port.send(enum_to_np(buffer[0, i], np.float64))
+            addr_path = rsp_port.recv()
+            send_port = getTempSendPort(str(addr_path[0]))
+            send_port.start()
+            send_port.send(buffer)
+            send_port.join()
             rsp = rsp_port.recv()
             if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
                 raise RuntimeError("Var Set couldn't get successfully "
@@ -462,15 +461,13 @@ class Runtime:
             req_port.send(enum_to_np(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
-            num_items: int = int(data_port.recv()[0].item())
-            buffer: np.ndarray = np.empty((1, num_items))
-            for i in range(num_items):
-                buffer[0, i] = data_port.recv()[0]
+            addr_path, recv_port = getTempRecvPort()
+            recv_port.start()
+            req_port.send(np.array([addr_path]))
+            buffer = recv_port.recv()
+            recv_port.join()
 
             # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:

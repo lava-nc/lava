@@ -62,6 +62,37 @@ class SocketRecvPort final : public AbstractRecvPort {
 // Use std::shared_ptr.
 using SocketRecvPortPtr = std::shared_ptr<SocketRecvPort>;
 
+class TempSocketSendPort final : public AbstractSendPort {
+ public:
+  TempSocketSendPort() = delete;
+  TempSocketSendPort(SocketFile &addr_path);
+  ~TempSocketSendPort() override {};
+  void Start();
+  void Send(DataPtr metadata);
+  void Join();
+  bool Probe();
+ private:
+  int cfd_;
+  SocketFile addr_path_;
+};
+using TempSocketSendPortPtr = std::shared_ptr<TempSocketSendPort>;
+
+class TempSocketRecvPort final : public AbstractRecvPort {
+ public:
+  TempSocketRecvPort() = delete;
+  TempSocketRecvPort(SocketFile &addr_path);
+  ~TempSocketRecvPort() override {}
+  void Start();
+  bool Probe();
+  void Join();
+  MetaDataPtr Recv();
+  MetaDataPtr Peek();
+ private:
+  int sfd_;
+  SocketFile addr_path_;
+};
+using TempSocketRecvPortPtr = std::shared_ptr<TempSocketRecvPort>;
+
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_SOCKET_SOCKET_PORT_H_

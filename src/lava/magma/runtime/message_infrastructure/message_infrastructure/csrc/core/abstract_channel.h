@@ -18,6 +18,9 @@ class AbstractChannel {
 
   virtual AbstractSendPortPtr GetSendPort() = 0;
   virtual AbstractRecvPortPtr GetRecvPort() = 0;
+  virtual std::string ChannelInfo() {
+    return std::string();
+  }
 };
 
 // Users should be allowed to copy channel objects.
