@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_system_default
 
 from ddsmetadata.msg import DDSMetaData
+from .utils.np_mdata_trans import metadata_to_nparray
 
 
 class MinimalSubscriber(Node):
 
     def __init__(self):
         super().__init__('minimal_subscriber')
-        ros_qos = qos_profile_system_default
         self.subscription = self.create_subscription(
             DDSMetaData,
             'dds_topic',
@@ -22,7 +23,7 @@ class MinimalSubscriber(Node):
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg.mdata[0])
+        print("Heard : ", metadata_to_nparray(msg))
 
 
 def main(args=None):

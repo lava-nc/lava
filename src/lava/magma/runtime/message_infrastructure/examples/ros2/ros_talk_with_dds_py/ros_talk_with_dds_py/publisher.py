@@ -1,38 +1,30 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-
+import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_system_default
 
 from ddsmetadata.msg import DDSMetaData
-
+from .utils.np_mdata_trans import nparray_to_metadata
 
 class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
         ros_qos = qos_profile_system_default
-        self.publisher_ = self.create_publisher(DDSMetaData,
-                                                'dds_topic',
-                                                ros_qos)
+        self.publisher_ = self.create_publisher(DDSMetaData, 'dds_topic', ros_qos)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
-        self.msg = DDSMetaData()
-        self.msg.nd = 1
-        self.msg.type = 7
-        self.msg.elsize = 8
-        self.msg.total_size = 1
-        self.msg.dims[0] = 1
-        self.msg.strides[0] = 1
+        
 
     def timer_callback(self):
-        mdata = [self.i % 255]
-        self.msg.mdata = mdata
-        self.publisher_.publish(self.msg)
-        self.get_logger().info('Publishing: "%ld"' % self.msg.mdata[0])
+        np_arr = np.array(([self.i,2,3]), np.int64)
+        msg = nparray_to_metadata(np_arr)
+        self.publisher_.publish(msg)
+        print("Publishing : ", np_arr)
         self.i += 1
 
 
