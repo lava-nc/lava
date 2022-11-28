@@ -39,8 +39,8 @@ class SktManager {
   SktManager& operator=(SktManager&&) = delete;
 
   SocketPair AllocChannelSocket(size_t nbytes);
-  SocketFile AllocSocketFile(const std::string addr_path);
-  bool DeleteSocketFile(const std::string addr_path);
+  SocketFile AllocSocketFile(const std::string &addr_path);
+  bool DeleteSocketFile(const std::string &addr_path);
 
   friend SktManager &GetSktManagerSingleton();
 

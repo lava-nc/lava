@@ -161,7 +161,10 @@ TempSocketRecvPort::TempSocketRecvPort(const SocketFile &addr_path) {
   sockaddr *skt_addr = reinterpret_cast<sockaddr*>(malloc(skt_addr_len));
   skt_addr->sa_family = AF_UNIX;
   memcpy(&skt_addr->sa_data[0], addr_path.c_str(), addr_path_.size());
-  // printf("the path: %s, %d\n", &skt_addr->sa_data[0], addr_path_.size());
+  LAVA_DEBUG(LOG_SKP,
+             "the path: %s, %zd\n",
+             &skt_addr->sa_data[0],
+             addr_path_.size());
   if (bind(sfd_, skt_addr, skt_addr_len) == -1) {
     LAVA_LOG_ERR("Cannot bind socket domain\n");
   }

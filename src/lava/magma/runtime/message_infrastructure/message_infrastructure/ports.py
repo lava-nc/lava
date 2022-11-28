@@ -4,7 +4,7 @@
 
 from MessageInfrastructurePywrapper import SendPort as CppSendPort
 from MessageInfrastructurePywrapper import Channel as CppChannel
-from MessageInfrastructurePywrapper import TempChannel as CppTempChannel
+from MessageInfrastructurePywrapper import TempChannel
 from MessageInfrastructurePywrapper import support_grpc_channel
 from MessageInfrastructurePywrapper import support_fastdds_channel
 from MessageInfrastructurePywrapper import support_cyclonedds_channel
@@ -61,13 +61,6 @@ if support_fastdds_channel() or support_cyclonedds_channel():
 
 
 class Channel(CppChannel):
-
-    @property
-    def src_port(self):
-        return SendPort(super().src_port)
-
-
-class TempChannel(CppTempChannel):
 
     @property
     def src_port(self):

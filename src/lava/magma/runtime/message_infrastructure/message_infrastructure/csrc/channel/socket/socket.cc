@@ -29,7 +29,7 @@ SocketPair SktManager::AllocChannelSocket(size_t nbytes) {
   return skt_pair;
 }
 
-SocketFile SktManager::AllocSocketFile(const std::string addr_path) {
+SocketFile SktManager::AllocSocketFile(const std::string &addr_path) {
   SocketFile skt_file;
   if (std::string() == addr_path) {
     LAVA_DEBUG(LOG_SKP, "Creating Socket File\n");
@@ -48,7 +48,7 @@ SocketFile SktManager::AllocSocketFile(const std::string addr_path) {
   return skt_file;
 }
 
-bool SktManager::DeleteSocketFile(const std::string addr_path) {
+bool SktManager::DeleteSocketFile(const std::string &addr_path) {
   if (socket_files_.find(addr_path) == socket_files_.end()) {
     LAVA_LOG_WARN(LOG_SKP, "Cannot delete exist file name\n");
     return false;
