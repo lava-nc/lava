@@ -15,16 +15,17 @@ from message_infrastructure import (
     SendPort,
     RecvPort,
     ChannelQueueSize,
+    SyncChannelBytes,
     getTempRecvPort,
     getTempSendPort
 )
 
 
-loop_number = 2000
+loop_number = 1000
 
 
 def prepare_data():
-    return np.random.random_sample((2, 4))
+    return np.random.random_sample((65536, 10))
 
 
 const_data = prepare_data()
@@ -82,7 +83,7 @@ class TestTempChannel(unittest.TestCase):
         shmem_channel = Channel(
             ChannelBackend.SHMEMCHANNEL,
             ChannelQueueSize,
-            128,
+            SyncChannelBytes,
             name,
             name)
 

@@ -35,15 +35,16 @@ bool SocketWrite(int fd, void* data, size_t size) {
 }
 
 bool SocketRead(int fd, void* data, size_t size) {
-  size_t length = read(fd, reinterpret_cast<char *>(data), size);
-
-  if (length != size) {
-    if (length == -1) {
-      LAVA_LOG_ERR("Read socket failed.\n");
-      return false;
-    }
-    LAVA_LOG_ERR("Read socket error, expected size: %zd, got size: %zd",
-                 size, length);
+  char *ptr = reinterpret_cast<char *>(data);
+  while (size > 0) {
+    size_t length = read(fd, ptr, size);
+    size -= length;
+    ptr += length;
+    if (length == 0)
+      break;
+  }
+  if (size) {
+    LAVA_LOG_ERR("Cannot recv all the data\n");
     return false;
   }
   return true;
