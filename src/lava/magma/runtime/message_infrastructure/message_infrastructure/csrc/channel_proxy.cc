@@ -31,6 +31,29 @@ RecvPortProxyPtr ChannelProxy::GetRecvPort() {
     return recv_port_;
 }
 
+TempChannelProxy::TempChannelProxy() {
+  ChannelFactory &channel_factory = GetChannelFactory();
+  channel_ = channel_factory.GetTempChannel(std::string());
+}
+
+TempChannelProxy::TempChannelProxy(const std::string &addr_path) {
+  ChannelFactory &channel_factory = GetChannelFactory();
+  channel_ = channel_factory.GetTempChannel(addr_path);
+}
+
+SendPortProxyPtr TempChannelProxy::GetSendPort() {
+  return std::make_shared<SendPortProxy>(ChannelType::TEMPCHANNEL,
+                                         channel_->GetSendPort());
+}
+RecvPortProxyPtr TempChannelProxy::GetRecvPort() {
+  return std::make_shared<RecvPortProxy>(ChannelType::TEMPCHANNEL,
+                                         channel_->GetRecvPort());
+}
+
+std::string TempChannelProxy::GetAddrPath() {
+  return channel_->ChannelInfo();
+}
+
 #if defined(GRPC_CHANNEL)
 GetRPCChannelProxy::GetRPCChannelProxy(const std::string &url,
                                        const int &port,

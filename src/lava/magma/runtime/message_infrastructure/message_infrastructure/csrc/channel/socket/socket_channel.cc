@@ -33,4 +33,30 @@ std::shared_ptr<SocketChannel> GetSocketChannel(const size_t &nbytes,
                                          nbytes));
 }
 
+TempSocketChannel::TempSocketChannel(const std::string &addr_path) {
+  addr_path_ = GetSktManagerSingleton().AllocSocketFile(addr_path);
+}
+
+std::string TempSocketChannel::ChannelInfo() {
+  return addr_path_;
+}
+
+AbstractRecvPortPtr TempSocketChannel::GetRecvPort() {
+  if (recv_port_ == nullptr) {
+    recv_port_ = std::make_shared<TempSocketRecvPort>(addr_path_);
+  }
+  return recv_port_;
+}
+
+AbstractSendPortPtr TempSocketChannel::GetSendPort() {
+  if (send_port_ == nullptr) {
+    send_port_ = std::make_shared<TempSocketSendPort>(addr_path_);
+  }
+  return send_port_;
+}
+
+bool TempSocketChannel::Close() {
+  return GetSktManagerSingleton().DeleteSocketFile(addr_path_);
+}
+
 }  // namespace message_infrastructure

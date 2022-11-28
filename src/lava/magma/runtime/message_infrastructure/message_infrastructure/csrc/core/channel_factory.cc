@@ -32,6 +32,11 @@ AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,
   return nullptr;
 }
 
+AbstractChannelPtr ChannelFactory::GetTempChannel(
+                                   const std::string &addr_path) {
+  return std::make_shared<TempSocketChannel>(addr_path);
+}
+
 #if defined(DDS_CHANNEL)
 AbstractChannelPtr ChannelFactory::GetDDSChannel(
                                    const std::string &topic_name,

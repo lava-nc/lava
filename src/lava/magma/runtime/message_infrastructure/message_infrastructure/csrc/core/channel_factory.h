@@ -26,6 +26,7 @@ class ChannelFactory {
                                 const std::string &src_name,
                                 const std::string &dst_name);
 
+  AbstractChannelPtr GetTempChannel(const std::string &addr_path);
 #if defined(DDS_CHANNEL)
   AbstractChannelPtr GetDDSChannel(const std::string &topic_name,
                                    const DDSTransportType &transport_type,

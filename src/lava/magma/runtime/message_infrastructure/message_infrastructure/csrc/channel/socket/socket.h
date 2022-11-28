@@ -23,9 +23,13 @@
 #include <vector>
 #include <utility>
 
+#define SKT_TEMP_PATH "/tmp/skt_tmp_"
+#define MAX_SKT_FILENAME_LENGTH 100
+
 namespace message_infrastructure {
 
 using SocketPair = std::pair<int, int>;
+using SocketFile = std::string;
 
 class SktManager {
  public:
@@ -35,6 +39,8 @@ class SktManager {
   SktManager& operator=(SktManager&&) = delete;
 
   SocketPair AllocChannelSocket(size_t nbytes);
+  SocketFile AllocSocketFile(const std::string &addr_path);
+  bool DeleteSocketFile(const std::string &addr_path);
 
   friend SktManager &GetSktManagerSingleton();
 
@@ -42,6 +48,7 @@ class SktManager {
   SktManager() = default;
   ~SktManager();
   std::vector<SocketPair> sockets_;
+  std::set<SocketFile> socket_files_;
   static SktManager sktm_;
 };
 

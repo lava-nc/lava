@@ -31,6 +31,17 @@ class ChannelProxy {
   RecvPortProxyPtr recv_port_ = nullptr;
 };
 
+class TempChannelProxy {
+ public:
+  TempChannelProxy();
+  explicit TempChannelProxy(const std::string &addr_path);
+  SendPortProxyPtr GetSendPort();
+  RecvPortProxyPtr GetRecvPort();
+  std::string GetAddrPath();
+ private:
+  AbstractChannelPtr channel_ = nullptr;
+};
+
 #if defined(GRPC_CHANNEL)
 class GetRPCChannelProxy {
  public:

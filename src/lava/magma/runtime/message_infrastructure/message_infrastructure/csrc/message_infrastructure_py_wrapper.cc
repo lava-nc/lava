@@ -97,6 +97,15 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
+  py::class_<TempChannelProxy, std::shared_ptr<TempChannelProxy>>
+      (m, "TempChannel")
+    .def(py::init<std::string>())
+    .def(py::init<>())
+    .def_property_readonly("addr_path", &TempChannelProxy::GetAddrPath)
+    .def_property_readonly("src_port", &TempChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &TempChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
 #if defined(GRPC_CHANNEL)
   py::class_<GetRPCChannelProxy, GetRPCChannelProxyPtr> (m, "GetRPCChannel")
     .def(py::init<std::string, int, std::string, std::string, size_t>())

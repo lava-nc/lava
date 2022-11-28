@@ -22,13 +22,20 @@ namespace {
 
 void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
   std::memcpy(ptr.get(), p, sizeof(MetaData));
-  ptr->mdata = std::calloc(nbytes, 1);
+  int len = ptr->elsize * ptr->total_size;
+  if (len > nbytes) {
+    LAVA_LOG_ERR("Recv %d data but max support %d lenght\n", len, nbytes);
+    len = nbytes;
+  }
+  LAVA_DEBUG(LOG_SMMP, "data len: %d, nbytes: %d\n", len, nbytes);
+  ptr->mdata = std::calloc(len, 1);
   if (ptr->mdata == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
   }
   LAVA_DEBUG(LOG_SMMP, "memory allocates: %p\n", ptr->mdata);
   std::memcpy(ptr->mdata,
-    reinterpret_cast<char *>(p) + sizeof(MetaData), nbytes);
+    reinterpret_cast<char *>(p) + sizeof(MetaData), len);
+  LAVA_DEBUG(LOG_SMMP, "Metadata created\n");
 }
 
 }  // namespace
@@ -50,13 +57,18 @@ void ShmemSendPort::Start() {
 }
 
 void ShmemSendPort::Send(DataPtr metadata) {
-  shm_->Store([this, &metadata](void* data){
+  auto mdata = reinterpret_cast<MetaData*>(metadata.get());
+  int len = mdata->elsize * mdata->total_size;
+  if (len > this->nbytes_ - sizeof(MetaData)) {
+    LAVA_LOG_ERR("Send data too large\n");
+  }
+  shm_->Store([len, &metadata](void* data){
     char* cptr = reinterpret_cast<char*>(data);
     std::memcpy(cptr, metadata.get(), sizeof(MetaData));
     cptr += sizeof(MetaData);
     std::memcpy(cptr,
                 reinterpret_cast<MetaData*>(metadata.get())->mdata,
-                this->nbytes_ - sizeof(MetaData));
+                len);
   });
 }
 
