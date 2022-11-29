@@ -15,7 +15,7 @@ from MessageInfrastructurePywrapper import support_fastdds_channel
 from MessageInfrastructurePywrapper import support_cyclonedds_channel
 from .ports import SendPort, Channel, getTempSendPort, getTempRecvPort
 
-ChannelQueueSize = 32
+ChannelQueueSize = 1
 SyncChannelBytes = 128
 SupportGRPCChannel = support_grpc_channel()
 SupportFastDDSChannel = support_fastdds_channel()
