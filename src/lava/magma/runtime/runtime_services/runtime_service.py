@@ -276,7 +276,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -447,7 +446,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
