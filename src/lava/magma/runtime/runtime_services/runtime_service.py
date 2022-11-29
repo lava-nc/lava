@@ -268,7 +268,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
     def _handle_stop(self):
         # Inform all ProcessModels about the STOP command
-        # self._send_pm_cmd(MGMT_COMMAND.STOP)
+        self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -276,7 +276,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -295,7 +294,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             # Probe if there is a new command from the runtime
             stop, _ = self.check_status()
             if stop:
-                self.join()
+                self._handle_stop()
                 break
             action = selector.select(*channel_actions)
             if action == "cmd":
@@ -438,7 +437,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_stop(self):
-        # self._send_pm_cmd(MGMT_COMMAND.STOP)
+        self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -447,7 +446,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -458,7 +456,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         while True:
             stop, _ = self.check_status()
             if stop:
-                self.join()
+                self._handle_stop()
                 break
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)

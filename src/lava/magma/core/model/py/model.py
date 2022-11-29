@@ -55,6 +55,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                                                          RecvPort],
                                                 ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
+            MGMT_COMMAND.STOP[0]: self._stop,
             MGMT_COMMAND.PAUSE[0]: self._pause,
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
             MGMT_COMMAND.SET_DATA[0]: self._set_var
@@ -178,7 +179,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
                         if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
-                            self.join()
                             break
                     else:
                         raise ValueError(
@@ -196,10 +196,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
-            stop = self.check_status()
-            if stop:
-                self._stop()
-                break
 
     @abstractmethod
     def add_ports_for_polling(self):
@@ -516,18 +512,16 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         pass
 
-    def _stop(self):
-        self._stopped = True
-        self.join()
-
     def check_for_stop_cmd(self) -> bool:
         """
         Checks if the RS has sent a STOP command.
         """
-        actor_status = self._actor.get_status()
-        if actor_status == ActorStatus.StatusStopped:
-            return True
-        return False
+        if self.service_to_process.probe():
+            cmd = self.service_to_process.peek()
+            if enum_equal(cmd, MGMT_COMMAND.STOP):
+                self.service_to_process.recv()
+                self._stop()
+                return True
 
     def run_async(self):
         """
