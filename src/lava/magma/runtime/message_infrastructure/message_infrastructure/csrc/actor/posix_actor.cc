@@ -61,12 +61,12 @@ int PosixActor::ForceStop() {
   return 0;
 }
 
-int PosixActor::Create() {
+ProcessType PosixActor::Create() {
   pid_t pid = fork();
   if (pid > 0) {
     LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
     this->pid_ = pid;
-    return ParentProcess;
+    return ProcessType::ParentProcess;
   }
 
   if (pid == 0) {
@@ -78,7 +78,7 @@ int PosixActor::Create() {
     exit(0);
   }
   LAVA_LOG_ERR("Cannot allocate new pid for the process\n");
-  return ErrorProcess;
+  return ProcessType::ErrorProcess;
 }
 
 }  // namespace message_infrastructure

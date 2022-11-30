@@ -16,7 +16,7 @@ class PosixActor final : public AbstractActor {
   int GetPid();
   int Wait();
   int ForceStop();
-  int Create();
+  ProcessType Create();
 };
 
 using PosixActorPtr = PosixActor *;

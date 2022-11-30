@@ -17,8 +17,9 @@ AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
 
 void AbstractActor::Control(const ActorCmd cmd) {
   ctl_shm_->Store([cmd](void* data){
-  auto ctrl_cmd = reinterpret_cast<int *>(data);
-  *ctrl_cmd = static_cast<int>(cmd);
+  auto ctrl_cmd = reinterpret_cast<ActorCmd *>(data);
+  *ctrl_cmd = cmd;
+  LAVA_DEBUG(LOG_MP, "Cmd Get: %d\n", static_cast<int>(cmd));
   });
 }
 
@@ -29,10 +30,11 @@ void AbstractActor::HandleCmd() {
       if (*ctrl_status == static_cast<int>(ActorCmd::CmdStop)) {
         this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusStopped));
+        LAVA_DEBUG(LOG_MP, "Stop Recieved\n");
       } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdPause)) {
         this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusPaused));
-      } else if (*ctrl_status == ActorCmd::CmdRun) {
+      } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdRun)) {
         this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusRunning));
       }
@@ -44,6 +46,7 @@ void AbstractActor::HandleCmd() {
 }
 
 bool AbstractActor::SetStatus(ActorStatus status) {
+    LAVA_DEBUG(LOG_MP, "Set Status: %d\n", static_cast<int>(status));
     auto const curr_status = actor_status_.load();
     if (curr_status >= static_cast<int>(ActorStatus::StatusStopped)
       && static_cast<int>(status) < curr_status) {

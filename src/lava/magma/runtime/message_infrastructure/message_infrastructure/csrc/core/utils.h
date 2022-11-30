@@ -45,13 +45,13 @@
 
 namespace message_infrastructure {
 
-enum ProcessType {
+enum class ProcessType {
   ErrorProcess = 0,
   ParentProcess = 1,
   ChildProcess = 2
 };
 
-enum ChannelType {
+enum class ChannelType {
   SHMEMCHANNEL = 0,
   RPCCHANNEL = 1,
   DDSCHANNEL = 2,
@@ -59,20 +59,19 @@ enum ChannelType {
   TEMPCHANNEL = 4
 };
 
-enum METADATA_TYPES { BOOL = 0,
-                      BYTE, UBYTE,
-                      SHORT, USHORT,
-                      INT, UINT,
-                      LONG, ULONG,
-                      LONGLONG, ULONGLONG,
-                      FLOAT, DOUBLE, LONGDOUBLE,
-                      // align the value of STRING to
-                      // NPY_STRING in ndarraytypes.h
-                      STRING = 18
+enum class METADATA_TYPES { BOOL = 0,
+                            BYTE, UBYTE,
+                            SHORT, USHORT,
+                            INT, UINT,
+                            LONG, ULONG,
+                            LONGLONG, ULONGLONG,
+                            FLOAT, DOUBLE, LONGDOUBLE,
+                            // align the value of STRING to
+                            // NPY_STRING in ndarraytypes.h
+                            STRING = 18
 };
 
-static int64_t LAVA_SIZEOF_ARRAY[message_infrastructure
-                                 ::METADATA_TYPES::STRING+1] =
+static int64_t LAVA_SIZEOF_ARRAY[static_cast<int>(METADATA_TYPES::STRING) + 1] =
   { LAVA_SIZEOF_BOOL,
     LAVA_SIZEOF_BYTE,
     LAVA_SIZEOF_UBYTE,
@@ -163,7 +162,7 @@ static void Sleep() {
 #define DDS_DATATYPE_NAME "ddsmetadata::msg::dds_::DDSMetaData_"
 
 
-enum DDSTransportType {
+enum class DDSTransportType {
   DDSSHM = 0,
   DDSTCPv4 = 1,
   DDSTCPv6 = 2,
@@ -171,12 +170,12 @@ enum DDSTransportType {
   DDSUDPv6 = 4
 };
 
-enum DDSBackendType {
+enum class DDSBackendType {
   FASTDDSBackend = 0,
   CycloneDDSBackend = 1
 };
 
-enum DDSInitErrorType {
+enum class DDSInitErrorType {
   DDSParticipantError = 1,
   DDSPublisherError = 2,
   DDSSubscriberError = 3,

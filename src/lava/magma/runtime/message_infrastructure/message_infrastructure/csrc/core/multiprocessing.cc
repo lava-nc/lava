@@ -11,9 +11,9 @@
 
 namespace message_infrastructure {
 
-int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
+ProcessType MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
   AbstractActor::ActorPtr actor = new PosixActor(target_fn);
-  int ret = actor->Create();
+  ProcessType ret = actor->Create();
   actors_.push_back(actor);
   return ret;
 }

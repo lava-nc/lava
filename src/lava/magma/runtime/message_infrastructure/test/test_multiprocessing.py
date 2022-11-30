@@ -44,6 +44,7 @@ def target_fn(*args, **kwargs):
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
         builder.build(idx)
+        actor.status_terminated()
         return 0
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
