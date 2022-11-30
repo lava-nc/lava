@@ -1,5 +1,5 @@
 # Message Infrastructure Library CPP Implementation for LAVA
-
+version: v0.2.1
 ## Introduction
 The message infrastructure library is for LAVA to transfer data. The library provides several method to do communication for IPC on single host or across multiple hosts.
 
