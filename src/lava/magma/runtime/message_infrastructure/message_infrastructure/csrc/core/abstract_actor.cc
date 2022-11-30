@@ -10,30 +10,32 @@ namespace message_infrastructure {
 
 AbstractActor::AbstractActor(AbstractActor::TargetFn target_fn)
   : target_fn_(target_fn) {
-  this->ctl_shm_ = GetSharedMemManagerSingleton()
+  ctl_shm_ = GetSharedMemManagerSingleton()
     .AllocChannelSharedMemory<SharedMemory>(sizeof(int));
-  this->ctl_shm_->Start();
+  ctl_shm_->Start();
 }
 
 void AbstractActor::Control(const ActorCmd cmd) {
-  this->ctl_shm_->Store([cmd](void* data){
-  auto ctrl_cmd = reinterpret_cast<int *>(data);
-  *ctrl_cmd = static_cast<int>(cmd);
+  ctl_shm_->Store([cmd](void* data){
+  auto ctrl_cmd = reinterpret_cast<ActorCmd *>(data);
+  *ctrl_cmd = cmd;
+  LAVA_DEBUG(LOG_MP, "Cmd Get: %d\n", static_cast<int>(cmd));
   });
 }
 
 void AbstractActor::HandleCmd() {
-  while (actore_status_.load() < static_cast<int>(ActorStatus::StatusStopped)) {
+  while (actor_status_.load() < static_cast<int>(ActorStatus::StatusStopped)) {
     auto ret = ctl_shm_->Load([this](void *data){
       auto ctrl_status = reinterpret_cast<int *>(data);
       if (*ctrl_status == static_cast<int>(ActorCmd::CmdStop)) {
-        this->actore_status_
+        this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusStopped));
+        LAVA_DEBUG(LOG_MP, "Stop Recieved\n");
       } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdPause)) {
-        this->actore_status_
+        this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusPaused));
-      } else if (*ctrl_status == ActorCmd::CmdRun) {
-        this->actore_status_
+      } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdRun)) {
+        this->actor_status_
           .store(static_cast<int>(ActorStatus::StatusRunning));
       }
     });
@@ -44,17 +46,18 @@ void AbstractActor::HandleCmd() {
 }
 
 bool AbstractActor::SetStatus(ActorStatus status) {
-    auto const curr_status = actore_status_.load();
+    LAVA_DEBUG(LOG_MP, "Set Status: %d\n", static_cast<int>(status));
+    auto const curr_status = actor_status_.load();
     if (curr_status >= static_cast<int>(ActorStatus::StatusStopped)
       && static_cast<int>(status) < curr_status) {
       return false;
     }
-    actore_status_.store(static_cast<int>(status));
+    actor_status_.store(static_cast<int>(status));
     return true;
 }
 
-int AbstractActor::GetStatus() {
-  return actore_status_.load();
+ActorStatus AbstractActor::GetStatus() {
+  return static_cast<ActorStatus>(actor_status_.load());
 }
 
 void AbstractActor::SetStopFn(StopFn stop_fn) {
@@ -64,31 +67,30 @@ void AbstractActor::SetStopFn(StopFn stop_fn) {
 void AbstractActor::Run() {
   InitStatus();
   while (true) {
-    if (actore_status_.load() >= static_cast<int>(ActorStatus::StatusStopped)) {
+    if (actor_status_.load() >= static_cast<int>(ActorStatus::StatusStopped)) {
       break;
     }
-    if (actore_status_.load() == static_cast<int>(ActorStatus::StatusRunning)) {
+    if (actor_status_.load() == static_cast<int>(ActorStatus::StatusRunning)) {
       target_fn_(this);
-      LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
+      LAVA_LOG(LOG_MP, "Actor:ActorStatus:%d\n", static_cast<int>(GetStatus()));
     } else {
       // pause status
       helper::Sleep();
     }
   }
-  if (handle_cmd_thread_->joinable()) {
-    handle_cmd_thread_->join();
+  if (handle_cmd_thread_.joinable()) {
+    handle_cmd_thread_.join();
   }
   if (stop_fn_ != nullptr &&
-    actore_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
+    actor_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
     stop_fn_();
   }
-  LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", this->pid_);
+  LAVA_LOG(LOG_ACTOR, "child exist, pid:%d\n", pid_);
 }
 
 void AbstractActor::InitStatus() {
-  actore_status_.store(static_cast<int>(ActorStatus::StatusRunning));
-  handle_cmd_thread_ =
-    std::make_shared<std::thread>(&AbstractActor::HandleCmd, this);
+  actor_status_.store(static_cast<int>(ActorStatus::StatusRunning));
+  handle_cmd_thread_ = std::thread(&AbstractActor::HandleCmd, this);
 }
 
 }  // namespace message_infrastructure

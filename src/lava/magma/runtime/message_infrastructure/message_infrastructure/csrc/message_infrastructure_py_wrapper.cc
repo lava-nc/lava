@@ -39,9 +39,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("cleanup", &MultiProcessing::Cleanup)
     .def("stop", &MultiProcessing::Stop);
   py::enum_<ProcessType> (m, "ProcessType")
-    .value("ErrorProcess", ErrorProcess)
-    .value("ChildProcess", ChildProcess)
-    .value("ParentProcess", ParentProcess)
+    .value("ErrorProcess", ProcessType::ErrorProcess)
+    .value("ChildProcess", ProcessType::ChildProcess)
+    .value("ParentProcess", ProcessType::ParentProcess)
     .export_values();
   py::enum_<ActorStatus> (m, "ActorStatus")
     .value("StatusError", ActorStatus::StatusError)
@@ -84,10 +84,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
         return actor.SetStatus(ActorStatus::StatusError);
       });
   py::enum_<ChannelType> (m, "ChannelType")
-    .value("SHMEMCHANNEL", SHMEMCHANNEL)
-    .value("RPCCHANNEL", RPCCHANNEL)
-    .value("DDSCHANNEL", DDSCHANNEL)
-    .value("SOCKETCHANNEL", SOCKETCHANNEL)
+    .value("SHMEMCHANNEL", ChannelType::SHMEMCHANNEL)
+    .value("RPCCHANNEL", ChannelType::RPCCHANNEL)
+    .value("DDSCHANNEL", ChannelType::DDSCHANNEL)
+    .value("SOCKETCHANNEL", ChannelType::SOCKETCHANNEL)
     .export_values();
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort")
     .def(py::init<>());
@@ -125,16 +125,16 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
 
 #if defined(DDS_CHANNEL)
   py::enum_<DDSTransportType> (m, "DDSTransportType")
-    .value("DDSSHM", DDSSHM)
-    .value("DDSTCPv4", DDSTCPv4)
-    .value("DDSTCPv6", DDSTCPv6)
-    .value("DDSUDPv4", DDSUDPv4)
-    .value("DDSUDPv6", DDSUDPv6)
+    .value("DDSSHM", DDSTransportType::DDSSHM)
+    .value("DDSTCPv4", DDSTransportType::DDSTCPv4)
+    .value("DDSTCPv6", DDSTransportType::DDSTCPv6)
+    .value("DDSUDPv4", DDSTransportType::DDSUDPv4)
+    .value("DDSUDPv6", DDSTransportType::DDSUDPv6)
     .export_values();
 
   py::enum_<DDSBackendType> (m, "DDSBackendType")
-    .value("FASTDDSBackend", FASTDDSBackend)
-    .value("CycloneDDSBackend", CycloneDDSBackend)
+    .value("FASTDDSBackend", DDSBackendType::FASTDDSBackend)
+    .value("CycloneDDSBackend", DDSBackendType::CycloneDDSBackend)
     .export_values();
 
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")

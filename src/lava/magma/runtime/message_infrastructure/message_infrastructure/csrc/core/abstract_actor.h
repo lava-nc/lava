@@ -6,6 +6,7 @@
 #define CORE_ABSTRACT_ACTOR_H_
 
 #include <message_infrastructure/csrc/channel/shmem/shm.h>
+#include <message_infrastructure/csrc/core/utils.h>
 #include <functional>
 #include <string>
 #include <memory>
@@ -14,13 +15,13 @@
 
 namespace message_infrastructure {
 
-enum ActorType {
+enum class ActorType {
   RuntimeActor = 0,
   RuntimeServiceActor = 1,
   ProcessModelActor = 2
 };
 
-enum ActorStatus {
+enum class ActorStatus {
   StatusError = -1,
   StatusRunning = 0,
   StatusPaused = 1,
@@ -28,7 +29,7 @@ enum ActorStatus {
   StatusTerminated = 3,
 };
 
-enum ActorCmd {
+enum class ActorCmd {
   CmdRun = 0,
   CmdStop = -1,
   CmdPause = -2
@@ -49,24 +50,23 @@ class AbstractActor {
   virtual ~AbstractActor() = default;
   virtual int ForceStop() = 0;
   virtual int Wait() = 0;
-  virtual int Create() = 0;
+  virtual ProcessType Create() = 0;
   void Control(const ActorCmd cmd);
-  int GetStatus();
+  ActorStatus GetStatus();
   bool SetStatus(ActorStatus status);
   void SetStopFn(StopFn stop_fn);
   int GetPid() {
-    return this->pid_;
+    return pid_;
   }
 
  protected:
   void Run();
-  int pid_;
+  int pid_ = -1;
 
  private:
   SharedMemoryPtr ctl_shm_;
-  std::atomic<int> actore_status_;
-  std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
-  std::string actor_name_ = "actor";
+  std::atomic<int> actor_status_;
+  std::thread handle_cmd_thread_;
   TargetFn target_fn_ = nullptr;
   StopFn stop_fn_ = nullptr;
   void InitStatus();

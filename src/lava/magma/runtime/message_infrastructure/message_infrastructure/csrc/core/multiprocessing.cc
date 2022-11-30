@@ -11,9 +11,9 @@
 
 namespace message_infrastructure {
 
-int MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
+ProcessType MultiProcessing::BuildActor(AbstractActor::TargetFn target_fn) {
   AbstractActor::ActorPtr actor = new PosixActor(target_fn);
-  int ret = actor->Create();
+  ProcessType ret = actor->Create();
   actors_.push_back(actor);
   return ret;
 }
@@ -40,7 +40,7 @@ void MultiProcessing::Cleanup(bool block) {
 void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
     LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)",
-                     actor->GetPid(), actor->GetStatus());
+                     actor->GetPid(), static_cast<int>(actor->GetStatus()));
   }
 }
 

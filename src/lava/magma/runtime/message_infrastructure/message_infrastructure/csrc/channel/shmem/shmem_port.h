@@ -17,8 +17,6 @@
 
 namespace message_infrastructure {
 
-using ThreadPtr = std::shared_ptr<std::thread>;
-
 template class RecvQueue<MetaDataPtr>;
 
 class ShmemSendPort final : public AbstractSendPort {
@@ -37,7 +35,6 @@ class ShmemSendPort final : public AbstractSendPort {
  private:
   SharedMemoryPtr shm_ = nullptr;
   std::atomic_bool done_;
-  ThreadPtr ack_callback_thread_ = nullptr;
 };
 
 // Users should be allowed to copy port objects.
@@ -80,7 +77,7 @@ class ShmemRecvPort final : public AbstractRecvPort {
   SharedMemoryPtr shm_ = nullptr;
   std::atomic_bool done_;
   std::shared_ptr<RecvQueue<MetaDataPtr>> recv_queue_;
-  ThreadPtr recv_queue_thread_ = nullptr;
+  std::thread recv_queue_thread_;
 };
 
 // Users should be allowed to copy port objects.

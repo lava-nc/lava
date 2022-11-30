@@ -41,7 +41,7 @@ class CycloneDDSPublisher final : public DDSPublisher {
                       dds_transfer_type_(dds_transfer_type),
                       max_samples_(max_sample) {}
   ~CycloneDDSPublisher() override;
-  int Init();
+  DDSInitErrorType Init();
   bool Publish(DataPtr metadata);
   void Stop();  // Can Init again
 
@@ -83,7 +83,7 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
                        dds_transfer_type_(dds_transfer_type),
                        max_samples_(max_sample) {}
   ~CycloneDDSSubscriber() override;
-  int Init();
+  DDSInitErrorType Init();
   void Stop();
   MetaDataPtr Recv(bool keep);
 

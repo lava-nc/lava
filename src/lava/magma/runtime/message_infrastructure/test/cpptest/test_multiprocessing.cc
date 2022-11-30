@@ -43,8 +43,10 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
                               i,
                               std::placeholders::_1);
     target_fn = bound_fn;
-    int return_value = mp.BuildActor(bound_fn);
-    std::cout << "Return Value --> " << return_value << std::endl;
+    ProcessType return_value = mp.BuildActor(bound_fn);
+    std::cout << "Return Value --> "
+              << static_cast<int>(return_value)
+              << std::endl;
   }
 
   std::vector<AbstractActor::ActorPtr>& actorList = mp.GetActors();
@@ -70,8 +72,10 @@ TEST(TestMultiprocessing, ActorStop) {
                               i,
                               std::placeholders::_1);
     target_fn = bound_fn;
-    int return_value = mp.BuildActor(bound_fn);
-    std::cout << "Return Value --> " << return_value << std::endl;
+    ProcessType return_value = mp.BuildActor(bound_fn);
+    std::cout << "Return Value --> "
+              << static_cast<int>(return_value)
+              << std::endl;
   }
 
   sleep(1);

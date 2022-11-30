@@ -54,7 +54,7 @@ class FastDDSPublisher final : public DDSPublisher {
                    dds_transfer_type_(dds_transfer_type),
                    max_samples_(max_samples) {}
   ~FastDDSPublisher() override;
-  int Init();
+  DDSInitErrorType Init();
   bool Publish(DataPtr data);
   void Stop();  // Can Init again
 
@@ -106,7 +106,7 @@ class FastDDSSubscriber final : public DDSSubscriber {
                     dds_transfer_type_(dds_transfer_type),
                     max_samples_(max_samples) {}
   ~FastDDSSubscriber() override;
-  int Init();
+  DDSInitErrorType Init();
   void Stop();
   MetaDataPtr Recv(bool keep);
 

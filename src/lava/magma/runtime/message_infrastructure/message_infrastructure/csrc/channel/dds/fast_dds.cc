@@ -31,7 +31,7 @@ FastDDSPublisher::~FastDDSPublisher() {
   LAVA_DEBUG(LOG_DDS, "FastDDS Publisher released\n");
 }
 
-int FastDDSPublisher::Init() {
+DDSInitErrorType FastDDSPublisher::Init() {
   dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   InitParticipant();
   if (participant_ == nullptr)
@@ -56,7 +56,7 @@ int FastDDSPublisher::Init() {
   LAVA_DEBUG(LOG_DDS, "Init Fast DDS Publisher Successfully, topic name: %s\n",
                     topic_name_.c_str());
   stop_ = false;
-  return 0;
+  return DDSInitErrorType::DDSNOERR;
 }
 
 void FastDDSPublisher::InitDataWriter() {
@@ -222,7 +222,7 @@ void FastDDSSubscriber::InitDataReader() {
   reader_ = subscriber_->create_datareader(topic_, rqos, listener_.get());
 }
 
-int FastDDSSubscriber::Init() {
+DDSInitErrorType FastDDSSubscriber::Init() {
   InitParticipant();
   if (participant_ == nullptr)
     return DDSInitErrorType::DDSParticipantError;
@@ -246,7 +246,7 @@ int FastDDSSubscriber::Init() {
   LAVA_DEBUG(LOG_DDS, "Init FastDDS Subscriber Successfully, topic name: %s\n",
                       topic_name_.c_str());
   stop_ = false;
-  return 0;
+  return DDSInitErrorType::DDSNOERR;
 }
 
 MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
@@ -348,7 +348,8 @@ GetTransportDescriptor(const DDSTransportType &dds_type) {
     transport->non_blocking_send = NON_BLOCKING_SEND;
     return transport;
   } else {
-    LAVA_LOG_ERR("TransportType %d has not supported\n", dds_type);
+    LAVA_LOG_ERR("TransportType %d has not supported\n",
+                 static_cast<int>(dds_type));
   }
   return nullptr;
 }

@@ -33,7 +33,7 @@ void dds_target_fn_a1_bound(int loop,
   to_a2->Start();
   auto from_a2 = a2_to_a1->GetRecvPort();
   from_a2->Start();
-  while ((loop--)&&!actor_ptr->GetStatus()) {
+  while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
     MetaDataPtr data = from_mp->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a2->Send(data);
@@ -47,7 +47,7 @@ void dds_target_fn_a1_bound(int loop,
   from_a2->Join();
   to_a2->Join();
   to_mp->Join();
-  while (!actor_ptr->GetStatus()) {
+  while (!static_cast<int>(actor_ptr->GetStatus())) {
     helper::Sleep();
   }
 }
@@ -61,7 +61,7 @@ void dds_target_fn_a2_bound(int loop,
   from_a1->Start();
   auto to_a1 = a2_to_a1->GetSendPort();
   to_a1->Start();
-  while ((loop--)&&!actor_ptr->GetStatus()) {
+  while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
     MetaDataPtr data = from_a1->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a1->Send(data);
@@ -69,7 +69,7 @@ void dds_target_fn_a2_bound(int loop,
   }
   from_a1->Join();
   to_a1->Join();
-  while (!actor_ptr->GetStatus()) {
+  while (!static_cast<int>(actor_ptr->GetStatus())) {
     helper::Sleep();
   }
 }
@@ -106,8 +106,8 @@ void dds_protocol(std::string topic_name,
   auto target_fn_a2 = std::bind(&dds_target_fn_a2_bound, loop, a1_to_a2,
                                 a2_to_a1, std::placeholders::_1);
 
-  int actor1 = mp.BuildActor(target_fn_a1);
-  int actor2 = mp.BuildActor(target_fn_a2);
+  ProcessType actor1 = mp.BuildActor(target_fn_a1);
+  ProcessType actor2 = mp.BuildActor(target_fn_a2);
 
   auto to_a1   = mp_to_a1->GetSendPort();
   to_a1->Start();
@@ -120,7 +120,8 @@ void dds_protocol(std::string topic_name,
                     (malloc(sizeof(int64_t) * dims[0]));
   memset(array_, 0, sizeof(int64_t) * dims[0]);
   std::fill(array_, array_ + 10, 1);
-  GetMetadata(metadata, array_, nd, METADATA_TYPES::LONG, dims);
+  GetMetadata(metadata, array_, nd,
+              static_cast<int64_t>(METADATA_TYPES::LONG), dims);
   MetaDataPtr mptr;
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   const clock_t start_time = std::clock();
@@ -144,16 +145,22 @@ void dds_protocol(std::string topic_name,
 #if defined(FASTDDS_ENABLE)
 TEST(TestDDSDelivery, FastDDSSHMLoop) {
   GTEST_SKIP();
-  dds_protocol("fast_shm_", DDSSHM, FASTDDSBackend);
+  dds_protocol("fast_shm_",
+               DDSTransportType::DDSSHM,
+               DDSBackendType::FASTDDSBackend);
 }
 TEST(TestDDSDelivery, FastDDSUDPv4Loop) {
-  dds_protocol("fast_UDPv4", DDSUDPv4, FASTDDSBackend);
+  dds_protocol("fast_UDPv4",
+               DDSTransportType::DDSUDPv4,
+               DDSBackendType::FASTDDSBackend);
 }
 #endif
 
 #if defined(CycloneDDS_ENABLE)
 TEST(TestDDSDelivery, CycloneDDSUDPv4Loop) {
-  dds_protocol("cyclone_UDPv4", DDSUDPv4, CycloneDDSBackend);
+  dds_protocol("cyclone_UDPv4",
+               DDSTransportType::DDSUDPv4,
+               DDSBackendType::CycloneDDSBackend);
 }
 #endif
 
@@ -161,7 +168,10 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   GTEST_SKIP();
   LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
-    .GetDDSChannel("test_DDSChannel", DDSSHM, FASTDDSBackend, 5);
+    .GetDDSChannel("test_DDSChannel",
+    DDSTransportType::DDSSHM,
+    DDSBackendType::FASTDDSBackend,
+    5);
 
   auto send_port = dds_channel->GetSendPort();
   send_port->Start();

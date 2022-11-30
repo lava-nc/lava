@@ -22,9 +22,9 @@ AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,
                                               const std::string &src_name,
                                               const std::string &dst_name) {
   switch (channel_type) {
-    case DDSCHANNEL:
+    case ChannelType::DDSCHANNEL:
       break;
-    case SOCKETCHANNEL:
+    case ChannelType::SOCKETCHANNEL:
       return GetSocketChannel(nbytes, src_name, dst_name);
     default:
       return GetShmemChannel(size, nbytes, src_name, dst_name);

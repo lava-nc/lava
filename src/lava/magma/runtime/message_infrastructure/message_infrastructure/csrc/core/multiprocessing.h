@@ -6,6 +6,7 @@
 #define CORE_MULTIPROCESSING_H_
 
 #include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <message_infrastructure/csrc/core/utils.h>
 #include <vector>
 #include <functional>
 
@@ -15,7 +16,7 @@ class MultiProcessing {
  public:
   ~MultiProcessing();
   void Stop();
-  int BuildActor(AbstractActor::TargetFn target_fn);
+  ProcessType BuildActor(AbstractActor::TargetFn target_fn);
   void CheckActor();
   void Cleanup(bool block);
   std::vector<AbstractActor::ActorPtr>& GetActors();
