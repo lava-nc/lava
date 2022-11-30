@@ -65,7 +65,7 @@ class AbstractActor {
  private:
   SharedMemoryPtr ctl_shm_;
   std::atomic<int> actor_status_;
-  std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
+  std::thread handle_cmd_thread_;
   std::string actor_name_ = "actor";
   TargetFn target_fn_ = nullptr;
   StopFn stop_fn_ = nullptr;

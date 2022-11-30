@@ -75,8 +75,8 @@ void AbstractActor::Run() {
       helper::Sleep();
     }
   }
-  if (handle_cmd_thread_->joinable()) {
-    handle_cmd_thread_->join();
+  if (handle_cmd_thread_.joinable()) {
+    handle_cmd_thread_.join();
   }
   if (stop_fn_ != nullptr &&
     actor_status_.load() != static_cast<int>(ActorStatus::StatusTerminated)) {
@@ -87,8 +87,7 @@ void AbstractActor::Run() {
 
 void AbstractActor::InitStatus() {
   actor_status_.store(static_cast<int>(ActorStatus::StatusRunning));
-  handle_cmd_thread_ =
-    std::make_shared<std::thread>(&AbstractActor::HandleCmd, this);
+  handle_cmd_thread_ = std::thread(&AbstractActor::HandleCmd, this);
 }
 
 }  // namespace message_infrastructure
