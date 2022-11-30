@@ -16,7 +16,7 @@
 namespace message_infrastructure {
 class DDSPublisher {
  public:
-  virtual int Init() = 0;
+  virtual DDSInitErrorType Init() = 0;
   virtual bool Publish(DataPtr data) = 0;
   virtual void Stop() = 0;
   virtual ~DDSPublisher() {}
@@ -29,7 +29,7 @@ using DDSPublisherPtr = std::shared_ptr<DDSPublisher>;
 
 class DDSSubscriber {
  public:
-  virtual int Init() = 0;
+  virtual DDSInitErrorType Init() = 0;
   virtual MetaDataPtr Recv(bool keep) = 0;
   virtual void Stop() = 0;
   virtual ~DDSSubscriber() {}

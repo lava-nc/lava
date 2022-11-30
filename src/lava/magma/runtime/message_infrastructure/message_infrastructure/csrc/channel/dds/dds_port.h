@@ -16,9 +16,10 @@ class DDSSendPort final : public AbstractSendPort {
   DDSSendPort(DDSPtr dds) : publisher_(dds->dds_publisher_) {}
   ~DDSSendPort() = default;
   void Start() {
-    int flag = publisher_->Init();
-    if (flag) {
-      LAVA_LOG_FATAL("Publisher Init return error, %d\n", flag);
+    auto flag = publisher_->Init();
+    if (static_cast<int>(flag)) {
+      LAVA_LOG_FATAL("Publisher Init return error, %d\n",
+                     static_cast<int>(flag));
     }
   }
   void Send(DataPtr data) {
@@ -47,9 +48,10 @@ class DDSRecvPort final : public AbstractRecvPort {
   DDSRecvPort(DDSPtr dds) : subscriber_(dds->dds_subscriber_) {}
   ~DDSRecvPort() override {}
   void Start() {
-    int flag = subscriber_->Init();
-    if (flag) {
-      LAVA_LOG_FATAL("Subscriber Init return error, %d\n", flag);
+    auto flag = subscriber_->Init();
+    if (static_cast<int>(flag)) {
+      LAVA_LOG_FATAL("Subscriber Init return error, %d\n",
+                     static_cast<int>(flag));
     }
   }
   MetaDataPtr Recv() {

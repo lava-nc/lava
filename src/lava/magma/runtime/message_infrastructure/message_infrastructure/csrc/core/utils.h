@@ -176,6 +176,7 @@ enum class DDSBackendType {
 };
 
 enum class DDSInitErrorType {
+  DDSNOERR = 0,
   DDSParticipantError = 1,
   DDSPublisherError = 2,
   DDSSubscriberError = 3,
