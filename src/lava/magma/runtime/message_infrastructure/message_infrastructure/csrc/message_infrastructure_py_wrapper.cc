@@ -36,6 +36,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("check_actor", &MultiProcessing::CheckActor)
     .def("get_actors", &MultiProcessing::GetActors,
                        py::return_value_policy::reference)
+    .def("cleanup", &MultiProcessing::Cleanup)
     .def("stop", &MultiProcessing::Stop);
   py::enum_<ProcessType> (m, "ProcessType")
     .value("ErrorProcess", ErrorProcess)
@@ -95,6 +96,15 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("src_port", &ChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
+                                       py::return_value_policy::reference);
+  py::class_<TempChannelProxy, std::shared_ptr<TempChannelProxy>>
+      (m, "TempChannel")
+    .def(py::init<std::string>())
+    .def(py::init<>())
+    .def_property_readonly("addr_path", &TempChannelProxy::GetAddrPath)
+    .def_property_readonly("src_port", &TempChannelProxy::GetSendPort,
+                                       py::return_value_policy::reference)
+    .def_property_readonly("dst_port", &TempChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
 #if defined(GRPC_CHANNEL)
   py::class_<GetRPCChannelProxy, GetRPCChannelProxyPtr> (m, "GetRPCChannel")

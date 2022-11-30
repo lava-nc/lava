@@ -227,27 +227,20 @@ class LoihiPyRuntimeService(PyRuntimeService):
         """Relays data received from ProcessModel given by model id  to the
         runtime"""
         process_idx = self.model_ids.index(model_id)
-        data_recv_port = self.process_to_service[process_idx]
-        data_relay_port = self.service_to_runtime
-        num_items = data_recv_port.recv()
-        data_relay_port.send(num_items)
-        for i in range(int(num_items[0])):
-            value = data_recv_port.recv()
-            data_relay_port.send(value)
+        addr_recv_port = self.runtime_to_service
+        addr_relay_port = self.service_to_process[process_idx]
+        addr_path = addr_recv_port.recv()
+        addr_relay_port.send(addr_path)
 
     def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
         """Relays data received from the runtime to the ProcessModel given by
         the model id."""
         process_idx = self.model_ids.index(model_id)
-        data_recv_port = self.runtime_to_service
-        data_relay_port = self.service_to_process[process_idx]
+        addr_recv_port = self.process_to_service[process_idx]
+        addr_relay_port = self.service_to_runtime
+        addr_path = addr_recv_port.recv()
+        addr_relay_port.send(addr_path)
         resp_port = self.process_to_service[process_idx]
-        # Receive and relay number of items
-        num_items = data_recv_port.recv()
-        data_relay_port.send(num_items)
-        # Receive and relay data1, data2, ...
-        for i in range(int(num_items[0].item())):
-            data_relay_port.send(data_recv_port.recv())
         rsp = resp_port.recv()
         return rsp
 
@@ -275,7 +268,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
     def _handle_stop(self):
         # Inform all ProcessModels about the STOP command
-        # self._send_pm_cmd(MGMT_COMMAND.STOP)
+        self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -283,7 +276,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -302,7 +294,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             # Probe if there is a new command from the runtime
             stop, _ = self.check_status()
             if stop:
-                self.join()
+                self._handle_stop()
                 break
             action = selector.select(*channel_actions)
             if action == "cmd":
@@ -445,7 +437,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_stop(self):
-        # self._send_pm_cmd(MGMT_COMMAND.STOP)
+        self._send_pm_cmd(MGMT_COMMAND.STOP)
         rsps = self._get_pm_resp()
         for rsp in rsps:
             if not enum_equal(
@@ -454,7 +446,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
-        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -465,7 +456,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         while True:
             stop, _ = self.check_status()
             if stop:
-                self.join()
+                self._handle_stop()
                 break
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)

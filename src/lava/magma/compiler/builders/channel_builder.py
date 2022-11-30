@@ -13,7 +13,8 @@ from lava.magma.compiler.builders. \
 from message_infrastructure import (
     Channel,
     ChannelBackend,
-    ChannelQueueSize
+    ChannelQueueSize,
+    SyncChannelBytes
 )
 from lava.magma.compiler.utils import PortInitializer
 from message_infrastructure \
@@ -97,7 +98,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
         """
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       self.port_initializer.bytes,
+                       SyncChannelBytes,
                        self.port_initializer.name,
                        self.port_initializer.name)
 
@@ -134,7 +135,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
         """
         return Channel(ChannelBackend.SHMEMCHANNEL,
                        ChannelQueueSize,
-                       self.port_initializer.bytes,
+                       SyncChannelBytes,
                        self.port_initializer.name,
                        self.port_initializer.name)
 

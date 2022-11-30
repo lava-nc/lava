@@ -99,7 +99,8 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   sleep(2);
 
   // Stop any currently running actors
-  mp.Stop(true);
+  mp.Stop();
+  mp.Cleanup(true);
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess) {

@@ -103,7 +103,6 @@ void CycloneDDSPublisher::Stop() {
     helper::Sleep();
   }
   try {
-    writer_.~DataWriter();
     participant_ = dds::core::null;
     publisher_ = dds::core::null;
     topic_ = dds::core::null;

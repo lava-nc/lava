@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "message_infrastructure"
-version = "0.1.0"
+version = "0.2.1"
 description = "Message Infrastructure"
 authors = ["Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"]
 license = "BSD-3-Clause or LGPL-2.1-or-later"
