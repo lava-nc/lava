@@ -75,12 +75,13 @@ DDS::DDS(const std::string &topic_name,
          const DDSTransportType &dds_transfer_type,
          const DDSBackendType &dds_backend,
          const size_t &max_samples) {
-  if (dds_backend == FASTDDSBackend) {
+  if (dds_backend == DDSBackendType::FASTDDSBackend) {
     CreateFastDDSBackend(topic_name, dds_transfer_type, max_samples);
-  } else if (dds_backend == CycloneDDSBackend) {
+  } else if (dds_backend == DDSBackendType::CycloneDDSBackend) {
     CreateCycloneDDSBackend(topic_name, dds_transfer_type, max_samples);
   } else {
-    LAVA_LOG_ERR("Not support DDSBackendType provided, %d\n", dds_backend);
+    LAVA_LOG_ERR("Not support DDSBackendType provided, %d\n",
+                 static_cast<int>(dds_backend));
   }
 }
 

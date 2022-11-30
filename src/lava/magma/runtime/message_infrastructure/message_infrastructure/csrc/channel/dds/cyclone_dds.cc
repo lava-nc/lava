@@ -40,7 +40,7 @@ void CycloneDDSPubListener::on_publication_matched(
 int CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
   dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
-  if (dds_transfer_type_ != DDSUDPv4) {
+  if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
@@ -136,7 +136,7 @@ void CycloneDDSSubListener::on_subscription_matched(
 }
 int CycloneDDSSubscriber::Init() {
   LAVA_LOG(LOG_DDS, "subscriber init\n");
-  if (dds_transfer_type_ != DDSUDPv4) {
+  if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
   participant_ = dds::domain::DomainParticipant(domain::default_id());
