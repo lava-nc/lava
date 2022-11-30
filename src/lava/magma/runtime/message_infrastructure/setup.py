@@ -133,7 +133,7 @@ class CMakeBuild(build_ext):
 # and simpler if you include description/version in a file.
 setup(
     name="MessageInfrastructurePywrapper",
-    version="0.0.1",
+    version="0.2.1",
     ext_modules=[CMakeExtension("MessageInfrastructurePywrapper")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
