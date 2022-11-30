@@ -92,8 +92,8 @@ ShmemRecvPort::~ShmemRecvPort() {
 }
 
 void ShmemRecvPort::Start() {
-  recv_queue_thread_ = std::make_shared<std::thread>(
-                       &message_infrastructure::ShmemRecvPort::QueueRecv, this);
+  recv_queue_thread_ = std::thread(
+    &message_infrastructure::ShmemRecvPort::QueueRecv, this);
 }
 
 void ShmemRecvPort::QueueRecv() {
@@ -125,7 +125,7 @@ MetaDataPtr ShmemRecvPort::Recv() {
 void ShmemRecvPort::Join() {
   if (!done_) {
     done_ = true;
-    recv_queue_thread_->join();
+    recv_queue_thread_.join();
     recv_queue_->Stop();
   }
 }

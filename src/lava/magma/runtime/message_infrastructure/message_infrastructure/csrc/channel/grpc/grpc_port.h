@@ -31,7 +31,6 @@ using grpcchannel::DataReply;
 using grpcchannel::GrpcChannelServer;
 using grpcchannel::GrpcMetaData;
 
-using ThreadPtr = std::shared_ptr<std::thread>;
 using GrpcMetaDataPtr = std::shared_ptr<GrpcMetaData>;
 
 template class RecvQueue<GrpcMetaDataPtr>;
@@ -118,7 +117,6 @@ class GrpcSendPort final : public AbstractSendPort {
   std::shared_ptr<Channel> channel_;
   std::atomic_bool done_;
   std::unique_ptr<GrpcChannelServer::Stub> stub_;
-  ThreadPtr ack_callback_thread_ = nullptr;
   std::string url_;
   std::string name_;
   size_t size_;
