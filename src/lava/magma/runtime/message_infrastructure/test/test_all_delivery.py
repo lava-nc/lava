@@ -375,7 +375,7 @@ class TestAllDelivery(unittest.TestCase):
         mp.cleanup(True)
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
-    @unittest.skip
+
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
 
