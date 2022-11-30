@@ -37,7 +37,7 @@ void CycloneDDSPubListener::on_publication_matched(
   }
 }
 
-int CycloneDDSPublisher::Init() {
+DDSInitErrorType CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
   dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
@@ -60,7 +60,7 @@ int CycloneDDSPublisher::Init() {
             listener_.get(),
             dds::core::status::StatusMask::all());
   stop_ = false;
-  return 0;
+  return DDSInitErrorType::DDSNOERR;
 }
 
 bool CycloneDDSPublisher::Publish(DataPtr data) {
@@ -134,7 +134,7 @@ void CycloneDDSSubListener::on_subscription_matched(
     LAVA_LOG_ERR("CycloneDDS Sublistener MatchedStatus error\n");
   }
 }
-int CycloneDDSSubscriber::Init() {
+DDSInitErrorType CycloneDDSSubscriber::Init() {
   LAVA_LOG(LOG_DDS, "subscriber init\n");
   if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
@@ -161,7 +161,7 @@ int CycloneDDSSubscriber::Init() {
               DataReader<ddsmetadata::msg::DDSMetaData>::Selector>(reader_);
   selector_->max_samples(1);
   stop_ = false;
-  return 0;
+  return DDSInitErrorType::DDSNOERR;
 }
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
