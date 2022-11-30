@@ -56,8 +56,8 @@ bool AbstractActor::SetStatus(ActorStatus status) {
     return true;
 }
 
-int AbstractActor::GetStatus() {
-  return actor_status_.load();
+ActorStatus AbstractActor::GetStatus() {
+  return static_cast<ActorStatus>(actor_status_.load());
 }
 
 void AbstractActor::SetStopFn(StopFn stop_fn) {
@@ -72,7 +72,7 @@ void AbstractActor::Run() {
     }
     if (actor_status_.load() == static_cast<int>(ActorStatus::StatusRunning)) {
       target_fn_(this);
-      LAVA_LOG(LOG_MP, "Actor: ActorStatus:%d\n", GetStatus());
+      LAVA_LOG(LOG_MP, "Actor:ActorStatus:%d\n", static_cast<int>(GetStatus()));
     } else {
       // pause status
       helper::Sleep();

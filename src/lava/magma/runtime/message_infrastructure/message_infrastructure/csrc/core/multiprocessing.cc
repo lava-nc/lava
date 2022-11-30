@@ -40,7 +40,7 @@ void MultiProcessing::Cleanup(bool block) {
 void MultiProcessing::CheckActor() {
   for (auto actor : actors_) {
     LAVA_LOG(LOG_MP, "Actor info: (pid, status):(%d, %d)",
-                     actor->GetPid(), actor->GetStatus());
+                     actor->GetPid(), static_cast<int>(actor->GetStatus()));
   }
 }
 

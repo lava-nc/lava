@@ -42,7 +42,9 @@ int PosixActor::Wait() {
     return -1;
   }
 
-  LAVA_DEBUG(LOG_ACTOR, "current actor status: %d\n", GetStatus());
+  LAVA_DEBUG(LOG_ACTOR,
+             "current actor status: %d\n",
+             static_cast<int>(GetStatus()));
   // Check the status
   return 0;
 }

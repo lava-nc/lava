@@ -52,7 +52,7 @@ class AbstractActor {
   virtual int Wait() = 0;
   virtual ProcessType Create() = 0;
   void Control(const ActorCmd cmd);
-  int GetStatus();
+  ActorStatus GetStatus();
   bool SetStatus(ActorStatus status);
   void SetStopFn(StopFn stop_fn);
   int GetPid() {
