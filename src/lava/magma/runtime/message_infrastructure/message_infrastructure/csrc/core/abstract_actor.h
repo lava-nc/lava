@@ -55,7 +55,7 @@ class AbstractActor {
   bool SetStatus(ActorStatus status);
   void SetStopFn(StopFn stop_fn);
   int GetPid() {
-    return this->pid_;
+    return pid_;
   }
 
  protected:
@@ -64,7 +64,7 @@ class AbstractActor {
 
  private:
   SharedMemoryPtr ctl_shm_;
-  std::atomic<int> actore_status_;
+  std::atomic<int> actor_status_;
   std::shared_ptr<std::thread> handle_cmd_thread_ = nullptr;
   std::string actor_name_ = "actor";
   TargetFn target_fn_ = nullptr;
