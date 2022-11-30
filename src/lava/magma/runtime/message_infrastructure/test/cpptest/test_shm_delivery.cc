@@ -32,7 +32,7 @@ void target_fn_a1_bound(
     auto from_a2 = a2_to_a1->GetRecvPort();
     from_a2->Start();
     LAVA_DUMP(LOG_UTTEST, "shm actor1, loop: %d\n", loop);
-    while ((loop--)&&!actor_ptr->GetStatus()) {
+    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
       LAVA_DUMP(LOG_UTTEST, "shm actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "shm actor1 recviced\n");
@@ -46,7 +46,7 @@ void target_fn_a1_bound(
     }
     from_mp->Join();
     from_a2->Join();
-    while (!actor_ptr->GetStatus()) {
+    while (!static_cast<int>(actor_ptr->GetStatus())) {
       helper::Sleep();
     }
   }
@@ -62,7 +62,7 @@ void target_fn_a2_bound(
     auto to_a1   = a2_to_a1->GetSendPort();
     to_a1->Start();
     LAVA_DUMP(LOG_UTTEST, "shm actor2, loop: %d\n", loop);
-    while ((loop--)&&!actor_ptr->GetStatus()) {
+    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
       LAVA_DUMP(LOG_UTTEST, "shm actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "shm actor2 recviced\n");
@@ -71,7 +71,7 @@ void target_fn_a2_bound(
       free(data->mdata);
     }
     from_a1->Join();
-    while (!actor_ptr->GetStatus()) {
+    while (!static_cast<int>(actor_ptr->GetStatus())) {
       helper::Sleep();
     }
   }
@@ -81,20 +81,36 @@ TEST(TestShmDelivery, ShmLoop) {
   int loop = 1000;
   const int queue_size = 1;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10000, "mp_to_a1", "mp_to_a1");
+                                ChannelType::SHMEMCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "mp_to_a1",
+                                "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_mp", "a1_to_mp");
+                                ChannelType::SHMEMCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a1_to_mp",
+                                "a1_to_mp");
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_a2", "a1_to_a2");
+                                ChannelType::SHMEMCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a1_to_a2",
+                                "a1_to_a2");
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
-    SHMEMCHANNEL, queue_size, sizeof(int64_t)*10000, "a2_to_a1", "a2_to_a1");
+                                ChannelType::SHMEMCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a2_to_a1",
+                                "a2_to_a1");
   auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
                                 a2_to_a1, std::placeholders::_1);
   auto target_fn_a2 = std::bind(&target_fn_a2_bound, loop, a1_to_a2,
                                 a2_to_a1, std::placeholders::_1);
-  int actor1 = mp.BuildActor(target_fn_a1);
-  int actor2 = mp.BuildActor(target_fn_a2);
+  ProcessType actor1 = mp.BuildActor(target_fn_a1);
+  ProcessType actor2 = mp.BuildActor(target_fn_a2);
   auto to_a1   = mp_to_a1->GetSendPort();
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
@@ -106,7 +122,8 @@ TEST(TestShmDelivery, ShmLoop) {
                     (malloc(sizeof(int64_t) * dims[0]));
   memset(array_, 0, sizeof(int64_t) * dims[0]);
   std::fill(array_, array_ + 10, 1);
-  GetMetadata(metadata, array_, nd, METADATA_TYPES::LONG, dims);
+  GetMetadata(metadata, array_, nd,
+              static_cast<int64_t>(METADATA_TYPES::LONG), dims);
 
   LAVA_DUMP(LOG_UTTEST, "main process loop: %d\n", loop);
   int expect_result = 1 + loop * 3;

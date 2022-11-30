@@ -33,7 +33,7 @@ void soket_target_fn1(
     to_a2->Start();
     from_a2->Start();
     LAVA_DUMP(LOG_UTTEST, "socket actor1, loop: %d\n", loop);
-    while ((loop--)&&!actor_ptr->GetStatus()) {
+    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
       LAVA_DUMP(LOG_UTTEST, "soket actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "socket actor1 recviced\n");
@@ -49,7 +49,7 @@ void soket_target_fn1(
     to_mp->Join();
     to_a2->Join();
     from_a2->Join();
-    while (!actor_ptr->GetStatus()) {
+    while (!static_cast<int>(actor_ptr->GetStatus())) {
       helper::Sleep();
     }
   }
@@ -65,7 +65,7 @@ void soket_target_fn2(
     from_a1->Start();
     to_a1->Start();
     LAVA_DUMP(1, "socket actor2, loop: %d\n", loop);
-    while ((loop--)&&!actor_ptr->GetStatus()) {
+    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
       LAVA_DUMP(LOG_UTTEST, "socket actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "socket actor2 recviced\n");
@@ -75,7 +75,7 @@ void soket_target_fn2(
     }
     from_a1->Join();
     to_a1->Join();
-    while (!actor_ptr->GetStatus()) {
+    while (!static_cast<int>(actor_ptr->GetStatus())) {
       helper::Sleep();
     }
   }
@@ -85,13 +85,29 @@ TEST(TestSocketChannel, SocketLoop) {
   int loop = 1000;
   const int queue_size = 1;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory().GetChannel(
-    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "mp_to_a1", "mp_to_a1");
+                                ChannelType::SOCKETCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "mp_to_a1",
+                                "mp_to_a1");
   AbstractChannelPtr a1_to_mp = GetChannelFactory().GetChannel(
-    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_mp", "a1_to_mp");
+                                ChannelType::SOCKETCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a1_to_mp",
+                                "a1_to_mp");
   AbstractChannelPtr a1_to_a2 = GetChannelFactory().GetChannel(
-    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a1_to_a2", "a1_to_a2");
+                                ChannelType::SOCKETCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a1_to_a2",
+                                "a1_to_a2");
   AbstractChannelPtr a2_to_a1 = GetChannelFactory().GetChannel(
-    SOCKETCHANNEL, queue_size, sizeof(int64_t)*10000, "a2_to_a1", "a2_to_a1");
+                                ChannelType::SOCKETCHANNEL,
+                                queue_size,
+                                sizeof(int64_t)*10000,
+                                "a2_to_a1",
+                                "a2_to_a1");
   auto target_fn_a1 = std::bind(&soket_target_fn1,
                                 loop,
                                 mp_to_a1,
@@ -104,8 +120,8 @@ TEST(TestSocketChannel, SocketLoop) {
                                 a1_to_a2,
                                 a2_to_a1,
                                 std::placeholders::_1);
-  int actor1 = mp.BuildActor(target_fn_a1);
-  int actor2 = mp.BuildActor(target_fn_a2);
+  ProcessType actor1 = mp.BuildActor(target_fn_a1);
+  ProcessType actor2 = mp.BuildActor(target_fn_a2);
   auto to_a1 = mp_to_a1->GetSendPort();
   to_a1->Start();
   auto from_a1 = a1_to_mp->GetRecvPort();
@@ -117,7 +133,8 @@ TEST(TestSocketChannel, SocketLoop) {
                     (malloc(sizeof(int64_t) * dims[0]));
   memset(array_, 0, sizeof(int64_t) * dims[0]);
   std::fill(array_, array_ + 10, 1);
-  GetMetadata(metadata, array_, nd, METADATA_TYPES::LONG, dims);
+  GetMetadata(metadata, array_, nd,
+              static_cast<int64_t>(METADATA_TYPES::LONG), dims);
   int expect_result = 1 + loop * 3;
   const clock_t start_time = std::clock();
   while (loop--) {

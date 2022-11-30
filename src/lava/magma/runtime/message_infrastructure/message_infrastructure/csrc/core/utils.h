@@ -59,16 +59,16 @@ enum class ChannelType {
   TEMPCHANNEL = 4
 };
 
-enum class METADATA_TYPES { BOOL = 0,
-                            BYTE, UBYTE,
-                            SHORT, USHORT,
-                            INT, UINT,
-                            LONG, ULONG,
-                            LONGLONG, ULONGLONG,
-                            FLOAT, DOUBLE, LONGDOUBLE,
-                            // align the value of STRING to
-                            // NPY_STRING in ndarraytypes.h
-                            STRING = 18
+enum class METADATA_TYPES : int64_t{ BOOL = 0,
+                                     BYTE, UBYTE,
+                                     SHORT, USHORT,
+                                     INT, UINT,
+                                     LONG, ULONG,
+                                     LONGLONG, ULONGLONG,
+                                     FLOAT, DOUBLE, LONGDOUBLE,
+                                     // align the value of STRING to
+                                     // NPY_STRING in ndarraytypes.h
+                                     STRING = 18
 };
 
 static int64_t LAVA_SIZEOF_ARRAY[static_cast<int>(METADATA_TYPES::STRING) + 1] =
