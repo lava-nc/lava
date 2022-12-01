@@ -114,4 +114,4 @@ jobs:
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: runner.os == 'Linux'
-      run: pytest test/
+      run: poetry run pytest test/
