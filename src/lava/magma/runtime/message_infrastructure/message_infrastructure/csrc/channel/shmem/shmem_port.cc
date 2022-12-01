@@ -11,7 +11,6 @@
 #include <mutex>  // NOLINT
 #include <memory>
 #include <string>
-#include <condition_variable>  // NOLINT
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
@@ -59,7 +58,7 @@ void ShmemSendPort::Start() {
 void ShmemSendPort::Send(DataPtr metadata) {
   auto mdata = reinterpret_cast<MetaData*>(metadata.get());
   int len = mdata->elsize * mdata->total_size;
-  if (len > this->nbytes_ - sizeof(MetaData)) {
+  if (len > nbytes_ - sizeof(MetaData)) {
     LAVA_LOG_ERR("Send data too large\n");
   }
   shm_->Store([len, &metadata](void* data){
@@ -103,7 +102,7 @@ void ShmemRecvPort::QueueRecv() {
       ret = shm_->Load([this](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
         MetaDataPtrFromPointer(metadata_res, data,
-                               this->nbytes_ - sizeof(MetaData));
+                               nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
       });
     }
@@ -132,7 +131,7 @@ void ShmemRecvPort::Join() {
 
 MetaDataPtr ShmemRecvPort::Peek() {
   MetaDataPtr metadata_res = recv_queue_->Front();
-  int mem_size = (this->nbytes_ - sizeof(MetaData) + 7) & (~0x7);
+  int mem_size = (nbytes_ - sizeof(MetaData) + 7) & (~0x7);
   void * ptr = std::calloc(mem_size, 1);
   if (ptr == nullptr) {
     LAVA_LOG_ERR("alloc failed, errno: %d\n", errno);
@@ -156,7 +155,7 @@ MetaDataPtr ShmemBlockRecvPort::Recv() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->BlockLoad([&metadata_res, this](void* data){
     MetaDataPtrFromPointer(metadata_res, data,
-                           this->nbytes_ - sizeof(MetaData));
+                           nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }
@@ -165,7 +164,7 @@ MetaDataPtr ShmemBlockRecvPort::Peek() {
   MetaDataPtr metadata_res = std::make_shared<MetaData>();
   shm_->Read([&metadata_res, this](void* data){
     MetaDataPtrFromPointer(metadata_res, data,
-                           this->nbytes_ - sizeof(MetaData));
+                           nbytes_ - sizeof(MetaData));
   });
   return metadata_res;
 }

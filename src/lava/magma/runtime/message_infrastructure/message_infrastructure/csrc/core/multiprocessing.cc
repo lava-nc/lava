@@ -45,7 +45,7 @@ void MultiProcessing::CheckActor() {
 }
 
 std::vector<AbstractActor::ActorPtr>& MultiProcessing::GetActors() {
-  return this->actors_;
+  return actors_;
 }
 
 MultiProcessing::~MultiProcessing() {

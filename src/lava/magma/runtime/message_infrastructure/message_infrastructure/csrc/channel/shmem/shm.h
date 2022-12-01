@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <string>
 #include <atomic>
@@ -129,9 +129,9 @@ class SharedMemManager {
     alloc_pid_ = getpid();
   }
   ~SharedMemManager() = default;
-  std::map<int, std::string> shm_fd_strs_;
-  std::map<sem_t*, std::string> sem_p_strs_;
-  std::map<void*, int64_t> shm_mmap_;
+  std::unordered_map<int, std::string> shm_fd_strs_;
+  std::unordered_map<sem_t*, std::string> sem_p_strs_;
+  std::unordered_map<void*, int64_t> shm_mmap_;
   static SharedMemManager smm_;
   std::string shm_str_ = "shm";
   int alloc_pid_;

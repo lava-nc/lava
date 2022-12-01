@@ -21,20 +21,20 @@ AbstractPortImplementation::AbstractPortImplementation(
   {}
 
 int AbstractPortImplementation::Start() {
-  for (auto port : this->send_ports_) {
+  for (auto port : send_ports_) {
     port->Start();
   }
-  for (auto port : this->recv_ports_) {
+  for (auto port : recv_ports_) {
     port->Start();
   }
   return 0;
 }
 
 int AbstractPortImplementation::Join() {
-  for (auto port : this->send_ports_) {
+  for (auto port : send_ports_) {
     port->Join();
   }
-  for (auto port : this->recv_ports_) {
+  for (auto port : recv_ports_) {
     port->Join();
   }
   return 0;

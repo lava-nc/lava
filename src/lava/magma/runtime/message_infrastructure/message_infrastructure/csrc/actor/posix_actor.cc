@@ -29,16 +29,16 @@ int CheckSemaphore(sem_t *sem) {
 }
 
 int PosixActor::GetPid() {
-  return this->pid_;
+  return pid_;
 }
 
 int PosixActor::Wait() {
   int status;
   int options = 0;
-  int ret = waitpid(this->pid_, &status, options);
+  int ret = waitpid(pid_, &status, options);
 
   if (ret < 0) {
-    LAVA_LOG_ERR("Process %d waitpid error\n", this->pid_);
+    LAVA_LOG_ERR("Process %d waitpid error\n", pid_);
     return -1;
   }
 
@@ -67,14 +67,14 @@ ProcessType PosixActor::Create() {
   pid_t pid = fork();
   if (pid > 0) {
     LAVA_LOG(LOG_MP, "Parent Process, create child process %d\n", pid);
-    this->pid_ = pid;
+    pid_ = pid;
     return ProcessType::ParentProcess;
   }
 
   if (pid == 0) {
     LogClear();
     LAVA_LOG(LOG_MP, "Child, new process %d\n", getpid());
-    this->pid_ = getpid();
+    pid_ = getpid();
     Run();
     this->~PosixActor();
     exit(0);

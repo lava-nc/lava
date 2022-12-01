@@ -12,9 +12,9 @@ AbstractPort::AbstractPort(
 {}
 
 std::string AbstractPort::Name() {
-  return this->name_;
+  return name_;
 }
 size_t AbstractPort::Size() {
-  return this->size_;
+  return size_;
 }
 }  // namespace message_infrastructure

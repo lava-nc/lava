@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <memory>
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <cstdlib>
 #include <ctime>
@@ -48,7 +48,7 @@ class SktManager {
   SktManager() = default;
   ~SktManager();
   std::vector<SocketPair> sockets_;
-  std::set<SocketFile> socket_files_;
+  std::unordered_set<SocketFile> socket_files_;
   static SktManager sktm_;
 };
 

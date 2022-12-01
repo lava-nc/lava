@@ -28,15 +28,11 @@ void AbstractActor::HandleCmd() {
     auto ret = ctl_shm_->Load([this](void *data){
       auto ctrl_status = reinterpret_cast<int *>(data);
       if (*ctrl_status == static_cast<int>(ActorCmd::CmdStop)) {
-        this->actor_status_
-          .store(static_cast<int>(ActorStatus::StatusStopped));
-        LAVA_DEBUG(LOG_MP, "Stop Recieved\n");
+        actor_status_.store(static_cast<int>(ActorStatus::StatusStopped));
       } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdPause)) {
-        this->actor_status_
-          .store(static_cast<int>(ActorStatus::StatusPaused));
+        actor_status_.store(static_cast<int>(ActorStatus::StatusPaused));
       } else if (*ctrl_status == static_cast<int>(ActorCmd::CmdRun)) {
-        this->actor_status_
-          .store(static_cast<int>(ActorStatus::StatusRunning));
+        actor_status_.store(static_cast<int>(ActorStatus::StatusRunning));
       }
     });
     if (!ret) {
