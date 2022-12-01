@@ -16,10 +16,10 @@ find_package(ddsmetadata REQUIRED)
 
 include_directories(include)
 
-add_executable(ros_pub src/publisher.cpp)
+add_executable(ros_pub src/publisher.cc)
 ament_target_dependencies(ros_pub rclcpp ddsmetadata)
 
-add_executable(ros_sub src/subscriber.cpp)
+add_executable(ros_sub src/subscriber.cc)
 ament_target_dependencies(ros_sub rclcpp ddsmetadata)
 
 install(TARGETS

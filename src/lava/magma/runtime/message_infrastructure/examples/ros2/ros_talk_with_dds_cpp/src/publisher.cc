@@ -40,8 +40,10 @@ public:
     metadata->mdata = reinterpret_cast<char*> (malloc(sizeof(int64_t)));
     *reinterpret_cast<int64_t*>(metadata->mdata) = 0;
 
-    publisher_ = this->create_publisher<ddsmetadata::msg::DDSMetaData>("dds_topic", rclcpp::SystemDefaultsQoS());
-    timer_ = this->create_wall_timer(
+    publisher_ = rclcpp::Node::create_publisher<ddsmetadata::msg::DDSMetaData>(
+                 "dds_topic",
+                 rclcpp::SystemDefaultsQoS());
+    timer_ = rclcpp::Node::create_wall_timer(
       500ms, std::bind(&MinimalPublisher::timer_callback, this));
   }
 
@@ -62,7 +64,7 @@ private:
                   reinterpret_cast<unsigned char*>(metadata->mdata),
                   reinterpret_cast<unsigned char*>(metadata->mdata) + metadata->elsize * metadata->total_size);
     
-    RCLCPP_INFO(this->get_logger(), "ROS2 publishing: '%d'", count_++);
+    RCLCPP_INFO(rclcpp::Node::get_logger(), "ROS2 publishing: '%d'", count_++);
     publisher_->publish(message);
   }
   rclcpp::TimerBase::SharedPtr timer_;
