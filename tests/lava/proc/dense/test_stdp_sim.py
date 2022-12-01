@@ -96,9 +96,6 @@ class PyRSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     process in floating point precision with learning enabled.
     """
 
-    # Graded reward input spikes
-    a_in_reward: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
 

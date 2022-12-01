@@ -13,7 +13,6 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 class Dense(AbstractProcess):
-
     """Dense connections between neurons. Realizes the following abstract
     behavior: a_out = weights * s_in
 

@@ -60,7 +60,6 @@ class LearningConnectionProcess(AbstractProcess):
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
-
         kwargs["shape"] = shape
         tag_1 = kwargs.get('tag_1', 0)
         tag_2 = kwargs.get('tag_2', 0)

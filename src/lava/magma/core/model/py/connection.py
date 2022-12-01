@@ -99,7 +99,6 @@ class PyLearningConnection(AbstractLearningConnection):
            Parameters from the ProcessModel
        """
 
-
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
 
