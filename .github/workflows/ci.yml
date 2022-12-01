@@ -39,6 +39,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         lfs: true
+    
+    - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
