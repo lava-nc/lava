@@ -1,8 +1,6 @@
 name: Run CI
 on:
-  push:
-    branches:
-      - main      
+  push:    
   pull_request:
 
 concurrency:
@@ -93,6 +91,11 @@ jobs:
       with:
         lfs: true
 
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
     - name: Install dependencies
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -109,4 +112,4 @@ jobs:
     - name: Run message infrastructure unit tests
       working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: runner.os == 'Linux'
-      run: pytest test/
+      run: poetry run pytest test/
