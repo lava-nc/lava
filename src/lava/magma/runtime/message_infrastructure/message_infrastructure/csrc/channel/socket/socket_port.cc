@@ -150,7 +150,7 @@ void TempSocketSendPort::Join() {
 }
 
 TempSocketRecvPort::TempSocketRecvPort(const SocketFile &addr_path) {
-  this->name_ = "RecvPort_" + addr_path;
+  name_ = "RecvPort_" + addr_path;
   addr_path_ = addr_path;
   sfd_ = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sfd_ == -1) {
