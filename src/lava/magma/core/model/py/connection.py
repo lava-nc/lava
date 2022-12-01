@@ -385,7 +385,6 @@ class LearningConnection:
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
-        self._update_dependencies()
         x_traces_history, y_traces_history = self._compute_trace_histories()
         self._update_traces(x_traces_history, y_traces_history)
         self._apply_learning_rules(x_traces_history, y_traces_history)
@@ -393,9 +392,6 @@ class LearningConnection:
 
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
-        pass
-
-    def _update_dependencies(self):
         pass
 
     @abstractmethod
