@@ -350,15 +350,18 @@ class LearningConnection:
             s_in_bap = self.s_in_bap.recv().astype(bool)
             self._record_post_spike_times(s_in_bap)
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
+            s_in_bap = self.s_in_bap.recv().astype(bool)
+
             # s_in_bap is being connected to the y1 port to receive
             # post-synaptic spikes.
-            s_in_bap = self.s_in_bap.recv().astype(bool)
+            y1 = self.s_in_y1.recv()
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
 
             self._record_post_spike_times(s_in_bap)
 
             y_traces = self._y_traces
+            y_traces[0, :] = y1
             y_traces[1, :] = y2
             y_traces[2, :] = y3
             self._set_y_traces(y_traces)
@@ -382,6 +385,7 @@ class LearningConnection:
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
+        self._update_dependencies()
         x_traces_history, y_traces_history = self._compute_trace_histories()
         self._update_traces(x_traces_history, y_traces_history)
         self._apply_learning_rules(x_traces_history, y_traces_history)
@@ -389,6 +393,9 @@ class LearningConnection:
 
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
+        pass
+
+    def _update_dependencies(self):
         pass
 
     @abstractmethod
