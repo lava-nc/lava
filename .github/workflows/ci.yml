@@ -112,4 +112,4 @@ jobs:
       run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
-      run: poetry run pytest ./src/lava/magma/runtime/message_infrastructure/test/
+      run: poetry run pytest ./src/lava/magma/runtime/message_infrastructure/test
