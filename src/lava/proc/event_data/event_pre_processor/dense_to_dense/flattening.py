@@ -28,10 +28,33 @@ class Flattening(AbstractProcess):
 
         # TODO: Validation
 
+        self._validate_shape_in(shape_in)
+
         shape_out = (math.prod(shape_in),)
 
         self.in_port = InPort(shape_in)
         self.out_port = OutPort(shape_out)
+
+    @staticmethod
+    def _validate_shape_in(shape_in):
+        if not (len(shape_in) == 2 or len(shape_in) == 3):
+            raise ValueError(f"shape_in should be 2 or 3 dimensional. "
+                             f"{shape_in} given.")
+
+        if not isinstance(shape_in[0], int) or not isinstance(shape_in[1], int):
+            raise ValueError(f"Width and height of shape_in should be integers."
+                             f"{shape_in} given.")
+        if len(shape_in) == 3:
+            if shape_in[2] != 2:
+                raise ValueError(f"Third dimension of shape_in should be "
+                                 f"equal to 2."
+                                 f"{shape_in} given.")
+
+        if shape_in[0] <= 0 or shape_in[1] <= 0:
+            raise ValueError(f"Width and height of shape_in should be positive."
+                             f"{shape_in} given.")
+
+        return shape_in
 
 
 @implements(proc=Flattening, protocol=LoihiProtocol)
@@ -39,6 +62,10 @@ class Flattening(AbstractProcess):
 class FlatteningPM(PyLoihiProcessModel):
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+
+    def __init__(self, proc_params: dict) -> None:
+        super().__init__(proc_params)
+        self._shape_in = proc_params["shape_in"]
 
     def run_spk(self) -> None:
         data = self.in_port.recv()
