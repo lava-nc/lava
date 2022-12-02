@@ -71,15 +71,6 @@ jobs:
       with:
         repository: 'Lava'
 
-    - name: Install dependencies
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install message_infrastructure
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      run: poetry install --no-interaction
-      
     - name: Run unit tests
       run: |
         poetry run git lfs fetch
@@ -135,5 +126,8 @@ jobs:
       run: build/temp.*/MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
+      working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: runner.os == 'Linux'
-      run: pytest ./src/lava/magma/runtime/message_infrastructure/test/
+      run: |
+        source $VENV
+        pytest ./src/lava/magma/runtime/message_infrastructure/test/
