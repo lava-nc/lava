@@ -23,7 +23,7 @@ void MetaDataPtrFromPointer(const MetaDataPtr &ptr, void *p, int nbytes) {
   std::memcpy(ptr.get(), p, sizeof(MetaData));
   int len = ptr->elsize * ptr->total_size;
   if (len > nbytes) {
-    LAVA_LOG_ERR("Recv %d data but max support %d lenght\n", len, nbytes);
+    LAVA_LOG_ERR("Recv %d data but max support %d length\n", len, nbytes);
     len = nbytes;
   }
   LAVA_DEBUG(LOG_SMMP, "data len: %d, nbytes: %d\n", len, nbytes);
