@@ -16,34 +16,30 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
+import math
+
 
 class Flattening(AbstractProcess):
     def __init__(self,
                  shape_in: tuple,
-                 shape_out: tuple,
                  **kwargs) -> None:
         super().__init__(shape_in=shape_in,
-                         shape_out=shape_out,
                          **kwargs)
-
-        raise NotImplementedError()
 
         # TODO: Validation
 
-        self.in_port = InPort()
-        self.out_port = OutPort()
+        shape_out = (math.prod(shape_in),)
+
+        self.in_port = InPort(shape_in)
+        self.out_port = OutPort(shape_out)
 
 
 @implements(proc=Flattening, protocol=LoihiProtocol)
 @requires(CPU)
 class FlatteningPM(PyLoihiProcessModel):
-    in_port: PyOutPort = LavaPyType(PyInPort.VEC_DENSE, int)
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
-    def __init__(self, proc_params: dict) -> None:
-        super().__init__(proc_params)
-        raise NotImplementedError()
-
     def run_spk(self) -> None:
-        raise NotImplementedError()
-
+        data = self.in_port.recv()
+        self.out_port.send(data.flatten())
