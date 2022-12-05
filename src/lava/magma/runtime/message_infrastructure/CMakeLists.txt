@@ -15,7 +15,7 @@ option(FASTDDS_ENABLE "enable FastDDS" OFF)
 option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
 
 if(GRPC_CHANNEL AND CycloneDDS_ENABLE)
-  message(FATAL_ERROR "Cannot enable GRPC and CycloneDDS togeter")
+  message(FATAL_ERROR "Cannot enable GRPC and CycloneDDS together")
 endif()
 
 if(GRPC_CHANNEL)
@@ -88,7 +88,7 @@ if(DDS_CHANNEL)
     "message_infrastructure/csrc/channel/dds/dds_channel.cc")
 
   if(FASTDDS_ENABLE AND CycloneDDS_ENABLE)
-	  message(FATAL_ERROR "Cannot enable Backend FASTDDS and CycloneDDS togeter")
+	  message(FATAL_ERROR "Cannot enable Backend FASTDDS and CycloneDDS together")
   endif()
 
   if(CycloneDDS_ENABLE)
