@@ -9,7 +9,10 @@ lib_name = 'libmessage_infrastructure.so'
 here = path.abspath(__file__)
 lib_path = path.join(path.dirname(here), lib_name)
 print(lib_path)
-CDLL(lib_path)
+if (path.exists(lib_path)):
+    CDLL(lib_path)
+else:
+    print("Warn: No library file")
 
 from .MessageInfrastructurePywrapper import CppMultiProcessing
 from .MessageInfrastructurePywrapper import ProcessType
