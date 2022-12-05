@@ -179,6 +179,17 @@ class LoihiLearningRule:
         return self._x1_impulse
 
     @property
+    def x1_tau(self) -> float:
+        """Get the tau value for x1 trace.
+
+        Returns
+        ----------
+        x1_tau : int
+            Tau value for x1 trace.
+        """
+        return self._x1_tau
+
+    @property
     def x2_impulse(self) -> float:
         """Get the impulse value for x2 trace.
 
@@ -188,6 +199,17 @@ class LoihiLearningRule:
             Impulse value for x2 trace.
         """
         return self._x2_impulse
+
+    @property
+    def x2_tau(self) -> float:
+        """Get the tau value for x2 trace.
+
+        Returns
+        ----------
+        x2_tau : int
+            Tau value for x2 trace.
+        """
+        return self._x2_tau
 
     @property
     def y1_impulse(self) -> float:
@@ -201,29 +223,7 @@ class LoihiLearningRule:
         return self._y1_impulse
 
     @property
-    def x1_tau(self) -> int:
-        """Get the tau value for x1 trace.
-
-        Returns
-        ----------
-        x1_tau : int
-            Tau value for x1 trace.
-        """
-        return self._x1_tau
-
-    @property
-    def x2_tau(self) -> int:
-        """Get the tau value for x2 trace.
-
-        Returns
-        ----------
-        x2_tau : int
-            Tau value for x2 trace.
-        """
-        return self._x2_tau
-
-    @property
-    def y1_tau(self) -> int:
+    def y1_tau(self) -> float:
         """Get the tau value for y1 trace.
 
         Returns
@@ -232,28 +232,6 @@ class LoihiLearningRule:
             Tau value for y1 trace.
         """
         return self._y1_tau
-
-    @property
-    def y2_tau(self) -> int:
-        """Get the tau value for y2 trace.
-
-        Returns
-        ----------
-        y2_tau : int
-            Tau value for y2 trace.
-        """
-        return self._y2_tau
-
-    @property
-    def y3_tau(self) -> int:
-        """Get the tau value for y3 trace.
-
-        Returns
-        ----------
-        y3_tau : int
-            Tau value for y3 trace.
-        """
-        return self._y3_tau
 
     @property
     def y2_impulse(self) -> float:
@@ -267,6 +245,17 @@ class LoihiLearningRule:
         return self._y2_impulse
 
     @property
+    def y2_tau(self) -> float:
+        """Get the tau value for y2 trace.
+
+        Returns
+        ----------
+        y2_tau : int
+            Tau value for y2 trace.
+        """
+        return self._y2_tau
+
+    @property
     def y3_impulse(self) -> float:
         """Get the impulse value for y3 trace.
 
@@ -276,6 +265,17 @@ class LoihiLearningRule:
             Impulse value for y3 trace.
         """
         return self._y3_impulse
+
+    @property
+    def y3_tau(self) -> float:
+        """Get the tau value for y3 trace.
+
+        Returns
+        ----------
+        y3_tau : int
+            Tau value for y3 trace.
+        """
+        return self._y3_tau
 
     @property
     def t_epoch(self) -> int:
@@ -449,7 +449,7 @@ class LoihiLearningRule:
         return impulse
 
     @staticmethod
-    def _validate_tau(tau: int) -> int:
+    def _validate_tau(tau: float) -> float:
         """Validate that a decay time constant is allowed (non-negative).
 
         Parameters
@@ -562,3 +562,89 @@ class LoihiLearningRule:
         product_series = ProductSeries(symbolic_equation)
 
         return product_series
+
+
+class Loihi2FLearningRule(LoihiLearningRule):
+    pass
+
+
+class Loihi3FLearningRule(LoihiLearningRule):
+    """Encapsulation of learning-related information according to Loihi.
+
+    By using the three-factor (3F) learning rule all post-synaptic traces
+    are handled by the post-synaptic neuron. Hence, the y_impulses and y_taus
+    are set to 0 resp. 2^32 to the corresponding low-pass filter.
+
+    A LoihiLearningRule object has the following main objectives:
+    (1) Given string representations of learning rules (equations) describing
+    dynamics of the three synaptic variables (weight, delay, tag),
+    generate adequate ProductSeries representations and store them.
+
+    (2) Store other learning-related information such as:
+    impulse values by which to update traces upon spikes;
+    time constants by which to decay traces over time;
+    the length of the learning epoch;
+    a dict with dependencies as keys and the set of all traces appearing
+    with them in the specified learning rules as values;
+    the set of traces used by all specified learning rules.
+
+    From the user's perspective, a LoihiLearningRule object is to be used
+    as follows:
+    (1) Instantiate an implementation of LoihiLearningRule object with
+    learning rules given in string format for all three synaptic variables
+    (dw, dd, dt), as well as trace configuration parameters (impulse, decay)
+    for all available traces (x1, x2, y1), and the learning epoch length.
+
+    (2) The LoihiLearningRule object encapsulating learning-related information
+    is then passed to the Dense Process as instantiation argument.
+
+    (3) It will internally be used by ProcessModels to derive the operations
+    to be executed in the learning phase (Py and Nc).
+
+    Parameters
+    ----------
+
+    dw: str
+        ProductSeries representation of synaptic weight learning rule.
+    dd: str
+        ProductSeries representation of synaptic delay learning rule.
+    dt: str
+        ProductSeries representation of synaptic tag learning rule.
+    x1_impulse: float
+        Impulse by which x1 increases upon each pre-synaptic spike.
+    x1_tau: int
+        Time constant by which x1 trace decays exponentially over time.
+    x2_impulse: float
+        Impulse by which x2 increases upon each pre-synaptic spike.
+    x2_tau: int
+        Time constant by which x2 trace decays exponentially over time.
+    t_epoch: int
+        Duration of learning epoch.
+    rng_seed: int
+        Seed for the random number generators. If None, seed will be
+        chosen randomly. Only used in fixed point implementations.
+
+    """
+
+    def __init__(
+            self,
+            dw: ty.Optional[str] = None,
+            dd: ty.Optional[str] = None,
+            dt: ty.Optional[str] = None,
+            x1_impulse: ty.Optional[float] = 0.0,
+            x1_tau: ty.Optional[float] = 0.0,
+            x2_impulse: ty.Optional[float] = 0.0,
+            x2_tau: ty.Optional[float] = 0.0,
+            y1_impulse: ty.Optional[float] = 0.0,
+            y1_tau: ty.Optional[float] = 0.0,
+            t_epoch: ty.Optional[int] = 1,
+            rng_seed: ty.Optional[int] = None,
+    ) -> None:
+
+        super().__init__(dw=dw, dd=dd, dt=dt,
+                         x1_impulse=x1_impulse, x1_tau=x1_tau,
+                         x2_impulse=x2_impulse, x2_tau=x2_tau,
+                         y1_impulse=y1_impulse, y1_tau=y1_tau,
+                         y2_impulse=0, y2_tau=2 ** 32 - 1,
+                         y3_impulse=0, y3_tau=2 ** 32 - 1,
+                         t_epoch=t_epoch, rng_seed=rng_seed)

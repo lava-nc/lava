@@ -1,0 +1,69 @@
+name: Run CI
+on:
+  push:
+    branches:
+      - main      
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'    
+
+    - name: Run flakeheaven (flake8)
+      run: poetry run flakeheaven lint src/lava tests/
+
+  security-lint:
+    name: Security Lint Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
+    - name: Run bandit    
+      uses: tj-actions/bandit@v5.1
+      with:
+        targets: |
+          src/lava/.      
+        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+
+  unit-tests:
+    name: Unit Test Code + Coverage
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
+    - name: Run unit tests
+      run: |
+        poetry run git lfs fetch
+        poetry run git lfs pull
+        poetry run pytest

@@ -77,7 +77,7 @@ cd $HOME
 curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git checkout v0.5.1
 ./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
@@ -96,7 +96,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git checkout v0.5.1
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
@@ -175,7 +175,7 @@ Open a Python terminal and run:
 python -m venv .venv
 source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
 pip install -U pip
-pip install lava-nc-0.4.0.tar.gz
+pip install lava-nc-0.5.1.tar.gz
 ```
 
 ## Linting, testing, documentation and packaging

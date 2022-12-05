@@ -44,7 +44,7 @@ class PyMonitorModel(PyLoihiProcessModel):
             ref_port_name = self.proc_params["RefPorts"][i]
             var_read_name = self.proc_params["VarsData1"][i]
             getattr(self, var_read_name)[self.time_step - 1, ...] = \
-                np.squeeze(np.array(getattr(self, ref_port_name).read()))
+                np.array(getattr(self, ref_port_name).read())
 
     def run_spk(self):
         """
@@ -58,4 +58,4 @@ class PyMonitorModel(PyLoihiProcessModel):
             in_port_name = self.proc_params["InPorts"][i]
             out_read_name = self.proc_params["VarsData2"][i]
             getattr(self, out_read_name)[self.time_step - 1, ...] = \
-                np.squeeze(np.array(getattr(self, in_port_name).recv()))
+                np.array(getattr(self, in_port_name).recv())

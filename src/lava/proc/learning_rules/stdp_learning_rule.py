@@ -14,10 +14,11 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
+from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
+from lava.magma.core.learning.utils import float_to_literal
 
 
-class STDPLoihi(LoihiLearningRule):
+class STDPLoihi(Loihi2FLearningRule):
 
     def __init__(
             self,
@@ -49,15 +50,15 @@ class STDPLoihi(LoihiLearningRule):
 
         """
 
-        self.learning_rate = learning_rate
-        self.A_plus = str(A_plus) if A_plus > 0 else f"({str(A_plus)})"
-        self.A_minus = str(A_minus) if A_minus > 0 else f"({str(A_minus)})"
+        self.learning_rate = float_to_literal(learning_rate)
+        self.A_plus = float_to_literal(A_plus)
+        self.A_minus = float_to_literal(A_minus)
         self.tau_plus = tau_plus
         self.tau_minus = tau_minus
 
         # String learning rule for dw
-        dw = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1"
+        dw = f"{self.learning_rate} * {self.A_minus} * x0 * y1 +" \
+             f"{self.learning_rate} * {self.A_plus} * y0 * x1"
 
         # Other learning-related parameters
         # Trace impulse values
