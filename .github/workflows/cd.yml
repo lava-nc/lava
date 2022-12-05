@@ -57,7 +57,6 @@ jobs:
           pip install --no-input $artifact
           python -c 'import lava.magma.compiler.subcompilers'
           python -c 'import lava.magma.core.model'
-          python -c 'import MessageInfrastructurePywrapper'
           pip uninstall -y lava-nc
           deactivate
           rm -rf artifact-test
@@ -70,7 +69,6 @@ jobs:
           pip install --no-input $artifact
           python -c 'import lava.magma.compiler.subcompilers'
           python -c 'import lava.magma.core.model'
-          python -c 'import MessageInfrastructurePywrapper'
           pip uninstall -y lava-nc
           deactivate
           rm -rf artifact-test

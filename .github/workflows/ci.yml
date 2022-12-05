@@ -2,7 +2,7 @@ name: Run CI
 on:
   push:
     branches:
-      - message_refactor_release2nd 
+      - main      
   pull_request:
 
 concurrency:
