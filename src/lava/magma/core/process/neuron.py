@@ -28,9 +28,7 @@ class LearningNeuronProcess:
                  **kwargs):
 
         kwargs['shape'] = shape
-        kwargs["learning_rule"] = learning_rule
-
-        self.learning_rule = learning_rule
+        kwargs['learning_rule'] = learning_rule
 
         # Learning Ports
         # Port for backprop action potentials

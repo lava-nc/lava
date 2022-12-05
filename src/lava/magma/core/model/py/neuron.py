@@ -33,6 +33,7 @@ class LearningNeuronModel(PyLoihiProcessModel):
         super().__init__(proc_params)
 
         self._shape = self.proc_params["shape"]
+        self._learning_rule = self.proc_params["learning_rule"]
 
 
 class LearningNeuronModelFixed(LearningNeuronModel):
