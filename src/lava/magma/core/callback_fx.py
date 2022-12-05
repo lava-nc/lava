@@ -44,12 +44,12 @@ class NxSdkCallbackFx(CallbackFx):
 
     @abstractmethod
     def pre_run_callback(self,
-                 board: NxBoard = None,
-                 var_id_to_var_model_map: dict = None):
+                         board: NxBoard = None,
+                         var_id_to_var_model_map: dict = None):
         pass
 
     @abstractmethod
     def post_run_callback(self,
-                         board: NxBoard = None,
-                         var_id_to_var_model_map: dict = None):
+                          board: NxBoard = None,
+                          var_id_to_var_model_map: dict = None):
         pass
