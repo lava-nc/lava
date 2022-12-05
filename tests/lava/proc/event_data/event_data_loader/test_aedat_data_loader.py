@@ -1,33 +1,34 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
-from lava.proc.event_data.event_data_loader.aedat_data_loader import AedatDataLoader, \
-    AedatDataLoaderPM
+
 from dv import AedatFile
 from dv.AedatFile import _AedatFileEventNumpyPacketIterator
-
-import typing as ty
 import numpy as np
+import typing as ty
+import unittest
+
+from lava.proc.event_data.event_data_loader.aedat_data_loader import AedatDataLoader, \
+    AedatDataLoaderPM
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
 
+from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-
+# TODO : check that this way to structure imports is ok
 
 class RecvSparse(AbstractProcess):
     def __init__(self,
-                 shape: tuple) -> None:
+                 shape: ty.Tuple[int]) -> None:
         super().__init__(shape=shape)
 
         self.in_port = InPort(shape=shape)
@@ -55,7 +56,7 @@ class PyRecvSparsePM(PyLoihiProcessModel):
 
 class TestProcessAedatDataLoader(unittest.TestCase):
     def test_init(self):
-        """Tests instantiation of AedatDataLoader"""
+        """Tests instantiation of AedatDataLoader."""
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
                                       shape_out=(43200,))
 
@@ -64,38 +65,37 @@ class TestProcessAedatDataLoader(unittest.TestCase):
                          "../dvs_recording.aedat4")
         self.assertEqual(data_loader.proc_params["shape_out"], (43200,))
 
-    def test_invalid_file_path_extension(self):
-        """Tests for invalid file extension"""
+    def test_unsupported_file_extension_throws_exception(self):
+        """Tests whether a file_path argument with an unsupported file extension throws an exception."""
         with(self.assertRaises(ValueError)):
-            # Test for .py
-            _ = AedatDataLoader(file_path="test_aedat_data_loader.py",
-                                shape_out=(43200,))
+            AedatDataLoader(file_path="test_aedat_data_loader.py",
+                            shape_out=(43200,))
 
-    def test_invalid_file_path_missing_file(self):
-        """Tests for missing file"""
+    def test_missing_file_throws_exception(self):
+        """Tests whether an exception is thrown when a specified file does not exist."""
         with(self.assertRaises(FileNotFoundError)):
-            _ = AedatDataLoader(file_path="missing_file.aedat4",
-                                shape_out=(43200,))
+            AedatDataLoader(file_path="missing_file.aedat4",
+                            shape_out=(43200,))
 
-    def test_invalid_shape_out_dimension(self):
-        """Test for an invalid shape given to the shape_out param"""
+    def test_too_many_dimensions_throws_exception(self):
+        """Tests whether a shape_out argument with too many dimensions throws an exception."""
         with(self.assertRaises(ValueError)):
-            _ = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                shape_out=(240, 180))
+            AedatDataLoader(file_path="../dvs_recording.aedat4",
+                            shape_out=(240, 180))
 
-    def test_invalid_shape_out_negative_integer(self):
-        """Tests for a negative width given"""
+    def test_negative_width_throws_exception(self):
+        """Tests whether a shape_out argument with a negative width throws an exception."""
         with(self.assertRaises(ValueError)):
-            _ = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                shape_out=(-43200,))
+            AedatDataLoader(file_path="../dvs_recording.aedat4",
+                            shape_out=(-43200,))
 
-    def test_invalid_shape_out_decimal(self):
-        """Tests for a decimal width given"""
-        with(self.assertRaises(ValueError)):
-            _ = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                shape_out=(43200.5,))
+    # def test_invalid_shape_out_decimal(self):
+    #     """Tests for a decimal width given."""
+    #     with(self.assertRaises(ValueError)):
+    #         AedatDataLoader(file_path="../dvs_recording.aedat4",
+    #                         shape_out=(43200.5,))
 
-
+# TODO: add doc strings
 class TestProcessModelAedatDataLoader(unittest.TestCase):
     def test_init(self):
         proc_params = {
@@ -114,7 +114,22 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         self.assertIsInstance(pm._frame_shape, tuple)
         self.assertIsInstance(pm._random_rng, np.random.Generator)
 
+    def test_run_without_sub_sampling(self):
+        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
+                                      shape_out=(3000,))
+
+        num_steps = 9
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=num_steps)
+
+        data_loader.run(condition=run_cnd, run_cfg=run_cfg)
+
+        data_loader.stop()
+
+        # TODO: add asserts on the output to show functionality without subsampling
+
     def test_sub_sampling(self):
+        # TODO: reduce size of this (less timesteps?)
         data_history = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -172,6 +187,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
                 sampled_idx = rng.choice(data_idx_array,
                                          max_num_events,
                                          replace=False)
+                # TODO: assert that after subsampling, the number of events is the maximum. Could also hard code expected events
 
                 expected_data = expected_data[sampled_idx]
                 expected_indices = expected_indices[sampled_idx]
@@ -184,23 +200,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         # Stopping
         data_loader.stop()
 
-    def test_run(self):
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(3000,),
-                                      seed_sub_sampling=0)
-
-        # Run parameters
-        num_steps = 9
-        run_cfg = Loihi1SimCfg()
-        run_cnd = RunSteps(num_steps=num_steps)
-
-        # Running
-        data_loader.run(condition=run_cnd, run_cfg=run_cfg)
-
-        # Stopping
-        data_loader.stop()
-
-        self.assertFalse(data_loader.runtime._is_running)
+# TODO: add another test that runs the process twice with different seeds and asserts that the events have been sampled differently
 
     def test_end_of_file(self):
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
