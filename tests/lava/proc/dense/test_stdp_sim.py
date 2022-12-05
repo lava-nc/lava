@@ -35,6 +35,7 @@ from lava.proc.io.source import RingBuffer as SpikeIn
 class RSTDPLIF(LearningLIF):
     pass
 
+
 @implements(proc=RSTDPLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")

@@ -52,7 +52,9 @@ class LearningNeuronModelFixed(LearningNeuronModel):
     """
 
     # Learning Ports
-    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=7)
+    a_third_factor_in: PyInPort = LavaPyType(
+        PyInPort.VEC_DENSE, np.int32, precision=7
+    )
 
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     s_out_y1: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
