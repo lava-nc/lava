@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import typing as ty
-
+import math
 import numpy as np
+import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
@@ -16,17 +15,15 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
-import math
 
 
 class Flattening(AbstractProcess):
     def __init__(self,
-                 shape_in: tuple,
+                 *,
+                 shape_in: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]],
                  **kwargs) -> None:
         super().__init__(shape_in=shape_in,
                          **kwargs)
-
-        # TODO: Validation
 
         self._validate_shape_in(shape_in)
 
@@ -36,25 +33,20 @@ class Flattening(AbstractProcess):
         self.out_port = OutPort(shape_out)
 
     @staticmethod
-    def _validate_shape_in(shape_in):
+    def _validate_shape_in(shape_in: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]]) -> None:
         if not (len(shape_in) == 2 or len(shape_in) == 3):
             raise ValueError(f"shape_in should be 2 or 3 dimensional. "
-                             f"{shape_in} given.")
+                             f"{shape_in} was given.")
 
-        if not isinstance(shape_in[0], int) or not isinstance(shape_in[1], int):
-            raise ValueError(f"Width and height of shape_in should be integers."
-                             f"{shape_in} given.")
         if len(shape_in) == 3:
             if shape_in[2] != 2:
                 raise ValueError(f"Third dimension of shape_in should be "
                                  f"equal to 2."
-                                 f"{shape_in} given.")
+                                 f"{shape_in} was given.")
 
         if shape_in[0] <= 0 or shape_in[1] <= 0:
             raise ValueError(f"Width and height of shape_in should be positive."
-                             f"{shape_in} given.")
-
-        return shape_in
+                             f"{shape_in} was given.")
 
 
 @implements(proc=Flattening, protocol=LoihiProtocol)

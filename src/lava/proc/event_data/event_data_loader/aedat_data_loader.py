@@ -49,7 +49,7 @@ class AedatDataLoader(AbstractProcess):
     @staticmethod
     def _validate_shape_out(shape_out: ty.Tuple[int]) -> None:
         if len(shape_out) != 1:
-            raise ValueError(f"Shape of the OutPort should have a shape of (n,). "
+            raise ValueError(f"Shape of the OutPort should be (n,). "
                              f"{shape_out} was given.")
 
         if shape_out[0] <= 0:

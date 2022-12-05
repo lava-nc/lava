@@ -7,19 +7,16 @@ from numpy.lib.stride_tricks import as_strided
 from scipy import signal
 import typing as ty
 
-from lava.proc.event_data.event_pre_processor.utils import \
-    DownSamplingMethodDense
-
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-
+from lava.proc.event_data.event_pre_processor.utils import \
+    DownSamplingMethodDense
 
 class DownSamplingDense(AbstractProcess):
     def __init__(self,
