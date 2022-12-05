@@ -1,6 +1,8 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import typing as ty
+
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
@@ -9,12 +11,11 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class ConnectionProcess(AbstractProcess):
+class LearningConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
-    online learning in fixed and floating point simulations. If the
-    learning_rule parameter is not set, plasticity is disabled.
+    online learning in fixed and floating point simulations.
 
     Attributes
     ----------
@@ -55,16 +56,20 @@ class ConnectionProcess(AbstractProcess):
     def __init__(
         self,
         shape: tuple = (1, 1),
-        learning_rule: LoihiLearningRule = None,
+        learning_rule: ty.Optional[LoihiLearningRule] = None,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
+
         kwargs["shape"] = shape
 
         self.learning_rule = learning_rule
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
+        self.s_in_y1 = InPort(shape=(shape[0],))
+        self.s_in_y2 = InPort(shape=(shape[0],))
+        self.s_in_y3 = InPort(shape=(shape[0],))
 
         # Learning Vars
         self.x0 = Var(shape=(shape[-1],), init=0)
