@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import typing as ty
-
 import numpy as np
-from scipy import signal
 from numpy.lib.stride_tricks import as_strided
+from scipy import signal
+import typing as ty
 
 from lava.proc.event_data.event_pre_processor.utils import \
     DownSamplingMethodDense
@@ -24,7 +23,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 class DownSamplingDense(AbstractProcess):
     def __init__(self,
-                 shape_in: tuple,
+                 shape_in: ty.Tuple[int],
                  down_sampling_method: DownSamplingMethodDense,
                  down_sampling_factor: int,
                  **kwargs) -> None:
