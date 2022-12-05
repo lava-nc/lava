@@ -57,8 +57,8 @@ class STDPLoihi(Loihi2FLearningRule):
         self.tau_minus = tau_minus
 
         # String learning rule for dw
-        dw = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1"
+        dw = f"{self.learning_rate} * {self.A_minus} * x0 * y1 +" \
+             f"{self.learning_rate} * {self.A_plus} * y0 * x1"
 
         # Other learning-related parameters
         # Trace impulse values

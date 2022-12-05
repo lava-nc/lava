@@ -194,11 +194,11 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
         self.subthr_dynamics(activation_in=a_in_data)
 
-        s_out = self.spiking_activation()
+        self.s_out_buff = self.spiking_activation()
 
         # Reset voltage of spiked neurons to 0
-        self.reset_voltage(spike_vector=s_out)
-        self.s_out.send(s_out)
+        self.reset_voltage(spike_vector=self.s_out_buff)
+        self.s_out.send(self.s_out_buff)
 
 
 @implements(proc=LIF, protocol=LoihiProtocol)
