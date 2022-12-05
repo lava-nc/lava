@@ -10,6 +10,14 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 option(GRPC_CHANNEL "Use grpc_channel" OFF)
+option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
+option(FASTDDS_ENABLE "enable FastDDS" OFF)
+option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
+
+if(GRPC_CHANNEL AND CycloneDDS_ENABLE)
+  message(FATAL_ERROR "Cannot enable GRPC and CycloneDDS togeter")
+endif()
+
 if(GRPC_CHANNEL)
   add_definitions(-DGRPC_CHANNEL)
 endif()
@@ -71,9 +79,6 @@ if(GRPC_CHANNEL)
     ${grpc_srcs})
 endif()
 
-option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
-option(FASTDDS_ENABLE "enable FastDDS" OFF)
-option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
 
 if(DDS_CHANNEL)
   set(COMMON_DDS_DESTINATION "${CMAKE_BINARY_DIR}/install")
