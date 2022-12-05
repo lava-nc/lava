@@ -1,30 +1,29 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
-from lava.proc.event_data.event_pre_processor.sparse_to_sparse.binary_to_unary_polarity import \
-    BinaryToUnaryPolarity, BinaryToUnaryPolarityPM
 
 import numpy as np
+import typing as ty
+import unittest
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
+from lava.proc.event_data.event_pre_processor.sparse_to_sparse.binary_to_unary_polarity import \
+    BinaryToUnaryPolarity, BinaryToUnaryPolarityPM
 
-
+# TODO: add doc strings for these processes
 class RecvSparse(AbstractProcess):
     def __init__(self,
-                 shape: tuple) -> None:
+                 shape: ty.Tuple[int]) -> None:
         super().__init__(shape=shape)
 
         self.in_port = InPort(shape=shape)
@@ -54,7 +53,7 @@ class PyRecvSparsePM(PyLoihiProcessModel):
 
 class SendSparse(AbstractProcess):
     def __init__(self,
-                 shape: tuple,
+                 shape: ty.Tuple[int],
                  data: np.ndarray,
                  indices: np.ndarray) -> None:
         super().__init__(shape=shape, data=data, indices=indices)
@@ -81,30 +80,26 @@ class PySendSparsePM(PyLoihiProcessModel):
 
 class TestProcessBinaryToUnaryPolarity(unittest.TestCase):
     def test_init(self):
-        """Tests instantiation of BinaryToUnaryPolarity"""
+        """Tests instantiation of BinaryToUnaryPolarity."""
         converter = BinaryToUnaryPolarity(shape=(43200,))
 
         self.assertIsInstance(converter, BinaryToUnaryPolarity)
         self.assertEqual(converter.proc_params["shape"], (43200,))
 
-    def test_invalid_shape_out_dimension(self):
-        """Test for an invalid shape"""
+    def test_too_many_dimensions_throws_exception(self):
+        """Tests whether a shape argument with too many dimensions throws an exception."""
         with(self.assertRaises(ValueError)):
-            _ = BinaryToUnaryPolarity(shape=(240, 180))
+            BinaryToUnaryPolarity(shape=(240, 180))
 
-    def test_negative_width(self):
-        """Tests for a negative width given"""
+    def test_negative_width_throws_exception(self):
+        """Tests whether a shape argument with a negative width throws an exception."""
         with(self.assertRaises(ValueError)):
-            _ = BinaryToUnaryPolarity(shape=(-43200,))
+            BinaryToUnaryPolarity(shape=(-43200,))
 
-    def test_decimal_width(self):
-        """Tests for a decimal width given"""
-        with(self.assertRaises(ValueError)):
-            _ = BinaryToUnaryPolarity(shape=(43200.5,))
-
-
+# TODO: add doc strings
 class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
     def test_init(self):
+        """Tests instantiation of the BinaryToUnary process model."""
         proc_params = {
             "shape": (10,)
         }
@@ -114,6 +109,8 @@ class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
         self.assertIsInstance(pm, BinaryToUnaryPolarityPM)
 
     def test_binary_to_unary_polarity_encoding(self):
+        # TODO: add explanations for the meaning of binary and unary somewhere? explain test variables?
+        """Tests whether the encoding from binary to unary works correctly."""
         data = np.array([1, 1, 1, 0, 1, 0, 0, 1, 0])
         indices = np.array([1, 5, 4, 3, 3, 2, 0, 1, 0])
 
@@ -149,6 +146,7 @@ class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
         np.testing.assert_equal(sent_and_received_indices,
                                 expected_indices)
 
+    # TODO: I guess not needed? should any edge cases be treated?
     def test_run(self):
         data = np.array([1, 1, 1, 0, 1, 0, 0, 1, 0])
         indices = np.array([1, 5, 4, 3, 3, 2, 0, 1, 0])

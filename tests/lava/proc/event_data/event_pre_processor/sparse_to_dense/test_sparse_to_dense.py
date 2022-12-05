@@ -1,31 +1,28 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
-from lava.proc.event_data.event_pre_processor.sparse_to_dense.sparse_to_dense import SparseToDense, SparseToDensePM
 
 import numpy as np
+import typing as ty
+import unittest
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
+from lava.proc.event_data.event_pre_processor.sparse_to_dense.sparse_to_dense import SparseToDense, SparseToDensePM
 
-import matplotlib.pyplot as plt
-
-
+# TODO: add doc strings
 class RecvDense(AbstractProcess):
     def __init__(self,
-                 shape: tuple) -> None:
+                 shape: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]]) -> None:
         super().__init__(shape=shape)
 
         self.in_port = InPort(shape=shape)
@@ -48,7 +45,7 @@ class PyRecvDensePM(PyLoihiProcessModel):
 
 class SendSparse(AbstractProcess):
     def __init__(self,
-                 shape: tuple,
+                 shape: ty.Tuple[int],
                  data: np.ndarray,
                  indices: np.ndarray) -> None:
         super().__init__(shape=shape, data=data, indices=indices)
@@ -73,11 +70,9 @@ class PySendSparsePM(PyLoihiProcessModel):
         self.out_port.send(data, idx)
 
 
-
-
 class TestProcessSparseToDense(unittest.TestCase):
     def test_init_2d(self):
-        """Tests instantiation of SparseToDense for a 2D output"""
+        """Tests instantiation of SparseToDense for a 2D output."""
         sparse_to_dense = SparseToDense(shape_in=(43200,),
                                         shape_out=(240, 180))
 
@@ -86,7 +81,7 @@ class TestProcessSparseToDense(unittest.TestCase):
         self.assertEqual(sparse_to_dense.proc_params["shape_out"], (240, 180))
 
     def test_init_3d(self):
-        """Tests instantiation of SparseToDense for a 3D output"""
+        """Tests instantiation of SparseToDense for a 3D output."""
         sparse_to_dense = SparseToDense(shape_in=(43200,),
                                         shape_out=(240, 180, 2))
 
@@ -94,69 +89,53 @@ class TestProcessSparseToDense(unittest.TestCase):
         self.assertEqual(sparse_to_dense.proc_params["shape_in"], (43200,))
         self.assertEqual(sparse_to_dense.proc_params["shape_out"], (240, 180, 2))
 
-    def test_invalid_shape_out_dimension(self):
-        """Check if an error is raised when shape_out is 1D or 4D"""
-        # TODO: should it rather raise not implemented error?
+    def test_too_few_or_too_many_dimensions_shape_out_throws_exception(self):
+        """Tests whether an exception is thrown when a 1d or 4d value for the shape_out argument is given."""
+        # TODO: should the 4D+ case rather raise a NotImplementedError?
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240,))
+            SparseToDense(shape_in=(43200,),
+                          shape_out=(240,))
 
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240, 180, 2, 1))
+            SparseToDense(shape_in=(43200,),
+                          shape_out=(240, 180, 2, 1))
 
-    def test_invalid_shape_in_dimension(self):
-        """Check if an error is raised when shape_in is 2D"""
+    def test_too_many_dimensions_shape_in_throws_exception(self):
+        """Tests whether a shape_in argument with too many dimensions throws an exception."""
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200, 1),
-                              shape_out=(240, 180))
+            SparseToDense(shape_in=(43200, 1),
+                          shape_out=(240, 180))
 
-    def test_invalid_shape_in_third_dimension_not_2(self):
-        """Checks if an error is raised if the value of the 3rd dimension 
-        for the shape_out parameter is not 2"""
+    def test_third_dimension_not_2_throws_exception(self):
+        """Tests whether an exception is thrown if the value of the 3rd dimension for the
+        shape_out argument is not 2."""
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240, 180, 1))
+            SparseToDense(shape_in=(43200,),
+                          shape_out=(240, 180, 1))
 
-    def test_invalid_shape_in_negative_integer(self):
-        """Checks if an error is raised when a negative integer for shape_in 
-        is given"""
+    def test_negative_width_shape_in_throws_exception(self):
+        """Tests whether an exception is thrown when a negative integer for the shape_in
+        argument is given"""
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(-43200,),
-                              shape_out=(240, 180))
+            SparseToDense(shape_in=(-43200,),
+                          shape_out=(240, 180))
 
-    def test_invalid_shape_in_decimal(self):
-        """Checks if an error is raised when a decimal integer for shape_in 
-        is given"""
+    def test_negative_width_or_height_shape_out_throws_exception(self):
+        """Tests whether an exception is thrown when a negative width or height for the
+        shape_out argument is given"""
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200.5,),
-                              shape_out=(240, 180))
-
-    def test_invalid_shape_out_negative_width_or_height(self):
-        """Checks if an error is raised when a negative width or height for 
-        shape_out is given"""
-        with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(-240, 180))
+            SparseToDense(shape_in=(43200,),
+                          shape_out=(-240, 180))
             
         with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240, -180))
-
-    def test_invalid_shape_out_decimal_width_or_height(self):
-        """Checks if an error is raised when a decimal width or height for 
-        shape_out is given"""
-        with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240.5, 180))
-            
-        with(self.assertRaises(ValueError)):
-            _ = SparseToDense(shape_in=(43200,),
-                              shape_out=(240, 180.5))
+            SparseToDense(shape_in=(43200,),
+                          shape_out=(240, -180))
 
 
+#TODO: add doc strings
 class TestProcessModelSparseToDense(unittest.TestCase):
     def test_init(self):
+        """Tests instantiation of the SparseToDense process model."""
         proc_params = {
             "shape_out": (240, 180)
         }
@@ -166,6 +145,7 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         self.assertIsInstance(pm, SparseToDensePM)
         self.assertEqual(pm._shape_out, proc_params["shape_out"])
 
+# TODO: can be deleted I guess
     def test_run(self):
         data = np.array([1, 1, 1, 1, 1, 1])
         xs = [0, 1, 2, 1, 2, 4]

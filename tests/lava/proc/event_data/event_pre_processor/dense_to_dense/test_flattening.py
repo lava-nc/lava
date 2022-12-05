@@ -1,30 +1,28 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
-from lava.proc.event_data.event_pre_processor.dense_to_dense.flattening import Flattening, FlatteningPM
 
 import numpy as np
+import typing as ty
+import unittest
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
+from lava.proc.event_data.event_pre_processor.dense_to_dense.flattening import Flattening, FlatteningPM
 
-import matplotlib.pyplot as plt
-
+# TODO: add doc strings for these processes
 class RecvDense(AbstractProcess):
     def __init__(self,
-                 shape: tuple) -> None:
+                 shape: ty.Tuple[int]) -> None:
         super().__init__(shape=shape)
 
         self.in_port = InPort(shape=shape)
@@ -47,7 +45,7 @@ class PyRecvDensePM(PyLoihiProcessModel):
 
 class SendDense(AbstractProcess):
     def __init__(self,
-                 shape: tuple,
+                 shape: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]],
                  data: np.ndarray) -> None:
         super().__init__(shape=shape, data=data)
 
@@ -76,41 +74,31 @@ class TestProcessFlattening(unittest.TestCase):
         self.assertIsInstance(flattener, Flattening)
         self.assertEqual(flattener.proc_params["shape_in"], (240, 180))
 
-    def test_invalid_shape_in_negative_width_or_height(self):
-        """Checks if an error is raised when a negative width or height
-        for shape_in is given."""
+    def test_negative_width_or_height_throws_exception(self):
+        """Tests whether an exception is thrown when a negative width or height for the shape_in argument is given."""
         with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(-240, 180))
-
-        with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240, -180))
-
-    def test_invalid_shape_in_decimal_width_or_height(self):
-        """Checks if an error is raised when a decimal width or height
-        for shape_in is given."""
-        with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240.5, 180))
+            Flattening(shape_in=(-240, 180))
 
         with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240, 180.5))
+            Flattening(shape_in=(240, -180))
 
-    def test_invalid_shape_in_dimension(self):
-        """Checks if an error is raised when a 1d or 4d input shape is given."""
+    def test_too_few_or_too_many_dimensions_throws_exception(self):
+        """Tests whether an exception is thrown when a 1d or 4d value for the shape_in argument is given."""
         with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240,))
+            Flattening(shape_in=(240,))
 
         with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240, 180, 2, 1))
+            Flattening(shape_in=(240, 180, 2, 1))
 
-    def test_invalid_shape_in_third_dimension_not_2(self):
-        """Checks if an error is raised if the value of the 3rd dimension
-        for the shape_in parameter is not 2."""
+    def test_third_dimension_not_2_throws_exception(self):
+        """Tests whether an exception is thrown if the value of the 3rd dimension for the shape_in argument is not 2."""
         with(self.assertRaises(ValueError)):
-            _ = Flattening(shape_in=(240, 180, 1))
+            Flattening(shape_in=(240, 180, 1))
 
-
+# TODO: add doc strings
 class TestProcessModelFlattening(unittest.TestCase):
     def test_init(self):
+        """Tests instantiation of the Flattening process model"""
         proc_params = {
             "shape_in": (240, 180)
         }
@@ -120,6 +108,7 @@ class TestProcessModelFlattening(unittest.TestCase):
         self.assertIsInstance(pm, FlatteningPM)
         self.assertEqual(pm._shape_in, proc_params["shape_in"])
 
+    # TODO: can probably be deleted
     def test_run(self):
         data = np.zeros((8, 8))
 
