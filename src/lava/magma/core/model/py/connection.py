@@ -274,7 +274,7 @@ class LearningConnection:
         """
         return np.concatenate(
             (self.x1[np.newaxis, :], self.x2[np.newaxis, :]), axis=0
-        )
+        ).copy()
 
     def _set_x_traces(self, x_traces: np.ndarray) -> None:
         """Set x traces.
@@ -303,7 +303,7 @@ class LearningConnection:
                 self.y3[np.newaxis, :],
             ),
             axis=0,
-        )
+        ).copy()
 
     def _set_y_traces(self, y_traces: np.ndarray) -> None:
         """Set y traces.

@@ -515,7 +515,7 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[43.01800924]])
+            weight_after_run, np.array([[57.6700329]])
         )
 
     def test_rstdp_floating_point_multi_synapse(self):
@@ -594,8 +594,8 @@ class TestSTDPSim(unittest.TestCase):
             weight_after_run,
             np.array(
                 [
-                    [191.99952804, 7.02267667, 202.75767107],
-                    [188.13966773, -6.54728359, 198.97247313],
+                    [199.4073425, 24.2080047, 211.0480477],
+                    [196.1627991, 11.6769457, 208.2230696],
                 ]
             ),
         )
@@ -737,5 +737,6 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[3.0, 4.0, -9.0], [10.0, 16.0, 2.0]])
+            weight_after_run, np.array([[0., 1., -3.],
+                                        [12., 16.0, 3.]])
         )
