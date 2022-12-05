@@ -20,3 +20,10 @@ script = "setup.py"
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=42", "wheel", "cmake>=3.12", "numpy>=1.22.2"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "--strict-markers"
+testpaths = [
+    "test"
+]
