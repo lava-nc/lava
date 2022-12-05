@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
-#include <message_infrastructure/csrc/core/channel_factory.h>
-#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
+#include <channel/dds/cyclone_dds.h>
+#include <core/channel_factory.h>
+#include <channel/dds/dds_channel.h>
 
 using namespace message_infrastructure;  // NOLINT
 

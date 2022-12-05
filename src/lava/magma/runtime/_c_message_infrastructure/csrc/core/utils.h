@@ -6,9 +6,9 @@
 #define CORE_UTILS_H_
 
 #if defined(GRPC_CHANNEL)
-#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
+#include <channel/grpc/grpcchannel.grpc.pb.h>
 #endif
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <core/message_infrastructure_logging.h>
 #include <memory>
 #include <chrono>  // NOLINT
 #include <thread>  // NOLINT

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/socket/socket_channel.h>
-#include <message_infrastructure/csrc/channel/socket/socket_port.h>
-#include <message_infrastructure/csrc/channel/socket/socket.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/socket/socket_channel.h>
+#include <channel/socket/socket_port.h>
+#include <channel/socket/socket.h>
+#include <core/utils.h>
 
 namespace message_infrastructure {
 

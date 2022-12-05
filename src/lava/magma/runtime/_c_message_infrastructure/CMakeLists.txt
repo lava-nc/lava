@@ -33,27 +33,27 @@ if(PY_WRAPPER)
 endif()
 
 set(MESSAGE_INFRASTRUCTURE_SRCS
-  "message_infrastructure/csrc/core/abstract_actor.cc"
-  "message_infrastructure/csrc/core/abstract_port.cc"
-  "message_infrastructure/csrc/core/multiprocessing.cc"
-  "message_infrastructure/csrc/core/abstract_port_implementation.cc"
-  "message_infrastructure/csrc/core/ports.cc"
-  "message_infrastructure/csrc/core/channel_factory.cc"
-  "message_infrastructure/csrc/core/message_infrastructure_logging.cc"
-  "message_infrastructure/csrc/actor/posix_actor.cc"
-  "message_infrastructure/csrc/channel/shmem/shm.cc"
-  "message_infrastructure/csrc/channel/shmem/shmem_channel.cc"
-  "message_infrastructure/csrc/channel/shmem/shmem_port.cc"
-  "message_infrastructure/csrc/channel/socket/socket.cc"
-  "message_infrastructure/csrc/channel/socket/socket_channel.cc"
-  "message_infrastructure/csrc/channel/socket/socket_port.cc")
+  "csrc/core/abstract_actor.cc"
+  "csrc/core/abstract_port.cc"
+  "csrc/core/multiprocessing.cc"
+  "csrc/core/abstract_port_implementation.cc"
+  "csrc/core/ports.cc"
+  "csrc/core/channel_factory.cc"
+  "csrc/core/message_infrastructure_logging.cc"
+  "csrc/actor/posix_actor.cc"
+  "csrc/channel/shmem/shm.cc"
+  "csrc/channel/shmem/shmem_channel.cc"
+  "csrc/channel/shmem/shmem_port.cc"
+  "csrc/channel/socket/socket.cc"
+  "csrc/channel/socket/socket_channel.cc"
+  "csrc/channel/socket/socket_port.cc")
 
 if(GRPC_CHANNEL)
   set(GRPC_FETCHCONTENT 1)
   set(GRPC_TAG v1.49.1)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc_common.cmake)
 
-  set(grpc_path "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/grpc/")
+  set(grpc_path "${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/grpc/")
   get_filename_component(grpc_proto "${grpc_path}/protos/grpcchannel.proto" ABSOLUTE)
   get_filename_component(grpc_proto_path "${grpc_proto}" PATH)
 
@@ -72,9 +72,9 @@ if(GRPC_CHANNEL)
         DEPENDS "${grpc_proto}")
 
   set(GRPC_CHANNEL_SRCS
-    "message_infrastructure/csrc/channel/grpc/grpc.cc"
-    "message_infrastructure/csrc/channel/grpc/grpc_port.cc"
-    "message_infrastructure/csrc/channel/grpc/grpc_channel.cc"
+    "csrc/channel/grpc/grpc.cc"
+    "csrc/channel/grpc/grpc_port.cc"
+    "csrc/channel/grpc/grpc_channel.cc"
     ${grpc_proto_srcs}
     ${grpc_srcs})
 endif()
@@ -84,8 +84,8 @@ if(DDS_CHANNEL)
   set(COMMON_DDS_DESTINATION "${CMAKE_BINARY_DIR}/install")
   set(COMMON_DDS_INC "${COMMON_DDS_DESTINATION}/include")
   set(DDS_CHANNEL_SRCS
-    "message_infrastructure/csrc/channel/dds/dds.cc"
-    "message_infrastructure/csrc/channel/dds/dds_channel.cc")
+    "csrc/channel/dds/dds.cc"
+    "csrc/channel/dds/dds_channel.cc")
 
   if(FASTDDS_ENABLE AND CycloneDDS_ENABLE)
 	  message(FATAL_ERROR "Cannot enable Backend FASTDDS and CycloneDDS together")
@@ -95,17 +95,17 @@ if(DDS_CHANNEL)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cyclonedds.cmake)
     set(CYCLONE_DDS_INC "${COMMON_DDS_DESTINATION}/include/ddscxx")
     add_custom_target(CycloneDDS_metdata ALL
-                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
+                      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
     add_dependencies(CycloneDDS_metdata cyclonedds-cxx)
-    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp"
-                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/DDSMetaData.idl
-                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds)
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp"
+                       COMMAND "${COMMON_DDS_DESTINATION}/bin/idlc" -l cxx ${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/dds/protos/DDSMetaData.idl
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/dds/protos/cyclone_dds)
 
     add_definitions(-DCycloneDDS_ENABLE)
     set(CycloneDDS_SRC
       ${DDS_CHANNEL_SRCS}
-      "message_infrastructure/csrc/channel/dds/cyclone_dds.cc"
-      "${CMAKE_CURRENT_SOURCE_DIR}/message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
+      "csrc/channel/dds/cyclone_dds.cc"
+      "${CMAKE_CURRENT_SOURCE_DIR}/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.cpp")
   endif()
 
   if(FASTDDS_ENABLE)
@@ -113,9 +113,9 @@ if(DDS_CHANNEL)
     add_definitions(-DFASTDDS_ENABLE)
     set(FASTDDS_SRC
       ${DDS_CHANNEL_SRCS}
-      "message_infrastructure/csrc/channel/dds/fast_dds.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaData.cc"
-      "message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.cc")
+      "csrc/channel/dds/fast_dds.cc"
+      "csrc/channel/dds/protos/fast_dds/DDSMetaData.cc"
+      "csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.cc")
   endif()
 
   if(FASTDDS_ENABLE OR CycloneDDS_ENABLE)
@@ -149,7 +149,7 @@ target_compile_definitions(message_infrastructure PUBLIC
                           $<$<EQUAL:${MSG_LOG_FILE_ENABLE},1>:MSG_LOG_FILE_ENABLE>)
 
 target_include_directories(message_infrastructure PUBLIC
-                          ${PROJECT_SOURCE_DIR}
+                          ${PROJECT_SOURCE_DIR}/csrc
                           $<BUILD_INTERFACE:${COMMON_DDS_INC}>
                           $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>)
 
@@ -178,9 +178,9 @@ endif()
 
 if(PY_WRAPPER)
   set(PY_WRAPPER_SRCS
-        "message_infrastructure/csrc/message_infrastructure_py_wrapper.cc"
-        "message_infrastructure/csrc/channel_proxy.cc"
-        "message_infrastructure/csrc/port_proxy.cc")
+        "csrc/message_infrastructure_py_wrapper.cc"
+        "csrc/channel_proxy.cc"
+        "csrc/port_proxy.cc")
 
   pybind11_add_module(MessageInfrastructurePywrapper ${PY_WRAPPER_SRCS})
   target_include_directories(MessageInfrastructurePywrapper PUBLIC

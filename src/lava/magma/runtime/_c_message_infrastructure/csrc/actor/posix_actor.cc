@@ -7,9 +7,9 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <message_infrastructure/csrc/actor/posix_actor.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <actor/posix_actor.h>
+#include <core/message_infrastructure_logging.h>
+#include <core/utils.h>
 
 namespace message_infrastructure {
 

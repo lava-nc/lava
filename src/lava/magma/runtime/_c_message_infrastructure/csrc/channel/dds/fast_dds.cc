@@ -3,8 +3,8 @@
 // See: https://spdx.org/licenses/
 
 
-#include <message_infrastructure/csrc/channel/dds/fast_dds.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <channel/dds/fast_dds.h>
+#include <core/message_infrastructure_logging.h>
 
 #include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
 #include <fastdds/rtps/transport/TCPv4TransportDescriptor.h>

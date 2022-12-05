@@ -5,11 +5,11 @@
 #ifndef CHANNEL_DDS_DDS_CHANNEL_H_
 #define CHANNEL_DDS_DDS_CHANNEL_H_
 
-#include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/channel/dds/dds_port.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/abstract_channel.h>
+#include <core/abstract_port.h>
+#include <channel/dds/dds.h>
+#include <channel/dds/dds_port.h>
+#include <core/utils.h>
 
 #include <memory>
 #include <string>

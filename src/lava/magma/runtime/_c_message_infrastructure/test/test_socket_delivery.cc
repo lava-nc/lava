@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/core/channel_factory.h>
-#include <message_infrastructure/csrc/core/multiprocessing.h>
-#include <message_infrastructure/csrc/channel/socket/socket_channel.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/channel_factory.h>
+#include <core/multiprocessing.h>
+#include <channel/socket/socket_channel.h>
+#include <core/message_infrastructure_logging.h>
+#include <core/utils.h>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <cstring>

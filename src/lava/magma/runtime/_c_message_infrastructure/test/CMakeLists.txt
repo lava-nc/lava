@@ -8,16 +8,16 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-include_directories(../message_infrastructure/csrc)
+include_directories(../csrc)
 
 add_executable(
   test_messaging_infrastructure
-  cpptest/test_multiprocessing.cc
-  cpptest/test_channel.cc
-  cpptest/test_shm_delivery.cc
-  cpptest/test_socket_delivery.cc
-  $<$<BOOL:${GRPC_CHANNEL}>:cpptest/test_grpc_delivery.cc>
-  $<$<BOOL:${DDS_CHANNEL}>:cpptest/test_ddschannel.cc>)
+  test_multiprocessing.cc
+  test_channel.cc
+  test_shm_delivery.cc
+  test_socket_delivery.cc
+  $<$<BOOL:${GRPC_CHANNEL}>:test_grpc_delivery.cc>
+  $<$<BOOL:${DDS_CHANNEL}>:test_ddschannel.cc>)
 
 
 target_link_libraries(
@@ -29,11 +29,11 @@ target_link_libraries(
 if(FASTDDS_ENABLE)
   add_executable(
     test_fastdds_to_ros
-    cpptest/test_fastdds_to_ros.cc)
+    test_fastdds_to_ros.cc)
 
   add_executable(
     test_fastdds_from_ros
-    cpptest/test_fastdds_from_ros.cc)
+    test_fastdds_from_ros.cc)
 
   target_link_libraries(
     test_fastdds_to_ros
@@ -46,11 +46,11 @@ if(FASTDDS_ENABLE)
 elseif(CycloneDDS_ENABLE)
   add_executable(
     test_cyclonedds_to_ros
-    cpptest/test_cyclonedds_to_ros.cc)
+    test_cyclonedds_to_ros.cc)
 
   add_executable(
     test_cyclonedds_from_ros
-    cpptest/test_cyclonedds_from_ros.cc)
+    test_cyclonedds_from_ros.cc)
 
   target_link_libraries(
     test_cyclonedds_to_ros

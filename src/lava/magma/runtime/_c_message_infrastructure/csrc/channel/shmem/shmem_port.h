@@ -5,9 +5,9 @@
 #ifndef CHANNEL_SHMEM_SHMEM_PORT_H_
 #define CHANNEL_SHMEM_SHMEM_PORT_H_
 
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/shmem/shm.h>
-#include <message_infrastructure/csrc/core/common.h>
+#include <core/abstract_port.h>
+#include <channel/shmem/shm.h>
+#include <core/common.h>
 
 #include <string>
 #include <vector>

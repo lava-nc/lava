@@ -3,13 +3,13 @@
 // See: https://spdx.org/licenses/
 
 #if defined(FASTDDS_ENABLE)
-#include <message_infrastructure/csrc/channel/dds/fast_dds.h>
+#include <channel/dds/fast_dds.h>
 #endif
 #if defined(CycloneDDS_ENABLE)
-#include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
+#include <channel/dds/cyclone_dds.h>
 #endif
-#include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/dds/dds.h>
+#include <core/utils.h>
 #include <string>
 #include <mutex>  // NOLINT
 

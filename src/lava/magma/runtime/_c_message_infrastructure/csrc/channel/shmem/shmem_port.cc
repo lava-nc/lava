@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/shmem/shmem_port.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <channel/shmem/shmem_port.h>
+#include <core/utils.h>
+#include <core/message_infrastructure_logging.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <thread>  // NOLINT

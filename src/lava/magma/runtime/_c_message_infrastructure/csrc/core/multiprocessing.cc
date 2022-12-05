@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/core/multiprocessing.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/actor/posix_actor.h>
+#include <core/multiprocessing.h>
+#include <core/message_infrastructure_logging.h>
+#include <actor/posix_actor.h>
 #if defined(GRPC_CHANNEL)
-#include <message_infrastructure/csrc/channel/grpc/grpc.h>
+#include <channel/grpc/grpc.h>
 #endif
 
 namespace message_infrastructure {

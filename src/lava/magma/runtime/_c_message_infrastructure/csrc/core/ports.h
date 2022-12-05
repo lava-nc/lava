@@ -5,7 +5,7 @@
 #ifndef CORE_PORTS_H_
 #define CORE_PORTS_H_
 
-#include <message_infrastructure/csrc/core/abstract_port_implementation.h>
+#include <core/abstract_port_implementation.h>
 
 #include <vector>
 #include <variant>

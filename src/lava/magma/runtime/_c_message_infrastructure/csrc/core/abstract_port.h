@@ -5,7 +5,7 @@
 #ifndef CORE_ABSTRACT_PORT_H_
 #define CORE_ABSTRACT_PORT_H_
 
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/utils.h>
 #include <string>
 #include <list>
 #include <memory>

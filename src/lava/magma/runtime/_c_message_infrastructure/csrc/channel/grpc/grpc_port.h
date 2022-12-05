@@ -9,10 +9,10 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/common.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/grpc/grpcchannel.grpc.pb.h>
+#include <core/utils.h>
+#include <core/common.h>
+#include <core/abstract_port.h>
+#include <channel/grpc/grpcchannel.grpc.pb.h>
 
 #include <atomic>
 #include <thread> //NOLINT

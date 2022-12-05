@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/shmem/shmem_channel.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/shmem/shmem_channel.h>
+#include <core/utils.h>
 
 namespace message_infrastructure {
 

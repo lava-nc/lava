@@ -5,8 +5,8 @@
 #ifndef CHANNEL_GRPC_GRPC_H_
 #define CHANNEL_GRPC_GRPC_H_
 
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <core/utils.h>
+#include <core/message_infrastructure_logging.h>
 
 #include <string>
 #include <unordered_set>

@@ -5,7 +5,7 @@
 #ifndef CORE_COMMON_H_
 #define CORE_COMMON_H_
 
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/utils.h>
 
 #include <vector>
 #include <atomic>

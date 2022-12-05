@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/socket/socket.h>
+#include <channel/socket/socket.h>
 #include <sys/socket.h>
 #include <filesystem>
 

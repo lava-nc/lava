@@ -5,10 +5,10 @@
 #ifndef CHANNEL_SHMEM_SHMEM_CHANNEL_H_
 #define CHANNEL_SHMEM_SHMEM_CHANNEL_H_
 
-#include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
-#include <message_infrastructure/csrc/channel/shmem/shm.h>
-#include <message_infrastructure/csrc/channel/shmem/shmem_port.h>
+#include <core/abstract_channel.h>
+#include <core/abstract_port.h>
+#include <channel/shmem/shm.h>
+#include <channel/shmem/shmem_port.h>
 
 #include <memory>
 #include <string>

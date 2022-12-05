@@ -5,8 +5,8 @@
 #ifndef CORE_MULTIPROCESSING_H_
 #define CORE_MULTIPROCESSING_H_
 
-#include <message_infrastructure/csrc/core/abstract_actor.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/abstract_actor.h>
+#include <core/utils.h>
 #include <vector>
 #include <functional>
 

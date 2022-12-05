@@ -5,7 +5,7 @@
 #ifndef ACTOR_POSIX_ACTOR_H_
 #define ACTOR_POSIX_ACTOR_H_
 
-#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <core/abstract_actor.h>
 
 namespace message_infrastructure {
 

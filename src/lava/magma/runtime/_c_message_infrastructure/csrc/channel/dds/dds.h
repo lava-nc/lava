@@ -5,8 +5,8 @@
 #ifndef CHANNEL_DDS_DDS_H_
 #define CHANNEL_DDS_DDS_H_
 
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <core/utils.h>
+#include <core/message_infrastructure_logging.h>
 #include <memory>
 #include <unordered_set>
 #include <string>

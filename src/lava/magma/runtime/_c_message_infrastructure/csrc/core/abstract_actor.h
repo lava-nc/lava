@@ -5,8 +5,8 @@
 #ifndef CORE_ABSTRACT_ACTOR_H_
 #define CORE_ABSTRACT_ACTOR_H_
 
-#include <message_infrastructure/csrc/channel/shmem/shm.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/shmem/shm.h>
+#include <core/utils.h>
 #include <functional>
 #include <string>
 #include <memory>

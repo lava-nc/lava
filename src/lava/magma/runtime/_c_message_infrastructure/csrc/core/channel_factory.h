@@ -5,8 +5,8 @@
 #ifndef CORE_CHANNEL_FACTORY_H_
 #define CORE_CHANNEL_FACTORY_H_
 
-#include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/abstract_channel.h>
+#include <core/utils.h>
 
 #include <string>
 #include <memory>

@@ -5,10 +5,10 @@
 #ifndef CHANNEL_SOCKET_SOCKET_CHANNEL_H_
 #define CHANNEL_SOCKET_SOCKET_CHANNEL_H_
 
-#include <message_infrastructure/csrc/channel/socket/socket_port.h>
-#include <message_infrastructure/csrc/channel/socket/socket.h>
-#include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <channel/socket/socket_port.h>
+#include <channel/socket/socket.h>
+#include <core/abstract_channel.h>
+#include <core/abstract_port.h>
 
 #include <memory>
 #include <string>

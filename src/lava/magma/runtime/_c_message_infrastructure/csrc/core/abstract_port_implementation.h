@@ -5,7 +5,7 @@
 #ifndef CORE_ABSTRACT_PORT_IMPLEMENTATION_H_
 #define CORE_ABSTRACT_PORT_IMPLEMENTATION_H_
 
-#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <core/abstract_port.h>
 
 namespace message_infrastructure {
 

@@ -5,11 +5,11 @@
 #ifndef CHANNEL_PROXY_H_
 #define CHANNEL_PROXY_H_
 
-#include <message_infrastructure/csrc/core/abstract_channel.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/port_proxy.h>
+#include <core/abstract_channel.h>
+#include <core/utils.h>
+#include <port_proxy.h>
 #if defined(DDS_CHANNEL)
-#include <message_infrastructure/csrc/channel/dds/dds.h>
+#include <channel/dds/dds.h>
 #endif
 
 #include <string>

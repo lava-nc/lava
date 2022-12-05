@@ -5,13 +5,13 @@
 #ifndef CHANNEL_DDS_CYCLONE_DDS_H_
 #define CHANNEL_DDS_CYCLONE_DDS_H_
 
-#include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/dds/dds.h>
+#include <core/utils.h>
 #include <atomic>
 #include <memory>
 #include <string>
 #include <dds/dds.hpp>
-#include <message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData.hpp>
+#include <channel/dds/protos/cyclone_dds/DDSMetaData.hpp>
 
 namespace message_infrastructure {
 

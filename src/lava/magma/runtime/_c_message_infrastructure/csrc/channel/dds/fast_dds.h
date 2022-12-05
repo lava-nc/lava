@@ -5,10 +5,10 @@
 #ifndef CHANNEL_DDS_FAST_DDS_H_
 #define CHANNEL_DDS_FAST_DDS_H_
 
-#include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.h>
-#include <message_infrastructure/csrc/channel/dds/protos/fast_dds/DDSMetaData.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <channel/dds/dds.h>
+#include <channel/dds/protos/fast_dds/DDSMetaDataPubSubTypes.h>
+#include <channel/dds/protos/fast_dds/DDSMetaData.h>
+#include <core/utils.h>
 #include <fastdds/rtps/transport/TransportDescriptorInterface.h>
 
 #include <memory>

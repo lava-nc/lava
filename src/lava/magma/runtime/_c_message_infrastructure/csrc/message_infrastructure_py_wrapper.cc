@@ -6,12 +6,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <message_infrastructure/csrc/core/abstract_actor.h>
-#include <message_infrastructure/csrc/core/multiprocessing.h>
-#include <message_infrastructure/csrc/port_proxy.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/channel_proxy.h>
-#include <message_infrastructure/csrc/actor/posix_actor.h>
+#include <core/abstract_actor.h>
+#include <core/multiprocessing.h>
+#include <port_proxy.h>
+#include <core/utils.h>
+#include <channel_proxy.h>
+#include <actor/posix_actor.h>
 
 #include <memory>
 

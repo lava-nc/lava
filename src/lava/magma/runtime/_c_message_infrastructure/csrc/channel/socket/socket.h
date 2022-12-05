@@ -5,8 +5,8 @@
 #ifndef CHANNEL_SOCKET_SOCKET_H_
 #define CHANNEL_SOCKET_SOCKET_H_
 
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
-#include <message_infrastructure/csrc/core/utils.h>
+#include <core/message_infrastructure_logging.h>
+#include <core/utils.h>
 
 #include <sys/mman.h>
 #include <sys/stat.h>

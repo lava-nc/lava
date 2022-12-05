@@ -5,9 +5,9 @@
 #ifndef CHANNEL_SOCKET_SOCKET_PORT_H_
 #define CHANNEL_SOCKET_SOCKET_PORT_H_
 
-#include <message_infrastructure/csrc/channel/socket/socket.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <channel/socket/socket.h>
+#include <core/utils.h>
+#include <core/abstract_port.h>
 
 #include <string>
 #include <vector>

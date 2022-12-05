@@ -41,6 +41,6 @@ build/
 log/
 
 # Compiled grpc protos
-message_infrastructure/csrc/channel/grpc/grpcchannel*
+csrc/channel/grpc/grpcchannel*
 # Compiled CycloneDDS proto
-message_infrastructure/csrc/channel/dds/protos/cyclone_dds/DDSMetaData*
+csrc/channel/dds/protos/cyclone_dds/DDSMetaData*

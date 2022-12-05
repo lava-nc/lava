@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/core/multiprocessing.h>
-#include <message_infrastructure/csrc/core/abstract_actor.h>
+#include <core/multiprocessing.h>
+#include <core/abstract_actor.h>
 #include <gtest/gtest.h>
 #include <iostream>
 

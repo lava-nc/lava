@@ -5,8 +5,8 @@
 #ifndef CHANNEL_GRPC_GRPC_CHANNEL_H_
 #define CHANNEL_GRPC_GRPC_CHANNEL_H_
 
-#include <message_infrastructure/csrc/channel/grpc/grpc_port.h>
-#include <message_infrastructure/csrc/core/abstract_channel.h>
+#include <channel/grpc/grpc_port.h>
+#include <core/abstract_channel.h>
 
 #include <memory>
 #include <string>

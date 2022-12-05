@@ -5,7 +5,7 @@
 #ifndef CHANNEL_SHMEM_SHM_H_
 #define CHANNEL_SHMEM_SHM_H_
 
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <core/message_infrastructure_logging.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>

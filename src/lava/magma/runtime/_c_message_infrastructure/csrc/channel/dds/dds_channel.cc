@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/dds/dds_channel.h>
-#include <message_infrastructure/csrc/channel/dds/dds.h>
-#include <message_infrastructure/csrc/core/utils.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <channel/dds/dds_channel.h>
+#include <channel/dds/dds.h>
+#include <core/utils.h>
+#include <core/message_infrastructure_logging.h>
 
 namespace message_infrastructure {
 

@@ -5,7 +5,7 @@
 #ifndef CORE_ABSTRACT_CHANNEL_H_
 #define CORE_ABSTRACT_CHANNEL_H_
 
-#include <message_infrastructure/csrc/core/abstract_port.h>
+#include <core/abstract_port.h>
 #include <memory>
 #include <string>
 

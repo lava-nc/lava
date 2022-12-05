@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <message_infrastructure/csrc/channel/dds/cyclone_dds.h>
-#include <message_infrastructure/csrc/core/message_infrastructure_logging.h>
+#include <channel/dds/cyclone_dds.h>
+#include <core/message_infrastructure_logging.h>
 
 #include <vector>
 #include <string>
