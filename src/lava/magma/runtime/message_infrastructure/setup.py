@@ -132,9 +132,9 @@ class CMakeBuild(build_ext):
 # logic and declaration,
 # and simpler if you include description/version in a file.
 setup(
-    name="MessageInfrastructurePywrapper",
+    name="message_infrastructure",
     version="0.2.1",
-    ext_modules=[CMakeExtension("MessageInfrastructurePywrapper")],
+    ext_modules=[CMakeExtension("message_infrastructure.message_infrastructure")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=5.2"]},
