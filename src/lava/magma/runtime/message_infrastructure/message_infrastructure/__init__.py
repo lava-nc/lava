@@ -5,15 +5,21 @@
 from ctypes import CDLL, RTLD_GLOBAL
 from os import path
 
-lib_name = 'libmessage_infrastructure.so'
-here = path.abspath(__file__)
-lib_path = path.join(path.dirname(here), lib_name)
-if (path.exists(lib_path)):
-    CDLL(lib_path)
-else:
-    print("Warn: No library file")
 
-from message_infrastructure.MessageInfrastructurePywrapper import (
+def load_library():
+    lib_name = 'libmessage_infrastructure.so'
+    here = path.abspath(__file__)
+    lib_path = path.join(path.dirname(here), lib_name)
+    if (path.exists(lib_path)):
+        CDLL(lib_path)
+    else:
+        print("Warn: No library file")
+
+
+load_library()
+
+
+from message_infrastructure.MessageInfrastructurePywrapper import (  # noqa
     CppMultiProcessing,
     ProcessType,
     Actor,
@@ -24,10 +30,15 @@ from message_infrastructure.MessageInfrastructurePywrapper import (
     support_grpc_channel,
     support_fastdds_channel,
     support_cyclonedds_channel)
-from message_infrastructure.MessageInfrastructurePywrapper \
-    import ChannelType as ChannelBackend
 
-from .ports import SendPort, Channel, getTempSendPort, getTempRecvPort
+from message_infrastructure.MessageInfrastructurePywrapper \
+    import ChannelType as ChannelBackend  # noqa: E402
+
+from .ports import (  # noqa: E402
+    SendPort,
+    Channel,
+    getTempSendPort,
+    getTempRecvPort)
 
 ChannelQueueSize = 1
 SyncChannelBytes = 128
