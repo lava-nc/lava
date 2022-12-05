@@ -126,7 +126,8 @@ jobs:
       run: build/temp.*/message_infrastructure.MessageInfrastructurePywrapper/test/test_messaging_infrastructure
 
     - name: Run message infrastructure unit tests
+      working-directory: ./src/lava/magma/runtime/message_infrastructure
       if: runner.os == 'Linux'
       run: |
         source $VENV
-        pytest ./src/lava/magma/runtime/message_infrastructure/test/
+        pytest test/
