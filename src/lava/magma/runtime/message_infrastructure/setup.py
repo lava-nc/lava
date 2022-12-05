@@ -134,7 +134,8 @@ class CMakeBuild(build_ext):
 setup(
     name="MessageInfrastructurePywrapper",
     version="0.2.1",
-    ext_modules=[CMakeExtension("message_infrastructure.MessageInfrastructurePywrapper")],
+    ext_modules=[CMakeExtension(
+        "message_infrastructure.MessageInfrastructurePywrapper")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=5.2"]},

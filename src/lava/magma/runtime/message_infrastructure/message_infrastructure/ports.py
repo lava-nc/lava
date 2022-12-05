@@ -2,14 +2,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from .MessageInfrastructurePywrapper import SendPort as CppSendPort
-from .MessageInfrastructurePywrapper import Channel as CppChannel
-from .MessageInfrastructurePywrapper import TempChannel
-from .MessageInfrastructurePywrapper import support_grpc_channel
-from .MessageInfrastructurePywrapper import support_fastdds_channel
-from .MessageInfrastructurePywrapper import support_cyclonedds_channel
+from message_infrastructure.MessageInfrastructurePywrapper \
+    import SendPort as CppSendPort
+from message_infrastructure.MessageInfrastructurePywrapper \
+    import Channel as CppChannel
+from message_infrastructure.MessageInfrastructurePywrapper import (
+    TempChannel,
+    support_grpc_channel,
+    support_fastdds_channel,
+    support_cyclonedds_channel,
+    AbstractTransferPort)
 
-from .MessageInfrastructurePywrapper import AbstractTransferPort
 import numpy as np
 
 
@@ -43,7 +46,8 @@ class SendPort(AbstractTransferPort):
 
 
 if support_grpc_channel():
-    from .MessageInfrastructurePywrapper import GetRPCChannel as CppRPCChannel
+    from message_infrastructure.MessageInfrastructurePywrapper \
+        import GetRPCChannel as CppRPCChannel
 
     class GetRPCChannel(CppRPCChannel):
 
@@ -52,7 +56,8 @@ if support_grpc_channel():
             return SendPort(super().src_port)
 
 if support_fastdds_channel() or support_cyclonedds_channel():
-    from .MessageInfrastructurePywrapper import GetDDSChannel as CppDDSChannel
+    from message_infrastructure.MessageInfrastructurePywrapper \
+        import GetDDSChannel as CppDDSChannel
 
     class GetDDSChannel(CppDDSChannel):
         @property
