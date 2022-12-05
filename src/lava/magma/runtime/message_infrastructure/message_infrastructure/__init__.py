@@ -2,18 +2,43 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from MessageInfrastructurePywrapper import CppMultiProcessing
-from MessageInfrastructurePywrapper import ProcessType
-from MessageInfrastructurePywrapper import Actor
-from MessageInfrastructurePywrapper import ActorStatus
-from MessageInfrastructurePywrapper import ActorCmd
-from MessageInfrastructurePywrapper import ChannelType as ChannelBackend
-from MessageInfrastructurePywrapper import RecvPort
-from MessageInfrastructurePywrapper import AbstractTransferPort
-from MessageInfrastructurePywrapper import support_grpc_channel
-from MessageInfrastructurePywrapper import support_fastdds_channel
-from MessageInfrastructurePywrapper import support_cyclonedds_channel
-from .ports import SendPort, Channel, getTempSendPort, getTempRecvPort
+from ctypes import CDLL, RTLD_GLOBAL
+from os import path
+
+
+def load_library():
+    lib_name = 'libmessage_infrastructure.so'
+    here = path.abspath(__file__)
+    lib_path = path.join(path.dirname(here), lib_name)
+    if (path.exists(lib_path)):
+        CDLL(lib_path)
+    else:
+        print("Warn: No library file")
+
+
+load_library()
+
+
+from message_infrastructure.MessageInfrastructurePywrapper import (  # noqa
+    CppMultiProcessing,
+    ProcessType,
+    Actor,
+    ActorStatus,
+    ActorCmd,
+    RecvPort,
+    AbstractTransferPort,
+    support_grpc_channel,
+    support_fastdds_channel,
+    support_cyclonedds_channel)
+
+from message_infrastructure.MessageInfrastructurePywrapper \
+    import ChannelType as ChannelBackend  # noqa: E402
+
+from .ports import (  # noqa: E402
+    SendPort,
+    Channel,
+    getTempSendPort,
+    getTempRecvPort)
 
 ChannelQueueSize = 1
 SyncChannelBytes = 128
@@ -25,5 +50,6 @@ if SupportGRPCChannel:
     from .ports import GetRPCChannel
 if SupportFastDDSChannel or SupportCycloneDDSChannel:
     from .ports import GetDDSChannel
-    from MessageInfrastructurePywrapper import DDSTransportType
-    from MessageInfrastructurePywrapper import DDSBackendType
+    from message_infrastructure.MessageInfrastructurePywrapper import (
+        DDSTransportType,
+        DDSBackendType)

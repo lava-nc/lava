@@ -11,7 +11,7 @@ numpy = "^1.22.2"
 pybind11 = {extras = ["global"], version = "^2.10.0"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^7.2.0"
 psutil = "^5.9.2"
 
 [tool.poetry.build]
@@ -20,3 +20,10 @@ script = "setup.py"
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=42", "wheel", "cmake>=3.12", "numpy>=1.22.2"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "--strict-markers"
+testpaths = [
+    "test"
+]

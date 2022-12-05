@@ -1,0 +1,133 @@
+name: Run CI
+on:
+  push:
+    branches:
+      - message_refactor_release2nd 
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'    
+
+    - name: Run flakeheaven (flake8)
+      run: poetry run flakeheaven lint src/lava tests/
+      
+    - name: Run cpplint (cpplint)
+      run: poetry run cpplint --recursive --quiet \
+           --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
+           --root=csrc \
+           --exclude=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/channel/dds/protos \
+           src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
+           src/lava/magma/runtime/message_infrastructure/test/
+
+  security-lint:
+    name: Security Lint Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
+    - name: Run bandit    
+      uses: tj-actions/bandit@v5.1
+      with:
+        targets: |
+          src/lava/.      
+        options: "-r --exclude build --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+
+  unit-tests:
+    name: Unit Test Code + Coverage
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        # TODO: restore it before merge into ML
+        operating-system: [ubuntu-latest,] # windows-latest, macos-latest]
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
+    - name: Run unit tests
+      run: |
+        poetry run git lfs fetch
+        poetry run git lfs pull
+        poetry run pytest
+
+  msg-infr-unit-tests:
+    name: Message Infrastructure Unit Test
+    runs-on: ${{ matrix.operating-system }}
+    env:
+      DEBUG: 1
+
+    strategy:
+      matrix:
+        # TODO: restore it before merge into ML
+        operating-system: [ubuntu-latest,] #windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-path: .venv
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-02-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      working-directory: ./src/lava/magma/runtime/message_infrastructure
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install message_infrastructure
+      working-directory: ./src/lava/magma/runtime/message_infrastructure
+      run: poetry install --no-interaction
+
+    - name: Run message infrastructure cpp unit tests
+      working-directory: ./src/lava/magma/runtime/message_infrastructure/
+      run: build/temp.*/message_infrastructure.MessageInfrastructurePywrapper/test/test_messaging_infrastructure
+
+    - name: Run message infrastructure unit tests
+      working-directory: ./src/lava/magma/runtime/message_infrastructure
+      if: runner.os == 'Linux'
+      run: |
+        source $VENV
+        pytest test/
