@@ -113,19 +113,41 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return s_graded_in
 
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
+
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+
         super().run_spk()
 
         a_graded_in = self.a_third_factor_in.recv()
 
+        # self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
-        self.s_out_y1.send(self.s_out_buff)
+        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
@@ -185,19 +207,41 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         """
         return s_graded_in
 
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return np.floor(self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff)
+
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+
         super().run_spk()
 
         a_graded_in = self.a_third_factor_in.recv()
 
+        # self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
-        self.s_out_y1.send(self.s_out_buff)
+        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
@@ -452,9 +496,12 @@ class TestSTDPSim(unittest.TestCase):
         dense.a_out.connect(lif_1.a_in)
 
         # Connect traces from LIF to Dense
-        # y1: spikes (BAP)
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
         # y2: reward
-        lif_1.s_out_y1.connect(dense.s_in_bap)
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
 
         run_cfg = Loihi2SimCfg(select_tag="floating_pt")
@@ -509,6 +556,7 @@ class TestSTDPSim(unittest.TestCase):
             dv=0,
             vth=1,
             bias_mant=np.array([0.12, 0.15]),
+            learning_rule=learning_rule
         )
 
         # reward
@@ -524,9 +572,12 @@ class TestSTDPSim(unittest.TestCase):
         dense.a_out.connect(lif_1.a_in)
 
         # Connect traces from LIF to Dense
-        # y1: spikes (BAP)
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
         # y2: reward
-        lif_1.s_out_y1.connect(dense.s_in_bap)
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
 
         run_cfg = Loihi2SimCfg(select_tag="floating_pt")
@@ -574,7 +625,8 @@ class TestSTDPSim(unittest.TestCase):
 
         dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
-        lif_1 = RSTDPLIF(shape=(size,), du=0, dv=0, vth=100, bias_mant=3700)
+        lif_1 = RSTDPLIF(shape=(size,), du=0, dv=0, vth=100, bias_mant=3700,
+                         learning_rule=learning_rule)
 
         # reward
         reward_signal = np.zeros((size, num_steps))
@@ -589,9 +641,12 @@ class TestSTDPSim(unittest.TestCase):
         dense.a_out.connect(lif_1.a_in)
 
         # Connect traces from LIF to Dense
-        # y1: spikes (BAP)
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
         # y2: reward
-        lif_1.s_out_y1.connect(dense.s_in_bap)
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
 
         run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
@@ -647,6 +702,7 @@ class TestSTDPSim(unittest.TestCase):
             dv=0,
             vth=90,
             bias_mant=np.array([2400, 1600]),
+            learning_rule=learning_rule
         )
 
         # reward
@@ -662,9 +718,12 @@ class TestSTDPSim(unittest.TestCase):
         dense.a_out.connect(lif_1.a_in)
 
         # Connect traces from LIF to Dense
-        # y1: spikes (BAP)
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
         # y2: reward
-        lif_1.s_out_y1.connect(dense.s_in_bap)
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
 
         run_cfg = Loihi2SimCfg(select_tag="fixed_pt")

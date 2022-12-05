@@ -412,7 +412,8 @@ class LearningConnection:
         """
         # set traces to last value
         self._set_x_traces(x_traces_history[-1])
-        self._set_y_traces(y_traces_history[-1])
+        if isinstance(self._learning_rule, Loihi2FLearningRule):
+            self._set_y_traces(y_traces_history[-1])
 
     @abstractmethod
     def _apply_learning_rules(self,

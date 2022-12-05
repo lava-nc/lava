@@ -109,6 +109,24 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         """
         return s_graded_in
 
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
+
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
@@ -119,9 +137,11 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
 
         a_graded_in = self.a_third_factor_in.recv()
 
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
-        self.s_out_y1.send(self.s_out_buff)
+        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
@@ -181,6 +201,24 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         """
         return s_graded_in
 
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return np.floor(self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff)
+
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
@@ -191,9 +229,11 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
 
         a_graded_in = self.a_third_factor_in.recv()
 
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
-        self.s_out_y1.send(self.s_out_buff)
+        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
