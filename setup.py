@@ -21,7 +21,7 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
+    def __init__(self, name, sourcedir="src/lava/magma/runtime/_c_message_infrastructure"):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
@@ -132,10 +132,10 @@ class CMakeBuild(build_ext):
 # logic and declaration,
 # and simpler if you include description/version in a file.
 setup(
-    name="MessageInfrastructurePywrapper",
+    name="lava-nc",
     version="0.2.1",
     ext_modules=[CMakeExtension(
-        "message_infrastructure.MessageInfrastructurePywrapper")],
+        "MessageInfrastructurePywrapper")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=5.2"]},
