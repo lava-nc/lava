@@ -16,9 +16,34 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.utils.events import sub_sample
 
 
 class AedatDataLoader(AbstractProcess):
+    """
+    Process that reads data from an aedat4 file.
+
+    This process outputs a sparse tensor of the event data stream, meaning
+    two 1-dimensional vectors containing polarity data and indices. The
+    data is sub-sampled to fit the given output shape. The process is
+    implemented such that the reading from file loops back to the beginning
+    of the file when it reaches the end.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the desired aedat4 file.
+
+    shape_out : tuple (shape (n,))
+        The shape of the OutPort. The size of this parameter sets a maximum
+        number of events per time-step, and the process will subsample data
+        in order to fit it into this port. Data which contains fewer events
+        will be padded with zeros.
+
+    seed_sub_sampling : int, optional
+        Seed used for the random number generator that sub-samples data to
+        fit the OutPort.
+    """
     def __init__(self,
                  *,
                  file_path: str,
@@ -37,17 +62,23 @@ class AedatDataLoader(AbstractProcess):
 
     @staticmethod
     def _validate_file_path(file_path: str) -> None:
-        # Checking file extension
+        """
+        Checks whether the file extension is valid and if the file can
+        be found. Raises relevant exception if not.
+        """
         if not file_path.lower().endswith('.aedat4'):
             raise ValueError(f"AedatDataLoader currently only supports aedat4 files (*.aedat4). "
                              f"{file_path} was given.")
 
-        # Checking if file exists
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f"File not found. {file_path} given.")
 
     @staticmethod
     def _validate_shape_out(shape_out: ty.Tuple[int]) -> None:
+        """
+        Checks whether the given shape is valid and that the size given
+        is not a negative number. Raises relevant exception if not
+        """
         if len(shape_out) != 1:
             raise ValueError(f"Shape of the OutPort should be (n,). "
                              f"{shape_out} was given.")
@@ -60,6 +91,10 @@ class AedatDataLoader(AbstractProcess):
 @implements(proc=AedatDataLoader, protocol=LoihiProtocol)
 @requires(CPU)
 class AedatDataLoaderPM(PyLoihiProcessModel):
+    """
+    Implementation of the Aedat Data Loader process on Loihi, with sparse
+    representation of events.
+    """
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_SPARSE, int)
 
     def __init__(self, proc_params: dict) -> None:
@@ -73,11 +108,12 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
 
         self._seed_sub_sampling = proc_params["seed_sub_sampling"]
 
-    def _init_aedat_file(self) -> None:
-        self._file = AedatFile(file_name=self._file_path)
-        self._stream = self._file["events"].numpy()
-
     def run_spk(self) -> None:
+        """
+        Compiles events into a batch (roughly 10ms long). The polarity data
+        and x and y values are then used to encode the sparse tensor. The
+        data is sub-sampled if necessary, and then sent out.
+        """
         events = self._get_next_event_batch()
 
         data, indices = self._encode_data_and_indices(events)
@@ -87,8 +123,13 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
         self.out_port.send(data, indices)
 
     def _get_next_event_batch(self):
+        """
+        Compiles events from the event stream into batches which will be
+        treated in a single timestep. Once we reach the end of the file, the
+        process loops back to the start of the file.
+        """
         try:
-            # If end of file, raise StopIteration error.
+            # If end of file, raises StopIteration error.
             events = self._stream.__next__()
         except StopIteration:
             # Reset the iterator and loop back to the start of the file.
@@ -97,33 +138,23 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
 
         return events
 
-# TODO: change type annotation of events
-    def _encode_data_and_indices(self,
-                                 events: dict) \
-            -> ty.Tuple[np.ndarray, np.ndarray]:
+    def _init_aedat_file(self) -> None:
+        """
+        Resets the event stream
+        """
+        self._file = AedatFile(file_name=self._file_path)
+        self._stream = self._file["events"].numpy()
 
+    # TODO: look into the type of "events"
+    def _encode_data_and_indices(self,
+                                 events: ty.Dict) \
+            -> ty.Tuple[np.ndarray, np.ndarray]:
+        """
+        Extracts the polarity data, and x and y indices from the given
+        batch of events, and encodes them accordingly.
+        """
         xs, ys, ps = events['x'], events['y'], events['polarity']
         data = ps
         indices = np.ravel_multi_index((xs, ys), self._frame_shape)
 
-        return data, indices
-
-def sub_sample(data: np.ndarray,
-               indices: np.ndarray,
-               max_events: int,
-               seed_random: ty.Optional[int] = 0) \
-        -> ty.Tuple[np.ndarray, np.ndarray]:
-    # If we have more data than our shape allows, subsample
-    if data.shape[0] > max_events:
-        random_rng = np.random.default_rng(seed_random)
-        data_idx_array = np.arange(0, data.shape[0])
-        sampled_idx = random_rng.choice(data_idx_array,
-                                        max_events,
-                                        replace=False)
-
-        warnings.warn(f"Read {data.shape[0]} events. Maximum number of events is {max_events}. "
-                      f"Removed {data.shape[0] - max_events} events by subsampling.")
-
-        return data[sampled_idx], indices[sampled_idx]
-    else:
         return data, indices

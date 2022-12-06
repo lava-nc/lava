@@ -89,7 +89,7 @@ class TestProcessSparseToDense(unittest.TestCase):
         self.assertEqual(sparse_to_dense.proc_params["shape_in"], (43200,))
         self.assertEqual(sparse_to_dense.proc_params["shape_out"], (240, 180, 2))
 
-    def test_too_few_or_too_many_dimensions_shape_out_throws_exception(self):
+    def test_invalid_shape_out_throws_exception(self):
         """Tests whether an exception is thrown when a 1d or 4d value for the shape_out argument is given."""
         # TODO: should the 4D+ case rather raise a NotImplementedError?
         with(self.assertRaises(ValueError)):
@@ -100,8 +100,8 @@ class TestProcessSparseToDense(unittest.TestCase):
             SparseToDense(shape_in=(43200,),
                           shape_out=(240, 180, 2, 1))
 
-    def test_too_many_dimensions_shape_in_throws_exception(self):
-        """Tests whether a shape_in argument with too many dimensions throws an exception."""
+    def test_invalid_shape_in_throws_exception(self):
+        """Tests whether a shape_in argument that isn't (n,) throws an exception."""
         with(self.assertRaises(ValueError)):
             SparseToDense(shape_in=(43200, 1),
                           shape_out=(240, 180))
@@ -113,7 +113,7 @@ class TestProcessSparseToDense(unittest.TestCase):
             SparseToDense(shape_in=(43200,),
                           shape_out=(240, 180, 1))
 
-    def test_negative_width_shape_in_throws_exception(self):
+    def test_negative_size_shape_in_throws_exception(self):
         """Tests whether an exception is thrown when a negative integer for the shape_in
         argument is given"""
         with(self.assertRaises(ValueError)):

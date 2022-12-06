@@ -86,13 +86,13 @@ class TestProcessBinaryToUnaryPolarity(unittest.TestCase):
         self.assertIsInstance(converter, BinaryToUnaryPolarity)
         self.assertEqual(converter.proc_params["shape"], (43200,))
 
-    def test_too_many_dimensions_throws_exception(self):
-        """Tests whether a shape argument with too many dimensions throws an exception."""
+    def test_invalid_shape_throws_exception(self):
+        """Tests whether a shape argument with an invalid shape throws an exception."""
         with(self.assertRaises(ValueError)):
             BinaryToUnaryPolarity(shape=(240, 180))
 
-    def test_negative_width_throws_exception(self):
-        """Tests whether a shape argument with a negative width throws an exception."""
+    def test_negative_size_throws_exception(self):
+        """Tests whether a shape argument with a negative size throws an exception."""
         with(self.assertRaises(ValueError)):
             BinaryToUnaryPolarity(shape=(-43200,))
 

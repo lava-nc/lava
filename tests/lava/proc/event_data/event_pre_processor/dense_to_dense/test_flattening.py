@@ -82,7 +82,7 @@ class TestProcessFlattening(unittest.TestCase):
         with(self.assertRaises(ValueError)):
             Flattening(shape_in=(240, -180))
 
-    def test_too_few_or_too_many_dimensions_throws_exception(self):
+    def test_invalid_shape_throws_exception(self):
         """Tests whether an exception is thrown when a 1d or 4d value for the shape_in argument is given."""
         with(self.assertRaises(ValueError)):
             Flattening(shape_in=(240,))
