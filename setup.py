@@ -135,7 +135,7 @@ setup(
     name="lava-nc",
     version="0.2.1",
     ext_modules=[CMakeExtension(
-        "MessageInfrastructurePywrapper")],
+        "src.lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=5.2"]},
