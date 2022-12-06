@@ -5,7 +5,7 @@
 import logging
 import typing as ty
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
     RecvPort,
     SendPort

@@ -3,8 +3,8 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
-from message_infrastructure import ChannelBackend
-from message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure import ChannelBackend
+from lava.magma.runtime.message_infrastructure import Channel
 
 """A Message Infrastructure Interface which can create actors which would
 participate in message passing/exchange, start and stop them as well as

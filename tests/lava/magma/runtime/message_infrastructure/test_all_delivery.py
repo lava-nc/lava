@@ -10,9 +10,9 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-from message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ActorStatus,
     ChannelBackend,
     Channel,
@@ -451,7 +451,7 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
-        from message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -512,9 +512,9 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportFastDDSChannel,
                      "Not support FastDDS channel.")
     def test_fastdds_channel(self):
-        from message_infrastructure import GetDDSChannel
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import GetDDSChannel
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -579,9 +579,9 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support CycloneDDS channel.")
     def test_cyclonedds_channel(self):
-        from message_infrastructure import GetDDSChannel
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import GetDDSChannel
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_

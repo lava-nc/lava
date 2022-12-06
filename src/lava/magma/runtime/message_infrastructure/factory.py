@@ -1,8 +1,8 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
-from message_infrastructure.message_interface_enum import ActorType
-from message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
 
 """Factory class to create the messaging infrastructure"""
 

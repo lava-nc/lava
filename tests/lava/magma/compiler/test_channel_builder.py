@@ -10,7 +10,7 @@ from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.utils import PortInitializer
 
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     SendPort,

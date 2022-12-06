@@ -7,9 +7,9 @@ import unittest
 from functools import partial
 import time
 
-from message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     SendPort,
@@ -64,9 +64,9 @@ class Builder:
 
 
 def ddschannel_protocol(transfer_type, backend, topic_name):
-    from message_infrastructure import GetDDSChannel
-    from message_infrastructure import DDSTransportType
-    from message_infrastructure import DDSBackendType
+    from lava.magma.runtime.message_infrastructure import GetDDSChannel
+    from lava.magma.runtime.message_infrastructure import DDSTransportType
+    from lava.magma.runtime.message_infrastructure import DDSBackendType
     mp = MultiProcessing()
     mp.start()
     dds_channel = GetDDSChannel(
@@ -205,7 +205,7 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
-        from message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure import GetRPCChannel
         mp = MultiProcessing()
         mp.start()
         name = 'test_grpc_channel'
@@ -235,16 +235,16 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
     def test_fastdds_channel_shm(self):
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSSHM,
                             DDSBackendType.FASTDDSBackend,
                             "test_fastdds_channel_shm")
 
     @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
     def test_fastdds_channel_udpv4(self):
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSUDPv4,
                             DDSBackendType.FASTDDSBackend,
                             "test_fastdds_channel_udpv4")
@@ -252,8 +252,8 @@ class TestChannel(unittest.TestCase):
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
     def test_cyclonedds_channel_shm(self):
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSSHM,
                             DDSBackendType.CycloneDDSBackend,
                             "test_cyclonedds_shm")
@@ -261,8 +261,8 @@ class TestChannel(unittest.TestCase):
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
     def test_cyclonedds_channel_udpv4(self):
-        from message_infrastructure import DDSTransportType
-        from message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import DDSTransportType
+        from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSUDPv4,
                             DDSBackendType.CycloneDDSBackend,
                             "test_cyclonedds_udpv4")

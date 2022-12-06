@@ -4,7 +4,7 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SendPort,
     Actor,

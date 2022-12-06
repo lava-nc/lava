@@ -67,7 +67,7 @@ from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
-from message_infrastructure import ChannelBackend
+from lava.magma.runtime.message_infrastructure import ChannelBackend
 
 
 class Compiler:

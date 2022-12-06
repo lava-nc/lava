@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
     RecvPort,
     SendPort

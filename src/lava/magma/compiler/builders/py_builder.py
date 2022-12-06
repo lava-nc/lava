@@ -7,7 +7,7 @@ import typing as ty
 import numpy as np
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
     RecvPort,
     SendPort

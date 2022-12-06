@@ -7,9 +7,9 @@ import unittest
 from functools import partial
 import time
 
-from message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     SendPort,

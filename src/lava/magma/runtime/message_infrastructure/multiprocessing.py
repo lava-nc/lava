@@ -4,12 +4,12 @@
 import typing as ty
 from functools import partial
 
-from message_infrastructure import CppMultiProcessing
-from message_infrastructure import Actor
-from message_infrastructure import ChannelBackend
-from message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure import CppMultiProcessing
+from lava.magma.runtime.message_infrastructure import Actor
+from lava.magma.runtime.message_infrastructure import ChannelBackend
+from lava.magma.runtime.message_infrastructure import Channel
 
-from message_infrastructure.message_infrastructure_interface \
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface \
     import MessageInfrastructureInterface
 
 
