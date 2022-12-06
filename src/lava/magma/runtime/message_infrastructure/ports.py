@@ -6,7 +6,8 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import SendPort as CppSendPort
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import Channel as CppChannel
-from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper import (
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import (
     TempChannel,
     support_grpc_channel,
     support_fastdds_channel,
@@ -46,7 +47,8 @@ class SendPort(AbstractTransferPort):
 
 
 if support_grpc_channel():
-    from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    from lava.magma.runtime.message_infrastructure. \
+        MessageInfrastructurePywrapper \
         import GetRPCChannel as CppRPCChannel
 
     class GetRPCChannel(CppRPCChannel):
@@ -56,7 +58,8 @@ if support_grpc_channel():
             return SendPort(super().src_port)
 
 if support_fastdds_channel() or support_cyclonedds_channel():
-    from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    from lava.magma.runtime.message_infrastructure. \
+        MessageInfrastructurePywrapper \
         import GetDDSChannel as CppDDSChannel
 
     class GetDDSChannel(CppDDSChannel):

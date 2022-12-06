@@ -14,7 +14,8 @@ from lava.magma.runtime.message_infrastructure import CppMultiProcessing
 from lava.magma.runtime.message_infrastructure import ProcessType
 from lava.magma.runtime.message_infrastructure import Actor
 from lava.magma.runtime.message_infrastructure import ActorStatus
-from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.multiprocessing \
+    import MultiProcessing
 from lava.magma.runtime.message_infrastructure import SendPort
 from lava.magma.runtime.message_infrastructure import RecvPort
 from lava.magma.runtime.message_infrastructure import Channel

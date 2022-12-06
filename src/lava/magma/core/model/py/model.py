@@ -9,11 +9,11 @@ import logging
 import numpy as np
 
 from lava.magma.runtime.message_infrastructure import (SendPort,
-                                    RecvPort,
-                                    Actor,
-                                    ActorStatus,
-                                    getTempSendPort,
-                                    getTempRecvPort)
+                                                       RecvPort,
+                                                       Actor,
+                                                       ActorStatus,
+                                                       getTempSendPort,
+                                                       getTempRecvPort)
 from lava.magma.compiler.channels.selector import Selector
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation

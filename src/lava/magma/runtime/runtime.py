@@ -10,16 +10,19 @@ import typing
 import typing as ty
 import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
-                                    SendPort,
-                                    Actor,
-                                    Channel,
-                                    getTempSendPort,
-                                    getTempRecvPort)
+                                                       SendPort,
+                                                       Actor,
+                                                       Channel,
+                                                       getTempSendPort,
+                                                       getTempRecvPort)
 
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
-from lava.magma.runtime.message_infrastructure.message_interface_enum import ActorType
-from lava.magma.runtime.message_infrastructure.factory import MessageInfrastructureFactory
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface import \
+from lava.magma.runtime.message_infrastructure.message_interface_enum import \
+    ActorType
+from lava.magma.runtime.message_infrastructure.factory import \
+    MessageInfrastructureFactory
+from lava.magma.runtime.\
+    message_infrastructure.message_infrastructure_interface import \
     MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
                                                  enum_equal, enum_to_np)

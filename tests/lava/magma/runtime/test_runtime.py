@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import Mock, PropertyMock
 
 from lava.magma.compiler.executable import Executable
-from lava.magma.runtime.message_infrastructure.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.message_interface_enum \
+    import ActorType
 from lava.magma.core.resources import HeadNode, Loihi2System
 from lava.magma.compiler.node import Node, NodeConfig
 from lava.magma.runtime.runtime import Runtime

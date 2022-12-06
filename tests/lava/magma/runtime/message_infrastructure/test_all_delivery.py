@@ -10,7 +10,8 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
+from lava.magma.runtime.message_infrastructure.multiprocessing \
+    import MultiProcessing
 
 from lava.magma.runtime.message_infrastructure import (
     ActorStatus,

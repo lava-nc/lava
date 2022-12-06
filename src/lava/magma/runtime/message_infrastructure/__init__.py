@@ -19,7 +19,8 @@ def load_library():
 load_library()
 
 
-from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper import (  # noqa
+from lava.magma.runtime.message_infrastructure. \
+    MessageInfrastructurePywrapper import (  # noqa
     CppMultiProcessing,
     ProcessType,
     Actor,
