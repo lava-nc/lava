@@ -7,4 +7,3 @@ if [ -d $MSG_LOG_PATH ]; then
 else
   mkdir -p $MSG_LOG_PATH
 fi
-export LD_LIBRARY_PATH="${SCRIPTPATH}/build:${SCRIPTPATH}/build/install/lib:${SCRIPTPATH}:$LD_LIBRARY_PATH"
