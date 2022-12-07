@@ -51,7 +51,6 @@ numpy = "^1.22.2"
 scipy = "^1.8.0"
 networkx = "<=2.8.7"
 asteval = "^0.9.27"
-pybind11 = {extras = ["global"], version = "^2.10.1"}
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.2"

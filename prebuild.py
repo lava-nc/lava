@@ -9,8 +9,6 @@ class CMake():
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
         self.cmake_command = "cmake"
-        # self.cmake_command_prefix = ["poetry", "run"]
-        self.cmake_command_prefix = []
         self.cmake_args = []
         self.build_args = []
         self.env = os.environ.copy()
@@ -23,16 +21,12 @@ class CMake():
     def _set_cmake_args(self):
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
-        
-        python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
-            .decode().strip() + "/bin/python3"
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
-        print(f"THE PATH OF EXECUTABLE: {python_env}")
-        print(f"THE ORIGINAL PATH OF EXECUTEABLE: {sys.executable}")
+        print(f"THE PATH OF EXECUTEABLE: {sys.executable}")
         if "CMAKE_ARGS" in os.environ:
             self.cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ")
                            if item]
@@ -51,8 +45,8 @@ class CMake():
     def run(self):
         self._set_cmake_path()
         self._set_cmake_args()
-        subprocess.check_call(self.cmake_command_prefix + [self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
-        subprocess.check_call(self.cmake_command_prefix + [self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call([self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call([self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
 
 if __name__ == '__main__':
     base_runtime_path = "src/lava/magma/runtime/"
