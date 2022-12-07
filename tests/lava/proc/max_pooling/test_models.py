@@ -17,10 +17,17 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.proc.max_pooling.process import MaxPooling
-from lava.proc.max_pooling.models import MaxPoolingPM
+from lava.proc.max_pooling.models import PyMaxPoolingPM
 
 
 class RecvDense(AbstractProcess):
+    """Process that receives arbitrary dense data.
+
+    Parameters
+    ----------
+    shape: tuple
+        Shape of the InPort and Var.
+    """
     def __init__(self,
                  shape: tuple) -> None:
         super().__init__(shape=shape)
@@ -33,6 +40,7 @@ class RecvDense(AbstractProcess):
 @implements(proc=RecvDense, protocol=LoihiProtocol)
 @requires(CPU)
 class PyRecvDensePM(PyLoihiProcessModel):
+    """Receives dense data from PyInPort and stores it in a Var."""
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     data: np.ndarray = LavaPyType(np.ndarray, int)
@@ -44,6 +52,13 @@ class PyRecvDensePM(PyLoihiProcessModel):
 
 
 class SendDense(AbstractProcess):
+    """Process that sends arbitrary dense data.
+
+    Parameters
+    ----------
+    shape: tuple
+        Shape of the OutPort.
+    """
     def __init__(self,
                  shape: tuple,
                  data: np.ndarray) -> None:
@@ -55,6 +70,7 @@ class SendDense(AbstractProcess):
 @implements(proc=SendDense, protocol=LoihiProtocol)
 @requires(CPU)
 class PySendDensePM(PyLoihiProcessModel):
+    """Sends dense data to PyOutPort."""
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def __init__(self, proc_params):
@@ -69,9 +85,9 @@ class PySendDensePM(PyLoihiProcessModel):
 
 class TestProcessModelMaxPooling(unittest.TestCase):
     def test_init(self):
-        pm = MaxPoolingPM()
+        pm = PyMaxPoolingPM()
 
-        self.assertIsInstance(pm, MaxPoolingPM)
+        self.assertIsInstance(pm, PyMaxPoolingPM)
 
     def test_max_pooling(self):
         data = np.zeros((8, 8, 1))
@@ -295,6 +311,7 @@ class TestProcessModelMaxPooling(unittest.TestCase):
 
         np.testing.assert_equal(sent_and_received_data,
                                 expected_data)
+
 
 if __name__ == '__main__':
     unittest.main()

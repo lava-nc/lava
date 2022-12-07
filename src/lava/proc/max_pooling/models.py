@@ -13,12 +13,15 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.max_pooling.process import MaxPooling
-from lava.proc.conv import utils
 
 
 @implements(proc=MaxPooling, protocol=LoihiProtocol)
 @requires(CPU)
-class MaxPoolingPM(PyLoihiProcessModel):
+class PyMaxPoolingPM(PyLoihiProcessModel):
+    """PyLoihiProcessModel implementing the MaxPooling Process.
+
+    Applies the max-pooling operation on incoming data.
+    """
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
@@ -34,6 +37,18 @@ class MaxPoolingPM(PyLoihiProcessModel):
         self.out_port.send(max_pooled_data)
 
     def _max_pooling(self, data: np.ndarray) -> np.ndarray:
+        """Applies the max-pooling operation on data with shape (W, H, C).
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Incoming data.
+
+        Returns
+        ----------
+        result : np.ndarray
+            3D result after max-pooling.
+        """
         result = np.zeros(self.out_port.shape)
 
         for channel in range(self.out_port.shape[-1]):
@@ -52,6 +67,26 @@ class MaxPoolingPM(PyLoihiProcessModel):
                         kernel_size: np.ndarray,
                         stride: np.ndarray,
                         padding: np.ndarray) -> np.ndarray:
+        """Applies the max-pooling operation on data with shape (W, H).
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data with shape (W, H).
+        output_shape : tuple(int, int)
+            Output shape.
+        kernel_size : np.ndarray
+            Max-pooling kernel size.
+        stride : np.ndarray
+            Max-pooling stride.
+        padding : np.ndarray
+            Padding to apply.
+
+        Returns
+        ----------
+        result : np.ndarray
+            2D result after max-pooling.
+        """
         padded_data = np.pad(data,
                              (padding[0], padding[1]),
                              mode='constant').copy()

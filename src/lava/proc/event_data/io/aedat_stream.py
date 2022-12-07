@@ -6,7 +6,6 @@ from dv import AedatFile
 import numpy as np
 import os.path
 import typing as ty
-import warnings
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
@@ -19,7 +18,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.utils.events import sub_sample
 
 
-class AedatDataLoader(AbstractProcess):
+class AedatStream(AbstractProcess):
     """Process that reads event-based data from an aedat4 file.
 
     This process outputs a sparse tensor of the event data stream, meaning
@@ -87,9 +86,9 @@ class AedatDataLoader(AbstractProcess):
                              f"{shape_out} was given.")
 
 
-@implements(proc=AedatDataLoader, protocol=LoihiProtocol)
+@implements(proc=AedatStream, protocol=LoihiProtocol)
 @requires(CPU)
-class AedatDataLoaderPM(PyLoihiProcessModel):
+class AedatStreamPM(PyLoihiProcessModel):
     """
     Implementation of the Aedat Data Loader process on Loihi, with sparse
     representation of events.
@@ -120,7 +119,8 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
 
         # If we have more data than our shape allows, subsample
         if data.shape[0] > self._shape_out[0]:
-            data, indices = sub_sample(data, indices, self._shape_out[0], self._random_rng)
+            data, indices = sub_sample(data, indices,
+                                       self._shape_out[0], self._random_rng)
 
         self.out_port.send(data, indices)
 
@@ -147,9 +147,8 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
         self._file = AedatFile(file_name=self._file_path)
         self._stream = self._file["events"].numpy()
 
-    # TODO: look into the type of "events"
     def _encode_data_and_indices(self,
-                                 events: ty.Dict) \
+                                 events: np.ndarray) \
             -> ty.Tuple[np.ndarray, np.ndarray]:
         """
         Extracts the polarity data, and x and y indices from the given

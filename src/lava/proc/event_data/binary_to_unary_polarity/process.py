@@ -15,7 +15,7 @@ class BinaryToUnaryPolarity(AbstractProcess):
 
     Parameters
     ----------
-    shape : tuple
+    shape : tuple(int)
         Shape of InPort and OutPort.
     """
     def __init__(self,
@@ -32,17 +32,21 @@ class BinaryToUnaryPolarity(AbstractProcess):
 
     @staticmethod
     def _validate_shape(shape: ty.Tuple[int]) -> None:
-        """Validate that a given shape is of the right format (max_num_events, )
+        """Validate that a given shape is of the form (max_num_events, ) where
+        max_num_events is strictly positive.
 
         Parameters
         ----------
-        shape : tuple
+        shape : tuple(int)
             Shape to validate.
         """
         if len(shape) != 1:
-            raise ValueError(f"Shape should be of the form (max_num_events, )."
-                             f"{shape} was given.")
+            raise ValueError(f"Expected shape to be of the form "
+                             f"(max_num_events, ). "
+                             f"Found {shape=}.")
 
         if shape[0] <= 0:
-            raise ValueError(f"Max number of events should be positive."
-                             f"{shape} was given.")
+            raise ValueError(f"Expected max number of events "
+                             f"(first element of shape) to be strictly "
+                             f"positive. "
+                             f"Found {shape=}.")

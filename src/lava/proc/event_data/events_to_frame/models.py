@@ -15,7 +15,12 @@ from lava.proc.event_data.events_to_frame.process import EventsToFrame
 
 @implements(proc=EventsToFrame, protocol=LoihiProtocol)
 @requires(CPU)
-class EventsToFramePM(PyLoihiProcessModel):
+class PyEventsToFramePM(PyLoihiProcessModel):
+    """PyLoihiProcessModel implementing the EventsToFrame Process.
+
+    Transforms a collection of (sparse) events with unary or binary polarity
+    into a (dense) frame of shape (W, H, 1) or (W, H, 2).
+    """
     in_port: PyInPort = LavaPyType(PyInPort.VEC_SPARSE, int)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
@@ -27,6 +32,26 @@ class EventsToFramePM(PyLoihiProcessModel):
         self.out_port.send(dense_data)
 
     def _transform(self, data: np.ndarray, indices: np.ndarray) -> np.ndarray:
+        """Transform collection of sparsely represented events into a densely
+        represented frame of events.
+
+        (1) If output shape is (W, H, 1), input is assumed to be unary.
+        (2) If output shape is (W, H, 2), input is assumed to be binary.
+        Negative events are represented by 1s in first channel.
+        Positive events are represented by 1s in second channel.
+
+        Parameters
+        ----------
+        data : ndarray
+            Array of events.
+        indices : ndarray
+            Array of event indices.
+
+        Returns
+        ----------
+        result : ndarray
+            Frame of events.
+        """
         shape_out = self.out_port.shape
         dense_data = np.zeros(shape_out)
 

@@ -19,7 +19,7 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.proc.event_data.event_data_loader.dv_stream import DvStream, DvStreamPM
+from lava.proc.event_data.io.dv_stream import DvStream, DvStreamPM
 
 
 class TestProcessDvStream(unittest.TestCase):

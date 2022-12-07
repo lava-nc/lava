@@ -61,3 +61,7 @@ class TestProcessMaxPooling(unittest.TestCase):
             MaxPooling(shape_in=(240, 180, 1),
                        kernel_size=2,
                        padding=-1)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -19,15 +19,16 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.proc.event_data.io.aedat_data_loader import AedatDataLoader, AedatDataLoaderPM
+from lava.proc.event_data.io.aedat_stream import AedatStream, AedatStreamPM
+
 
 class RecvSparse(AbstractProcess):
-    """
-    Process that receives arbitrary sparse data.
+    """Process that receives arbitrary sparse data.
 
     Parameters
     ----------
-    shape: tuple, shape of the process
+    shape: tuple
+        Shape of the InPort and Vars.
     """
     def __init__(self,
                  shape: ty.Tuple[int]) -> None:
@@ -42,15 +43,14 @@ class RecvSparse(AbstractProcess):
 @implements(proc=RecvSparse, protocol=LoihiProtocol)
 @requires(CPU)
 class PyRecvSparsePM(PyLoihiProcessModel):
+    """Receives sparse data from PyInPort and stores a padded version of
+    received data and indices in Vars."""
     in_port: PyInPort = LavaPyType(PyInPort.VEC_SPARSE, int)
 
     data: np.ndarray = LavaPyType(np.ndarray, int)
     idx: np.ndarray = LavaPyType(np.ndarray, int)
 
     def run_spk(self) -> None:
-        """
-        Receives the data and pads with zeros to enable access with get().
-        """
         data, idx = self.in_port.recv()
 
         self.data = np.pad(data,
@@ -59,15 +59,15 @@ class PyRecvSparsePM(PyLoihiProcessModel):
                           pad_width=(0, self.in_port.shape[0] - data.shape[0]))
 
 
-class TestProcessAedatDataLoader(unittest.TestCase):
+class TestProcessAedatStream(unittest.TestCase):
     def test_init(self):
         """
-        Tests instantiation of AedatDataLoader.
+        Tests instantiation of AedatStream.
         """
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(43200,))
+        data_loader = AedatStream(file_path="../dvs_recording.aedat4",
+                                  shape_out=(43200,))
 
-        self.assertIsInstance(data_loader, AedatDataLoader)
+        self.assertIsInstance(data_loader, AedatStream)
         self.assertEqual(data_loader.proc_params["file_path"],
                          "../dvs_recording.aedat4")
         self.assertEqual(data_loader.proc_params["shape_out"], (43200,))
@@ -78,38 +78,39 @@ class TestProcessAedatDataLoader(unittest.TestCase):
         throws an exception.
         """
         with(self.assertRaises(ValueError)):
-            AedatDataLoader(file_path="test_aedat_data_loader.py",
-                            shape_out=(43200,))
+            AedatStream(file_path="test_aedat_data_loader.py",
+                        shape_out=(43200,))
 
     def test_missing_file_throws_exception(self):
         """
         Tests whether an exception is thrown when a specified file does not exist.
         """
         with(self.assertRaises(FileNotFoundError)):
-            AedatDataLoader(file_path="missing_file.aedat4",
-                            shape_out=(43200,))
+            AedatStream(file_path="missing_file.aedat4",
+                        shape_out=(43200,))
 
     def test_invalid_shape_throws_exception(self):
         """
         Tests whether a shape_out argument with an invalid shape throws an exception.
         """
         with(self.assertRaises(ValueError)):
-            AedatDataLoader(file_path="../dvs_recording.aedat4",
-                            shape_out=(240, 180))
+            AedatStream(file_path="../dvs_recording.aedat4",
+                        shape_out=(240, 180))
 
     def test_negative_size_throws_exception(self):
         """
         Tests whether a shape_out argument with a negative size throws an exception.
         """
         with(self.assertRaises(ValueError)):
-            AedatDataLoader(file_path="../dvs_recording.aedat4",
-                            shape_out=(-43200,))
+            AedatStream(file_path="../dvs_recording.aedat4",
+                        shape_out=(-43200,))
+
 
 # TODO: add doc strings
-class TestProcessModelAedatDataLoader(unittest.TestCase):
+class TestProcessModelAedatStream(unittest.TestCase):
     def test_init(self):
         """
-        Tests instantiation of the AedatDataLoader process model.
+        Tests instantiation of the AedatStream process model.
         """
         proc_params = {
             "file_path": "../dvs_recording.aedat4",
@@ -117,9 +118,9 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
             "seed_sub_sampling": 0
         }
 
-        pm = AedatDataLoaderPM(proc_params)
+        pm = AedatStreamPM(proc_params)
 
-        self.assertIsInstance(pm, AedatDataLoaderPM)
+        self.assertIsInstance(pm, AedatStreamPM)
         self.assertEqual(pm._shape_out, proc_params["shape_out"])
         self.assertIsInstance(pm._file, AedatFile)
         self.assertIsInstance(pm._stream,
@@ -128,7 +129,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
 
     def test_run_without_sub_sampling(self):
         """
-        Tests whether running yields the expectde behavior, given that the
+        Tests whether running yields the expected behavior, given that the
         user parameters are all correct.
         """
         data_history = [
@@ -150,19 +151,17 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
 
         seed_rng = 0
         max_num_events = 15
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(max_num_events,),
-                                      seed_sub_sampling=seed_rng)
+        data_loader = AedatStream(file_path="../dvs_recording.aedat4",
+                                  shape_out=(max_num_events,),
+                                  seed_sub_sampling=seed_rng)
         recv_sparse = RecvSparse(shape=(max_num_events,))
 
         data_loader.out_port.connect(recv_sparse.in_port)
 
-        # Run parameters
         num_steps = 5
         run_cfg = Loihi1SimCfg()
         run_cnd = RunSteps(num_steps=1)
 
-        # Running
         for i in range(num_steps):
             data_loader.run(condition=run_cnd, run_cfg=run_cfg)
 
@@ -179,7 +178,6 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
             np.testing.assert_equal(sent_and_received_indices,
                                     expected_indices)
 
-        # Stopping
         data_loader.stop()
 
     def test_sub_sampling(self):
@@ -206,19 +204,17 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
 
         seed_rng = 0
         max_num_events = 10
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(max_num_events,),
-                                      seed_sub_sampling=seed_rng)
+        data_loader = AedatStream(file_path="../dvs_recording.aedat4",
+                                  shape_out=(max_num_events,),
+                                  seed_sub_sampling=seed_rng)
         recv_sparse = RecvSparse(shape=(max_num_events,))
 
         data_loader.out_port.connect(recv_sparse.in_port)
 
-        # Run parameters
         num_steps = 5
         run_cfg = Loihi1SimCfg()
         run_cnd = RunSteps(num_steps=1)
 
-        # Running
         for i in range(num_steps):
             data_loader.run(condition=run_cnd, run_cfg=run_cfg)
 
@@ -232,7 +228,6 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
             np.testing.assert_equal(sent_and_received_indices,
                                     expected_indices[i])
 
-        # Stopping
         data_loader.stop()
 
     def test_sub_sampling_seed(self):
@@ -262,12 +257,12 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         seed_rng_run_1 = 0
         seed_rng_run_2 = 1
 
-        data_loader_1 = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                        shape_out=(max_num_events,),
-                                        seed_sub_sampling=seed_rng_run_1)
-        data_loader_2 = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                        shape_out=(max_num_events,),
-                                        seed_sub_sampling=seed_rng_run_2)
+        data_loader_1 = AedatStream(file_path="../dvs_recording.aedat4",
+                                    shape_out=(max_num_events,),
+                                    seed_sub_sampling=seed_rng_run_1)
+        data_loader_2 = AedatStream(file_path="../dvs_recording.aedat4",
+                                    shape_out=(max_num_events,),
+                                    seed_sub_sampling=seed_rng_run_2)
 
         recv_sparse_1 = RecvSparse(shape=(max_num_events,))
         recv_sparse_2 = RecvSparse(shape=(max_num_events,))
@@ -282,7 +277,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         for i in range(num_steps):
             data_loader_1.run(condition=run_cnd, run_cfg=run_cfg)
 
-            sent_and_received_indices_1.append\
+            sent_and_received_indices_1.append \
                 (recv_sparse_1.idx.get()[:len(expected_indices_seed_1[i])])
 
         np.testing.assert_equal(sent_and_received_indices_1,
@@ -293,7 +288,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         for i in range(num_steps):
             data_loader_2.run(condition=run_cnd, run_cfg=run_cfg)
 
-            sent_and_received_indices_2.append\
+            sent_and_received_indices_2.append \
                 (recv_sparse_2.idx.get()[:len(expected_indices_seed_1[i])])
 
         np.testing.assert_equal(sent_and_received_indices_2,
@@ -313,9 +308,9 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
 
         seed_rng = 0
         max_num_events = 15
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(max_num_events,),
-                                      seed_sub_sampling=seed_rng)
+        data_loader = AedatStream(file_path="../dvs_recording.aedat4",
+                                  shape_out=(max_num_events,),
+                                  seed_sub_sampling=seed_rng)
         recv_sparse = RecvSparse(shape=(max_num_events,))
 
         data_loader.out_port.connect(recv_sparse.in_port)
@@ -330,20 +325,22 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
             data_loader.run(condition=run_cnd, run_cfg=run_cfg)
             # get data from the first 5 timesteps
             if i in range(5):
-                data_time_steps_1_to_5.append\
+                data_time_steps_1_to_5.append \
                     (recv_sparse.data.get())
-                indices_time_steps_1_to_5.append\
+                indices_time_steps_1_to_5.append \
                     (recv_sparse.idx.get())
 
             # get data from timesteps 28-32
-            if i in range(27,32):
-                data_time_steps_28_to_32.append\
+            if i in range(27, 32):
+                data_time_steps_28_to_32.append \
                     (recv_sparse.data.get())
-                indices_time_steps_28_to_32.append\
+                indices_time_steps_28_to_32.append \
                     (recv_sparse.idx.get())
 
-        np.testing.assert_equal(data_time_steps_1_to_5, data_time_steps_28_to_32)
-        np.testing.assert_equal(indices_time_steps_1_to_5, indices_time_steps_28_to_32)
+        np.testing.assert_equal(data_time_steps_1_to_5,
+                                data_time_steps_28_to_32)
+        np.testing.assert_equal(indices_time_steps_1_to_5,
+                                indices_time_steps_28_to_32)
 
         # Stopping
         data_loader.stop()
@@ -382,9 +379,9 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         dense_shape = (240, 180)
 
         max_num_events = 15
-        data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(max_num_events,),
-                                      seed_sub_sampling=seed_rng)
+        data_loader = AedatStream(file_path="../dvs_recording.aedat4",
+                                  shape_out=(max_num_events,),
+                                  seed_sub_sampling=seed_rng)
         recv_sparse = RecvSparse(shape=(max_num_events,))
 
         data_loader.out_port.connect(recv_sparse.in_port)
