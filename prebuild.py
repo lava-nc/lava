@@ -1,3 +1,3 @@
 import subprocess  # nosec
 
-subprocess.check_call(["python3", "setup.py", "build"])
+subprocess.check_call(["poetry", "run", "python3", "setup.py", "build"])
