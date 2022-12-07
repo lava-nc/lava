@@ -38,7 +38,6 @@ class RuntimeServiceBuilder:
             model_ids: ty.List[int],
             loihi_version: ty.Type[LoihiVersion],
             loglevel: int = logging.WARNING,
-            compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
             *args,
             **kwargs
     ):
@@ -48,7 +47,6 @@ class RuntimeServiceBuilder:
         self.rs_kwargs = kwargs
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
-        self._compile_config = compile_config
         self._runtime_service_id = runtime_service_id
         self._model_ids: ty.List[int] = model_ids
         self.csp_send_port: ty.Dict[str, CspSendPort] = {}
@@ -105,7 +103,6 @@ class RuntimeServiceBuilder:
                 self.sync_protocol,
                 loihi_version=self.loihi_version,
                 loglevel=self.log.level,
-                compile_config=self._compile_config,
                 **self.rs_kwargs
             )
             nxsdk_rts = True
