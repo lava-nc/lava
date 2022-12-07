@@ -87,7 +87,11 @@ jobs:
       matrix:
         # TODO: restore it before merge into ML
         operating-system: [ubuntu-latest,] #windows-latest, macos-latest]
-
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+        
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
