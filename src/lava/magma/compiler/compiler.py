@@ -716,6 +716,7 @@ class Compiler:
                     model_ids,
                     loihi_version,
                     log.level,
+                    compile_config,
                     **rs_kwargs
                 )
                 rs_builders[sync_domain] = rs_builder
