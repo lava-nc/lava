@@ -23,7 +23,7 @@ class CMake():
         cfg = "Debug" if debug else "Release"
         
         python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
-            .decode().strip() + "/bin/python"
+            .decode().strip() + "/bin/python3"
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
             f"-DPYTHON_EXECUTABLE={python_env}",
