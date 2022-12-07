@@ -26,6 +26,7 @@ class CMake():
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
+        print(f"THE PATH OF EXECUTABLE{sys.executable}")
         if "CMAKE_ARGS" in os.environ:
             self.cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ")
                            if item]
