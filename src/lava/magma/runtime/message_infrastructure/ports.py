@@ -8,11 +8,11 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import Channel as CppChannel
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import (
-    TempChannel,
-    support_grpc_channel,
-    support_fastdds_channel,
-    support_cyclonedds_channel,
-    AbstractTransferPort)
+        TempChannel,
+        support_grpc_channel,
+        support_fastdds_channel,
+        support_cyclonedds_channel,
+        AbstractTransferPort)
 
 import numpy as np
 

@@ -9,8 +9,8 @@ from lava.magma.runtime.message_infrastructure import Actor
 from lava.magma.runtime.message_infrastructure import ChannelBackend
 from lava.magma.runtime.message_infrastructure import Channel
 
-from lava.magma.runtime.message_infrastructure.message_infrastructure_interface \
-    import MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure. \
+    message_infrastructure_interface import MessageInfrastructureInterface
 
 
 """Implements the Message Infrastructure Interface using Python

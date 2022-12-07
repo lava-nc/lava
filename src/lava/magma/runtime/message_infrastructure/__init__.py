@@ -21,16 +21,16 @@ load_library()
 
 from lava.magma.runtime.message_infrastructure. \
     MessageInfrastructurePywrapper import (  # noqa
-    CppMultiProcessing,
-    ProcessType,
-    Actor,
-    ActorStatus,
-    ActorCmd,
-    RecvPort,
-    AbstractTransferPort,
-    support_grpc_channel,
-    support_fastdds_channel,
-    support_cyclonedds_channel)
+        CppMultiProcessing,
+        ProcessType,
+        Actor,
+        ActorStatus,
+        ActorCmd,
+        RecvPort,
+        AbstractTransferPort,
+        support_grpc_channel,
+        support_fastdds_channel,
+        support_cyclonedds_channel)
 
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import ChannelType as ChannelBackend  # noqa: E402
@@ -51,6 +51,7 @@ if SupportGRPCChannel:
     from .ports import GetRPCChannel
 if SupportFastDDSChannel or SupportCycloneDDSChannel:
     from .ports import GetDDSChannel
-    from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper import (
-        DDSTransportType,
-        DDSBackendType)
+    from lava.magma.runtime.message_infrastructure. \
+        MessageInfrastructurePywrapper import (
+            DDSTransportType,
+            DDSBackendType)
