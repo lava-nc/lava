@@ -172,8 +172,8 @@ class ChannelBroker(AbstractChannelBroker):
                         channel_name: str,
                         message_size: int,
                         number_elements: int,
-                        host_idx: int = 0,
-                        slack: int = 16):
+                        slack: int,
+                        host_idx: int = 0):
         return self.board.hosts[host_idx].createChannel(
             name=channel_name,
             messageSize=message_size,
@@ -189,7 +189,8 @@ class ChannelBroker(AbstractChannelBroker):
                        c_builder_idx: int) -> ty.List[Channel]:
         channels: ty.List[Channel] = []
         MESSAGE_SIZE_IN_C = 128 * 4
-        channel_slack = self._compile_config.get("slack", 16)
+        DEFAULT_CHANNEL_SLACK = 16
+        channel_slack = self._compile_config.get("slack", DEFAULT_CHANNEL_SLACK)
         if input_channel:
             for csp_port in c_port.csp_ports:
                 channel_name = generate_channel_name("in_grpc_",
@@ -211,7 +212,8 @@ class ChannelBroker(AbstractChannelBroker):
                 channels.append(self._create_channel(
                     channel_name=channel_name,
                     message_size=MESSAGE_SIZE_IN_C,
-                    number_elements=csp_port.size
+                    number_elements=csp_port.size,
+                    slack=channel_slack
                 ))
 
         if input_channel:
