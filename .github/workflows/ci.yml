@@ -24,7 +24,7 @@ jobs:
         repository: 'Lava'
 
     - name: Run flakeheaven (flake8)
-      run: poetry run flakeheaven lint src/lava tests/
+      run: poetry run flakeheaven lint src/lava tests/ prebuild.py
       
     - name: Run cpplint (cpplint)
       run: poetry run cpplint --recursive --quiet \
