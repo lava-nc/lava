@@ -9,7 +9,8 @@ class CMake():
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
         self.cmake_command = "cmake"
-        self.cmake_command_prefix = ["poetry", "run"]
+        # self.cmake_command_prefix = ["poetry", "run"]
+        self.cmake_command_prefix = []
         self.cmake_args = []
         self.build_args = []
         self.env = os.environ.copy()
