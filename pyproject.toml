@@ -9,7 +9,7 @@ packages = [
     {include = "lava", from = "src"},
     {include = "tests"}
 ]
-include = ["tutorials"]
+include = ["tutorials", "src/lava/magma/runtime/message_infrastructure/*.so"]
 version = "0.5.1"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
@@ -87,7 +87,8 @@ cpplint = "^1.6.0"
 psutil = "^5.9.4"
 
 [tool.poetry.build]
-script = "setup.py"
+generate-setup-file = false
+script = "prebuild.py"
 
 [tool.black]
 line-length = 80

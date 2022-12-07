@@ -21,16 +21,15 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir="src/lava/magma/runtime/_c_message_infrastructure"):
+    def __init__(self, name, sourcedir, targetdir):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
+        self.targetdir = targetdir
 
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
-        extdir = os.path.abspath(
-            os.path.dirname(self.get_ext_fullpath(ext.name)))
-
+        extdir = os.path.abspath(ext.targetdir)
         # required for auto-detection & inclusion of auxiliary "native" libs
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
@@ -123,21 +122,23 @@ class CMakeBuild(build_ext):
         build_temp = os.path.join(self.build_temp, ext.name)
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
-
         subprocess.check_call(["cmake", ext.sourcedir] + cmake_args, cwd=build_temp)  # nosec # noqa
         subprocess.check_call(["cmake", "--build", "."] + build_args,  cwd=build_temp)  # nosec # noqa
 
-
-# The information here can also be placed in setup.cfg - better separation of
-# logic and declaration,
-# and simpler if you include description/version in a file.
-setup(
-    name="lava-nc",
-    version="0.2.1",
-    ext_modules=[CMakeExtension(
-        "src.lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper")],
-    cmdclass={"build_ext": CMakeBuild},
-    zip_safe=False,
-    extras_require={"test": ["pytest>=5.2"]},
-    python_requires=">=3.8",
-)
+if __name__ == '__main__':
+    # The information here can also be placed in setup.cfg - better separation of
+    # logic and declaration,
+    # and simpler if you include description/version in a file.
+    base_runtime_path = "src/lava/magma/runtime/"
+    setup(
+        name="lava-nc",
+        version="0.2.1",
+        ext_modules=[CMakeExtension(
+            "src.lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper",
+            sourcedir=f"{base_runtime_path}_c_message_infrastructure",
+            targetdir=f"{base_runtime_path}message_infrastructure")],
+        cmdclass={"build_ext": CMakeBuild},
+        zip_safe=False,
+        extras_require={"test": ["pytest>=5.2"]},
+        python_requires=">=3.8",
+    )
