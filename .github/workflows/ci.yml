@@ -34,6 +34,11 @@ jobs:
            src/lava/magma/runtime/_c_message_infrastructure/ \
            src/lava/magma/runtime/_c_message_infrastructure/test/
 
+           poetry run cpplint --recursive --quiet \
+           --repository=src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp \
+           --root=src \
+           src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp/src
+
   security-lint:
     name: Security Lint Code
     runs-on: ubuntu-latest
