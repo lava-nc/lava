@@ -190,7 +190,6 @@ class ChannelBroker(AbstractChannelBroker):
         channels: ty.List[Channel] = []
         MESSAGE_SIZE_IN_C = 128 * 4
         channel_slack = self._compile_config.get("slack", 16)
-        print(f"{channel_slack=}")
         if input_channel:
             for csp_port in c_port.csp_ports:
                 channel_name = generate_channel_name("in_grpc_",
