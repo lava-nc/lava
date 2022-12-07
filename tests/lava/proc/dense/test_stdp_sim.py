@@ -5,6 +5,7 @@
 import unittest
 
 import numpy as np
+
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
@@ -15,13 +16,17 @@ from lava.magma.core.process.neuron import LearningNeuronProcess
 from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-from lava.magma.core.model.py.neuron import LearningNeuronModelFloat
+from lava.magma.core.model.py.neuron import (
+    LearningNeuronModelFloat, LearningNeuronModelFixed
+)
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
-from lava.proc.lif.models import AbstractPyLifModelFloat
+from lava.proc.lif.models import (
+    AbstractPyLifModelFloat, AbstractPyLifModelFixed
+)
 from lava.proc.io.source import RingBuffer as SpikeIn
 
 
@@ -53,100 +58,192 @@ class RSTDPLIF(LearningNeuronProcess, AbstractLIF):
         population of neurons.
 
     """
-
     def __init__(
-        self,
-        *,
-        shape: ty.Tuple[int, ...],
-        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        du: ty.Optional[float] = 0,
-        dv: ty.Optional[float] = 0,
-        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        vth: ty.Optional[float] = 10,
-        name: ty.Optional[str] = None,
-        log_config: ty.Optional[LogConfig] = None,
-        learning_rule: RewardModulatedSTDP = None,
-        **kwargs,
-    ) -> None:
-        super().__init__(
-            shape=shape,
-            u=u,
-            v=v,
-            du=du,
-            dv=dv,
-            bias_mant=bias_mant,
-            bias_exp=bias_exp,
-            name=name,
-            log_config=log_config,
-            learning_rule=learning_rule,
-            **kwargs,
-        )
+            self,
+            *,
+            shape: ty.Tuple[int, ...],
+            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            du: ty.Optional[float] = 0,
+            dv: ty.Optional[float] = 0,
+            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            vth: ty.Optional[float] = 10,
+            name: ty.Optional[str] = None,
+            log_config: ty.Optional[LogConfig] = None,
+            **kwargs) -> None:
+        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
+                         bias_mant=bias_mant,
+                         bias_exp=bias_exp, name=name,
+                         log_config=log_config,
+                         **kwargs)
         self.vth = Var(shape=(1,), init=vth)
 
-        self.a_graded_reward_in = InPort(shape=shape)
+        self.a_third_factor_in = InPort(shape=shape)
 
 
 @implements(proc=RSTDPLIF, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("floating_pt")
-class RSTDPLIFModel(LearningNeuronModelFloat, AbstractPyLifModelFloat):
+@tag('floating_pt')
+class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural
-    process in floating point precision with learning enabled.
+    process in floating point precision with learning enabled
+    to do R-STDP.
     """
-
     # Graded reward input spikes
-    a_graded_reward_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.s_out_buff = np.zeros(proc_params["shape"])
+        self.s_out_buff = np.zeros(proc_params['shape'])
 
     def spiking_activation(self):
-        """Spiking activation function for Learning LIF."""
+        """Spiking activation function for Learning LIF.
+        """
         return self.v > self.vth
 
-    def filter_spike_trains(self):
-        """Filters the spike trains with an exponential filter."""
-
-        y1_impulse = self.proc_params[
-            "learning_rule"
-        ].post_trace_kernel_magnitude
-        y1_tau = self.proc_params["learning_rule"].post_trace_decay_tau
-
-        return self.y1 * np.exp(-1 / y1_tau) + self.s_out_buff * y1_impulse
-
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
-        """Generate's a third factor Reward traces based on
-        Graded input spikes to the Learning LIF process.
+        """Generate's a third factor reward traces based on
+        graded input spikes to the Learning LIF process.
 
         Currently, the third factor resembles the input graded spike.
         """
         return s_graded_in
 
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
+
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the
         Dense process for learning.
+        s_out_y1: sends the post-synaptic spike times.
+        s_out_y2: sends the graded third-factor reward signal.
         """
-        self.y1 = self.filter_spike_trains()
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
 
         super().run_spk()
 
-        a_graded_in = self.a_graded_reward_in.recv()
+        a_graded_in = self.a_third_factor_in.recv()
 
+        # self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
-        self.y3 = self.y3.astype(bool) | self.s_out_buff.astype(bool)
 
+        self.s_out_bap.send(self.s_out_buff)
         self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
-        if self.time_step % self.proc_params["learning_rule"].t_epoch == 0:
-            self.y3 = self.y3 & False
+
+@implements(proc=RSTDPLIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('bit_accurate_loihi', 'fixed_pt')
+class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
+    """Implementation of RSTDP Leaky-Integrate-and-Fire neural
+    process bit-accurate with Loihi's hardware LIF dynamics,
+    which means, it mimics Loihi behaviour bit-by-bit.
+
+    Currently missing features (compared to Loihi 1 hardware):
+
+    - refractory period after spiking
+    - axonal delays
+
+    Precisions of state variables
+
+    - du: unsigned 12-bit integer (0 to 4095)
+    - dv: unsigned 12-bit integer (0 to 4095)
+    - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
+      bias.
+    - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
+    - vth: unsigned 17-bit integer (0 to 131071).
+
+    """
+    # Graded reward input spikes
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: int = LavaPyType(int, np.int32, precision=17)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        self.effective_vth = 0
+        self.s_out_buff = np.zeros(proc_params['shape'])
+
+    def scale_threshold(self):
+        """Scale threshold according to the way Loihi hardware scales it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
+        with other state variables of higher precision.
+        """
+        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.isthrscaled = True
+
+    def spiking_activation(self):
+        """Spike when voltage exceeds threshold.
+        """
+        return self.v > self.effective_vth
+
+    def calculate_third_factor_trace(self, s_graded_in: float) -> float:
+        """Generate's a third factor reward traces based on
+        graded input spikes to the Learning LIF process.
+
+        Currently, the third factor resembles the input graded spike.
+        """
+        return s_graded_in
+
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.y1_tau
+        y1_impulse = self._learning_rule.y1_impulse
+
+        return np.floor(self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff)
+
+    def run_spk(self) -> None:
+        """Calculates the third factor trace and sends it to the
+        Dense process for learning.
+        s_out_y1: sends the post-synaptic spike times.
+        s_out_y2: sends the graded third-factor reward signal.
+        """
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+
+        super().run_spk()
+
+        a_graded_in = self.a_third_factor_in.recv()
+
+        # self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+        self.y2 = self.calculate_third_factor_trace(a_graded_in)
+
+        self.s_out_bap.send(self.s_out_buff)
+        self.s_out_y1.send(self.y1)
+        self.s_out_y2.send(self.y2)
+        self.s_out_y3.send(self.y3)
 
 
 class TestSTDPSim(unittest.TestCase):
@@ -156,8 +253,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=4,
+            A_plus=4,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=2,
@@ -190,7 +287,7 @@ class TestSTDPSim(unittest.TestCase):
         lif_0.stop()
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[60]]))
+        np.testing.assert_almost_equal(weight_after_run, np.array([[72]]))
 
     def test_stdp_fixed_point_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
@@ -198,8 +295,8 @@ class TestSTDPSim(unittest.TestCase):
         from previous runs."""
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
@@ -255,14 +352,15 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
         )
 
         size = 1
+
         weights_init = np.eye(size) * 0
 
         lif_0 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.1)
@@ -297,8 +395,8 @@ class TestSTDPSim(unittest.TestCase):
         from previous runs."""
         learning_rule = STDPLoihi(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=1,
+            A_plus=1,
+            A_minus=-2,
             tau_plus=10,
             tau_minus=10,
             t_epoch=1,
@@ -359,8 +457,8 @@ class TestSTDPSim(unittest.TestCase):
 
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
-            A_plus=-2,
-            A_minus=2,
+            A_plus=2,
+            A_minus=-2,
             pre_trace_decay_tau=10,
             post_trace_decay_tau=10,
             pre_trace_kernel_magnitude=16,
@@ -392,18 +490,19 @@ class TestSTDPSim(unittest.TestCase):
         reward = SpikeIn(data=reward_signal.astype(float))
         reward_conn = Dense(weights=np.eye(size))
         reward.s_out.connect(reward_conn.s_in)
-        reward_conn.a_out.connect(lif_1.a_graded_reward_in)
+        reward_conn.a_out.connect(lif_1.a_third_factor_in)
 
         lif_0.s_out.connect(dense.s_in)
         dense.a_out.connect(lif_1.a_in)
 
         # Connect traces from LIF to Dense
-        # y1: exp filtered spike trains
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
         # y2: reward
-        # y3: spikes (BAP)
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
         lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
-        lif_1.s_out_y3.connect(dense.s_in_y3)
 
         run_cfg = Loihi2SimCfg(select_tag="floating_pt")
         run_cnd = RunSteps(num_steps=num_steps)
@@ -416,5 +515,228 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[-62.706254]])
+            weight_after_run, np.array([[57.6700329]])
+        )
+
+    def test_rstdp_floating_point_multi_synapse(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        population with multiple neurons and compare to the resulting weight
+        from previous runs."""
+        learning_rule = RewardModulatedSTDP(
+            learning_rate=1,
+            A_plus=2,
+            A_minus=-2,
+            pre_trace_decay_tau=10,
+            post_trace_decay_tau=10,
+            pre_trace_kernel_magnitude=16,
+            post_trace_kernel_magnitude=16,
+            eligibility_trace_decay_tau=0.5,
+            t_epoch=2,
+        )
+
+        num_pre_neurons = 3
+        num_post_neurons = 2
+        num_steps = 100
+
+        weights_init = np.zeros((num_post_neurons, num_pre_neurons))
+
+        lif_0 = LIF(
+            shape=(num_pre_neurons,),
+            du=0,
+            dv=0,
+            vth=1,
+            bias_mant=np.array([0.08, 0.1, 0.11]),
+        )
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = RSTDPLIF(
+            shape=(num_post_neurons,),
+            du=0,
+            dv=0,
+            vth=1,
+            bias_mant=np.array([0.12, 0.15]),
+            learning_rule=learning_rule
+        )
+
+        # reward
+        reward_signal = np.zeros((num_post_neurons, num_steps))
+        reward_signal[:, num_steps // 3 : num_steps // 2] = 1
+
+        reward = SpikeIn(data=reward_signal.astype(float))
+        reward_conn = Dense(weights=np.eye(num_post_neurons))
+        reward.s_out.connect(reward_conn.s_in)
+        reward_conn.a_out.connect(lif_1.a_third_factor_in)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+
+        # Connect traces from LIF to Dense
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
+        # y2: reward
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
+        lif_1.s_out_y2.connect(dense.s_in_y2)
+
+        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(
+            weight_after_run,
+            np.array(
+                [
+                    [199.4073425, 24.2080047, 211.0480477],
+                    [196.1627991, 11.6769457, 208.2230696],
+                ]
+            ),
+        )
+
+    def test_rstdp_fixed_point(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        and compare to the resulting weight from previous runs."""
+
+        learning_rule = RewardModulatedSTDP(
+            learning_rate=1,
+            A_plus=4,
+            A_minus=-2,
+            pre_trace_decay_tau=10,
+            post_trace_decay_tau=10,
+            pre_trace_kernel_magnitude=16,
+            post_trace_kernel_magnitude=16,
+            eligibility_trace_decay_tau=0.5,
+            t_epoch=1,
+            rng_seed=0,
+        )
+
+        size = 1
+        weights_init = np.eye(size) * 1
+        num_steps = 100
+
+        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=100, bias_mant=3600)
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = RSTDPLIF(shape=(size,), du=0, dv=0, vth=100, bias_mant=3700,
+                         learning_rule=learning_rule)
+
+        # reward
+        reward_signal = np.zeros((size, num_steps))
+        reward_signal[:, num_steps // 3 : num_steps // 2] = 250
+
+        reward = SpikeIn(data=reward_signal)
+        reward_conn = Dense(weights=np.eye(size))
+        reward.s_out.connect(reward_conn.s_in)
+        reward_conn.a_out.connect(lif_1.a_third_factor_in)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+
+        # Connect traces from LIF to Dense
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
+        # y2: reward
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
+        lif_1.s_out_y2.connect(dense.s_in_y2)
+
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(weight_after_run, np.array([[50]]))
+
+    def test_rstdp_fixed_point_multi_synapse(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        population with multiple neurons and compare to the resulting weight
+        from previous runs."""
+
+        learning_rule = RewardModulatedSTDP(
+            learning_rate=1,
+            A_plus=4,
+            A_minus=-2,
+            pre_trace_decay_tau=10,
+            post_trace_decay_tau=10,
+            pre_trace_kernel_magnitude=20,
+            post_trace_kernel_magnitude=20,
+            eligibility_trace_decay_tau=2.4,
+            t_epoch=1,
+            rng_seed=0,
+        )
+
+        num_pre_neurons = 3
+        num_post_neurons = 2
+        num_steps = 100
+
+        weights_init = np.zeros((num_post_neurons, num_pre_neurons))
+
+        lif_0 = LIF(
+            shape=(num_pre_neurons,),
+            du=0,
+            dv=0,
+            vth=90,
+            bias_mant=np.array([1900, 2500, 1200]),
+        )
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = RSTDPLIF(
+            shape=(num_post_neurons,),
+            du=0,
+            dv=0,
+            vth=90,
+            bias_mant=np.array([2400, 1600]),
+            learning_rule=learning_rule
+        )
+
+        # reward
+        reward_signal = np.zeros((num_post_neurons, num_steps))
+        reward_signal[:, num_steps // 3 : num_steps // 2] = 16
+
+        reward = SpikeIn(data=reward_signal.astype(float))
+        reward_conn = Dense(weights=np.eye(num_post_neurons))
+        reward.s_out.connect(reward_conn.s_in)
+        reward_conn.a_out.connect(lif_1.a_third_factor_in)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+
+        # Connect traces from LIF to Dense
+        # bap: back-propagating action potential
+        # y1: post-synaptic trace
+        # y2: reward
+        lif_1.s_out_bap.connect(dense.s_in_bap)
+
+        lif_1.s_out_y1.connect(dense.s_in_y1)
+        lif_1.s_out_y2.connect(dense.s_in_y2)
+
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(
+            weight_after_run, np.array([[0., 1., -3.],
+                                        [12., 16.0, 3.]])
         )
