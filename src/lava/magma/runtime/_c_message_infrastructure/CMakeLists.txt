@@ -177,7 +177,6 @@ if(FASTDDS_ENABLE)
 endif()
 
 if(PY_WRAPPER)
-  message("NUMPY INCLUDE DIRS: ${NUMPY_INCLUDE_DIRS}")
   set(PY_WRAPPER_SRCS
         "csrc/message_infrastructure_py_wrapper.cc"
         "csrc/channel_proxy.cc"

@@ -4,7 +4,7 @@ import numpy
 import subprocess  # nosec
 import sys
 
-class CMake():
+class CMake:
     def __init__(self, sourcedir, targetdir):
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
@@ -26,15 +26,12 @@ class CMake():
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
-        print(f"THE PATH OF EXECUTEABLE: {sys.executable}")
         if "CMAKE_ARGS" in os.environ:
             self.cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ")
                            if item]
         # Set numpy include header to cpplib
         self.cmake_args += [
             f"-DNUMPY_INCLUDE_DIRS={numpy.get_include()}"]
-
-        print(f"NUMPY_INCLUDE_DIRS={numpy.get_include()}")
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
