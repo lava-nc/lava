@@ -704,8 +704,7 @@ class Compiler:
                     "nc_builders" : list(nc_builders.values())
                 }
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
-                    rs_kwargs["pre_run_fxs"] = run_cfg.pre_run_fxs
-                    rs_kwargs["post_run_fxs"] = run_cfg.post_run_fxs
+                    rs_kwargs["callback_fxs"] = run_cfg.callback_fxs
                     rs_kwargs["embedded_allocation_order"] = \
                         run_cfg.embedded_allocation_order
 
