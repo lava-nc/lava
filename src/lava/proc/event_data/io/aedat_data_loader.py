@@ -106,6 +106,7 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
                              self._file["events"].size_y)
 
         self._seed_sub_sampling = proc_params["seed_sub_sampling"]
+        self._random_rng = np.random.default_rng(self._seed_sub_sampling)
 
     def run_spk(self) -> None:
         """
@@ -119,7 +120,7 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
 
         # If we have more data than our shape allows, subsample
         if data.shape[0] > self._shape_out[0]:
-            data, indices = sub_sample(data, indices, self._shape_out[0], self._seed_sub_sampling)
+            data, indices = sub_sample(data, indices, self._shape_out[0], self._random_rng)
 
         self.out_port.send(data, indices)
 

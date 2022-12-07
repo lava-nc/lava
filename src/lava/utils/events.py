@@ -10,10 +10,9 @@ import warnings
 def sub_sample(data: np.ndarray,
                indices: np.ndarray,
                max_events: int,
-               seed_random: ty.Optional[int] = 0) \
+               random_rng: ty.Optional[np.random.Generator] = None) \
         -> ty.Tuple[np.ndarray, np.ndarray]:
 
-    random_rng = np.random.default_rng(seed_random)
     data_idx_array = np.arange(0, data.shape[0])
     sampled_idx = random_rng.choice(data_idx_array,
                                     max_events,
@@ -21,6 +20,6 @@ def sub_sample(data: np.ndarray,
 
     percentage_data_lost = (1 - max_events/data.shape[0])*100
     warnings.warn(f"Read {data.shape[0]} events. Maximum number of events is {max_events}. "
-                  f"Removed {data.shape[0] - max_events}({percentage_data_lost}%) events by subsampling.")
+                  f"Removed {data.shape[0] - max_events} ({percentage_data_lost:.1f}%) events by subsampling.")
 
     return data[sampled_idx], indices[sampled_idx]
