@@ -39,6 +39,8 @@ class CMake():
         self.cmake_args += [
             f"-DNUMPY_INCLUDE_DIRS={numpy.get_include()}"]
 
+        print(f"NUMPY_INCLUDE_DIRS={numpy.get_include()}")
+
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
