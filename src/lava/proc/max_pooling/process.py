@@ -34,8 +34,12 @@ class MaxPooling(AbstractProcess):
         out_channels = in_channels
 
         kernel_size = utils.make_tuple(kernel_size)
-        padding = utils.make_tuple(padding)
         stride = utils.make_tuple(stride)
+        padding = utils.make_tuple(padding)
+
+        self._validate_kernel_size(kernel_size)
+        self._validate_stride(stride)
+        self._validate_padding(padding)
 
         shape_out = utils.output_shape(
             shape_in, out_channels, kernel_size, stride, padding, (1, 1)
@@ -48,7 +52,7 @@ class MaxPooling(AbstractProcess):
         self.stride = Var(shape=(2,), init=stride)
 
     @staticmethod
-    def _validate_shape_in(shape_in: ty.Tuple[int, int, int]):
+    def _validate_shape_in(shape_in: ty.Tuple[int, int, int]) -> None:
         if not len(shape_in) == 3:
             raise ValueError(f"shape_in should be 3 dimensional. {shape_in} given.")
 
@@ -56,4 +60,20 @@ class MaxPooling(AbstractProcess):
             raise ValueError(f"Width and height of shape_in should be positive."
                              f"{shape_in} given.")
 
-        return shape_in
+    @staticmethod
+    def _validate_kernel_size(kernel_size: ty.Tuple[int, int]) -> None:
+        if kernel_size[0] <= 0 or kernel_size[1] <= 0:
+            raise ValueError(f"Kernel size elements should be strictly positive."
+                             f"{kernel_size=} found.")
+        
+    @staticmethod
+    def _validate_stride(stride: ty.Tuple[int, int]) -> None:
+        if stride[0] <= 0 or stride[1] <= 0:
+            raise ValueError(f"Stride elements should be strictly positive."
+                             f"{stride=} found.")
+        
+    @staticmethod
+    def _validate_padding(padding: ty.Tuple[int, int]) -> None:
+        if padding[0] < 0 or padding[1] < 0:
+            raise ValueError(f"Padding elements should be positive."
+                             f"{padding=} found.")

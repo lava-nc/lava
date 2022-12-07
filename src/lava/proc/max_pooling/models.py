@@ -4,6 +4,7 @@
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
+import typing as ty
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -33,21 +34,36 @@ class MaxPoolingPM(PyLoihiProcessModel):
         self.out_port.send(max_pooled_data)
 
     def _max_pooling(self, data: np.ndarray) -> np.ndarray:
-        output_shape = self.out_port.shape
+        result = np.zeros(self.out_port.shape)
 
+        for channel in range(self.out_port.shape[-1]):
+            result[:, :, channel] = \
+                self._max_pooling_2d(data[:, :, channel],
+                                     output_shape=self.out_port.shape[:-1],
+                                     kernel_size=self.kernel_size,
+                                     stride=self.stride,
+                                     padding=self.padding)
+
+        return result
+
+    @staticmethod
+    def _max_pooling_2d(data: np.ndarray,
+                        output_shape: ty.Tuple[int, int],
+                        kernel_size: np.ndarray,
+                        stride: np.ndarray,
+                        padding: np.ndarray) -> np.ndarray:
         padded_data = np.pad(data,
-                             (utils.make_tuple(self.padding[0]),
-                              utils.make_tuple(self.padding[1])),
-                             mode='constant')
+                             (padding[0], padding[1]),
+                             mode='constant').copy()
 
         shape_w = (output_shape[0],
                    output_shape[1],
-                   self.kernel_size[0],
-                   self.kernel_size[1])
-        strides_w = (self.stride[0] * data.strides[0],
-                     self.stride[1] * data.strides[1],
-                     data.strides[0],
-                     data.strides[1])
+                   kernel_size[0],
+                   kernel_size[1])
+        strides_w = (stride[0] * padded_data.strides[0],
+                     stride[1] * padded_data.strides[1],
+                     padded_data.strides[0],
+                     padded_data.strides[1])
 
         pooled_data = as_strided(padded_data, shape_w, strides_w)
         max_pooled_data = pooled_data.max(axis=(2, 3))
