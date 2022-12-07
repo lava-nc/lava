@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
-#include <chrono>
+#include <chrono>  // NOLINT
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 #include "ddsmetadata/msg/dds_meta_data.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
 
 #define MAX_ARRAY_DIMS (5)
 
@@ -24,12 +24,10 @@ struct MetaData {
 
 using MetaDataPtr = std::shared_ptr<MetaData>;
 
-class MinimalPublisher : public rclcpp::Node
-{
-public:
+class MinimalPublisher : public rclcpp::Node {
+ public:
   MinimalPublisher()
-  : Node("minimal_publisher"), count_(0)
-  {
+  : Node("minimal_publisher"), count_(0) {
     metadata = std::make_shared<MetaData>();
     metadata->nd = 1;
     metadata->type = 7;
@@ -47,23 +45,23 @@ public:
       500ms, std::bind(&MinimalPublisher::timer_callback, this));
   }
 
-private:
-  void timer_callback()
-  {
+ private:
+  void timer_callback() {
     auto message = ddsmetadata::msg::DDSMetaData();
     message.nd = metadata->nd;
     message.type = metadata->type;
     message.elsize = metadata->elsize;
     message.total_size = metadata->total_size;
-    for(int i = 0; i < MAX_ARRAY_DIMS; i++) {
+    for (int i = 0; i < MAX_ARRAY_DIMS; i++) {
       message.dims[i] = metadata->dims[i];
       message.strides[i] = metadata->strides[i];
     }
     *reinterpret_cast<int64_t*>(metadata->mdata) = count_;
     message.mdata = std::vector<unsigned char>(
                   reinterpret_cast<unsigned char*>(metadata->mdata),
-                  reinterpret_cast<unsigned char*>(metadata->mdata) + metadata->elsize * metadata->total_size);
-    
+                  reinterpret_cast<unsigned char*>(metadata->mdata)
+                      + metadata->elsize * metadata->total_size);
+
     RCLCPP_INFO(rclcpp::Node::get_logger(), "ROS2 publishing: '%d'", count_++);
     publisher_->publish(message);
   }
@@ -74,8 +72,7 @@ private:
   rmw_publisher_t publisher;
 };
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<MinimalPublisher>());
   rclcpp::shutdown();
