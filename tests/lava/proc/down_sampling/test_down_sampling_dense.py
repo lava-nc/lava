@@ -1,27 +1,22 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-import unittest
-from lava.proc.event_data.event_pre_processor.dense_to_dense.down_sampling_dense import DownSamplingDense, DownSamplingDensePM
-from lava.proc.event_data.event_pre_processor.utils import DownSamplingMethodDense
 
 import numpy as np
+import unittest
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-
-import matplotlib.pyplot as plt
+from lava.proc.down_sampling.models import DownSampling, DownSamplingPM
 
 
 class RecvDense(AbstractProcess):

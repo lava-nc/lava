@@ -19,8 +19,7 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.proc.event_data.event_data_loader.aedat_data_loader import AedatDataLoader, \
-    AedatDataLoaderPM
+from lava.proc.event_data.io.aedat_data_loader import AedatDataLoader, AedatDataLoaderPM
 
 class RecvSparse(AbstractProcess):
     """
@@ -50,7 +49,8 @@ class PyRecvSparsePM(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         """
-        Receives the data and pads with zeros to fit them to the port shape. TODO: why?
+        Receives the data and pads with zeros to be able to access it with
+        Lava Vars.
         """
         data, idx = self.in_port.recv()
 
@@ -133,15 +133,56 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         user parameters are all correct.
         TODO: implement this test, show functionality without sub-sampling
         """
+        data_history = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1],
+            [0]
+        ]
+        indices_history = [
+            [1597, 2308, 2486, 2496, 2498, 1787, 2642, 2633, 2489,
+             2488, 1596, 1729, 1727, 2500, 1780],
+            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911],
+            [7138, 2301, 2471, 1601, 2982, 1364, 1379, 1386, 1384,
+             2983, 1390, 2289, 1401, 1362, 2293],
+            [1910, 1382, 1909, 1562, 1606, 1381],
+            [464]
+        ]
+        seed_rng = 0
+        rng = np.random.default_rng(seed=seed_rng)
+
+        max_num_events = 15
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(3000,))
+                                      shape_out=(max_num_events,),
+                                      seed_sub_sampling=seed_rng)
+        recv_sparse = RecvSparse(shape=(max_num_events,))
 
-        num_steps = 9
+        data_loader.out_port.connect(recv_sparse.in_port)
+
+        # Run parameters
+        num_steps = 5
         run_cfg = Loihi1SimCfg()
-        run_cnd = RunSteps(num_steps=num_steps)
+        run_cnd = RunSteps(num_steps=1)
 
-        data_loader.run(condition=run_cnd, run_cfg=run_cfg)
+        # Running
+        for i in range(num_steps):
+            data_loader.run(condition=run_cnd, run_cfg=run_cfg)
 
+            expected_data = np.array(data_history[i])
+            expected_indices = np.array(indices_history[i])
+
+            sent_and_received_data = \
+                recv_sparse.data.get()[:expected_data.shape[0]]
+            sent_and_received_indices = \
+                recv_sparse.idx.get()[:expected_indices.shape[0]]
+
+            np.testing.assert_equal(sent_and_received_data,
+                                    expected_data)
+            np.testing.assert_equal(sent_and_received_indices,
+                                    expected_indices)
+
+        # Stopping
         data_loader.stop()
 
     def test_sub_sampling(self):
@@ -169,6 +210,15 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         seed_rng = 0
         rng = np.random.default_rng(seed=seed_rng)
 
+        expected_data = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ]
+
+        expected_indices = [
+            [1787, 1780, 2498, 2633, 2486, 1597, 1727, 2496, 2500, 1729],
+            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911,]
+        ]
+
         max_num_events = 10
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
                                       shape_out=(max_num_events,),
@@ -178,7 +228,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         data_loader.out_port.connect(recv_sparse.in_port)
 
         # Run parameters
-        num_steps = 5
+        num_steps = 2
         run_cfg = Loihi1SimCfg()
         run_cnd = RunSteps(num_steps=1)
 
@@ -199,7 +249,6 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
                 sampled_idx = rng.choice(data_idx_array,
                                          max_num_events,
                                          replace=False)
-                # TODO: assert that after subsampling, the number of events is the maximum. Could also hard code expected events
 
                 expected_data = expected_data[sampled_idx]
                 expected_indices = expected_indices[sampled_idx]
@@ -208,6 +257,9 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
                                     expected_data)
             np.testing.assert_equal(sent_and_received_indices,
                                     expected_indices)
+
+            print(f"data timestep {i}: ", sent_and_received_data)
+            print(f"indices timestep {i}: ", sent_and_received_indices)
 
         # Stopping
         data_loader.stop()
