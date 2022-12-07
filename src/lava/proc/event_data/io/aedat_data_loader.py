@@ -20,8 +20,7 @@ from lava.utils.events import sub_sample
 
 
 class AedatDataLoader(AbstractProcess):
-    """
-    Process that reads data from an aedat4 file.
+    """Process that reads event-based data from an aedat4 file.
 
     This process outputs a sparse tensor of the event data stream, meaning
     two 1-dimensional vectors containing polarity data and indices. The
