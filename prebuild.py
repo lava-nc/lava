@@ -27,7 +27,7 @@ class CMake():
             .decode().strip() + "/bin/python3"
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
-            f"-DPYTHON_EXECUTABLE={python_env}",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
         print(f"THE PATH OF EXECUTABLE: {python_env}")
