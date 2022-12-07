@@ -117,7 +117,9 @@ class AedatDataLoaderPM(PyLoihiProcessModel):
 
         data, indices = self._encode_data_and_indices(events)
 
-        data, indices = sub_sample(data, indices, self._shape_out[0], self._seed_sub_sampling)
+        # If we have more data than our shape allows, subsample
+        if data.shape[0] > self._shape_out[0]:
+            data, indices = sub_sample(data, indices, self._shape_out[0], self._seed_sub_sampling)
 
         self.out_port.send(data, indices)
 

@@ -17,7 +17,7 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.proc.event_data.event_pre_processor.sparse_to_dense.sparse_to_dense import SparseToDense, SparseToDensePM
+from lava.proc.event_data.to_frame.models import ToFrame, ToFramePM
 
 # TODO: add doc strings
 class RecvDense(AbstractProcess):
@@ -73,63 +73,63 @@ class PySendSparsePM(PyLoihiProcessModel):
 class TestProcessSparseToDense(unittest.TestCase):
     def test_init_2d(self):
         """Tests instantiation of SparseToDense for a 2D output."""
-        sparse_to_dense = SparseToDense(shape_in=(43200,),
-                                        shape_out=(240, 180))
+        to_frame = ToFrame(shape_in=(43200,),
+                           shape_out=(240, 180))
 
-        self.assertIsInstance(sparse_to_dense, SparseToDense)
-        self.assertEqual(sparse_to_dense.proc_params["shape_in"], (43200,))
-        self.assertEqual(sparse_to_dense.proc_params["shape_out"], (240, 180))
+        self.assertIsInstance(to_frame, ToFrame)
+        self.assertEqual(to_frame.proc_params["shape_in"], (43200,))
+        self.assertEqual(to_frame.proc_params["shape_out"], (240, 180))
 
     def test_init_3d(self):
         """Tests instantiation of SparseToDense for a 3D output."""
-        sparse_to_dense = SparseToDense(shape_in=(43200,),
-                                        shape_out=(240, 180, 2))
+        to_frame = ToFrame(shape_in=(43200,),
+                           shape_out=(240, 180, 2))
 
-        self.assertIsInstance(sparse_to_dense, SparseToDense)
-        self.assertEqual(sparse_to_dense.proc_params["shape_in"], (43200,))
-        self.assertEqual(sparse_to_dense.proc_params["shape_out"], (240, 180, 2))
+        self.assertIsInstance(to_frame, ToFrame)
+        self.assertEqual(to_frame.proc_params["shape_in"], (43200,))
+        self.assertEqual(to_frame.proc_params["shape_out"], (240, 180, 2))
 
     def test_invalid_shape_out_throws_exception(self):
         """Tests whether an exception is thrown when a 1d or 4d value for the shape_out argument is given."""
         # TODO: should the 4D+ case rather raise a NotImplementedError?
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200,),
-                          shape_out=(240,))
+            ToFrame(shape_in=(43200,),
+                    shape_out=(240,))
 
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200,),
-                          shape_out=(240, 180, 2, 1))
+            ToFrame(shape_in=(43200,),
+                    shape_out=(240, 180, 2, 1))
 
     def test_invalid_shape_in_throws_exception(self):
         """Tests whether a shape_in argument that isn't (n,) throws an exception."""
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200, 1),
-                          shape_out=(240, 180))
+            ToFrame(shape_in=(43200, 1),
+                    shape_out=(240, 180))
 
     def test_third_dimension_not_2_throws_exception(self):
         """Tests whether an exception is thrown if the value of the 3rd dimension for the
         shape_out argument is not 2."""
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200,),
-                          shape_out=(240, 180, 1))
+            ToFrame(shape_in=(43200,),
+                    shape_out=(240, 180, 1))
 
     def test_negative_size_shape_in_throws_exception(self):
         """Tests whether an exception is thrown when a negative integer for the shape_in
         argument is given"""
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(-43200,),
-                          shape_out=(240, 180))
+            ToFrame(shape_in=(-43200,),
+                    shape_out=(240, 180))
 
     def test_negative_width_or_height_shape_out_throws_exception(self):
         """Tests whether an exception is thrown when a negative width or height for the
         shape_out argument is given"""
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200,),
-                          shape_out=(-240, 180))
+            ToFrame(shape_in=(43200,),
+                    shape_out=(-240, 180))
             
         with(self.assertRaises(ValueError)):
-            SparseToDense(shape_in=(43200,),
-                          shape_out=(240, -180))
+            ToFrame(shape_in=(43200,),
+                    shape_out=(240, -180))
 
 
 #TODO: add doc strings
@@ -140,9 +140,9 @@ class TestProcessModelSparseToDense(unittest.TestCase):
             "shape_out": (240, 180)
         }
 
-        pm = SparseToDensePM(proc_params)
+        pm = ToFramePM(proc_params)
 
-        self.assertIsInstance(pm, SparseToDensePM)
+        self.assertIsInstance(pm, ToFramePM)
         self.assertEqual(pm._shape_out, proc_params["shape_out"])
 
 # TODO: can be deleted I guess
@@ -153,10 +153,10 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         indices = np.ravel_multi_index((xs, ys), (8, 8))
 
         send_sparse = SendSparse(shape=(10, ), data=data, indices=indices)
-        sparse_to_dense = SparseToDense(shape_in=(10, ),
+        to_frame = ToFrame(shape_in=(10, ),
                                         shape_out=(8, 8))
 
-        send_sparse.out_port.connect(sparse_to_dense.in_port)
+        send_sparse.out_port.connect(to_frame.in_port)
 
         # Run parameters
         num_steps = 1
@@ -164,12 +164,12 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         run_cnd = RunSteps(num_steps=num_steps)
 
         # Running
-        sparse_to_dense.run(condition=run_cnd, run_cfg=run_cfg)
+        to_frame.run(condition=run_cnd, run_cfg=run_cfg)
 
         # Stopping
-        sparse_to_dense.stop()
+        to_frame.stop()
 
-        self.assertFalse(sparse_to_dense.runtime._is_running)
+        self.assertFalse(to_frame.runtime._is_running)
         
     def test_2d(self):
         data = np.array([1, 1, 1, 1, 1, 1])
@@ -188,12 +188,12 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         expected_data[4, 4] = 1
 
         send_sparse = SendSparse(shape=(10, ), data=data, indices=indices)
-        sparse_to_dense = SparseToDense(shape_in=(10, ),
-                                        shape_out=(8, 8))
+        to_frame = ToFrame(shape_in=(10, ),
+                           shape_out=(8, 8))
         recv_dense = RecvDense(shape=(8, 8))
 
-        send_sparse.out_port.connect(sparse_to_dense.in_port)
-        sparse_to_dense.out_port.connect(recv_dense.in_port)
+        send_sparse.out_port.connect(to_frame.in_port)
+        to_frame.out_port.connect(recv_dense.in_port)
 
         # Run parameters
         num_steps = 1
@@ -201,13 +201,13 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         run_cnd = RunSteps(num_steps=num_steps)
 
         # Running
-        sparse_to_dense.run(condition=run_cnd, run_cfg=run_cfg)
+        to_frame.run(condition=run_cnd, run_cfg=run_cfg)
         
         sent_and_received_data = \
             recv_dense.data.get()
 
         # Stopping
-        sparse_to_dense.stop()
+        to_frame.stop()
 
         np.testing.assert_equal(sent_and_received_data,
                                 expected_data)
@@ -229,12 +229,12 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         expected_data[4, 4, 0] = 1
 
         send_sparse = SendSparse(shape=(10,), data=data, indices=indices)
-        sparse_to_dense = SparseToDense(shape_in=(10,),
-                                        shape_out=(8, 8, 2))
+        to_frame = ToFrame(shape_in=(10,),
+                           shape_out=(8, 8, 2))
         recv_dense = RecvDense(shape=(8, 8, 2))
 
-        send_sparse.out_port.connect(sparse_to_dense.in_port)
-        sparse_to_dense.out_port.connect(recv_dense.in_port)
+        send_sparse.out_port.connect(to_frame.in_port)
+        to_frame.out_port.connect(recv_dense.in_port)
 
         # Run parameters
         num_steps = 1
@@ -242,13 +242,13 @@ class TestProcessModelSparseToDense(unittest.TestCase):
         run_cnd = RunSteps(num_steps=num_steps)
 
         # Running
-        sparse_to_dense.run(condition=run_cnd, run_cfg=run_cfg)
+        to_frame.run(condition=run_cnd, run_cfg=run_cfg)
 
         sent_and_received_data = \
             recv_dense.data.get()
 
         # Stopping
-        sparse_to_dense.stop()
+        to_frame.stop()
 
         # # TODO : REMOVE THIS AFTER DEBUG
         # expected_data_im = np.zeros((8, 8))

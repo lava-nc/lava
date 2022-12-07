@@ -16,7 +16,6 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
-
 class Flattening(AbstractProcess):
     def __init__(self,
                  *,
