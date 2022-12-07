@@ -57,7 +57,10 @@ class TestLearningRuleFloatApplier(unittest.TestCase):
             "weights": w,
             "traces": traces,
             # Adding numpy to applier args to be able to use it for sign method
-            "np": np
+            "np": np,
+            "x1_y0": traces[1, 0],
+            "y1_x0": traces[0, 2],
+            "x2_u": x2_u
         }
 
         result = w + (np.broadcast_to(x0[np.newaxis, :], conn_shape) * (-1)
@@ -118,8 +121,9 @@ class TestLearningRuleFixedBitApproxApplier(unittest.TestCase):
             "y0": y0[:, np.newaxis],
             "u": u,
             "weights": w,
-            "x_traces": traces[:, :2, :, :],
-            "y_traces": traces[:, 2:, :, :]
+            "x1_y0": traces[1, 0],
+            "y1_x0": traces[0, 2],
+            "x2_u": x2_u
         }
 
         result = [[5295, 1294, 2025, 738, 1792], [2196, 3627, 988, -575, 3367],
