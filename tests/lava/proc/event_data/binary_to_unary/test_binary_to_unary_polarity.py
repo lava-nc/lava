@@ -17,11 +17,17 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
-from lava.proc.event_data.event_pre_processor.sparse_to_sparse.binary_to_unary_polarity import \
-    BinaryToUnaryPolarity, BinaryToUnaryPolarityPM
+from lava.proc.event_data.binary_to_unary.models import BinaryToUnaryPolarity, BinaryToUnaryPolarityPM
 
-# TODO: add doc strings for these processes
+
 class RecvSparse(AbstractProcess):
+    """
+    Process that receives arbitrary sparse data.
+
+    Parameters
+    ----------
+    shape: tuple, shape of the process
+    """
     def __init__(self,
                  shape: ty.Tuple[int]) -> None:
         super().__init__(shape=shape)
@@ -41,6 +47,9 @@ class PyRecvSparsePM(PyLoihiProcessModel):
     idx: np.ndarray = LavaPyType(np.ndarray, int)
 
     def run_spk(self) -> None:
+        """
+        Receives the data and pads with zeros to enable access with get()
+        """
         data, idx = self.in_port.recv()
 
         self.data = np.pad(data,
@@ -52,6 +61,13 @@ class PyRecvSparsePM(PyLoihiProcessModel):
 
 
 class SendSparse(AbstractProcess):
+    """
+    Process that sends arbitrary sparse data.
+
+    Parameters
+    ----------
+    shape: tuple, shape of the process
+    """
     def __init__(self,
                  shape: ty.Tuple[int],
                  data: np.ndarray,
@@ -109,7 +125,6 @@ class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
         self.assertIsInstance(pm, BinaryToUnaryPolarityPM)
 
     def test_binary_to_unary_polarity_encoding(self):
-        # TODO: add explanations for the meaning of binary and unary somewhere? explain test variables?
         """Tests whether the encoding from binary to unary works correctly."""
         data = np.array([1, 1, 1, 0, 1, 0, 0, 1, 0])
         indices = np.array([1, 5, 4, 3, 3, 2, 0, 1, 0])
@@ -147,25 +162,25 @@ class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
                                 expected_indices)
 
     # TODO: I guess not needed? should any edge cases be treated?
-    def test_run(self):
-        data = np.array([1, 1, 1, 0, 1, 0, 0, 1, 0])
-        indices = np.array([1, 5, 4, 3, 3, 2, 0, 1, 0])
-
-        send_sparse = SendSparse(shape=(10,), data=data, indices=indices)
-        binary_to_unary_encoder = BinaryToUnaryPolarity(shape=(10,))
-
-        send_sparse.out_port.connect(binary_to_unary_encoder.in_port)
-
-        # Run parameters
-        run_cfg = Loihi1SimCfg()
-        run_cnd = RunSteps(num_steps=1)
-
-        # Running
-        binary_to_unary_encoder.run(condition=run_cnd, run_cfg=run_cfg)
-
-        binary_to_unary_encoder.stop()
-
-        self.assertFalse(binary_to_unary_encoder.runtime._is_running)
+    # def test_run(self):
+    #     data = np.array([1, 1, 1, 0, 1, 0, 0, 1, 0])
+    #     indices = np.array([1, 5, 4, 3, 3, 2, 0, 1, 0])
+    #
+    #     send_sparse = SendSparse(shape=(10,), data=data, indices=indices)
+    #     binary_to_unary_encoder = BinaryToUnaryPolarity(shape=(10,))
+    #
+    #     send_sparse.out_port.connect(binary_to_unary_encoder.in_port)
+    #
+    #     # Run parameters
+    #     run_cfg = Loihi1SimCfg()
+    #     run_cnd = RunSteps(num_steps=1)
+    #
+    #     # Running
+    #     binary_to_unary_encoder.run(condition=run_cnd, run_cfg=run_cfg)
+    #
+    #     binary_to_unary_encoder.stop()
+    #
+    #     self.assertFalse(binary_to_unary_encoder.runtime._is_running)
 
 
 if __name__ == '__main__':

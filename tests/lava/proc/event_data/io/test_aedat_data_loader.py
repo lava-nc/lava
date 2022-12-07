@@ -9,11 +9,11 @@ import typing as ty
 import unittest
 
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -49,8 +49,7 @@ class PyRecvSparsePM(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         """
-        Receives the data and pads with zeros to be able to access it with
-        Lava Vars.
+        Receives the data and pads with zeros to enable access with get().
         """
         data, idx = self.in_port.recv()
 
@@ -131,7 +130,6 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         """
         Tests whether running yields the expectde behavior, given that the
         user parameters are all correct.
-        TODO: implement this test, show functionality without sub-sampling
         """
         data_history = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -149,9 +147,8 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
             [1910, 1382, 1909, 1562, 1606, 1381],
             [464]
         ]
-        seed_rng = 0
-        rng = np.random.default_rng(seed=seed_rng)
 
+        seed_rng = 0
         max_num_events = 15
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
                                       shape_out=(max_num_events,),
@@ -191,34 +188,23 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         that is smaller than the amount of events we receive in a given batch
         (i.e. the process will sub-sample correctly).
         """
-        data_history = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        expected_data = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1],
             [0]
-        ]
-        indices_history = [
-            [1597, 2308, 2486, 2496, 2498, 1787, 2642, 2633, 2489,
-             2488, 1596, 1729, 1727, 2500, 1780],
-            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911],
-            [7138, 2301, 2471, 1601, 2982, 1364, 1379, 1386, 1384,
-             2983, 1390, 2289, 1401, 1362, 2293],
-            [1910, 1382, 1909, 1562, 1606, 1381],
-            [464]
-        ]
-        seed_rng = 0
-        rng = np.random.default_rng(seed=seed_rng)
-
-        expected_data = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
 
         expected_indices = [
             [1787, 1780, 2498, 2633, 2486, 1597, 1727, 2496, 2500, 1729],
-            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911,]
+            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911],
+            [1362, 1384, 7138, 1379, 1390, 2982, 1364, 2301, 2289, 1386],
+            [1910, 1382, 1909, 1562, 1606, 1381],
+            [464]
         ]
 
+        seed_rng = 0
         max_num_events = 10
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
                                       shape_out=(max_num_events,),
@@ -228,7 +214,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         data_loader.out_port.connect(recv_sparse.in_port)
 
         # Run parameters
-        num_steps = 2
+        num_steps = 5
         run_cfg = Loihi1SimCfg()
         run_cnd = RunSteps(num_steps=1)
 
@@ -236,30 +222,15 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         for i in range(num_steps):
             data_loader.run(condition=run_cnd, run_cfg=run_cfg)
 
-            expected_data = np.array(data_history[i])
-            expected_indices = np.array(indices_history[i])
-
             sent_and_received_data = \
-                recv_sparse.data.get()[:expected_data.shape[0]]
+                recv_sparse.data.get()[:len(expected_data[i])]
             sent_and_received_indices = \
-                recv_sparse.idx.get()[:expected_indices.shape[0]]
-
-            if expected_data.shape[0] > max_num_events:
-                data_idx_array = np.arange(0, expected_data.shape[0])
-                sampled_idx = rng.choice(data_idx_array,
-                                         max_num_events,
-                                         replace=False)
-
-                expected_data = expected_data[sampled_idx]
-                expected_indices = expected_indices[sampled_idx]
+                recv_sparse.idx.get()[:len(expected_indices[i])]
 
             np.testing.assert_equal(sent_and_received_data,
-                                    expected_data)
+                                    expected_data[i])
             np.testing.assert_equal(sent_and_received_indices,
-                                    expected_indices)
-
-            print(f"data timestep {i}: ", sent_and_received_data)
-            print(f"indices timestep {i}: ", sent_and_received_indices)
+                                    expected_indices[i])
 
         # Stopping
         data_loader.stop()
@@ -267,37 +238,120 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
     def test_sub_sampling_seed(self):
         """
         Tests whether using different seeds does indeed result in different samples.
+        TODO: would testing on only 1 timestep be sufficient?
         """
-        # TODO: implement this
-        pass
+        expected_indices_seed_0 = [
+            [1787, 1780, 2498, 2633, 2486, 1597, 1727, 2496, 2500, 1729],
+            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911],
+            [1362, 1384, 7138, 1379, 1390, 2982, 1364, 2301, 2289, 1386],
+            [1910, 1382, 1909, 1562, 1606, 1381],
+            [464]
+        ]
+
+        expected_indices_seed_1 = [
+            [2498, 2486, 2488, 1597, 1727, 2496, 2308, 2642, 2489, 2500],
+            [1600, 1732, 2297, 1388, 2290, 2305, 3704, 3519, 1911],
+            [1401, 1390, 1386, 1364, 2289, 7138, 1601, 2301, 1379, 1384],
+            [1910, 1382, 1909, 1562, 1606, 1381],
+            [464]
+        ]
+        sent_and_received_indices_1 = []
+        sent_and_received_indices_2 = []
+
+        max_num_events = 10
+        seed_rng_run_1 = 0
+        seed_rng_run_2 = 1
+
+        data_loader_1 = AedatDataLoader(file_path="../dvs_recording.aedat4",
+                                        shape_out=(max_num_events,),
+                                        seed_sub_sampling=seed_rng_run_1)
+        data_loader_2 = AedatDataLoader(file_path="../dvs_recording.aedat4",
+                                        shape_out=(max_num_events,),
+                                        seed_sub_sampling=seed_rng_run_2)
+
+        recv_sparse_1 = RecvSparse(shape=(max_num_events,))
+        recv_sparse_2 = RecvSparse(shape=(max_num_events,))
+
+        data_loader_1.out_port.connect(recv_sparse_1.in_port)
+        data_loader_2.out_port.connect(recv_sparse_2.in_port)
+
+        num_steps = 5
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=1)
+
+        for i in range(num_steps):
+            data_loader_1.run(condition=run_cnd, run_cfg=run_cfg)
+
+            sent_and_received_indices_1.append\
+                (recv_sparse_1.idx.get()[:len(expected_indices_seed_1[i])])
+
+        np.testing.assert_equal(sent_and_received_indices_1,
+                                expected_indices_seed_0)
+
+        data_loader_1.stop()
+
+        for i in range(num_steps):
+            data_loader_2.run(condition=run_cnd, run_cfg=run_cfg)
+
+            sent_and_received_indices_2.append\
+                (recv_sparse_2.idx.get()[:len(expected_indices_seed_1[i])])
+
+        np.testing.assert_equal(sent_and_received_indices_2,
+                                expected_indices_seed_1)
+
+        data_loader_2.stop()
 
     def test_end_of_file(self):
         """
         Tests whether we loop back to the beginning of the event stream when we reach
-        the end of the aedat4 file.
-        TODO: implement this. dvs_recording.aedat4 should be 30 timesteps long.
+        the end of the aedat4 file. The test file contains 27 time-steps.
         """
+        data_time_steps_1_to_5 = []
+        data_time_steps_28_to_32 = []
+        indices_time_steps_1_to_5 = []
+        indices_time_steps_28_to_32 = []
+
+        seed_rng = 0
+        max_num_events = 15
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
-                                      shape_out=(3000,),
-                                      seed_sub_sampling=0)
+                                      shape_out=(max_num_events,),
+                                      seed_sub_sampling=seed_rng)
+        recv_sparse = RecvSparse(shape=(max_num_events,))
+
+        data_loader.out_port.connect(recv_sparse.in_port)
 
         # Run parameters
-        num_steps = 10
+        num_steps = 32
         run_cfg = Loihi1SimCfg()
-        run_cnd = RunSteps(num_steps=num_steps)
+        run_cnd = RunSteps(num_steps=1)
 
         # Running
-        data_loader.run(condition=run_cnd, run_cfg=run_cfg)
+        for i in range(num_steps):
+            data_loader.run(condition=run_cnd, run_cfg=run_cfg)
+            # get data from the first 5 timesteps
+            if i in range(5):
+                data_time_steps_1_to_5.append\
+                    (recv_sparse.data.get())
+                indices_time_steps_1_to_5.append\
+                    (recv_sparse.idx.get())
+
+            # get data from timesteps 28-32
+            if i in range(27,32):
+                data_time_steps_28_to_32.append\
+                    (recv_sparse.data.get())
+                indices_time_steps_28_to_32.append\
+                    (recv_sparse.idx.get())
+
+        np.testing.assert_equal(data_time_steps_1_to_5, data_time_steps_28_to_32)
+        np.testing.assert_equal(indices_time_steps_1_to_5, indices_time_steps_28_to_32)
 
         # Stopping
         data_loader.stop()
 
-        self.assertFalse(data_loader.runtime._is_running)
-
     def test_index_encoding(self):
         """
-        Tests whether indices are correctly calculated given x and y coordinates.
-        TODO: have less timesteps? maybe 2-3 (show it works for multiple timesteps with multiple sizes)?
+        Tests whether indices are correctly calculated during the process.
+        TODO: have less timesteps? maybe 2? (show it works for multiple timesteps with multiple sizes)? no difference in runtime
         """
         x_history = [
             [8, 12, 13, 13, 13, 9, 14, 14, 13, 13, 8, 9, 9, 13, 9],
@@ -327,7 +381,7 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
         rng = np.random.default_rng(seed=seed_rng)
         dense_shape = (240, 180)
 
-        max_num_events = 10
+        max_num_events = 15
         data_loader = AedatDataLoader(file_path="../dvs_recording.aedat4",
                                       shape_out=(max_num_events,),
                                       seed_sub_sampling=seed_rng)
@@ -352,15 +406,6 @@ class TestProcessModelAedatDataLoader(unittest.TestCase):
 
             reconstructed_xs, reconstructed_ys = \
                 np.unravel_index(sent_and_received_indices, dense_shape)
-
-            if expected_xs.shape[0] > max_num_events:
-                data_idx_array = np.arange(0, expected_xs.shape[0])
-                sampled_idx = rng.choice(data_idx_array,
-                                         max_num_events,
-                                         replace=False)
-
-                expected_xs = expected_xs[sampled_idx]
-                expected_ys = expected_ys[sampled_idx]
 
             np.testing.assert_equal(reconstructed_xs, expected_xs)
             np.testing.assert_equal(reconstructed_ys, expected_ys)
