@@ -21,18 +21,18 @@ jobs:
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
-        repository: 'Lava'    
+        repository: 'Lava'
 
     - name: Run flakeheaven (flake8)
       run: poetry run flakeheaven lint src/lava tests/
       
     - name: Run cpplint (cpplint)
       run: poetry run cpplint --recursive --quiet \
-           --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
+           --repository=src/lava/magma/runtime/_c_message_infrastructure \
            --root=csrc \
-           --exclude=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/channel/dds/protos \
-           src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
-           src/lava/magma/runtime/message_infrastructure/test/
+           --exclude=src/lava/magma/runtime/_c_message_infrastructure/csrc/channel/dds/protos \
+           src/lava/magma/runtime/_c_message_infrastructure/ \
+           src/lava/magma/runtime/_c_message_infrastructure/test/
 
   security-lint:
     name: Security Lint Code
@@ -112,22 +112,6 @@ jobs:
         path: ~/.cache
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-02-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Install dependencies
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install message_infrastructure
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      run: poetry install --no-interaction
-
     - name: Run message infrastructure cpp unit tests
-      working-directory: ./src/lava/magma/runtime/message_infrastructure/
+      working-directory: src/lava/magma/runtime/_c_message_infrastructure/
       run: build/temp.*/message_infrastructure.MessageInfrastructurePywrapper/test/test_messaging_infrastructure
-
-    - name: Run message infrastructure unit tests
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      if: runner.os == 'Linux'
-      run: |
-        source $VENV
-        pytest test/
