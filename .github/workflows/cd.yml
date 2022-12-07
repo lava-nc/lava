@@ -57,6 +57,7 @@ jobs:
           pip install --no-input $artifact
           python -c 'import lava.magma.compiler.subcompilers'
           python -c 'import lava.magma.core.model'
+          python -c 'from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing'
           pip uninstall -y lava-nc
           deactivate
           rm -rf artifact-test
@@ -69,6 +70,7 @@ jobs:
           pip install --no-input $artifact
           python -c 'import lava.magma.compiler.subcompilers'
           python -c 'import lava.magma.core.model'
+          python -c 'from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing'
           pip uninstall -y lava-nc
           deactivate
           rm -rf artifact-test
