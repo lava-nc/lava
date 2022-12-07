@@ -195,7 +195,6 @@ class LearningLIF(LearningNeuronProcess, AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
 
 
-
 class TernaryLIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process with *ternary* spiking
     output, i.e., +1, 0, and -1 spikes. When the voltage of a TernaryLIF neuron
