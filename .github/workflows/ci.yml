@@ -91,11 +91,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         lfs: true
-        
+
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
 
     - name: Run message infrastructure cpp unit tests
-      run: build/temp.*/*.MessageInfrastructurePywrapper/test/test_messaging_infrastructure
+      run: ./build/test/test_messaging_infrastructure
