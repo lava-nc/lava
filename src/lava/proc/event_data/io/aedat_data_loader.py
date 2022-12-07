@@ -79,11 +79,11 @@ class AedatDataLoader(AbstractProcess):
         is not a negative number. Raises relevant exception if not
         """
         if len(shape_out) != 1:
-            raise ValueError(f"Shape of the OutPort should be (n,). "
+            raise ValueError(f"Shape of the OutPort should be (n,)."
                              f"{shape_out} was given.")
 
         if shape_out[0] <= 0:
-            raise ValueError(f"Max number of events should be positive. "
+            raise ValueError(f"Max number of events should be positive."
                              f"{shape_out} was given.")
 
 

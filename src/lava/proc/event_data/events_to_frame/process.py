@@ -8,11 +8,11 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
-class ToFrame(AbstractProcess):
+class EventsToFrame(AbstractProcess):
     def __init__(self,
                  *,
                  shape_in: ty.Tuple[int],
-                 shape_out: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]],
+                 shape_out: ty.Tuple[int, int, int],
                  **kwargs) -> None:
         super().__init__(shape_in=shape_in,
                          shape_out=shape_out,
@@ -24,6 +24,7 @@ class ToFrame(AbstractProcess):
         self.in_port = InPort(shape=shape_in)
         self.out_port = OutPort(shape=shape_out)
 
+    # TODO: Re-write error messages
     @staticmethod
     def _validate_shape_in(shape_in: ty.Tuple[int]) -> None:
         if len(shape_in) != 1:
@@ -33,15 +34,15 @@ class ToFrame(AbstractProcess):
         if shape_in[0] <= 0:
             raise ValueError(f"Width of shape_in should be positive. {shape_in} given.")
 
+    # TODO: Re-write error messages
     @staticmethod
-    def _validate_shape_out(shape_out: ty.Union[ty.Tuple[int, int], ty.Tuple[int, int, int]]) -> None:
-        if not (len(shape_out) == 2 or len(shape_out) == 3):
-            raise ValueError(f"shape_out should be 2 or 3 dimensional. {shape_out} given.")
+    def _validate_shape_out(shape_out: ty.Tuple[int, int, int]) -> None:
+        if not len(shape_out) == 3:
+            raise ValueError(f"shape_out should be 3 dimensional. {shape_out} given.")
 
-        if len(shape_out) == 3:
-            if shape_out[2] != 2:
-                raise ValueError(f"Depth of the shape_out argument should be an integer and equal to 2. "
-                                 f"{shape_out} given.")
+        if not (shape_out[2] == 1 or shape_out[2] == 2):
+            raise ValueError(f"Depth of the shape_out argument should be an integer and equal to 2. "
+                             f"{shape_out} given.")
 
         if shape_out[0] <= 0 or shape_out[1] <= 0:
             raise ValueError(f"Width and height of the shape_out argument should be positive. "

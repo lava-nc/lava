@@ -40,8 +40,9 @@ class BinaryToUnaryPolarity(AbstractProcess):
             Shape to validate.
         """
         if len(shape) != 1:
-            raise ValueError(f"Shape should be (n,). {shape} was given.")
+            raise ValueError(f"Shape should be of the form (max_num_events, )."
+                             f"{shape} was given.")
 
         if shape[0] <= 0:
-            raise ValueError(f"Max number of events should be positive. "
+            raise ValueError(f"Max number of events should be positive."
                              f"{shape} was given.")
