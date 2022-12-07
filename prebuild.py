@@ -9,6 +9,7 @@ class CMake():
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
         self.cmake_command = "cmake"
+        self.cmake_command_prefix = ["poetry", "run"]
         self.cmake_args = []
         self.build_args = []
         self.env = os.environ.copy()
@@ -47,8 +48,8 @@ class CMake():
     def run(self):
         self._set_cmake_path()
         self._set_cmake_args()
-        subprocess.check_call([self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
-        subprocess.check_call([self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call(self.cmake_command_prefix + [self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call(self.cmake_command_prefix + [self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
 
 if __name__ == '__main__':
     base_runtime_path = "src/lava/magma/runtime/"
