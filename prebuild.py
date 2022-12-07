@@ -21,12 +21,16 @@ class CMake():
     def _set_cmake_args(self):
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
+        
+        python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
+            .decode().strip() + "/bin/python"
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DPYTHON_EXECUTABLE={python_env}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
-        print(f"THE PATH OF EXECUTABLE{sys.executable}")
+        print(f"THE PATH OF EXECUTABLE: {python_env}")
+        print(f"THE ORIGINAL PATH OF EXECUTEABLE: {sys.executable}")
         if "CMAKE_ARGS" in os.environ:
             self.cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ")
                            if item]
