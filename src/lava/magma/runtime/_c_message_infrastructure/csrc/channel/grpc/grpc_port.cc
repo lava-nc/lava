@@ -39,7 +39,7 @@ void RecvQueue<GrpcMetaDataPtr>::FreeData(GrpcMetaDataPtr data)
 
 GrpcChannelServerImpl::GrpcChannelServerImpl(const std::string& name,
                                              const size_t &size)
-  :name_(name), size_(size), done_(false) {
+  :GrpcServerImpl(name, size), done_(false) {
   recv_queue_ = std::make_shared<RecvQueue<GrpcMetaDataPtr>>(name_, size_);
 }
 
@@ -76,11 +76,60 @@ void GrpcChannelServerImpl::Stop() {
   recv_queue_->Stop();
 }
 
+GrpcChannelBlockServerImpl::GrpcChannelBlockServerImpl(const std::string& name,
+                                             const size_t &size)
+  :GrpcServerImpl(name, size), done_(false), usable_(true) {
+  block_recv_data_ = nullptr;
+}
+
+Status GrpcChannelBlockServerImpl::RecvArrayData(ServerContext* context,
+                                                 const GrpcMetaData *request,
+                                                 DataReply* reply) {
+  bool rep = true;
+  while (usable_ != true) {
+    helper::Sleep();
+    if (done_) {
+      rep = false;
+      return Status::OK;
+    }
+  }
+  block_recv_data_ = std::make_shared<GrpcMetaData>(*request);
+  usable_ = false;
+  reply->set_ack(rep);
+  return Status::OK;
+}
+
+GrpcMetaDataPtr GrpcChannelBlockServerImpl::Pop(bool block) {
+  while (block && usable_ == true) {
+    helper::Sleep();
+    if (done_)
+      return nullptr;
+  }
+  usable_ = true;
+  return  block_recv_data_;
+}
+
+GrpcMetaDataPtr GrpcChannelBlockServerImpl::Front() {
+  return block_recv_data_;
+}
+
+bool GrpcChannelBlockServerImpl::Probe() {
+  return block_recv_data_ != nullptr;
+}
+
+void GrpcChannelBlockServerImpl::Stop() {
+  done_ = true;
+}
+
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
                            const size_t &size,
                            const std::string& url)
   :name_(name), size_(size), done_(false), url_(url) {
-  service_ptr_ = std::make_shared<GrpcChannelServerImpl>(name_, size_);
+  if (size_ > 1) {
+    service_ptr_ = std::make_shared<GrpcChannelServerImpl>(name_, size_);
+  } else {
+    service_ptr_ = std::make_shared<GrpcChannelBlockServerImpl>(name_, size_);
+  }
 }
 
 void GrpcRecvPort::Start() {
