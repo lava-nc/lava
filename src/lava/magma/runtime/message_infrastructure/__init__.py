@@ -3,17 +3,26 @@
 # See: https://spdx.org/licenses/
 
 from ctypes import CDLL, RTLD_GLOBAL
-from os import path
+import os
 
 
 def load_library():
     lib_name = 'libmessage_infrastructure.so'
-    here = path.abspath(__file__)
-    lib_path = path.join(path.dirname(here), lib_name)
-    if (path.exists(lib_path)):
-        CDLL(lib_path)
+    here = os.path.abspath(__file__)
+    lib_path = os.path.join(os.path.dirname(here), lib_name)
+    if (os.path.exists(lib_path)):
+        CDLL(lib_path, mode=RTLD_GLOBAL)
     else:
         print("Warn: No library file")
+    extra_lib_folder = os.path.join(os.path.dirname(here), "install", "lib")
+    if (os.path.exists(extra_lib_folder)):
+        extra_libs = os.listdir(extra_lib_folder)
+        for lib in extra_libs:
+            if '.so' in lib and ('idl' not in lib):
+                lib_file = os.path.join(extra_lib_folder, lib)
+                CDLL(lib_file, mode=RTLD_GLOBAL)
+    else:
+        print("No lib include")
 
 
 load_library()

@@ -81,7 +81,7 @@ endif()
 
 
 if(DDS_CHANNEL)
-  set(COMMON_DDS_DESTINATION "${CMAKE_BINARY_DIR}/install")
+  set(COMMON_DDS_DESTINATION "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/install")
   set(COMMON_DDS_INC "${COMMON_DDS_DESTINATION}/include")
   set(DDS_CHANNEL_SRCS
     "csrc/channel/dds/dds.cc"

@@ -9,7 +9,9 @@ packages = [
     {include = "lava", from = "src"},
     {include = "tests"}
 ]
-include = ["tutorials", "src/lava/magma/runtime/message_infrastructure/*.so"]
+include = ["tutorials",
+           "src/lava/magma/runtime/message_infrastructure/*.so",
+           "src/lava/magma/runtime/message_infrastructure/install/lib/lib*"]
 version = "0.5.1"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
@@ -143,7 +145,7 @@ extended_default_ignore=[]  # Fix for bug while using newer flake8 ver.
 format = "grouped"
 max_line_length = 80
 show_source = true
-exclude = ["./docs/", "./src/lava/magma/runtime/message_infrastructure/build"]
+exclude = ["./docs/", "./src/lava/magma/runtime/message_infrastructure/install"]
 
 [tool.flakeheaven.plugins]
 flake8-bandit = ["+*", "-S322", "-B101", "-S404", "-S602"]       # Enable a plugin, disable specific checks
