@@ -44,29 +44,16 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
 
       - name: Test artifact tar.gz
         run: |
-          python3.10 -m venv artifact-test
+          python3.9 -m venv artifact-test
           source artifact-test/bin/activate
           artifact=$(ls | grep lava | grep tar)
-          pip install --no-input $artifact
-          python -c 'import lava.magma.compiler.subcompilers'
-          python -c 'import lava.magma.core.model'
-          python -c 'from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing'
-          pip uninstall -y lava-nc
-          deactivate
-          rm -rf artifact-test
-
-      - name: Test artifact .whl
-        run: |
-          python3.10 -m venv artifact-test
-          source artifact-test/bin/activate
-          artifact=$(ls | grep lava | grep whl)
           pip install --no-input $artifact
           python -c 'import lava.magma.compiler.subcompilers'
           python -c 'import lava.magma.core.model'
@@ -87,17 +74,17 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
 
       - name: Test artifact tar.gz
         run: |
           mkdir tmp
           cd tmp
           cp ../lava* .
-          python3.10 -m venv artifact-unittest
+          python3.9 -m venv artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
           pip install nbconvert>=7.2.2 pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0 nbconvert>=7.2.2
@@ -111,23 +98,3 @@ jobs:
           cd ../
           rm -rf tmp
 
-      - name: Test artifact .whl
-        run: |
-          mkdir tmp
-          cd tmp
-          cp ../lava* .
-          python3.10 -m venv artifact-unittest
-          source artifact-unittest/bin/activate
-          pip install -U pip
-          pip install nbconvert>=7.2.2 pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0 nbconvert>=7.2.2
-          artifact=$(ls | grep lava | grep whl)
-          pip install --no-input $artifact
-          # Change $artifact to tar.gz
-          artifact=$(ls | grep lava | grep tar)
-          tar -xvf $artifact
-          mv ./lava*/tests .
-          mv ./lava*/tutorials .
-          python -m unittest -vv
-          deactivate
-          cd ../
-          rm -rf tmp
