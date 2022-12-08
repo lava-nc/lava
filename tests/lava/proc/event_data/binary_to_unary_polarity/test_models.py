@@ -17,7 +17,7 @@ from ..utils import SendSparse, RecvSparse
 
 class TestProcessModelBinaryToUnaryPolarity(unittest.TestCase):
     def test_init(self):
-        """Tests instantiation of the BinaryToUnary process model."""
+        """Tests instantiation of the BinaryToUnary ProcessModel."""
         pm = PyBinaryToUnaryPolarityPM()
         self.assertIsInstance(pm, PyBinaryToUnaryPolarityPM)
 
