@@ -11,21 +11,22 @@ from lava.proc.event_data.binary_to_unary_polarity.process \
 class TestProcessBinaryToUnaryPolarity(unittest.TestCase):
     def test_init(self):
         """Tests instantiation of BinaryToUnaryPolarity."""
-        converter = BinaryToUnaryPolarity(shape=(43200,))
+        binary_to_unary_polarity = BinaryToUnaryPolarity(shape=(43200,))
 
-        self.assertIsInstance(converter, BinaryToUnaryPolarity)
+        self.assertIsInstance(binary_to_unary_polarity, BinaryToUnaryPolarity)
 
     def test_invalid_shape_throws_exception(self):
-        """Tests whether a shape argument with an invalid shape
-        throws an exception."""
+        """Tests whether an invalid shape (not one-dimensional) throws an
+        exception."""
+        invalid_shape = (240, 180)
         with(self.assertRaises(ValueError)):
-            BinaryToUnaryPolarity(shape=(240, 180))
+            BinaryToUnaryPolarity(shape=invalid_shape)
 
     def test_negative_size_throws_exception(self):
-        """Tests whether a shape argument with a negative size
-        throws an exception."""
+        """Tests whether shape with a negative size throws an exception."""
+        invalid_shape = (-43200,)
         with(self.assertRaises(ValueError)):
-            BinaryToUnaryPolarity(shape=(-43200,))
+            BinaryToUnaryPolarity(shape=invalid_shape)
 
 
 if __name__ == '__main__':
