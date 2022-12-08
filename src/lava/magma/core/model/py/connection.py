@@ -32,7 +32,7 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
 class AbstractLearningConnection:
-    """Base class for plastic connection ProcessModels.
+    """Base class for learning connection ProcessModels.
     """
 
     # Learning Ports
@@ -58,7 +58,7 @@ class AbstractLearningConnection:
 
 
 class PyLearningConnection(AbstractLearningConnection):
-    """Base class for plastic connection ProcessModels in Python / CPU.
+    """Base class for learning connection ProcessModels in Python / CPU.
 
     This class provides commonly used functions for simulating the Loihi
     learning engine. It is subclasses for floating and fixed point

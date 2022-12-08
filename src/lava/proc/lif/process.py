@@ -9,14 +9,10 @@ from lava.magma.core.learning.learning_rule import (
     LoihiLearningRule,
     Loihi2FLearningRule,
 )
-from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
-
 from lava.magma.core.process.neuron import LearningNeuronProcess
-
-from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 
 
 class AbstractLIF(AbstractProcess):

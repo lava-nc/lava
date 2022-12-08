@@ -77,8 +77,8 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         result : ndarray
             Computed post synaptic trace values.
         """
-        y1_tau = self._learning_rule.y1_tau
-        y1_impulse = self._learning_rule.y1_impulse
+        y1_tau = self._learning_rule.post_trace_decay_tau
+        y1_impulse = self._learning_rule.post_trace_kernel_magnitude
 
         return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
 
@@ -88,6 +88,7 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+
         self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
 
         super().run_spk()
@@ -167,8 +168,8 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         result : ndarray
             Computed post synaptic trace values.
         """
-        y1_tau = self._learning_rule.y1_tau
-        y1_impulse = self._learning_rule.y1_impulse
+        y1_tau = self._learning_rule.post_trace_decay_tau
+        y1_impulse = self._learning_rule.post_trace_kernel_magnitude
 
         return np.floor(self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff)
 
@@ -178,6 +179,7 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+
         self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
 
         super().run_spk()
@@ -462,7 +464,7 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[57.6700329]])
+            weight_after_run, np.array([[33.4178762]])
         )
 
     def test_rstdp_floating_point_multi_synapse(self):
@@ -541,8 +543,8 @@ class TestSTDPSim(unittest.TestCase):
             weight_after_run,
             np.array(
                 [
-                    [199.4073425, 24.2080047, 211.0480477],
-                    [196.1627991, 11.6769457, 208.2230696],
+                    [191.7346893, 31.3543832, 255.5798239],
+                    [187.6966191, 17.4426083, 250.7489829],
                 ]
             ),
         )
@@ -613,7 +615,7 @@ class TestSTDPSim(unittest.TestCase):
         lif_0.stop()
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[50]]))
+        np.testing.assert_almost_equal(weight_after_run, np.array([[64]]))
 
     def test_rstdp_fixed_point_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
@@ -690,5 +692,5 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[0.0, 1.0, -3.0], [12.0, 16.0, 3.0]])
+            weight_after_run, np.array([[3.0, 2.0, -7.0], [14.0, 19.0, 3.0]])
         )
