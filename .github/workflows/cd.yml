@@ -19,7 +19,7 @@ jobs:
 
     - name: Build artifacts 
       run: |
-        pipx run poetry build
+        poetry build
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
