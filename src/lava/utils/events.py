@@ -4,7 +4,6 @@
 
 import numpy as np
 import typing as ty
-import warnings
 
 
 def sub_sample(data: np.ndarray,
@@ -18,8 +17,6 @@ def sub_sample(data: np.ndarray,
                                     max_events,
                                     replace=False)
 
-    percentage_data_lost = (1 - max_events/data.shape[0])*100
-    warnings.warn(f"Read {data.shape[0]} events. Maximum number of events is {max_events}. "
-                  f"Removed {data.shape[0] - max_events} ({percentage_data_lost:.1f}%) events by subsampling.")
+    sampled_idx = np.sort(sampled_idx)
 
     return data[sampled_idx], indices[sampled_idx]

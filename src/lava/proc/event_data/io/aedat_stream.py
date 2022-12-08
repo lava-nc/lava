@@ -6,6 +6,7 @@ from dv import AedatFile
 import numpy as np
 import os.path
 import typing as ty
+import warnings
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
@@ -35,8 +36,7 @@ class AedatStream(AbstractProcess):
     shape_out : tuple (shape (n,))
         The shape of the OutPort. The size of this parameter sets a maximum
         number of events per time-step, and the process will subsample data
-        in order to fit it into this port. Data which contains fewer events
-        will be padded with zeros.
+        in order to fit it into this port.
 
     seed_sub_sampling : int, optional
         Seed used for the random number generator that sub-samples data to
@@ -110,17 +110,24 @@ class AedatStreamPM(PyLoihiProcessModel):
     def run_spk(self) -> None:
         """
         Compiles events into a batch (roughly 10ms long). The polarity data
-        and x and y values are then used to encode the sparse tensor. The
-        data is sub-sampled if necessary, and then sent out.
+        and x and y values are then used to encode the sparse tensor using
+        row-major (C-style) encoding. The data is sub-sampled if necessary,
+        and then sent out.
         """
         events = self._get_next_event_batch()
 
         data, indices = self._encode_data_and_indices(events)
 
-        # If we have more data than our shape allows, subsample
+        # If we have more data than our shape allows, sub-sample
         if data.shape[0] > self._shape_out[0]:
             data, indices = sub_sample(data, indices,
                                        self._shape_out[0], self._random_rng)
+
+            # warn the user if we need to sub-sample
+            percentage_data_lost = (1 - self._shape_out[0] / data.shape[0]) * 100
+            warnings.warn(f"Read {data.shape[0]} events. Maximum number of events is {self._shape_out[0]}. "
+                          f"Removed {data.shape[0] - self._shape_out[0]} ({percentage_data_lost:.1f}%) "
+                          f"events by subsampling.")
 
         self.out_port.send(data, indices)
 
@@ -142,7 +149,7 @@ class AedatStreamPM(PyLoihiProcessModel):
 
     def _init_aedat_file(self) -> None:
         """
-        Resets the event stream
+        Resets the event stream.
         """
         self._file = AedatFile(file_name=self._file_path)
         self._stream = self._file["events"].numpy()
@@ -152,7 +159,7 @@ class AedatStreamPM(PyLoihiProcessModel):
             -> ty.Tuple[np.ndarray, np.ndarray]:
         """
         Extracts the polarity data, and x and y indices from the given
-        batch of events, and encodes them accordingly.
+        batch of events, and encodes them using C-style encoding.
         """
         xs, ys, ps = events['x'], events['y'], events['polarity']
         data = ps
