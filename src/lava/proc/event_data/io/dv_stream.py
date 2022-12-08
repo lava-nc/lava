@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
+import warnings
 from dv import NetworkNumpyEventPacketInput
 
 from lava.magma.core.decorator import implements, requires
@@ -13,6 +14,9 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+import numpy as np
+
+from lava.utils.events import sub_sample
 
 
 class DvStream(AbstractProcess):
@@ -20,15 +24,18 @@ class DvStream(AbstractProcess):
                  *,
                  address: str,
                  port: int,
+                 shape_frame_in: ty.Tuple[int, int],
                  shape_out: ty.Tuple[int],
                  **kwargs) -> None:
         super().__init__(address=address,
                          port=port,
                          shape_out=shape_out,
+                         shape_frame_in=shape_frame_in,
                          **kwargs)
         self._validate_address(address)
         self._validate_port(port)
         self._validate_shape(shape_out)
+        self._validate_frame_size(shape_frame_in)
 
         self.out_port = OutPort(shape=shape_out)
 
@@ -58,6 +65,16 @@ class DvStream(AbstractProcess):
             raise ValueError(f"Size of the shape (maximum number of events) "
                              f"must be positive; got {shape=}.")
 
+    @staticmethod
+    def _validate_frame_size(shape: ty.Tuple[int, int]) -> None:
+        """Check that shape one-dimensional with a positive size."""
+        if len(shape) != 2:
+            raise ValueError(f"Shape of the frame should be (n,); "
+                             f"got {shape=}.")
+        if shape[0] <= 0 or shape[1] <= 0:
+            raise ValueError(f"Size of the frame "
+                             f"must be positive; got {shape=}.")
+
 
 @implements(proc=DvStream, protocol=LoihiProtocol)
 @requires(CPU)
@@ -70,9 +87,56 @@ class DvStreamPM(PyLoihiProcessModel):
         self._address = proc_params["address"]
         self._port = proc_params["port"]
         self._shape_out = proc_params["shape_out"]
+        self._frame_shape = proc_params["shape_frame_in"]
         self._event_stream = proc_params.get("event_stream")
         if not self._event_stream:
             self._event_stream = NetworkNumpyEventPacketInput(
                 address=self._address,
                 port=self._port
             )
+
+    def run_spk(self) -> None:
+        """
+        Compiles events into a batch (roughly 10ms long). The polarity data
+        and x and y values are then used to encode the sparse tensor. The
+        data is sub-sampled if necessary, and then sent out.
+        """
+        events = self._get_next_event_batch()
+        if not events:
+            data = np.empty(self._shape_out)
+            indices = np.empty(self._shape_out)
+            warnings.warn("no events received")
+        else:
+            data, indices = self._encode_data_and_indices(events)
+            # If we have more data than our shape allows, subsample
+            # if data.shape[0] > self._shape_out[0]:
+            #    data, indices = sub_sample(data, indices,
+            #                               self._shape_out[0], self._random_rng)
+        self.out_port.send(data, indices)
+
+    def _get_next_event_batch(self):
+        """
+        Compiles events from the event stream into batches which will be
+        treated in a single timestep. Once we reach the end of the file, the
+        process loops back to the start of the file.
+        """
+        try:
+            # If end of file, raises StopIteration error.
+            events = self._event_stream.__next__()
+        # TODO add exact error that is thrown
+        except:
+            return None
+        return events
+
+    def _encode_data_and_indices(self,
+                                 events: np.ndarray) \
+            -> ty.Tuple[np.ndarray, np.ndarray]:
+        """
+        Extracts the polarity data, and x and y indices from the given
+        batch of events, and encodes them accordingly.
+        """
+        xs, ys, ps = events['x'], events['y'], events['polarity']
+        data = ps
+        indices = np.ravel_multi_index((xs, ys), self._frame_shape)
+
+        return data, indices
