@@ -50,6 +50,12 @@ class LoihiSynapseAddress(LoihiAddress):
 
 
 @dataclass
+class LoihiInAxonAddress(LoihiAddress):
+    # To which Profile on the core a synapse belongs
+    profile_id: int
+
+
+@dataclass
 class AbstractVarModel(ABC):
     var: InitVar[Var] = None
     node_id: int = -1  # Default value signifying unset

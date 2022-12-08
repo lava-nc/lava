@@ -122,8 +122,8 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         result : ndarray
             Computed post synaptic trace values.
         """
-        y1_tau = self._learning_rule.y1_tau
-        y1_impulse = self._learning_rule.y1_impulse
+        y1_tau = self._learning_rule.post_trace_decay_tau
+        y1_impulse = self._learning_rule.post_trace_kernel_magnitude
 
         return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
 
@@ -214,8 +214,8 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         result : ndarray
             Computed post synaptic trace values.
         """
-        y1_tau = self._learning_rule.y1_tau
-        y1_impulse = self._learning_rule.y1_impulse
+        y1_tau = self._learning_rule.post_trace_decay_tau
+        y1_impulse = self._learning_rule.post_trace_kernel_magnitude
 
         return np.floor(self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff)
 
