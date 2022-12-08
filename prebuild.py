@@ -9,10 +9,18 @@ class CMake:
     def __init__(self, sourcedir, targetdir):
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
-        self.cmake_command = ["poetry", "run", "cmake"]
+        self.env = os.environ.copy()
+        self.from_poetry = self._check_poetry()
+        self.cmake_command = ["poetry", "run", "cmake"] \
+            if self.from_poetry else ["cmake"]
         self.cmake_args = []
         self.build_args = []
-        self.env = os.environ.copy()
+
+    def _check_poetry(self):
+        exec_code = self.env.get('_', "").rsplit('/')[-1]
+        if exec_code == 'poetry':
+            return True
+        return False
 
     def _set_cmake_path(self):
         self.temp_path = os.path.join(os.path.abspath(""), "build")
@@ -22,10 +30,14 @@ class CMake:
     def _set_cmake_args(self):
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
-        python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
-            .decode().strip() + "/bin/python3"
-        numpy_include_dir = subprocess.check_output(["poetry", "run",
-            "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip()
+        if self.from_poetry:
+            python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
+                .decode().strip() + "/bin/python3"
+            numpy_include_dir = subprocess.check_output(["poetry", "run",
+                "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip()
+        else:
+            python_env = sys.executable
+            numpy_include_dir = numpy.get_include()
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
             f"-DPYTHON_EXECUTABLE={python_env}",
