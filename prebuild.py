@@ -9,7 +9,7 @@ class CMake:
     def __init__(self, sourcedir, targetdir):
         self.sourcedir = os.path.abspath(sourcedir)
         self.targetdir = os.path.abspath(targetdir)
-        self.cmake_command = "cmake"
+        self.cmake_command = ["poetry", "run", "cmake"]
         self.cmake_args = []
         self.build_args = []
         self.env = os.environ.copy()
@@ -47,8 +47,8 @@ class CMake:
     def run(self):
         self._set_cmake_path()
         self._set_cmake_args()
-        subprocess.check_call([self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
-        subprocess.check_call([self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call([*self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call([*self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
 
 
 if __name__ == '__main__':
