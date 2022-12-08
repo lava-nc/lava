@@ -22,9 +22,13 @@ class CMake:
     def _set_cmake_args(self):
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
+        python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
+            .decode().strip() + "/bin/python3"
+        numpy_include_dir = subprocess.check_output(["poetry", "run",
+            "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip()
         self.cmake_args += [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={self.targetdir}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DPYTHON_EXECUTABLE={python_env}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
         if "CMAKE_ARGS" in os.environ:
@@ -32,7 +36,7 @@ class CMake:
                                 os.environ["CMAKE_ARGS"].split(" ") if item]
         # Set numpy include header to cpplib
         self.cmake_args += [
-            f"-DNUMPY_INCLUDE_DIRS={numpy.get_include()}"]
+            f"-DNUMPY_INCLUDE_DIRS={numpy_include_dir}"]
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
