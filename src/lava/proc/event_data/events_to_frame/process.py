@@ -64,7 +64,7 @@ class EventsToFrame(AbstractProcess):
     @staticmethod
     def _validate_shape_out(shape_out: ty.Tuple[int, int, int]) -> None:
         """Validate that a given shape is of the form (W, H, C) where W and H
-        are strictly positive and C either 1 or 2.
+        are strictly positive and C is equal to either 1 or 2.
 
         Parameters
         ----------
