@@ -26,19 +26,12 @@ class PyEventsToFramePM(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         data, indices = self.in_port.recv()
-
         dense_data = self._transform(data, indices)
-
         self.out_port.send(dense_data)
 
     def _transform(self, data: np.ndarray, indices: np.ndarray) -> np.ndarray:
-        """Transform collection of sparsely represented events into a densely
-        represented frame of events.
-
-        (1) If output shape is (W, H, 1), input is assumed to be unary.
-        (2) If output shape is (W, H, 2), input is assumed to be binary.
-        Negative events are represented by 1s in first channel.
-        Positive events are represented by 1s in second channel.
+        """Transforms from an event-based representation to a frame-based
+        representation.
 
         Parameters
         ----------

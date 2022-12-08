@@ -57,6 +57,38 @@ class PyRecvSparsePM(PyLoihiProcessModel):
         )
 
 
+class RecvDense(AbstractProcess):
+    """Process that receives arbitrary dense data.
+
+    Parameters
+    ----------
+    shape: tuple
+        Shape of the InPort and Var.
+    """
+    def __init__(self,
+                 shape: ty.Union[
+                     ty.Tuple[int, int], ty.Tuple[int, int, int]]) -> None:
+        super().__init__(shape=shape)
+
+        self.in_port = InPort(shape=shape)
+
+        self.data = Var(shape=shape, init=np.zeros(shape, dtype=int))
+
+
+@implements(proc=RecvDense, protocol=LoihiProtocol)
+@requires(CPU)
+class PyRecvDensePM(PyLoihiProcessModel):
+    """Receives dense data from PyInPort and stores it in a Var."""
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
+
+    data: np.ndarray = LavaPyType(np.ndarray, int)
+
+    def run_spk(self) -> None:
+        data = self.in_port.recv()
+
+        self.data = data
+
+
 class SendSparse(AbstractProcess):
     """Process that sends arbitrary sparse data.
 
