@@ -180,7 +180,8 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         s_out_y2: sends the graded third-factor reward signal.
         """
 
-        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+        self.y1 = \
+            self.compute_post_synaptic_trace(self.s_out_buff).astype(np.int32)
 
         super().run_spk()
 
