@@ -23,10 +23,8 @@ def sub_sample(data: np.ndarray,
 def encode_data_and_indices(frame_shape: ty.Tuple,
                              events: np.ndarray) \
            -> ty.Tuple[np.ndarray, np.ndarray]:
-    """
-    Extracts the polarity data, and x and y indices from the given
-    batch of events, and encodes them using C-style encoding.
-    """
+    """Extracts the polarity data, and x and y indices from the given
+    batch of events, and encodes them using C-style encoding."""
     xs, ys, ps = events['x'], events['y'], events['polarity']
     data = ps
     indices = np.ravel_multi_index((xs, ys), frame_shape)
