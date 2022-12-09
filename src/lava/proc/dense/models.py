@@ -183,9 +183,9 @@ class PyLearningDenseModelBitApproximate(
             a_accum = self.weights[:, s_in].sum(axis=1)
 
         self.a_buff = (
-            np.left_shift(a_accum, self.weight_exp).astype(np.int32)
+            np.left_shift(a_accum, self.weight_exp).astype(self.a_buff.dtype)
             if self.weight_exp > 0
-            else np.right_shift(a_accum, -self.weight_exp).astype(np.int32)
+            else np.right_shift(a_accum, -self.weight_exp).astype(self.a_buff.dtype)
         )
 
         self.recv_traces(s_in)
