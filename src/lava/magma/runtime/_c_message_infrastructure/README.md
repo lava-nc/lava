@@ -4,28 +4,20 @@ version: v0.2.1
 The message infrastructure library is for LAVA to transfer data. The library provides several method to do communication for IPC on single host or across multiple hosts.
 
 ## Build
-Assume you are in `src/lava/magma/runtime/message_infrastructure` folder now.
-### 1. Create `build` folder and go into it.
+Assume you are in `<lava>/` folder now.
+### 1. Set cmake args by env variables to build the message infrastructure library according to your requirements.
 ```bash
-$ mkdir build
-$ cd build
+$ export CMAKE_ARGS="..."
 ```
-### 2. Build the message infrastructure library according to your requirements using Cmake.
-
-#### (1) If you want to use PythonWrapper of the lib, run the default command:
-```bash
-# set numpy dependence by -DNUMPY_INCLUDE_DIRS=<numpy_include_dir>
-$ cmake ..
-```
-
+#### (1) If you want to use PythonWrapper of the lib, this step could be just ignored as this is the default setting.
 #### (2) If you do not need to use PythonWrapper of the lib and just use the lib for CPP, run the command:
 ```bash
-$ cmake .. -DPY_WRAPPER=OFF
+$ export CMAKE_ARGS="-DPY_WRAPPER=OFF"
 ```
 #### (3) If you want to use GRPC channel, run the command:
 
 ```bash
-$ cmake .. -DGRPC_CHANNEL=ON
+$ export CMAKE_ARGS="-DGRPC_CHANNEL=ON"
 ```
 
 Note :
@@ -39,45 +31,50 @@ You could use the commands in your ternimal,
 
 #### (4) If you want to enable DDS channel, run the command:
 ```bash
-$cmake .. -DDDS_CHANNEL=ON -D<DDS_BACKEND>_ENABLE=ON
+$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -D<DDS_BACKEND>_ENABLE=ON"
 # [DDS_BACKEND: FASTDDS, CycloneDDS ..., only support FASTDDS now]
 ``` 
 
 #### (5) Build with cpp unit tests
 
 ```bash
-$ cmake .. -DCMAKE_BUILD_TYPE=Debug
+$ export CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug"
 ```
 
-### 3. Compile with makefile
+### 2. Compile library code
 - Run the command to build message infrastructure library.
 ```bash
-$ make -j<parallel_num>
+$ python3 prebuild.py
 ```
 - If you have select to use PythonWrapper, GRPC channel, DDS channel or CPP unit tests, the source code will be compiled together with the message infrastructure library code.
-## Enable env variables
-- Run the command to set the path of message infrastructure library, also set the path to store log file for the lib.
+### 3. Add PYTHONPATH
+- Add PYTHONPATH into terminal environment.
 ```bash
-$ cd ..
-$ source setenv.sh
+$  export PYTHONPATH=src/:$PYTHONPATH
 ```
-## Run python test
+## Run Python test
 - For example, run the python test for channel usage
   ```bash
-  $ python3 test/test_channel.py
+  $ python3 tests/lava/magma/runtime/message_infrastructure/test_channel.py
   ```
 - Run all tests
   ```bash
   # when enable grpc channel, need to add following env:
   # export GRPC_ENABLE_FORK_SUPPORT=true
   # export GRPC_POLL_STRATEGY=poll
-  $ pytest test/
+  $ pytest tests/lava/magma/runtime/message_infrastructure/
+  ```
+
+## Run CPP test
+- Run all the CPP test for msg lib
+  ```bash
+  $ build/test/test_messaging_infrastructure
   ```
 
 ## Install by poetry
-
+Also users could choose to use poetry to enbale the whole environment.
 ```bash
-# Enable grpc channel
-# export CMAKE_ARGS="-DGRPC_CHANNEL=ON"
+$ export CMAKE_ARGS="..."
 $ poetry install
+$ source .venc/bin/activate
 ```
