@@ -24,15 +24,15 @@ Then continue following the [guide](https://docs.ros.org/en/foxy/Tutorials/Begin
 ## Build ROS2 Example Package in ROS2 Workspace
 This example also provides the ROS2 package to communicate with DDS port in `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` folder. Please follow the [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html) to build the cpp code in the folder as a ROS2 package. And for the python code, please follow this [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html).
 ## Build the DDS Example code
-Please follow the `README.md` in path `src/lava/magma/runtime/message_infrastructure/` to build the message infrastrucure library and initial the environment.
+Please follow the `README.md` in path `src/lava/magma/runtime/_c_message_infrastructure/` to build the message infrastrucure library and initialize the environment.
 
 Note : Please run the `cmake` command with the options to choose to build the project with FASTDDS or CycloneDDS.
 ```
-cmake .. -DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON
+$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON"
 ```
 or 
 ```
-cmake .. -DDDS_CHANNEL=ON -DCycloneDDS=ON
+$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DCycloneDDS=ON"
 ```
 ## Running the Example withs FASTDDS
 Please open 2 terminals. One is for running ROS2 code and the other is for running DDS port.
@@ -78,31 +78,31 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
 Users could use Python test files to valid the function of this example.
 1. `test_fastdds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
     ```
-    python test_fastdds_to_ros.py
+    $ python test_fastdds_to_ros.py
     ```
 2. `test_fastdds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
     ```
-    python test_fastdds_from_ros.py
+    $ python test_fastdds_from_ros.py
     ```
 #### CPP Example
 To enbale CPP example, when users are processing the steps in 'Build the DDS Example code' part, the option for build the CPP test example need to be set on, just as,
 ```
-cmake .. -DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON -DCMAKE_BUILD_TYPE=Debug
+$ cmake .. -DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON -DCMAKE_BUILD_TYPE=Debug
 ```
 Then the CPP example test binaries will be generated in the folder,
-`<lava_repo>/src/lava/magma/runtime/message_infrastructure/build/test/`
+`<lava>/build/test/`
 and the names for the tests are `test_fastdds_to_ros` and `test_fastdds_from_ros`.
 1. Navigate to the msg_lib build folder,
     ```
-    cd <=message_infastructure>/build/
+    $ cd <lava>/build/test/
     ```
 2. `test_fastdds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
-    test/test_fastdds_to_ros
+    $ ./test_fastdds_to_ros
     ```
 3. `test_fastdds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
-    test/test_fastdds_from_ros
+    $ ./test_fastdds_from_ros
     ```
 
 ## Running the Example withs CycloneDDS
@@ -119,7 +119,7 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
     ```
 3. Enable Cyclone middleware of ROS2 to make ROS2 communication through CycloneDDS. Make sure you have successfully install Cyclone middleware for ROS2. Then run the command in the terminal,
     ```
-    export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    $ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     ```
 
 4. Users could choose to run CPP or Python ROS2 package.
@@ -145,29 +145,29 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
 Users could use Python test files to valid the function of this example.
 1. `test_cyclonedds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
     ```
-    python test_cyclonedds_to_ros.py
+    $ python test_cyclonedds_to_ros.py
     ```
 2. `test_cyclonedds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
     ```
-    python test_cyclonedds_from_ros.py
+    $ python test_cyclonedds_from_ros.py
     ```
 #### CPP Example
 To enbale CPP example, when users are processing the steps in 'Build the DDS Example code' part, the option for build the CPP test example need to be set on, just as,
 ```
-cmake .. -DDDS_CHANNEL=ON -DCycloneDDS=ON -DCMAKE_BUILD_TYPE=Debug
+$ cmake .. -DDDS_CHANNEL=ON -DCycloneDDS=ON -DCMAKE_BUILD_TYPE=Debug
 ```
 Then the CPP example test binaries will be generated in the folder,
-`<message_infrastructure>/build/test/`
+`<lava>/build/test/`
 and the names for the tests are `test_cyclonedds_to_ros` and `test_cyclonedds_from_ros`.
 1. Navigate to the msg_lib build folder,
     ```
-    cd <message_infastructure>/build/
+    $ cd <lava>/build/test/
     ```
 2. `test_cyclonedds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
-    test/test_cyclonedds_to_ros
+    $ ./test_cyclonedds_to_ros
     ```
 3. `test_cyclonedds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
-    test/test_cyclonedds_from_ros
+    $ ./test_cyclonedds_from_ros
     ```
