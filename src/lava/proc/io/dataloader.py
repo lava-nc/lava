@@ -167,7 +167,9 @@ class SpikeDataloader(AbstractDataloader):
         super().__init__(gt_shape, dataset, interval, offset)
 
         data_shape = data.shape[:-1] + (interval,)
-        self.data = Var(shape=data_shape, init=np.zeros(data_shape, dtype=data.dtype))
+        self.data = Var(
+            shape=data_shape,
+            init=np.zeros(data_shape, dtype=data.dtype))
         self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
 
 
