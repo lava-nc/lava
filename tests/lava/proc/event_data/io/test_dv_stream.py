@@ -211,6 +211,7 @@ class TestProcessModelDvStream(unittest.TestCase):
         dv_stream.run(condition=RunSteps(num_steps=len(self._mock_packet_input)+1), run_cfg=Loihi1SimCfg())
         dv_stream.stop()
 
+
 if __name__ == '__main__':
     unittest.main()
 
