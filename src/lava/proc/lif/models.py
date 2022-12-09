@@ -484,15 +484,14 @@ class PyLearningLIFModelFixed(
         """
         super().run_spk()
 
+
 @implements(proc=LearningLIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyLearningLifModelFloat(LearningNeuronModelFloat,
                               AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural process in floating
-    point precision. This short and simple ProcessModel can be used for quick
-    algorithmic prototyping, without engaging with the nuances of a fixed
-    point implementation.
+    point precision with learning enabled.
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
