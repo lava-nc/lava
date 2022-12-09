@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import numpy as np
 import typing as ty
 import warnings
 from dv import NetworkNumpyEventPacketInput
@@ -14,9 +15,7 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-import numpy as np
-
-from lava.utils.events import sub_sample
+from lava.utils.events import sub_sample, encode_data_and_indices
 
 
 class DvStream(AbstractProcess):
@@ -26,11 +25,13 @@ class DvStream(AbstractProcess):
                  port: int,
                  shape_frame_in: ty.Tuple[int, int],
                  shape_out: ty.Tuple[int],
+                 seed_sub_sampling: ty.Optional[int] = 0,
                  **kwargs) -> None:
         super().__init__(address=address,
                          port=port,
                          shape_out=shape_out,
                          shape_frame_in=shape_frame_in,
+                         seed_sub_sampling=seed_sub_sampling,
                          **kwargs)
         self._validate_address(address)
         self._validate_port(port)
@@ -88,6 +89,8 @@ class DvStreamPM(PyLoihiProcessModel):
         self._port = proc_params["port"]
         self._shape_out = proc_params["shape_out"]
         self._frame_shape = proc_params["shape_frame_in"]
+        self._seed_sub_sampling = proc_params["seed_sub_sampling"]
+        self._random_rng = np.random.default_rng(self._seed_sub_sampling)
         self._event_stream = proc_params.get("event_stream")
         if not self._event_stream:
             self._event_stream = NetworkNumpyEventPacketInput(
@@ -102,16 +105,20 @@ class DvStreamPM(PyLoihiProcessModel):
         data is sub-sampled if necessary, and then sent out.
         """
         events = self._get_next_event_batch()
+        # if we have not received a new batch
         if not events:
             data = np.empty(self._shape_out)
             indices = np.empty(self._shape_out)
             warnings.warn("no events received")
+        elif not events["data"]:
+            warnings.warn()
         else:
-            data, indices = self._encode_data_and_indices(events)
+            data, indices = encode_data_and_indices(self._frame_shape,
+                                                    events)
             # If we have more data than our shape allows, subsample
-            # if data.shape[0] > self._shape_out[0]:
-            #    data, indices = sub_sample(data, indices,
-            #                               self._shape_out[0], self._random_rng)
+            if data.shape[0] > self._shape_out[0]:
+               data, indices = sub_sample(data, indices,
+                                          self._shape_out[0], self._random_rng)
         self.out_port.send(data, indices)
 
     def _get_next_event_batch(self):
@@ -123,9 +130,10 @@ class DvStreamPM(PyLoihiProcessModel):
         try:
             # If end of file, raises StopIteration error.
             events = self._event_stream.__next__()
-        # TODO add exact error that is thrown
-        except:
-            return None
+        except StopIteration:
+            # TODO: define expected behavior
+            raise StopIteration(f"No events received. Check that everything is well connected.")
+            # return None
         return events
 
     def _encode_data_and_indices(self,
@@ -133,7 +141,7 @@ class DvStreamPM(PyLoihiProcessModel):
             -> ty.Tuple[np.ndarray, np.ndarray]:
         """
         Extracts the polarity data, and x and y indices from the given
-        batch of events, and encodes them accordingly.
+        batch of events, and encodes them using C-style encoding.
         """
         xs, ys, ps = events['x'], events['y'], events['polarity']
         data = ps

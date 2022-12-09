@@ -140,75 +140,224 @@ class PyRecvSparsePM(PyLoihiProcessModel):
                           pad_width=(0, self.in_port.shape[0] - data.shape[0]))
 
 
+class MockPacketInput:
+    def __init__(self,
+                 mock_packets):
+        self._mock_packets = mock_packets
+        self.timestep = 0
+
+    def __next__(self):
+        # if self.timestep < len(self._mock_packets):
+        packet = self._mock_packets[self.timestep]
+        self.timestep += 1
+
+        return packet
+        # else:
+        #     raise StopIteration # TODO: change this to actual behavior from DV network input object
+
+    @property
+    def mock_packets(self):
+        return self._mock_packets
+
 class TestProcessModelDvStream(unittest.TestCase):
-    def setUp(self) -> None:
-        self._mock_packet_input = ({"x": np.asarray([35, 32, 33]), "y": np.asarray([35, 32, 31]),
-                                    "polarity": np.asarray([0, 0, 0])},
-                                   {"x": np.asarray([35, 32, 33]), "y": np.asarray([35, 32, 31]),
-                                    "polarity": np.asarray([0, 0, 0])},
-                                   {"x": np.asarray([35, 32, 33]), "y": np.asarray([35, 32, 31]),
-                                    "polarity": np.asarray([0, 0, 0])})
-
-        self.proc_params = {
-            "address": "127.0.0.1",
-            "port": 7777,
-            "shape_frame_in": (40, 40),
-            "shape_out": (43200,),
-            "event_stream": iter(self._mock_packet_input)
-        }
-
     def test_init(self) -> None:
         """Tests instantiation of the DvStream PyProcModel."""
-        pm = DvStreamPM(proc_params=self.proc_params)
+        mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
+                         "polarity": np.asarray([0, 1, 0])},
+                        {"x": np.asarray([39]), "y": np.asarray([118]),
+                         "polarity": np.asarray([1])},
+                        {"x": np.asarray([12, 10]), "y": np.asarray([163, 108]),
+                         "polarity": np.asarray([1, 1])})
+
+        mock_packet_input = MockPacketInput(mock_packets)
+
+        proc_params = {
+            "address": "127.0.0.1",
+            "port": 7777,
+            "shape_frame_in": (240, 180),
+            "shape_out": (43200,),
+            "seed_sub_sampling": 0,
+            "event_stream": iter(mock_packet_input.mock_packets)
+        }
+
+        pm = DvStreamPM(proc_params=proc_params)
         self.assertIsInstance(pm, DvStreamPM)
 
     def test_run_spk_without_subsampling(self) -> None:
-        """ Test that run_spk works as expected when no subsampling is needed."""
+        """
+        Tests that run_spk works as expected when no subsampling is needed.
+        """
+        mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
+                         "polarity": np.asarray([0, 1, 0])},
+                        {"x": np.asarray([39]), "y": np.asarray([118]),
+                         "polarity": np.asarray([1])},
+                        {"x": np.asarray([12, 10]), "y": np.asarray([163, 108]),
+                         "polarity": np.asarray([1, 1])})
+
+        mock_packet_input = MockPacketInput(mock_packets)
+
+        # data and indices calculated from the mock packets
+        data_history = [
+            [0, 1, 0],
+            [1],
+            [1, 1]
+        ]
+        indices_history = [
+            [1597, 2308, 2486],
+            [7138],
+            [2323, 1908]
+        ]
+
         max_num_events = 15
-        shape = (max_num_events,)
-        shape_frame_in = (40,40)
+        shape_frame_in = (240, 180)
         dv_stream = DvStream(address="127.0.0.1",
                              port=7777,
-                             shape_out=shape,
+                             shape_out=(max_num_events,),
                              shape_frame_in=shape_frame_in,
-                             event_stream=iter(self._mock_packet_input))
-        recv_sparse = RecvSparse(shape=shape)
+                             event_stream=iter(mock_packet_input.mock_packets))
+
+        recv_sparse = RecvSparse(shape=(max_num_events,))
 
         dv_stream.out_port.connect(recv_sparse.in_port)
 
-        for mock_package in self._mock_packet_input:
-            dv_stream.run(condition=RunSteps(num_steps=1), run_cfg=Loihi1SimCfg())
+        num_steps = 3
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=1)
 
-            expected_data = mock_package["polarity"]
-            expected_indices = np.ravel_multi_index((mock_package["x"], mock_package["y"]), shape_frame_in)
+        for i in range(num_steps):
+            dv_stream.run(condition=run_cnd, run_cfg=run_cfg)
 
-            sent_and_received_data = \
+            expected_data = np.array(data_history[i])
+            expected_indices = np.array(indices_history[i])
+
+            received_data = \
                 recv_sparse.data.get()[:expected_data.shape[0]]
-            sent_and_received_indices = \
+            received_indices = \
                 recv_sparse.idx.get()[:expected_indices.shape[0]]
 
-            np.testing.assert_equal(sent_and_received_data,
-                                    expected_data)
-            np.testing.assert_equal(sent_and_received_indices,
-                                    expected_indices)
+            np.testing.assert_equal(received_data, expected_data)
+            np.testing.assert_equal(received_indices, expected_indices)
+
         dv_stream.stop()
 
-    def test_run_spk_with_no_next(self) -> None:
+    def test_run_spk_with_empty_batch(self) -> None:
         """ Test that warning is raised when no events are arriving."""
-        # TODO: Check whether warning arrives
-        # with (self.assertWarns(UserWarning)):
-        max_num_events = 15
-        shape = (max_num_events,)
+        # TODO: Add appropriate behavior in process
+        mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
+                         "polarity": np.asarray([0, 1, 0])},
+                        {"x": np.asarray([39]), "y": np.asarray([118]),
+                         "polarity": np.asarray([1])},
+                        {"x": np.asarray([12, 10]), "y": np.asarray([163, 108]),
+                         "polarity": np.asarray([1, 1])},
+                        {"x": np.asarray([]), "y": np.asarray([]),
+                         "polarity": np.asarray([])})
 
+        mock_packet_input = MockPacketInput(mock_packets)
+
+        max_num_events = 15
+        shape_frame_in = (240, 180)
         dv_stream = DvStream(address="127.0.0.1",
                              port=7777,
-                             shape_out=shape,
-                             shape_frame_in=(40, 40),
-                             event_stream=iter(self._mock_packet_input))
-        recv_sparse = RecvSparse(shape=shape)
+                             shape_out=(max_num_events,),
+                             shape_frame_in=shape_frame_in,
+                             event_stream=iter(mock_packet_input.mock_packets))
+
+        recv_sparse = RecvSparse(shape=(max_num_events,))
 
         dv_stream.out_port.connect(recv_sparse.in_port)
-        dv_stream.run(condition=RunSteps(num_steps=len(self._mock_packet_input)+1), run_cfg=Loihi1SimCfg())
+
+        num_steps = 4
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=1)
+
+        for i in range(num_steps):
+            print(i)
+            dv_stream.run(condition=run_cnd, run_cfg=run_cfg)
+
+        dv_stream.stop()
+
+    def test_run_spk_with_no_batch(self) -> None:
+        """ Test that an exception is thrown when the event stream stops."""
+        # TODO: Add behavior in dv_stream
+        # with (self.assertWarns(UserWarning)):
+        mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
+                         "polarity": np.asarray([0, 1, 0])},)
+
+        mock_packet_input = MockPacketInput(mock_packets)
+
+        max_num_events = 15
+        shape_frame_in = (240, 180)
+        dv_stream = DvStream(address="127.0.0.1",
+                             port=7777,
+                             shape_out=(max_num_events,),
+                             shape_frame_in=shape_frame_in,
+                             event_stream=iter(mock_packet_input.mock_packets))
+
+        recv_sparse = RecvSparse(shape=(max_num_events,))
+
+        dv_stream.out_port.connect(recv_sparse.in_port)
+
+        num_steps = len(mock_packets) + 1
+        print(num_steps)
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=1)
+
+        for i in range(num_steps):
+            print(i)
+            dv_stream.run(condition=run_cnd, run_cfg=run_cfg)
+
+        dv_stream.stop()
+
+    def test_run_spk_with_sub_sampling(self):
+        mock_packets = ({"x": np.asarray([8, 12, 13, 13, 13, 9, 14, 14, 13, 13, 8, 9, 9, 13, 9]),
+                         "y": np.asarray([157, 148, 146, 156, 158, 167, 122, 113, 149, 148, 156,
+                                          109, 107, 160, 160]),
+                         "polarity": np.asarray([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])},
+                        {"x": np.asarray([39]),
+                         "y": np.asarray([118]),
+                         "polarity": np.asarray([1])})
+
+        self.mock_packet_input = MockPacketInput(mock_packets)
+
+        # data and indices calculated from the mock packets
+        expected_data = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1]
+        ]
+        expected_indices = [
+            [1597., 2486., 2496., 2498., 1787., 2633., 1729., 1727., 2500., 1780.],
+            [7138]
+        ]
+
+        max_num_events = 10
+        shape_frame_in = (240, 180)
+        seed_rng = 0
+        dv_stream = DvStream(address="127.0.0.1",
+                             port=7777,
+                             shape_out=(max_num_events,),
+                             shape_frame_in=shape_frame_in,
+                             event_stream=iter(self.mock_packet_input.mock_packets),
+                             seed_sub_sampling=seed_rng)
+
+        recv_sparse = RecvSparse(shape=(max_num_events,))
+
+        dv_stream.out_port.connect(recv_sparse.in_port)
+
+        num_steps = 2
+        run_cfg = Loihi1SimCfg()
+        run_cnd = RunSteps(num_steps=1)
+
+        for i in range(num_steps):
+            dv_stream.run(condition=run_cnd, run_cfg=run_cfg)
+
+            received_data = \
+                recv_sparse.data.get()[:len(expected_data[i])]
+            received_indices = \
+                recv_sparse.idx.get()[:len(expected_indices[i])]
+
+            np.testing.assert_equal(received_data, expected_data[i])
+            np.testing.assert_equal(received_indices, expected_indices[i])
+
         dv_stream.stop()
 
 
