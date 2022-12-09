@@ -57,13 +57,13 @@ class STDPLoihi(Loihi2FLearningRule):
         self.tau_minus = tau_minus
 
         # String learning rule for dw
-        dw = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1"
+        dw = f"{self.learning_rate} * {self.A_minus} * x0 * y1 +" \
+             f"{self.learning_rate} * {self.A_plus} * y0 * x1"
 
         # Other learning-related parameters
         # Trace impulse values
-        x1_impulse = kwargs.get("x1_impulse", 16)
-        y1_impulse = kwargs.get("y1_impulse", 16)
+        x1_impulse = kwargs.pop("x1_impulse", 16)
+        y1_impulse = kwargs.pop("y1_impulse", 16)
 
         # Trace decay constants
         x1_tau = tau_plus
