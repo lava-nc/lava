@@ -721,7 +721,7 @@ class PyRefPortVectorDense(PyRefPort):
             The data to send via _csp_send_port.
         """
         if self._csp_send_port:
-            header = np.ones(self._shape) * VarPortCmd.SET
+            header = np.ones(self._shape, dtype=data.dtype) * VarPortCmd.SET
             self._csp_send_port.send(header)
             self._csp_send_port.send(data)
 
