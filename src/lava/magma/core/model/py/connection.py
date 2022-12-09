@@ -31,8 +31,34 @@ NUM_X_TRACES = len(str_symbols.PRE_TRACES)
 NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
-class LearningConnection:
-    """Base class for plastic connection ProcessModels.
+class AbstractLearningConnection:
+    """Base class for learning connection ProcessModels.
+    """
+
+    # Learning Ports
+    s_in_bap = None
+    s_in_y1 = None
+    s_in_y2 = None
+    s_in_y3 = None
+
+    # Learning Vars
+    x0 = None
+    tx = None
+    x1 = None
+    x2 = None
+
+    y0 = None
+    ty = None
+    y1 = None
+    y2 = None
+    y3 = None
+
+    tag_2 = None
+    tag_1 = None
+
+
+class PyLearningConnection(AbstractLearningConnection):
+    """Base class for learning connection ProcessModels in Python / CPU.
 
     This class provides commonly used functions for simulating the Loihi
     learning engine. It is subclasses for floating and fixed point
@@ -74,27 +100,6 @@ class LearningConnection:
     proc_params: dict
         Parameters from the ProcessModel
     """
-
-    # Learning Ports
-    s_in_bap = None
-    s_in_y1 = None
-    s_in_y2 = None
-    s_in_y3 = None
-
-    # Learning Vars
-    x0 = None
-    tx = None
-    x1 = None
-    x2 = None
-
-    y0 = None
-    ty = None
-    y1 = None
-    y2 = None
-    y3 = None
-
-    tag_2 = None
-    tag_1 = None
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
@@ -484,7 +489,7 @@ class LearningConnection:
         self.ty = np.zeros_like(self.ty)
 
 
-class LearningConnectionModelBitApproximate(LearningConnection):
+class LearningConnectionModelBitApproximate(PyLearningConnection):
     """Fixed-point, bit-approximate implementation of the Connection base
     class.
 
@@ -1020,7 +1025,7 @@ class LearningConnectionModelBitApproximate(LearningConnection):
             )
 
 
-class LearningConnectionModelFloat(LearningConnection):
+class LearningConnectionModelFloat(PyLearningConnection):
     """Floating-point implementation of the Connection Process.
 
     This ProcessModel constitutes a behavioral implementation of Loihi synapses
