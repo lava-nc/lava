@@ -49,8 +49,23 @@ inline GrpcMetaDataPtr MetaData2GrpcMetaData(MetaDataPtr metadata) {
   grpcdata->set_value(metadata->mdata, metadata->elsize*metadata->total_size);
   return grpcdata;
 }
-
-class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
+class GrpcServerImpl : public GrpcChannelServer::Service {
+ public:
+  GrpcServerImpl(const std::string& name,
+                const size_t &size): name_(name), size_(size) {}
+  virtual ~GrpcServerImpl() = default;
+  virtual Status RecvArrayData(ServerContext* context,
+                               const GrpcMetaData* request,
+                               DataReply* reply) = 0;
+  virtual GrpcMetaDataPtr Pop(bool block) = 0;
+  virtual GrpcMetaDataPtr Front() = 0;
+  virtual bool Probe() = 0;
+  virtual void Stop() = 0;
+ protected:
+  std::string name_;
+  size_t size_;
+};
+class GrpcChannelServerImpl final : public GrpcServerImpl {
  public:
   GrpcChannelServerImpl(const std::string& name,
                         const size_t &size);
@@ -65,12 +80,27 @@ class GrpcChannelServerImpl final : public GrpcChannelServer::Service {
 
  private:
   std::shared_ptr<RecvQueue<GrpcMetaDataPtr>> recv_queue_;
-  std::string name_;
-  size_t size_;
   std::atomic_bool done_;
 };
 
-using ServerImplPtr = std::shared_ptr<GrpcChannelServerImpl>;
+class GrpcChannelBlockServerImpl final : public GrpcServerImpl {
+ public:
+  GrpcChannelBlockServerImpl(const std::string& name,
+                        const size_t &size);
+  ~GrpcChannelBlockServerImpl() override {}
+  Status RecvArrayData(ServerContext* context,
+                       const GrpcMetaData* request,
+                       DataReply* reply) override;
+  GrpcMetaDataPtr Pop(bool block);
+  GrpcMetaDataPtr Front();
+  bool Probe();
+  void Stop();
+
+ private:
+  GrpcMetaDataPtr block_recv_data_;
+  std::atomic_bool done_;
+  std::atomic_bool usable_;
+};
 
 class GrpcRecvPort final : public AbstractRecvPort {
  public:
@@ -89,7 +119,7 @@ class GrpcRecvPort final : public AbstractRecvPort {
   ServerBuilder builder_;
   std::atomic_bool done_;
   std::unique_ptr<Server> server_;
-  ServerImplPtr service_ptr_;
+  std::shared_ptr<GrpcServerImpl> service_ptr_;
   std::string url_;
   std::string name_;
   size_t size_;
