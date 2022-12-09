@@ -147,13 +147,13 @@ class MockPacketInput:
         self.timestep = 0
 
     def __next__(self):
-        if self.timestep < len(self._mock_packets):
-            packet = self._mock_packets[self.timestep]
-            self.timestep += 1
+        # if self.timestep < len(self._mock_packets):
+        packet = self._mock_packets[self.timestep]
+        self.timestep += 1
 
-            return packet
-        else:
-            raise StopIteration # TODO: change this to error from network... object
+        return packet
+        # else:
+        #     raise StopIteration # TODO: change this to actual behavior from DV network input object
 
     @property
     def mock_packets(self):
@@ -242,7 +242,7 @@ class TestProcessModelDvStream(unittest.TestCase):
 
     def test_run_spk_with_empty_batch(self) -> None:
         """ Test that warning is raised when no events are arriving."""
-        # TODO: Add appropriate error in dv_stream when receiving an empty batch, catch the error
+        # TODO: Add appropriate behavior in process
         mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
                          "polarity": np.asarray([0, 1, 0])},
                         {"x": np.asarray([39]), "y": np.asarray([118]),
@@ -278,10 +278,10 @@ class TestProcessModelDvStream(unittest.TestCase):
 
     def test_run_spk_with_no_batch(self) -> None:
         """ Test that an exception is thrown when the event stream stops."""
-        # TODO: Add functionality for this in dv_stream
+        # TODO: Add behavior in dv_stream
         # with (self.assertWarns(UserWarning)):
         mock_packets = ({"x": np.asarray([8, 12, 13]), "y": np.asarray([157, 148, 146]),
-                         "polarity": np.asarray([0, 1, 0])})
+                         "polarity": np.asarray([0, 1, 0])},)
 
         mock_packet_input = MockPacketInput(mock_packets)
 
@@ -297,7 +297,7 @@ class TestProcessModelDvStream(unittest.TestCase):
 
         dv_stream.out_port.connect(recv_sparse.in_port)
 
-        num_steps = len(mock_packets)
+        num_steps = len(mock_packets) + 1
         print(num_steps)
         run_cfg = Loihi1SimCfg()
         run_cnd = RunSteps(num_steps=1)
@@ -359,7 +359,6 @@ class TestProcessModelDvStream(unittest.TestCase):
             np.testing.assert_equal(received_indices, expected_indices[i])
 
         dv_stream.stop()
-
 
 
 if __name__ == '__main__':
