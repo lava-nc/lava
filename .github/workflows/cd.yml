@@ -19,7 +19,7 @@ jobs:
 
     - name: Build artifacts 
       run: |
-        pipx run poetry build
+        poetry build
 
     - name: Archive artifacts
       uses: actions/upload-artifact@v3
@@ -74,7 +74,6 @@ jobs:
           pip uninstall -y lava-nc
           deactivate
           rm -rf artifact-test
-
 
   test-artifact-use:
     name: Test Artifact With Unit Tests
