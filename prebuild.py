@@ -32,9 +32,9 @@ class CMake:
         cfg = "Debug" if debug else "Release"
         if self.from_poetry:
             python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
-                .decode().strip() + "/bin/python3"
-            numpy_include_dir = subprocess.check_output(["poetry", "run",
-                "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip()
+                .decode().strip() + "/bin/python3" # nosec # noqa
+            numpy_include_dir = subprocess.check_output(["poetry", "run", # nosec # noqa
+                "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip() # nosec # noqa
         else:
             python_env = sys.executable
             numpy_include_dir = numpy.get_include()
