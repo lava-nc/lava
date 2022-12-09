@@ -9,7 +9,7 @@ from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderNx,
 )
 
-from message_infrastructure import ChannelBackend
+from lava.magma.runtime.message_infrastructure import ChannelBackend
 
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
 from lava.magma.compiler.channels.interfaces import ChannelType

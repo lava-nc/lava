@@ -9,12 +9,12 @@ from multiprocessing.managers import SharedMemoryManager
 import numpy as np
 import typing as ty
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
     ChannelBackend,
     ChannelQueueSize
 )
-from message_infrastructure import Channel as MsgChannel
+from lava.magma.runtime.message_infrastructure import Channel as MsgChannel
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
 
 try:

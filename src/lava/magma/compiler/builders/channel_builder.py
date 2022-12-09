@@ -10,14 +10,14 @@ from lava.magma.compiler.builders.interfaces import \
     AbstractProcessModel
 from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     Channel,
     ChannelBackend,
     ChannelQueueSize,
     SyncChannelBytes
 )
 from lava.magma.compiler.utils import PortInitializer
-from message_infrastructure \
+from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
 
 if ty.TYPE_CHECKING:

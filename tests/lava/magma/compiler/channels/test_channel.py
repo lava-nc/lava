@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 from multiprocessing import Process
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     AbstractTransferPort,

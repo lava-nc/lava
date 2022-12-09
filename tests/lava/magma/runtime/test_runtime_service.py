@@ -1,6 +1,6 @@
 import unittest
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     ActorStatus

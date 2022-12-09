@@ -247,19 +247,22 @@ def conv_scipy(input: np.ndarray,
         convolution output
     """
     input_shape = input.shape
+    input_dtype = input.dtype
     output = np.zeros(
         output_shape(
             input_shape, weight.shape[0],
             kernel_size, stride, padding, dilation
-        )
+        ),
+        dtype=input_dtype
     )
 
     dilated_weight = np.zeros([
         weight.shape[0],
         dilation[0] * (kernel_size[0] - 1) + 1,
         dilation[1] * (kernel_size[1] - 1) + 1,
-        weight.shape[-1]
-    ])
+        weight.shape[-1]],
+        dtype=input_dtype
+    )
     dilated_weight[:, ::dilation[0], ::dilation[1], :] = weight
 
     input_padded = np.pad(

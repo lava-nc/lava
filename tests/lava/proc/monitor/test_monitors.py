@@ -45,8 +45,8 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_post_mgmt(self):
         if self.time_step > 1:
-            self.s = np.array([self.time_step])
-            self.u = 2 * np.array([self.time_step])
+            self.s = np.array([self.time_step], dtype=np.int32)
+            self.u = 2 * np.array([self.time_step], dtype=np.int32)
             self.v = np.array([[1, 2], [3, 4]], dtype=np.int32)
 
 

@@ -21,18 +21,24 @@ jobs:
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
-        repository: 'Lava'    
+        repository: 'Lava'
 
     - name: Run flakeheaven (flake8)
-      run: poetry run flakeheaven lint src/lava tests/
+      run: poetry run flakeheaven lint src/lava tests/ prebuild.py
       
     - name: Run cpplint (cpplint)
-      run: poetry run cpplint --recursive --quiet \
-           --repository=src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
-           --root=csrc \
-           --exclude=src/lava/magma/runtime/message_infrastructure/message_infrastructure/csrc/channel/dds/protos \
-           src/lava/magma/runtime/message_infrastructure/message_infrastructure/ \
-           src/lava/magma/runtime/message_infrastructure/test/
+      run: |
+        poetry run cpplint --recursive --quiet \
+        --repository=src/lava/magma/runtime/_c_message_infrastructure \
+        --root=csrc \
+        --exclude=src/lava/magma/runtime/_c_message_infrastructure/csrc/channel/dds/protos \
+        src/lava/magma/runtime/_c_message_infrastructure/ \
+        src/lava/magma/runtime/_c_message_infrastructure/test/
+
+        poetry run cpplint --recursive --quiet \
+        --repository=src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp \
+        --root=src \
+        src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp/src
 
   security-lint:
     name: Security Lint Code
@@ -87,47 +93,15 @@ jobs:
       matrix:
         # TODO: restore it before merge into ML
         operating-system: [ubuntu-latest,] #windows-latest, macos-latest]
-
     steps:
     - uses: actions/checkout@v3
       with:
         lfs: true
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
-        python-version: 3.9
-
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-path: .venv
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-02-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install message_infrastructure
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      run: poetry install --no-interaction
+        repository: 'Lava'
 
     - name: Run message infrastructure cpp unit tests
-      working-directory: ./src/lava/magma/runtime/message_infrastructure/
-      run: build/temp.*/message_infrastructure.MessageInfrastructurePywrapper/test/test_messaging_infrastructure
-
-    - name: Run message infrastructure unit tests
-      working-directory: ./src/lava/magma/runtime/message_infrastructure
-      if: runner.os == 'Linux'
-      run: |
-        source $VENV
-        pytest test/
+      run: ./build/test/test_messaging_infrastructure

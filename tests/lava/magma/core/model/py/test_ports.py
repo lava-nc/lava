@@ -7,7 +7,7 @@ import time
 import numpy as np
 import typing as ty
 import functools as ft
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     AbstractTransferPort,

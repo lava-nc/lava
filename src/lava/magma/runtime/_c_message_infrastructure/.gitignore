@@ -1,0 +1,46 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# vscode
+.vscode/*
+
+# Build
+build/
+
+# Log
+log/
+
+# Compiled grpc protos
+csrc/channel/grpc/grpcchannel*
+# Compiled CycloneDDS proto
+csrc/channel/dds/protos/cyclone_dds/DDSMetaData*

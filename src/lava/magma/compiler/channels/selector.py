@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-from message_infrastructure import RecvPort
+from lava.magma.runtime.message_infrastructure import RecvPort
 
 
 class Selector:

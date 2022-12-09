@@ -34,7 +34,7 @@ from lava.magma.core.resources import CPU, LMT, NeuroCore
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
-from message_infrastructure import ChannelBackend
+from lava.magma.runtime.message_infrastructure import ChannelBackend
 
 
 # A minimal process (A) with an InPort, OutPort and RefPort

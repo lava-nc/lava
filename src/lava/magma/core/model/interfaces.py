@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
-from message_infrastructure import AbstractTransferPort
+from lava.magma.runtime.message_infrastructure import AbstractTransferPort
 
 
 class AbstractPortImplementation(ABC):

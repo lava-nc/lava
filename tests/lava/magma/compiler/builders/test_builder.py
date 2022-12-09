@@ -23,7 +23,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 
-from message_infrastructure import (
+from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
     AbstractTransferPort,
