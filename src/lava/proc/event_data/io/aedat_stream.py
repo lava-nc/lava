@@ -16,7 +16,7 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.utils.events import sub_sample
+from lava.utils.events import sub_sample, encode_data_and_indices
 
 
 class AedatStream(AbstractProcess):
@@ -116,7 +116,8 @@ class AedatStreamPM(PyLoihiProcessModel):
         """
         events = self._get_next_event_batch()
 
-        data, indices = self._encode_data_and_indices(events)
+        data, indices = encode_data_and_indices(frame_shape=self._frame_shape,
+                                                events=events)
 
         # If we have more data than our shape allows, sub-sample
         if data.shape[0] > self._shape_out[0]:
