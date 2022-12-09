@@ -49,7 +49,6 @@ class TestFileDescriptors(unittest.TestCase):
         self.assertEqual(file_descriptor_usage, None)
 
         for iteration in range(self.num_iterations):
-            print(f"We are at interation {iteration}", flush=True)
             # Run Process
             run_process()
 

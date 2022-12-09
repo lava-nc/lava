@@ -21,8 +21,6 @@ def load_library():
             if '.so' in lib and ('idl' not in lib):
                 lib_file = os.path.join(extra_lib_folder, lib)
                 CDLL(lib_file, mode=RTLD_GLOBAL)
-    else:
-        print("No lib include")
 
 
 load_library()
