@@ -33,7 +33,6 @@ def run_process():
 def get_file_descriptor_usage():
     result = run("lsof 2>/dev/null | grep python | grep FIFO | wc -l",  # noqa: S607, E501
                  shell=True)
-    print(flush=True)
     sleep(0.1)
     return result.stdout
 
@@ -52,7 +51,7 @@ class TestFileDescriptors(unittest.TestCase):
             # Run Process
             run_process()
 
-            # Check file descriptor usage after running processes
+        # Check file descriptor usage after running processes
         file_descriptor_usage = get_file_descriptor_usage()
         self.assertEqual(file_descriptor_usage, None,
                          msg=f"Failed on iteration {iteration}")
