@@ -483,3 +483,27 @@ class PyLearningLIFModelFixed(
         Dense process for learning.
         """
         super().run_spk()
+
+@implements(proc=LearningLIF, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyLearningLifModelFloat(LearningNeuronModelFloat,
+                              AbstractPyLifModelFloat):
+    """Implementation of Leaky-Integrate-and-Fire neural process in floating
+    point precision. This short and simple ProcessModel can be used for quick
+    algorithmic prototyping, without engaging with the nuances of a fixed
+    point implementation.
+    """
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    vth: float = LavaPyType(float, float)
+
+    def spiking_activation(self):
+        """Spiking activation function for LIF."""
+        return self.v > self.vth
+
+    def run_spk(self) -> None:
+        """Calculates the third factor trace and sends it to the
+        Dense process for learning.
+        """
+        super().run_spk()
