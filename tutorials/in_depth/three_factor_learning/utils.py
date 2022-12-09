@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import typing as ty
 import numpy as np
 
-from lava.proc.lif.process import LIF, AbstractLIF, LogConfig
+from lava.proc.lif.process import LIF, AbstractLIF, LogConfig, LearningLIF
 from lava.proc.io.source import RingBuffer
 from lava.proc.dense.process import LearningDense, Dense
 from lava.magma.core.process.neuron import LearningNeuronProcess
@@ -26,79 +26,28 @@ from lava.proc.lif.models import (
 )
 
 
-class RSTDPLIF(LearningNeuronProcess, AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process with RSTDP learning rule.
-
-    Parameters
-    ----------
-    shape : tuple(int)
-        Number and topology of LIF neurons.
-    u : float, list, numpy.ndarray, optional
-        Initial value of the neurons' current.
-    v : float, list, numpy.ndarray, optional
-        Initial value of the neurons' voltage (membrane potential).
-    du : float, optional
-        Inverse of decay time-constant for current decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    dv : float, optional
-        Inverse of decay time-constant for voltage decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    bias_mant : float, list, numpy.ndarray, optional
-        Mantissa part of neuron bias.
-    bias_exp : float, list, numpy.ndarray, optional
-        Exponent part of neuron bias, if needed. Mostly for fixed point
-        implementations. Ignored for floating point implementations.
-    vth : float, optional
-        Neuron threshold voltage, exceeding which, the neuron will spike.
-        Currently, only a single threshold can be set for the entire
-        population of neurons.
-
-    """
-    def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            du: ty.Optional[float] = 0,
-            dv: ty.Optional[float] = 0,
-            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10,
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None,
-            **kwargs) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant,
-                         bias_exp=bias_exp, name=name,
-                         log_config=log_config,
-                         **kwargs)
-        self.vth = Var(shape=(1,), init=vth)
-
-        self.a_third_factor_in = InPort(shape=shape)
+class RSTDPLIF(LearningLIF):
+    pass
 
 
 @implements(proc=RSTDPLIF, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
     """Implementation of Leaky-Integrate-and-Fire neural
     process in floating point precision with learning enabled
     to do R-STDP.
     """
-    # Graded reward input spikes
-    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.s_out_buff = np.zeros(proc_params['shape'])
+        self.s_out_buff = np.zeros(proc_params["shape"])
 
     def spiking_activation(self):
-        """Spiking activation function for Learning LIF.
-        """
+        """Spiking activation function for Learning LIF."""
         return self.v > self.vth
 
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
@@ -133,11 +82,13 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+
         super().run_spk()
 
         a_graded_in = self.a_third_factor_in.recv()
 
-        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
         self.s_out_bap.send(self.s_out_buff)
@@ -148,7 +99,7 @@ class RSTDPLIFModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloat):
 
 @implements(proc=RSTDPLIF, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('bit_accurate_loihi', 'fixed_pt')
+@tag("bit_accurate_loihi", "fixed_pt")
 class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
     """Implementation of RSTDP Leaky-Integrate-and-Fire neural
     process bit-accurate with Loihi's hardware LIF dynamics,
@@ -169,8 +120,6 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
     - vth: unsigned 17-bit integer (0 to 131071).
 
     """
-    # Graded reward input spikes
-    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     vth: int = LavaPyType(int, np.int32, precision=17)
@@ -178,7 +127,7 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.effective_vth = 0
-        self.s_out_buff = np.zeros(proc_params['shape'])
+        self.s_out_buff = np.zeros(proc_params["shape"])
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In
@@ -189,10 +138,9 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         self.isthrscaled = True
 
     def spiking_activation(self):
-        """Spike when voltage exceeds threshold.
-        """
+        """Spike when voltage exceeds threshold."""
         return self.v > self.effective_vth
-    
+
     def calculate_third_factor_trace(self, s_graded_in: float) -> float:
         """Generate's a third factor reward traces based on
         graded input spikes to the Learning LIF process.
@@ -225,11 +173,13 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
+
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+
         super().run_spk()
 
         a_graded_in = self.a_third_factor_in.recv()
 
-        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
         self.y2 = self.calculate_third_factor_trace(a_graded_in)
 
         self.s_out_bap.send(self.s_out_buff)
