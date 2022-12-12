@@ -119,27 +119,8 @@ class LearningRuleApplierFloat(AbstractLearningRuleApplier):
             factor_str = f"({factor.const})"
             return factor_str
 
-        # if factor is a Trace Factor
         if factor.state_var in str_symbols.TRACES:
-            factor_str = "traces"
-
-            if dep == str_symbols.X0:
-                factor_str += "[0]"
-            elif dep == str_symbols.Y0:
-                factor_str += "[1]"
-            elif dep == str_symbols.U:
-                factor_str += "[2]"
-
-            if factor.state_var == str_symbols.X1:
-                factor_str += "[0]"
-            elif factor.state_var == str_symbols.X2:
-                factor_str += "[1]"
-            elif factor.state_var == str_symbols.Y1:
-                factor_str += "[2]"
-            elif factor.state_var == str_symbols.Y2:
-                factor_str += "[3]"
-            elif factor.state_var == str_symbols.Y3:
-                factor_str += "[4]"
+            factor_str = factor.state_var + "_" + dep
 
         # if factor is a Synaptic Variable Factor
         elif factor.state_var in str_symbols.SYNAPTIC_VARIABLES:
@@ -234,12 +215,7 @@ class LearningRuleApplierBitApprox(AbstractLearningRuleApplier):
 
         # handle factor of type Trace
         if factor.state_var in str_symbols.TRACES:
-            return (
-                applier_args[f"{factor.state_var[0]}_traces"][
-                    DEP_TO_IDX_DICT[dependency]
-                ][TRACE_TO_IDX_DICT[factor.state_var]]
-                + const
-            )
+            return applier_args[f"{factor.state_var}_{dependency}"] + const
 
         # handle factor of type Synaptic variable
         if (

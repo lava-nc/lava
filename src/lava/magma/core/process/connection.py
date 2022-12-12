@@ -55,13 +55,15 @@ class LearningConnectionProcess(AbstractProcess):
     """
     def __init__(
         self,
-        shape: tuple = (1, 1),
+        shape: tuple,
         learning_rule: ty.Optional[LoihiLearningRule] = None,
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
 
         kwargs["shape"] = shape
+        tag_1 = kwargs.get('tag_1', 0)
+        tag_2 = kwargs.get('tag_2', 0)
 
         self.learning_rule = learning_rule
 
@@ -83,7 +85,7 @@ class LearningConnectionProcess(AbstractProcess):
         self.y2 = Var(shape=(shape[0],), init=0)
         self.y3 = Var(shape=(shape[0],), init=0)
 
-        self.tag_2 = Var(shape=shape, init=0)
-        self.tag_1 = Var(shape=shape, init=0)
+        self.tag_1 = Var(shape=shape, init=tag_1)
+        self.tag_2 = Var(shape=shape, init=tag_2)
 
         super().__init__(**kwargs)

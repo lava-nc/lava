@@ -1,32 +1,41 @@
 name: Run CI
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main      
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.1
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'    
 
     - name: Run flakeheaven (flake8)
-      if: runner.os == 'Linux' || runner.os == 'macOS'
-      run: poetry run flakeheaven lint src/lava tests/
-
-    - name: Run flakeheaven (flake8)
-      if: runner.os == 'Windows'
       run: poetry run flakeheaven lint src/lava tests/
 
   security-lint:
     name: Security Lint Code
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.1
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
 
@@ -44,19 +53,17 @@ jobs:
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
     steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.1
+      uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
 
     - name: Run unit tests
-      if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         poetry run git lfs fetch
         poetry run git lfs pull
         poetry run pytest
-        
-    - name: Run unit tests
-      if: runner.os == 'Windows'
-      run: poetry run pytest

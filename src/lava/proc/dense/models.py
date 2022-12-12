@@ -112,7 +112,8 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
 class PyDenseModelBitAcc(AbstractPyDenseModelBitAcc):
     pass
 
-# @implements(proc=LearningDense, protocol=LoihiProtocol)
+
+@implements(proc=LearningDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyLearningDenseModelFloat(
