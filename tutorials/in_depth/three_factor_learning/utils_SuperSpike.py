@@ -113,7 +113,17 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         Graded input spikes to the Learning LIF process. 
 
         For SuperSpike:
-        This is the error signal propogated from the input. 
+        This is the error signal propogated from the input.
+
+        Parameters
+        ----------
+        s_error_in : ndarray
+            Target Spikes.
+
+        Returns
+        ----------
+        result : ndarray
+            Decayed error trace. 
         """
         # Decay constants for error
         error_tau_rise = 20
@@ -142,27 +152,43 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         surrogate_v = np.power((1 + np.abs(h_i)), (-2))
 
         return surrogate_v
+    
+    def compute_post_synaptic_trace(self, s_out_buff):
+        """Compute post-synaptic trace values for this time step.
+
+        Parameters
+        ----------
+        s_out_buff : ndarray
+            Spikes array.
+
+        Returns
+        ----------
+        result : ndarray
+            Computed post synaptic trace values.
+        """
+        y1_tau = self._learning_rule.post_trace_decay_tau
+        y1_impulse = self._learning_rule.post_trace_kernel_magnitude
+
+        return self.y1 * np.exp(-1 / y1_tau) + y1_impulse * s_out_buff
 
     def run_spk(self) -> None:
         """Calculates the third factor trace and sends it to the 
         Dense process for learning.
         """
         super().run_spk()
-        
-        a_third_factor_in = self.a_third_factor_in.recv()
 
-        self.y1 = self.y1.astype(bool) | self.s_out_buff.astype(bool)
-        self.y2 = self.calculate_third_factor_trace_y2(a_third_factor_in)
+        a_graded_in = self.a_third_factor_in.recv()
+        
+        self.y1 = self.compute_post_synaptic_trace(self.s_out_buff)
+        self.y2 = self.calculate_third_factor_trace_y2(a_graded_in)
         self.y3 = self.calculate_third_factor_trace_y3()
-    
+
+        self.s_out_bap.send(self.s_out_buff)
         self.s_out_y1.send(self.y1)
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
         self.v_port.send(self.v)
-
-        if self.time_step % self.proc_params['learning_rule'].t_epoch == 0:
-            self.y1 = self.y1 & False
 
 ####################################################################
 # Creating a LearningDenseProbe for Measuring Trace Dynamics
