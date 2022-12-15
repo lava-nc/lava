@@ -105,13 +105,15 @@ class DvStreamPM(PyLoihiProcessModel):
         data is sub-sampled if necessary, and then sent out.
         """
         events = self._get_next_event_batch()
+        print("pieps")
+        print(events)
         # if we have not received a new batch
-        if not events:
+        if events is None:
             data = np.empty(self._shape_out)
             indices = np.empty(self._shape_out)
             warnings.warn("no events received")
-        elif not events["data"]:
-            warnings.warn()
+        # elif not events["data"]:
+        #    warnings.warn()
         else:
             data, indices = encode_data_and_indices(self._frame_shape,
                                                     events)
