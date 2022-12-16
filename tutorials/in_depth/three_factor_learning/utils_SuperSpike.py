@@ -17,7 +17,7 @@ from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
 
-from lava.proc.lif.process import AbstractLIF
+from lava.proc.lif.process import AbstractLIF, LearningLIF
 from lava.proc.lif.models import AbstractPyLifModelFloat
 from lava.proc.dense.process import LearningDense, Dense
 from lava.proc.dense.models import PyLearningDenseModelFloat
@@ -28,61 +28,8 @@ from lava.proc.io.source import RingBuffer as SpikeIn
 ####################################################################
 # Creating a custom SuperSpikeLIF
 ####################################################################
-class SuperSpikeLIF(LearningNeuronProcess, AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process with learning enabled.
-
-    Parameters
-    ----------
-    shape : tuple(int)
-        Number and topology of LIF neurons.
-    u : float, list, numpy.ndarray, optional
-        Initial value of the neurons' current.
-    v : float, list, numpy.ndarray, optional
-        Initial value of the neurons' voltage (membrane potential).
-    du : float, optional
-        Inverse of decay time-constant for current decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    dv : float, optional
-        Inverse of decay time-constant for voltage decay. Currently, only a
-        single decay can be set for the entire population of neurons.
-    bias_mant : float, list, numpy.ndarray, optional
-        Mantissa part of neuron bias.
-    bias_exp : float, list, numpy.ndarray, optional
-        Exponent part of neuron bias, if needed. Mostly for fixed point
-        implementations. Ignored for floating point implementations.
-    vth : float, optional
-        Neuron threshold voltage, exceeding which, the neuron will spike.
-        Currently, only a single threshold can be set for the entire
-        population of neurons.
-
-    """
-    def __init__(
-            self,
-            *,
-            shape: ty.Tuple[int, ...],
-            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            du: ty.Optional[float] = 0,
-            dv: ty.Optional[float] = 0,
-            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-            vth: ty.Optional[float] = 10, 
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None,
-            **kwargs) -> None:
-        super().__init__(shape=shape, u=u, v=v, du=du, dv=dv,
-                         bias_mant=bias_mant,
-                         bias_exp=bias_exp, name=name,
-                         log_config=log_config, **kwargs)
-        self.vth = Var(shape=(1,), init=vth)
-
-        self.s_error_out = Var(shape=shape, init=np.zeros(shape))
-        self.s_error_out_decay = Var(shape=shape, init=np.zeros(shape))
-        
-        # Third factor input
-        self.a_third_factor_in = InPort(shape=shape)
-
-        self.v_port = OutPort(shape=(1,))
+class SuperSpikeLIF(LearningLIF):
+    pass
 
 
 @implements(proc=SuperSpikeLIF, protocol=LoihiProtocol)
@@ -98,7 +45,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
     s_error_out : np.ndarray = LavaPyType(float, float)
     s_error_out_decay : np.ndarray = LavaPyType(float, float)
 
-    v_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    #v_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     # third factor input
     a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -154,7 +101,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         return surrogate_v
     
     def compute_post_synaptic_trace(self, s_out_buff):
-        """Compute post-synaptic trace values for this time step.
+        """Compute post-synaptic trace values for this time step.(y1)
 
         Parameters
         ----------
@@ -188,7 +135,7 @@ class PySuperSpikeLifModelFloat(LearningNeuronModelFloat, AbstractPyLifModelFloa
         self.s_out_y2.send(self.y2)
         self.s_out_y3.send(self.y3)
 
-        self.v_port.send(self.v)
+        #self.v_port.send(self.v)
 
 ####################################################################
 # Creating a LearningDenseProbe for Measuring Trace Dynamics
