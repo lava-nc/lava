@@ -10,7 +10,7 @@ packages = [
     {include = "tests"}
 ]
 include = ["tutorials"]
-version = "0.5.1"
+version = "0.6.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
