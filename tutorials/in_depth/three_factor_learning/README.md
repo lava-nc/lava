@@ -5,7 +5,9 @@ This folder contains the implementation of the SuperSpike learning rule. The ini
 Learning rule: 
 
 > dt represents the eligibility trace with the pre and post-synaptic traces along with the surrogate gradient trace (y3)
+
 > dd decays the eligibility trace (implements the double exponential filter)
+
 > dw is ffunction of d and the error trace (y2)
 
 ### POINTS TO REMEMBER:
@@ -14,9 +16,10 @@ utils_SuperSpike.py:
 
 > Implements a floating point version of the SuperSpikeLIF neuron.
 
-    > error_tau_rise and error_tau_decay should be symmetric to the 
+  > error_tau_rise and error_tau_decay should be symmetric to the 
       eligibility_trace_decay_tau and eligibility_trace_rise_tau.
-    > y1 implements the filtering of post-synaptic trace (replicating a ucoded neuron)
+      
+  > y1 implements the filtering of post-synaptic trace (replicating a ucoded neuron)
 
 > LearningDenseProbe Process and ProcessModels are created to monitor "Var". It replaces "Var's" as InPorts or OutPorts for measuring. This was to circumvent an issue with Var monitor slowing down the simulation significantly. A simple LearningDense is replaced with LearningDenseProb in simulation. 
 Note :  This can be removed later - if the Monitor problem is fixed! 
