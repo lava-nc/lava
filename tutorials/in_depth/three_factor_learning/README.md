@@ -2,6 +2,12 @@
 
 This folder contains the implementation of the SuperSpike learning rule. The initial paper implements a double exponential filter applied to the error trace, pre and post-synaptic trace which is implemented with the help of the difference of exponential formula and also the elgibility trace. 
 
+Refer to the paper for more details : Zenke, F., and Ganguli, S. (2018). SuperSpike: Supervised Learning in Multilayer Spiking Neural Networks. Neural Computation 30, 1514–1541.
+
+URL: https://www.mitpressjournals.org/doi/abs/10.1162/neco_a_01086
+
+The publically available implementation might provide some of the values for the simulation parameters : [SuperSpike](https://github.com/fzenke/pub2018superspike)
+
 Learning rule: 
 
 > dt represents the eligibility trace with the pre and post-synaptic traces along with the surrogate gradient trace (y3)
@@ -18,7 +24,7 @@ utils_SuperSpike.py:
 
   > error_tau_rise and error_tau_decay should be symmetric to the 
       eligibility_trace_decay_tau and eligibility_trace_rise_tau.
-      
+
   > y1 implements the filtering of post-synaptic trace (replicating a ucoded neuron)
 
 > LearningDenseProbe Process and ProcessModels are created to monitor "Var". It replaces "Var's" as InPorts or OutPorts for measuring. This was to circumvent an issue with Var monitor slowing down the simulation significantly. A simple LearningDense is replaced with LearningDenseProb in simulation. 
