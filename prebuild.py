@@ -13,7 +13,7 @@ class CMake:
         self.from_poetry = self._check_poetry()
         self.from_cd_action = self._check_cd_action()
         self.cmake_command = ["poetry", "run", "cmake"] \
-            if self.from_cd_action else ["cmake"]
+            if self.from_cd_action and self.from_poetry else ["cmake"]
         self.cmake_args = []
         self.build_args = []
 
@@ -24,9 +24,7 @@ class CMake:
         return False
 
     def _check_cd_action(self):
-        is_action = self.env.get('GITHUB_ACTIONS', False)
         event_name = self.env.get('GITHUB_EVENT_NAME', '')
-        print('_check_cd_action', is_action, event_name)
         return event_name == 'workflow_dispatch'
 
     def _set_cmake_path(self):
@@ -37,7 +35,7 @@ class CMake:
     def _set_cmake_args(self):
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
-        if self.from_cd_action:
+        if self.from_cd_action and self.from_poetry:
             python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
                 .decode().strip() + "/bin/python3" # nosec # noqa
             numpy_include_dir = subprocess.check_output(["poetry", "run", # nosec # noqa
