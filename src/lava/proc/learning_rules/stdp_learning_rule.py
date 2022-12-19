@@ -62,8 +62,8 @@ class STDPLoihi(Loihi2FLearningRule):
 
         # Other learning-related parameters
         # Trace impulse values
-        x1_impulse = kwargs.get("x1_impulse", 16)
-        y1_impulse = kwargs.get("y1_impulse", 16)
+        x1_impulse = kwargs.pop("x1_impulse", 16)
+        y1_impulse = kwargs.pop("y1_impulse", 16)
 
         # Trace decay constants
         x1_tau = tau_plus

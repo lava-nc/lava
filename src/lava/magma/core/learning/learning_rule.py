@@ -95,6 +95,11 @@ class LoihiLearningRule:
         t_epoch: ty.Optional[int] = 1,
         rng_seed: ty.Optional[int] = None,
     ) -> None:
+
+        self._dw_str = None if dw is None else "dw = " + str(dw)
+        self._dd_str = None if dd is None else "dd = " + str(dd)
+        self._dt_str = None if dt is None else "dt = " + str(dt)
+
         # dict of string learning rules
         str_learning_rules = {
             str_symbols.DW: dw,
@@ -627,24 +632,32 @@ class Loihi3FLearningRule(LoihiLearningRule):
     """
 
     def __init__(
-            self,
-            dw: ty.Optional[str] = None,
-            dd: ty.Optional[str] = None,
-            dt: ty.Optional[str] = None,
-            x1_impulse: ty.Optional[float] = 0.0,
-            x1_tau: ty.Optional[float] = 0.0,
-            x2_impulse: ty.Optional[float] = 0.0,
-            x2_tau: ty.Optional[float] = 0.0,
-            y1_impulse: ty.Optional[float] = 0.0,
-            y1_tau: ty.Optional[float] = 0.0,
-            t_epoch: ty.Optional[int] = 1,
-            rng_seed: ty.Optional[int] = None,
+        self,
+        dw: ty.Optional[str] = None,
+        dd: ty.Optional[str] = None,
+        dt: ty.Optional[str] = None,
+        x1_impulse: ty.Optional[float] = 0.0,
+        x1_tau: ty.Optional[float] = 0.0,
+        x2_impulse: ty.Optional[float] = 0.0,
+        x2_tau: ty.Optional[float] = 0.0,
+        t_epoch: ty.Optional[int] = 1,
+        rng_seed: ty.Optional[int] = None,
     ) -> None:
 
-        super().__init__(dw=dw, dd=dd, dt=dt,
-                         x1_impulse=x1_impulse, x1_tau=x1_tau,
-                         x2_impulse=x2_impulse, x2_tau=x2_tau,
-                         y1_impulse=y1_impulse, y1_tau=y1_tau,
-                         y2_impulse=0, y2_tau=2 ** 32 - 1,
-                         y3_impulse=0, y3_tau=2 ** 32 - 1,
-                         t_epoch=t_epoch, rng_seed=rng_seed)
+        super().__init__(
+            dw=dw,
+            dd=dd,
+            dt=dt,
+            x1_impulse=x1_impulse,
+            x1_tau=x1_tau,
+            x2_impulse=x2_impulse,
+            x2_tau=x2_tau,
+            y1_impulse=0,
+            y1_tau=2**32 - 1,
+            y2_impulse=0,
+            y2_tau=2**32 - 1,
+            y3_impulse=0,
+            y3_tau=2**32 - 1,
+            t_epoch=t_epoch,
+            rng_seed=rng_seed,
+        )
