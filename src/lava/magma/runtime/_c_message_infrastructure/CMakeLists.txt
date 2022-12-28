@@ -4,6 +4,7 @@ project(message_passing)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
@@ -165,15 +166,16 @@ endif()
 if(CycloneDDS_ENABLE)
   add_dependencies(message_infrastructure cyclonedds-cxx CycloneDDS_metdata)
   target_link_libraries(message_infrastructure
-    ${COMMON_DDS_DESTINATION}/lib/libddsc.so
-    ${COMMON_DDS_DESTINATION}/lib/libddscxx.so)
+    ${COMMON_DDS_DESTINATION}/lib/libddsc.a
+    ${COMMON_DDS_DESTINATION}/lib/libddscxx.a)
 endif()
 
 if(FASTDDS_ENABLE)
   add_dependencies(message_infrastructure foonathan_memory fastcdr fastrtps)
   target_link_libraries(message_infrastructure
-    ${COMMON_DDS_DESTINATION}/lib/libfastcdr.so
-    ${COMMON_DDS_DESTINATION}/lib/libfastrtps.so)
+    ${COMMON_DDS_DESTINATION}/lib/libfoonathan_memory-0.7.1.a
+    ${COMMON_DDS_DESTINATION}/lib/libfastcdr.a
+    ${COMMON_DDS_DESTINATION}/lib/libfastrtps.a)
 endif()
 
 if(PY_WRAPPER)
