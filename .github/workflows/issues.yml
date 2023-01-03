@@ -1,9 +1,10 @@
-name: Add new issues to the NCL planning project
+name: Add new issues to the NCL planning project and label them
 
 on:
   issues:
     types:
       - opened
+      - reopened
       - transferred
 
 jobs:
@@ -15,3 +16,18 @@ jobs:
         with:
           project-url: https://github.com/orgs/lava-nc/projects/3
           github-token: ${{ secrets.ADD_ISSUES_TO_PROJECT }}
+
+  label_issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["0-needs-review"]
+            })
