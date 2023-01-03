@@ -53,7 +53,7 @@ networkx = "<=2.8.7"
 asteval = "^0.9.27"
 
 [tool.poetry.dev-dependencies]
-bandit = "1.7.4"
+bandit = "1.7.2"
 coverage = "^6.3.2"
 darglint = "^1.8.1"
 flake8 = "^4.0.1"
