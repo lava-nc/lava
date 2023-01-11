@@ -445,7 +445,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         Add various ports to poll for communication on ports
         """
         if enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
-                enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT):
+                enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT) \
+                or enum_equal(self.phase, PyLoihiProcessModel.Phase.HOST):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, RecvPort):
