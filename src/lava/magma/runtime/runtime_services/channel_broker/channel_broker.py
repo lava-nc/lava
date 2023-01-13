@@ -76,6 +76,7 @@ class ChannelBroker(AbstractChannelBroker):
 
     def __init__(self,
                  board: NxBoard,
+                 compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None,
                  *args,
                  **kwargs,):
         """Initialize ChannelBroker with NxBoard.
@@ -89,6 +90,7 @@ class ChannelBroker(AbstractChannelBroker):
         """
         super().__init__(*args, **kwargs)
         self.board = board
+        self._compile_config = compile_config
         self.has_started: bool = False
         # Need to poll for CInPorts
         self.c_inports_to_poll: ty.Dict[CInPort, Channel] = {}
@@ -170,11 +172,13 @@ class ChannelBroker(AbstractChannelBroker):
                         channel_name: str,
                         message_size: int,
                         number_elements: int,
+                        slack: int,
                         host_idx: int = 0):
         return self.board.hosts[host_idx].createChannel(
             name=channel_name,
             messageSize=message_size,
-            numElements=number_elements
+            numElements=number_elements,
+            slack=slack
         )
 
     def create_channel(self,
@@ -185,6 +189,9 @@ class ChannelBroker(AbstractChannelBroker):
                        c_builder_idx: int) -> ty.List[Channel]:
         channels: ty.List[Channel] = []
         MESSAGE_SIZE_IN_C = 128 * 4
+        DEFAULT_CHANNEL_SLACK = 16
+        channel_slack = self._compile_config.get("channel_slack",
+                                                 DEFAULT_CHANNEL_SLACK)
         if input_channel:
             for csp_port in c_port.csp_ports:
                 channel_name = generate_channel_name("in_grpc_",
@@ -194,7 +201,8 @@ class ChannelBroker(AbstractChannelBroker):
                 channels.append(self._create_channel(
                     channel_name=channel_name,
                     message_size=MESSAGE_SIZE_IN_C,
-                    number_elements=csp_port.size
+                    number_elements=csp_port.size,
+                    slack=channel_slack
                 ))
         else:
             for csp_port in c_port.csp_ports:
@@ -205,7 +213,8 @@ class ChannelBroker(AbstractChannelBroker):
                 channels.append(self._create_channel(
                     channel_name=channel_name,
                     message_size=MESSAGE_SIZE_IN_C,
-                    number_elements=csp_port.size
+                    number_elements=csp_port.size,
+                    slack=channel_slack
                 ))
 
         if input_channel:
