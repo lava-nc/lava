@@ -28,11 +28,14 @@ You could use the commands in your ternimal,
   $ unset https_proxy
   ```
 - When you use grpc channel at main and sub processes together, pls refer to [this link](https://github.com/grpc/grpc/blob/master/doc/fork_support.md) to set env.
+- There are conflict of `LOCKABLE` definition at CycloneDDS and gRPC, so reject enabling GRPC_CHANNEL and CycloneDDS_ENABLE together.
 
 #### (4) If you want to enable DDS channel, run the command:
 ```bash
 $ export CMAKE_ARGS="-DDDS_CHANNEL=ON -D<DDS_BACKEND>_ENABLE=ON"
 # [DDS_BACKEND: FASTDDS, CycloneDDS ..., only support FASTDDS now]
+# Before build FastDDS, need to install dependences by below command.
+# sudo apt-get install libasio-dev libtinyxml2-dev
 ``` 
 
 #### (5) Build with cpp unit tests
