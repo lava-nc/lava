@@ -138,6 +138,18 @@ class TestOptimizeWeightBits(unittest.TestCase):
         self.assertEqual(optimized.weight_exp, -4)
         self.assertEqual(optimized.num_weight_bits, 3)
 
+    def test_optimize_weight_bits_wgts_all_zero(self) -> None:
+        weights = np.array([0, 0, 0])
+        sign_mode = SignMode.EXCITATORY
+
+        optimized = optimize_weight_bits(weights=weights,
+                                         sign_mode=sign_mode,
+                                         loihi2=True)
+
+        np.testing.assert_array_equal(optimized.weights, np.array([0, 0, 0]))
+        self.assertEqual(optimized.weight_exp, -0)
+        self.assertEqual(optimized.num_weight_bits, 0)
+
     def test_determine_weight_exp_inhibitory_0(self) -> None:
         weight_exp = _determine_weight_exp(weights=np.array([-255, -128, -1]),
                                            sign_mode=SignMode.INHIBITORY)
