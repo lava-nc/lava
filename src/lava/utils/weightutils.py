@@ -136,6 +136,10 @@ def _determine_weight_exp(weights: np.ndarray,
 
     scale = 0
 
+    if max_weight == min_weight == 0:
+        weight_exp = -0
+        return weight_exp
+
     if sign_mode == SignMode.MIXED:
         pos_scale = 127 / max_weight if max_weight > 0 else np.inf
         neg_scale = -128 / min_weight if min_weight < 0 else np.inf
