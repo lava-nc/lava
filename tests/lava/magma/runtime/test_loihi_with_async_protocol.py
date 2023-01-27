@@ -33,11 +33,13 @@ This test checks if Process with Loihi Protocol works properly with
 process with Async Protocol.
 """
 
+
 class AProcess1(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs["shape"]
         self.in_port = InPort(shape=shape)
+
 
 class AProcess2(AbstractProcess):
     def __init__(self, **kwargs):
@@ -45,33 +47,38 @@ class AProcess2(AbstractProcess):
         shape = kwargs["shape"]
         self.out_port = OutPort(shape=shape)
 
+
 @implements(proc=AProcess1, protocol=AsyncProtocol)
 @requires(CPU)
 class A1ProcessModel(PyAsyncProcessModel):
     in_port = LavaPyType(PyInPort.VEC_DENSE, int)
+
     def run_async(self):
         count = 1
         while True:
             val = self.in_port.recv()
             exp = (np.ones(
-                    shape=self.in_port.shape)*count).tolist()
+                shape=self.in_port.shape) * count).tolist()
             if val.tolist() != exp:
                 raise ValueError(f"Wrong value of val : {val.tolist()} {exp}")
             count += 1
             if count == 11:
                 return
 
+
 @implements(proc=AProcess2, protocol=AsyncProtocol)
 @requires(CPU)
 class A2ProcessModel(PyAsyncProcessModel):
     out_port = LavaPyType(PyOutPort.VEC_DENSE, int)
+
     def run_async(self):
         count = 1
         while True:
-            self.out_port.send(np.ones(shape=self.out_port.shape)*count)
+            self.out_port.send(np.ones(shape=self.out_port.shape) * count)
             count += 1
             if count == 11:
                 return
+
 
 class LProcess(AbstractProcess):
     def __init__(self, **kwargs):
@@ -80,6 +87,7 @@ class LProcess(AbstractProcess):
         self.var = Var(shape=shape, init=0)
         self.in_port = InPort(shape=shape)
         self.out_port = OutPort(shape=shape)
+
 
 @implements(proc=LProcess, protocol=LoihiProtocol)
 @requires(CPU)
@@ -91,6 +99,7 @@ class LProcessModel(PyLoihiProcessModel):
     def run_spk(self):
         var = self.in_port.recv()
         self.out_port.send(var)
+
 
 class TestProcess(unittest.TestCase):
     def test_async_with_loihi_protocol(self):
