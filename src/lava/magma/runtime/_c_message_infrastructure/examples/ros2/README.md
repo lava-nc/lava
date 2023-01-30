@@ -54,7 +54,6 @@ Then run
 ```
 $ cd <lava>
 $ poetry install
-$ python3 prebuild.py
 ```
 The DDS example binary will be built in <lava>/build/test. (`test_fastdds_from_ros` and `test_fastdds_to_ros`)
 
