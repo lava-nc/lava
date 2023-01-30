@@ -1,16 +1,6 @@
-# INTEL CONFIDENTIAL
-# Copyright © 2022 Intel Corporation.
-
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2022 Intel Corporation
+# SPDX-License-Identifier: LGPL 2.1 or later
+# See: https://spdx.org/licenses/
 
 import unittest
 import numpy as np
@@ -34,23 +24,23 @@ process with Async Protocol.
 """
 
 
-class AProcess1(AbstractProcess):
+class AsyncProcessDest(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs["shape"]
         self.in_port = InPort(shape=shape)
 
 
-class AProcess2(AbstractProcess):
+class AsyncProcessSrc(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs["shape"]
         self.out_port = OutPort(shape=shape)
 
 
-@implements(proc=AProcess1, protocol=AsyncProtocol)
+@implements(proc=AsyncProcessDest, protocol=AsyncProtocol)
 @requires(CPU)
-class A1ProcessModel(PyAsyncProcessModel):
+class AsyncProcessDestProcessModel(PyAsyncProcessModel):
     in_port = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_async(self):
@@ -66,9 +56,9 @@ class A1ProcessModel(PyAsyncProcessModel):
                 return
 
 
-@implements(proc=AProcess2, protocol=AsyncProtocol)
+@implements(proc=AsyncProcessSrc, protocol=AsyncProtocol)
 @requires(CPU)
-class A2ProcessModel(PyAsyncProcessModel):
+class AsyncProcessSrcProcessModel(PyAsyncProcessModel):
     out_port = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def run_async(self):
@@ -80,7 +70,7 @@ class A2ProcessModel(PyAsyncProcessModel):
                 return
 
 
-class LProcess(AbstractProcess):
+class LoihiProcess(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs["shape"]
@@ -89,9 +79,9 @@ class LProcess(AbstractProcess):
         self.out_port = OutPort(shape=shape)
 
 
-@implements(proc=LProcess, protocol=LoihiProtocol)
+@implements(proc=LoihiProcess, protocol=LoihiProtocol)
 @requires(CPU)
-class LProcessModel(PyLoihiProcessModel):
+class LoihiProcessModel(PyLoihiProcessModel):
     in_port = LavaPyType(PyInPort.VEC_DENSE, int)
     out_port = LavaPyType(PyOutPort.VEC_DENSE, int)
     var = LavaPyType(np.ndarray, np.int32)
@@ -104,14 +94,15 @@ class LProcessModel(PyLoihiProcessModel):
 class TestProcess(unittest.TestCase):
     def test_async_with_loihi_protocol(self):
         """
-        Test is to send the data to A1 from A2 via LP.
-        A2 -- > LP --> A1
+        Test is to send the data to AsyncProcessSrc from AsyncProcessSrc via
+        LoihiProcess.
+        AsyncProcessSrc -- > LoihiProcess --> AsyncProcessSrc
         """
         shape = (2,)
-        lp = LProcess(shape=shape)
-        a1 = AProcess1(shape=shape)
-        a2 = AProcess2(shape=shape)
-        lp.in_port.connect_from(a2.out_port)
-        a1.in_port.connect_from(lp.out_port)
-        lp.run(condition=RunSteps(num_steps=10), run_cfg=Loihi2SimCfg())
-        lp.stop()
+        loihi_process = LoihiProcess(shape=shape)
+        async_process_dest = AsyncProcessDest(shape=shape)
+        async_process_src = AsyncProcessSrc(shape=shape)
+        loihi_process.in_port.connect_from(async_process_src.out_port)
+        async_process_dest.in_port.connect_from(loihi_process.out_port)
+        loihi_process.run(condition=RunSteps(num_steps=10), run_cfg=Loihi2SimCfg())
+        loihi_process.stop()
