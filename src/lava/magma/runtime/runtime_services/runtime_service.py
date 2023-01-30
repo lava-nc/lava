@@ -460,8 +460,8 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 break
             # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
-            channel_actions = []
             if action == "cmd":
+                channel_actions = []
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
@@ -472,6 +472,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                             (ptos_recv_port, lambda: "resp")
                         )
             elif action == "resp":
+                channel_actions = []
                 resps = self._get_pm_resp()
                 done: bool = True
                 for resp in resps:
