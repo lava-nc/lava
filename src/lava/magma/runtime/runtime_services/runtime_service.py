@@ -379,7 +379,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                             break
                     if self.pausing or self.stopping or enum_equal(
                             phase, MGMT_COMMAND.STOP) or enum_equal(
-                        phase, MGMT_COMMAND.PAUSE):
+                            phase, MGMT_COMMAND.PAUSE):
                         continue
                     # Inform the runtime that last time step was reached
                     if is_last_ts:
@@ -492,8 +492,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     ):
                         self._error = True
                     if not enum_equal(resp,
-                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE
-                                      # noqa: E501
+                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE  # noqa: E501
                                       ):
                         done = False
                 if done:

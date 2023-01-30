@@ -104,5 +104,6 @@ class TestProcess(unittest.TestCase):
         async_process_src = AsyncProcessSrc(shape=shape)
         loihi_process.in_port.connect_from(async_process_src.out_port)
         async_process_dest.in_port.connect_from(loihi_process.out_port)
-        loihi_process.run(condition=RunSteps(num_steps=10), run_cfg=Loihi2SimCfg())
+        loihi_process.run(condition=RunSteps(num_steps=10),
+                          run_cfg=Loihi2SimCfg())
         loihi_process.stop()
