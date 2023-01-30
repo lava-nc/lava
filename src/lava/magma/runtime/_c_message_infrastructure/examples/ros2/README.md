@@ -15,31 +15,54 @@ Or if you want to test msg_lib CycloneDDS port talking with ROS2 node, please fo
 ## Build DDSMetadata Package in ROS2 Workspace
 As this example need to transfer DDSMetadata type data between ROS2 node and DDS port, DDSMetadata package needs to be built in ROS2 workspace first. Please follow the [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html) to build the DDSMetadata Package.
 
-Users do not need to define `*.msg` themselves. Please use `DDSMetaData` folder to replace the `DDSMetaData` ROS2 package created by the command,
+We have already prepared `DDSMetaData` ROS2 package for the message communication structure between ROS2 and msglib. User can build `DDSMetaData` package by the commands:
 ```
-ros2 pkg create --build-type ament_cmake DDSMetaData
+# open your ros2 build folder and create the ROS2 environment
+$ . ~/ros2_foxy/install/local_setup.bash
+
+# build the DDSMetaData ROS2 Package
+$ cd <lava>/src/lava/magma/runtime/_c_message_infrastructure/examples/ros2
+$ colcon build --packages-select ddsmetadata
 ```
-Then continue following the [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html) to finish the package building.
 
 ## Build ROS2 Example Package in ROS2 Workspace
-This example also provides the ROS2 package to communicate with DDS port in `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` folder. Please follow the [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html) to build the cpp code in the folder as a ROS2 package. And for the python code, please follow this [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html).
+This example also provides the ROS2 package to communicate with DDS port in `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` folder. You can follow the commands here to build these packages
+```
+# import the DDSMetaData Package
+$ . install/local_setup.bash
+
+# build ros_talk_with_dds_cpp or ros_talk_with_dds_py Package
+$ colcon build --packages-select ros_talk_with_dds_cpp
+# or
+$ colcon build --packages-select ros_talk_with_dds_py
+```
+
+For the detail please follow the [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html) to build the cpp code in the folder as a ROS2 package. And for the python code, please follow this [guide](https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html).
+
 ## Build the DDS Example code
 Please follow the `README.md` in path `src/lava/magma/runtime/_c_message_infrastructure/` to build the message infrastrucure library and initialize the environment.
 
-Note : Please run the `cmake` command with the options to choose to build the project with FASTDDS or CycloneDDS.
+Note : Please change cmake args with the options to choose to build the project with FASTDDS or CycloneDDS.
 ```
-$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON"
+$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON -DCMAKE_BUILD_TYPE=Debug"
 ```
 or 
 ```
-$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DCycloneDDS=ON"
+$ export CMAKE_ARGS="-DDDS_CHANNEL=ON -DCycloneDDS=ON -DCMAKE_BUILD_TYPE=Debug"
 ```
+Then run
+```
+$ cd <lava>
+$ poetry install
+```
+The DDS example binary will be built in <lava>/build/test. (`test_fastdds_from_ros` and `test_fastdds_to_ros`)
+
 ## Running the Example withs FASTDDS
 Please open 2 terminals. One is for running ROS2 code and the other is for running DDS port.
 ### 1st Terminal to Run ROS2 Node
-1. Navigate to your ROS2 workspace folder. For example,
+1. Navigate to your ROS2 workspace folder.
     ```
-    $ cd ~/ros2_ws/
+    $ cd <lava>/src/lava/magma/runtime/_c_message_infrastructure/examples/ros2
     ```
 2. Intialize ROS2 environment.
     ```
@@ -108,9 +131,9 @@ and the names for the tests are `test_fastdds_to_ros` and `test_fastdds_from_ros
 ## Running the Example withs CycloneDDS
 Please open 2 terminals. One is for running ROS2 code and the other is for running DDS port.
 ### 1st Terminal to Run ROS2 Node
-1. Navigate to your ROS2 workspace folder. For example,
+1. Navigate to your ROS2 workspace folder.
     ```
-    $ cd ~/ros2_ws/
+    $ cd <lava>/src/lava/magma/runtime/_c_message_infrastructure/examples/ros2
     ```
 2. Intialize ROS2 environment.
     ```
