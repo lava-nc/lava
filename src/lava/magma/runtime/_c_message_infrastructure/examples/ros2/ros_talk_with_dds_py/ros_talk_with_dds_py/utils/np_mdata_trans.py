@@ -3,7 +3,7 @@ from enum import Enum
 from ddsmetadata.msg import DDSMetaData
 
 
-DTYPE_LIST = [np.dtype(i) for i in [np.bool,
+DTYPE_LIST = [np.dtype(i) for i in [np.bool_,
                                     np.byte,
                                     np.ubyte,
                                     np.short,
@@ -20,9 +20,9 @@ DTYPE_LIST = [np.dtype(i) for i in [np.bool,
                                     np.cfloat,
                                     np.cdouble,
                                     np.clongdouble,
-                                    np.object,
+                                    np.object_,
                                     np.string_,
-                                    np.unicode,
+                                    np.unicode_,
                                     np.void]]
 
 
