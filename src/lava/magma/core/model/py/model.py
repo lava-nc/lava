@@ -442,6 +442,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if isinstance(csp_port, CspRecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
+
                         self._channel_actions.insert(0,
                                                      (csp_port, func(var_port)))
 
@@ -476,6 +477,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
 
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
+        self.num_steps = 0
         self._cmd_handlers.update({
             MGMT_COMMAND.RUN[0]: self._run_async
         })
@@ -526,6 +528,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         Helper function to wrap run_async function
         """
+        self.num_steps = int(self.service_to_process.recv()[0].item())
         self.run_async()
         self.process_to_service.send(PyAsyncProcessModel.Response.STATUS_DONE)
 
