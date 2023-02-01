@@ -41,6 +41,7 @@ class SystemProcess(mp.Process):
     """Wraps a process so that the exceptions can be collected if present"""
 
     def __init__(self, *args, **kwargs):
+        mp.set_start_method('fork')
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
         self._exception = None
