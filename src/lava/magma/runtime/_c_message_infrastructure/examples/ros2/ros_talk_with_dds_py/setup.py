@@ -1,7 +1,7 @@
 from setuptools import setup
 
 package_name = 'ros_talk_with_dds_py'
-utils = "py_pubsub/utils"
+utils = "ros_talk_with_dds_py/utils"
 
 setup(
     name=package_name,
