@@ -29,6 +29,7 @@ from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 
+mp.set_start_method('fork')
 
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
@@ -41,7 +42,6 @@ class SystemProcess(mp.Process):
     """Wraps a process so that the exceptions can be collected if present"""
 
     def __init__(self, *args, **kwargs):
-        mp.set_start_method('fork')
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
         self._exception = None
