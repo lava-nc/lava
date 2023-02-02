@@ -135,6 +135,7 @@ class LearningDense(LearningConnectionProcess, Dense):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  learning_rule: LoihiLearningRule = None,
+                 graded_spike_config: int = 0,
                  **kwargs) -> None:
 
         super().__init__(weights=weights,
@@ -143,4 +144,5 @@ class LearningDense(LearningConnectionProcess, Dense):
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
+                         graded_spike_config=graded_spike_config,
                          **kwargs)

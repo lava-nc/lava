@@ -108,6 +108,7 @@ class PyLearningConnection(AbstractLearningConnection):
         # add all necessary ports get access to all learning params
         self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
         self._shape: typing.Tuple[int, ...] = proc_params["shape"]
+        self._graded_spike_config = proc_params["graded_spike_config"]
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
@@ -642,20 +643,75 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         s_in : ndarray
             Pre-synaptic spikes.
         """
-        self.x0[s_in] = True
-        multi_spike_x = (self.tx > 0) & s_in
+        # self.x0[s_in] = True
+        # multi_spike_x = (self.tx > 0) & s_in
+        #
+        # x_traces = self._x_traces
+        # x_traces[:, multi_spike_x] = self._add_impulse(
+        #     x_traces[:, multi_spike_x],
+        #     self._x_random.random_impulse_addition,
+        #     self._x_impulses_int[:, np.newaxis],
+        #     self._x_impulses_frac[:, np.newaxis],
+        # )
+        # self._set_x_traces(x_traces)
+        #
+        # ts_offset = self._within_epoch_time_step()
+        # self.tx[s_in] = ts_offset
 
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] = self._add_impulse(
-            x_traces[:, multi_spike_x],
-            self._x_random.random_impulse_addition,
-            self._x_impulses_int[:, np.newaxis],
-            self._x_impulses_frac[:, np.newaxis],
+        spiked = s_in.astype(bool)
+
+        activations = s_in.astype(np.uint8)
+        unpacked_activations = np.unpackbits(activations[:, np.newaxis], axis=1, bitorder="little")
+        activations_lsb = unpacked_activations[:, 0]
+        idx_lsb_equals_1 = activations_lsb == 1
+
+        rounded = np.right_shift(activations, 1)
+        idx_msbs_less_than_127 = rounded < 127
+
+        rounded[idx_lsb_equals_1 & idx_msbs_less_than_127] += 1
+
+        self.x0[spiked] = True
+        multi_spike_x = (self.tx > 0) & spiked
+
+        update_t_spike = spiked
+        x2_update_idx = multi_spike_x
+
+        if self._graded_spike_config == 0:
+            self.x1[multi_spike_x] = self._add_impulse(
+                self.x1[multi_spike_x],
+                0,
+                self._x_impulses_int[0],
+                self._x_impulses_frac[0],
+            )
+
+        elif self._graded_spike_config == 1:
+            self.x1[s_in > 0] = rounded[s_in > 0]
+
+        elif self._graded_spike_config == 2 or self._graded_spike_config == 3:
+            sums = (self.x1 + rounded).astype(np.uint8)
+            unpacked_sums = np.unpackbits(sums[:, np.newaxis], axis=1, bitorder="little")
+            sums_msb = unpacked_sums[:, 7]
+            unpacked_sums[:, 7] = 0
+            sums = np.packbits(unpacked_sums, axis=1, bitorder="little")
+
+            self.x1 = sums[:, 0]
+
+            if self._graded_spike_config == 2:
+                self.x1[sums_msb == 1] = 127
+
+            if self._graded_spike_config == 3:
+                update_t_spike = update_t_spike & (sums_msb == 1)
+                x2_update_idx = x2_update_idx & (sums_msb == 1)
+
+        self.x2[x2_update_idx] = self._add_impulse(
+            self.x2[x2_update_idx],
+            0,
+            self._x_impulses_int[1],
+            self._x_impulses_frac[1],
         )
-        self._set_x_traces(x_traces)
 
         ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
+        self.tx[update_t_spike] = ts_offset
 
     def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
         """Record within-epoch spiking times of pre- and post-synaptic neurons.
@@ -1130,16 +1186,35 @@ class LearningConnectionModelFloat(PyLearningConnection):
         s_in : ndarray
             Pre-synaptic spikes.
         """
+        spiked = s_in.astype(bool)
+        sums = np.zeros_like(s_in)
 
-        self.x0[s_in] = True
-        multi_spike_x = (self.tx > 0) & s_in
+        scaled_activations = s_in / 2
 
-        x_traces = self._x_traces
-        x_traces[:, multi_spike_x] += self._x_impulses[:, np.newaxis]
-        self._set_x_traces(x_traces)
+        self.x0[spiked] = True
+        multi_spike_x = (self.tx > 0) & spiked
+
+        if self._graded_spike_config == 0:
+            self.x1[multi_spike_x] += self._x_impulses[0]
+
+        elif self._graded_spike_config == 1:
+            self.x1[s_in > 0] = scaled_activations[s_in > 0]
+
+        elif self._graded_spike_config == 2 or self._graded_spike_config == 3:
+            sums = self.x1 + scaled_activations
+            self.x1 = sums
+
+        update_t_spike = spiked
+        x2_update_idx = multi_spike_x
+
+        if self._graded_spike_config == 3:
+            update_t_spike = update_t_spike & (sums >= 128)
+            x2_update_idx = x2_update_idx & (sums >= 128)
+
+        self.x2[x2_update_idx] += self._x_impulses[1]
 
         ts_offset = self._within_epoch_time_step()
-        self.tx[s_in] = ts_offset
+        self.tx[update_t_spike] = ts_offset
 
     def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
         """Record within-epoch spiking times of post-synaptic neurons.
