@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import unittest
+import platform
 import numpy as np
 
 from lava.magma.core.run_conditions import RunSteps
@@ -28,6 +29,7 @@ py_loihi_models = [PyLifModelFloat, PyLifModelBitAcc, PySigmaDeltaModelFixed,
 
 class CustomRunConfig(Loihi2SimCfg):
     """Custom run config that converts PyLoihi models to PyAsync models."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -39,15 +41,20 @@ class CustomRunConfig(Loihi2SimCfg):
 
 
 class TestPyLoihiToPyAsync(unittest.TestCase):
+    @unittest.skipIf(platform.system() == 'Windows',
+                     'Model conversion is not supported on Windows.')
     def test_model_conversion(self):
         """Test model conversion"""
         for py_loihi_model in py_loihi_models:
             py_async_model = PyLoihiModelToPyAsyncModel(py_loihi_model)
             self.assertTrue(py_loihi_model.implements_process
                             == py_async_model.implements_process)
-            self.assertTrue(py_async_model.implements_protocol == AsyncProtocol)
+            self.assertTrue(
+                py_async_model.implements_protocol == AsyncProtocol)
             self.assertTrue(hasattr(py_async_model, 'run_async'))
 
+    @unittest.skipIf(platform.system() == 'Windows',
+                     'Model conversion is not supported on Windows.')
     def test_lif_dense_lif(self):
         """Test LIF-Dense-LIF equivalency."""
         in_size = 10
@@ -99,6 +106,8 @@ class TestPyLoihiToPyAsync(unittest.TestCase):
         self.assertTrue(np.array_equal(current, current_gt))
         self.assertTrue(np.array_equal(voltage, voltage_gt))
 
+    @unittest.skipIf(platform.system() == 'Windows',
+                     'Model conversion is not supported on Windows.')
     def test_sdn_dense_sdn(self):
         """Test LIF-Dense-LIF equivalency."""
         in_size = 10

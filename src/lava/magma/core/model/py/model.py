@@ -6,6 +6,7 @@ import typing as ty
 from abc import ABC, abstractmethod
 import logging
 import numpy as np
+import platform
 
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort, \
     CspSelector
@@ -614,6 +615,13 @@ def PyLoihiModelToPyAsyncModel(
     """
     # The exclude_vars and exclude_callables are
     # based on the constructor of PyLoihiProcessModel and PyAsyncProcModel
+    if platform.system() == 'Windows':
+        raise OSError('Conversion of process models on the fly is not '
+                      'supported on Windows system. It will result in '
+                      'pickling error when lava threads for model execution '
+                      'are spawned. The fundamental reason is Windows OS '
+                      'does not support forking and needs to use pickle.')
+
     exclude_vars = ['time_step', 'phase']
     exclude_callables = ['run_spk',
                          'pre_guard', 'run_pre_mgmt',
