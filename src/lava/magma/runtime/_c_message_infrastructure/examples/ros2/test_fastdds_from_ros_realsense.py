@@ -38,14 +38,20 @@ def test_ddschannel():
 
     recv_port = dds_channel.dst_port
     recv_port.start()
-    for i in range(100):
+    for i in range(10):
         res = recv_port.recv()
-        print(res.size)
-        res = res.reshape((480, 640, 3))
-        img = numpy2pil(res)
+        stamp = int.from_bytes(bytearray(res[0:8].tolist()), byteorder='big', signed=False)
+        width = int.from_bytes(bytearray(res[8:12].tolist()), byteorder='big', signed=False)
+        height = int.from_bytes(bytearray(res[12:16].tolist()), byteorder='big', signed=False)
+        img_data = res[16:]
+        print("stamp nsec = ", stamp)
+        print("width = ", width)
+        print("height = ", height)
+        print("img_data = ", img_data)
+        img = numpy2pil(img_data.reshape((height, width, 3)))
         img.show()
         img.close()
-        time.sleep(1)
+        time.sleep(0.01)
     recv_port.join()
 
 
