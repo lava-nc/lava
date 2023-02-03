@@ -22,6 +22,7 @@ from lava.magma.runtime.message_infrastructure import (
     DDSBackendType
 )
 
+
 def numpy2pil(np_array: np.ndarray) -> Image:
     img = Image.fromarray(np_array, 'RGB')
     return img
@@ -40,10 +41,14 @@ def test_ddschannel():
     recv_port.start()
     for i in range(10):
         res = recv_port.recv()
-        stamp = int.from_bytes(bytearray(res[0:8].tolist()), byteorder='big', signed=False)
-        channel = int.from_bytes(bytearray(res[8:12].tolist()), byteorder='big', signed=False)
-        width = int.from_bytes(bytearray(res[12:16].tolist()), byteorder='big', signed=False)
-        height = int.from_bytes(bytearray(res[16:20].tolist()), byteorder='big', signed=False)
+        stamp = int.from_bytes(bytearray(res[0:8].tolist()),
+                               byteorder='big', signed=False)
+        channel = int.from_bytes(bytearray(res[8:12].tolist()),
+                                 byteorder='big', signed=False)
+        width = int.from_bytes(bytearray(res[12:16].tolist()),
+                               byteorder='big', signed=False)
+        height = int.from_bytes(bytearray(res[16:20].tolist()),
+                                byteorder='big', signed=False)
         img_data = res[20:]
         print("stamp nsec = ", stamp)
         print("channel = ", channel)
