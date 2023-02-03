@@ -47,7 +47,7 @@ class RosFrameGetterProcess(AbstractProcess):
         topic: str,
         num_step: int,
     ) -> None:
-        super().__init__(topic = topic, num_step = num_step)
+        super().__init__(topic=topic, num_step=num_step)
 
 
 @implements(proc=RosFrameGetterProcess, protocol=LoihiProtocol)
@@ -67,30 +67,36 @@ class RosGetterProcModel(PyLoihiProcessModel):
         )
         self.dst_port = self.dds_channel.dst_port
         self.dst_port.start()
-    
+
     def run_spk(self) -> None:
         res = self.dst_port.recv()
-        stamp = int.from_bytes(bytearray(res[0:8].tolist()), byteorder='big', signed=False)
-        width = int.from_bytes(bytearray(res[8:12].tolist()), byteorder='big', signed=False)
-        height = int.from_bytes(bytearray(res[12:16].tolist()), byteorder='big', signed=False)
-        img_data = res[16:]
+        stamp = int.from_bytes(bytearray(res[0:8].tolist()),
+                               byteorder='big', signed=False)
+        channel = int.from_bytes(bytearray(res[8:12].tolist()),
+                                 byteorder='big', signed=False)
+        width = int.from_bytes(bytearray(res[12:16].tolist()),
+                               byteorder='big', signed=False)
+        height = int.from_bytes(bytearray(res[16:20].tolist()),
+                                byteorder='big', signed=False)
+        img_data = res[20:].sum()
         print("stamp nsec = ", stamp)
+        print("channel = ", channel)
         print("width = ", width)
         print("height = ", height)
         print("img_data = ", img_data)
-        # img = numpy2pil(img_data.reshape((height, width, 3)))
-        # img.show()
-        # img.close()
-    
+        img = numpy2pil(img_data.reshape((height, width, channel)))
+        img.show()
+        img.close()
+
     def post_guard(self) -> bool:
         return self.time_step == self.num_step
-    
+
     def run_post_mgmt(self) -> None:
         self.dst_port.join()
 
 
 def test_dds_from_ros_for_realsense():
-    topic = 'rt/camera/color/image_raw_dds'
+    topic = 'rt/camera/depth/image_rect_raw_dds'
     num_steps = 10
     proc = RosFrameGetterProcess(topic=topic, num_step=num_steps)
     run_condition = RunSteps(num_steps=num_steps)
