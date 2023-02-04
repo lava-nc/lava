@@ -108,7 +108,7 @@ class PyLearningConnection(AbstractLearningConnection):
         # add all necessary ports get access to all learning params
         self._learning_rule: LoihiLearningRule = proc_params["learning_rule"]
         self._shape: typing.Tuple[int, ...] = proc_params["shape"]
-        self._graded_spike_config = proc_params["graded_spike_config"]
+        self._graded_spike_cfg: GradedSpikeCfg = proc_params["graded_spike_cfg"]
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
@@ -638,26 +638,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         If more a single pre- or post-synaptic neuron spikes more than once,
         the corresponding trace is updated by its trace impulse value.
 
+        TODO : UPDATE
+
         Parameters
         ----------
         s_in : ndarray
             Pre-synaptic spikes.
         """
-        # self.x0[s_in] = True
-        # multi_spike_x = (self.tx > 0) & s_in
-        #
-        # x_traces = self._x_traces
-        # x_traces[:, multi_spike_x] = self._add_impulse(
-        #     x_traces[:, multi_spike_x],
-        #     self._x_random.random_impulse_addition,
-        #     self._x_impulses_int[:, np.newaxis],
-        #     self._x_impulses_frac[:, np.newaxis],
-        # )
-        # self._set_x_traces(x_traces)
-        #
-        # ts_offset = self._within_epoch_time_step()
-        # self.tx[s_in] = ts_offset
-
+        # TODO : REFACTOR
         spiked = s_in.astype(bool)
 
         activations = s_in.astype(np.uint8)
@@ -676,7 +664,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
 
-        if self._graded_spike_config == 0:
+        if self._graded_spike_cfg == 0:
             self.x1[multi_spike_x] = self._add_impulse(
                 self.x1[multi_spike_x],
                 0,
@@ -684,22 +672,22 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 self._x_impulses_frac[0],
             )
 
-        elif self._graded_spike_config == 1:
+        elif self._graded_spike_cfg == 1:
             self.x1[s_in > 0] = rounded[s_in > 0]
 
-        elif self._graded_spike_config == 2 or self._graded_spike_config == 3:
+        elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
             sums = (self.x1 + rounded).astype(np.uint8)
             unpacked_sums = np.unpackbits(sums[:, np.newaxis], axis=1, bitorder="little")
-            sums_msb = unpacked_sums[:, 7]
+            sums_msb = unpacked_sums[:, 7].copy()
             unpacked_sums[:, 7] = 0
             sums = np.packbits(unpacked_sums, axis=1, bitorder="little")
 
             self.x1 = sums[:, 0]
 
-            if self._graded_spike_config == 2:
+            if self._graded_spike_cfg == 2:
                 self.x1[sums_msb == 1] = 127
 
-            if self._graded_spike_config == 3:
+            if self._graded_spike_cfg == 3:
                 update_t_spike = update_t_spike & (sums_msb == 1)
                 x2_update_idx = x2_update_idx & (sums_msb == 1)
 
@@ -1181,11 +1169,15 @@ class LearningConnectionModelFloat(PyLearningConnection):
         If more a single pre-synaptic neuron spikes more than once,
         the corresponding trace is updated by its trace impulse value.
 
+        TODO : UPDATE
+
         Parameters
         ----------
         s_in : ndarray
             Pre-synaptic spikes.
         """
+        # TODO : REFACTOR
+
         spiked = s_in.astype(bool)
         sums = np.zeros_like(s_in)
 
@@ -1194,20 +1186,20 @@ class LearningConnectionModelFloat(PyLearningConnection):
         self.x0[spiked] = True
         multi_spike_x = (self.tx > 0) & spiked
 
-        if self._graded_spike_config == 0:
+        if self._graded_spike_cfg == 0:
             self.x1[multi_spike_x] += self._x_impulses[0]
 
-        elif self._graded_spike_config == 1:
+        elif self._graded_spike_cfg == 1:
             self.x1[s_in > 0] = scaled_activations[s_in > 0]
 
-        elif self._graded_spike_config == 2 or self._graded_spike_config == 3:
+        elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
             sums = self.x1 + scaled_activations
             self.x1 = sums
 
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
 
-        if self._graded_spike_config == 3:
+        if self._graded_spike_cfg == 3:
             update_t_spike = update_t_spike & (sums >= 128)
             x2_update_idx = x2_update_idx & (sums >= 128)
 

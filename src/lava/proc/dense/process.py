@@ -5,6 +5,7 @@
 import numpy as np
 import typing as ty
 
+from lava.magma.core.learning.constants import GradedSpikeCfg
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.connection import LearningConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -126,6 +127,9 @@ class LearningDense(LearningConnectionProcess, Dense):
 
     learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
+
+    graded_spike_cfg: GradedSpikeCfg
+        TODO: WRITE
     """
 
     def __init__(self,
@@ -135,7 +139,7 @@ class LearningDense(LearningConnectionProcess, Dense):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  learning_rule: LoihiLearningRule = None,
-                 graded_spike_config: int = 0,
+                 graded_spike_cfg: GradedSpikeCfg = GradedSpikeCfg.DEFAULT,
                  **kwargs) -> None:
 
         super().__init__(weights=weights,
@@ -144,5 +148,5 @@ class LearningDense(LearningConnectionProcess, Dense):
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
-                         graded_spike_config=graded_spike_config,
+                         graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
