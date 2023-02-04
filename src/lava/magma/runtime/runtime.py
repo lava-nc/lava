@@ -135,6 +135,14 @@ class Runtime:
         if self._is_started:
             self.stop()
 
+    def __enter__(self):
+        """Initialize the runtime on entering a "with" block"""
+        self.initialize()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop the runtime when exiting "with" block."""
+        self.stop()
+
     def initialize(self, node_cfg_idx: int = 0):
         """Initializes the runtime"""
         self._build_message_infrastructure()

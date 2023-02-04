@@ -221,6 +221,16 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """
         self.stop()
 
+    def __enter__(self):
+        """Required for "with" block."""
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Stop the runtime when exiting "with" block.
+        """
+        self.stop()
+
     def _post_init(self):
         """Called after __init__() method of any sub class via
         ProcessMetaClass to finalize initialization leading to following
