@@ -656,7 +656,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
 
-        if self._graded_spike_cfg == 0:
+        if self._graded_spike_cfg == GradedSpikeCfg.DEFAULT:
             self.x1[multi_spike_x] = self._add_impulse(
                 self.x1[multi_spike_x],
                 0,
@@ -664,16 +664,17 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 self._x_impulses_frac[0],
             )
 
-        elif self._graded_spike_cfg == 1:
+        elif self._graded_spike_cfg == GradedSpikeCfg.OVERWRITE:
             self.x1[spiked] = scaled_activations[spiked]
 
-        elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
+        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
             sums = (self.x1 + scaled_activations).astype(np.uint8)
 
-            if self._graded_spike_cfg == 2:
+            if self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION:
                 self.x1 = np.clip(sums, 0, 127)
 
-            if self._graded_spike_cfg == 3:
+            if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
                 overflow_idx = sums > 127
                 update_t_spike = update_t_spike & overflow_idx
                 x2_update_idx = x2_update_idx & overflow_idx
@@ -1176,16 +1177,17 @@ class LearningConnectionModelFloat(PyLearningConnection):
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
 
-        if self._graded_spike_cfg == 0:
+        if self._graded_spike_cfg == GradedSpikeCfg.DEFAULT:
             self.x1[multi_spike_x] += self._x_impulses[0]
 
-        elif self._graded_spike_cfg == 1:
+        elif self._graded_spike_cfg == GradedSpikeCfg.OVERWRITE:
             self.x1[spiked] = scaled_activations[spiked]
 
-        elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
+        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
             sums = self.x1 + scaled_activations
 
-            if self._graded_spike_cfg == 3:
+            if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
                 overflow_idx = sums > 127
                 update_t_spike = update_t_spike & overflow_idx
                 x2_update_idx = x2_update_idx & overflow_idx
