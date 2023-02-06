@@ -645,21 +645,13 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         s_in : ndarray
             Pre-synaptic spikes.
         """
-        # TODO : REFACTOR
         spiked = s_in.astype(bool)
-
-        activations = s_in.astype(np.uint8)
-        unpacked_activations = np.unpackbits(activations[:, np.newaxis], axis=1, bitorder="little")
-        activations_lsb = unpacked_activations[:, 0]
-        idx_lsb_equals_1 = activations_lsb == 1
-
-        rounded = np.right_shift(activations, 1)
-        idx_msbs_less_than_127 = rounded < 127
-
-        rounded[idx_lsb_equals_1 & idx_msbs_less_than_127] += 1
 
         self.x0[spiked] = True
         multi_spike_x = (self.tx > 0) & spiked
+
+        activations = s_in.astype(np.uint8)
+        scaled_activations = activations // 2
 
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
@@ -673,23 +665,21 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             )
 
         elif self._graded_spike_cfg == 1:
-            self.x1[s_in > 0] = rounded[s_in > 0]
+            self.x1[spiked] = scaled_activations[spiked]
 
         elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
-            sums = (self.x1 + rounded).astype(np.uint8)
-            unpacked_sums = np.unpackbits(sums[:, np.newaxis], axis=1, bitorder="little")
-            sums_msb = unpacked_sums[:, 7].copy()
-            unpacked_sums[:, 7] = 0
-            sums = np.packbits(unpacked_sums, axis=1, bitorder="little")
-
-            self.x1 = sums[:, 0]
+            sums = (self.x1 + scaled_activations).astype(np.uint8)
 
             if self._graded_spike_cfg == 2:
-                self.x1[sums_msb == 1] = 127
+                self.x1 = np.clip(sums, 0, 127)
 
             if self._graded_spike_cfg == 3:
-                update_t_spike = update_t_spike & (sums_msb == 1)
-                x2_update_idx = x2_update_idx & (sums_msb == 1)
+                overflow_idx = sums > 127
+                update_t_spike = update_t_spike & overflow_idx
+                x2_update_idx = x2_update_idx & overflow_idx
+
+                self.x1 = sums
+                self.x1[overflow_idx] -= 127
 
         self.x2[x2_update_idx] = self._add_impulse(
             self.x2[x2_update_idx],
@@ -1176,32 +1166,31 @@ class LearningConnectionModelFloat(PyLearningConnection):
         s_in : ndarray
             Pre-synaptic spikes.
         """
-        # TODO : REFACTOR
-
         spiked = s_in.astype(bool)
-        sums = np.zeros_like(s_in)
-
-        scaled_activations = s_in / 2
 
         self.x0[spiked] = True
         multi_spike_x = (self.tx > 0) & spiked
+
+        scaled_activations = s_in / 2
+
+        update_t_spike = spiked
+        x2_update_idx = multi_spike_x
 
         if self._graded_spike_cfg == 0:
             self.x1[multi_spike_x] += self._x_impulses[0]
 
         elif self._graded_spike_cfg == 1:
-            self.x1[s_in > 0] = scaled_activations[s_in > 0]
+            self.x1[spiked] = scaled_activations[spiked]
 
         elif self._graded_spike_cfg == 2 or self._graded_spike_cfg == 3:
             sums = self.x1 + scaled_activations
+
+            if self._graded_spike_cfg == 3:
+                overflow_idx = sums > 127
+                update_t_spike = update_t_spike & overflow_idx
+                x2_update_idx = x2_update_idx & overflow_idx
+
             self.x1 = sums
-
-        update_t_spike = spiked
-        x2_update_idx = multi_spike_x
-
-        if self._graded_spike_cfg == 3:
-            update_t_spike = update_t_spike & (sums >= 128)
-            x2_update_idx = x2_update_idx & (sums >= 128)
 
         self.x2[x2_update_idx] += self._x_impulses[1]
 
