@@ -15,7 +15,7 @@ from lava.magma.runtime.message_infrastructure import (
     ChannelQueueSize
 )
 from lava.magma.runtime.message_infrastructure import Channel as MsgChannel
-from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
+from lava.magma.compiler.channels.selector import Selector
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
@@ -117,6 +117,7 @@ class ChannelBroker(AbstractChannelBroker):
                 ChannelBackend.SHMEMCHANNEL,
                 ChannelQueueSize,
                 np.dtype(np.int32).itemsize,
+                "mgmt_channel",
                 "mgmt_channel"
             )
             self.mgmt_channel.src_port.start()
@@ -145,7 +146,7 @@ class ChannelBroker(AbstractChannelBroker):
         After sending requests to the GRPC channel the process
         is informed about completion.
         """
-        selector = CspSelector()
+        selector = Selector()
 
         while True:
             # Need to poll both GRPC and CSP ports for messages
@@ -161,7 +162,7 @@ class ChannelBroker(AbstractChannelBroker):
             action, channel = selector.select(*channel_actions)
             if action == "stop":
                 return
-            else:
+            elif action is not None:
                 action._recv(channel)
 
     def poll_c_outports(self):
