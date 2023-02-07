@@ -635,10 +635,16 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
     def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
         """Record within-epoch spiking times of pre- and post-synaptic neurons.
 
-        If more a single pre- or post-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        TODO : UPDATE
+        Four different modes of operation, based on GradedSpikeCfg value:
+        (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
+        than once, pre-traces are updated by their regular impulses.
+        (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
+        trace x1 by payload/2, upon spiking.
+        (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
+        trace x1, upon spiking, saturates x1 to 127.
+        (2) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
+        trace x1, upon spiking, keeps only overflow from 127 in x1,
+        adds regular impulse to x2 on overflow.
 
         Parameters
         ----------
@@ -1157,10 +1163,15 @@ class LearningConnectionModelFloat(PyLearningConnection):
     def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
         """Record within-epoch spiking times of pre-synaptic neurons.
 
-        If more a single pre-synaptic neuron spikes more than once,
-        the corresponding trace is updated by its trace impulse value.
-
-        TODO : UPDATE
+        Four different modes of operation, based on GradedSpikeCfg value:
+        (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
+        than once, pre-traces are updated by their regular impulses.
+        (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
+        trace x1 by payload/2, upon spiking.
+        (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
+        trace x1, upon spiking.
+        (2) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
+        trace x1, upon spiking, adds regular impulse to x2 on overflow.
 
         Parameters
         ----------

@@ -129,7 +129,20 @@ class LearningDense(LearningConnectionProcess, Dense):
         Learning rule which determines the parameters for online learning.
 
     graded_spike_cfg: GradedSpikeCfg
-        TODO: WRITE
+        Indicates how to use incoming graded spike to update pre-synaptic traces
+
+        (0) GradedSpikeCfg.DEFAULT interprets the spike as a binary spike, adds
+        regular impulses to pre-synaptic traces, at the end of the epoch.
+        (1) GradedSpikeCfg.OVERWRITE interprets the spike as a graded spike,
+        overwrites the value of the pre-synaptic trace x1 by payload/2,
+        upon spiking.
+        (2) GradedSpikeCfg.ADD_SATURATION interprets the spike as a graded
+        spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
+        saturates x1 to 127 (fixed-pt/hw only).
+        (2) GradedSpikeCfg.ADD_NO_SATURATION interprets the spike as a graded
+        spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
+        keeps only overflow from 127 in x1 (fixed-pt/hw only), adds regular
+        impulse to x2 on overflow.
     """
 
     def __init__(self,
