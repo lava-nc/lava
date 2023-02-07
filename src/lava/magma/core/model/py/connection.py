@@ -391,6 +391,7 @@ class PyLearningConnection(AbstractLearningConnection):
 
     def run_lrn(self) -> None:
         self._update_synaptic_variable_random()
+        self._update_dependencies()
         x_traces_history, y_traces_history = self._compute_trace_histories()
         self._update_traces(x_traces_history, y_traces_history)
         self._apply_learning_rules(x_traces_history, y_traces_history)
@@ -399,6 +400,10 @@ class PyLearningConnection(AbstractLearningConnection):
     @abstractmethod
     def _update_synaptic_variable_random(self) -> None:
         pass
+
+    def _update_dependencies(self) -> None:
+        self.x0[self.tx > 0] = True
+        self.y0[self.ty > 0] = True
 
     @abstractmethod
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
@@ -653,7 +658,6 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """
         spiked = s_in.astype(bool)
 
-        self.x0[spiked] = True
         multi_spike_x = (self.tx > 0) & spiked
 
         activations = s_in.astype(np.uint8)
@@ -1180,7 +1184,6 @@ class LearningConnectionModelFloat(PyLearningConnection):
         """
         spiked = s_in.astype(bool)
 
-        self.x0[spiked] = True
         multi_spike_x = (self.tx > 0) & spiked
 
         scaled_activations = s_in / 2
