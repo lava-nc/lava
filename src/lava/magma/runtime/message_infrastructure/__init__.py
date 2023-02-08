@@ -19,7 +19,6 @@ PURE_PYTHON_VERSION = _get_pure_py()
 if PURE_PYTHON_VERSION:
     from abc import ABC, abstractmethod
 
-
     class Channel(ABC):
         @property
         @abstractmethod
@@ -30,6 +29,7 @@ if PURE_PYTHON_VERSION:
         @abstractmethod
         def dst_port(self):
             pass
+
     from .py_ports import AbstractTransferPort
     from .pypychannel import (
         SendPort,
@@ -64,11 +64,8 @@ else:
 
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper import (  # noqa
-        CppMultiProcessing,
-        ProcessType,
         Actor,
         ActorStatus,
-        ActorCmd,
         RecvPort,
         AbstractTransferPort,
         support_grpc_channel,

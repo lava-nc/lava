@@ -3,31 +3,19 @@
 # See: https://spdx.org/licenses/
 import traceback
 import unittest
-import psutil
-import os
 import time
 import numpy as np
 from functools import partial
-from enum import Enum
 
-from lava.magma.runtime.message_infrastructure import CppMultiProcessing
-from lava.magma.runtime.message_infrastructure import ProcessType
-from lava.magma.runtime.message_infrastructure import Actor
-from lava.magma.runtime.message_infrastructure import ActorStatus
 from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
-from lava.magma.runtime.message_infrastructure import SendPort
-from lava.magma.runtime.message_infrastructure import RecvPort
-from lava.magma.runtime.message_infrastructure import Channel
-
-import time
 
 
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
 
 
-class Builder():
+class Builder:
     def build(self, i):
         time.sleep(0.0001)
 

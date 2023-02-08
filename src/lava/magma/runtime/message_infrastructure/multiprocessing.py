@@ -4,10 +4,11 @@
 import typing as ty
 from functools import partial
 
-from lava.magma.runtime.message_infrastructure import CppMultiProcessing
-from lava.magma.runtime.message_infrastructure import Actor
-from lava.magma.runtime.message_infrastructure import ChannelBackend
-from lava.magma.runtime.message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import (
+        CppMultiProcessing,
+        Actor)
+from lava.magma.runtime.message_infrastructure import Channel, ChannelBackend
 
 from lava.magma.runtime.message_infrastructure. \
     message_infrastructure_interface import MessageInfrastructureInterface
