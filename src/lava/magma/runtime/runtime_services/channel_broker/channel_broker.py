@@ -132,7 +132,7 @@ class ChannelBroker(AbstractChannelBroker):
     def join(self):
         if self.has_started:
             self.grpc_stopping_event.set()
-            self.mgmt_channel.get_send_port().send(np.array([0]))
+            self.mgmt_channel.src_port.send(np.array([0]))
             self.grpc_poller.join()
             self.port_poller.join()
             self.mgmt_channel.dst_port.join()
@@ -159,7 +159,13 @@ class ChannelBroker(AbstractChannelBroker):
 
             channel_actions.append((self.mgmt_channel.dst_port,
                                     lambda: ('stop', None)))
-            action, channel = selector.select(*channel_actions)
+
+            resp = selector.select(*channel_actions)
+            if resp is None:
+                continue
+
+            action, channel = resp
+
             if action == "stop":
                 return
             elif action is not None:

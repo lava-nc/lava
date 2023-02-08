@@ -32,6 +32,7 @@ class AbstractRuntimeService(ABC):
 
     def start(self, actor):
         self._actor = actor
+        self._actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         self.run()
