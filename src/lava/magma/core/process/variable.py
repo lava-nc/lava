@@ -118,13 +118,16 @@ class Var(AbstractProcessMember):
                     f"'{self.process.name}::{self.process.__class__.__name__}'"
                     f".")
 
-    def set(self, value: np.ndarray, idx: np.ndarray = None):
+    def set(self, value: ty.Union[np.ndarray, str], idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if self.aliased_var is not None:
             self.aliased_var.set(value, idx)
         else:
             if self.process.runtime:
+                # encode if var is str
+                if isinstance(value, str):
+                    value = np.array(list(value.encode('ascii')), dtype=np.integer)
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -138,7 +141,12 @@ class Var(AbstractProcessMember):
             return self.aliased_var.get(idx)
         else:
             if self.process.runtime:
-                return self.process.runtime.get_var(self.id, idx)
+                buffer = self.process.runtime.get_var(self.id, idx)
+                if isinstance(self.init, str):
+                    # decode if var is string
+                    return bytes(buffer.astype(int).tolist()).decode('ascii')
+                else:
+                    return buffer
             else:
                 return self.init
 

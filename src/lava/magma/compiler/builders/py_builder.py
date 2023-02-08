@@ -361,12 +361,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
             if issubclass(lt.cls, np.ndarray):
                 var = lt.cls(v.shape, lt.d_type)
                 var[:] = v.value
-            elif issubclass(lt.cls, (int, float)):
+            elif issubclass(lt.cls, (int, float, str)):
                 var = v.value
             else:
                 raise NotImplementedError("Cannot initiliaze variable "
                                           "datatype, \
-                                          only subclasses of int and float are \
+                                          only subclasses of int, float and str are \
                                           supported")
 
             # Create dynamic variable attribute on ProcModel

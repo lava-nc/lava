@@ -120,6 +120,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
+        elif isinstance(var, str):
+            encoded_str = list(var.encode('ascii'))
+            data_port.send(enum_to_np(len(encoded_str)))
+            for ch in encoded_str:
+                data_port.send(enum_to_np(ch, d_type=np.integer))
+
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -151,9 +157,24 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 num_items -= 1
                 i[...] = data_port.recv()[0]
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+        elif isinstance(var, str):
+            # First item is number of items
+            num_items = int(data_port.recv()[0])
+
+            s = [] 
+            for i in range(num_items):
+                s.append(int(data_port.recv()[0]))            # decode string from ascii
+
+            s = bytes(s).decode('ascii')
+            setattr(self, var_name, s)
+            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            
         else:
             self.process_to_service.send(MGMT_RESPONSE.ERROR)
             raise RuntimeError("Unsupported type")
+
+        # notify PM that Vars have been changed
+        self.on_var_update()
 
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""

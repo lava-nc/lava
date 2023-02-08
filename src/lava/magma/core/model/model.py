@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import typing as ty
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -103,3 +103,9 @@ class AbstractProcessModel(ABC):
             + " has tags   "
             + tags
         )
+
+    def on_var_update(self):
+        """This method is called if a Var is updated. It 
+        can be used as callback function to calculate dependent
+        changes. """
+        pass

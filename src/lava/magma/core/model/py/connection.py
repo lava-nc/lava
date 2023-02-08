@@ -56,6 +56,15 @@ class AbstractLearningConnection:
     tag_2 = None
     tag_1 = None
 
+    dw = None
+    dt = None
+    dd = None
+
+    x1_tau = None
+    x1_impulse = None
+    x2_tau = None
+    x2_impulse = None
+
 
 class PyLearningConnection(AbstractLearningConnection):
     """Base class for learning connection ProcessModels in Python / CPU.
@@ -127,6 +136,32 @@ class PyLearningConnection(AbstractLearningConnection):
 
         # initialize TraceRandoms and ConnVarRandom
         self._init_randoms()
+
+    def on_var_update(self):
+
+        # TODO: check if anything was changed
+        self._learning_rule.x1_tau = self.x1_tau[0]
+        self._learning_rule.x1_impulse = self.x1_impulse[0]
+        self._learning_rule.x2_tau = self.x2_tau[0]
+        self._learning_rule.x2_impulse = self.x2_impulse[0]
+        
+        self._learning_rule.dw_str = self.dw
+        self._learning_rule.dd_str = self.dd
+        self._learning_rule.dt_str = self.dt
+
+        # store impulses and taus in ndarrays with the right shapes
+        self._store_impulses_and_taus()
+
+        # store active traces per dependency from learning_rule in ndarrays
+        # with the right shapes
+        self._build_active_traces_per_dependency()
+
+        # store active traces from learning_rule in ndarrays
+        # with the right shapes
+        self._build_active_traces()
+        
+        # generate LearningRuleApplierBitApprox from ProductSeries
+        self._build_learning_rule_appliers()
 
     def _store_shapes(self) -> None:
         """Build and store several shapes that are needed in several
@@ -554,6 +589,15 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
     tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+
+    dw: str = LavaPyType(str, str)
+    dd: str = LavaPyType(str, str)
+    dt: str = LavaPyType(str, str)
+
+    x1_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
@@ -1087,6 +1131,15 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
     tag_2: np.ndarray = LavaPyType(np.ndarray, float)
     tag_1: np.ndarray = LavaPyType(np.ndarray, float)
+
+    dw: str = LavaPyType(str, str)
+    dd: str = LavaPyType(str, str)
+    dt: str = LavaPyType(str, str)
+
+    x1_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    x1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    x2_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    x2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
