@@ -157,7 +157,7 @@ class ChannelBroker(AbstractChannelBroker):
                 channel_actions.append((cport.csp_ports[0],
                                         (lambda y: (lambda: y))(result)))
 
-            channel_actions.append((self.mgmt_channel.src_port,
+            channel_actions.append((self.mgmt_channel.dst_port,
                                     lambda: ('stop', None)))
             action, channel = selector.select(*channel_actions)
             if action == "stop":
