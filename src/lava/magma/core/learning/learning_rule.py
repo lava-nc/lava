@@ -235,6 +235,10 @@ class LoihiLearningRule:
     def rng_seed(self) -> int:
         return self._rng_seed
 
+    @rng_seed.setter
+    def rng_seed(self, value):
+        self._rng_seed = value
+
     @property
     def x1_impulse(self) -> float:
         """Get the impulse value for x1 trace.

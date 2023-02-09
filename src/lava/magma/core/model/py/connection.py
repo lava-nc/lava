@@ -65,6 +65,13 @@ class AbstractLearningConnection:
     x2_tau = None
     x2_impulse = None
 
+    y1_tau = None
+    y1_impulse = None
+    y2_tau = None
+    y2_impulse = None
+    y3_tau = None
+    y3_impulse = None
+
 
 class PyLearningConnection(AbstractLearningConnection):
     """Base class for learning connection ProcessModels in Python / CPU.
@@ -144,6 +151,14 @@ class PyLearningConnection(AbstractLearningConnection):
         self._learning_rule.x1_impulse = self.x1_impulse[0]
         self._learning_rule.x2_tau = self.x2_tau[0]
         self._learning_rule.x2_impulse = self.x2_impulse[0]
+
+        self._learning_rule.y1_tau = self.y1_tau[0]
+        self._learning_rule.y1_impulse = self.y1_impulse[0]
+        self._learning_rule.y2_tau = self.y2_tau[0]
+        self._learning_rule.y2_impulse = self.y2_impulse[0]
+        self._learning_rule.y3_tau = self.y3_tau[0]
+        self._learning_rule.y3_impulse = self.y3_impulse[0]
+ 
         
         self._learning_rule.dw_str = self.dw
         self._learning_rule.dd_str = self.dd
@@ -598,6 +613,13 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
     x1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
     x2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
     x2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+
+    y1_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y3_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y3_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
@@ -1140,6 +1162,14 @@ class LearningConnectionModelFloat(PyLearningConnection):
     x1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
     x2_tau: np.ndarray = LavaPyType(np.ndarray, float)
     x2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    
+    y1_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    y2_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    y3_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y3_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y

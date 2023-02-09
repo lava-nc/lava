@@ -50,4 +50,11 @@ class LearningNeuronProcess:
         self.y2 = Var(shape=shape, init=0)
         self.y3 = Var(shape=shape, init=0)
 
+        self.y1_tau = Var(shape=(1, ), init=learning_rule.y1_tau)
+        self.y1_impulse = Var(shape=(1, ), init=learning_rule.y1_impulse)
+        self.y2_tau = Var(shape=(1, ), init=learning_rule.y2_tau)
+        self.y2_impulse = Var(shape=(1, ), init=learning_rule.y2_impulse)
+        self.y3_tau = Var(shape=(1, ), init=learning_rule.y3_tau)
+        self.y3_impulse = Var(shape=(1, ), init=learning_rule.y3_impulse)
+
         super().__init__(*args, **kwargs)
