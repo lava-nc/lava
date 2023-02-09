@@ -30,7 +30,8 @@ class PortInitializer:
 
     @property
     def bytes(self) -> int:
-        return np.prod(self.shape) * np.dtype(self.d_type).itemsize
+        data_type = np.int32 if str(self.d_type) == "LavaCDataType.INT32" else self.d_type
+        return np.prod(self.shape) * np.dtype(data_type).itemsize
 
 
 # check if can be a subclass of PortInitializer
@@ -47,7 +48,8 @@ class VarPortInitializer:
 
     @property
     def bytes(self) -> int:
-        return np.prod(self.shape) * np.dtype(self.d_type).itemsize
+        data_type = np.int32 if str(self.d_type) == "LavaCDataType.INT32" else self.d_type
+        return np.prod(self.shape) * np.dtype(data_type).itemsize
 
 
 @dataclass
