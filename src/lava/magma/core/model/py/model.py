@@ -10,8 +10,6 @@ import numpy as np
 
 from lava.magma.runtime.message_infrastructure import (SendPort,
                                                        RecvPort,
-                                                       Actor,
-                                                       ActorStatus,
                                                        getTempSendPort,
                                                        getTempRecvPort)
 from lava.magma.compiler.channels.selector import Selector
@@ -50,7 +48,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self._selector: Selector = Selector()
         self._action: str = 'cmd'
         self._stopped: bool = False
-        self._actor: Actor = None
         self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
                                                          RecvPort],
                                                 ty.Callable]] = []
@@ -60,14 +57,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
             MGMT_COMMAND.SET_DATA[0]: self._set_var
         }
-
-    def check_status(self):
-        actor_status = self._actor.get_status()
-        if actor_status in [ActorStatus.StatusStopped,
-                            ActorStatus.StatusTerminated,
-                            ActorStatus.StatusError]:
-            return True
-        return False
 
     def __setattr__(self, key: str, value: ty.Any):
         """
@@ -88,13 +77,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             if isinstance(value, PyVarPort):
                 self.var_ports.append(value)
 
-    def start(self, actor):
+    def start(self):
         """
         Starts the process model, by spinning up all the ports (mgmt and
         py_ports) and calls the run function.
         """
-        self._actor = actor
-        self._actor.set_stop_fn(self._stop)
         self.service_to_process.start()
         self.process_to_service.start()
         for p in self.py_ports:
@@ -114,7 +101,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         Command handler for Pause command.
         """
         self.process_to_service.send(MGMT_RESPONSE.PAUSED)
-        self._actor.status_paused()
 
     def _get_var(self):
         """Handles the get Var command from runtime service."""
@@ -189,7 +175,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 except Exception as inst:
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()  # join cause raise error
-                    self._actor.error()
                     raise inst
             elif self._action is not None:
                 self._handle_var_port(self._action)
@@ -212,7 +197,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.process_to_service.join()
         for p in self.py_ports:
             p.join()
-        self._actor.status_terminated()
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
@@ -414,7 +398,6 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         Command handler for Pause Command.
         """
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
-        self._actor.status_paused()
 
     def _handle_pause_or_stop_req(self):
         """

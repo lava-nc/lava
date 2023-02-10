@@ -64,8 +64,6 @@ else:
 
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper import (  # noqa
-        Actor,
-        ActorStatus,
         RecvPort,
         AbstractTransferPort,
         support_grpc_channel,

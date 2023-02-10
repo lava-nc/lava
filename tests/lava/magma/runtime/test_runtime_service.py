@@ -3,7 +3,6 @@ import unittest
 from lava.magma.runtime.message_infrastructure import (
     ChannelBackend,
     Channel,
-    ActorStatus
 )
 from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -19,21 +18,6 @@ def create_channel(name: str):
                    4,
                    name + "src",
                    name + "dst")
-
-
-class MockActorInterface:
-
-    def set_stop_fn(self, fn):
-        pass
-
-    def get_status(self):
-        return ActorStatus.StatusRunning
-
-    def status_stopped(self):
-        pass
-
-    def status_terminated(self):
-        pass
 
 
 class SimpleSyncProtocol(AbstractSyncProtocol):
@@ -80,12 +64,12 @@ class TestRuntimeService(unittest.TestCase):
         pm.service_to_process = service_to_process[0].dst_port
         pm.process_to_service = process_to_service[0].src_port
         pm.py_ports = []
-        pm.start(MockActorInterface())
+        pm.start()
         rs.runtime_to_service = runtime_to_service.src_port
         rs.service_to_runtime = service_to_runtime.dst_port
         rs.service_to_process = [service_to_process[0].src_port]
         rs.process_to_service = [process_to_service[0].dst_port]
-        rs.start(MockActorInterface())
+        rs.start()
         rs.join()
         pm.join()
 

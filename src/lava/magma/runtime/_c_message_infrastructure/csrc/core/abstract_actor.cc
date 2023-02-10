@@ -67,8 +67,12 @@ void AbstractActor::Run() {
       break;
     }
     if (actor_status_.load() == static_cast<int>(ActorStatus::StatusRunning)) {
-      target_fn_(this);
+      target_fn_();
       LAVA_LOG(LOG_MP, "Actor:ActorStatus:%d\n", static_cast<int>(GetStatus()));
+      if (!loop_run_) {
+        Control(ActorCmd::CmdStop);
+        break;
+      }
     } else {
       // pause status
       helper::Sleep();

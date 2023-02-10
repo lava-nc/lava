@@ -43,7 +43,7 @@ struct ActorCtrlStatus {
 class AbstractActor {
  public:
   using ActorPtr = AbstractActor *;
-  using TargetFn = std::function<void(ActorPtr)>;
+  using TargetFn = std::function<void(void)>;
   using StopFn = std::function<void(void)>;
 
   explicit AbstractActor(TargetFn target_fn);
@@ -69,6 +69,7 @@ class AbstractActor {
   std::thread handle_cmd_thread_;
   TargetFn target_fn_ = nullptr;
   StopFn stop_fn_ = nullptr;
+  bool loop_run_ = false;
   void InitStatus();
   void HandleCmd();
 };

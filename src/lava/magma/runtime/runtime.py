@@ -11,7 +11,6 @@ import typing as ty
 import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        SendPort,
-                                                       Actor,
                                                        Channel,
                                                        getTempSendPort,
                                                        getTempRecvPort)
@@ -365,6 +364,16 @@ class Runtime:
     def stop(self):
         """Stops an ongoing or paused run."""
         if self._is_started:
+            for send_port in self.runtime_to_service:
+                send_port.send(MGMT_COMMAND.STOP)
+            for recv_port in self.service_to_runtime:
+                data = recv_port.recv()
+                if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                    if recv_port.probe():
+                        data = recv_port.recv()
+                    if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                        raise RuntimeError(f"Runtime Received {data}")
+
             self._messaging_infrastructure.stop()
             self.join()
             self._is_running = False

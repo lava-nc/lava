@@ -11,7 +11,6 @@ import numpy as np
 from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SendPort,
-    ActorStatus
 )
 from lava.magma.compiler.channels.selector import Selector
 
@@ -66,11 +65,9 @@ class PyRuntimeService(AbstractRuntimeService):
         self.service_to_process: ty.List[SendPort] = []
         self.process_to_service: ty.List[RecvPort] = []
 
-    def start(self, actor):
+    def start(self):
         """Start the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
-        self._actor = actor
-        self._actor.set_stop_fn(self.join)
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         for i in range(len(self.service_to_process)):
@@ -88,24 +85,12 @@ class PyRuntimeService(AbstractRuntimeService):
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group
         of processes this RuntimeService is managing"""
-        self._actor.status_stopped()
         self.runtime_to_service.join()
         self.service_to_runtime.join()
 
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
-        self._actor.status_terminated()
-
-    def check_status(self):
-        actor_status = self._actor.get_status()
-        if actor_status in [ActorStatus.StatusStopped,
-                            ActorStatus.StatusTerminated,
-                            ActorStatus.StatusError]:
-            return True, False
-        if actor_status == ActorStatus.StatusPaused:
-            return False, True
-        return False, False
 
 
 class LoihiPyRuntimeService(PyRuntimeService):
@@ -254,7 +239,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
         ack_relay_port.send(ack_recv_port.recv())
 
     def _handle_pause(self):
-        self._actor.status_paused()
         # Inform all ProcessModels about the PAUSE command
         self._send_pm_cmd(MGMT_COMMAND.PAUSE)
         rsps = self._get_pm_resp()
@@ -276,6 +260,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             ):
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
+        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -292,14 +277,13 @@ class LoihiPyRuntimeService(PyRuntimeService):
 
         while True:
             # Probe if there is a new command from the runtime
-            stop, _ = self.check_status()
-            if stop:
-                self._handle_stop()
-                break
             action = selector.select(*channel_actions)
             if action == "cmd":
                 command = self.runtime_to_service.recv()
-                if enum_equal(command, MGMT_COMMAND.PAUSE):
+                if enum_equal(command, MGMT_COMMAND.STOP):
+                    self._handle_stop()
+                    return
+                elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                     self.paused = True
                 elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
@@ -354,14 +338,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
                         # Check if pause or stop received from Runtime
                         if self.runtime_to_service.probe():
                             cmd = self.runtime_to_service.peek()
+                            if enum_equal(cmd, MGMT_COMMAND.STOP):
+                                self.stopping = True
+                                self.req_stop = True
                             if enum_equal(cmd, MGMT_COMMAND.PAUSE):
                                 self.pausing = True
                                 self.req_pause = True
-                        # Check if pause or stop received from actor status
-                        stop, _ = self.check_status()
-                        if stop:
-                            self.stopping = True
-                            self.req_stop = True
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(phase, LoihiPhase.HOST):
                             break
@@ -432,7 +414,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
         return rcv_msgs
 
     def _handle_pause(self):
-        self._actor.status_paused()
         # Inform the runtime about successful pausing
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
@@ -446,6 +427,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 raise ValueError(f"Wrong Response Received : {rsp}")
         # Inform the runtime about successful termination
+        self.service_to_runtime.send(MGMT_RESPONSE.TERMINATED)
         self.join()
 
     def run(self):
@@ -454,16 +436,14 @@ class AsyncPyRuntimeService(PyRuntimeService):
         selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
-            stop, _ = self.check_status()
-            if stop:
-                self._handle_stop()
-                break
-            # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
             if action == "cmd":
                 channel_actions = []
                 command = self.runtime_to_service.recv()
-                if enum_equal(command, MGMT_COMMAND.PAUSE):
+                if enum_equal(command, MGMT_COMMAND.STOP):
+                    self._handle_stop()
+                    return
+                elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
                 else:
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
@@ -503,6 +483,5 @@ class AsyncPyRuntimeService(PyRuntimeService):
             elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.join()
-                self._actor.error()
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))
