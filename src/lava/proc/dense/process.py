@@ -145,7 +145,8 @@ class LearningDense(LearningConnectionProcess, Dense):
                          learning_rule=learning_rule,
                          **kwargs)
 
-class DenseDelay(Dense):
+
+class DelayDense(Dense):
     def __init__(self,
                  *,
                  weights: np.ndarray,
@@ -154,18 +155,18 @@ class DenseDelay(Dense):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
-        """Dense, delayed connections between neurons. Realizes the following 
-        abstract behavior: [TODO:NEED TO FILL THIS IN]
+        """Dense, delayed connections between neurons. Realizes the following
+        abstract behavior: a_out = weights * s_in
 
         Parameters
         ----------
         weights : numpy.ndarray
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
-        
+
         delays : numpy.ndarray
             2D connection delay matrix of form (num_flat_output_neurons,
-            num_flat_input_neurons) in C-order (row major). 
+            num_flat_input_neurons) in C-order (row major).
 
         weight_exp : int, optional
             Shared weight exponent of base 2 used to scale magnitude of
@@ -203,25 +204,17 @@ class DenseDelay(Dense):
                          name=name,
                          log_config=log_config,
                          **kwargs)
-        
 
-        self._validate_weights(weights)
-        self._validate_delays(delays) #TODO: implement this
-        shape = weights.shape
+        self._validate_delays(delays)
         max_delay = int(np.max(delays))
-
-        # Ports 
-        self.s_in = InPort(shape=(shape[1],))
-        self.a_out = OutPort(shape=(shape[0],))
+        shape = weights.shape
 
         # Variables
-        self.weights = Var(shape=shape, init=weights)
         self.delays = Var(shape=shape, init=delays)
         self.a_buff = Var(shape=(shape[0], max_delay + 1) , init=0)
-        self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
     @staticmethod
     def _validate_delays(delays: np.ndarray) -> None:
         if len(np.shape(delays)) != 2:
-            raise ValueError("DenseDelay Process 'delays' expects a 2D "
+            raise ValueError("DelayDense Process 'delays' expects a 2D "
                              f"matrix, got {delays}.")
