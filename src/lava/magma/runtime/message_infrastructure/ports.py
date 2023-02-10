@@ -39,6 +39,10 @@ class SendPort(AbstractTransferPort):
     def name(self):
         return self._cpp_send_port.name
 
+    @property
+    def shape(self):
+        return self._cpp_send_port.shape
+
     def size(self):
         return self._cpp_send_port.size()
 

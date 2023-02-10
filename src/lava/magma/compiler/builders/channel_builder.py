@@ -60,7 +60,9 @@ class ChannelBuilderMp(AbstractChannelBuilder):
                        ChannelQueueSize,
                        self.src_port_initializer.bytes,
                        self.src_port_initializer.name,
-                       self.dst_port_initializer.name
+                       self.dst_port_initializer.name,
+                       self.src_port_initializer.shape,
+                       self.src_port_initializer.d_type
                        )
 
 
@@ -100,7 +102,9 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
                        ChannelQueueSize,
                        SyncChannelBytes,
                        self.port_initializer.name,
-                       self.port_initializer.name)
+                       self.port_initializer.name,
+                       self.src_port_initializer.shape,
+                       self.src_port_initializer.d_type)
 
 
 @dataclass
@@ -137,7 +141,9 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
                        ChannelQueueSize,
                        SyncChannelBytes,
                        self.port_initializer.name,
-                       self.port_initializer.name)
+                       self.port_initializer.name,
+                       self.src_port_initializer.shape,
+                       self.src_port_initializer.d_type)
 
 
 @dataclass

@@ -86,7 +86,9 @@ class TestTempChannel(unittest.TestCase):
             ChannelQueueSize,
             SyncChannelBytes,
             name,
-            name)
+            name,
+            (65536, 10),
+            None)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port

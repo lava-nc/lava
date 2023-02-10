@@ -109,6 +109,14 @@ void MetaDataDump(MetaDataPtr metadata) {
                strides[0], strides[1], strides[2], strides[3], strides[4]);
 }
 
+py::object PortProxy::Type() {
+  return type_;
+}
+
+py::tuple PortProxy::Shape() {
+  return shape_;
+}
+
 ChannelType SendPortProxy::GetChannelType() {
   return channel_type_;
 }

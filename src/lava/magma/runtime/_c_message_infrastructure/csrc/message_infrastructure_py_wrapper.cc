@@ -92,7 +92,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
   py::class_<PortProxy, std::shared_ptr<PortProxy>> (m, "AbstractTransferPort")
     .def(py::init<>());
   py::class_<ChannelProxy, std::shared_ptr<ChannelProxy>> (m, "Channel")
-    .def(py::init<ChannelType, size_t, size_t, std::string, std::string>())
+    .def(py::init<ChannelType, size_t, size_t, std::string, std::string, py::tuple, py::object>())
     .def_property_readonly("src_port", &ChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &ChannelProxy::GetRecvPort,
@@ -170,6 +170,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("send", &SendPortProxy::Send)
     .def("join", &SendPortProxy::Join)
     .def_property_readonly("name", &SendPortProxy::Name)
+    .def_property_readonly("shape", &SendPortProxy::Shape)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy,
              std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
@@ -181,6 +182,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("peek", &RecvPortProxy::Peek)
     .def("join", &RecvPortProxy::Join)
     .def_property_readonly("name", &RecvPortProxy::Name)
+    .def_property_readonly("shape", &RecvPortProxy::Shape)
     .def("size", &RecvPortProxy::Size);
 }
 

@@ -12,7 +12,9 @@ ChannelProxy::ChannelProxy(const ChannelType &channel_type,
                            const size_t &size,
                            const size_t &nbytes,
                            const std::string &src_name,
-                           const std::string &dst_name) {
+                           const std::string &dst_name,
+                           py::tuple shape,
+                           py::object type) {
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetChannel(channel_type,
                                         size,
@@ -20,9 +22,13 @@ ChannelProxy::ChannelProxy(const ChannelType &channel_type,
                                         src_name,
                                         dst_name);
   send_port_ = std::make_shared<SendPortProxy>(channel_type,
-                                               channel_->GetSendPort());
+                                               channel_->GetSendPort(),
+                                               shape,
+                                               type);
   recv_port_ = std::make_shared<RecvPortProxy>(channel_type,
-                                               channel_->GetRecvPort());
+                                               channel_->GetRecvPort(),
+                                               shape,
+                                               type);
 }
 SendPortProxyPtr ChannelProxy::GetSendPort() {
     return send_port_;

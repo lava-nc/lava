@@ -105,7 +105,9 @@ class TestChannel(unittest.TestCase):
             ChannelQueueSize,
             nbytes,
             name,
-            name)
+            name,
+            (2, 4),
+            None)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
@@ -132,7 +134,9 @@ class TestChannel(unittest.TestCase):
             ChannelQueueSize,
             nbytes,
             name,
-            name)
+            name,
+            (2,4),
+            np.int32)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
@@ -160,7 +164,9 @@ class TestChannel(unittest.TestCase):
             ChannelQueueSize,
             nbytes,
             name,
-            name)
+            name,
+            (2,4),
+            np.int32)
 
         send_port = socket_channel.src_port
         recv_port = socket_channel.dst_port
@@ -187,7 +193,9 @@ class TestChannel(unittest.TestCase):
             ChannelQueueSize,
             nbytes,
             name,
-            name)
+            name,
+            (2,4),
+            np.int32)
 
         send_port = socket_channel.src_port
         recv_port = socket_channel.dst_port
