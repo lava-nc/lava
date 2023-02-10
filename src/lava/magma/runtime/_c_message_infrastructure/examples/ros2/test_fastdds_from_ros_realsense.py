@@ -30,13 +30,13 @@ def numpy2pil(np_array: np.ndarray) -> Image:
 
 def realsense_msg_process(res):
     stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
-                                byteorder='big', signed=False)
+        byteorder='big', signed=False)
     width = int.from_bytes(bytearray(np.flipud(res[8:12:]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     height = int.from_bytes(bytearray(np.flipud(res[12:16:]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     img_data = res[16:]
     print("stamp nsec = ", stamp)
     print("channel = ", channel)
@@ -51,11 +51,11 @@ def realsense_msg_process(res):
 
 def dvs_msg_process(res):
     stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     width = int.from_bytes(bytearray(np.flipud(res[8:12:]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     height = int.from_bytes(bytearray(np.flipud(res[12:16:]).tolist()),
-                            byteorder='big', signed=False)
+        byteorder='big', signed=False)
     print("stamp nsec = ", stamp)
     print("width = ", width)
     print("height = ", height)
@@ -68,7 +68,7 @@ def dvs_msg_process(res):
             y = i
             p = int(img_data[i][j])
             if p == 1:
-                print("event_data [width = %d, height = %d, p = %d]" % (x, y, p))
+                print("event_data[width = %d, height = %d, p = %d]" % (x, y, p))
     dds_get_timestamp = time.time() * 1e9
     print("dds_get_timestamp =", dds_get_timestamp)
     print("dvs_ros_latency = %ld nsec", dds_get_timestamp - stamp)
