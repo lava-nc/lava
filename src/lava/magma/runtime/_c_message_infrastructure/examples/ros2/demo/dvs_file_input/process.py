@@ -99,6 +99,7 @@ class PyDVSFileInputPM(PyLoihiProcessModel):
         self._frame_shape = self._down_sampled_shape[::-1]
                                     
         self._num_steps = proc_params["num_steps"]
+        self._cur_steps = 0
 
         # DDSChannel relavent
         name = 'rt/camera/color/image_raw_dds'
@@ -126,6 +127,7 @@ class PyDVSFileInputPM(PyLoihiProcessModel):
         # return np.linalg.norm(real_diffs, axis=2) > self.diff_thresh # distance
 
     def run_spk(self):
+        self._cur_steps += 1
         
         res = self.recv_port.recv()
         """stamp = int.from_bytes(bytearray(res[0:8].tolist()),
@@ -162,6 +164,12 @@ class PyDVSFileInputPM(PyLoihiProcessModel):
             
         diff = np.transpose(diff, axes=(1, 0)) #* later codes assume (width, height) shaped image
         self.event_frame_out.send(diff)
+
+    def post_guard(self) -> bool:
+        return self._cur_steps == self._num_steps
+
+    def run_post_mgmt(self) -> None:
+        self.recv_port.join()
 
     # gaussian blur
     def _convolution(self, matrix: np.ndarray, kernel_size: int = 16):
