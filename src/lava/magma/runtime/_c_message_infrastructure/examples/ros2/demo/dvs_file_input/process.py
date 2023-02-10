@@ -169,6 +169,7 @@ class PyDVSFileInputPM(PyLoihiProcessModel):
         return self._cur_steps == self._num_steps
 
     def run_post_mgmt(self) -> None:
+        print("managed")
         self.recv_port.join()
 
     # gaussian blur
