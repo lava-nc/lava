@@ -139,10 +139,13 @@ class LearningDense(LearningConnectionProcess, Dense):
         (2) GradedSpikeCfg.ADD_SATURATION interprets the spike as a graded
         spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
         saturates x1 to 127 (fixed-pt/hw only).
-        (2) GradedSpikeCfg.ADD_NO_SATURATION interprets the spike as a graded
+        (3) GradedSpikeCfg.ADD_NO_SATURATION interprets the spike as a graded
         spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
-        keeps only overflow from 127 in x1 (fixed-pt/hw only), adds regular
+        keeps only overflow above 127 in x1 (fixed-pt/hw only), adds regular
         impulse to x2 on overflow.
+        In addition, only pre-synaptic graded spikes that trigger overflow in
+        x1 and regular impulse addition to x2 will be considered by the
+        learning rule Products conditioned on x0.
     """
 
     def __init__(self,

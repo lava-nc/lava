@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
 import typing
 
@@ -25,6 +25,7 @@ from lava.magma.core.learning.learning_rule_applier import (
 import lava.magma.core.learning.string_symbols as str_symbols
 from lava.utils.weightutils import SignMode, clip_weights
 from lava.magma.core.learning.utils import stochastic_round
+import logging
 
 NUM_DEPENDENCIES = len(str_symbols.DEPENDENCIES)
 NUM_X_TRACES = len(str_symbols.PRE_TRACES)
@@ -194,8 +195,8 @@ class PyLearningConnection(AbstractLearningConnection):
             dtype=bool,
         )
         for (
-            dependency,
-            traces,
+                dependency,
+                traces,
         ) in self._learning_rule.active_traces_per_dependency.items():
             if dependency == str_symbols.X0:
                 dependency_idx = 0
@@ -224,29 +225,29 @@ class PyLearningConnection(AbstractLearningConnection):
 
         # Shape : (3, 2)
         self._active_x_traces_per_dependency = active_traces_per_dependency[
-            :, :2
-        ]
+                                               :, :2
+                                               ]
 
         # Shape : (3, 3)
         self._active_y_traces_per_dependency = active_traces_per_dependency[
-            :, 2:
-        ]
+                                               :, 2:
+                                               ]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
         traces are active."""
         # Shape : (2, )
         self._active_x_traces = (
-            self._active_x_traces_per_dependency[0]
-            | self._active_x_traces_per_dependency[1]
-            | self._active_x_traces_per_dependency[2]
+                self._active_x_traces_per_dependency[0]
+                | self._active_x_traces_per_dependency[1]
+                | self._active_x_traces_per_dependency[2]
         )
 
         # Shape : (3, )
         self._active_y_traces = (
-            self._active_y_traces_per_dependency[0]
-            | self._active_y_traces_per_dependency[1]
-            | self._active_y_traces_per_dependency[2]
+                self._active_y_traces_per_dependency[0]
+                | self._active_y_traces_per_dependency[1]
+                | self._active_y_traces_per_dependency[2]
         )
 
     def _build_learning_rule_appliers(self) -> None:
@@ -261,7 +262,7 @@ class PyLearningConnection(AbstractLearningConnection):
 
     @abstractmethod
     def _create_learning_rule_applier(
-        self, product_series: ProductSeries
+            self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
         pass
 
@@ -350,11 +351,12 @@ class PyLearningConnection(AbstractLearningConnection):
         s_in : np.adarray
             Synaptic spike input
         """
-        self._record_pre_spike_times(s_in)
+        self._process_pre_spikes(s_in)
+        self._update_trace_randoms()
 
         if isinstance(self._learning_rule, Loihi2FLearningRule):
             s_in_bap = self.s_in_bap.recv().astype(bool)
-            self._record_post_spike_times(s_in_bap)
+            self._process_post_spikes(s_in_bap)
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
             s_in_bap = self.s_in_bap.recv().astype(bool)
 
@@ -364,7 +366,7 @@ class PyLearningConnection(AbstractLearningConnection):
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
 
-            self._record_post_spike_times(s_in_bap)
+            self._process_post_spikes(s_in_bap)
 
             y_traces = self._y_traces
             y_traces[0, :] = y1
@@ -375,11 +377,11 @@ class PyLearningConnection(AbstractLearningConnection):
         self._update_trace_randoms()
 
     @abstractmethod
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
+    def _process_pre_spikes(self, s_in: np.ndarray) -> None:
         pass
 
     @abstractmethod
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
+    def _process_post_spikes(self, s_in_bap: np.ndarray) -> None:
         pass
 
     @abstractmethod
@@ -594,7 +596,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _decompose_impulses(
-        impulses: np.ndarray,
+            impulses: np.ndarray,
     ) -> typing.Tuple[np.ndarray, np.ndarray]:
         """Decompose float impulse values into integer and fractional parts.
 
@@ -612,13 +614,13 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """
         impulses_int = np.floor(impulses)
         impulses_frac = np.round(
-            (impulses - impulses_int) * 2**W_TRACE_FRACTIONAL_PART
+            (impulses - impulses_int) * 2 ** W_TRACE_FRACTIONAL_PART
         )
 
         return impulses_int.astype(int), impulses_frac.astype(int)
 
     def _create_learning_rule_applier(
-        self, product_series: ProductSeries
+            self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
         """Create a LearningRuleApplierBitApprox."""
         return LearningRuleApplierBitApprox(product_series)
@@ -637,8 +639,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         self._conn_var_random = ConnVarRandom()
 
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+    def _process_pre_spikes(self, s_in: np.ndarray) -> None:
+        """Process pre-synaptic spikes.
 
         Four different modes of operation, based on GradedSpikeCfg value:
         (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
@@ -647,9 +649,13 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         trace x1 by payload/2, upon spiking.
         (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
         trace x1, upon spiking, saturates x1 to 127.
-        (2) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
+        (3) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
         trace x1, upon spiking, keeps only overflow from 127 in x1,
         adds regular impulse to x2 on overflow.
+
+        Within-epoch spike times are recorded.
+        With GradedSpikeCfg.ADD_NO_SATURATION, only spike times of spikes
+        triggering x1 overflow and x2 impulse addition are recorded.
 
         Parameters
         ----------
@@ -660,8 +666,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         multi_spike_x = (self.tx > 0) & spiked
 
-        activations = s_in.astype(np.uint8)
-        scaled_activations = activations // 2
+        activations = s_in
+        scaled_activations = np.round(activations/2).astype(np.uint8)
 
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
@@ -702,10 +708,11 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         ts_offset = self._within_epoch_time_step()
         self.tx[update_t_spike] = ts_offset
 
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre- and post-synaptic neurons.
+    def _process_post_spikes(self, s_in_bap: np.ndarray) -> None:
+        """Process post-synaptic spikes.
 
-        If more a single pre- or post-synaptic neuron spikes more than once,
+        Records within-epoch spiking times of post-synaptic neurons.
+        If a single post-synaptic neuron spikes more than once,
         the corresponding trace is updated by its trace impulse value.
 
         Parameters
@@ -771,7 +778,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         # most naive algorithm to decay traces
         # TODO decay only for important time-steps
-        x_traces_history = np.full((t_epoch + 1, ) + x_traces.shape, np.nan,
+        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
                                    dtype=int)
         x_traces_history[0] = x_traces
         y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
@@ -805,7 +812,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _decay_trace(
-        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray, random: float
+            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray,
+            random: float
     ) -> np.ndarray:
         """Stochastically decay trace to a given within-epoch time step.
 
@@ -933,8 +941,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2**k
-                == 0
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
+                   == 0
                 else 0
             )
 
@@ -949,7 +957,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         return applier_args
 
     def _saturate_synaptic_variable_accumulator(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable accumulator.
 
@@ -1024,7 +1033,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         return result
 
     def _saturate_synaptic_variable(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable.
 
@@ -1053,14 +1063,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         # Delays
         elif synaptic_variable_name == "tag_2":
             return np.clip(
-                synaptic_variable_values, a_min=0, a_max=2**W_TAG_2_U - 1
+                synaptic_variable_values, a_min=0, a_max=2 ** W_TAG_2_U - 1
             )
         # Tags
         elif synaptic_variable_name == "tag_1":
             return np.clip(
                 synaptic_variable_values,
-                a_min=-(2**W_TAG_1_U) - 1,
-                a_max=2**W_TAG_1_U - 1,
+                a_min=-(2 ** W_TAG_1_U) - 1,
+                a_max=2 ** W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
@@ -1133,6 +1143,22 @@ class LearningConnectionModelFloat(PyLearningConnection):
     tag_2: np.ndarray = LavaPyType(np.ndarray, float)
     tag_1: np.ndarray = LavaPyType(np.ndarray, float)
 
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+
+        if self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+            logging.warning(
+                f'The floating-pt PyProcessModel has been selected for the '
+                f'LearningDense Process and '
+                f'graded_spike_cfg={self._graded_spike_cfg}.')
+            logging.warning(
+                f'Incoming graded spikes will be added to the pre-trace x1, '
+                f'with no saturation. This will not effect the pre-trace x2.')
+            logging.warning(
+                f'All incoming spikes will be considered by learning rule '
+                f'Products conditioned on x0.')
+
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
         impulses and taus."""
@@ -1159,23 +1185,27 @@ class LearningConnectionModelFloat(PyLearningConnection):
         )
 
     def _create_learning_rule_applier(
-        self, product_series: ProductSeries
+            self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
         """Create a LearningRuleApplierFloat."""
         return LearningRuleApplierFloat(product_series)
 
-    def _record_pre_spike_times(self, s_in: np.ndarray) -> None:
-        """Record within-epoch spiking times of pre-synaptic neurons.
+    def _process_pre_spikes(self, s_in: np.ndarray) -> None:
+        """Process pre-synaptic spikes.
 
         Four different modes of operation, based on GradedSpikeCfg value:
         (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
         than once, pre-traces are updated by their regular impulses.
         (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
         trace x1 by payload/2, upon spiking.
-        (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
-        trace x1, upon spiking.
-        (2) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
-        trace x1, upon spiking, adds regular impulse to x2 on overflow.
+
+        Only in floating-pt:
+            (2) & (3) GradedSpikeCfg.ADD_SATURATION &
+            GradedSpikeCfg.ADD_NO_SATURATION have the same behavior:
+            adds payload/2 to the pre-synaptic trace x1, upon spiking.
+            x1 is not saturated.
+
+        Within-epoch spike times are recorded.
 
         Parameters
         ----------
@@ -1201,10 +1231,10 @@ class LearningConnectionModelFloat(PyLearningConnection):
                 self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
             sums = self.x1 + scaled_activations
 
-            if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
-                overflow_idx = sums > 127
-                update_t_spike = update_t_spike & overflow_idx
-                x2_update_idx = x2_update_idx & overflow_idx
+            # if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+            #     overflow_idx = sums > 127
+            #     update_t_spike = update_t_spike & overflow_idx
+            #     x2_update_idx = x2_update_idx & overflow_idx
 
             self.x1 = sums
 
@@ -1213,10 +1243,11 @@ class LearningConnectionModelFloat(PyLearningConnection):
         ts_offset = self._within_epoch_time_step()
         self.tx[update_t_spike] = ts_offset
 
-    def _record_post_spike_times(self, s_in_bap: np.ndarray) -> None:
-        """Record within-epoch spiking times of post-synaptic neurons.
+    def _process_post_spikes(self, s_in_bap: np.ndarray) -> None:
+        """Process post-synaptic spikes.
 
-        If more a single post-synaptic neuron spikes more than once,
+        Records within-epoch spiking times of post-synaptic neurons.
+        If a single post-synaptic neuron spikes more than once,
         the corresponding trace is updated by its trace impulse value.
 
         Parameters
@@ -1263,7 +1294,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
         # most naive algorithm to decay traces
         # TODO decay only for important time-steps
-        x_traces_history = np.full((t_epoch + 1, ) + x_traces.shape, np.nan,
+        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
                                    dtype=float)
         x_traces_history[0] = x_traces
         y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
@@ -1364,8 +1395,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
             k = self._learning_rule.decimate_exponent
             u = (
                 1
-                if int(self.time_step / self._learning_rule.t_epoch) % 2**k
-                == 0
+                if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
+                   == 0
                 else 0
             )
 
@@ -1380,7 +1411,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
         return applier_args
 
     def _saturate_synaptic_variable(
-        self, synaptic_variable_name: str, synaptic_variable_values: np.ndarray
+            self, synaptic_variable_name: str,
+            synaptic_variable_values: np.ndarray
     ) -> np.ndarray:
         """Saturate synaptic variable.
 

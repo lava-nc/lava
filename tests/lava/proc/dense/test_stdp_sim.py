@@ -386,7 +386,7 @@ class TestSTDPSimBitApproximate(unittest.TestCase):
         lif_0.stop()
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[72]]))
+        np.testing.assert_almost_equal(weight_after_run, np.array([[56]]))
 
     def test_stdp_bit_approximate_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
@@ -442,7 +442,7 @@ class TestSTDPSimBitApproximate(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[32.0, 3.0, -26.0], [-66.0, 26.0, 5.0]])
+            weight_after_run, np.array([[31.0, 2.0, -24.0], [-64.0, 30.0, 14.0]])
         )
 
     def test_stdp_learning_lif_bit_approximate(self):
@@ -489,7 +489,7 @@ class TestSTDPSimBitApproximate(unittest.TestCase):
         lif_0.stop()
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[72]]))
+        np.testing.assert_almost_equal(weight_after_run, np.array([[56]]))
 
 
 class TestRSTDPSimFloatingPoint(unittest.TestCase):
@@ -788,5 +788,5 @@ class TestRSTDPSimBitApproximate(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[3.0, 2.0, -7.0], [14.0, 19.0, 3.0]])
+            weight_after_run, np.array([[2.0, 1.0, -1.0], [15.0, 20.0, 9.0]])
         )
