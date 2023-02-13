@@ -303,7 +303,7 @@ class CspSelector:
     def select(
             self,
             *args: ty.Tuple[
-                ty.Union[CspSendPort, CspRecvPort], ty.Callable[[], ty.Any]
+                ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
             ],
     ):
         """

@@ -11,8 +11,8 @@ import numpy as np
 from lava.magma.runtime.message_infrastructure import (SendPort,
                                                        RecvPort,
                                                        getTempSendPort,
-                                                       getTempRecvPort)
-from lava.magma.compiler.channels.selector import Selector
+                                                       getTempRecvPort,
+                                                       Selector)
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort

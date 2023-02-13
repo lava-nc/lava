@@ -36,6 +36,7 @@ if PURE_PYTHON_VERSION:
         SendPort,
         RecvPort,
         create_channel)
+    from .pypychannel import CspSelector as Selector
 
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
@@ -78,6 +79,7 @@ else:
     from .ports import (  # noqa: E402
         SendPort,
         Channel,
+        Selector,
         getTempSendPort,
         getTempRecvPort,
         create_channel)

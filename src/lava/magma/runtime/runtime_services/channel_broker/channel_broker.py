@@ -12,9 +12,9 @@ import typing as ty
 from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
     create_channel,
+    Selector
 )
 from lava.magma.runtime.message_infrastructure import Channel as MsgChannel
-from lava.magma.compiler.channels.selector import Selector
 
 try:
     from nxcore.arch.base.nxboard import NxBoard

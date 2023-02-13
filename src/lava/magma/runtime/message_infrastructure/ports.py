@@ -14,9 +14,22 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
         support_fastdds_channel,
         support_cyclonedds_channel,
         AbstractTransferPort,
-        ChannelType)
+        ChannelType,
+        RecvPort)
 
 import numpy as np
+import typing as ty
+
+
+class Selector:
+    def select(
+            self,
+            *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
+    ):
+        for recv_port, action in args:
+            if recv_port.probe():
+                return action()
+        return None
 
 
 class SendPort(AbstractTransferPort):
@@ -53,6 +66,7 @@ if support_grpc_channel():
         MessageInfrastructurePywrapper \
         import GetRPCChannel as CppRPCChannel
 
+
     class GetRPCChannel(CppRPCChannel):
 
         @property
@@ -63,6 +77,7 @@ if support_fastdds_channel() or support_cyclonedds_channel():
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper \
         import GetDDSChannel as CppDDSChannel
+
 
     class GetDDSChannel(CppDDSChannel):
         @property

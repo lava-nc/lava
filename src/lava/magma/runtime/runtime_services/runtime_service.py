@@ -12,7 +12,7 @@ from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SendPort,
 )
-from lava.magma.compiler.channels.selector import Selector
+from lava.magma.runtime.message_infrastructure import Selector
 
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
