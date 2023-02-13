@@ -7,9 +7,9 @@ from PIL import Image
 
 
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
@@ -28,37 +28,11 @@ def numpy2pil(np_array: np.ndarray, fm = 'RGB') -> Image:
     img = Image.fromarray(np_array, fm)
     return img
 
-"""# Input Encoder ###############################################################
-class PilotNetEncoder(AbstractProcess):
-    def __init__(self,
-                 shape: Tuple[int, ...],
-                 vth: int,
-                 compression: Compression = Compression.DELTA_SPARSE_8) -> None:
-        super().__init__(shape=shape,
-                         vth=vth,
-                         compression=compression)
-        self.inp = InPort(shape=shape)
-        self.out = OutPort(shape=shape)
-
-
-@implements(proc=PilotNetEncoder, protocol=LoihiProtocol)
-@requires(CPU)
-class PilotNetPyEncoderModel(AbstractSubProcessModel):
-    def __init__(self, proc: AbstractProcess) -> None:
-        self.inp: PyInPort = LavaPyType(np.ndarray, np.int64)
-        self.out: PyOutPort = LavaPyType(np.ndarray, np.int64)
-        shape = proc.proc_params.get('shape')
-        vth = proc.proc_params.get('vth')
-        self.encoder = io.encoder.DeltaEncoder(shape=shape,
-                                               vth=vth,
-                                               spike_exp=6)
-        proc.inp.connect(self.encoder.a_in)
-        self.encoder.s_out.connect(proc.out)"""
-
-
-class DVSFileInput(AbstractProcess):
-    """outputting a frame from ROS camera fetched from DDSChannel, after converting it
-        to events"""
+class RosRealsenseInput(AbstractProcess):
+    """
+    outputting a frame from ROS camera fetched from DDSChannel, 
+    after converting it to events
+    """
     def __init__(self,
                  true_height: int,
                  true_width: int,
@@ -78,9 +52,9 @@ class DVSFileInput(AbstractProcess):
         self.event_frame_out = OutPort(shape=out_shape)
 
 
-@implements(proc=DVSFileInput, protocol=LoihiProtocol)
+@implements(proc=RosRealsenseInput, protocol=LoihiProtocol)
 @requires(CPU)
-class PyDVSFileInputPM(PyLoihiProcessModel):
+class RosRealsenseInputPM(PyLoihiProcessModel):
     event_frame_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def __init__(self, proc_params):
@@ -121,59 +95,54 @@ class PyDVSFileInputPM(PyLoihiProcessModel):
 
 
     def diff(self, frame1, frame2):
+        """
+        Comparing the difference between two frames
+        Remove the comment of the preferred operation
+        """
         real_diffs = frame2 - frame1
-        # return (np.absolute(real_diffs[:,:,:]) > self.diff_thresh).sum(axis=2) > 0  # comparing the absolute value
-        return ((frame2 * (1 / 3)).sum(axis = 2)) / 255   # grayscale
-        # return np.linalg.norm(real_diffs, axis=2) > self.diff_thresh # distance
+        
+        #* OP: comparing the absolute color difference
+        # return (np.absolute(real_diffs[:,:,:]) > self.diff_thresh).sum(axis=2) > 0 
+        
+        #* OP: grayscale
+        return ((frame2 * (1 / 3)).sum(axis = 2)) / 255
+
+        #* OP: distance between colors
+        # return np.linalg.norm(real_diffs, axis=2) > self.diff_thresh
+
 
     def run_spk(self):
         self._cur_steps += 1
         
         res = self.recv_port.recv()
-        """stamp = int.from_bytes(bytearray(res[0:8].tolist()),
-                               byteorder='big', signed=False)
-        channel = int.from_bytes(bytearray(res[8:12].tolist()),
-                                 byteorder='big', signed=False)"""
-        width = int.from_bytes(bytearray(res[12:16].tolist()),
-                               byteorder='big', signed=False)
-        height = int.from_bytes(bytearray(res[16:20].tolist()),
+        width = int.from_bytes(bytearray(np.flipud(res[12:16:]).tolist()),
+                           byteorder='big', signed=False)
+        height = int.from_bytes(bytearray(np.flipud(res[16:20:]).tolist()),
                                 byteorder='big', signed=False)
         img_data = res[20:]
         img_data = img_data.reshape((height, width, 3))
 
         # apply gaussian blur
         event_frame_small = \
-                self._convolution(img_data)
+                self._gaussian_downsample(img_data)
         diff = self.diff(self.prev_frame, event_frame_small)
-        """if self.saved == 2:
-            # img = numpy2pil(np.uint8(diff * 255), fm='L')
-            img = numpy2pil(img_data)
-            img.save("/home/zuom/img.jpg")
-            print(self.prev_frame)
-            print("========================")
-            print(event_frame_small)
-            print("=========================")
-            print(event_frame_small - self.prev_frame)
-            print("=========================")
-            print(np.linalg.norm(event_frame_small - self.prev_frame, axis=2))
-            print("=========================")
-            print("threashold ", self.diff_thresh)
-        self.saved += 1"""
-
         self.prev_frame = event_frame_small
-            
-        diff = np.transpose(diff, axes=(1, 0)) #* later codes assume (width, height) shaped image
+
+        #* later codes assume (width, height) shaped image
+        diff = np.transpose(diff, axes=(1, 0))
         self.event_frame_out.send(diff)
+
 
     def post_guard(self) -> bool:
         return self._cur_steps == self._num_steps
 
+
     def run_post_mgmt(self) -> None:
-        print("managed")
         self.recv_port.join()
 
+
     # gaussian blur
-    def _convolution(self, matrix: np.ndarray, kernel_size: int = 16):
+    def _gaussian_downsample(self, matrix: np.ndarray, kernel_size: int = 16):
         event_frame_convolved = gaussian_filter(matrix, 8, radius=kernel_size)
         
         event_frame_small = \

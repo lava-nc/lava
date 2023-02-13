@@ -3,9 +3,16 @@
 # See: https://spdx.org/licenses/
 
 #
-# To run this:
+# To run this in bokeh (with a web interface):
 # bokeh serve app.py --port 18886
+# 
+# Or run directly in command line, with openCV windows popping out:
+# python3 app.py
 #
+
+import os
+import subprocess
+import cv2
 
 import numpy as np
 from threading import Thread
@@ -32,17 +39,28 @@ from lava.lib.dnf.operations.operations import Convolution
 from sparse.process import *
 
 from process_out.process import ProcessOut, DataRelayerPM
-from dvs_file_input.process import *
+from ros_realsense_input.process import *
 from rate_reader.process import RateReader
+
+def through_bokeh():
+    def get_pname():
+        pname = ""
+        with subprocess.Popen(["ps -o cmd= {}".format(os.getpid())], stdout=subprocess.PIPE, shell=True) as p:
+            pname = str(p.communicate()[0])
+        return pname
+    
+    return "bokeh" in get_pname()
+
+running_in_bokeh = through_bokeh()
 
 
 # ==========================================================================
 # Parameters
 # ==========================================================================
 # number of time steps to be run in demo
-num_steps = 4800
+num_steps = 4800 if running_in_bokeh else 3
 
-# DVSFileInput Params
+# RosRealsenseInput Params
 true_height = 480
 true_width = 640
 down_sample_factor = 16
@@ -101,7 +119,7 @@ recv_pipe, send_pipe = Pipe()
 # ==========================================================================
 # Instantiate Processes Running on CPU
 # ==========================================================================
-dvs_file_input = DVSFileInput(true_height=true_height,
+roscam_input = RosRealsenseInput(true_height=true_height,
                               true_width=true_width,
                               down_sample_factor=down_sample_factor,
                               num_steps=num_steps,
@@ -116,18 +134,14 @@ rate_reader_selective = RateReader(shape=down_sampled_shape,
                                    num_steps=num_steps)
 
 # sends data to pipe for plotting
-data_relayer = ProcessOut(shape_dvs_frame=down_sampled_shape,
+data_relayer = ProcessOut(shape_roscam_frame=down_sampled_shape,
                           shape_dnf=down_sampled_shape,
                           send_pipe=send_pipe)
-
-print("down_sampled_shape", down_sampled_shape)
 
 # ==========================================================================
 # Instantiate Processes Running on Loihi 2
 # ==========================================================================
 sparse_1 = Syn(weights=np.eye(num_neurons) * sparse1_weights, synname="sparse_1")
-
-
 dnf_multi_peak = LIF(shape=down_sampled_shape,
                      du=du_multipeak,
                      dv=dv_multipeak,
@@ -145,7 +159,7 @@ connections_selective = Syn(weights=weights_selective, synname="connections_sele
 # Connecting Processes
 # ==========================================================================
 # Connecting Input Processes
-dvs_file_input.event_frame_out.reshape(down_sampled_flat_shape).connect(sparse_1.s_in)
+roscam_input.event_frame_out.reshape(down_sampled_flat_shape).connect(sparse_1.s_in)
 sparse_1.a_out.reshape(new_shape=down_sampled_shape).connect(
     dnf_multi_peak.a_in)
 dnf_multi_peak.s_out.reshape(new_shape=down_sampled_flat_shape).connect(
@@ -155,8 +169,6 @@ sparse_2.a_out.reshape(new_shape=down_sampled_shape).connect(
 
 # Recurrent-connecting MultiPeak DNF
 con_ip = connections_multi_peak.s_in
-print("con_ip.shape", con_ip.shape)
-print("weights_multi_peak.shape", weights_multi_peak.shape)
 dnf_multi_peak.s_out.reshape(new_shape=con_ip.shape).connect(con_ip)
 con_op = connections_multi_peak.a_out
 con_op.reshape(new_shape=dnf_multi_peak.a_in.shape).connect(
@@ -174,7 +186,7 @@ sparse_1.a_out.reshape(new_shape=down_sampled_shape).connect(rate_reader_multi_p
 dnf_selective.s_out.connect(rate_reader_selective.in_port)
 
 # Connecting ProcessOut (data relayer)
-dvs_file_input.event_frame_out.connect(data_relayer.dvs_frame_port)
+roscam_input.event_frame_out.connect(data_relayer.roscam_frame_port)
 rate_reader_multi_peak.out_port.connect(data_relayer.dnf_multipeak_rates_port)
 rate_reader_selective.out_port.connect(data_relayer.dnf_selective_rates_port)
 
@@ -183,7 +195,7 @@ rate_reader_selective.out_port.connect(data_relayer.dnf_selective_rates_port)
 # ==========================================================================
 
 exception_pm_map = {
-    DVSFileInput: PyDVSFileInputPM,
+    RosRealsenseInput: RosRealsenseInputPM,
     ProcessOut: DataRelayerPM
 }
 run_cfg = Loihi2SimCfg(exception_proc_model_map=exception_pm_map)
@@ -191,116 +203,129 @@ run_cnd = RunSteps(num_steps=num_steps, blocking=False)
 
 # Compilation
 compiler = Compiler()
-executable = compiler.compile(dvs_file_input, run_cfg=run_cfg)
+executable = compiler.compile(roscam_input, run_cfg=run_cfg)
 
 # Initializing runtime
 mp = ActorType.MultiProcessing
 runtime = Runtime(exe=executable,
                 message_infrastructure_type=mp)
 runtime.initialize()
-# runtime.start(run_condition=run_cnd)
-
-
-
 
 # ==========================================================================
-# Bokeh Helpers
+# Main block
 # ==========================================================================
-def callback_run():
+if running_in_bokeh:
+    # ==========================================================================
+    # Bokeh Helpers
+    # ==========================================================================
+    def callback_run():
+        runtime.start(run_condition=run_cnd)
+
+
+    def create_plot(plot_base_width, data_shape, title):
+        x_range = DataRange1d(start=0,
+                            end=data_shape[0],
+                            bounds=(0, data_shape[0]),
+                            range_padding=50,
+                            range_padding_units='percent')
+        y_range = DataRange1d(start=0,
+                            end=data_shape[1],
+                            bounds=(0, data_shape[1]),
+                            range_padding=50,
+                            range_padding_units='percent')
+
+        pw = plot_base_width
+        ph = int(pw * data_shape[1] / data_shape[0])
+        plot = figure(width=pw,
+                    height=ph,
+                    x_range=x_range,
+                    y_range=y_range,
+                    match_aspect=True,
+                    tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")],
+                    toolbar_location=None)
+
+        image = plot.image([], x=0, y=0, dw=data_shape[0], dh=data_shape[1],
+                        palette="Viridis256", level="image")
+
+        plot.add_layout(Title(text=title, align="center"), "above")
+
+        x_grid = list(range(data_shape[0]))
+        plot.xgrid[0].ticker = x_grid
+        y_grid = list(range(data_shape[1]))
+        plot.ygrid[0].ticker = y_grid
+        plot.xgrid.grid_line_color = None
+        plot.ygrid.grid_line_color = None
+
+        color = LinearColorMapper(palette="Viridis256", low=0, high=1)
+        image.glyph.color_mapper = color
+
+        cb = ColorBar(color_mapper=color)
+        plot.add_layout(cb, 'right')
+
+        return plot, image
+
+    # ==========================================================================
+    # Instantiating Bokeh document
+    # ==========================================================================
+    bokeh_document = curdoc()
+
+    # create plots
+    roscam_frame_p, roscam_frame_im = create_plot(
+        400, down_sampled_shape, "ROS input (events)")
+    dnf_multipeak_rates_p, dnf_multipeak_rates_im = create_plot(
+        400, down_sampled_shape, "DNF multi-peak (spike rates)")
+    dnf_selective_rates_p, dnf_selective_rates_im = create_plot(
+        400, down_sampled_shape, "DNF selective (spike rates)")
+
+    # add a button widget and configure with the call back
+    button_run = Button(label="Run")
+    button_run.on_click(callback_run)
+
+    # finalize layout (with spacer as placeholder)
+    spacer = Spacer(height=40)
+    bokeh_document.add_root(
+        gridplot([[button_run, None, None],
+                [None, spacer, None],
+                [roscam_frame_p, dnf_multipeak_rates_p, dnf_selective_rates_p]],
+                toolbar_options=dict(logo=None)))
+
+    # ==========================================================================
+    # Bokeh Update
+    # ==========================================================================
+    def update(roscam_frame_ds_image,
+            dnf_multipeak_rates_ds_image,
+            dnf_selective_rates_ds_image):
+        roscam_frame_im.data_source.data["image"] = [roscam_frame_ds_image]
+        dnf_multipeak_rates_im.data_source.data["image"] = \
+            [dnf_multipeak_rates_ds_image]
+        dnf_selective_rates_im.data_source.data["image"] = \
+            [dnf_selective_rates_ds_image]
+
+    # ==========================================================================
+    # Bokeh Main loop
+    # ==========================================================================
+    def main_loop():
+        while True:
+            data_for_plot_dict = recv_pipe.recv()
+            bokeh_document.add_next_tick_callback(
+                partial(update, **data_for_plot_dict)
+            )
+
+
+    thread = Thread(target=main_loop)
+    thread.start()
+else:
     runtime.start(run_condition=run_cnd)
-
-
-def create_plot(plot_base_width, data_shape, title):
-    x_range = DataRange1d(start=0,
-                          end=data_shape[0],
-                          bounds=(0, data_shape[0]),
-                          range_padding=50,
-                          range_padding_units='percent')
-    y_range = DataRange1d(start=0,
-                          end=data_shape[1],
-                          bounds=(0, data_shape[1]),
-                          range_padding=50,
-                          range_padding_units='percent')
-
-    pw = plot_base_width
-    ph = int(pw * data_shape[1] / data_shape[0])
-    plot = figure(plot_width=pw,
-                  plot_height=ph,
-                  x_range=x_range,
-                  y_range=y_range,
-                  match_aspect=True,
-                  tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")],
-                  toolbar_location=None)
-
-    image = plot.image([], x=0, y=0, dw=data_shape[0], dh=data_shape[1],
-                       palette="Viridis256", level="image")
-
-    plot.add_layout(Title(text=title, align="center"), "above")
-
-    x_grid = list(range(data_shape[0]))
-    plot.xgrid[0].ticker = x_grid
-    y_grid = list(range(data_shape[1]))
-    plot.ygrid[0].ticker = y_grid
-    plot.xgrid.grid_line_color = None
-    plot.ygrid.grid_line_color = None
-
-    color = LinearColorMapper(palette="Viridis256", low=0, high=1)
-    image.glyph.color_mapper = color
-
-    cb = ColorBar(color_mapper=color)
-    plot.add_layout(cb, 'right')
-
-    return plot, image
-
-# ==========================================================================
-# Instantiating Bokeh document
-# ==========================================================================
-bokeh_document = curdoc()
-
-# create plots
-dvs_frame_p, dvs_frame_im = create_plot(
-    400, down_sampled_shape, "DVS file input (events)")
-dnf_multipeak_rates_p, dnf_multipeak_rates_im = create_plot(
-    400, down_sampled_shape, "DNF multi-peak (spike rates)")
-dnf_selective_rates_p, dnf_selective_rates_im = create_plot(
-    400, down_sampled_shape, "DNF selective (spike rates)")
-
-# add a button widget and configure with the call back
-button_run = Button(label="Run")
-button_run.on_click(callback_run)
-
-# finalize layout (with spacer as placeholder)
-spacer = Spacer(height=40)
-bokeh_document.add_root(
-    gridplot([[button_run, None, None],
-              [None, spacer, None],
-              [dvs_frame_p, dnf_multipeak_rates_p, dnf_selective_rates_p]],
-             toolbar_options=dict(logo=None)))
-
-
-# ==========================================================================
-# Bokeh Update
-# ==========================================================================
-def update(dvs_frame_ds_image,
-           dnf_multipeak_rates_ds_image,
-           dnf_selective_rates_ds_image):
-    dvs_frame_im.data_source.data["image"] = [dvs_frame_ds_image]
-    dnf_multipeak_rates_im.data_source.data["image"] = \
-        [dnf_multipeak_rates_ds_image]
-    dnf_selective_rates_im.data_source.data["image"] = \
-        [dnf_selective_rates_ds_image]
-
-
-# ==========================================================================
-# Bokeh Main loop
-# ==========================================================================
-def main_loop():
-    while True:
-        data_for_plot_dict = recv_pipe.recv()
-        bokeh_document.add_next_tick_callback(
-            partial(update, **data_for_plot_dict)
-        )
-
-
-thread = Thread(target=main_loop)
-thread.start()
+    def main_loop():
+        for i in range(num_steps):
+            print("step", i)
+            data_for_plot_dict = recv_pipe.recv()
+            for name, img_data in data_for_plot_dict.items():
+                cv2.imshow(str(i) + "_" + name, img_data * 255)
+                #* If you prefer saving the image..
+                # cv2.imwrite("~/img_" + str(i) + "_" + name + ".jpg", img_data * 255)
+    
+    thread = Thread(target=main_loop)
+    thread.start()
+    thread.join()
+    runtime.stop()
