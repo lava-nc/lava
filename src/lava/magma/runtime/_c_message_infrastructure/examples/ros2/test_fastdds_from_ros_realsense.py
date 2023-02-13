@@ -33,20 +33,20 @@ def realsense_msg_process(res):
                            byteorder='big', signed=False)
     channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
                              byteorder='big', signed=False)
-    width = int.from_bytes(bytearray(np.flipud(res[8:12:]).tolist()),
+    width = int.from_bytes(bytearray(np.flipud(res[12:16]).tolist()),
                            byteorder='big', signed=False)
-    height = int.from_bytes(bytearray(np.flipud(res[12:16:]).tolist()),
+    height = int.from_bytes(bytearray(np.flipud(res[16:20]).tolist()),
                             byteorder='big', signed=False)
-    img_data = res[16:]
+    img_data = res[20:]
     print("stamp nsec = ", stamp)
     print("channel = ", channel)
     print("width = ", width)
     print("height = ", height)
     print("img_data = ", img_data)
-    img = numpy2pil(img_data.reshape((height, width, channel)))
-    img.show()
-    img.close()
-    time.sleep(0.01)
+    # img = numpy2pil(img_data.reshape((height, width, channel)))
+    # img.show()
+    # img.close()
+    # time.sleep(0.01)
 
 
 def test_ddschannel():
