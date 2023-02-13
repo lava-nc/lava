@@ -442,7 +442,8 @@ class TestSTDPSimBitApproximate(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[31.0, 2.0, -24.0], [-64.0, 30.0, 14.0]])
+            weight_after_run, np.array([[31.0, 2.0, -24.0],
+                                        [-64.0, 30.0, 14.0]])
         )
 
     def test_stdp_learning_lif_bit_approximate(self):

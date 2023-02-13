@@ -224,31 +224,27 @@ class PyLearningConnection(AbstractLearningConnection):
                 active_traces_per_dependency[dependency_idx, trace_idx] = True
 
         # Shape : (3, 2)
-        self._active_x_traces_per_dependency = active_traces_per_dependency[
-                                               :, :2
-                                               ]
+        self._active_x_traces_per_dependency = \
+            active_traces_per_dependency[:, :2]
 
         # Shape : (3, 3)
-        self._active_y_traces_per_dependency = active_traces_per_dependency[
-                                               :, 2:
-                                               ]
+        self._active_y_traces_per_dependency = \
+            active_traces_per_dependency[:, 2:]
 
     def _build_active_traces(self) -> None:
         """Build and store boolean numpy arrays specifying which x and y
         traces are active."""
         # Shape : (2, )
-        self._active_x_traces = (
-                self._active_x_traces_per_dependency[0]
-                | self._active_x_traces_per_dependency[1]
-                | self._active_x_traces_per_dependency[2]
-        )
+        self._active_x_traces = \
+            (self._active_x_traces_per_dependency[0]
+             | self._active_x_traces_per_dependency[1]
+             | self._active_x_traces_per_dependency[2])
 
         # Shape : (3, )
-        self._active_y_traces = (
-                self._active_y_traces_per_dependency[0]
-                | self._active_y_traces_per_dependency[1]
-                | self._active_y_traces_per_dependency[2]
-        )
+        self._active_y_traces = \
+            (self._active_y_traces_per_dependency[0]
+             | self._active_y_traces_per_dependency[1]
+             | self._active_y_traces_per_dependency[2])
 
     def _build_learning_rule_appliers(self) -> None:
         """Build and store LearningRuleApplier for each active learning
@@ -667,7 +663,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         multi_spike_x = (self.tx > 0) & spiked
 
         activations = s_in
-        scaled_activations = np.round(activations/2).astype(np.uint8)
+        scaled_activations = np.round(activations / 2).astype(np.uint8)
 
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
@@ -942,7 +938,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             u = (
                 1
                 if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
-                   == 0
+                == 0
                 else 0
             )
 
@@ -1396,7 +1392,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
             u = (
                 1
                 if int(self.time_step / self._learning_rule.t_epoch) % 2 ** k
-                   == 0
+                == 0
                 else 0
             )
 
