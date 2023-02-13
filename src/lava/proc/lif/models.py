@@ -195,7 +195,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
-        super().run_spk()
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
