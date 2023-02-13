@@ -102,6 +102,7 @@ class Channel(CppChannel):
 
 def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
     channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
+    print("lxc create channel", dtype, shape)
     return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name, shape, dtype)
 
 

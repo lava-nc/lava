@@ -11,6 +11,7 @@ from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
 
 from lava.magma.runtime.message_infrastructure import (
+    create_channel,
     Channel,
     SendPort,
     RecvPort,
@@ -36,8 +37,6 @@ def actor_stop(name):
 
 
 def recv_proc(*args, **kwargs):
-    actor = args[0]
-    actor.set_stop_fn(partial(actor_stop, "send"))
     port = kwargs.pop("port")
     port.start()
     for i in range(loop_number):
@@ -49,12 +48,9 @@ def recv_proc(*args, **kwargs):
         if not np.array_equal(data, const_data):
             raise AssertionError()
     port.join()
-    actor.status_stopped()
 
 
 def send_proc(*args, **kwargs):
-    actor = args[0]
-    actor.set_stop_fn(partial(actor_stop, "recv"))
     port = kwargs.pop("port")
     port.start()
     for i in range(loop_number):
@@ -64,7 +60,6 @@ def send_proc(*args, **kwargs):
         send_port.send(const_data)
         send_port.join()
     port.join()
-    actor.status_stopped()
 
 
 class Builder:
@@ -81,14 +76,13 @@ class TestTempChannel(unittest.TestCase):
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
         name = 'test_temp_channel'
 
-        shmem_channel = Channel(
-            ChannelBackend.SHMEMCHANNEL,
-            ChannelQueueSize,
-            SyncChannelBytes,
+        shmem_channel = create_channel(
+            None,
             name,
             name,
-            (65536, 10),
-            None)
+            const_data.shape,
+            const_data.dtype,
+            const_data.size)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
