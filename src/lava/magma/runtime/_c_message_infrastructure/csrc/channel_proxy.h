@@ -24,7 +24,7 @@ class ChannelProxy {
                const size_t &nbytes,
                const std::string &src_name,
                const std::string &dst_name,
-               py::tuple shape = py::none(),
+               py::tuple shape = py::make_tuple(),
                py::object type = py::none());
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();

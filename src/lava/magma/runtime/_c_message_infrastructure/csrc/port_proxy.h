@@ -34,7 +34,7 @@ class SendPortProxy : public PortProxy {
   SendPortProxy() {}
   SendPortProxy(ChannelType channel_type,
                 AbstractSendPortPtr send_port,
-                py::tuple shape = py::none(),
+                py::tuple shape = py::make_tuple(),
                 py::object type = py::none()) :
                 PortProxy(shape, type),
                 channel_type_(channel_type),
@@ -59,7 +59,7 @@ class RecvPortProxy : public PortProxy {
   RecvPortProxy() {}
   RecvPortProxy(ChannelType channel_type,
                 AbstractRecvPortPtr recv_port,
-                py::tuple shape = py::none(),
+                py::tuple shape = py::make_tuple(),
                 py::object type = py::none()) :
                 PortProxy(shape, type),
                 channel_type_(channel_type),
