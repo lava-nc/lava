@@ -17,14 +17,28 @@ namespace message_infrastructure {
 
 namespace py = pybind11;
 
-class PortProxy {};
+class PortProxy {
+ public:
+  PortProxy() {}
+  PortProxy(py::tuple shape, py::object d_type) :
+            shape_(shape), d_type_(d_type) {}
+  py::object DType();
+  py::tuple Shape();
+ private:
+  py::object d_type_;
+  py::tuple shape_;
+};
 
 class SendPortProxy : public PortProxy {
  public:
   SendPortProxy() {}
-  SendPortProxy(ChannelType channel_type, AbstractSendPortPtr send_port) :
-                                          channel_type_(channel_type),
-                                          send_port_(send_port) {}
+  SendPortProxy(ChannelType channel_type,
+                AbstractSendPortPtr send_port,
+                py::tuple shape = py::none(),
+                py::object type = py::none()) :
+                PortProxy(shape, type),
+                channel_type_(channel_type),
+                send_port_(send_port) {}
   ChannelType GetChannelType();
   void Start();
   bool Probe();
@@ -43,9 +57,13 @@ class SendPortProxy : public PortProxy {
 class RecvPortProxy : public PortProxy {
  public:
   RecvPortProxy() {}
-  RecvPortProxy(ChannelType channel_type, AbstractRecvPortPtr recv_port) :
-                                            channel_type_(channel_type),
-                                            recv_port_(recv_port) {}
+  RecvPortProxy(ChannelType channel_type,
+                AbstractRecvPortPtr recv_port,
+                py::tuple shape = py::none(),
+                py::object type = py::none()) :
+                PortProxy(shape, type),
+                channel_type_(channel_type),
+                recv_port_(recv_port) {}
 
   ChannelType GetChannelType();
   void Start();

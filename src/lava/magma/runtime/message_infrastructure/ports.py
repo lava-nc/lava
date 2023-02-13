@@ -54,6 +54,14 @@ class SendPort(AbstractTransferPort):
     def name(self):
         return self._cpp_send_port.name
 
+    @property
+    def shape(self):
+        return self._cpp_send_port.shape
+
+    @property
+    def d_type(self):
+        return self._cpp_send_port.d_type
+
     def size(self):
         return self._cpp_send_port.size()
 
@@ -93,8 +101,8 @@ class Channel(CppChannel):
 
 
 def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
-    channel_bytes = np.prod(shape) * size
-    return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name)
+    channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
+    return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name, shape, dtype)
 
 
 def getTempSendPort(addr_path: str):

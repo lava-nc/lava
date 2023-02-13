@@ -59,6 +59,6 @@ class MultiProcessing(MessageInfrastructureInterface):
     def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
         if channel_type == ChannelType.PyPy:
             channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize if not sync else SyncChannelBytes
-            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name)
+            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name, shape, dtype)
         else:
             raise Exception(f"Unsupported channel type {channel_type}")
