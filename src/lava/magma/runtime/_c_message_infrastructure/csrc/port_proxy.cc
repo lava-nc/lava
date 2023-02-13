@@ -109,8 +109,8 @@ void MetaDataDump(MetaDataPtr metadata) {
                strides[0], strides[1], strides[2], strides[3], strides[4]);
 }
 
-py::object PortProxy::Type() {
-  return type_;
+py::object PortProxy::DType() {
+  return d_type_;
 }
 
 py::tuple PortProxy::Shape() {
