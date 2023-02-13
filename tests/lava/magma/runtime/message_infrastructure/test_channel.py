@@ -135,7 +135,7 @@ class TestChannel(unittest.TestCase):
             nbytes,
             name,
             name,
-            (2,4),
+            (2, 4),
             np.int32)
 
         send_port = shmem_channel.src_port
@@ -150,7 +150,7 @@ class TestChannel(unittest.TestCase):
         if not np.array_equal(resdata, predata):
             raise AssertionError()
 
-        self.assertTrue(send_port.shape, (2,4))
+        self.assertTrue(send_port.shape, (2, 4))
         self.assertTrue(recv_port.d_type, np.int32)
 
         send_port.join()
@@ -168,7 +168,7 @@ class TestChannel(unittest.TestCase):
             nbytes,
             name,
             name,
-            (2,4),
+            (2, 4),
             np.int32)
 
         send_port = socket_channel.src_port
@@ -197,7 +197,7 @@ class TestChannel(unittest.TestCase):
             nbytes,
             name,
             name,
-            (2,4),
+            (2, 4),
             np.int32)
 
         send_port = socket_channel.src_port
