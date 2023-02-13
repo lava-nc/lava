@@ -20,11 +20,12 @@ namespace py = pybind11;
 class PortProxy {
  public:
   PortProxy() {}
-  PortProxy(py::tuple shape, py::object type) :
-            shape_(shape), type_(type) {}
-  py::object Type();
+  PortProxy(py::tuple shape, py::object d_type) :
+            shape_(shape), d_type_(d_type) {}
+  py::object DType();
   py::tuple Shape();
-  py::object type_;
+ private:
+  py::object d_type_;
   py::tuple shape_;
 };
 

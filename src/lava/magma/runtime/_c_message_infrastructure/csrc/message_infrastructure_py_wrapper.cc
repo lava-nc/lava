@@ -171,6 +171,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &SendPortProxy::Join)
     .def_property_readonly("name", &SendPortProxy::Name)
     .def_property_readonly("shape", &SendPortProxy::Shape)
+    .def_property_readonly("d_type", &SendPortProxy::DType)
     .def("size", &SendPortProxy::Size);
   py::class_<RecvPortProxy, PortProxy,
              std::shared_ptr<RecvPortProxy>> (m, "RecvPort")
@@ -183,6 +184,7 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def("join", &RecvPortProxy::Join)
     .def_property_readonly("name", &RecvPortProxy::Name)
     .def_property_readonly("shape", &RecvPortProxy::Shape)
+    .def_property_readonly("d_type", &RecvPortProxy::DType)
     .def("size", &RecvPortProxy::Size);
 }
 
