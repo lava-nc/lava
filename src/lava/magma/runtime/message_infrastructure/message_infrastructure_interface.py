@@ -3,8 +3,8 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 from abc import ABC, abstractmethod
-from lava.magma.runtime.message_infrastructure import ChannelBackend
 from lava.magma.runtime.message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 """A Message Infrastructure Interface which can create actors which would
 participate in message passing/exchange, start and stop them as well as
@@ -15,6 +15,7 @@ passing implementation."""
 class MessageInfrastructureInterface(ABC):
     """Interface to provide the ability to create actors which can
     communicate via message passing"""
+
     @abstractmethod
     def start(self):
         """Starts the messaging infrastructure"""
@@ -37,8 +38,7 @@ class MessageInfrastructureInterface(ABC):
         pass
 
     @abstractmethod
-    def channel_class(self,
-                      channel_type: ChannelBackend) -> ty.Type[Channel]:
+    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
         pass

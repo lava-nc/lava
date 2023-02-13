@@ -363,3 +363,7 @@ class PyPyChannel(Channel):
     @property
     def dst_port(self) -> AbstractTransferPort:
         return self._dst_port
+
+
+def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
+    return PyPyChannel(message_infrastructure, src_name, dst_name, shape, dtype, size)

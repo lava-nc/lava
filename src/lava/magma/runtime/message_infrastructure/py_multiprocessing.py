@@ -118,3 +118,7 @@ class MultiProcessing(MessageInfrastructureInterface):
             return CPyChannel
         else:
             raise Exception(f"Unsupported channel type {channel_type}")
+
+    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
+        channel_class = self.channel_class(channel_type)
+        return channel_class(self, src_name, dst_name, shape, dtype, size)

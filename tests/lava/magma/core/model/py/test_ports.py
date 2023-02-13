@@ -8,10 +8,9 @@ import numpy as np
 import typing as ty
 import functools as ft
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
     Channel,
+    create_channel,
     AbstractTransferPort,
-    ChannelQueueSize
 )
 
 from lava.magma.core.model.py.ports import (
@@ -23,17 +22,20 @@ from lava.magma.core.model.py.ports import (
     IdentityTransformer)
 
 
-def nbytes_cal(shape, dtype):
-    return np.prod(shape) * np.dtype(dtype).itemsize
+class MockInterface:
+    def __init__(self, smm):
+        self.smm = smm
 
 
 def get_channel(data, name="test_channel") -> Channel:
-    return Channel(
-        ChannelBackend.SHMEMCHANNEL,
-        ChannelQueueSize,
-        nbytes_cal(data.shape, data.dtype),
-        name + "src",
-        name + "dst")
+    mock = MockInterface(None)
+    return create_channel(
+        message_infrastructure=mock,
+        src_name=name + "src",
+        dst_name=name + "dst",
+        shape=data.shape,
+        dtype=data.dtype,
+        size=data.size)
 
 
 class TestPyPorts(unittest.TestCase):

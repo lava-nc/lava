@@ -9,7 +9,6 @@ import numpy as np
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
@@ -22,20 +21,20 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
+    create_channel,
     Channel,
     AbstractTransferPort,
 )
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 
 class MockMessageInterface:
-    def __init__(self):
-        pass
+    def __init__(self, smm):
+        self.smm = smm
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return Channel
+    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size) -> Channel:
+        return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 
 class TestChannelBuilder(unittest.TestCase):
@@ -45,14 +44,14 @@ class TestChannelBuilder(unittest.TestCase):
             name="mock", shape=(1, 2), d_type=np.int32,
             port_type='DOESNOTMATTER', size=64)
         channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-            channel_type=ChannelBackend.SHMEMCHANNEL,
+            channel_type=ChannelType.PyPy,
             src_port_initializer=port_initializer,
             dst_port_initializer=port_initializer,
             src_process=None,
             dst_process=None,
         )
 
-        mock = MockMessageInterface()
+        mock = MockMessageInterface(None)
         channel: Channel = channel_builder.build(mock)
         assert isinstance(channel, Channel)
         assert isinstance(channel.src_port, AbstractTransferPort)

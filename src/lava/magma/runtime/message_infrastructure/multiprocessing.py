@@ -2,17 +2,19 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 import typing as ty
+import numpy as np
 from functools import partial
 
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import (
-        CppMultiProcessing,
-        Actor)
-from lava.magma.runtime.message_infrastructure import Channel, ChannelBackend
-
+            CppMultiProcessing,
+            Actor)
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import ChannelType as ChannelBackend  # noqa: E402
+from lava.magma.runtime.message_infrastructure import Channel, ChannelQueueSize, SyncChannelBytes
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure. \
     message_infrastructure_interface import MessageInfrastructureInterface
-
 
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
@@ -54,7 +56,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Close all resources"""
         self._mp.cleanup(block)
 
-    def channel_class(self,
-                      channel_type: ChannelBackend) -> ty.Type[Channel]:
-        """TODO: depricated. Return None"""
-        return None
+    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
+        if channel_type == ChannelType.PyPy:
+            channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize if not sync else SyncChannelBytes
+            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name)
+        else:
+            raise Exception(f"Unsupported channel type {channel_type}")

@@ -19,6 +19,7 @@ PURE_PYTHON_VERSION = _get_pure_py()
 if PURE_PYTHON_VERSION:
     from abc import ABC, abstractmethod
 
+
     class Channel(ABC):
         @property
         @abstractmethod
@@ -33,7 +34,8 @@ if PURE_PYTHON_VERSION:
     from .py_ports import AbstractTransferPort
     from .pypychannel import (
         SendPort,
-        RecvPort)
+        RecvPort,
+        create_channel)
 
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
@@ -70,17 +72,16 @@ else:
         support_fastdds_channel,
         support_cyclonedds_channel)
 
-    from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-        import ChannelType as ChannelBackend  # noqa: E402
+    ChannelQueueSize = 1
+    SyncChannelBytes = 128
 
     from .ports import (  # noqa: E402
         SendPort,
         Channel,
         getTempSendPort,
-        getTempRecvPort)
+        getTempRecvPort,
+        create_channel)
 
-    ChannelQueueSize = 1
-    SyncChannelBytes = 128
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()

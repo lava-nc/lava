@@ -11,7 +11,6 @@ from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
 
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
     Channel,
     SendPort,
     RecvPort,

@@ -1,9 +1,6 @@
 import unittest
-
-from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
-    Channel,
-)
+import numpy as np
+from lava.magma.runtime.message_infrastructure import create_channel as create_pychannel
 from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
@@ -12,12 +9,15 @@ from lava.magma.runtime.runtime_services.runtime_service import \
     PyRuntimeService
 
 
+class MockInterface:
+    def __init__(self, smm):
+        self.smm = smm
+
+
+# TODO: support smm
 def create_channel(name: str):
-    return Channel(ChannelBackend.SHMEMCHANNEL,
-                   8,
-                   4,
-                   name + "src",
-                   name + "dst")
+    mock = MockInterface(None)
+    return create_pychannel(mock, name + "src", name + "dst", (1,), np.int32, 8)
 
 
 class SimpleSyncProtocol(AbstractSyncProtocol):

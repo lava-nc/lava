@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from lava.magma.runtime.message_infrastructure import ChannelQueueSize
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import SendPort as CppSendPort
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
@@ -12,7 +13,8 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
         support_grpc_channel,
         support_fastdds_channel,
         support_cyclonedds_channel,
-        AbstractTransferPort)
+        AbstractTransferPort,
+        ChannelType)
 
 import numpy as np
 
@@ -73,6 +75,11 @@ class Channel(CppChannel):
     @property
     def src_port(self):
         return SendPort(super().src_port)
+
+
+def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
+    channel_bytes = np.prod(shape) * size
+    return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name)
 
 
 def getTempSendPort(addr_path: str):

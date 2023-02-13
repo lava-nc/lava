@@ -11,7 +11,7 @@ from unittest.mock import Mock
 import numpy as np
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.compiler.compiler_graphs import ProcGroupDiGraphs
 from lava.magma.compiler.subcompilers.channel_builders_factory import \
     ChannelBuildersFactory
@@ -33,8 +33,6 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU, LMT, NeuroCore
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-
-from lava.magma.runtime.message_infrastructure import ChannelBackend
 
 
 # A minimal process (A) with an InPort, OutPort and RefPort
@@ -302,7 +300,7 @@ class TestChannelBuildersFactory(unittest.TestCase):
         builders = self.channel_builder_factory.from_channel_map(
             self.channel_map, self.cfg
         )
-        channel_types = {ChannelBackend.SHMEMCHANNEL}
+        channel_types = {ChannelType.PyPy}
         outcome = {builder.channel_type for builder in builders}
         self.assertEqual(outcome, channel_types)
 
@@ -369,8 +367,7 @@ class TestChannelBuildersMp(unittest.TestCase):
         # Each channel builder should connect its source and destination
         # process and port
         # Let's check the first one in detail
-        self.assertEqual(channel_builders[0].channel_type,
-                         ChannelBackend.SHMEMCHANNEL)
+        self.assertEqual(channel_builders[0].channel_type, ChannelType.PyPy)
         self.assertEqual(channel_builders[0].src_process, p1)
         self.assertEqual(channel_builders[0].src_port_initializer.name, "out")
         self.assertEqual(channel_builders[0].src_port_initializer.shape, (1,))
