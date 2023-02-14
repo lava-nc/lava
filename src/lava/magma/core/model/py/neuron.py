@@ -81,9 +81,6 @@ class LearningNeuronModelFixed(LearningNeuronModel):
     y3_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
     y3_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
-    def __init__(self, proc_params: dict) -> None:
-        super().__init__(proc_params)
-
 
 class LearningNeuronModelFloat(LearningNeuronModel):
     """Base class for learning enables neuron models.
@@ -112,14 +109,5 @@ class LearningNeuronModelFloat(LearningNeuronModel):
     y2: np.ndarray = LavaPyType(np.ndarray, float)
     y3: np.ndarray = LavaPyType(np.ndarray, float)
  
-    # LearningRule parameters
-    y1_tau: np.ndarray = LavaPyType(np.ndarray, float)
-    y1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
-    y2_tau: np.ndarray = LavaPyType(np.ndarray, float)
-    y2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
-    y3_tau: np.ndarray = LavaPyType(np.ndarray, float)
-    y3_impulse: np.ndarray = LavaPyType(np.ndarray, float)
 
 
-    def __init__(self, proc_params: dict) -> None:
-        super().__init__(proc_params)
