@@ -16,6 +16,11 @@ from lava.proc.io.source import RingBuffer, PySendModelFixed, PySendModelFloat
 
 
 class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
+    """Known value test suite. Tests have been run once and validated.
+    Resulting values are stored as 'expected' values.
+    Any deviation from these expected values in the future would be a symptom
+    of breaking changes"""
+
     @staticmethod
     def create_network_single_synapse(num_steps: int,
                                       weights_init: np.ndarray,
@@ -54,7 +59,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         dw = f"2^{scaling_exp} * {learning_rule_cnd}0 * x1"
 
-        x1_impulse = 16 if graded_spike_cfg == GradedSpikeCfg.DEFAULT else 0
+        x1_impulse = \
+            16 if graded_spike_cfg == GradedSpikeCfg.USE_REGULAR_IMPULSE else 0
 
         learning_rule = Loihi2FLearningRule(dw=dw,
                                             x1_impulse=x1_impulse, x1_tau=12,
@@ -292,10 +298,10 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
          158.719138, 158.719138, 162.1512235, 162.1512235, 162.1512235,
          162.1512235]
 
-    def test_learning_graded_spike_default_floating_pt_x0_condition(self):
+    def test_learning_graded_spike_reg_imp_floating_pt_x0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=x0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=x0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -306,7 +312,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "x"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,
@@ -340,10 +346,10 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
 
-    def test_learning_graded_spike_default_floating_pt_y0_condition(self):
+    def test_learning_graded_spike_reg_imp_floating_pt_y0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=y0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=y0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -354,7 +360,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "y"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,
@@ -388,10 +394,10 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
 
-    def test_learning_graded_spike_default_floating_pt_u0_condition(self):
+    def test_learning_graded_spike_reg_imp_floating_pt_u0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=u0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=u0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -402,7 +408,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "u"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,
@@ -870,6 +876,11 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
 
 class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
+    """Known value test suite. Tests have been run once and validated.
+    Resulting values are stored as 'expected' values.
+    Any deviation from these expected values in the future would be a symptom
+    of breaking changes"""
+
     @staticmethod
     def create_network_single_synapse(num_steps: int,
                                       weights_init: np.ndarray,
@@ -908,7 +919,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         dw = f"2^{scaling_exp} * {learning_rule_cnd}0 * x1"
 
-        x1_impulse = 16 if graded_spike_cfg == GradedSpikeCfg.DEFAULT else 0
+        x1_impulse = \
+            16 if graded_spike_cfg == GradedSpikeCfg.USE_REGULAR_IMPULSE else 0
 
         learning_rule = Loihi2FLearningRule(dw=dw,
                                             x1_impulse=x1_impulse, x1_tau=12,
@@ -1072,10 +1084,10 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
          81.0, 81.0, 81.0, 83.0, 83.0, 83.0, 83.0, 87.0, 87.0, 87.0, 87.0, 89.0,
          89.0, 89.0, 89.0]
 
-    def test_learning_graded_spike_default_bit_approx_x0_condition(self):
+    def test_learning_graded_spike_reg_imp_bit_approx_x0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=x0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=x0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -1086,7 +1098,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "x"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,
@@ -1120,10 +1132,10 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
 
-    def test_learning_graded_spike_default_bit_approx_y0_condition(self):
+    def test_learning_graded_spike_reg_imp_bit_approx_y0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=y0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=y0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -1134,7 +1146,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "y"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,
@@ -1168,10 +1180,10 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
 
-    def test_learning_graded_spike_default_bit_approx_u0_condition(self):
+    def test_learning_graded_spike_reg_imp_bit_approx_u0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
-        pre-synaptic graded spikes, DEFAULT GradedSpikeCfg and dw=u0 * x1
-        learning rule."""
+        pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
+        dw=u0 * x1 learning rule."""
 
         expected_x1_data = self.expected_x1_data_default
         expected_x2_data = self.expected_x2_data
@@ -1182,7 +1194,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         weights_init = np.eye(size) * 10
         learning_rule_cnd = "u"
-        graded_spike_cfg = GradedSpikeCfg.DEFAULT
+        graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
         pattern_pre, learning_dense, pattern_post = \
             self.create_network_single_synapse(num_steps,

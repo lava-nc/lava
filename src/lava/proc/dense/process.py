@@ -131,8 +131,9 @@ class LearningDense(LearningConnectionProcess, Dense):
     graded_spike_cfg: GradedSpikeCfg
         Indicates how to use incoming graded spike to update pre-synaptic traces
 
-        (0) GradedSpikeCfg.DEFAULT interprets the spike as a binary spike, adds
-        regular impulses to pre-synaptic traces, at the end of the epoch.
+        (0) GradedSpikeCfg.USE_REGULAR_IMPULSE interprets the spike as a
+        binary spike, adds regular impulses to pre-synaptic traces, at the end
+        of the epoch.
         (1) GradedSpikeCfg.OVERWRITE interprets the spike as a graded spike,
         overwrites the value of the pre-synaptic trace x1 by payload/2,
         upon spiking.
@@ -155,7 +156,8 @@ class LearningDense(LearningConnectionProcess, Dense):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  learning_rule: LoihiLearningRule = None,
-                 graded_spike_cfg: GradedSpikeCfg = GradedSpikeCfg.DEFAULT,
+                 graded_spike_cfg: GradedSpikeCfg =
+                 GradedSpikeCfg.USE_REGULAR_IMPULSE,
                  **kwargs) -> None:
 
         super().__init__(weights=weights,

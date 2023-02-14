@@ -639,8 +639,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """Process pre-synaptic spikes.
 
         Four different modes of operation, based on GradedSpikeCfg value:
-        (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
-        than once, pre-traces are updated by their regular impulses.
+        (0) GradedSpikeCfg.USE_REGULAR_IMPULSE if a single pre-synaptic neuron
+        spikes more than once, pre-traces are updated by their regular impulses.
         (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
         trace x1 by payload/2, upon spiking.
         (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
@@ -668,7 +668,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         update_t_spike = spiked
         x2_update_idx = multi_spike_x
 
-        if self._graded_spike_cfg == GradedSpikeCfg.DEFAULT:
+        if self._graded_spike_cfg == GradedSpikeCfg.USE_REGULAR_IMPULSE:
             self.x1[multi_spike_x] = self._add_impulse(
                 self.x1[multi_spike_x],
                 0,
@@ -773,7 +773,6 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         t_spike_y = self.ty
 
         # most naive algorithm to decay traces
-        # TODO decay only for important time-steps
         x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
                                    dtype=int)
         x_traces_history[0] = x_traces
@@ -1149,8 +1148,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
                 f'LearningDense Process and '
                 f'graded_spike_cfg={self._graded_spike_cfg}.')
             logging.warning(
-                f'Incoming graded spikes will be added to the pre-trace x1, '
-                f'with no saturation. This will not effect the pre-trace x2.')
+                f'Incoming graded spike payloads (divided by 2) will be added '
+                f'to the pre-trace x1, with no saturation. This will not '
+                f'effect the pre-trace x2.')
             logging.warning(
                 f'All incoming spikes will be considered by learning rule '
                 f'Products conditioned on x0.')
@@ -1190,8 +1190,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
         """Process pre-synaptic spikes.
 
         Four different modes of operation, based on GradedSpikeCfg value:
-        (0) GradedSpikeCfg.DEFAULT if a single pre-synaptic neuron spikes more
-        than once, pre-traces are updated by their regular impulses.
+        (0) GradedSpikeCfg.USE_REGULAR_IMPULSE if a single pre-synaptic neuron
+        spikes more than once, pre-traces are updated by their regular impulses.
         (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
         trace x1 by payload/2, upon spiking.
 
@@ -1214,10 +1214,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
         scaled_activations = s_in / 2
 
-        update_t_spike = spiked
-        x2_update_idx = multi_spike_x
-
-        if self._graded_spike_cfg == GradedSpikeCfg.DEFAULT:
+        if self._graded_spike_cfg == GradedSpikeCfg.USE_REGULAR_IMPULSE:
             self.x1[multi_spike_x] += self._x_impulses[0]
 
         elif self._graded_spike_cfg == GradedSpikeCfg.OVERWRITE:
@@ -1227,17 +1224,12 @@ class LearningConnectionModelFloat(PyLearningConnection):
                 self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
             sums = self.x1 + scaled_activations
 
-            # if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
-            #     overflow_idx = sums > 127
-            #     update_t_spike = update_t_spike & overflow_idx
-            #     x2_update_idx = x2_update_idx & overflow_idx
-
             self.x1 = sums
 
-        self.x2[x2_update_idx] += self._x_impulses[1]
+        self.x2[multi_spike_x] += self._x_impulses[1]
 
         ts_offset = self._within_epoch_time_step()
-        self.tx[update_t_spike] = ts_offset
+        self.tx[spiked] = ts_offset
 
     def _process_post_spikes(self, s_in_bap: np.ndarray) -> None:
         """Process post-synaptic spikes.
@@ -1289,7 +1281,6 @@ class LearningConnectionModelFloat(PyLearningConnection):
         t_spike_y = self.ty
 
         # most naive algorithm to decay traces
-        # TODO decay only for important time-steps
         x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
                                    dtype=float)
         x_traces_history[0] = x_traces
