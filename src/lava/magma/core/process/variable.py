@@ -135,7 +135,7 @@ class Var(AbstractProcessMember):
                 # encode if var is str
                 if isinstance(value, str):
                     value = np.array(
-                        list(value.encode("ascii")), dtype=np.integer
+                        list(value.encode("ascii")), dtype=np.int32
                     )
                 self.process.runtime.set_var(self.id, value, idx)
             else:
