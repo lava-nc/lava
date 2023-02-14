@@ -30,13 +30,6 @@ class LearningNeuronModel(PyLoihiProcessModel):
     y2 = None
     y3 = None
 
-    y1_tau = None
-    y1_impulse = None
-    y2_tau = None
-    y2_impulse = None
-    y3_tau = None
-    y3_impulse = None
-
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params)
 
@@ -73,14 +66,6 @@ class LearningNeuronModelFixed(LearningNeuronModel):
     y2: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=7)
     y3: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=7)
 
-    # LearningRule parameters
-    y1_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-    y1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-    y2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-    y2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-    y3_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-    y3_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
-
 
 class LearningNeuronModelFloat(LearningNeuronModel):
     """Base class for learning enables neuron models.
@@ -108,6 +93,3 @@ class LearningNeuronModelFloat(LearningNeuronModel):
     y1: np.ndarray = LavaPyType(np.ndarray, float)
     y2: np.ndarray = LavaPyType(np.ndarray, float)
     y3: np.ndarray = LavaPyType(np.ndarray, float)
- 
-
-

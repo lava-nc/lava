@@ -78,9 +78,11 @@ class AbstractProcessModel(ABC):
     required_resources: ty.List[ty.Type[AbstractResource]] = []
     tags: ty.List[str] = []
 
-    def __init__(self,
-                 proc_params: ty.Type["ProcessParameters"],
-                 loglevel: ty.Optional[int] = logging.WARNING) -> None:
+    def __init__(
+        self,
+        proc_params: ty.Type["ProcessParameters"],
+        loglevel: ty.Optional[int] = logging.WARNING,
+    ) -> None:
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
         self.proc_params: ty.Type["ProcessParameters"] = proc_params
@@ -105,7 +107,7 @@ class AbstractProcessModel(ABC):
         )
 
     def on_var_update(self):
-        """This method is called if a Var is updated. It 
+        """This method is called if a Var is updated. It
         can be used as callback function to calculate dependent
-        changes. """
+        changes."""
         pass
