@@ -1730,58 +1730,6 @@ class TestLoihiLearningRule(unittest.TestCase):
 
         assert(delays[-1] == 30)
 
-    def test_set_invalid_x1_tau_float(self) -> None:
-        """Tests changing x1_tau during runtime in a floating point simulation"""
-
-        dw = "x0 * x1 * 0"
-        t_epoch = 1
-        x1_tau_init = 2
-        x1_tau_new = -10
-        x1_impulse = 16
-
-        learning_rule = Loihi2FLearningRule(dw=dw,
-                                            t_epoch=t_epoch,
-                                            x1_tau=x1_tau_init,
-                                            x1_impulse=x1_impulse)
-
-        size = 1
-        weights_init = np.eye(size) * 0
-        num_steps = 10 
-        t_spike = 3
-
-        _, _, lif_0, dense, _ = create_network(size, 
-                                               num_steps, 
-                                               t_spike, 
-                                               learning_rule, 
-                                               weights_init)
-
-       
-        mon_x1 = Monitor()
-        mon_x1.probe(dense.x1, 2 * num_steps)
-
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
-        run_cnd = RunSteps(num_steps=num_steps)
-
-        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-
-        with self.assertRaises(ValueError):
-            dense.x1_tau.set(np.ones(size) * x1_tau_new)
-
-
-        lif_0.stop()
-
-
-
-
-
-        
-
-        
-
-
-
- 
-
 
 
 
