@@ -12,6 +12,8 @@ import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        SendPort,
                                                        Channel,
+                                                       SupportTempChannel,
+                                                       Selector,
                                                        getTempSendPort,
                                                        getTempRecvPort)
 
@@ -166,6 +168,7 @@ class Runtime:
         _messaging_infrastructure_type and Start it"""
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
             self._messaging_infrastructure_type)
+        self._messaging_infrastructure.init()
 
     def _get_process_builder_for_process(self, process: AbstractProcess) -> \
             AbstractProcessBuilder:
@@ -271,7 +274,7 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        self._messaging_infrastructure.stop(True)
+                        self._messaging_infrastructure.stop()
                         raise RuntimeError(
                             f"Exception(s) occurred. See "
                             f"output above for details.")
@@ -431,11 +434,22 @@ class Runtime:
                 buffer = buffer[idx]
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            addr_path = rsp_port.recv()
-            send_port = getTempSendPort(str(addr_path[0]))
-            send_port.start()
-            send_port.send(buffer)
-            send_port.join()
+            if SupportTempChannel:
+                addr_path = rsp_port.recv()
+                send_port = getTempSendPort(str(addr_path[0]))
+                send_port.start()
+                send_port.send(buffer)
+                send_port.join()
+            else:
+                buffer_shape: ty.Tuple[int, ...] = buffer.shape
+                num_items: int = np.prod(buffer_shape).item()
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                buffer = buffer.reshape((1, num_items), order=reshape_order)
+                data_port: SendPort = self.runtime_to_service[runtime_srv_id]
+                data_port.send(enum_to_np(num_items))
+                for i in range(num_items):
+                    data_port.send(enum_to_np(buffer[0, i], np.float64))
+
             rsp = rsp_port.recv()
             if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
                 raise RuntimeError("Var Set couldn't get successfully "
@@ -473,11 +487,18 @@ class Runtime:
             req_port.send(enum_to_np(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            addr_path, recv_port = getTempRecvPort()
-            recv_port.start()
-            req_port.send(np.array([addr_path]))
-            buffer = recv_port.recv()
-            recv_port.join()
+            if SupportTempChannel:
+                addr_path, recv_port = getTempRecvPort()
+                recv_port.start()
+                req_port.send(np.array([addr_path]))
+                buffer = recv_port.recv()
+                recv_port.join()
+            else:
+                data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
+                num_items: int = int(data_port.recv()[0].item())
+                buffer: np.ndarray = np.empty((1, num_items))
+                for i in range(num_items):
+                    buffer[0, i] = data_port.recv()[0]
 
             # 3. Reshape result and return
             if idx:

@@ -10,6 +10,7 @@ import numpy as np
 
 from lava.magma.runtime.message_infrastructure import (SendPort,
                                                        RecvPort,
+                                                       SupportTempChannel,
                                                        getTempSendPort,
                                                        getTempRecvPort,
                                                        Selector)
@@ -110,15 +111,30 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         var = getattr(self, var_name)
 
         # 2. Send Var data
-        addr_path = self.service_to_process.recv()
-        data_port = getTempSendPort(str(addr_path[0]))
-        data_port.start()
-        if isinstance(var, int) or isinstance(var, np.integer):
-            data_port.send(enum_to_np(var))
-        elif isinstance(var, np.ndarray):
-            # FIXME: send a whole vector (also runtime_service.py)
-            data_port.send(var)
-        data_port.join()
+        if SupportTempChannel:
+            addr_path = self.service_to_process.recv()
+            data_port = getTempSendPort(str(addr_path[0]))
+            data_port.start()
+            if isinstance(var, int) or isinstance(var, np.integer):
+                data_port.send(enum_to_np(var))
+            elif isinstance(var, np.ndarray):
+                # FIXME: send a whole vector (also runtime_service.py)
+                data_port.send(var)
+            data_port.join()
+        else:
+            data_port = self.process_to_service
+            # Header corresponds to number of values
+            # Data is either send once (for int) or one by one (array)
+            if isinstance(var, int) or isinstance(var, np.integer):
+                data_port.send(enum_to_np(1))
+                data_port.send(enum_to_np(var))
+            elif isinstance(var, np.ndarray):
+                # FIXME: send a whole vector (also runtime_service.py)
+                var_iter = np.nditer(var, order='C')
+                num_items: np.integer = np.prod(var.shape)
+                data_port.send(enum_to_np(num_items))
+                for value in var_iter:
+                    data_port.send(enum_to_np(value, np.float64))
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -128,25 +144,52 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         var = getattr(self, var_name)
 
         # 2. Receive Var data
-        addr_path, data_port = getTempRecvPort()
-        data_port.start()
-        self.process_to_service.send(np.array([addr_path]))
-        buffer = data_port.recv()
-        data_port.join()
-        if isinstance(var, int) or isinstance(var, np.integer):
-            buffer = buffer[0]
-            if isinstance(var, int):
-                setattr(self, var_name, buffer.item())
-            else:
+        if SupportTempChannel:
+            addr_path, data_port = getTempRecvPort()
+            data_port.start()
+            self.process_to_service.send(np.array([addr_path]))
+            buffer = data_port.recv()
+            data_port.join()
+            if isinstance(var, int) or isinstance(var, np.integer):
+                buffer = buffer[0]
+                if isinstance(var, int):
+                    setattr(self, var_name, buffer.item())
+                else:
+                    setattr(self, var_name, buffer.astype(var.dtype))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, np.ndarray):
+                var_iter = np.nditer(var, op_flags=['readwrite'])
                 setattr(self, var_name, buffer.astype(var.dtype))
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-        elif isinstance(var, np.ndarray):
-            var_iter = np.nditer(var, op_flags=['readwrite'])
-            setattr(self, var_name, buffer.astype(var.dtype))
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            else:
+                self.process_to_service.send(MGMT_RESPONSE.ERROR)
+                raise RuntimeError("Unsupported type")
         else:
-            self.process_to_service.send(MGMT_RESPONSE.ERROR)
-            raise RuntimeError("Unsupported type")
+            data_port = self.service_to_process
+            if isinstance(var, int) or isinstance(var, np.integer):
+                # First item is number of items (1) - not needed
+                data_port.recv()
+                # Data to set
+                buffer = data_port.recv()[0]
+                if isinstance(var, int):
+                    setattr(self, var_name, buffer.item())
+                else:
+                    setattr(self, var_name, buffer.astype(var.dtype))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, np.ndarray):
+                # First item is number of items
+                num_items = data_port.recv()[0]
+                var_iter = np.nditer(var, op_flags=['readwrite'])
+                # Set data one by one
+                for i in var_iter:
+                    if num_items == 0:
+                        break
+                    num_items -= 1
+                    i[...] = data_port.recv()[0]
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            else:
+                self.process_to_service.send(MGMT_RESPONSE.ERROR)
+                raise RuntimeError("Unsupported type")
 
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""

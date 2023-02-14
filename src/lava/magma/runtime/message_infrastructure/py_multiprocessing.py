@@ -13,7 +13,7 @@ import os
 from multiprocessing.managers import SharedMemoryManager
 import traceback
 
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure import Channel
 from lava.magma.runtime.message_infrastructure.pypychannel import PyPyChannel
 try:
@@ -84,10 +84,13 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Returns the underlying shared memory manager"""
         return self._smm
 
-    def start(self):
+    def init(self):
         """Starts the shared memory manager"""
         self._smm = SharedMemoryManager()
         self._smm.start()
+
+    def start(self):
+        pass
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[

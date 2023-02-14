@@ -34,6 +34,9 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Returns a list of actors"""
         return self._mp.get_actors()
 
+    def init(self):
+        pass
+
     def start(self):
         """Init the MultiProcessing"""
         for actor in self._mp.get_actors():

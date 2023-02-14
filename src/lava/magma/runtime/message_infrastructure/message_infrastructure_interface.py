@@ -17,6 +17,11 @@ class MessageInfrastructureInterface(ABC):
     communicate via message passing"""
 
     @abstractmethod
+    def init(self):
+        """Init the messaging infrastructure"""
+        pass
+
+    @abstractmethod
     def start(self):
         """Starts the messaging infrastructure"""
         pass
@@ -29,6 +34,10 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def build_actor(self, target_fn: ty.Callable, builder):
         """Given a target_fn starts a system process"""
+        pass
+
+    def cleanup(self, block=False):
+        """Close all resources"""
         pass
 
     @property

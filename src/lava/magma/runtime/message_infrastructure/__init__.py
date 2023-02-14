@@ -31,6 +31,7 @@ if PURE_PYTHON_VERSION:
         def dst_port(self):
             pass
 
+
     from .py_ports import AbstractTransferPort
     from .pypychannel import (
         SendPort,
@@ -41,6 +42,15 @@ if PURE_PYTHON_VERSION:
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
     SupportCycloneDDSChannel = False
+    SupportTempChannel = False
+
+
+    def getTempSendPort(addr_path: str):
+        return None
+
+
+    def getTempRecvPort():
+        return None, None
 
 else:
     from ctypes import CDLL, RTLD_GLOBAL
@@ -87,6 +97,7 @@ else:
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()
+    SupportTempChannel = True
 
     if SupportGRPCChannel:
         from .ports import GetRPCChannel
