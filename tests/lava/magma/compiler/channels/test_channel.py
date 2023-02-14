@@ -119,7 +119,6 @@ def buffer(shape, dst_port, src_port):
 
 class TestPyPyChannelMultiProcess(unittest.TestCase):
 
-    @unittest.skip("need to fix")
     def test_send_recv_relay(self):
         data = np.ones((2, 2))
         channel_source_to_buffer = get_channel(
