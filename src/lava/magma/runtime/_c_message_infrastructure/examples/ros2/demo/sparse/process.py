@@ -26,34 +26,40 @@ from lava.magma.core.model.py.type import LavaPyType
 
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
-from lava.utils.weightutils import SignMode, optimize_weight_bits, \
-    truncate_weights, determine_sign_mode, clip_weights
+from lava.utils.weightutils import (
+    SignMode,
+    optimize_weight_bits,
+    truncate_weights,
+    determine_sign_mode,
+    clip_weights,
+)
 
-from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
-from lava.proc import io
-from lava.proc.io.encoder import Compression
 
 DEBUG_INFO = False
 DEBUG_INFO2 = False
 
-class Syn(AbstractProcess):
-    def __init__(self,
-                 *,
-                 weights: np.ndarray,
-                 name: ty.Optional[str] = None,
-                 num_message_bits: ty.Optional[int] = 0,
-                 log_config: ty.Optional[LogConfig] = None,
-                 **kwargs) -> None:
 
-        super().__init__(weights=weights,
-                         num_message_bits=num_message_bits,
-                         name=name,
-                         log_config=log_config,
-                         **kwargs)
+class Syn(AbstractProcess):
+    def __init__(
+        self,
+        *,
+        weights: np.ndarray,
+        name: ty.Optional[str] = None,
+        num_message_bits: ty.Optional[int] = 0,
+        log_config: ty.Optional[LogConfig] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            weights=weights,
+            num_message_bits=num_message_bits,
+            name=name,
+            log_config=log_config,
+            **kwargs,
+        )
 
         self._validate_weights(weights)
         shape = weights.shape
@@ -70,13 +76,18 @@ class Syn(AbstractProcess):
     @staticmethod
     def _validate_weights(weights: np.ndarray) -> None:
         if len(np.shape(weights)) != 2:
-            raise ValueError("Dense Process 'weights' expects a 2D matrix, "
-                            f"got {weights}.")
+            raise ValueError(
+                "Dense Process 'weights' expects a 2D matrix, "
+                f"got {weights}."
+            )
+
 
 @implements(proc=Syn, protocol=LoihiProtocol)
 @requires(CPU)
 class SynModel(PyLoihiProcessModel):
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int64, precision=24) #* makes it np.int64 due to the "Send data too large" problem
+    s_in: PyInPort = LavaPyType(
+        PyInPort.VEC_DENSE, np.int64, precision=24
+    )  # * makes it np.int64 due to the "Send data too large" problem
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int64, precision=24)
     weights: np.ndarray = LavaPyType(np.ndarray, np.int64, precision=8)
 
@@ -88,20 +99,16 @@ class SynModel(PyLoihiProcessModel):
         self.input_shape = None
         self.output_shape = None
 
-
-
     def init(self):
         weight_exp: int = self.proc_params.get("weight_exp", 0)
         num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
         sign_mode: SignMode = self.proc_params.get("sign_mode", None)
         weights: np.ndarray = self.weights
 
-        
         input_shape = weights.shape[0]
         output_shape = weights.shape[1]
         self.input_shape = input_shape
         self.output_shape = output_shape
-        process_size = (np.prod(output_shape), np.prod(input_shape))
 
         if DEBUG_INFO:
             print("input_shape:", input_shape)
@@ -113,14 +120,11 @@ class SynModel(PyLoihiProcessModel):
             print("weights:", weights.shape)
             print("===================")
 
-
         sign_mode = sign_mode or determine_sign_mode(weights)
         weights = clip_weights(weights, sign_mode, num_bits=8)
         weights = truncate_weights(weights, sign_mode, num_weight_bits)
         optimized_weights = optimize_weight_bits(
-            weights=weights,
-            sign_mode=sign_mode,
-            loihi2=True
+            weights=weights, sign_mode=sign_mode, loihi2=True
         )
 
         weights: np.ndarray = optimized_weights.weights
@@ -135,12 +139,22 @@ class SynModel(PyLoihiProcessModel):
         num_weight_bits = optimized_weights.num_weight_bits
 
         sparse_weights = csr_matrix(weights)
-        dst, src, wgt = find(sparse_weights) #* Return the indices and values of the nonzero elements of a matrix
+        dst, src, wgt = find(
+            sparse_weights
+        )  # * Return the indices and values of the nonzero
+        # elements of a matrix
 
         if DEBUG_INFO2:
-            print(self.synname, "dst:", dst.shape, "     src: ", src.shape, "     wgt: ", wgt.shape)
+            print(
+                self.synname,
+                "dst:",
+                dst.shape,
+                "     src: ",
+                src.shape,
+                "     wgt: ",
+                wgt.shape,
+            )
             print("===================")
-
 
         # Sort sparse weight in the order of input dimension
         idx = np.argsort(src)
@@ -157,7 +171,7 @@ class SynModel(PyLoihiProcessModel):
             print("===================")
             print("dst:", dst, "     src: ", src, "     wgt: ", wgt)
             print("===================")
-    
+
     def run_spk(self):
         if self.firsttime:
             self.init()
@@ -170,7 +184,7 @@ class SynModel(PyLoihiProcessModel):
         expanded_oup = expanded_inp * self.wgt
         for i in range(len(self.dst)):
             self.oup_data[self.dst[i]] += expanded_oup[i]
-        
+
         output = np.zeros(self.output_shape)
         THRESH = 0.5
         for i in range(len(self.oup_data)):

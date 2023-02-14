@@ -20,10 +20,11 @@ class RateReader(AbstractProcess):
     Process that stores recent spikes in a buffer and computes the spike rate
     at each timestep.
     """
+
     def __init__(self, shape, buffer_size, num_steps=1):
-        super().__init__(shape=shape,
-                         buffer_size=buffer_size,
-                         num_steps=num_steps)
+        super().__init__(
+            shape=shape, buffer_size=buffer_size, num_steps=num_steps
+        )
         self.in_port = InPort(shape)
         self.buffer = Var(shape=shape + (buffer_size,))
         self.rate = Var(shape=shape, init=0)
