@@ -5,6 +5,7 @@
 from typing import Iterable, Tuple, Union, List
 import numpy as np
 from PIL import Image
+import time
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
@@ -70,15 +71,15 @@ class RosGetterProcModel(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         res = self.dst_port.recv()
-        stamp = int.from_bytes(bytearray(res[0:8].tolist()),
-                               byteorder='big', signed=False)
-        channel = int.from_bytes(bytearray(res[8:12].tolist()),
-                                 byteorder='big', signed=False)
-        width = int.from_bytes(bytearray(res[12:16].tolist()),
-                               byteorder='big', signed=False)
-        height = int.from_bytes(bytearray(res[16:20].tolist()),
+        stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
+                            byteorder='big', signed=False)
+        channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
                                 byteorder='big', signed=False)
-        img_data = res[20:].sum()
+        width = int.from_bytes(bytearray(np.flipud(res[12:16]).tolist()),
+                            byteorder='big', signed=False)
+        height = int.from_bytes(bytearray(np.flipud(res[16:20]).tolist()),
+                                byteorder='big', signed=False)
+        img_data = res[20:]
         print("stamp nsec = ", stamp)
         print("channel = ", channel)
         print("width = ", width)
@@ -87,6 +88,7 @@ class RosGetterProcModel(PyLoihiProcessModel):
         img = numpy2pil(img_data.reshape((height, width, channel)))
         img.show()
         img.close()
+        time.sleep(0.1)
 
     def post_guard(self) -> bool:
         return self.time_step == self.num_step
@@ -96,7 +98,7 @@ class RosGetterProcModel(PyLoihiProcessModel):
 
 
 def test_dds_from_ros_for_realsense():
-    topic = 'rt/camera/depth/image_rect_raw_dds'
+    topic = 'rt/camera/color/image_raw_dds'
     num_steps = 10
     proc = RosFrameGetterProcess(topic=topic, num_step=num_steps)
     run_condition = RunSteps(num_steps=num_steps)

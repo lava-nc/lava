@@ -43,10 +43,10 @@ def realsense_msg_process(res):
     print("width = ", width)
     print("height = ", height)
     print("img_data = ", img_data)
-    # img = numpy2pil(img_data.reshape((height, width, channel)))
-    # img.show()
-    # img.close()
-    # time.sleep(0.01)
+    img = numpy2pil(img_data.reshape((height, width, channel)))
+    img.show()
+    img.close()
+    time.sleep(0.1)
 
 
 def test_ddschannel():
