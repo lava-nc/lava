@@ -265,28 +265,47 @@ class Runtime:
         Gets response from RuntimeServices
         """
         if self._is_running:
-            for recv_port in self.service_to_runtime:
+            selector = Selector()
+            # Poll on all responses
+            channel_actions = [(recv_port, (lambda y: (lambda: y))(
+                recv_port)) for
+                               recv_port in
+                               self.service_to_runtime]
+            rsps = []
+            while True:
+                recv_port = selector.select(*channel_actions)
+                if recv_port is None:
+                    continue
                 data = recv_port.recv()
+                rsps.append(data)
                 if enum_equal(data, MGMT_RESPONSE.REQ_PAUSE):
-                    self._req_paused = True
+                    self.pause()
+                    return
                 elif enum_equal(data, MGMT_RESPONSE.REQ_STOP):
-                    self._req_stop = True
+                    self.stop()
+                    return
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
+                        error_cnt = 0
                         self._messaging_infrastructure.stop()
+                        '''
+                        for actors in \
+                                self._messaging_infrastructure.actors:
+                            actors.join()
+                            if actors.exception:
+                                _, traceback = actors.exception
+                                self.log.info(traceback)
+                                error_cnt += 1
+                        '''
                         raise RuntimeError(
-                            f"Exception(s) occurred. See "
+                            f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
-            if self._req_paused:
-                self._req_paused = False
-                self.pause()
-            if self._req_stop:
-                self._req_stop = False
-                self.stop()
-            self._is_running = False
+                if len(rsps) == len(self.service_to_runtime):
+                    self._is_running = False
+                    return
 
     def start(self, run_condition: AbstractRunCondition):
         """
