@@ -11,7 +11,7 @@
 #
 
 import os
-import subprocess
+import subprocess  # nosec
 import cv2
 
 import numpy as np
@@ -50,7 +50,7 @@ def through_bokeh():
         with subprocess.Popen(
             ["ps -o cmd= {}".format(os.getpid())],
             stdout=subprocess.PIPE,
-            shell=True,
+            shell=True,  # nosec
         ) as p:
             pname = str(p.communicate()[0])
         return pname
