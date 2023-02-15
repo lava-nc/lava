@@ -40,33 +40,38 @@ class MockMessageInterface:
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        port_initializer: PortInitializer = PortInitializer(
-            name="mock", shape=(1, 2), d_type=np.int32,
-            port_type='DOESNOTMATTER', size=64)
-        channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-            channel_type=ChannelType.PyPy,
-            src_port_initializer=port_initializer,
-            dst_port_initializer=port_initializer,
-            src_process=None,
-            dst_process=None,
-        )
-
-        mock = MockMessageInterface(None)
-        channel: Channel = channel_builder.build(mock)
-        assert isinstance(channel, Channel)
-        assert isinstance(channel.src_port, AbstractTransferPort)
-        assert isinstance(channel.dst_port, AbstractTransferPort)
+        smm: SharedMemoryManager = SharedMemoryManager()
         try:
-            channel.src_port.start()
-            channel.dst_port.start()
+            port_initializer: PortInitializer = PortInitializer(
+                name="mock", shape=(1, 2), d_type=np.int32,
+                port_type='DOESNOTMATTER', size=64)
+            channel_builder: ChannelBuilderMp = ChannelBuilderMp(
+                channel_type=ChannelType.PyPy,
+                src_port_initializer=port_initializer,
+                dst_port_initializer=port_initializer,
+                src_process=None,
+                dst_process=None,
+            )
 
-            expected_data = np.array([[1, 2]], dtype=np.int32)
-            channel.src_port.send(expected_data)
-            data = channel.dst_port.recv()
-            assert np.array_equal(data, expected_data)
+            smm.start()
+            mock = MockMessageInterface(smm)
+            channel: Channel = channel_builder.build(mock)
+            assert isinstance(channel, Channel)
+            assert isinstance(channel.src_port, AbstractTransferPort)
+            assert isinstance(channel.dst_port, AbstractTransferPort)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
+
+                expected_data = np.array([[1, 2]], dtype=np.int32)
+                channel.src_port.send(expected_data)
+                data = channel.dst_port.recv()
+                assert np.array_equal(data, expected_data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
-            channel.src_port.join()
-            channel.dst_port.join()
+            smm.shutdown()
 
 
 # A test Process with a variety of Ports and Vars of different shapes,

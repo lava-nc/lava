@@ -47,7 +47,7 @@ class MultiProcessing(MessageInfrastructureInterface):
         bound_target_fn = partial(target_fn, builder=builder)
         self._mp.build_actor(bound_target_fn)
 
-    def stop(self):
+    def pre_stop(self):
         """Stops the shared memory manager"""
         self._mp.stop()
 

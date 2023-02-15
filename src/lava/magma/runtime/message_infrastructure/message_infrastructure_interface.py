@@ -26,9 +26,12 @@ class MessageInfrastructureInterface(ABC):
         """Starts the messaging infrastructure"""
         pass
 
-    @abstractmethod
+    def pre_stop(self):
+        """Stop MessageInfrastructure before join ports"""
+        pass
+
     def stop(self):
-        """Stops the messaging infrastructure"""
+        """Stops the messaging infrastructure after join ports"""
         pass
 
     @abstractmethod

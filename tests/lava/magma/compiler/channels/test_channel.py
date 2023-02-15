@@ -2,7 +2,7 @@ import time
 import numpy as np
 import unittest
 from multiprocessing import Process
-
+from multiprocessing.managers import SharedMemoryManager
 from lava.magma.runtime.message_infrastructure import (
     create_channel,
     Channel,
@@ -14,8 +14,8 @@ class MockInterface:
         self.smm = smm
 
 
-def get_channel(data, name="test_channel") -> Channel:
-    mock = MockInterface(None)
+def get_channel(smm, data, name="test_channel") -> Channel:
+    mock = MockInterface(smm)
     return create_channel(
         message_infrastructure=mock,
         src_name=name + "src",
@@ -27,46 +27,61 @@ def get_channel(data, name="test_channel") -> Channel:
 
 class TestPyPyChannelSingleProcess(unittest.TestCase):
     def test_send_recv_single_process(self):
-        data = np.ones((2, 2, 2))
-        channel = get_channel(data)
+        smm = SharedMemoryManager()
         try:
-            channel.src_port.start()
-            channel.dst_port.start()
+            smm.start()
+            data = np.ones((2, 2, 2))
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.send(data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
-            channel.src_port.join()
-            channel.dst_port.join()
+            smm.shutdown()
 
     def test_send_recv_single_process_2d_data(self):
-        data = np.random.randint(100, size=(100, 100), dtype=np.int32)
-        channel = get_channel(data)
+        smm = SharedMemoryManager()
         try:
-            channel.src_port.start()
-            channel.dst_port.start()
+            smm.start()
+            data = np.random.randint(100, size=(100, 100), dtype=np.int32)
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.send(data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
-            channel.src_port.join()
-            channel.dst_port.join()
+            smm.shutdown()
 
     def test_send_recv_single_process_1d_data(self):
-        data = np.random.randint(1000, size=100, dtype=np.int16)
-        channel = get_channel(data)
+        smm = SharedMemoryManager()
         try:
-            channel.src_port.start()
-            channel.dst_port.start()
+            smm.start()
+            data = np.random.randint(1000, size=100, dtype=np.int16)
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.send(data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
-            channel.src_port.join()
-            channel.dst_port.join()
+            smm.shutdown()
 
 
 class DummyProcess(Process):
@@ -120,47 +135,52 @@ def buffer(shape, dst_port, src_port):
 class TestPyPyChannelMultiProcess(unittest.TestCase):
 
     def test_send_recv_relay(self):
-        data = np.ones((2, 2))
-        channel_source_to_buffer = get_channel(
-            data, name="channel_source_to_buffer"
-        )
-        channel_buffer_to_sink = get_channel(
-            data, name="channel_buffer_to_sink"
-        )
-        jobs = [
-            DummyProcess(
-                ports=(channel_source_to_buffer.src_port,),
-                target=source,
-                args=(
-                    data.shape,
-                    channel_source_to_buffer.src_port,
+        smm = SharedMemoryManager()
+        try:
+            smm.start()
+            data = np.ones((2, 2))
+            channel_source_to_buffer = get_channel(
+                smm, data, name="channel_source_to_buffer"
+            )
+            channel_buffer_to_sink = get_channel(
+                smm, data, name="channel_buffer_to_sink"
+            )
+            jobs = [
+                DummyProcess(
+                    ports=(channel_source_to_buffer.src_port,),
+                    target=source,
+                    args=(
+                        data.shape,
+                        channel_source_to_buffer.src_port,
+                    ),
                 ),
-            ),
-            DummyProcess(
-                ports=(
-                    channel_source_to_buffer.dst_port,
-                    channel_buffer_to_sink.src_port,
+                DummyProcess(
+                    ports=(
+                        channel_source_to_buffer.dst_port,
+                        channel_buffer_to_sink.src_port,
+                    ),
+                    target=buffer,
+                    args=(
+                        data.shape,
+                        channel_source_to_buffer.dst_port,
+                        channel_buffer_to_sink.src_port,
+                    ),
                 ),
-                target=buffer,
-                args=(
-                    data.shape,
-                    channel_source_to_buffer.dst_port,
-                    channel_buffer_to_sink.src_port,
+                DummyProcess(
+                    ports=(channel_buffer_to_sink.dst_port,),
+                    target=sink,
+                    args=(
+                        data.shape,
+                        channel_buffer_to_sink.dst_port,
+                    ),
                 ),
-            ),
-            DummyProcess(
-                ports=(channel_buffer_to_sink.dst_port,),
-                target=sink,
-                args=(
-                    data.shape,
-                    channel_buffer_to_sink.dst_port,
-                ),
-            ),
-        ]
-        for p in jobs:
-            p.start()
-        for p in jobs:
-            p.join()
+            ]
+            for p in jobs:
+                p.start()
+            for p in jobs:
+                p.join()
+        finally:
+            smm.shutdown()
 
 
 if __name__ == "__main__":

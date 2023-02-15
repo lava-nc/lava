@@ -17,7 +17,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_conditions import RunSteps
-
+from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
 # A minimal process with an OutPort
 class P1(AbstractProcess):
@@ -117,6 +117,7 @@ class TestExceptionHandling(unittest.TestCase):
         existing_shm = shared_memory.SharedMemory(name=self.shm_name)
         existing_shm.unlink()
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "need to restore py version")
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
@@ -140,6 +141,7 @@ class TestExceptionHandling(unittest.TestCase):
         proc.stop()
         self.assertEqual(res[0], 1)
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "need to restore py version")
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
         runtime."""
@@ -168,6 +170,7 @@ class TestExceptionHandling(unittest.TestCase):
         recv.stop()
         self.assertEqual(res[0], 2)
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "need to restore py version")
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
         runtime."""

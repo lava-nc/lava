@@ -7,6 +7,7 @@ import time
 import numpy as np
 import typing as ty
 import functools as ft
+from multiprocessing.managers import SharedMemoryManager
 from lava.magma.runtime.message_infrastructure import (
     Channel,
     create_channel,
@@ -27,8 +28,8 @@ class MockInterface:
         self.smm = smm
 
 
-def get_channel(data, name="test_channel") -> Channel:
-    mock = MockInterface(None)
+def get_channel(smm, data, name="test_channel") -> Channel:
+    mock = MockInterface(smm)
     return create_channel(
         message_infrastructure=mock,
         src_name=name + "src",
@@ -42,58 +43,63 @@ class TestPyPorts(unittest.TestCase):
     def probe_test_routine(self, cls):
         """Routine that tests probe method on one implementation of PyInPorts.
         """
-
-        data = np.ones((4, 4))
-
-        channel_1 = get_channel(data)
-        send_csp_port_1: AbstractTransferPort = channel_1.src_port
-        recv_csp_port_1: AbstractTransferPort = channel_1.dst_port
-
-        channel_2 = get_channel(data)
-        send_csp_port_2: AbstractTransferPort = channel_2.src_port
-        recv_csp_port_2: AbstractTransferPort = channel_2.dst_port
-
-        # Create two different PyOutPort
-        send_py_port_1: PyOutPort = \
-            PyOutPortVectorDense([send_csp_port_1], None, data.shape,
-                                 data.dtype)
-        send_py_port_2: PyOutPort = \
-            PyOutPortVectorDense([send_csp_port_2], None, data.shape,
-                                 data.dtype)
-        # Create PyInPort with current implementation
-        recv_py_port: PyInPort = \
-            cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
-                data.dtype)
+        smm = SharedMemoryManager()
 
         try:
-            recv_py_port.start()
-            send_py_port_1.start()
-            send_py_port_2.start()
+            smm.start()
+            data = np.ones((4, 4))
 
-            # Send data through first PyOutPort
-            send_py_port_1.send(data)
-            # Send data through second PyOutPort
-            send_py_port_2.send(data)
-            # Sleep to let message reach the PyInPort
-            time.sleep(0.01)
-            # Probe PyInPort
-            probe_value = recv_py_port.probe()
+            channel_1 = get_channel(smm, data)
+            send_csp_port_1: AbstractTransferPort = channel_1.src_port
+            recv_csp_port_1: AbstractTransferPort = channel_1.dst_port
 
-            # probe_value should be True if message reached the PyInPort
-            self.assertTrue(probe_value)
+            channel_2 = get_channel(smm, data)
+            send_csp_port_2: AbstractTransferPort = channel_2.src_port
+            recv_csp_port_2: AbstractTransferPort = channel_2.dst_port
 
-            # Get data that reached PyInPort to empty buffer
-            _ = recv_py_port.recv()
-            # Probe PyInPort
-            probe_value = recv_py_port.probe()
+            # Create two different PyOutPort
+            send_py_port_1: PyOutPort = \
+                PyOutPortVectorDense([send_csp_port_1], None, data.shape,
+                                     data.dtype)
+            send_py_port_2: PyOutPort = \
+                PyOutPortVectorDense([send_csp_port_2], None, data.shape,
+                                     data.dtype)
+            # Create PyInPort with current implementation
+            recv_py_port: PyInPort = \
+                cls([recv_csp_port_1, recv_csp_port_2], None, data.shape,
+                    data.dtype)
 
-            # probe_value should be False since PyInPort's buffer was emptied
-            self.assertFalse(probe_value)
+            try:
+                recv_py_port.start()
+                send_py_port_1.start()
+                send_py_port_2.start()
+
+                # Send data through first PyOutPort
+                send_py_port_1.send(data)
+                # Send data through second PyOutPort
+                send_py_port_2.send(data)
+                # Sleep to let message reach the PyInPort
+                time.sleep(0.01)
+                # Probe PyInPort
+                probe_value = recv_py_port.probe()
+
+                # probe_value should be True if message reached the PyInPort
+                self.assertTrue(probe_value)
+
+                # Get data that reached PyInPort to empty buffer
+                _ = recv_py_port.recv()
+                # Probe PyInPort
+                probe_value = recv_py_port.probe()
+
+                # probe_value should be False since PyInPort's buffer was emptied
+                self.assertFalse(probe_value)
+            finally:
+                send_csp_port_1.join()
+                recv_csp_port_1.join()
+                send_py_port_1.join()
+                recv_csp_port_2.join()
         finally:
-            send_csp_port_1.join()
-            recv_csp_port_1.join()
-            send_py_port_1.join()
-            recv_csp_port_2.join()
+            smm.shutdown()
 
     def test_py_in_port_probe(self):
         """Tests PyInPort probe method on all implementations of PyInPorts."""

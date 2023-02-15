@@ -385,25 +385,28 @@ class Runtime:
 
     def stop(self):
         """Stops an ongoing or paused run."""
-        if self._is_started:
-            for send_port in self.runtime_to_service:
-                send_port.send(MGMT_COMMAND.STOP)
-            for recv_port in self.service_to_runtime:
-                data = recv_port.recv()
-                if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
-                    if recv_port.probe():
-                        data = recv_port.recv()
+        try:
+            if self._is_started:
+                for send_port in self.runtime_to_service:
+                    send_port.send(MGMT_COMMAND.STOP)
+                for recv_port in self.service_to_runtime:
+                    data = recv_port.recv()
                     if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
-                        raise RuntimeError(f"Runtime Received {data}")
+                        if recv_port.probe():
+                            data = recv_port.recv()
+                        if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                            raise RuntimeError(f"Runtime Received {data}")
 
+                self._messaging_infrastructure.pre_stop()
+                self.join()
+                self._is_running = False
+                self._is_started = False
+                self._messaging_infrastructure.cleanup(True)
+                # Send messages to RuntimeServices to stop as soon as possible.
+            else:
+                self.log.info("Runtime not started yet.")
+        finally:
             self._messaging_infrastructure.stop()
-            self.join()
-            self._is_running = False
-            self._is_started = False
-            self._messaging_infrastructure.cleanup(True)
-            # Send messages to RuntimeServices to stop as soon as possible.
-        else:
-            self.log.info("Runtime not started yet.")
 
     def join(self):
         """Join all ports and processes"""
@@ -518,8 +521,9 @@ class Runtime:
                 buffer: np.ndarray = np.empty((1, num_items))
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]
-
-            # 3. Reshape result and return
+                # 3. Reshape result and return
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:

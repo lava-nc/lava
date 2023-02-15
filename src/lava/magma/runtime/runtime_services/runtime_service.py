@@ -11,6 +11,7 @@ import numpy as np
 from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SendPort,
+    SupportTempChannel,
 )
 from lava.magma.runtime.message_infrastructure import Selector
 
@@ -212,20 +213,40 @@ class LoihiPyRuntimeService(PyRuntimeService):
         """Relays data received from ProcessModel given by model id  to the
         runtime"""
         process_idx = self.model_ids.index(model_id)
-        addr_recv_port = self.runtime_to_service
-        addr_relay_port = self.service_to_process[process_idx]
-        addr_path = addr_recv_port.recv()
-        addr_relay_port.send(addr_path)
+        if SupportTempChannel:
+            addr_recv_port = self.runtime_to_service
+            addr_relay_port = self.service_to_process[process_idx]
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+        else:
+            data_recv_port = self.process_to_service[process_idx]
+            data_relay_port = self.service_to_runtime
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            for i in range(int(num_items[0])):
+                value = data_recv_port.recv()
+                data_relay_port.send(value)
 
     def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
         """Relays data received from the runtime to the ProcessModel given by
         the model id."""
         process_idx = self.model_ids.index(model_id)
-        addr_recv_port = self.process_to_service[process_idx]
-        addr_relay_port = self.service_to_runtime
-        addr_path = addr_recv_port.recv()
-        addr_relay_port.send(addr_path)
-        resp_port = self.process_to_service[process_idx]
+        if SupportTempChannel:
+            addr_recv_port = self.process_to_service[process_idx]
+            addr_relay_port = self.service_to_runtime
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+            resp_port = self.process_to_service[process_idx]
+        else:
+            data_recv_port = self.runtime_to_service
+            data_relay_port = self.service_to_process[process_idx]
+            resp_port = self.process_to_service[process_idx]
+            # Receive and relay number of items
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            # Receive and relay data1, data2, ...
+            for i in range(int(num_items[0].item())):
+                data_relay_port.send(data_recv_port.recv())
         rsp = resp_port.recv()
         return rsp
 

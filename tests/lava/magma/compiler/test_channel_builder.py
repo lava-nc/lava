@@ -5,7 +5,7 @@ import typing as ty
 import unittest
 
 import numpy as np
-
+from multiprocessing.managers import SharedMemoryManager
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.utils import PortInitializer
 
@@ -29,6 +29,7 @@ class MockMessageInterface:
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
+        smm: SharedMemoryManager = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
                 name="mock", shape=(1, 2), d_type=np.int32,
@@ -40,8 +41,8 @@ class TestChannelBuilder(unittest.TestCase):
                 src_process=None,
                 dst_process=None,
             )
-
-            mock = MockMessageInterface(None)
+            smm.start()
+            mock = MockMessageInterface(smm)
             channel: Channel = channel_builder.build(mock)
             self.assertIsInstance(channel.src_port, SendPort)
             self.assertIsInstance(channel.dst_port, RecvPort)
@@ -58,7 +59,7 @@ class TestChannelBuilder(unittest.TestCase):
             channel.dst_port.join()
 
         finally:
-            pass
+            smm.shutdown()
 
 
 if __name__ == "__main__":
