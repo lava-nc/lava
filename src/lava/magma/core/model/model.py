@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import typing as ty
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess

@@ -116,13 +116,13 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         data_port = self.process_to_service
         # Header corresponds to number of values
         # Data is either send once (for int) or one by one (array)
-        if isinstance(var, int) or isinstance(var, np.integer):
+        if isinstance(var, int) or isinstance(var, np.int32):
             data_port.send(enum_to_np(1))
             data_port.send(enum_to_np(var))
         elif isinstance(var, np.ndarray):
             # FIXME: send a whole vector (also runtime_service.py)
             var_iter = np.nditer(var, order="C")
-            num_items: np.integer = np.prod(var.shape)
+            num_items: np.int32 = np.prod(var.shape)
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
@@ -130,7 +130,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             encoded_str = list(var.encode("ascii"))
             data_port.send(enum_to_np(len(encoded_str)))
             for ch in encoded_str:
-                data_port.send(enum_to_np(ch, d_type=np.integer))
+                data_port.send(enum_to_np(ch, d_type=np.int32))
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -141,7 +141,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
         # 2. Receive Var data
         data_port = self.service_to_process
-        if isinstance(var, int) or isinstance(var, np.integer):
+        if isinstance(var, int) or isinstance(var, np.int32):
             # First item is number of items (1) - not needed
             data_port.recv()
             # Data to set

@@ -60,7 +60,7 @@ def create_network(
     dense_inp = Dense(weights=np.eye(size, size) * 2.0)
 
     lif_0 = LIF(
-        shape=(size,), du=du, dv=dv, vth=vth, bias_mant=0.0, name="lif_pre"
+        shape=(size,), du=du, dv=dv, vth=vth, bias_mant=0, name="lif_pre"
     )
 
     dense = LearningDense(
@@ -68,7 +68,7 @@ def create_network(
     )
 
     lif_1 = LIF(
-        shape=(size,), du=du, dv=dv, vth=vth, bias_mant=0.0, name="lif_post"
+        shape=(size,), du=du, dv=dv, vth=vth, bias_mant=0, name="lif_post"
     )
 
     spike_gen.s_out.connect(dense_inp.s_in)
