@@ -69,9 +69,10 @@ class TestContextManager(unittest.TestCase):
         if self.stoppable is not None:
             self.stoppable.stop()
 
-    def test_context_manager_stops_process(self):
+    def test_context_manager_stops_process_continuous(self):
         """
         Verifies context manager stops process when exiting "with" block.
+        Process is started with RunContinuous.
         """
         process = SimpleProcess(shape=(2, 2))
         self.stoppable = process
@@ -82,6 +83,45 @@ class TestContextManager(unittest.TestCase):
             process.run(condition=RunContinuous(), run_cfg=run_config)
             self.assertTrue(process.runtime._is_running)
             self.assertTrue(process.runtime._is_started)
+            sleep(2)
+
+        self.assertFalse(process.runtime._is_running)
+        self.assertFalse(process.runtime._is_started)
+
+    def test_context_manager_stops_process_runsteps_nonblocking(self):
+        """
+        Verifies context manager stops process when exiting "with" block.
+        Process is started with RunSteps(blocking=false).
+        """
+        process = SimpleProcess(shape=(2, 2))
+        self.stoppable = process
+        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
+                                        [process])
+        run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
+
+        with process:
+            process.run(condition=RunSteps(200, blocking=False),
+                        run_cfg=run_config)
+            self.assertTrue(process.runtime._is_running)
+            self.assertTrue(process.runtime._is_started)
+
+        self.assertFalse(process.runtime._is_running)
+        self.assertFalse(process.runtime._is_started)
+
+    def test_context_manager_stops_process_runsteps_blocking(self):
+        """
+        Verifies context manager stops process when exiting "with" block.
+        Process is started with RunSteps(blocking=true).
+        """
+        process = SimpleProcess(shape=(2, 2))
+        self.stoppable = process
+        simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
+                                        [process])
+        run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
+
+        with process:
+            process.run(condition=RunSteps(200, blocking=True),
+                        run_cfg=run_config)
             sleep(2)
 
         self.assertFalse(process.runtime._is_running)
