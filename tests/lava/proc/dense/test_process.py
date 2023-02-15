@@ -5,7 +5,7 @@
 import unittest
 import numpy as np
 
-from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.dense.process import Dense, LearningDense, DelayDense
 
 
 class TestDenseProcess(unittest.TestCase):
@@ -41,3 +41,29 @@ class TestLearningDenseProcess(unittest.TestCase):
 
         self.assertEqual(np.shape(conn.weights.init), shape)
         np.testing.assert_array_equal(conn.weights.init, weights)
+
+
+class TestDelayDenseProcess(unittest.TestCase):
+    """Tests for DelayDense class"""
+
+    def test_init(self):
+        """Tests instantiation of DelayDense"""
+        shape = (100, 200)
+        weights = np.random.randint(100, size=shape)
+        delays = np.random.randint(10, size=shape)
+
+        conn = DelayDense(weights=weights, delays=delays)
+
+        self.assertEqual(np.shape(conn.weights.init), shape)
+        np.testing.assert_array_equal(conn.weights.init, weights)
+
+    def test_input_validation_delays(self):
+        """Tests input validation on the dimensions and values of 'delays'.
+        (Must be 2D and positive values.)"""
+        weights = np.random.randint(100, size=(2, 4))
+        delays = np.random.randint(10, size=(3, 4))
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)
+        delays = -1
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)

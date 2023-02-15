@@ -190,27 +190,10 @@ class PyLearningDenseModelBitApproximate(
         self.recv_traces(s_in)
 
 
-@implements(proc=DelayDense, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PyDelayDenseModelFloat(PyLoihiProcessModel):
-    """Implementation of Conn Process with Dense synaptic connections in
-    floating point precision. This short and simple ProcessModel can be used
-    for quick algorithmic prototyping, without engaging with the nuances of a
-    fixed point implementation. DelayDense incorporates delays into the Conn
-    Process.
+class AbstractPyDelayDenseModel(PyLoihiProcessModel):
+    """Abstract Conn Process with Dense synaptic connections which incorporates
+    delays into the Conn Process.
     """
-
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
-    # weights is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, float)
-    # delays is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
-    delays: np.ndarray = LavaPyType(np.ndarray, int)
-    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def get_del_wgts(self):
         """
@@ -254,6 +237,28 @@ class PyDelayDenseModelFloat(PyLoihiProcessModel):
         self.a_buff = np.roll(self.a_buff, -1)
         self.a_buff += self.calc_act(s_in)
 
+
+@implements(proc=DelayDense, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
+    """Implementation of Conn Process with Dense synaptic connections in
+    floating point precision. This short and simple ProcessModel can be used
+    for quick algorithmic prototyping, without engaging with the nuances of a
+    fixed point implementation. DelayDense incorporates delays into the Conn
+    Process.
+    """
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
+    # weights is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    # delays is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    delays: np.ndarray = LavaPyType(np.ndarray, int)
+    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+
     def run_spk(self):
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
@@ -261,7 +266,70 @@ class PyDelayDenseModelFloat(PyLoihiProcessModel):
         self.a_out.send(self.a_buff[:, 0])
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
-            self.update_act(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            self.update_act(s_in)
+        self.update_act(s_in)
+
+
+@implements(proc=DelayDense, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("bit_accurate_loihi", "fixed_pt")
+class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
+    """Implementation of Conn Process with Dense synaptic connections that is
+    bit-accurate with Loihi's hardware implementation of Dense, which means,
+    it mimics Loihi behaviour bit-by-bit. DelayDense incorporates delays into
+    the Conn Process. Loihi 2 has a maximum of 6 bits for delays, meaning a
+    spike can be delayed by 0 to 63 time steps."""
+    
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=16)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
+    # weights is a 2D matrix of form (num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    delays: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=6)
+    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        # Flag to determine whether weights have already been scaled.
+        self.weights_set = False
+
+    def run_spk(self):
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+
+        # Since this Process has no learning, weights are assumed to be static
+        # and only require scaling on the first timestep of run_spk().
+        if not self.weights_set:
+            num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
+            sign_mode: SignMode = self.proc_params.get("sign_mode") \
+                or determine_sign_mode(self.weights)
+
+            self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
+            self.weights = truncate_weights(self.weights,
+                                            sign_mode,
+                                            num_weight_bits)
+            self.weights_set = True
+            
+            # Check if delays are within Loihi 2 constraints
+            if np.max(self.delays) > 63:
+                raise ValueError("DelayDense Process 'delays' expects values "
+                                 f"between 0 and 63, got {self.delays}.")
+
+        # The a_out sent at each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
+        self.a_out.send(self.a_buff[:, 0])
+        if self.num_message_bits.item() > 0:
+            s_in = self.s_in.recv()
+        else:
+            s_in = self.s_in.recv().astype(bool)
+        
+        a_accum = self.calc_act(s_in)
+        self.a_buff[:, 0] = 0
+        self.a_buff = np.roll(self.a_buff, -1)
+        self.a_buff += (
+            np.left_shift(a_accum, self.weight_exp)
+            if self.weight_exp > 0
+            else np.right_shift(a_accum, -self.weight_exp)
+        )

@@ -150,7 +150,7 @@ class DelayDense(Dense):
     def __init__(self,
                  *,
                  weights: np.ndarray,
-                 delays: np.ndarray,
+                 delays: ty.Union[np.ndarray, int],
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -164,9 +164,10 @@ class DelayDense(Dense):
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
 
-        delays : numpy.ndarray
+        delays : numpy.ndarray, int
             2D connection delay matrix of form (num_flat_output_neurons,
-            num_flat_input_neurons) in C-order (row major).
+            num_flat_input_neurons) in C-order (row major) or integer value if
+            the same delay should be used for all synapses.
 
         weight_exp : int, optional
             Shared weight exponent of base 2 used to scale magnitude of
@@ -205,7 +206,7 @@ class DelayDense(Dense):
                          log_config=log_config,
                          **kwargs)
 
-        self._validate_delays(delays)
+        self._validate_delays(weights, delays)
         max_delay = int(np.max(delays))
         shape = weights.shape
 
@@ -214,7 +215,12 @@ class DelayDense(Dense):
         self.a_buff = Var(shape=(shape[0], max_delay + 1) , init=0)
 
     @staticmethod
-    def _validate_delays(delays: np.ndarray) -> None:
-        if len(np.shape(delays)) != 2:
-            raise ValueError("DelayDense Process 'delays' expects a 2D "
-                             f"matrix, got {delays}.")
+    def _validate_delays(weights: np.ndarray, delays: np.ndarray) -> None:
+        if np.min(delays) < 0:
+            raise ValueError("DelayDense Process 'delays' expects only "
+                             f"positive values, got {delays}.")
+        if not isinstance(delays, int):
+            if np.shape(weights) != np.shape(delays):
+                raise ValueError("DelayDense Process 'delays' expects same "
+                                 f"shape than the weight matrix or int, got "
+                                 f"{delays}.")
