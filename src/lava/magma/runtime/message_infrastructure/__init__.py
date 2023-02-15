@@ -36,9 +36,10 @@ if PURE_PYTHON_VERSION:
     from .pypychannel import (
         SendPort,
         RecvPort,
-        create_channel)
+        create_channel,
+        CspSelector,
+        PyPyChannel)
     from .pypychannel import CspSelector as Selector
-
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
     SupportCycloneDDSChannel = False
@@ -93,7 +94,9 @@ else:
         getTempSendPort,
         getTempRecvPort,
         create_channel)
-
+    from .pypychannel import (
+        CspSelector,
+        PyPyChannel)
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()
