@@ -213,11 +213,11 @@ class TestSTDPSim(unittest.TestCase):
 
         dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
-        lif_1 = LearningLIF(shape=(size,),
-                            du=0,
-                            dv=0,
-                            vth=10000,
-                            bias_mant=20000)
+        lif_1 = LIF(shape=(size,),
+                    du=0,
+                    dv=0,
+                    vth=10000,
+                    bias_mant=20000)
 
         lif_0.s_out.connect(dense.s_in)
         dense.a_out.connect(lif_1.a_in)
@@ -401,7 +401,7 @@ class TestSTDPSim(unittest.TestCase):
 
         dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
-        lif_1 = LearningLIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
+        lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
 
         lif_0.s_out.connect(dense.s_in)
         dense.a_out.connect(lif_1.a_in)
