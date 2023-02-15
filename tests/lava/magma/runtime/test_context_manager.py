@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import unittest
 from time import sleep
 
@@ -27,18 +31,11 @@ class SimpleProcess(AbstractProcess):
 @implements(proc=SimpleProcess, protocol=LoihiProtocol)
 @requires(CPU)
 class SimpleProcessModel(PyLoihiProcessModel):
-    """
-    Defines a SimpleProcessModel
-    """
     u = LavaPyType(int, int)
     v = LavaPyType(int, int)
 
 
 class SimpleRunConfig(RunConfig):
-    """
-    Defines a simple run config
-    """
-
     def __init__(self, **kwargs):
         sync_domains = kwargs.pop("sync_domains")
         super().__init__(custom_sync_domains=sync_domains)
@@ -57,13 +54,13 @@ class SimpleRunConfig(RunConfig):
 class TestContextManager(unittest.TestCase):
     def tearDown(self) -> None:
         """
-        Ensures process/runtime is stopped if context manager fails to
+        Ensures process/runtime is stopped if context manager fails to.
         """
         self.stoppable.stop()
 
     def test_context_manager_stops_process(self):
         """
-        Verifies context manager stops process when exiting "with" block
+        Verifies context manager stops process when exiting "with" block.
         """
         process = SimpleProcess(shape=(2, 2))
         self.stoppable = process
@@ -81,14 +78,14 @@ class TestContextManager(unittest.TestCase):
 
     def test_context_manager_stops_runtime(self):
         """
-        Verifies context manager stops runtime when exiting "with" block
+        Verifies context manager stops runtime when exiting "with" block.
         """
-        self.process = SimpleProcess(shape=(2, 2))
+        process = SimpleProcess(shape=(2, 2))
         simple_sync_domain = SyncDomain("simple", LoihiProtocol(),
-                                        [self.process])
+                                        [process])
         run_config = SimpleRunConfig(sync_domains=[simple_sync_domain])
         compiler = Compiler()
-        executable = compiler.compile(self.process, run_config)
+        executable = compiler.compile(process, run_config)
         runtime = Runtime(executable,
                           ActorType.MultiProcessing)
         executable.assign_runtime_to_all_processes(runtime)

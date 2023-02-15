@@ -226,9 +226,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Stop the runtime when exiting "with" block.
-        """
+        """Stop the runtime when exiting "with" block of a context manager."""
         self.stop()
 
     def _post_init(self):
