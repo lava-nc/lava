@@ -1,8 +1,9 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-
+import abc
 import unittest
+from typing import Optional
 from time import sleep
 
 from lava.magma.compiler.compiler import Compiler
@@ -51,12 +52,22 @@ class SimpleRunConfig(RunConfig):
         return proc_models[0]
 
 
+class Stoppable(abc.ABC):
+    @abc.abstractmethod
+    def stop(self) -> None:
+        ...
+
+
 class TestContextManager(unittest.TestCase):
+    def setUp(self) -> None:
+        self.stoppable: Optional[Stoppable] = None
+
     def tearDown(self) -> None:
         """
         Ensures process/runtime is stopped if context manager fails to.
         """
-        self.stoppable.stop()
+        if self.stoppable is not None:
+            self.stoppable.stop()
 
     def test_context_manager_stops_process(self):
         """
