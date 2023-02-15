@@ -7,7 +7,6 @@ import logging
 import typing as ty
 from _collections import OrderedDict
 from dataclasses import dataclass
-from contextlib import AbstractContextManager
 from lava.magma.compiler.executable import Executable
 
 from lava.magma.core.process.interfaces import \
@@ -36,7 +35,7 @@ class ProcessPostInitCaller(type):
         return obj
 
 
-class AbstractProcess(AbstractContextManager, metaclass=ProcessPostInitCaller):
+class AbstractProcess(metaclass=ProcessPostInitCaller):
     """The notion of a Process is inspired by the Communicating Sequential
     Process paradigm for distributed, parallel, and asynchronous programming.
 
@@ -221,6 +220,10 @@ class AbstractProcess(AbstractContextManager, metaclass=ProcessPostInitCaller):
         free compute resources.
         """
         self.stop()
+
+    def __enter__(self):
+        """Required for "with" block."""
+        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop the runtime when exiting "with" block of a context manager."""
