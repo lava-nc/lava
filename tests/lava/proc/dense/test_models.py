@@ -554,6 +554,7 @@ class TestDenseProcessModelFixed(unittest.TestCase):
         dense.run(condition=rcnd, run_cfg=rcfg)
         dense.stop()
 
+
 class TestDelayDenseProcessModel(unittest.TestCase):
     """Tests for ProcessModels of Dense with synaptic delay."""
 

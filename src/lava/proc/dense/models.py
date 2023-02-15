@@ -280,7 +280,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
     it mimics Loihi behaviour bit-by-bit. DelayDense incorporates delays into
     the Conn Process. Loihi 2 has a maximum of 6 bits for delays, meaning a
     spike can be delayed by 0 to 63 time steps."""
-    
+
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=16)
     a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
@@ -310,7 +310,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
                                             sign_mode,
                                             num_weight_bits)
             self.weights_set = True
-            
+
             # Check if delays are within Loihi 2 constraints
             if np.max(self.delays) > 63:
                 raise ValueError("DelayDense Process 'delays' expects values "
@@ -324,7 +324,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
             s_in = self.s_in.recv()
         else:
             s_in = self.s_in.recv().astype(bool)
-        
+
         a_accum = self.calc_act(s_in)
         self.a_buff[:, 0] = 0
         self.a_buff = np.roll(self.a_buff, -1)
