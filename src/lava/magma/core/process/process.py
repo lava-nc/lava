@@ -222,7 +222,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         self.stop()
 
     def __enter__(self):
-        """Required for "with" block."""
+        """Executed when Process enters a "with" block of a context manager."""
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
