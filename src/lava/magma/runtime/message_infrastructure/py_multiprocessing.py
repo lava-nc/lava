@@ -110,6 +110,16 @@ class MultiProcessing(MessageInfrastructureInterface):
                 actor.join()
         self._smm.shutdown()
 
+    def trace(self, logger) -> int:
+        error_cnt = 0
+        for actors in self._actors:
+            actors.join()
+            if actors.exception:
+                _, traceback = actors.exception
+                logger.info(traceback)
+                error_cnt += 1
+        return error_cnt
+
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
         """Given a channel type, returns the shared memory based class
         implementation for the same"""

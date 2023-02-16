@@ -59,6 +59,13 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Close all resources"""
         self._mp.cleanup(block)
 
+    def trace(self, logger) -> int:
+        """Trace actors' exceptions"""
+        # CppMessageInfrastructure cannot trace exceptions.
+        # It needs to stop all actors.
+        self.stop()
+        return 0
+
     def channel(self, channel_type: ChannelType, src_name, dst_name,
                 shape, dtype, size, sync=False) -> Channel:
         if channel_type == ChannelType.PyPy:

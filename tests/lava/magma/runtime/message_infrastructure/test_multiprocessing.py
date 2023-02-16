@@ -7,8 +7,8 @@ import time
 import numpy as np
 from functools import partial
 
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
+from lava.magma.runtime.message_infrastructure import \
+    PURE_PYTHON_VERSION
 
 
 def nbytes_cal(shape, dtype):
@@ -42,7 +42,10 @@ def target_fn(*args, **kwargs):
 
 class TestMultiprocessing(unittest.TestCase):
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
     def test_multiprocessing_actors(self):
+        from lava.magma.runtime.message_infrastructure.multiprocessing \
+            import MultiProcessing
         mp = MultiProcessing()
         mp.start()
         builder = Builder()

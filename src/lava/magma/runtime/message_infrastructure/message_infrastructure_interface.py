@@ -43,6 +43,10 @@ class MessageInfrastructureInterface(ABC):
         """Close all resources"""
         pass
 
+    def trace(self, logger) -> int:
+        """Trace actors' exceptions"""
+        return 0
+
     @property
     @abstractmethod
     def actors(self) -> ty.List[ty.Any]:

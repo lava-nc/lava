@@ -285,17 +285,8 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        error_cnt = 0
-                        self._messaging_infrastructure.stop()
-                        '''
-                        for actors in \
-                                self._messaging_infrastructure.actors:
-                            actors.join()
-                            if actors.exception:
-                                _, traceback = actors.exception
-                                self.log.info(traceback)
-                                error_cnt += 1
-                        '''
+                        error_cnt = self._messaging_infrastructure.trace(
+                            self.log)
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
