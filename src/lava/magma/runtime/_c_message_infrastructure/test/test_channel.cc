@@ -44,10 +44,7 @@ void RecvProc(AbstractRecvPortPtr recv_port) {
   recv_port->Start();
   auto recv_data = recv_port->Recv();
   recv_port->Join();
-
-  // if (recv_data != Data()) {
-  //   std::cout << "Received Data is incorrect" << std::endl;
-  // }
+  std::cout << "Status STOPPED" << std::endl;
 }
 
 TEST(TestSharedMemory, SharedMemSendReceive) {

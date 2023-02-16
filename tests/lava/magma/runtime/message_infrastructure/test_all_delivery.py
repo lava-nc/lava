@@ -12,9 +12,8 @@ from multiprocessing import Semaphore
 from multiprocessing import Process
 from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
-from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-    import ChannelType
 from lava.magma.runtime.message_infrastructure import (
+    PURE_PYTHON_VERSION,
     Channel,
     SupportGRPCChannel,
     SupportFastDDSChannel,
@@ -165,7 +164,10 @@ class TestAllDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 1000
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
+        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+            import ChannelType
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -241,7 +243,10 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
+        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+            import ChannelType
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -317,6 +322,7 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
 
@@ -388,6 +394,7 @@ class TestAllDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
         predata = prepare_data()

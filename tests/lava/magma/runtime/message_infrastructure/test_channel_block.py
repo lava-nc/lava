@@ -10,10 +10,8 @@ import time
 from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
 
-from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-    import ChannelType
-
 from lava.magma.runtime.message_infrastructure import (
+    PURE_PYTHON_VERSION,
     Channel,
     SendPort,
     RecvPort
@@ -51,7 +49,10 @@ def recv_proc(*args, **kwargs):
 
 class TestChannelBlock(unittest.TestCase):
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_block(self):
+        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+            import ChannelType
         mp = MultiProcessing()
         mp.start()
         predata = generate_data()
