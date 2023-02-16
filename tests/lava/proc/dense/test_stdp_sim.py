@@ -629,15 +629,15 @@ class TestSTDPSim(unittest.TestCase):
             weight_after_run,
             np.array(
                 [
-                    [191.7300724,  31.3616088, 255.5749675],
-                    [187.6922553,  17.4506295, 250.7446092]
+                    [191.7300724, 31.3616088, 255.5749675],
+                    [187.6922553, 17.4506295, 250.7446092]
                 ]
             ),
         )
 
-     def test_rstdp_fixed_point(self):
-         """Known value test. Run a simple learning dense layer between two LIF
-         and compare to the resulting weight from previous runs."""
+    def test_rstdp_fixed_point(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        and compare to the resulting weight from previous runs."""
 
         learning_rule = RewardModulatedSTDP(
             learning_rate=1,
@@ -704,7 +704,7 @@ class TestSTDPSim(unittest.TestCase):
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(weight_after_run, np.array([[64]]))
 
-     def test_rstdp_fixed_point_multi_synapse(self):
+    def test_rstdp_fixed_point_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
         population with multiple neurons and compare to the resulting weight
         from previous runs."""
