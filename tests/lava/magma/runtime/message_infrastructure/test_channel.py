@@ -84,7 +84,6 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
 
 class TestChannel(unittest.TestCase):
 
-
     def test_shmemchannel(self):
         mp = MultiProcessing()
         mp.start()
@@ -114,7 +113,6 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop()
         mp.cleanup(True)
-
 
     def test_single_process_shmemchannel(self):
         predata = prepare_data()
@@ -148,7 +146,6 @@ class TestChannel(unittest.TestCase):
         send_port.join()
         recv_port.join()
 
-
     def test_socketchannel(self):
         mp = MultiProcessing()
         mp.start()
@@ -178,7 +175,6 @@ class TestChannel(unittest.TestCase):
         time.sleep(0.1)
         mp.stop()
         mp.cleanup(True)
-
 
     def test_single_process_socketchannel(self):
         predata = prepare_data()

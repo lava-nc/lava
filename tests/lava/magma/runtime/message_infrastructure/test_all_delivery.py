@@ -241,7 +241,6 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         loop = self.loop_
         mp = MultiProcessing()
@@ -318,7 +317,6 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-
     def test_py_shm_loop_with_cpp_multiprocess(self):
         loop = self.loop_
 
@@ -390,10 +388,8 @@ class TestAllDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
-
         predata = prepare_data()
         queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize

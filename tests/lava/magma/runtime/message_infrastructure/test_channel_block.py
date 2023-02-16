@@ -51,7 +51,6 @@ def recv_proc(*args, **kwargs):
 
 class TestChannelBlock(unittest.TestCase):
 
-
     def test_block(self):
         mp = MultiProcessing()
         mp.start()
