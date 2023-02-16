@@ -85,7 +85,7 @@ jobs:
 
   msg-infr-unit-tests:
     # TODO: rm it
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Message Infrastructure Unit Test
     runs-on: ${{ matrix.operating-system }}
     env:
