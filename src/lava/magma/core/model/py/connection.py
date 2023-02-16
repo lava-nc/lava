@@ -402,9 +402,6 @@ class PyLearningConnection(AbstractLearningConnection):
             self._record_post_spike_times(s_in_bap)
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
             s_in_bap = self.s_in_bap.recv().astype(bool)
-
-            # s_in_bap is being connected to the y1 port to receive
-            # post-synaptic spikes.
             y1 = self.s_in_y1.recv()
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
