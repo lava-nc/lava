@@ -51,8 +51,8 @@ class TestChannelBlock(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_block(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         mp = MultiProcessing()
         mp.start()
         predata = generate_data()

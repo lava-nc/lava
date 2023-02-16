@@ -86,8 +86,8 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_shmemchannel(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
@@ -119,8 +119,8 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_single_process_shmemchannel(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_shmem_channel'
@@ -154,8 +154,8 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_socketchannel(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
@@ -187,8 +187,8 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_single_process_socketchannel(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'

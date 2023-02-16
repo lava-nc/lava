@@ -166,8 +166,8 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -245,8 +245,8 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
-        from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-            import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
