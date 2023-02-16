@@ -43,6 +43,10 @@ class MessageInfrastructureInterface(ABC):
         """Close all resources"""
         pass
 
+    def trace(self, logger) -> int:
+        """Trace actors' exceptions"""
+        return 0
+
     @property
     @abstractmethod
     def actors(self) -> ty.List[ty.Any]:
@@ -50,7 +54,8 @@ class MessageInfrastructureInterface(ABC):
         pass
 
     @abstractmethod
-    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size, sync=False) -> Channel:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
         pass

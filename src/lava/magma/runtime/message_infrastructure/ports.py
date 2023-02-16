@@ -74,7 +74,6 @@ if support_grpc_channel():
         MessageInfrastructurePywrapper \
         import GetRPCChannel as CppRPCChannel
 
-
     class GetRPCChannel(CppRPCChannel):
 
         @property
@@ -85,7 +84,6 @@ if support_fastdds_channel() or support_cyclonedds_channel():
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper \
         import GetDDSChannel as CppDDSChannel
-
 
     class GetDDSChannel(CppDDSChannel):
         @property
@@ -100,9 +98,11 @@ class Channel(CppChannel):
         return SendPort(super().src_port)
 
 
-def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
+def create_channel(message_infrastructure: "MessageInfrastructureInterface",
+                   src_name, dst_name, shape, dtype, size):
     channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
-    return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes, src_name, dst_name, shape, dtype)
+    return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes,
+                   src_name, dst_name, shape, dtype)
 
 
 def getTempSendPort(addr_path: str):

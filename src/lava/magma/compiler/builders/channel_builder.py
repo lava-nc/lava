@@ -57,7 +57,7 @@ class ChannelBuilderMp(AbstractChannelBuilder):
                                                 self.src_port_initializer.name,
                                                 self.dst_port_initializer.name,
                                                 self.src_port_initializer.shape,
-                                                self.src_port_initializer.d_type,
+                                                self.src_port_initializer.d_type,  # noqa: E501
                                                 self.src_port_initializer.size)
 
 
@@ -141,7 +141,6 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
                                                 self.port_initializer.d_type,
                                                 self.port_initializer.size,
                                                 sync=True)
-
 
 
 @dataclass

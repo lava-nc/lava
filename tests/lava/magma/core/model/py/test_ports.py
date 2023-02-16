@@ -91,7 +91,8 @@ class TestPyPorts(unittest.TestCase):
                 # Probe PyInPort
                 probe_value = recv_py_port.probe()
 
-                # probe_value should be False since PyInPort's buffer was emptied
+                # probe_value should be False since
+                # PyInPort's buffer was emptied
                 self.assertFalse(probe_value)
             finally:
                 send_csp_port_1.join()

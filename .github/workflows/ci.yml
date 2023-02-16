@@ -65,8 +65,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        # TODO: restore it before merge into ML
-        operating-system: [ubuntu-latest,] # windows-latest, macos-latest]
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v3
       with:
@@ -87,13 +86,10 @@ jobs:
     # TODO: rm it
     # if: ${{ false }}
     name: Message Infrastructure Unit Test
-    runs-on: ${{ matrix.operating-system }}
+    runs-on: ubuntu-latest
     env:
       DEBUG: 1
 
-    strategy:
-      matrix:
-        operating-system: [ubuntu-latest,]
     steps:
     - uses: actions/checkout@v3
       with:

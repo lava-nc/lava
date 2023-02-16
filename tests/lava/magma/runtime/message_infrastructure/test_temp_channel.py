@@ -12,11 +12,7 @@ from lava.magma.runtime.message_infrastructure.multiprocessing \
 
 from lava.magma.runtime.message_infrastructure import (
     create_channel,
-    Channel,
-    SendPort,
-    RecvPort,
-    ChannelQueueSize,
-    SyncChannelBytes,
+    PURE_PYTHON_VERSION,
     getTempRecvPort,
     getTempSendPort
 )
@@ -69,10 +65,10 @@ class Builder:
 
 class TestTempChannel(unittest.TestCase):
 
-    def test_shmemchannel(self):
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
+    def test_tempchannel(self):
         mp = MultiProcessing()
         mp.start()
-        nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
         name = 'test_temp_channel'
 
         shmem_channel = create_channel(
