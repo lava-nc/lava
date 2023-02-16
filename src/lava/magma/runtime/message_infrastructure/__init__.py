@@ -19,7 +19,6 @@ PURE_PYTHON_VERSION = _get_pure_py()
 if PURE_PYTHON_VERSION:
     from abc import ABC, abstractmethod
 
-
     class Channel(ABC):
         @property
         @abstractmethod
@@ -30,7 +29,6 @@ if PURE_PYTHON_VERSION:
         @abstractmethod
         def dst_port(self):
             pass
-
 
     from .py_ports import AbstractTransferPort
     from .pypychannel import (
@@ -45,17 +43,14 @@ if PURE_PYTHON_VERSION:
     SupportCycloneDDSChannel = False
     SupportTempChannel = False
 
-
     def getTempSendPort(addr_path: str):
         return None
-
 
     def getTempRecvPort():
         return None, None
 
 else:
     from ctypes import CDLL, RTLD_GLOBAL
-
 
     def load_library():
         lib_name = 'libmessage_infrastructure.so'
@@ -73,16 +68,15 @@ else:
                     lib_file = os.path.join(extra_lib_folder, lib)
                     CDLL(lib_file, mode=RTLD_GLOBAL)
 
-
     load_library()
 
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper import (  # noqa
-        RecvPort,
-        AbstractTransferPort,
-        support_grpc_channel,
-        support_fastdds_channel,
-        support_cyclonedds_channel)
+            RecvPort,
+            AbstractTransferPort,
+            support_grpc_channel,
+            support_fastdds_channel,
+            support_cyclonedds_channel)
 
     ChannelQueueSize = 1
     SyncChannelBytes = 128
@@ -108,5 +102,5 @@ else:
         from .ports import GetDDSChannel
         from lava.magma.runtime.message_infrastructure. \
             MessageInfrastructurePywrapper import (
-            DDSTransportType,
-            DDSBackendType)
+                DDSTransportType,
+                DDSBackendType)

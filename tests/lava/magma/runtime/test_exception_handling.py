@@ -19,6 +19,7 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
+
 # A minimal process with an OutPort
 class P1(AbstractProcess):
     def __init__(self):

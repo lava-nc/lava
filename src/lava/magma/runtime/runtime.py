@@ -268,9 +268,7 @@ class Runtime:
             selector = Selector()
             # Poll on all responses
             channel_actions = [(recv_port, (lambda y: (lambda: y))(
-                recv_port)) for
-                               recv_port in
-                               self.service_to_runtime]
+                recv_port)) for recv_port in self.service_to_runtime]
             rsps = []
             while True:
                 recv_port = selector.select(*channel_actions)
@@ -465,7 +463,8 @@ class Runtime:
             else:
                 buffer_shape: ty.Tuple[int, ...] = buffer.shape
                 num_items: int = np.prod(buffer_shape).item()
-                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
                 buffer = buffer.reshape((1, num_items), order=reshape_order)
                 data_port: SendPort = self.runtime_to_service[runtime_srv_id]
                 data_port.send(enum_to_np(num_items))
@@ -522,7 +521,8 @@ class Runtime:
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]
                 # 3. Reshape result and return
-                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
                 buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]

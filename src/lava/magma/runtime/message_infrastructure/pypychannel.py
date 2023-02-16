@@ -86,9 +86,7 @@ class SendPort(AbstractSendPort):
                 shape=self._shape,
                 dtype=self._dtype,
                 buffer=self._shm.buf[
-                       self._nbytes * i: self._nbytes * (i + 1)
-                       ],
-            )
+                    self._nbytes * i: self._nbytes * (i + 1)],)
             for i in range(self._size)
         ]
         self._semaphore = BoundedSemaphore(self._size)
@@ -228,8 +226,7 @@ class RecvPort(AbstractRecvPort):
                 shape=self._shape,
                 dtype=self._dtype,
                 buffer=self._shm.buf[
-                       self._nbytes * i: self._nbytes * (i + 1)
-                       ],
+                    self._nbytes * i: self._nbytes * (i + 1)],
             )
             for i in range(self._size)
         ]
@@ -365,5 +362,7 @@ class PyPyChannel(Channel):
         return self._dst_port
 
 
-def create_channel(message_infrastructure: "MessageInfrastructureInterface", src_name, dst_name, shape, dtype, size):
-    return PyPyChannel(message_infrastructure, src_name, dst_name, shape, dtype, size)
+def create_channel(message_infrastructure: "MessageInfrastructureInterface",
+                   src_name, dst_name, shape, dtype, size):
+    return PyPyChannel(message_infrastructure, src_name, dst_name,
+                       shape, dtype, size)

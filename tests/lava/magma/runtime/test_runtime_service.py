@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 from multiprocessing.managers import SharedMemoryManager
-from lava.magma.runtime.message_infrastructure import create_channel as create_pychannel
+from lava.magma.runtime.message_infrastructure \
+    import create_channel as create_pychannel
 from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess

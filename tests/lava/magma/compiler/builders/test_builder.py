@@ -33,7 +33,8 @@ class MockMessageInterface:
     def __init__(self, smm):
         self.smm = smm
 
-    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size) -> Channel:
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size) -> Channel:
         return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 

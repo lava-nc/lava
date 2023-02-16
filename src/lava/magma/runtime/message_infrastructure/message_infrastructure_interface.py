@@ -50,7 +50,8 @@ class MessageInfrastructureInterface(ABC):
         pass
 
     @abstractmethod
-    def channel(self, channel_type: ChannelType, src_name, dst_name, shape, dtype, size, sync=False) -> Channel:
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size, sync=False) -> Channel:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
         pass
