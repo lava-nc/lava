@@ -84,7 +84,6 @@ jobs:
 
   msg-infr-unit-tests:
     # TODO: rm it
-    # if: ${{ false }}
     name: Message Infrastructure Unit Test
     runs-on: ubuntu-latest
     env:

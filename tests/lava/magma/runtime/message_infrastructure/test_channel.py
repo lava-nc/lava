@@ -9,7 +9,8 @@ import time
 
 from lava.magma.runtime.message_infrastructure.multiprocessing \
     import MultiProcessing
-
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import ChannelType
 from lava.magma.runtime.message_infrastructure import (
     Channel,
     SendPort,
@@ -28,25 +29,16 @@ def prepare_data():
 const_data = prepare_data()
 
 
-def actor_stop(name):
-    pass
-
-
 def send_proc(*args, **kwargs):
-    actor = args[0]
-    actor.set_stop_fn(partial(actor_stop, "send"))
     port = kwargs.pop("port")
     if not isinstance(port, SendPort):
         raise AssertionError()
     port.start()
     port.send(const_data)
     port.join()
-    actor.status_stopped()
 
 
 def recv_proc(*args, **kwargs):
-    actor = args[0]
-    actor.set_stop_fn(partial(actor_stop, "recv"))
     port = kwargs.pop("port")
     port.start()
     if not isinstance(port, RecvPort):
@@ -55,7 +47,6 @@ def recv_proc(*args, **kwargs):
     if not np.array_equal(data, const_data):
         raise AssertionError()
     port.join()
-    actor.status_stopped()
 
 
 class Builder:
@@ -93,7 +84,7 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
 
 class TestChannel(unittest.TestCase):
 
-    @unittest.skip("need to fix")
+
     def test_shmemchannel(self):
         mp = MultiProcessing()
         mp.start()
@@ -101,7 +92,7 @@ class TestChannel(unittest.TestCase):
         name = 'test_shmem_channel'
 
         shmem_channel = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             ChannelQueueSize,
             nbytes,
             name,
@@ -124,14 +115,14 @@ class TestChannel(unittest.TestCase):
         mp.stop()
         mp.cleanup(True)
 
-    @unittest.skip("need to fix")
+
     def test_single_process_shmemchannel(self):
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_shmem_channel'
 
         shmem_channel = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             ChannelQueueSize,
             nbytes,
             name,
@@ -157,7 +148,7 @@ class TestChannel(unittest.TestCase):
         send_port.join()
         recv_port.join()
 
-    @unittest.skip("need to fix")
+
     def test_socketchannel(self):
         mp = MultiProcessing()
         mp.start()
@@ -165,7 +156,7 @@ class TestChannel(unittest.TestCase):
         name = 'test_socket_channel'
 
         socket_channel = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             ChannelQueueSize,
             nbytes,
             name,
@@ -188,14 +179,14 @@ class TestChannel(unittest.TestCase):
         mp.stop()
         mp.cleanup(True)
 
-    @unittest.skip("need to fix")
+
     def test_single_process_socketchannel(self):
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'
 
         socket_channel = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             ChannelQueueSize,
             nbytes,
             name,
@@ -231,7 +222,7 @@ class TestChannel(unittest.TestCase):
             port,
             name,
             name,
-            ChannelQueueSize)
+            1)
 
         send_port = grpc_channel.src_port
         recv_port = grpc_channel.dst_port
