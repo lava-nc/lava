@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#include <core/channel_factory.h>
 #include <core/multiprocessing.h>
 #include <core/abstract_actor.h>
 #include <channel/shmem/shmem_channel.h>
@@ -94,17 +95,29 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess) {
-  // ChannelProxy ShmemChannel;
+  // metadata generate
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  int64_t dims[] = {10000, 0, 0, 0, 0};
+  int64_t nd = 1;
+  int64_t* array_ = reinterpret_cast<int64_t*>
+                    (malloc(sizeof(int64_t) * dims[0]));
+  memset(array_, 0, sizeof(int64_t) * dims[0]);
+  std::fill(array_, array_ + 10, 1);
+  GetMetadata(metadata, array_, nd,
+              static_cast<int64_t>(METADATA_TYPES::LONG), dims);
+  AbstractChannelPtr shmchannel = GetChannelFactory().GetChannel(
+                              ChannelType::SHMEMCHANNEL,
+                              1,
+                              sizeof(int64_t)*10000,
+                              "send",
+                              "recv");
 
-  // SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();
-  // RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
-
-  // SendPort.Start();
-  // RecvPort.Start();
-  // auto data = DataInteger();
-  // SendPort.Send(data);
-  // auto received_data = RecvPort.Recv();
-  // EXPECT_EQ(data, received_data)
+  auto SendPort = shmchannel->GetSendPort();
+  auto RecvPort = shmchannel->GetRecvPort();
+  SendPort->Send(metadata);
+  MetaDataPtr received_data = RecvPort->Recv();
+  EXPECT_EQ(10000, metadata->total_size);
+  EXPECT_EQ(1, *reinterpret_cast<int64_t*>(metadata->mdata));
 }
 
 }  // namespace message_infrastructure
