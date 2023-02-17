@@ -67,7 +67,7 @@ class TestDelayDenseProcess(unittest.TestCase):
         weights = np.random.randint(100, size=shape)
         delays = 5
         max_delay = 15
-        expected_a_buff_shape = (shape[0], max_delay+1)
+        expected_a_buff_shape = (shape[0], max_delay + 1)
 
         conn = DelayDense(weights=weights, delays=delays, max_delay=max_delay)
 

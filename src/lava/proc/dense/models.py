@@ -195,7 +195,8 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     delays into the Conn Process.
     """
 
-    def get_del_wgts(self) -> np.ndarray:
+    @staticmethod
+    def get_del_wgts(weights, delays) -> np.ndarray:
         """
         Use self.weights and self.delays to create a matrix where the
         weights are separated by delay. Returns 2D matrix of form
@@ -208,8 +209,8 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         weights.
         """
         return np.vstack([
-            np.where(self.delays == k, self.weights, 0)
-            for k in range(np.max(self.delays) + 1)
+            np.where(delays == k, weights, 0)
+            for k in range(np.max(delays) + 1)
         ])
 
     def calc_act(self, s_in) -> np.ndarray:
@@ -221,8 +222,10 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
         which is then transposed to get the activation matrix.
         """
-        return np.reshape(np.sum(self.get_del_wgts() * s_in, axis=1),
-                          (np.max(self.delays) + 1, self.weights.shape[0])).T
+        return np.reshape(
+            np.sum(self.get_del_wgts(self.weights,
+                                     self.delays) * s_in, axis=1),
+            (np.max(self.delays) + 1, self.weights.shape[0])).T
 
     def update_act(self, s_in):
         """

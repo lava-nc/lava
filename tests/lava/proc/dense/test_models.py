@@ -17,6 +17,7 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.process import Dense, DelayDense
 from lava.utils.weightutils import SignMode
+from lava.proc.dense.models import AbstractPyDelayDenseModel
 
 
 class DenseRunConfig(RunConfig):
@@ -557,6 +558,26 @@ class TestDenseProcessModelFixed(unittest.TestCase):
 
 class TestDelayDenseProcessModel(unittest.TestCase):
     """Tests for ProcessModels of Dense with synaptic delay."""
+
+    def test_matrix_weight_delay_expansion(self):
+        """"""
+        shape = (3, 4)
+        weights = np.zeros(shape, dtype=float)
+        weights[2, 2] = 1
+        delays = np.zeros(shape, dtype=int)
+        delays[2, 2] = 2
+        max_delay = np.max(delays)
+        wgt_dly = AbstractPyDelayDenseModel.get_del_wgts(weights, delays)
+        # Expected shape is maximum delay=2 + 1 = 3 times first dimension of
+        # original shape (3, 4) => (9, 4)
+        expected_shape = ((max_delay + 1) * 3, 4)
+        self.assertTrue(np.shape(wgt_dly) == expected_shape)
+        # Expected matrix stacks n zero matrices of original shape of the
+        # weights matrix vertically to create the wgt_dly matrix. n being the
+        # maximum delay in the delay matrix.
+        expected_wgt_dly = np.zeros(expected_shape)
+        expected_wgt_dly[8, 2] = 1
+        self.assertTrue(np.all(wgt_dly == expected_wgt_dly))
 
     def test_float_pm_buffer_delay(self):
         """Tests floating point Dense ProcessModel connectivity and temporal
