@@ -195,7 +195,7 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     delays into the Conn Process.
     """
 
-    def get_del_wgts(self):
+    def get_del_wgts(self) -> np.ndarray:
         """
         Use self.weights and self.delays to create a matrix where the
         weights are separated by delay. Returns 2D matrix of form
@@ -212,7 +212,7 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
             for k in range(np.max(self.delays) + 1)
         ])
 
-    def calc_act(self, s_in):
+    def calc_act(self, s_in) -> np.ndarray:
         """
         Calculate the activations by performing del_wgts * s_in. This matrix
         is then summed across each row to get the activations to the output
@@ -314,7 +314,8 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
             # Check if delays are within Loihi 2 constraints
             if np.max(self.delays) > 63:
                 raise ValueError("DelayDense Process 'delays' expects values "
-                                 f"between 0 and 63, got {self.delays}.")
+                                 f"between 0 and 63 for Loihi, got "
+                                 f"{self.delays}.")
 
         # The a_out sent at each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in

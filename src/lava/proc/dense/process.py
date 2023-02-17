@@ -151,6 +151,7 @@ class DelayDense(Dense):
                  *,
                  weights: np.ndarray,
                  delays: ty.Union[np.ndarray, int],
+                 max_delay: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -168,6 +169,11 @@ class DelayDense(Dense):
             2D connection delay matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major) or integer value if
             the same delay should be used for all synapses.
+
+        max_delay: int, optional
+            Maximum expected delay. Should be set if delays change during
+            execution. Default value is 0, in this case the maximum delay
+            will be determined from the values given in 'delays'.
 
         weight_exp : int, optional
             Shared weight exponent of base 2 used to scale magnitude of
@@ -207,8 +213,9 @@ class DelayDense(Dense):
                          **kwargs)
 
         self._validate_delays(weights, delays)
-        max_delay = int(np.max(delays))
         shape = weights.shape
+        if max_delay == 0:
+            max_delay = int(np.max(delays))
 
         # Variables
         self.delays = Var(shape=shape, init=delays)
@@ -224,3 +231,6 @@ class DelayDense(Dense):
                 raise ValueError("DelayDense Process 'delays' expects same "
                                  f"shape than the weight matrix or int, got "
                                  f"{delays}.")
+            if delays.dtype != int:
+                raise ValueError("DelayDense Process 'delays' expects integer "
+                                 f"value(s), got {delays}.")
