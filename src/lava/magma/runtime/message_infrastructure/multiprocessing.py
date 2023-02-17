@@ -16,6 +16,12 @@ from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure. \
     message_infrastructure_interface import MessageInfrastructureInterface
 
+try:
+    from lava.magma.core.model.c.type import LavaTypeTransfer
+except ImportError:
+    class LavaTypeTransfer:
+        pass
+
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
 which will participate in exchanging messages. The Channel Infrastructure
@@ -70,6 +76,12 @@ class MultiProcessing(MessageInfrastructureInterface):
                 shape, dtype, size, sync=False) -> Channel:
         if channel_type == ChannelType.PyPy:
             channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize \
+                if not sync else SyncChannelBytes
+            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize,
+                           channel_bytes, src_name, dst_name, shape, dtype)
+        elif channel_type == ChannelType.PyC or channel_type == ChannelType.CPy:
+            temp_dtype = LavaTypeTransfer.cdtype2numpy(dtype)
+            channel_bytes = np.prod(shape) * np.dtype(temp_dtype).itemsize \
                 if not sync else SyncChannelBytes
             return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize,
                            channel_bytes, src_name, dst_name, shape, dtype)
