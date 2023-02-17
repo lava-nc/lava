@@ -36,7 +36,8 @@ class CustomRunConfig(Loihi2SimCfg):
     def select(self, proc, proc_models):
         pm = super().select(proc, proc_models)
         if issubclass(pm, PyLoihiProcessModel):
-            return PyLoihiModelToPyAsyncModel(pm)
+            pm1 = PyLoihiModelToPyAsyncModel(pm)
+            return pm1
         return pm
 
 
