@@ -135,8 +135,9 @@ class PyLearningConnection(AbstractLearningConnection):
         self._init_randoms()
 
     def on_var_update(self):
-        """ Update the learning rule parameters when on single Var is 
+        """ Update the learning rule parameters when on single Var is
         updated. """
+
         self._learning_rule.x1_tau = self.x1_tau[0]
         self._learning_rule.x1_impulse = self.x1_impulse[0]
         self._learning_rule.x2_tau = self.x2_tau[0]
