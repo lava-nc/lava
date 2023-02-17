@@ -21,14 +21,16 @@ class LearningNeuronProcess:
         Learning rule which determines the parameters for online learning.
 
     """
-    def __init__(self,
-                 shape: ty.Tuple[int, ...],
-                 learning_rule: LoihiLearningRule,
-                 *args,
-                 **kwargs):
 
-        kwargs['shape'] = shape
-        kwargs['learning_rule'] = learning_rule
+    def __init__(
+        self,
+        shape: ty.Tuple[int, ...],
+        learning_rule: LoihiLearningRule,
+        *args,
+        **kwargs,
+    ):
+        kwargs["shape"] = shape
+        kwargs["learning_rule"] = learning_rule
 
         # Learning Ports
         self.a_third_factor_in = InPort(shape=(shape[0],))
