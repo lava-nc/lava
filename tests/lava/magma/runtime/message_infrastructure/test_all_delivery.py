@@ -10,8 +10,6 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
 from lava.magma.runtime.message_infrastructure import (
     PURE_PYTHON_VERSION,
     Channel,
@@ -168,6 +166,10 @@ class TestAllDelivery(unittest.TestCase):
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -247,6 +249,10 @@ class TestAllDelivery(unittest.TestCase):
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -324,8 +330,11 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_py_shm_loop_with_cpp_multiprocess(self):
-        loop = self.loop_
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
 
+        loop = self.loop_
         mp = MultiProcessing()
         mp.start()
 
@@ -470,6 +479,10 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
         from lava.magma.runtime.message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -533,6 +546,10 @@ class TestAllDelivery(unittest.TestCase):
         from lava.magma.runtime.message_infrastructure import GetDDSChannel
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -600,6 +617,10 @@ class TestAllDelivery(unittest.TestCase):
         from lava.magma.runtime.message_infrastructure import GetDDSChannel
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_

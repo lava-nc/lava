@@ -7,9 +7,6 @@ import unittest
 from functools import partial
 import time
 
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-
 from lava.magma.runtime.message_infrastructure import (
     PURE_PYTHON_VERSION,
     Channel,
@@ -58,6 +55,8 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
     from lava.magma.runtime.message_infrastructure import GetDDSChannel
     from lava.magma.runtime.message_infrastructure import DDSTransportType
     from lava.magma.runtime.message_infrastructure import DDSBackendType
+    from lava.magma.runtime.message_infrastructure \
+    .multiprocessing import MultiProcessing
     mp = MultiProcessing()
     mp.start()
     dds_channel = GetDDSChannel(
@@ -88,6 +87,9 @@ class TestChannel(unittest.TestCase):
     def test_shmemchannel(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
@@ -156,6 +158,9 @@ class TestChannel(unittest.TestCase):
     def test_socketchannel(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         nbytes = np.prod(const_data.shape) * const_data.dtype.itemsize
@@ -220,6 +225,9 @@ class TestChannel(unittest.TestCase):
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
         from lava.magma.runtime.message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         name = 'test_grpc_channel'
