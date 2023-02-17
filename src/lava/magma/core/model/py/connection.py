@@ -33,8 +33,7 @@ NUM_Y_TRACES = len(str_symbols.POST_TRACES)
 
 
 class AbstractLearningConnection:
-    """Base class for learning connection ProcessModels.
-    """
+    """Base class for learning connection ProcessModels."""
 
     # Learning Ports
     s_in_bap = None
@@ -56,6 +55,22 @@ class AbstractLearningConnection:
 
     tag_2 = None
     tag_1 = None
+
+    dw = None
+    dt = None
+    dd = None
+
+    x1_tau = None
+    x1_impulse = None
+    x2_tau = None
+    x2_impulse = None
+
+    y1_tau = None
+    y1_impulse = None
+    y2_tau = None
+    y2_impulse = None
+    y3_tau = None
+    y3_impulse = None
 
 
 class PyLearningConnection(AbstractLearningConnection):
@@ -113,22 +128,38 @@ class PyLearningConnection(AbstractLearningConnection):
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
-        # store shapes that useful throughout the lifetime of this PM
         self._store_shapes()
-        # store impulses and taus in ndarrays with the right shapes
         self._store_impulses_and_taus()
 
-        # store active traces per dependency from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces_per_dependency()
-        # store active traces from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces()
-        # generate LearningRuleApplierBitApprox from ProductSeries
         self._build_learning_rule_appliers()
-
-        # initialize TraceRandoms and ConnVarRandom
         self._init_randoms()
+
+    def on_var_update(self):
+        """ Update the learning rule parameters when on single Var is
+        updated. """
+
+        self._learning_rule.x1_tau = self.x1_tau[0]
+        self._learning_rule.x1_impulse = self.x1_impulse[0]
+        self._learning_rule.x2_tau = self.x2_tau[0]
+        self._learning_rule.x2_impulse = self.x2_impulse[0]
+
+        self._learning_rule.y1_tau = self.y1_tau[0]
+        self._learning_rule.y1_impulse = self.y1_impulse[0]
+        self._learning_rule.y2_tau = self.y2_tau[0]
+        self._learning_rule.y2_impulse = self.y2_impulse[0]
+        self._learning_rule.y3_tau = self.y3_tau[0]
+        self._learning_rule.y3_impulse = self.y3_impulse[0]
+
+        self._learning_rule.dw_str = self.dw
+        self._learning_rule.dd_str = self.dd
+        self._learning_rule.dt_str = self.dt
+
+        self._store_impulses_and_taus()
+        self._build_active_traces_per_dependency()
+        self._build_active_traces()
+        self._build_learning_rule_appliers()
 
     def _store_shapes(self) -> None:
         """Build and store several shapes that are needed in several
@@ -355,9 +386,6 @@ class PyLearningConnection(AbstractLearningConnection):
             self._process_post_spikes(s_in_bap)
         elif isinstance(self._learning_rule, Loihi3FLearningRule):
             s_in_bap = self.s_in_bap.recv().astype(bool)
-
-            # s_in_bap is being connected to the y1 port to receive
-            # post-synaptic spikes.
             y1 = self.s_in_y1.recv()
             y2 = self.s_in_y2.recv()
             y3 = self.s_in_y3.recv()
@@ -407,9 +435,9 @@ class PyLearningConnection(AbstractLearningConnection):
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
         pass
 
-    def _update_traces(self,
-                       x_traces_history: np.ndarray,
-                       y_traces_history: np.ndarray) -> None:
+    def _update_traces(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> None:
         """Update x and y traces to last values in the epoch history.
 
         Parameters
@@ -425,15 +453,14 @@ class PyLearningConnection(AbstractLearningConnection):
             self._set_y_traces(y_traces_history[-1])
 
     @abstractmethod
-    def _apply_learning_rules(self,
-                              x_traces_history: np.ndarray,
-                              y_traces_history: np.ndarray) -> None:
+    def _apply_learning_rules(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> None:
         pass
 
-    def _extract_applier_evaluated_traces(self,
-                                          x_traces_history: np.ndarray,
-                                          y_traces_history: np.ndarray) \
-            -> typing.Dict[str, np.ndarray]:
+    def _extract_applier_evaluated_traces(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> typing.Dict[str, np.ndarray]:
         """Extract x and y trace values on time steps derived from each of
         allowed dependencies.
 
@@ -559,6 +586,22 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
     tag_2: np.ndarray = LavaPyType(np.ndarray, int, precision=6)
     tag_1: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
 
+    dw: str = LavaPyType(str, str)
+    dd: str = LavaPyType(str, str)
+    dt: str = LavaPyType(str, str)
+
+    x1_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    x2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+
+    y1_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y1_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y2_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y2_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y3_tau: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+    y3_impulse: np.ndarray = LavaPyType(np.ndarray, int, precision=8)
+
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
         impulses and taus."""
@@ -592,7 +635,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _decompose_impulses(
-            impulses: np.ndarray,
+        impulses: np.ndarray,
     ) -> typing.Tuple[np.ndarray, np.ndarray]:
         """Decompose float impulse values into integer and fractional parts.
 
@@ -610,13 +653,13 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """
         impulses_int = np.floor(impulses)
         impulses_frac = np.round(
-            (impulses - impulses_int) * 2 ** W_TRACE_FRACTIONAL_PART
+            (impulses - impulses_int) * 2**W_TRACE_FRACTIONAL_PART
         )
 
         return impulses_int.astype(int), impulses_frac.astype(int)
 
     def _create_learning_rule_applier(
-            self, product_series: ProductSeries
+        self, product_series: ProductSeries
     ) -> AbstractLearningRuleApplier:
         """Create a LearningRuleApplierBitApprox."""
         return LearningRuleApplierBitApprox(product_series)
@@ -781,27 +824,35 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         y_traces_history[0] = y_traces
 
         for t in range(1, t_epoch + 1):
-            x_traces_history[t][x_taus != 0] = \
-                self._decay_trace(x_traces_history[t - 1][x_taus != 0], 1,
-                                  x_taus[x_taus != 0][:, np.newaxis],
-                                  x_random.random_trace_decay)
-            y_traces_history[t][y_taus != 0] = \
-                self._decay_trace(y_traces_history[t - 1][y_taus != 0], 1,
-                                  y_taus[y_taus != 0][:, np.newaxis],
-                                  y_random.random_trace_decay)
+            x_traces_history[t][x_taus != 0] = self._decay_trace(
+                x_traces_history[t - 1][x_taus != 0],
+                1,
+                x_taus[x_taus != 0][:, np.newaxis],
+                x_random.random_trace_decay,
+            )
+            y_traces_history[t][y_taus != 0] = self._decay_trace(
+                y_traces_history[t - 1][y_taus != 0],
+                1,
+                y_taus[y_taus != 0][:, np.newaxis],
+                y_random.random_trace_decay,
+            )
 
             # add impulses if spike happens in this timestep
             x_spike_ids = np.where(t_spike_x == t)[0]
-            x_traces_history[t][:, x_spike_ids] = \
-                self._add_impulse(x_traces_history[t][:, x_spike_ids],
-                                  x_random.random_impulse_addition,
-                                  x_impulses_int, x_impulses_frac)
+            x_traces_history[t][:, x_spike_ids] = self._add_impulse(
+                x_traces_history[t][:, x_spike_ids],
+                x_random.random_impulse_addition,
+                x_impulses_int,
+                x_impulses_frac,
+            )
 
             y_spike_ids = np.where(t_spike_y == t)[0]
-            y_traces_history[t][:, y_spike_ids] = \
-                self._add_impulse(y_traces_history[t][:, y_spike_ids],
-                                  y_random.random_impulse_addition,
-                                  y_impulses_int, y_impulses_frac)
+            y_traces_history[t][:, y_spike_ids] = self._add_impulse(
+                y_traces_history[t][:, y_spike_ids],
+                y_random.random_impulse_addition,
+                y_impulses_int,
+                y_impulses_frac,
+            )
 
         return x_traces_history, y_traces_history
 
@@ -838,10 +889,10 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _add_impulse(
-            trace_values: np.ndarray,
-            random: int,
-            impulses_int: np.ndarray,
-            impulses_frac: np.ndarray,
+        trace_values: np.ndarray,
+        random: int,
+        impulses_int: np.ndarray,
+        impulses_frac: np.ndarray,
     ) -> np.ndarray:
         """Add trace impulse impulse value and stochastically round
         the result.
@@ -864,18 +915,19 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """
         trace_new = trace_values + impulses_int
         trace_new = stochastic_round(trace_new, random, impulses_frac)
-        trace_new = np.clip(trace_new, a_min=0, a_max=2 ** W_TRACE - 1)
+        trace_new = np.clip(trace_new, a_min=0, a_max=2**W_TRACE - 1)
 
         return trace_new
 
-    def _apply_learning_rules(self,
-                              x_traces_history: np.ndarray,
-                              y_traces_history: np.ndarray) -> None:
+    def _apply_learning_rules(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> None:
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
         learning rule."""
-        applier_args = self._extract_applier_args(x_traces_history,
-                                                  y_traces_history)
+        applier_args = self._extract_applier_args(
+            x_traces_history, y_traces_history
+        )
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
@@ -898,9 +950,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 
-    def _extract_applier_args(self,
-                              x_traces_history: np.ndarray,
-                              y_traces_history: np.ndarray) -> dict:
+    def _extract_applier_args(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> dict:
         """Extracts arguments for the LearningRuleApplierFloat.
 
         "u" is a scalar.
@@ -929,7 +981,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             "weights": self.weights,
             "tag_2": self.tag_2,
             "tag_1": self.tag_1,
-            "u": 0
+            "u": 0,
         }
 
         if self._learning_rule.decimate_exponent is not None:
@@ -944,9 +996,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             # Shape: (0, )
             applier_args["u"] = u
 
-        evaluated_traces = \
-            self._extract_applier_evaluated_traces(x_traces_history,
-                                                   y_traces_history)
+        evaluated_traces = self._extract_applier_evaluated_traces(
+            x_traces_history, y_traces_history
+        )
         applier_args.update(evaluated_traces)
 
         return applier_args
@@ -994,9 +1046,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _stochastic_round_synaptic_variable(
-            synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray,
-            random: float,
+        synaptic_variable_name: str,
+        synaptic_variable_values: np.ndarray,
+        random: float,
     ) -> np.ndarray:
         """Stochastically round synaptic variable after learning rule
         application.
@@ -1019,8 +1071,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         fractional_part = integer_part % 1
 
         integer_part = np.floor(integer_part)
-        integer_part = stochastic_round(integer_part, random,
-                                        fractional_part)
+        integer_part = stochastic_round(integer_part, random, fractional_part)
         result = (integer_part * exp_mant).astype(
             synaptic_variable_values.dtype
         )
@@ -1137,6 +1188,22 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
     tag_2: np.ndarray = LavaPyType(np.ndarray, float)
     tag_1: np.ndarray = LavaPyType(np.ndarray, float)
+
+    dw: str = LavaPyType(str, str)
+    dd: str = LavaPyType(str, str)
+    dt: str = LavaPyType(str, str)
+
+    x1_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    x1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    x2_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    x2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+
+    y1_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y1_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    y2_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y2_impulse: np.ndarray = LavaPyType(np.ndarray, float)
+    y3_tau: np.ndarray = LavaPyType(np.ndarray, float)
+    y3_impulse: np.ndarray = LavaPyType(np.ndarray, float)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -1284,17 +1351,22 @@ class LearningConnectionModelFloat(PyLearningConnection):
         x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
                                    dtype=float)
         x_traces_history[0] = x_traces
-        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
-                                   dtype=float)
+        y_traces_history = np.full(
+            (t_epoch + 1,) + y_traces.shape, np.nan, dtype=float
+        )
         y_traces_history[0] = y_traces
 
         for t in range(1, t_epoch + 1):
-            x_traces_history[t][x_taus != 0] = \
-                self._decay_trace(x_traces_history[t - 1][x_taus != 0], 1,
-                                  x_taus[x_taus != 0][:, np.newaxis])
-            y_traces_history[t][y_taus != 0] = \
-                self._decay_trace(y_traces_history[t - 1][y_taus != 0], 1,
-                                  y_taus[y_taus != 0][:, np.newaxis])
+            x_traces_history[t][x_taus != 0] = self._decay_trace(
+                x_traces_history[t - 1][x_taus != 0],
+                1,
+                x_taus[x_taus != 0][:, np.newaxis],
+            )
+            y_traces_history[t][y_taus != 0] = self._decay_trace(
+                y_traces_history[t - 1][y_taus != 0],
+                1,
+                y_taus[y_taus != 0][:, np.newaxis],
+            )
 
             # add impulses if spike happens in this timestep
             x_spike_ids = np.where(t_spike_x == t)[0]
@@ -1307,7 +1379,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
     @staticmethod
     def _decay_trace(
-            trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
+        trace_values: np.ndarray, t: np.ndarray, taus: np.ndarray
     ) -> np.ndarray:
         """Decay trace to a given within-epoch time step.
 
@@ -1328,14 +1400,15 @@ class LearningConnectionModelFloat(PyLearningConnection):
         """
         return np.exp(-t / taus) * trace_values
 
-    def _apply_learning_rules(self,
-                              x_traces_history: np.ndarray,
-                              y_traces_history: np.ndarray) -> None:
+    def _apply_learning_rules(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> None:
         """Update all synaptic variables according to the
         LearningRuleApplier representation of their corresponding
         learning rule."""
-        applier_args = self._extract_applier_args(x_traces_history,
-                                                  y_traces_history)
+        applier_args = self._extract_applier_args(
+            x_traces_history, y_traces_history
+        )
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
@@ -1343,9 +1416,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 
-    def _extract_applier_args(self,
-                              x_traces_history: np.ndarray,
-                              y_traces_history: np.ndarray) -> dict:
+    def _extract_applier_args(
+        self, x_traces_history: np.ndarray, y_traces_history: np.ndarray
+    ) -> dict:
         """Extracts arguments for the LearningRuleApplierFloat.
 
         "u" is a scalar.
@@ -1390,9 +1463,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
             # Shape: (0, )
             applier_args["u"] = u
 
-        evaluated_traces = \
-            self._extract_applier_evaluated_traces(x_traces_history,
-                                                   y_traces_history)
+        evaluated_traces = self._extract_applier_evaluated_traces(
+            x_traces_history, y_traces_history
+        )
         applier_args.update(evaluated_traces)
 
         return applier_args

@@ -53,18 +53,19 @@ class LearningConnectionProcess(AbstractProcess):
     learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
     """
+
     def __init__(
         self,
         shape: tuple,
-        learning_rule: ty.Optional[LoihiLearningRule] = None,
+        learning_rule: ty.Optional[LoihiLearningRule],
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
         kwargs["shape"] = shape
-        tag_1 = kwargs.get('tag_1', 0)
-        tag_2 = kwargs.get('tag_2', 0)
+        tag_1 = kwargs.get("tag_1", 0)
+        tag_2 = kwargs.get("tag_2", 0)
 
-        self.learning_rule = learning_rule
+        self._learning_rule = learning_rule
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
@@ -86,5 +87,21 @@ class LearningConnectionProcess(AbstractProcess):
 
         self.tag_1 = Var(shape=shape, init=tag_1)
         self.tag_2 = Var(shape=shape, init=tag_2)
+
+        self.dw = Var(shape=(256,), init=learning_rule.dw_str)
+        self.dd = Var(shape=(256,), init=learning_rule.dd_str)
+        self.dt = Var(shape=(256,), init=learning_rule.dt_str)
+
+        self.x1_tau = Var(shape=(1,), init=learning_rule.x1_tau)
+        self.x1_impulse = Var(shape=(1,), init=learning_rule.x1_impulse)
+        self.x2_tau = Var(shape=(1,), init=learning_rule.x2_tau)
+        self.x2_impulse = Var(shape=(1,), init=learning_rule.x2_impulse)
+
+        self.y1_tau = Var(shape=(1,), init=learning_rule.y1_tau)
+        self.y1_impulse = Var(shape=(1,), init=learning_rule.y1_impulse)
+        self.y2_tau = Var(shape=(1,), init=learning_rule.y2_tau)
+        self.y2_impulse = Var(shape=(1,), init=learning_rule.y2_impulse)
+        self.y3_tau = Var(shape=(1,), init=learning_rule.y3_tau)
+        self.y3_impulse = Var(shape=(1,), init=learning_rule.y3_impulse)
 
         super().__init__(**kwargs)

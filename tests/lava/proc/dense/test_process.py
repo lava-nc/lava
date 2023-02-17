@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
 
 class TestDenseProcess(unittest.TestCase):
@@ -37,7 +38,14 @@ class TestLearningDenseProcess(unittest.TestCase):
         shape = (100, 200)
         weights = np.random.randint(100, size=shape)
 
-        conn = LearningDense(weights=weights)
+        lr = STDPLoihi(learning_rate=0.1,
+                       A_plus=1.,
+                       A_minus=1.,
+                       tau_plus=20.,
+                       tau_minus=20.)
+
+        conn = LearningDense(weights=weights,
+                             learning_rule=lr)
 
         self.assertEqual(np.shape(conn.weights.init), shape)
         np.testing.assert_array_equal(conn.weights.init, weights)
