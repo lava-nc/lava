@@ -96,9 +96,9 @@ class LoihiLearningRule:
         rng_seed: ty.Optional[int] = None,
     ) -> None:
         # move the "dw = " to lava-loihi
-        self._dw_str = None if dw is None else "dw = " + str(dw)
-        self._dd_str = None if dd is None else "dd = " + str(dd)
-        self._dt_str = None if dt is None else "dt = " + str(dt)
+        self._dw_str = dw
+        self._dd_str = dd
+        self._dt_str = dt
 
         self._validate_learning_rule_strings()
 
@@ -129,15 +129,12 @@ class LoihiLearningRule:
         self._create_product_series()
 
     def _validate_learning_rule_strings(self):
-        dw = None if self._dw_str is None else self._dw_str[5:]
-        dd = None if self._dd_str is None else self._dd_str[5:]
-        dt = None if self._dt_str is None else self._dt_str[5:]
 
         # dict of string learning rules
         str_learning_rules = {
-            str_symbols.DW: dw,
-            str_symbols.DD: dd,
-            str_symbols.DT: dt,
+            str_symbols.DW: self._dw_str,
+            str_symbols.DD: self._dd_str,
+            str_symbols.DT: self._dt_str,
         }
 
         # dict of string learning rules that were provided only
@@ -184,49 +181,31 @@ class LoihiLearningRule:
 
     @property
     def dw_str(self):
-        if self._dw_str is None:
-            return None
-        return self._dw_str[5:]
+        return self._dw_str
 
     @dw_str.setter
     def dw_str(self, dw_str):
-        if dw_str is None:
-            self._dw_str = None
-        else:
-            self._dw_str = "dw = " + str(dw_str)
-
+        self._dw_str = dw_str
         self._validate_learning_rule_strings()
         self._create_product_series()
 
     @property
     def dd_str(self):
-        if self._dd_str is None:
-            return None
-        return self._dd_str[5:]
+        return self._dd_str
 
     @dd_str.setter
     def dd_str(self, dd_str):
-        if dd_str is None:
-            self._dd_str = None
-        else:
-            self._dd_str = "dd = " + str(dd_str)
-
+        self._dd_str = dd_str
         self._validate_learning_rule_strings()
         self._create_product_series()
 
     @property
     def dt_str(self):
-        if self._dt_str is None:
-            return None
-        return self._dt_str[5:]
+        return self._dt_str
 
     @dt_str.setter
     def dt_str(self, dt_str):
-        if dt_str is None:
-            self._dt_str = None
-        else:
-            self._dt_str = "dt = " + str(dt_str)
-
+        self._dt_str = dt_str
         self._validate_learning_rule_strings()
         self._create_product_series()
 
@@ -762,11 +741,11 @@ class Loihi3FLearningRule(LoihiLearningRule):
             x2_impulse=x2_impulse,
             x2_tau=x2_tau,
             y1_impulse=0,
-            y1_tau=2**16 - 1,
+            y1_tau=np.iinfo(np.uint16).max,
             y2_impulse=0,
-            y2_tau=2**16 - 1,
+            y2_tau=np.iinfo(np.uint16).max,
             y3_impulse=0,
-            y3_tau=2**16 - 1,
+            y3_tau=np.iinfo(np.uint16).max,
             t_epoch=t_epoch,
             rng_seed=rng_seed,
         )
