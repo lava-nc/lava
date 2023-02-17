@@ -643,14 +643,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         spikes more than once, pre-traces are updated by their regular impulses.
         (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
         trace x1 by payload/2, upon spiking.
-        (2) GradedSpikeCfg.ADD_SATURATION adds payload/2 to the pre-synaptic
+        (2) GradedSpikeCfg.ADD_WITH_SATURATION adds payload/2 to the pre-synaptic
         trace x1, upon spiking, saturates x1 to 127.
-        (3) GradedSpikeCfg.ADD_NO_SATURATION adds payload/2 to the pre-synaptic
+        (3) GradedSpikeCfg.ADD_WITHOUT_SATURATION adds payload/2 to the pre-synaptic
         trace x1, upon spiking, keeps only overflow from 127 in x1,
         adds regular impulse to x2 on overflow.
 
         Within-epoch spike times are recorded.
-        With GradedSpikeCfg.ADD_NO_SATURATION, only spike times of spikes
+        With GradedSpikeCfg.ADD_WITHOUT_SATURATION, only spike times of spikes
         triggering x1 overflow and x2 impulse addition are recorded.
 
         Parameters
@@ -679,14 +679,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         elif self._graded_spike_cfg == GradedSpikeCfg.OVERWRITE:
             self.x1[spiked] = scaled_activations[spiked]
 
-        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
-                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_WITH_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_WITHOUT_SATURATION:
             sums = (self.x1 + scaled_activations).astype(np.uint8)
 
-            if self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION:
+            if self._graded_spike_cfg == GradedSpikeCfg.ADD_WITH_SATURATION:
                 self.x1 = np.clip(sums, 0, 127)
 
-            if self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+            if self._graded_spike_cfg == GradedSpikeCfg.ADD_WITHOUT_SATURATION:
                 overflow_idx = sums > 127
                 update_t_spike = update_t_spike & overflow_idx
                 x2_update_idx = x2_update_idx & overflow_idx
@@ -1141,8 +1141,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
     def __init__(self, proc_params):
         super().__init__(proc_params)
 
-        if self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
-                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+        if self._graded_spike_cfg == GradedSpikeCfg.ADD_WITH_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_WITHOUT_SATURATION:
             logging.warning(
                 f'The floating-pt PyProcessModel has been selected for the '
                 f'LearningDense Process and '
@@ -1196,8 +1196,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
         trace x1 by payload/2, upon spiking.
 
         Only in floating-pt:
-            (2) & (3) GradedSpikeCfg.ADD_SATURATION &
-            GradedSpikeCfg.ADD_NO_SATURATION have the same behavior:
+            (2) & (3) GradedSpikeCfg.ADD_WITH_SATURATION &
+            GradedSpikeCfg.ADD_WITHOUT_SATURATION have the same behavior:
             adds payload/2 to the pre-synaptic trace x1, upon spiking.
             x1 is not saturated.
 
@@ -1220,8 +1220,8 @@ class LearningConnectionModelFloat(PyLearningConnection):
         elif self._graded_spike_cfg == GradedSpikeCfg.OVERWRITE:
             self.x1[spiked] = scaled_activations[spiked]
 
-        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_SATURATION or \
-                self._graded_spike_cfg == GradedSpikeCfg.ADD_NO_SATURATION:
+        elif self._graded_spike_cfg == GradedSpikeCfg.ADD_WITH_SATURATION or \
+                self._graded_spike_cfg == GradedSpikeCfg.ADD_WITHOUT_SATURATION:
             sums = self.x1 + scaled_activations
 
             self.x1 = sums

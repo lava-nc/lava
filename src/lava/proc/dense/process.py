@@ -137,11 +137,11 @@ class LearningDense(LearningConnectionProcess, Dense):
         (1) GradedSpikeCfg.OVERWRITE interprets the spike as a graded spike,
         overwrites the value of the pre-synaptic trace x1 by payload/2,
         upon spiking.
-        (2) GradedSpikeCfg.ADD_SATURATION interprets the spike as a graded
+        (2) GradedSpikeCfg.ADD_WITH_SATURATION interprets the spike as a graded
         spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
         saturates x1 to 127 (fixed-pt/hw only).
-        (3) GradedSpikeCfg.ADD_NO_SATURATION interprets the spike as a graded
-        spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
+        (3) GradedSpikeCfg.ADD_WITHOUT_SATURATION interprets the spike as a
+        graded spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
         keeps only overflow above 127 in x1 (fixed-pt/hw only), adds regular
         impulse to x2 on overflow.
         In addition, only pre-synaptic graded spikes that trigger overflow in

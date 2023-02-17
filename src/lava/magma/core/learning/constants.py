@@ -91,5 +91,5 @@ TRACE_TO_IDX_DICT = {
 class GradedSpikeCfg(IntEnum):
     USE_REGULAR_IMPULSE = auto()
     OVERWRITE = auto()
-    ADD_SATURATION = auto()
-    ADD_NO_SATURATION = auto()
+    ADD_WITH_SATURATION = auto()
+    ADD_WITHOUT_SATURATION = auto()
