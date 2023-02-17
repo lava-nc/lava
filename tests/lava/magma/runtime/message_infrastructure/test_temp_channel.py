@@ -7,9 +7,6 @@ import unittest
 from functools import partial
 import time
 
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-
 from lava.magma.runtime.message_infrastructure import (
     create_channel,
     PURE_PYTHON_VERSION,
@@ -67,6 +64,8 @@ class TestTempChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
     def test_tempchannel(self):
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing import MultiProcessing
         mp = MultiProcessing()
         mp.start()
         name = 'test_temp_channel'

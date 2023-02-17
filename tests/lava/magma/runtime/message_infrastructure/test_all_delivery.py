@@ -10,15 +10,12 @@ from datetime import datetime
 from multiprocessing import shared_memory
 from multiprocessing import Semaphore
 from multiprocessing import Process
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-
 from lava.magma.runtime.message_infrastructure import (
+    PURE_PYTHON_VERSION,
     Channel,
     SupportGRPCChannel,
     SupportFastDDSChannel,
-    SupportCycloneDDSChannel,
-    ChannelQueueSize
+    SupportCycloneDDSChannel
 )
 
 
@@ -112,7 +109,7 @@ class Builder:
 
 
 def bound_target_a1(loop, mp_to_a1, a1_to_a2,
-                    a2_to_a1, a1_to_mp, this, builder):
+                    a2_to_a1, a1_to_mp, builder):
     from_mp = mp_to_a1.dst_port
     from_mp.start()
     to_a2 = a1_to_a2.src_port
@@ -121,7 +118,7 @@ def bound_target_a1(loop, mp_to_a1, a1_to_a2,
     from_a2.start()
     to_mp = a1_to_mp.src_port
     to_mp.start()
-    while loop > 0 and this.get_status() == ActorStatus.StatusRunning:
+    while loop > 0:
         loop = loop - 1
         data = from_mp.recv()
         data[0] = data[0] + 1
@@ -130,27 +127,23 @@ def bound_target_a1(loop, mp_to_a1, a1_to_a2,
         data[0] = data[0] + 1
         to_mp.send(data)
 
-    while this.get_status() == ActorStatus.StatusRunning:
-        time.sleep(0.0001)
     from_mp.join()
     to_a2.join()
     from_a2.join()
     to_mp.join()
 
 
-def bound_target_a2(loop, a1_to_a2, a2_to_a1, this, builder):
+def bound_target_a2(loop, a1_to_a2, a2_to_a1, builder):
     from_a1 = a1_to_a2.dst_port
     from_a1.start()
     to_a1 = a2_to_a1.src_port
     to_a1.start()
-    while loop > 0 and this.get_status() == ActorStatus.StatusRunning:
+    while loop > 0:
         loop = loop - 1
         data = from_a1.recv()
         data[0] = data[0] + 1
         to_a1.send(data)
 
-    while this.get_status() == ActorStatus.StatusRunning:
-        time.sleep(0.0001)
     from_a1.join()
     to_a1.join()
 
@@ -168,8 +161,14 @@ class TestAllDelivery(unittest.TestCase):
         super().__init__(methodName)
         self.loop_ = 1000
 
-    @unittest.skip("need to fix")
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_shm_loop_with_cpp_multiprocess(self):
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -177,29 +176,37 @@ class TestAllDelivery(unittest.TestCase):
         queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         mp_to_a1 = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
             "mp_to_a1",
-            "mp_to_a1")
+            "mp_to_a1",
+            (2, 2),
+            np.int32)
         a1_to_a2 = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
             "a1_to_a2",
-            "a1_to_a2")
+            "a1_to_a2",
+            (2, 2),
+            np.int32)
         a2_to_a1 = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
             "a2_to_a1",
-            "a2_to_a1")
+            "a2_to_a1",
+            (2, 2),
+            np.int32)
         a1_to_mp = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
             "a1_to_mp",
-            "a1_to_mp")
+            "a1_to_mp",
+            (2, 2),
+            np.int32)
 
         target_a1 = partial(bound_target_a1, loop, mp_to_a1,
                             a1_to_a2, a2_to_a1, a1_to_mp)
@@ -237,8 +244,14 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("need to fix")
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_cpp_skt_loop_with_cpp_multiprocess(self):
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         loop = self.loop_
         mp = MultiProcessing()
         mp.start()
@@ -246,29 +259,37 @@ class TestAllDelivery(unittest.TestCase):
         queue_size = 2
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         mp_to_a1 = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             queue_size,
             nbytes,
             "mp_to_a1",
-            "mp_to_a1")
+            "mp_to_a1",
+            (2, 2),
+            np.int32)
         a1_to_a2 = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             queue_size,
             nbytes,
             "a1_to_a2",
-            "a1_to_a2")
+            "a1_to_a2",
+            (2, 2),
+            np.int32)
         a2_to_a1 = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             queue_size,
             nbytes,
             "a2_to_a1",
-            "a2_to_a1")
+            "a2_to_a1",
+            (2, 2),
+            np.int32)
         a1_to_mp = Channel(
-            ChannelBackend.SOCKETCHANNEL,
+            ChannelType.SOCKETCHANNEL,
             queue_size,
             nbytes,
             "a1_to_mp",
-            "a1_to_mp")
+            "a1_to_mp",
+            (2, 2),
+            np.int32)
 
         target_a1 = partial(bound_target_a1, loop, mp_to_a1,
                             a1_to_a2, a2_to_a1, a1_to_mp)
@@ -306,10 +327,13 @@ class TestAllDelivery(unittest.TestCase):
         print("cpp_skt_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("need to fix")
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_py_shm_loop_with_cpp_multiprocess(self):
-        loop = self.loop_
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
 
+        loop = self.loop_
         mp = MultiProcessing()
         mp.start()
 
@@ -378,10 +402,9 @@ class TestAllDelivery(unittest.TestCase):
         print("py_shm_loop_with_cpp_multiprocess timedelta =",
               loop_end - loop_start)
 
-    @unittest.skip("need to fix")
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_py_shm_loop_with_py_multiprocess(self):
         loop = self.loop_
-
         predata = prepare_data()
         queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
@@ -413,9 +436,9 @@ class TestAllDelivery(unittest.TestCase):
         builder = Builder()
 
         target_a1 = partial(bound_target_a1, loop, mp_to_a1,
-                            a1_to_a2, a2_to_a1, a1_to_mp, process(), builder)
+                            a1_to_a2, a2_to_a1, a1_to_mp, builder)
         target_a2 = partial(bound_target_a2, loop, a1_to_a2, a2_to_a1,
-                            process(), builder)
+                            builder)
 
         a1 = Process(target=target_a1)
         a2 = Process(target=target_a2)
@@ -454,7 +477,13 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
-        from lava.magma.runtime.message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure import (
+            GetRPCChannel,
+            ChannelQueueSize)
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -515,9 +544,15 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportFastDDSChannel,
                      "Not support FastDDS channel.")
     def test_fastdds_channel(self):
-        from lava.magma.runtime.message_infrastructure import GetDDSChannel
-        from lava.magma.runtime.message_infrastructure import DDSTransportType
-        from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import (
+            GetDDSChannel,
+            DDSTransportType,
+            DDSBackendType,
+            ChannelQueueSize)
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_
@@ -582,9 +617,15 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support CycloneDDS channel.")
     def test_cyclonedds_channel(self):
-        from lava.magma.runtime.message_infrastructure import GetDDSChannel
-        from lava.magma.runtime.message_infrastructure import DDSTransportType
-        from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import (
+            GetDDSChannel,
+            DDSTransportType,
+            DDSBackendType,
+            ChannelQueueSize)
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing \
+            import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         loop = self.loop_

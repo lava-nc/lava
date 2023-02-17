@@ -7,10 +7,8 @@ import unittest
 from functools import partial
 import time
 
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-
 from lava.magma.runtime.message_infrastructure import (
+    PURE_PYTHON_VERSION,
     Channel,
     SendPort,
     RecvPort
@@ -23,13 +21,9 @@ def generate_data():
     return np.random.random_sample((2, 4))
 
 
-def actor_stop(port, name):
-    port.join()
-
-
-def send_proc(actor, **kwargs):
+def send_proc(*args, **kwargs):
     port = kwargs.pop("port")
-    actor.set_stop_fn(partial(actor_stop, port, "send"))
+
     if not isinstance(port, SendPort):
         raise AssertionError()
     port.start()
@@ -38,36 +32,39 @@ def send_proc(actor, **kwargs):
         data = generate_data()
         port.send(data)
         end_ts = time.time()
-    actor.status_paused()
 
 
-def recv_proc(actor, **kwargs):
+def recv_proc(*args, **kwargs):
     port = kwargs.pop("port")
-    actor.set_stop_fn(partial(actor_stop, port, "recv"))
     port.start()
     if not isinstance(port, RecvPort):
         raise AssertionError()
     time.sleep(1)
     for i in range(QUEUE_SIZE + 1):
         data = port.recv()
-    actor.status_paused()
 
 
 class TestChannelBlock(unittest.TestCase):
 
-    @unittest.skip("need to fix")
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
     def test_block(self):
+        from lava.magma.runtime.message_infrastructure \
+            .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            .multiprocessing import MultiProcessing
+
         mp = MultiProcessing()
         mp.start()
         predata = generate_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         shmem_channel = Channel(
-            ChannelBackend.SHMEMCHANNEL,
+            ChannelType.SHMEMCHANNEL,
             QUEUE_SIZE,
             nbytes,
             "test_block",
-            "test_block")
-
+            "test_block",
+            (2, 4),
+            None)
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
 

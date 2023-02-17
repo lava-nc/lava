@@ -21,9 +21,8 @@ void Builder::Build(int i) {
   std::cout << "Build " << i << "... Builder complete" << std::endl;
 }
 
-void TargetFunction(Builder builder, int idx, AbstractActor* actor_ptr) {
+void TargetFunction(Builder builder, int idx) {
   std::cout << "Target Function running... ID " << idx << std::endl;
-  actor_ptr->SetStatus(ActorStatus::StatusStopped);
   builder.Build(idx);
 }
 
@@ -40,8 +39,7 @@ TEST(TestMultiprocessing, MultiprocessingSpawn) {
     std::cout << "Loop " << i << std::endl;
     auto bound_fn = std::bind(&TargetFunction,
                               (*builder),
-                              i,
-                              std::placeholders::_1);
+                              i);
     target_fn = bound_fn;
     ProcessType return_value = mp.BuildActor(bound_fn);
     std::cout << "Return Value --> "
@@ -69,8 +67,7 @@ TEST(TestMultiprocessing, ActorStop) {
     std::cout << "Loop " << i << std::endl;
     auto bound_fn = std::bind(&TargetFunction,
                               (*builder),
-                              i,
-                              std::placeholders::_1);
+                              i);
     target_fn = bound_fn;
     ProcessType return_value = mp.BuildActor(bound_fn);
     std::cout << "Return Value --> "

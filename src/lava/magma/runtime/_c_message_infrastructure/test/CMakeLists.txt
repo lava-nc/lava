@@ -17,7 +17,8 @@ add_executable(
   test_shm_delivery.cc
   test_socket_delivery.cc
   $<$<BOOL:${GRPC_CHANNEL}>:test_grpc_delivery.cc>
-  $<$<BOOL:${DDS_CHANNEL}>:test_ddschannel.cc>)
+  $<$<BOOL:${DDS_CHANNEL}>:test_ddschannel.cc>
+  )
 
 
 target_link_libraries(
