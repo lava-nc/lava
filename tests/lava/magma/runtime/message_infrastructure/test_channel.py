@@ -14,8 +14,7 @@ from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SupportGRPCChannel,
     SupportFastDDSChannel,
-    SupportCycloneDDSChannel,
-    ChannelQueueSize
+    SupportCycloneDDSChannel
 )
 
 
@@ -52,11 +51,13 @@ class Builder:
 
 
 def ddschannel_protocol(transfer_type, backend, topic_name):
-    from lava.magma.runtime.message_infrastructure import GetDDSChannel
-    from lava.magma.runtime.message_infrastructure import DDSTransportType
-    from lava.magma.runtime.message_infrastructure import DDSBackendType
+    from lava.magma.runtime.message_infrastructure import (
+        GetDDSChannel,
+        DDSTransportType,
+        DDSBackendType,
+        ChannelQueueSize)
     from lava.magma.runtime.message_infrastructure \
-    .multiprocessing import MultiProcessing
+        .multiprocessing import MultiProcessing
     mp = MultiProcessing()
     mp.start()
     dds_channel = GetDDSChannel(
@@ -89,6 +90,8 @@ class TestChannel(unittest.TestCase):
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing import MultiProcessing
+        from lava.magma.runtime.message_infrastructure \
+            import ChannelQueueSize
 
         mp = MultiProcessing()
         mp.start()
@@ -123,6 +126,9 @@ class TestChannel(unittest.TestCase):
     def test_single_process_shmemchannel(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure \
+            import ChannelQueueSize
+
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_shmem_channel'
@@ -160,6 +166,8 @@ class TestChannel(unittest.TestCase):
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing import MultiProcessing
+        from lava.magma.runtime.message_infrastructure \
+            import ChannelQueueSize
 
         mp = MultiProcessing()
         mp.start()
@@ -194,6 +202,8 @@ class TestChannel(unittest.TestCase):
     def test_single_process_socketchannel(self):
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
+        from lava.magma.runtime.message_infrastructure import \
+            ChannelQueueSize
         predata = prepare_data()
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         name = 'test_single_process_socket_channel'

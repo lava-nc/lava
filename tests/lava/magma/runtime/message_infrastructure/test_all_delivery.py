@@ -15,8 +15,7 @@ from lava.magma.runtime.message_infrastructure import (
     Channel,
     SupportGRPCChannel,
     SupportFastDDSChannel,
-    SupportCycloneDDSChannel,
-    ChannelQueueSize
+    SupportCycloneDDSChannel
 )
 
 
@@ -478,7 +477,9 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
-        from lava.magma.runtime.message_infrastructure import GetRPCChannel
+        from lava.magma.runtime.message_infrastructure import (
+            GetRPCChannel,
+            ChannelQueueSize)
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing \
             import MultiProcessing
@@ -543,9 +544,11 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportFastDDSChannel,
                      "Not support FastDDS channel.")
     def test_fastdds_channel(self):
-        from lava.magma.runtime.message_infrastructure import GetDDSChannel
-        from lava.magma.runtime.message_infrastructure import DDSTransportType
-        from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import (
+            GetDDSChannel,
+            DDSTransportType,
+            DDSBackendType,
+            ChannelQueueSize)
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing \
             import MultiProcessing
@@ -614,9 +617,11 @@ class TestAllDelivery(unittest.TestCase):
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support CycloneDDS channel.")
     def test_cyclonedds_channel(self):
-        from lava.magma.runtime.message_infrastructure import GetDDSChannel
-        from lava.magma.runtime.message_infrastructure import DDSTransportType
-        from lava.magma.runtime.message_infrastructure import DDSBackendType
+        from lava.magma.runtime.message_infrastructure import (
+            GetDDSChannel,
+            DDSTransportType,
+            DDSBackendType,
+            ChannelQueueSize)
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing \
             import MultiProcessing
