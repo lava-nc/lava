@@ -5,7 +5,6 @@ import logging
 import typing as ty
 from abc import abstractmethod
 
-
 import numpy as np
 
 from lava.magma.runtime.message_infrastructure import (
@@ -26,7 +25,6 @@ from lava.magma.runtime.mgmt_token_enums import (
 from lava.magma.runtime.runtime_services.enums import LoihiPhase
 from lava.magma.runtime.runtime_services.interfaces import \
     AbstractRuntimeService
-
 
 """The RuntimeService interface is responsible for
 coordinating the execution of a group of process models belonging to a common
@@ -92,6 +90,62 @@ class PyRuntimeService(AbstractRuntimeService):
         for i in range(len(self.service_to_process)):
             self.service_to_process[i].join()
             self.process_to_service[i].join()
+
+    def _relay_to_runtime_data_given_model_id(self, model_id: int):
+        """Relays data received from ProcessModel given by model id  to the
+        runtime"""
+        process_idx = self.model_ids.index(model_id)
+        data_recv_port = self.process_to_service[process_idx]
+        data_relay_port = self.service_to_runtime
+        num_items = data_recv_port.recv()
+        data_relay_port.send(num_items)
+        for i in range(int(num_items[0])):
+            value = data_recv_port.recv()
+            data_relay_port.send(value)
+
+    def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
+        """Relays data received from the runtime to the ProcessModel given by
+        the model id."""
+        process_idx = self.model_ids.index(model_id)
+        data_recv_port = self.runtime_to_service
+        data_relay_port = self.service_to_process[process_idx]
+        resp_port = self.process_to_service[process_idx]
+        # Receive and relay number of items
+        num_items = data_recv_port.recv()
+        data_relay_port.send(num_items)
+        # Receive and relay data1, data2, ...
+        for i in range(int(num_items[0].item())):
+            data_relay_port.send(data_recv_port.recv())
+        rsp = resp_port.recv()
+        return rsp
+
+    def _send_pm_req_given_model_id(self, model_id: int, *requests):
+        """Sends requests to a ProcessModel given by the model id."""
+        process_idx = self.model_ids.index(model_id)
+        req_port = self.service_to_process[process_idx]
+        for request in requests:
+            req_port.send(request)
+
+    def _handle_get_set(self, command):
+        if enum_equal(command, MGMT_COMMAND.GET_DATA):
+            requests: ty.List[np.ndarray] = [command]
+            # recv model_id
+            model_id: int = int(self.runtime_to_service.recv()[0].item())
+            # recv var_id
+            requests.append(self.runtime_to_service.recv())
+            self._send_pm_req_given_model_id(model_id, *requests)
+            self._relay_to_runtime_data_given_model_id(model_id)
+        elif enum_equal(command, MGMT_COMMAND.SET_DATA):
+            requests: ty.List[np.ndarray] = [command]
+            # recv model_id
+            model_id: int = int(self.runtime_to_service.recv()[0].item())
+            # recv var_id
+            requests.append(self.runtime_to_service.recv())
+            self._send_pm_req_given_model_id(model_id, *requests)
+            rsp = self._relay_to_pm_data_given_model_id(model_id)
+            self.service_to_runtime.send(rsp)
+        else:
+            raise RuntimeError(f"Unknown request {command}")
 
 
 class LoihiPyRuntimeService(PyRuntimeService):
@@ -165,13 +219,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
         """Sends a command (phase information) to all ProcessModels."""
         for send_port in self.service_to_process:
             send_port.send(phase)
-
-    def _send_pm_req_given_model_id(self, model_id: int, *requests):
-        """Sends requests to a ProcessModel given by the model id."""
-        process_idx = self.model_ids.index(model_id)
-        req_port = self.service_to_process[process_idx]
-        for request in requests:
-            req_port.send(request)
 
     def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
         """Retrieves responses of all ProcessModels."""
@@ -310,7 +357,11 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
                         command, MGMT_COMMAND.SET_DATA
                 ):
-                    self._handle_get_set(phase, command)
+                    if enum_equal(phase, LoihiPhase.HOST):
+                        self._handle_get_set(command)
+                    else:
+                        raise ValueError(f"Wrong Phase: {phase} to call "
+                                         f"GET/SET")
                 else:
                     self.paused = False
                     # The number of time steps was received ("command")
@@ -378,28 +429,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
             elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
 
-    def _handle_get_set(self, phase, command):
-        if enum_equal(phase, LoihiPhase.HOST):
-            if enum_equal(command, MGMT_COMMAND.GET_DATA):
-                requests: ty.List[np.ndarray] = [command]
-                # recv model_id
-                model_id: int = int(self.runtime_to_service.recv()[0].item())
-                # recv var_id
-                requests.append(self.runtime_to_service.recv())
-                self._send_pm_req_given_model_id(model_id, *requests)
-                self._relay_to_runtime_data_given_model_id(model_id)
-            elif enum_equal(command, MGMT_COMMAND.SET_DATA):
-                requests: ty.List[np.ndarray] = [command]
-                # recv model_id
-                model_id: int = int(self.runtime_to_service.recv()[0].item())
-                # recv var_id
-                requests.append(self.runtime_to_service.recv())
-                self._send_pm_req_given_model_id(model_id, *requests)
-                rsp = self._relay_to_pm_data_given_model_id(model_id)
-                self.service_to_runtime.send(rsp)
-            else:
-                raise RuntimeError(f"Unknown request {command}")
-
 
 class AsyncPyRuntimeService(PyRuntimeService):
     """RuntimeService that implements Async SyncProtocol in Py."""
@@ -409,6 +438,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
         self.req_stop = False
         self.req_pause = False
         self._error = False
+        self.running = False
 
     class PMResponse:
         STATUS_DONE = enum_to_np(0)
@@ -463,11 +493,25 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
+                    self.running = False
                     return
                 elif enum_equal(command, MGMT_COMMAND.PAUSE):
                     self._handle_pause()
+                    self.running = False
+                elif enum_equal(command, MGMT_COMMAND.GET_DATA) or enum_equal(
+                        command, MGMT_COMMAND.SET_DATA
+                ):
+                    if not self.running:
+                        self._handle_get_set(command)
+                    else:
+                        raise ValueError(f"Wrong Phase: {self.running} to call "
+                                         f"GET/SET. AsyncProcess should not "
+                                         f"be running when it gets GET/SET "
+                                         f"call.")
                 else:
                     self._send_pm_cmd(MGMT_COMMAND.RUN)
+                    self._send_pm_cmd(command)
+                    self.running = True
                     for ptos_recv_port in self.process_to_service:
                         channel_actions.append(
                             (ptos_recv_port, lambda: "resp")
@@ -501,8 +545,10 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_PAUSE)
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                    
             elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.join()
+                self.running = False
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))

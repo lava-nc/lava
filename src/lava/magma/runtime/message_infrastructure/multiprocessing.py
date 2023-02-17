@@ -22,6 +22,7 @@ except ImportError:
     class LavaTypeTransfer:
         pass
 
+
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
 which will participate in exchanging messages. The Channel Infrastructure

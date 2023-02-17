@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 # from functools import partial
 import logging
 import numpy as np
+import platform
 
 from lava.magma.runtime.message_infrastructure import (SendPort,
                                                        RecvPort,
@@ -22,6 +23,7 @@ from lava.magma.runtime.mgmt_token_enums import (
     enum_equal,
     MGMT_COMMAND,
     MGMT_RESPONSE, )
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
 class AbstractPyProcessModel(AbstractProcessModel, ABC):
@@ -440,7 +442,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Command handler for Pause Command.
         """
-        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
+        self.process_to_service.send(
+            PyLoihiProcessModel.Response.STATUS_PAUSED)
 
     def _handle_pause_or_stop_req(self):
         """
@@ -478,6 +481,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                     if isinstance(csp_port, RecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
+
                         self._channel_actions.insert(0,
                                                      (csp_port, func(var_port)))
 
@@ -512,6 +516,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
 
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
+        self.num_steps = 0
         self._cmd_handlers.update({
             MGMT_COMMAND.RUN[0]: self._run_async
         })
@@ -561,6 +566,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         Helper function to wrap run_async function
         """
+        self.num_steps = int(self.service_to_process.recv()[0].item())
         self.run_async()
         self.process_to_service.send(PyAsyncProcessModel.Response.STATUS_DONE)
 
@@ -569,3 +575,126 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         Add various ports to poll for communication on ports
         """
         pass
+
+
+def _get_attr_dict(
+    model_class: ty.Type[PyLoihiProcessModel]
+) -> ty.Dict[str, ty.Any]:
+    """Get a dictionary of non-callable public attributes of a class.
+
+    Parameters
+    ----------
+    model_class : ty.Type[PyLoihiProcessModel]
+        A class inherited from PyLoihiProcessModel.
+
+    Returns
+    -------
+    ty.Dict[str, ty.Any]
+        Dictionary of attribute name and it's value.
+    """
+    var_names = [v for v, m in vars(model_class).items()
+                 if not (v.startswith('_') or callable(m))]
+    var_dict = {var_name: getattr(model_class, var_name)
+                for var_name in var_names}
+    if model_class == PyLoihiProcessModel:
+        return {}
+    for base in model_class.__bases__:
+        var_dict = {**_get_attr_dict(base), **var_dict}
+    return var_dict
+
+
+def _get_callable_dict(
+    model_class: ty.Type[PyLoihiProcessModel]
+) -> ty.Dict[str, ty.Callable]:
+    """Get a dictionary of callable public members of a class.
+
+    Parameters
+    ----------
+    model_class : ty.Type[PyLoihiProcessModel]
+        A class inherited from PyLoihiProcessModel.
+
+    Returns
+    -------
+    ty.Dict[str, ty.Callable]
+        Dictionary of callable name and it's pointer.
+    """
+    callable_names = [v for v, m in vars(model_class).items()
+                      if callable(m) and not v.startswith('_')]
+    callable_dict = {callable_name: getattr(model_class, callable_name)
+                     for callable_name in callable_names}
+    if model_class == PyLoihiProcessModel:
+        return {}
+    for base in model_class.__bases__:
+        callable_dict = {**_get_callable_dict(base), **callable_dict}
+    return callable_dict
+
+
+def PyLoihiModelToPyAsyncModel(
+    py_loihi_model: ty.Type[PyLoihiProcessModel]
+) -> ty.Type[PyAsyncProcessModel]:
+    """Factory function that converts Py-Loihi process models
+    to equivalent Py-Async definition.
+
+    Parameters
+    ----------
+    py_loihi_model : ty.Type[PyLoihiProcessModel]
+        Py-Loihi model that describes the functional behavior of a process
+        using Loihi Protocol.
+
+    Returns
+    -------
+    ty.Type[PyAsyncProcessModel]
+        Equivalent Py-Async protocol model. The async process model
+        class name is the original loihi process model class name with Async
+        postfix.
+    """
+    # The exclude_vars and exclude_callables are
+    # based on the constructor of PyLoihiProcessModel and PyAsyncProcModel
+    if platform.system() == 'Windows':
+        raise OSError('Conversion of process models on the fly is not '
+                      'supported on Windows system. It will result in '
+                      'pickling error when lava threads for model execution '
+                      'are spawned. The fundamental reason is Windows OS '
+                      'does not support forking and needs to use pickle.')
+
+    exclude_vars = ['time_step', 'phase']
+    exclude_callables = ['run_spk',
+                         'pre_guard', 'run_pre_mgmt',
+                         'post_guard', 'run_post_mgmt',
+                         'implements_process', 'implements_protocol']
+    name = py_loihi_model.__name__ + 'Async'
+    var_dict = _get_attr_dict(py_loihi_model)
+    var_dict['implements_process'] = py_loihi_model.implements_process
+    var_dict['implements_protocol'] = AsyncProtocol
+    callable_dict = {k: v for k, v in _get_callable_dict(py_loihi_model).items()
+                     if k not in exclude_callables}
+
+    def __init__(self, proc_params: dict):
+        # New constructor of the PyAsyncModel implementation.
+        PyAsyncProcessModel.__init__(self, proc_params)
+        ref_model = py_loihi_model(proc_params)
+        attributes = [v for v, m in vars(ref_model).items()
+                      if not (v.startswith('_') or callable(m))
+                      and v not in var_dict.keys()
+                      and v not in vars(self)
+                      and v not in exclude_vars]
+        for attr in attributes:
+            setattr(self, attr, getattr(ref_model, attr))
+        self.time_step = 1
+
+    def run_async(self) -> None:
+        # New run_async behavior of PyAsyncModel implementation.
+        while self.time_step != self.num_steps + 1:
+            if py_loihi_model.pre_guard(self):
+                py_loihi_model.run_pre_mgmt(self)
+            py_loihi_model.run_spk(self)
+            if py_loihi_model.post_guard(self):
+                py_loihi_model.run_post_mgmt(self)
+            self.time_step += 1
+
+    py_async_model = type(name, (PyAsyncProcessModel,),
+                          {'__init__': __init__,
+                           'run_async': run_async,
+                           **var_dict,
+                           **callable_dict})
+    return py_async_model
