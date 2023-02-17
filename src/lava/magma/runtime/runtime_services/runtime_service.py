@@ -545,7 +545,6 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     self.service_to_runtime.send(MGMT_RESPONSE.REQ_PAUSE)
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
-                    
             elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.join()
