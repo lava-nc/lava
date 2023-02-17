@@ -160,6 +160,9 @@ class LearningDense(LearningConnectionProcess, Dense):
                  GradedSpikeCfg.USE_REGULAR_IMPULSE,
                  **kwargs) -> None:
 
+        if graded_spike_cfg != GradedSpikeCfg.USE_REGULAR_IMPULSE:
+            learning_rule.x1_impulse = 0
+
         super().__init__(weights=weights,
                          shape=weights.shape,
                          name=name,

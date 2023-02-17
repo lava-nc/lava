@@ -18,10 +18,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
     @staticmethod
     def create_network(num_steps: int,
                        learning_rule_cnd: str,
-                       graded_spike_cfg: GradedSpikeCfg,
-                       x1_impulse: ty.Union[float, int] = 16, x1_tau: int = 10,
-                       x2_impulse: ty.Union[float, int] = 24, x2_tau: int = 5,
-                       weight_init: ty.Union[float, int] = 10) \
+                       graded_spike_cfg: GradedSpikeCfg) \
             -> ty.Tuple[RingBuffer, LearningDense, RingBuffer]:
         """Create a network of RingBuffer -> LearningDense -> RingBuffer.
 
@@ -33,16 +30,6 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
             String specifying which learning rule condition to use.
         graded_spike_cfg : GradedSpikeCfg
             GradedSpikeCfg to use for the LearningDense.
-        x1_impulse : float or int
-            Impulse for x1 trace.
-        x1_tau : int
-            Decay constant for x1 trace.
-        x2_impulse : float or int
-            Impulse for x2 trace.
-        x2_tau : int
-            Decay constant for x2 trace.
-        weight_init : float or int
-            Initial value for the weight.
 
         Returns
         ----------
@@ -58,8 +45,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule = \
             Loihi2FLearningRule(dw=dw,
-                                x1_impulse=x1_impulse, x1_tau=x1_tau,
-                                x2_impulse=x2_impulse, x2_tau=x2_tau,
+                                x1_impulse=16, x1_tau=20,
+                                x2_impulse=24, x2_tau=5,
                                 t_epoch=4)
 
         # Pre-synaptic spike at time step 2, payload 51
@@ -71,7 +58,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         pattern_pre = RingBuffer(data=spike_raster_pre.astype(int))
         learning_dense = \
-            LearningDense(weights=np.eye(1) * weight_init,
+            LearningDense(weights=np.eye(1) * 10,
                           learning_rule=learning_rule,
                           name="learning_dense",
                           num_message_bits=8,
@@ -83,6 +70,15 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         return pattern_pre, learning_dense, pattern_post
 
+    def setUp(self) -> None:
+        exception_map = {
+            RingBuffer: PySendModelFloat
+        }
+        self._run_cfg = \
+            Loihi2SimCfg(select_tag="floating_pt",
+                         exception_proc_model_map=exception_map)
+        self._run_cnd = RunSteps(num_steps=1)
+
     def test_learning_graded_spike_reg_imp_float_x0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
         pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
@@ -92,24 +88,9 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.4773986, 14.4773986]
@@ -121,7 +102,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -142,24 +124,9 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.4773986, 14.4773986]
@@ -172,7 +139,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -193,24 +161,9 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.4773986, 14.4773986]
@@ -223,7 +176,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -244,28 +198,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -282,7 +220,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -303,28 +242,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -341,7 +264,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -362,28 +286,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -400,7 +308,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -421,28 +330,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -459,7 +352,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -480,28 +374,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -518,7 +396,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -539,28 +418,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -577,7 +440,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -598,28 +462,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -636,7 +484,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -657,28 +506,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -695,7 +528,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -716,28 +550,12 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15.0])
-
-        exception_map = {
-            RingBuffer: PySendModelFloat
-        }
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -754,7 +572,8 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -771,10 +590,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
     @staticmethod
     def create_network(num_steps: int,
                        learning_rule_cnd: str,
-                       graded_spike_cfg: GradedSpikeCfg,
-                       x1_impulse: ty.Union[float, int] = 16, x1_tau: int = 10,
-                       x2_impulse: ty.Union[float, int] = 24, x2_tau: int = 5,
-                       weight_init: ty.Union[float, int] = 10) \
+                       graded_spike_cfg: GradedSpikeCfg) \
             -> ty.Tuple[RingBuffer, LearningDense, RingBuffer]:
         """Create a network of RingBuffer -> LearningDense -> RingBuffer.
 
@@ -786,16 +602,6 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
             String specifying which learning rule condition to use.
         graded_spike_cfg : GradedSpikeCfg
             GradedSpikeCfg to use for the LearningDense.
-        x1_impulse : float or int
-            Impulse for x1 trace.
-        x1_tau : int
-            Decay constant for x1 trace.
-        x2_impulse : float or int
-            Impulse for x2 trace.
-        x2_tau : int
-            Decay constant for x2 trace.
-        weight_init : float or int
-            Initial value for the weight.
 
         Returns
         ----------
@@ -811,8 +617,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule = \
             Loihi2FLearningRule(dw=dw,
-                                x1_impulse=x1_impulse, x1_tau=x1_tau,
-                                x2_impulse=x2_impulse, x2_tau=x2_tau,
+                                x1_impulse=16, x1_tau=20,
+                                x2_impulse=24, x2_tau=5,
                                 t_epoch=4, rng_seed=0)
 
         # Pre-synaptic spike at time step 2, payload 51
@@ -824,7 +630,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         pattern_pre = RingBuffer(data=spike_raster_pre.astype(int))
         learning_dense = \
-            LearningDense(weights=np.eye(1) * weight_init,
+            LearningDense(weights=np.eye(1) * 10,
                           learning_rule=learning_rule,
                           name="learning_dense",
                           num_message_bits=8,
@@ -836,6 +642,15 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         return pattern_pre, learning_dense, pattern_post
 
+    def setUp(self) -> None:
+        exception_map = {
+            RingBuffer: PySendModelFixed
+        }
+        self._run_cfg = \
+            Loihi2SimCfg(select_tag="bit_approximate_loihi",
+                         exception_proc_model_map=exception_map)
+        self._run_cnd = RunSteps(num_steps=1)
+
     def test_learning_graded_spike_reg_imp_bit_approx_x0_condition(self):
         """Known value test for x1, x2, and weights of LearningDense with
         pre-synaptic graded spikes, USE_REGULAR_IMPULSE GradedSpikeCfg and
@@ -845,24 +660,9 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.0, 14.0]
@@ -874,7 +674,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -895,24 +696,9 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.0, 14.0]
@@ -925,7 +711,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -946,24 +733,9 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
-        x1_impulse = 16
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.0, 14.0]
@@ -976,7 +748,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -997,28 +770,12 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15], dtype=int)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1035,7 +792,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1056,28 +814,12 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15], dtype=int)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1094,7 +836,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1115,28 +858,12 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         learning_dense.x1.init = np.array([15], dtype=int)
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 overwrites x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1153,7 +880,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1174,29 +902,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         # initial value of x1 is high to clearly see effect of saturation
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1213,7 +925,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1234,29 +947,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         # initial value of x1 is high to clearly see effect of saturation
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1273,7 +970,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1294,29 +992,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
         # initial value of x1 is high to clearly see effect of saturation
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at pre-spike time
         # value of x1 at end of the epoch is value of x1 after payload/2
@@ -1333,7 +1015,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1355,29 +1038,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(5, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         # initial value of x1 is high to clearly see effect of overflow
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at first pre-spike time
         # x1 overflows, and only the overflow is left in x1
@@ -1404,7 +1071,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1426,29 +1094,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(5, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         # initial value of x1 is high to clearly see effect of overflow
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at first pre-spike time
         # x1 overflows, and only the overflow is left in x1
@@ -1475,7 +1127,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
@@ -1497,29 +1150,13 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
 
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
-        # set regular impulse for x1 to 0
-        x1_impulse = 0
-        x1_tau = 20
-        x2_impulse = 24
-        x2_tau = 5
-        weight_init = 10
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
-            self.create_network(5, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau,
-                                x2_impulse, x2_tau,
-                                weight_init)
+            self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
         # initial value of x1 is high to clearly see effect of overflow
         learning_dense.x1.init = np.array([115])
-
-        exception_map = {
-            RingBuffer: PySendModelFixed
-        }
-        run_cfg = Loihi2SimCfg(select_tag="bit_approximate_loihi",
-                               exception_proc_model_map=exception_map)
-        run_cnd = RunSteps(num_steps=1)
 
         # graded spike payload/2 is added to x1 trace at first pre-spike time
         # x1 overflows, and only the overflow is left in x1
@@ -1546,7 +1183,8 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x2_data = []
         wgt_data = []
         for i in range(num_steps):
-            pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
+            pre_ring_buffer.run(condition=self._run_cnd,
+                                run_cfg=self._run_cfg)
 
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
