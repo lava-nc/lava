@@ -643,10 +643,10 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         spikes more than once, pre-traces are updated by their regular impulses.
         (1) GradedSpikeCfg.OVERWRITE overwrites the value of the pre-synaptic
         trace x1 by payload/2, upon spiking.
-        (2) GradedSpikeCfg.ADD_WITH_SATURATION adds payload/2 to the pre-synaptic
-        trace x1, upon spiking, saturates x1 to 127.
-        (3) GradedSpikeCfg.ADD_WITHOUT_SATURATION adds payload/2 to the pre-synaptic
-        trace x1, upon spiking, keeps only overflow from 127 in x1,
+        (2) GradedSpikeCfg.ADD_WITH_SATURATION adds payload/2 to the
+        pre-synaptic trace x1, upon spiking, saturates x1 to 127.
+        (3) GradedSpikeCfg.ADD_WITHOUT_SATURATION adds payload/2 to the
+        pre-synaptic trace x1, upon spiking, keeps only overflow from 127 in x1,
         adds regular impulse to x2 on overflow.
 
         Within-epoch spike times are recorded.

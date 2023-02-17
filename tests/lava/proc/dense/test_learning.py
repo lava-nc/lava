@@ -11,7 +11,6 @@ from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.proc.dense.process import LearningDense
-from lava.proc.monitor.process import Monitor
 from lava.proc.io.source import RingBuffer, PySendModelFixed, PySendModelFloat
 
 
@@ -19,7 +18,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
     @staticmethod
     def create_network(num_steps: int,
                        learning_rule_cnd: str,
-                       graded_spike_cfg: GradedSpikeCfg, 
+                       graded_spike_cfg: GradedSpikeCfg,
                        x1_impulse: ty.Union[float, int] = 16, x1_tau: int = 10,
                        x2_impulse: ty.Union[float, int] = 24, x2_tau: int = 5,
                        weight_init: ty.Union[float, int] = 10) \
@@ -58,7 +57,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         dw = f"{learning_rule_cnd} * x1"
 
         learning_rule = \
-            Loihi2FLearningRule(dw=dw, 
+            Loihi2FLearningRule(dw=dw,
                                 x1_impulse=x1_impulse, x1_tau=x1_tau,
                                 x2_impulse=x2_impulse, x2_tau=x2_tau,
                                 t_epoch=4)
@@ -90,7 +89,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         dw=x0 * x1 learning rule."""
 
         num_steps = 5
-        
+
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
         x1_impulse = 16
@@ -101,7 +100,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
 
         pre_ring_buffer, learning_dense, post_ring_buffer = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg,
-                                x1_impulse, x1_tau, 
+                                x1_impulse, x1_tau,
                                 x2_impulse, x2_tau,
                                 weight_init)
 
@@ -123,13 +122,13 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         wgt_data = []
         for i in range(num_steps):
             pre_ring_buffer.run(condition=run_cnd, run_cfg=run_cfg)
-            
+
             x1_data.append(learning_dense.x1.get()[0])
             x2_data.append(learning_dense.x2.get()[0])
             wgt_data.append(learning_dense.weights.get()[0, 0])
-        
+
         pre_ring_buffer.stop()
-        
+
         np.testing.assert_almost_equal(x1_data, expected_x1_data)
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
@@ -1558,4 +1557,3 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         np.testing.assert_almost_equal(x1_data, expected_x1_data)
         np.testing.assert_almost_equal(x2_data, expected_x2_data)
         np.testing.assert_almost_equal(wgt_data, expected_wgt_data)
-        
