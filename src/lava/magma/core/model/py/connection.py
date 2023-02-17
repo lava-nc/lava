@@ -126,24 +126,17 @@ class PyLearningConnection(AbstractLearningConnection):
 
         self.sign_mode = proc_params.get("sign_mode", SignMode.MIXED)
 
-        # store shapes that useful throughout the lifetime of this PM
         self._store_shapes()
-        # store impulses and taus in ndarrays with the right shapes
         self._store_impulses_and_taus()
 
-        # store active traces per dependency from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces_per_dependency()
-        # store active traces from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces()
-        # generate LearningRuleApplierBitApprox from ProductSeries
         self._build_learning_rule_appliers()
-
-        # initialize TraceRandoms and ConnVarRandom
         self._init_randoms()
 
     def on_var_update(self):
+        """ Update the learning rule parameters when on single Var is 
+        updated. """
         self._learning_rule.x1_tau = self.x1_tau[0]
         self._learning_rule.x1_impulse = self.x1_impulse[0]
         self._learning_rule.x2_tau = self.x2_tau[0]
@@ -160,18 +153,9 @@ class PyLearningConnection(AbstractLearningConnection):
         self._learning_rule.dd_str = self.dd
         self._learning_rule.dt_str = self.dt
 
-        # store impulses and taus in ndarrays with the right shapes
         self._store_impulses_and_taus()
-
-        # store active traces per dependency from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces_per_dependency()
-
-        # store active traces from learning_rule in ndarrays
-        # with the right shapes
         self._build_active_traces()
-
-        # generate LearningRuleApplierBitApprox from ProductSeries
         self._build_learning_rule_appliers()
 
     def _store_shapes(self) -> None:

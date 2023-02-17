@@ -106,8 +106,3 @@ class AbstractProcessModel(ABC):
             + tags
         )
 
-    def on_var_update(self):
-        """This method is called if a Var is updated. It
-        can be used as callback function to calculate dependent
-        changes."""
-        pass

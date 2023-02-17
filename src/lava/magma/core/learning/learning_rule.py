@@ -95,7 +95,7 @@ class LoihiLearningRule:
         t_epoch: ty.Optional[int] = 1,
         rng_seed: ty.Optional[int] = None,
     ) -> None:
-        # move the "dw = " to lava-loihi
+
         self._dw_str = dw
         self._dd_str = dd
         self._dt_str = dt
