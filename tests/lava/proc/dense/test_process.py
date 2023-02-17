@@ -5,7 +5,7 @@
 import unittest
 import numpy as np
 
-from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.dense.process import Dense, LearningDense, DelayDense
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
 
@@ -49,3 +49,55 @@ class TestLearningDenseProcess(unittest.TestCase):
 
         self.assertEqual(np.shape(conn.weights.init), shape)
         np.testing.assert_array_equal(conn.weights.init, weights)
+
+
+class TestDelayDenseProcess(unittest.TestCase):
+    """Tests for DelayDense class"""
+
+    def test_init(self):
+        """Tests instantiation of DelayDense"""
+        shape = (100, 200)
+        weights = np.random.randint(100, size=shape)
+        delays = np.random.randint(10, size=shape)
+
+        conn = DelayDense(weights=weights, delays=delays)
+
+        self.assertEqual(np.shape(conn.weights.init), shape)
+        np.testing.assert_array_equal(conn.weights.init, weights)
+        np.testing.assert_array_equal(conn.delays.init, delays)
+
+    def test_init_max_delay(self):
+        """Tests that the parameter 'max_delay' creates an appropriate buffer
+        'a_buff'. If 'max_delay'=15 and 'delays'=5, the dimension of a_buff
+        should be [: 15+1].
+        """
+        shape = (100, 200)
+        weights = np.random.randint(100, size=shape)
+        delays = 5
+        max_delay = 15
+        expected_a_buff_shape = (shape[0], max_delay + 1)
+
+        conn = DelayDense(weights=weights, delays=delays, max_delay=max_delay)
+
+        self.assertEqual(np.shape(conn.weights.init), shape)
+        np.testing.assert_array_equal(conn.weights.init, weights)
+        np.testing.assert_array_equal(conn.delays.init, delays)
+        np.testing.assert_array_equal(conn.a_buff.shape, expected_a_buff_shape)
+
+    def test_input_validation_delays(self):
+        """Tests input validation on the dimensions and values of 'delays'.
+        (Must be 2D and positive values.)"""
+        weights = np.random.randint(100, size=(2, 4))
+        delays = np.random.randint(10, size=(3, 4))
+
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)
+        delays = -1
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)
+        delays = 1.2
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)
+        delays = np.random.rand(3, 4)
+        with self.assertRaises(ValueError):
+            DelayDense(weights=weights, delays=delays)
