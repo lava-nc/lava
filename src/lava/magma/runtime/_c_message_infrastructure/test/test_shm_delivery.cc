@@ -20,9 +20,7 @@ void target_fn_a1_bound(
   AbstractChannelPtr mp_to_a1,
   AbstractChannelPtr a1_to_mp,
   AbstractChannelPtr a1_to_a2,
-  AbstractChannelPtr a2_to_a1,
-  AbstractActor* actor_ptr) {
-    actor_ptr->SetStopFn(stop_fn);
+  AbstractChannelPtr a2_to_a1) {
     auto from_mp = mp_to_a1->GetRecvPort();
     from_mp->Start();
     auto to_mp   = a1_to_mp->GetSendPort();
@@ -32,7 +30,7 @@ void target_fn_a1_bound(
     auto from_a2 = a2_to_a1->GetRecvPort();
     from_a2->Start();
     LAVA_DUMP(LOG_UTTEST, "shm actor1, loop: %d\n", loop);
-    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+    while (loop--) {
       LAVA_DUMP(LOG_UTTEST, "shm actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "shm actor1 recviced\n");
@@ -46,23 +44,18 @@ void target_fn_a1_bound(
     }
     from_mp->Join();
     from_a2->Join();
-    while (!static_cast<int>(actor_ptr->GetStatus())) {
-      helper::Sleep();
-    }
   }
 
 void target_fn_a2_bound(
   int loop,
   AbstractChannelPtr a1_to_a2,
-  AbstractChannelPtr a2_to_a1,
-  AbstractActor* actor_ptr) {
-    actor_ptr->SetStopFn(stop_fn);
+  AbstractChannelPtr a2_to_a1) {
     auto from_a1 = a1_to_a2->GetRecvPort();
     from_a1->Start();
     auto to_a1   = a2_to_a1->GetSendPort();
     to_a1->Start();
     LAVA_DUMP(LOG_UTTEST, "shm actor2, loop: %d\n", loop);
-    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+    while (loop--) {
       LAVA_DUMP(LOG_UTTEST, "shm actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "shm actor2 recviced\n");
@@ -71,9 +64,6 @@ void target_fn_a2_bound(
       free(data->mdata);
     }
     from_a1->Join();
-    while (!static_cast<int>(actor_ptr->GetStatus())) {
-      helper::Sleep();
-    }
   }
 
 TEST(TestShmDelivery, ShmLoop) {
@@ -106,9 +96,9 @@ TEST(TestShmDelivery, ShmLoop) {
                                 "a2_to_a1");
   auto target_fn_a1 = std::bind(&target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
-                                a2_to_a1, std::placeholders::_1);
+                                a2_to_a1);
   auto target_fn_a2 = std::bind(&target_fn_a2_bound, loop, a1_to_a2,
-                                a2_to_a1, std::placeholders::_1);
+                                a2_to_a1);
   ProcessType actor1 = mp.BuildActor(target_fn_a1);
   ProcessType actor2 = mp.BuildActor(target_fn_a2);
   auto to_a1   = mp_to_a1->GetSendPort();

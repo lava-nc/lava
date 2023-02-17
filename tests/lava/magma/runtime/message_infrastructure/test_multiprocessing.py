@@ -3,31 +3,19 @@
 # See: https://spdx.org/licenses/
 import traceback
 import unittest
-import psutil
-import os
 import time
 import numpy as np
 from functools import partial
-from enum import Enum
 
-from lava.magma.runtime.message_infrastructure import CppMultiProcessing
-from lava.magma.runtime.message_infrastructure import ProcessType
-from lava.magma.runtime.message_infrastructure import Actor
-from lava.magma.runtime.message_infrastructure import ActorStatus
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-from lava.magma.runtime.message_infrastructure import SendPort
-from lava.magma.runtime.message_infrastructure import RecvPort
-from lava.magma.runtime.message_infrastructure import Channel
-
-import time
+from lava.magma.runtime.message_infrastructure import \
+    PURE_PYTHON_VERSION
 
 
 def nbytes_cal(shape, dtype):
     return np.prod(shape) * np.dtype(dtype).itemsize
 
 
-class Builder():
+class Builder:
     def build(self, i):
         time.sleep(0.0001)
 
@@ -41,11 +29,9 @@ def target_fn(*args, **kwargs):
     :return: None
     """
     try:
-        actor = args[0]
         builder = kwargs.pop("builder")
         idx = kwargs.pop("idx")
         builder.build(idx)
-        actor.status_terminated()
         return 0
     except Exception as e:
         print("Encountered Fatal Exception: " + str(e))
@@ -56,7 +42,10 @@ def target_fn(*args, **kwargs):
 
 class TestMultiprocessing(unittest.TestCase):
 
+    @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
     def test_multiprocessing_actors(self):
+        from lava.magma.runtime.message_infrastructure.multiprocessing \
+            import MultiProcessing
         mp = MultiProcessing()
         mp.start()
         builder = Builder()

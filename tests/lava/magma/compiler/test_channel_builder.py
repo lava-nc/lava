@@ -5,40 +5,45 @@ import typing as ty
 import unittest
 
 import numpy as np
-
+from multiprocessing.managers import SharedMemoryManager
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.utils import PortInitializer
 
-
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
     Channel,
     SendPort,
-    RecvPort
+    RecvPort,
+    create_channel
 )
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 
 class MockMessageInterface:
-    def channel_class(self, channel_type: ChannelBackend) -> ty.Type:
-        return ChannelBackend.SHMEMCHANNEL
+    def __init__(self, smm):
+        self.smm = smm
+
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size) -> Channel:
+        return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
+        smm: SharedMemoryManager = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
                 name="mock", shape=(1, 2), d_type=np.int32,
                 port_type='DOESNOTMATTER', size=64)
             channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-                channel_type=ChannelBackend.SHMEMCHANNEL,
+                channel_type=ChannelType.PyPy,
                 src_port_initializer=port_initializer,
                 dst_port_initializer=port_initializer,
                 src_process=None,
                 dst_process=None,
             )
-
-            mock = MockMessageInterface()
+            smm.start()
+            mock = MockMessageInterface(smm)
             channel: Channel = channel_builder.build(mock)
             self.assertIsInstance(channel.src_port, SendPort)
             self.assertIsInstance(channel.dst_port, RecvPort)
@@ -55,7 +60,7 @@ class TestChannelBuilder(unittest.TestCase):
             channel.dst_port.join()
 
         finally:
-            pass
+            smm.shutdown()
 
 
 if __name__ == "__main__":

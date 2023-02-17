@@ -22,9 +22,7 @@ void dds_target_fn_a1_bound(int loop,
                         AbstractChannelPtr mp_to_a1,
                         AbstractChannelPtr a1_to_mp,
                         AbstractChannelPtr a1_to_a2,
-                        AbstractChannelPtr a2_to_a1,
-                        AbstractActor* actor_ptr) {
-  actor_ptr->SetStopFn(dds_stop_fn);
+                        AbstractChannelPtr a2_to_a1) {
   auto from_mp = mp_to_a1->GetRecvPort();
   from_mp->Start();
   auto to_mp   = a1_to_mp->GetSendPort();
@@ -33,7 +31,7 @@ void dds_target_fn_a1_bound(int loop,
   to_a2->Start();
   auto from_a2 = a2_to_a1->GetRecvPort();
   from_a2->Start();
-  while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+  while (loop--) {
     MetaDataPtr data = from_mp->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a2->Send(data);
@@ -47,21 +45,16 @@ void dds_target_fn_a1_bound(int loop,
   from_a2->Join();
   to_a2->Join();
   to_mp->Join();
-  while (!static_cast<int>(actor_ptr->GetStatus())) {
-    helper::Sleep();
-  }
 }
 
 void dds_target_fn_a2_bound(int loop,
                         AbstractChannelPtr a1_to_a2,
-                        AbstractChannelPtr a2_to_a1,
-                        AbstractActor* actor_ptr) {
-  actor_ptr->SetStopFn(dds_stop_fn);
+                        AbstractChannelPtr a2_to_a1) {
   auto from_a1 = a1_to_a2->GetRecvPort();
   from_a1->Start();
   auto to_a1 = a2_to_a1->GetSendPort();
   to_a1->Start();
-  while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+  while (loop--) {
     MetaDataPtr data = from_a1->Recv();
     (*reinterpret_cast<int64_t*>(data->mdata))++;
     to_a1->Send(data);
@@ -69,9 +62,6 @@ void dds_target_fn_a2_bound(int loop,
   }
   from_a1->Join();
   to_a1->Join();
-  while (!static_cast<int>(actor_ptr->GetStatus())) {
-    helper::Sleep();
-  }
 }
 
 void dds_protocol(std::string topic_name,
@@ -102,9 +92,9 @@ void dds_protocol(std::string topic_name,
 
   auto target_fn_a1 = std::bind(&dds_target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
-                                a2_to_a1, std::placeholders::_1);
+                                a2_to_a1);
   auto target_fn_a2 = std::bind(&dds_target_fn_a2_bound, loop, a1_to_a2,
-                                a2_to_a1, std::placeholders::_1);
+                                a2_to_a1);
 
   ProcessType actor1 = mp.BuildActor(target_fn_a1);
   ProcessType actor2 = mp.BuildActor(target_fn_a2);

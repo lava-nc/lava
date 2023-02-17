@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from lava.magma.runtime.message_infrastructure import (
     RecvPort,
     SendPort,
-    Actor,
 )
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
@@ -23,16 +22,12 @@ class AbstractRuntimeService(ABC):
 
         self.model_ids: ty.List[int] = []
 
-        self._actor: Actor = None
-
     def __repr__(self):
         return f"Synchronizer : {self.__class__}, \
                  RuntimeServiceId : {self.runtime_service_id}, \
                  Protocol: {self.protocol}"
 
-    def start(self, actor):
-        self._actor = actor
-        self._actor.set_stop_fn(self.join)
+    def start(self):
         self.runtime_to_service.start()
         self.service_to_runtime.start()
         self.run()

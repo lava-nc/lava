@@ -21,9 +21,7 @@ void grpc_target_fn1(
   AbstractChannelPtr mp_to_a1,
   AbstractChannelPtr a1_to_mp,
   AbstractChannelPtr a1_to_a2,
-  AbstractChannelPtr a2_to_a1,
-  AbstractActor* actor_ptr) {
-    actor_ptr->SetStopFn(stop_fn);
+  AbstractChannelPtr a2_to_a1) {
     auto from_mp = mp_to_a1->GetRecvPort();
     auto to_mp = a1_to_mp->GetSendPort();
     auto to_a2   = a1_to_a2->GetSendPort();
@@ -33,7 +31,7 @@ void grpc_target_fn1(
     to_a2->Start();
     from_a2->Start();
     LAVA_DUMP(1, "grpc actor1, loop: %d\n", loop);
-    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+    while (loop--) {
       LAVA_DUMP(LOG_UTTEST, "grpc actor1 waitting\n");
       MetaDataPtr data = from_mp->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor1 recviced\n");
@@ -49,23 +47,18 @@ void grpc_target_fn1(
     to_mp->Join();
     to_a2->Join();
     from_a2->Join();
-    while (!static_cast<int>(actor_ptr->GetStatus())) {
-      helper::Sleep();
-    }
   }
 
 void grpc_target_fn2(
   int loop,
   AbstractChannelPtr a1_to_a2,
-  AbstractChannelPtr a2_to_a1,
-  AbstractActor* actor_ptr) {
-    actor_ptr->SetStopFn(stop_fn);
+  AbstractChannelPtr a2_to_a1) {
     auto to_a1 = a2_to_a1->GetSendPort();
     auto from_a1 = a1_to_a2->GetRecvPort();
     from_a1->Start();
     to_a1->Start();
     LAVA_DUMP(LOG_UTTEST, "grpc actor2, loop: %d\n", loop);
-    while ((loop--)&&!static_cast<int>(actor_ptr->GetStatus())) {
+    while (loop--) {
       LAVA_DUMP(LOG_UTTEST, "grpc actor2 waitting\n");
       MetaDataPtr data = from_a1->Recv();
       LAVA_DUMP(LOG_UTTEST, "grpc actor2 recviced\n");
@@ -75,9 +68,6 @@ void grpc_target_fn2(
     }
     from_a1->Join();
     to_a1->Join();
-    while (!static_cast<int>(actor_ptr->GetStatus())) {
-      helper::Sleep();
-    }
   }
 
 TEST(TestGRPCChannel, GRPCLoop) {
@@ -96,13 +86,11 @@ TEST(TestGRPCChannel, GRPCLoop) {
                                 mp_to_a1,
                                 a1_to_mp,
                                 a1_to_a2,
-                                a2_to_a1,
-                                std::placeholders::_1);
+                                a2_to_a1);
   auto target_fn_a2 = std::bind(&grpc_target_fn2,
                                 loop,
                                 a1_to_a2,
-                                a2_to_a1,
-                                std::placeholders::_1);
+                                a2_to_a1);
   ProcessType actor1 = mp.BuildActor(target_fn_a1);
   ProcessType actor2 = mp.BuildActor(target_fn_a2);
   auto to_a1 = mp_to_a1->GetSendPort();

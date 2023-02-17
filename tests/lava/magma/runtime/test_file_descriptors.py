@@ -9,6 +9,7 @@ from lava.proc.lif.process import LIF
 from lava.magma.core.run_configs import Loihi1SimCfg
 from time import sleep
 from subprocess import run
+from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
 
 def run_process():
@@ -40,7 +41,7 @@ def get_file_descriptor_usage():
 class TestFileDescriptors(unittest.TestCase):
     num_iterations = 1000
 
-    @unittest.skipIf(os.name != "posix",
+    @unittest.skipIf(os.name != "posix" or PURE_PYTHON_VERSION,
                      "Checking file descriptor only for POSIX systems.")
     def test_file_descriptor_usage(self):
         # Check initial state that file descriptor usage is zero

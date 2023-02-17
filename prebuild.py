@@ -1,8 +1,17 @@
 import os
+import platform
 import multiprocessing
 import numpy
 import subprocess  # nosec
 import sys
+
+
+def build_msg_lib() -> bool:
+    pure_py_env = os.getenv("LAVA_PURE_PYTHON", 0)
+    system_name = platform.system().lower()
+    if system_name != "linux":
+        return False
+    return int(pure_py_env) == 0
 
 
 class CMake:
@@ -37,9 +46,9 @@ class CMake:
         cfg = "Debug" if debug else "Release"
         if self.from_cd_action and self.from_poetry:
             python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
-                .decode().strip() + "/bin/python3" # nosec # noqa
-            numpy_include_dir = subprocess.check_output(["poetry", "run", # nosec # noqa
-                "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip() # nosec # noqa
+                             .decode().strip() + "/bin/python3"  # nosec # noqa
+            numpy_include_dir = subprocess.check_output(["poetry", "run",  # nosec # noqa
+                "python3", "-c", "import numpy; print(numpy.get_include())"]).decode().strip()  # nosec # noqa
         else:
             python_env = sys.executable
             numpy_include_dir = numpy.get_include()
@@ -65,12 +74,13 @@ class CMake:
         self._set_cmake_path()
         self._set_cmake_args()
         subprocess.check_call([*self.cmake_command, self.sourcedir] + self.cmake_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
-        subprocess.check_call([*self.cmake_command, "--build", "."] + self.build_args,  cwd=self.temp_path, env=self.env)  # nosec # noqa
+        subprocess.check_call([*self.cmake_command, "--build", "."] + self.build_args, cwd=self.temp_path, env=self.env)  # nosec # noqa
 
 
 if __name__ == '__main__':
     base_runtime_path = "src/lava/magma/runtime/"
     sourcedir = f"{base_runtime_path}_c_message_infrastructure"
     targetdir = f"{base_runtime_path}message_infrastructure"
-    cmake = CMake(sourcedir, targetdir)
-    cmake.run()
+    if build_msg_lib():
+        cmake = CMake(sourcedir, targetdir)
+        cmake.run()

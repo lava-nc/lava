@@ -9,10 +9,11 @@ from threading import BoundedSemaphore, Condition, Thread
 from time import time
 
 import numpy as np
-from lava.magma.compiler.channels.interfaces import (
-    Channel,
-    AbstractCspSendPort,
-    AbstractCspRecvPort,
+from lava.magma.runtime.message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure.py_ports import (
+    AbstractSendPort,
+    AbstractRecvPort,
+    AbstractTransferPort,
 )
 
 if ty.TYPE_CHECKING:
@@ -20,7 +21,6 @@ if ty.TYPE_CHECKING:
         message_infrastructure_interface \
         import (
             MessageInfrastructureInterface)  # silence pyflakes
-"""Depricated"""
 
 
 @dataclass
@@ -30,7 +30,7 @@ class Proto:
     nbytes: int
 
 
-class CspSendPort(AbstractCspSendPort):
+class SendPort(AbstractSendPort):
     """
     CspSendPort is a low level send port implementation based on CSP
     semantics. It can be understood as the input port of a CSP channel.
@@ -86,9 +86,7 @@ class CspSendPort(AbstractCspSendPort):
                 shape=self._shape,
                 dtype=self._dtype,
                 buffer=self._shm.buf[
-                    self._nbytes * i: self._nbytes * (i + 1)
-                ],
-            )
+                    self._nbytes * i: self._nbytes * (i + 1)],)
             for i in range(self._size)
         ]
         self._semaphore = BoundedSemaphore(self._size)
@@ -169,7 +167,7 @@ class CspRecvQueue(Queue):
             return item
 
 
-class CspRecvPort(AbstractCspRecvPort):
+class RecvPort(AbstractRecvPort):
     """
     CspRecvPort is a low level recv port implementation based on CSP
     semantics. It can be understood as the output port of a CSP channel.
@@ -228,8 +226,7 @@ class CspRecvPort(AbstractCspRecvPort):
                 shape=self._shape,
                 dtype=self._dtype,
                 buffer=self._shm.buf[
-                    self._nbytes * i: self._nbytes * (i + 1)
-                ],
+                    self._nbytes * i: self._nbytes * (i + 1)],
             )
             for i in range(self._size)
         ]
@@ -303,7 +300,7 @@ class CspSelector:
     def select(
             self,
             *args: ty.Tuple[
-                ty.Union[CspSendPort, CspRecvPort], ty.Callable[[], ty.Any]
+                ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
             ],
     ):
         """
@@ -350,16 +347,22 @@ class PyPyChannel(Channel):
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
-        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack)
-        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack)
+        self._src_port = SendPort(src_name, shm, proto, size, req, ack)
+        self._dst_port = RecvPort(dst_name, shm, proto, size, req, ack)
 
     def nbytes(self, shape, dtype):
         return np.prod(shape) * np.dtype(dtype).itemsize
 
     @property
-    def src_port(self) -> AbstractCspSendPort:
+    def src_port(self) -> AbstractTransferPort:
         return self._src_port
 
     @property
-    def dst_port(self) -> AbstractCspRecvPort:
+    def dst_port(self) -> AbstractTransferPort:
         return self._dst_port
+
+
+def create_channel(message_infrastructure: "MessageInfrastructureInterface",
+                   src_name, dst_name, shape, dtype, size):
+    return PyPyChannel(message_infrastructure, src_name, dst_name,
+                       shape, dtype, size)

@@ -9,7 +9,6 @@ import numpy as np
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import ChannelType
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
@@ -22,52 +21,58 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
+    create_channel,
     Channel,
     AbstractTransferPort,
 )
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 
 class MockMessageInterface:
-    def __init__(self):
-        pass
+    def __init__(self, smm):
+        self.smm = smm
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return Channel
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size) -> Channel:
+        return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        port_initializer: PortInitializer = PortInitializer(
-            name="mock", shape=(1, 2), d_type=np.int32,
-            port_type='DOESNOTMATTER', size=64)
-        channel_builder: ChannelBuilderMp = ChannelBuilderMp(
-            channel_type=ChannelBackend.SHMEMCHANNEL,
-            src_port_initializer=port_initializer,
-            dst_port_initializer=port_initializer,
-            src_process=None,
-            dst_process=None,
-        )
-
-        mock = MockMessageInterface()
-        channel: Channel = channel_builder.build(mock)
-        assert isinstance(channel, Channel)
-        assert isinstance(channel.src_port, AbstractTransferPort)
-        assert isinstance(channel.dst_port, AbstractTransferPort)
+        smm: SharedMemoryManager = SharedMemoryManager()
         try:
-            channel.src_port.start()
-            channel.dst_port.start()
+            port_initializer: PortInitializer = PortInitializer(
+                name="mock", shape=(1, 2), d_type=np.int32,
+                port_type='DOESNOTMATTER', size=64)
+            channel_builder: ChannelBuilderMp = ChannelBuilderMp(
+                channel_type=ChannelType.PyPy,
+                src_port_initializer=port_initializer,
+                dst_port_initializer=port_initializer,
+                src_process=None,
+                dst_process=None,
+            )
 
-            expected_data = np.array([[1, 2]], dtype=np.int32)
-            channel.src_port.send(expected_data)
-            data = channel.dst_port.recv()
-            assert np.array_equal(data, expected_data)
+            smm.start()
+            mock = MockMessageInterface(smm)
+            channel: Channel = channel_builder.build(mock)
+            assert isinstance(channel, Channel)
+            assert isinstance(channel.src_port, AbstractTransferPort)
+            assert isinstance(channel.dst_port, AbstractTransferPort)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
+
+                expected_data = np.array([[1, 2]], dtype=np.int32)
+                channel.src_port.send(expected_data)
+                data = channel.dst_port.recv()
+                assert np.array_equal(data, expected_data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
-            channel.src_port.join()
-            channel.dst_port.join()
+            smm.shutdown()
 
 
 # A test Process with a variety of Ports and Vars of different shapes,

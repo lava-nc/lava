@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // See: https://spdx.org/licenses/
 
+#include <core/channel_factory.h>
 #include <core/multiprocessing.h>
 #include <core/abstract_actor.h>
 #include <channel/shmem/shmem_channel.h>
@@ -25,36 +26,25 @@ MetaDataPtr ExpectData() {
 }
 
 void SendProc(AbstractSendPortPtr send_port,
-              MetaDataPtr data,
-              AbstractActor* actor_ptr) {
+              MetaDataPtr data) {
   AbstractActor::StopFn stop_fn;
-  actor_ptr->SetStopFn(stop_fn);
   std::cout << "Here I am" << std::endl;
 
   // Sends data
   send_port->Start();
   send_port->Send(data);
   send_port->Join();
-
-  actor_ptr->SetStatus(ActorStatus::StatusStopped);
   std::cout << "Status STOPPED" << std::endl;
 }
 
-void RecvProc(AbstractRecvPortPtr recv_port, AbstractActor* actor_ptr) {
-  AbstractActor::StopFn stop_fn;
-  actor_ptr->SetStopFn(stop_fn);
+void RecvProc(AbstractRecvPortPtr recv_port) {
   std::cout << "Here I am (RECV)" << std::endl;
 
   // Returns received data
   recv_port->Start();
   auto recv_data = recv_port->Recv();
   recv_port->Join();
-
-  actor_ptr->SetStatus(ActorStatus::StatusStopped);
-
-  // if (recv_data != Data()) {
-  //   std::cout << "Received Data is incorrect" << std::endl;
-  // }
+  std::cout << "Status STOPPED" << std::endl;
 }
 
 TEST(TestSharedMemory, SharedMemSendReceive) {
@@ -84,13 +74,11 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
   auto data = ExpectData();
   auto send_bound_fn = std::bind(&SendProc,
                                  send_port,
-                                 data,
-                                 std::placeholders::_1);
+                                 data);
   send_target_fn = send_bound_fn;
 
   auto recv_bound_fn = std::bind(&RecvProc,
-                                 recv_port,
-                                 std::placeholders::_1);
+                                 recv_port);
   recv_target_fn = recv_bound_fn;
 
   mp.BuildActor(send_target_fn);
@@ -104,17 +92,29 @@ TEST(TestSharedMemory, SharedMemSendReceive) {
 }
 
 TEST(TestSharedMemory, SharedMemSingleProcess) {
-  // ChannelProxy ShmemChannel;
+  // metadata generate
+  MetaDataPtr metadata = std::make_shared<MetaData>();
+  int64_t dims[] = {10000, 0, 0, 0, 0};
+  int64_t nd = 1;
+  int64_t* array_ = reinterpret_cast<int64_t*>
+                    (malloc(sizeof(int64_t) * dims[0]));
+  memset(array_, 0, sizeof(int64_t) * dims[0]);
+  std::fill(array_, array_ + 10, 1);
+  GetMetadata(metadata, array_, nd,
+              static_cast<int64_t>(METADATA_TYPES::LONG), dims);
+  AbstractChannelPtr shmchannel = GetChannelFactory().GetChannel(
+                              ChannelType::SHMEMCHANNEL,
+                              1,
+                              sizeof(int64_t)*10000,
+                              "send",
+                              "recv");
 
-  // SendPortProxyPtr SendPort = ShmemChannel.GetSendPort();
-  // RecvPortProxyPtr RecvPort = ShmemChannel.GetRecvPort();
-
-  // SendPort.Start();
-  // RecvPort.Start();
-  // auto data = DataInteger();
-  // SendPort.Send(data);
-  // auto received_data = RecvPort.Recv();
-  // EXPECT_EQ(data, received_data)
+  auto SendPort = shmchannel->GetSendPort();
+  auto RecvPort = shmchannel->GetRecvPort();
+  SendPort->Send(metadata);
+  MetaDataPtr received_data = RecvPort->Recv();
+  EXPECT_EQ(10000, metadata->total_size);
+  EXPECT_EQ(1, *reinterpret_cast<int64_t*>(metadata->mdata));
 }
 
 }  // namespace message_infrastructure

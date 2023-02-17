@@ -11,11 +11,10 @@ import typing as ty
 
 from lava.magma.runtime.message_infrastructure import (
     AbstractTransferPort,
-    ChannelBackend,
-    ChannelQueueSize
+    create_channel,
+    Selector
 )
 from lava.magma.runtime.message_infrastructure import Channel as MsgChannel
-from lava.magma.compiler.channels.selector import Selector
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
@@ -113,12 +112,14 @@ class ChannelBroker(AbstractChannelBroker):
         """Start the polling threads"""
         if not self.has_started:
             self.smm.start()
-            self.mgmt_channel = MsgChannel(
-                ChannelBackend.SHMEMCHANNEL,
-                ChannelQueueSize,
-                np.dtype(np.int32).itemsize,
-                "mgmt_channel",
-                "mgmt_channel"
+
+            self.mgmt_channel = create_channel(
+                message_infrastructure=self,
+                src_name="mgmt_channel",
+                dst_name="mgmt_channel",
+                shape=(1,),
+                dtype=np.int32,
+                size=1,
             )
             self.mgmt_channel.src_port.start()
             self.mgmt_channel.dst_port.start()

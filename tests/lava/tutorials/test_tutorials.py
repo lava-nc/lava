@@ -196,6 +196,7 @@ class TestTutorials(unittest.TestCase):
             "tutorial01_mnist_digit_classification.ipynb", e2e_tutorial=True
         )
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_end_to_end_02_ei_network(self):
         """Test tutorial end to end 02 E/I network."""
         self._run_notebook(

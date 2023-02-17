@@ -11,8 +11,9 @@ import typing as ty
 import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        SendPort,
-                                                       Actor,
                                                        Channel,
+                                                       SupportTempChannel,
+                                                       Selector,
                                                        getTempSendPort,
                                                        getTempRecvPort)
 
@@ -167,6 +168,7 @@ class Runtime:
         _messaging_infrastructure_type and Start it"""
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
             self._messaging_infrastructure_type)
+        self._messaging_infrastructure.init()
 
     def _get_process_builder_for_process(self, process: AbstractProcess) -> \
             AbstractProcessBuilder:
@@ -263,28 +265,36 @@ class Runtime:
         Gets response from RuntimeServices
         """
         if self._is_running:
-            for recv_port in self.service_to_runtime:
+            selector = Selector()
+            # Poll on all responses
+            channel_actions = [(recv_port, (lambda y: (lambda: y))(
+                recv_port)) for recv_port in self.service_to_runtime]
+            rsps = []
+            while True:
+                recv_port = selector.select(*channel_actions)
+                if recv_port is None:
+                    continue
                 data = recv_port.recv()
+                rsps.append(data)
                 if enum_equal(data, MGMT_RESPONSE.REQ_PAUSE):
-                    self._req_paused = True
+                    self.pause()
+                    return
                 elif enum_equal(data, MGMT_RESPONSE.REQ_STOP):
-                    self._req_stop = True
+                    self.stop()
+                    return
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        self._messaging_infrastructure.stop(True)
+                        error_cnt = self._messaging_infrastructure.trace(
+                            self.log)
                         raise RuntimeError(
-                            f"Exception(s) occurred. See "
+                            f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
                     else:
                         raise RuntimeError(f"Runtime Received {data}")
-            if self._req_paused:
-                self._req_paused = False
-                self.pause()
-            if self._req_stop:
-                self._req_stop = False
-                self.stop()
-            self._is_running = False
+                if len(rsps) == len(self.service_to_runtime):
+                    self._is_running = False
+                    return
 
     def start(self, run_condition: AbstractRunCondition):
         """
@@ -364,15 +374,28 @@ class Runtime:
 
     def stop(self):
         """Stops an ongoing or paused run."""
-        if self._is_started:
+        try:
+            if self._is_started:
+                for send_port in self.runtime_to_service:
+                    send_port.send(MGMT_COMMAND.STOP)
+                for recv_port in self.service_to_runtime:
+                    data = recv_port.recv()
+                    if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                        if recv_port.probe():
+                            data = recv_port.recv()
+                        if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
+                            raise RuntimeError(f"Runtime Received {data}")
+
+                self._messaging_infrastructure.pre_stop()
+                self.join()
+                self._is_running = False
+                self._is_started = False
+                self._messaging_infrastructure.cleanup(True)
+                # Send messages to RuntimeServices to stop as soon as possible.
+            else:
+                self.log.info("Runtime not started yet.")
+        finally:
             self._messaging_infrastructure.stop()
-            self.join()
-            self._is_running = False
-            self._is_started = False
-            self._messaging_infrastructure.cleanup(True)
-            # Send messages to RuntimeServices to stop as soon as possible.
-        else:
-            self.log.info("Runtime not started yet.")
 
     def join(self):
         """Join all ports and processes"""
@@ -422,11 +445,23 @@ class Runtime:
                 buffer = buffer[idx]
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            addr_path = rsp_port.recv()
-            send_port = getTempSendPort(str(addr_path[0]))
-            send_port.start()
-            send_port.send(buffer)
-            send_port.join()
+            if SupportTempChannel:
+                addr_path = rsp_port.recv()
+                send_port = getTempSendPort(str(addr_path[0]))
+                send_port.start()
+                send_port.send(buffer)
+                send_port.join()
+            else:
+                buffer_shape: ty.Tuple[int, ...] = buffer.shape
+                num_items: int = np.prod(buffer_shape).item()
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
+                buffer = buffer.reshape((1, num_items), order=reshape_order)
+                data_port: SendPort = self.runtime_to_service[runtime_srv_id]
+                data_port.send(enum_to_np(num_items))
+                for i in range(num_items):
+                    data_port.send(enum_to_np(buffer[0, i], np.float64))
+
             rsp = rsp_port.recv()
             if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
                 raise RuntimeError("Var Set couldn't get successfully "
@@ -464,13 +499,22 @@ class Runtime:
             req_port.send(enum_to_np(var_id))
 
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            addr_path, recv_port = getTempRecvPort()
-            recv_port.start()
-            req_port.send(np.array([addr_path]))
-            buffer = recv_port.recv()
-            recv_port.join()
-
-            # 3. Reshape result and return
+            if SupportTempChannel:
+                addr_path, recv_port = getTempRecvPort()
+                recv_port.start()
+                req_port.send(np.array([addr_path]))
+                buffer = recv_port.recv()
+                recv_port.join()
+            else:
+                data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
+                num_items: int = int(data_port.recv()[0].item())
+                buffer: np.ndarray = np.empty((1, num_items))
+                for i in range(num_items):
+                    buffer[0, i] = data_port.recv()[0]
+                # 3. Reshape result and return
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
+                buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:
