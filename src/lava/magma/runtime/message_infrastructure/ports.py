@@ -62,8 +62,9 @@ class SendPort(AbstractTransferPort):
     def d_type(self):
         return self._cpp_send_port.d_type
 
+    @property
     def size(self):
-        return self._cpp_send_port.size()
+        return self._cpp_send_port.size
 
     def get_channel_type(self):
         return self._cpp_send_port.get_channel_type()
