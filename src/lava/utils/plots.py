@@ -57,22 +57,24 @@ def raster_plot(
 
     if len(spikes.shape) != 2 or 0 in spikes.shape:
         raise ValueError(
-            "spikes must have exactly two dimensions and they must be non-empty"
+            "Parameter <spikes> must have exactly two dimensions and "
+            "they must be non-empty."
         )
 
     if ((spikes != 0) & (spikes != 1)).any():
-        raise ValueError("All values in spikes must be either 0 or 1")
+        raise ValueError("All values in spikes must be either 0 or 1.")
 
     num_neurons = spikes.shape[0]
     num_time_steps = spikes.shape[1]
 
     if stride > num_neurons:
         raise ValueError(
-            "Stride must not be greater than the number of neurons"
+            "Stride must not be greater than the number of neurons."
         )
 
     if fig is not None and figsize is not None:
-        raise ValueError("Must use at most one of the following: fig, figsize")
+        raise ValueError("Must use at most one of the following: fig, "
+                         "figsize.")
 
     time_steps = np.arange(0, num_time_steps, 1)
 
