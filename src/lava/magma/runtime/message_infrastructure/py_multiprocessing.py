@@ -49,7 +49,7 @@ class SystemProcess(mp.Process):
 
     def __init__(self, *args, **kwargs):
         mp.Process.__init__(self, *args, **kwargs)
-        self._pconn, self._cconn = mp.Pipe()
+        self._pconn, self._cconn = mp.get_context('fork').Pipe()
         self._exception = None
 
     def run(self):
@@ -67,6 +67,9 @@ class SystemProcess(mp.Process):
             self._exception = self._pconn.recv()
         return self._exception
 
+    def close_pipe(self):
+        self._cconn.close()
+        self._pconn.close()
 
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
@@ -109,6 +112,7 @@ class MultiProcessing(MessageInfrastructureInterface):
         for actor in self._actors:
             if actor._parent_pid == os.getpid():
                 actor.join()
+                actor.close_pipe()
         self._smm.shutdown()
 
     def trace(self, logger) -> int:
@@ -119,6 +123,7 @@ class MultiProcessing(MessageInfrastructureInterface):
                 _, traceback = actors.exception
                 logger.info(traceback)
                 error_cnt += 1
+            actors.close_pipe()
         return error_cnt
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
