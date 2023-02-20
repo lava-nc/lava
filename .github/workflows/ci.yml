@@ -77,4 +77,4 @@ jobs:
         poetry run git lfs fetch
         poetry run git lfs pull
         # poetry run pytest
-        poetry pyhon -m unittest -v tests/lava/proc/spiker/test_models.py
+        poetry python -m unittest -v tests/lava/proc/spiker/test_models.py
