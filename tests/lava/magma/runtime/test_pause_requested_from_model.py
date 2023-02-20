@@ -195,6 +195,7 @@ class TestPauseRequestedFromModel(unittest.TestCase):
         e = time()
         self.assertTrue(e - s < 100, "")
         self.assertFalse(process.runtime._is_running)
+        process.stop()
 
     @unittest.skip
     def test_pause_request_from_hierarchical_model(self):
