@@ -62,10 +62,13 @@ jobs:
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
+        
+    - name: Change ulimit
+      if: matrix.os == 'macos-latest'
+      run: ulimit -n 100000 
 
     - name: Run unit tests
       run: |
         poetry run git lfs fetch
         poetry run git lfs pull
-        poetry ulimit -n 100000 
         poetry run pytest
