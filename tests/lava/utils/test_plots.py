@@ -30,11 +30,12 @@ class TestInputValidation(unittest.TestCase):
 
         self.assertEquals(
             str(cm.exception),
-            "spikes must have exactly two dimensions and they must be non-empty"
+            "Parameter <spikes> must have exactly two dimensions and "
+            "they must be non-empty."
         )
 
     def test_non_binary_values(self) -> None:
-        error_msg = "All values in spikes must be either 0 or 1"
+        error_msg = "All values in spikes must be either 0 or 1."
 
         spikes = np.array([[0, 2], [0, 0]])
         with self.assertRaises(ValueError) as cm:
@@ -54,7 +55,7 @@ class TestInputValidation(unittest.TestCase):
 
         self.assertEquals(
             str(cm.exception),
-            "Stride must not be greater than the number of neurons",
+            "Stride must not be greater than the number of neurons.",
         )
 
     def test_both_fig_and_figsize_provided(self) -> None:
@@ -63,5 +64,5 @@ class TestInputValidation(unittest.TestCase):
 
         self.assertEquals(
             str(cm.exception),
-            "Must use at most one of the following: fig, figsize",
+            "Must use at most one of the following: fig, figsize.",
         )
