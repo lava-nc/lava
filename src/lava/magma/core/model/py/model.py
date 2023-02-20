@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-#from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 # from functools import partial
 import logging
 import numpy as np
@@ -26,7 +26,7 @@ from lava.magma.runtime.mgmt_token_enums import (
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
-class AbstractPyProcessModel(AbstractProcessModel):
+class AbstractPyProcessModel(AbstractProcessModel, ABC):
     """Abstract interface for Python ProcessModels.
 
     Example for how variables and ports might be initialized:
@@ -227,7 +227,7 @@ class AbstractPyProcessModel(AbstractProcessModel):
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
 
-    #@abstractmethod
+    @abstractmethod
     def add_ports_for_polling(self):
         """
         Add various ports to poll for communication on ports
