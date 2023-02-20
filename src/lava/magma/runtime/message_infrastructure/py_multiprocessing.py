@@ -33,7 +33,8 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
 
 import platform
 if platform.system() != 'Windows':
-    mp.set_start_method('fork')
+    if mp.get_context('fork') is None:
+        mp.set_start_method('fork')
 
 
 """Implements the Message Infrastructure Interface using Python
