@@ -67,7 +67,8 @@ jobs:
       run: |
         echo 'This is a test'
         ulimit -a
-        ulimit -n 100000
+        ulimit -n 200000
+        ulimit -u 100000
         ulimit -a
       if: runner.os == 'macOS'
 
