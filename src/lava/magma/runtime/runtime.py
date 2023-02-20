@@ -524,6 +524,7 @@ class Runtime:
                 reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
                     else 'C'
                 buffer = buffer.reshape(ev.shape, order=reshape_order)
+
             if idx:
                 return buffer[idx]
             else:

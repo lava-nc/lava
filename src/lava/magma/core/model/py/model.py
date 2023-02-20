@@ -22,7 +22,8 @@ from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,
     MGMT_COMMAND,
-    MGMT_RESPONSE, )
+    MGMT_RESPONSE,
+)
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
@@ -38,9 +39,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         du: int =          LavaPyType(int, np.uint16, precision=12)
     """
 
-    def __init__(self,
-                 proc_params: ty.Type["ProcessParameters"],
-                 loglevel: ty.Optional[int] = logging.WARNING) -> None:
+    def __init__(
+        self,
+        proc_params: ty.Type["ProcessParameters"],
+        loglevel: ty.Optional[int] = logging.WARNING,
+    ) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
         self.service_to_process: ty.Optional[RecvPort] = None
@@ -58,7 +61,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             MGMT_COMMAND.STOP[0]: self._stop,
             MGMT_COMMAND.PAUSE[0]: self._pause,
             MGMT_COMMAND.GET_DATA[0]: self._get_var,
-            MGMT_COMMAND.SET_DATA[0]: self._set_var
+            MGMT_COMMAND.SET_DATA[0]: self._set_var,
         }
 
     def __setattr__(self, key: str, value: ty.Any):
@@ -122,6 +125,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             elif isinstance(var, np.ndarray):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
+            elif isinstance(var, str):
+                # Todo(hexu1): Need debug
+                data_port.send(np.array(var, dtype=str))
             data_port.join()
         else:
             data_port = self.process_to_service
@@ -137,6 +143,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 data_port.send(enum_to_np(num_items))
                 for value in var_iter:
                     data_port.send(enum_to_np(value, np.float64))
+            elif isinstance(var, str):
+                encoded_str = list(var.encode("ascii"))
+                data_port.send(enum_to_np(len(encoded_str)))
+                for ch in encoded_str:
+                    data_port.send(enum_to_np(ch, d_type=np.int32))
+
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -162,6 +174,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             elif isinstance(var, np.ndarray):
                 var_iter = np.nditer(var, op_flags=['readwrite'])
                 setattr(self, var_name, buffer.astype(var.dtype))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, str):
+                #Todo(hexu1): Need debug
+                var_iter = np.nditer(var, op_flags=['readwrite'])
+                setattr(self, var_name, buffer.tostring())
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             else:
                 self.process_to_service.send(MGMT_RESPONSE.ERROR)
@@ -189,9 +206,23 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     num_items -= 1
                     i[...] = data_port.recv()[0]
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, str):
+                # First item is number of items
+                num_items = int(data_port.recv()[0])
+
+                s = []
+                for i in range(num_items):
+                    s.append(int(data_port.recv()[0]))  # decode string from ascii
+
+                s = bytes(s).decode("ascii")
+                setattr(self, var_name, s)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             else:
                 self.process_to_service.send(MGMT_RESPONSE.ERROR)
                 raise RuntimeError("Unsupported type")
+
+        # notify PM that Vars have been changed
+        self.on_var_update()
 
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""
@@ -204,7 +235,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         is informed about completion. The loop ends when the STOP command is
         received."""
         while True:
-            if self._action == 'cmd':
+            if self._action == "cmd":
                 cmd = self.service_to_process.recv()[0]
                 try:
                     if cmd in self._cmd_handlers:
@@ -216,14 +247,15 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                             f"Illegal RuntimeService command! ProcessModels of "
                             f"type {self.__class__.__qualname__} "
                             f"{self.model_id} cannot handle "
-                            f"command: {cmd} ")
+                            f"command: {cmd} "
+                        )
                 except Exception as inst:
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
                     self.join()  # join cause raise error
                     raise inst
             elif self._action is not None:
                 self._handle_var_port(self._action)
-            self._channel_actions = [(self.service_to_process, lambda: 'cmd')]
+            self._channel_actions = [(self.service_to_process, lambda: "cmd")]
             self.add_ports_for_polling()
             self._action = self._selector.select(*self._channel_actions)
 
@@ -242,6 +274,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         self.process_to_service.join()
         for p in self.py_ports:
             p.join()
+
+    def on_var_update(self):
+        """This method is called if a Var is updated. It
+        can be used as callback function to calculate dependent
+        changes."""
+        pass
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
@@ -272,13 +310,15 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         super().__init__(proc_params=proc_params)
         self.time_step = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
-        self._cmd_handlers.update({
-            PyLoihiProcessModel.Phase.SPK[0]: self._spike,
-            PyLoihiProcessModel.Phase.PRE_MGMT[0]: self._pre_mgmt,
-            PyLoihiProcessModel.Phase.LRN[0]: self._lrn,
-            PyLoihiProcessModel.Phase.POST_MGMT[0]: self._post_mgmt,
-            PyLoihiProcessModel.Phase.HOST[0]: self._host
-        })
+        self._cmd_handlers.update(
+            {
+                PyLoihiProcessModel.Phase.SPK[0]: self._spike,
+                PyLoihiProcessModel.Phase.PRE_MGMT[0]: self._pre_mgmt,
+                PyLoihiProcessModel.Phase.LRN[0]: self._lrn,
+                PyLoihiProcessModel.Phase.POST_MGMT[0]: self._post_mgmt,
+                PyLoihiProcessModel.Phase.HOST[0]: self._host,
+            }
+        )
         self._req_pause: bool = False
         self._req_stop: bool = False
 
@@ -286,6 +326,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Different States of the State Machine of a Loihi Process
         """
+
         SPK = enum_to_np(1)
         PRE_MGMT = enum_to_np(2)
         LRN = enum_to_np(3)
@@ -296,6 +337,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Different types of response for a RuntimeService Request
         """
+
         STATUS_DONE = enum_to_np(0)
         """Signfies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)
@@ -372,16 +414,20 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             return
         if self.lrn_guard() and self.pre_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_PRE_LRN_MGMT
+            )
         elif self.lrn_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_LEARNING)
+                PyLoihiProcessModel.Response.REQ_LEARNING
+            )
         elif self.post_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
         else:
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.STATUS_DONE)
+                PyLoihiProcessModel.Response.STATUS_DONE
+            )
 
     def _pre_mgmt(self):
         """
@@ -393,8 +439,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         if self._req_pause or self._req_stop:
             self._handle_pause_or_stop_req()
             return
-        self.process_to_service.send(
-            PyLoihiProcessModel.Response.REQ_LEARNING)
+        self.process_to_service.send(PyLoihiProcessModel.Response.REQ_LEARNING)
 
     def _post_mgmt(self):
         """
@@ -420,7 +465,8 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
             return
         if self.post_guard():
             self.process_to_service.send(
-                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT)
+                PyLoihiProcessModel.Response.REQ_POST_LRN_MGMT
+            )
             return
         self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_DONE)
 
@@ -435,15 +481,15 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         Command handler for Stop Command.
         """
         self.process_to_service.send(
-            PyLoihiProcessModel.Response.STATUS_TERMINATED)
+            PyLoihiProcessModel.Response.STATUS_TERMINATED
+        )
         self.join()
 
     def _pause(self):
         """
         Command handler for Pause Command.
         """
-        self.process_to_service.send(
-            PyLoihiProcessModel.Response.STATUS_PAUSED)
+        self.process_to_service.send(PyLoihiProcessModel.Response.STATUS_PAUSED)
 
     def _handle_pause_or_stop_req(self):
         """
@@ -473,17 +519,20 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         """
         Add various ports to poll for communication on ports
         """
-        if enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT) or \
-                enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT) \
-                or enum_equal(self.phase, PyLoihiProcessModel.Phase.HOST):
+        if (
+            enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT)
+            or enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT)
+            or enum_equal(self.phase, PyLoihiProcessModel.Phase.HOST)
+        ):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, RecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
 
-                        self._channel_actions.insert(0,
-                                                     (csp_port, func(var_port)))
+                        self._channel_actions.insert(
+                            0, (csp_port, func(var_port))
+                        )
 
 
 class PyAsyncProcessModel(AbstractPyProcessModel):
@@ -517,14 +566,13 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
         self.num_steps = 0
-        self._cmd_handlers.update({
-            MGMT_COMMAND.RUN[0]: self._run_async
-        })
+        self._cmd_handlers.update({MGMT_COMMAND.RUN[0]: self._run_async})
 
     class Response:
         """
         Different types of response for a RuntimeService Request
         """
+
         STATUS_DONE = enum_to_np(0)
         """Signifies Ack or Finished with the Command"""
         STATUS_TERMINATED = enum_to_np(-1)
@@ -578,7 +626,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
 
 
 def _get_attr_dict(
-    model_class: ty.Type[PyLoihiProcessModel]
+    model_class: ty.Type[PyLoihiProcessModel],
 ) -> ty.Dict[str, ty.Any]:
     """Get a dictionary of non-callable public attributes of a class.
 
@@ -592,10 +640,14 @@ def _get_attr_dict(
     ty.Dict[str, ty.Any]
         Dictionary of attribute name and it's value.
     """
-    var_names = [v for v, m in vars(model_class).items()
-                 if not (v.startswith('_') or callable(m))]
-    var_dict = {var_name: getattr(model_class, var_name)
-                for var_name in var_names}
+    var_names = [
+        v
+        for v, m in vars(model_class).items()
+        if not (v.startswith("_") or callable(m))
+    ]
+    var_dict = {
+        var_name: getattr(model_class, var_name) for var_name in var_names
+    }
     if model_class == PyLoihiProcessModel:
         return {}
     for base in model_class.__bases__:
@@ -604,7 +656,7 @@ def _get_attr_dict(
 
 
 def _get_callable_dict(
-    model_class: ty.Type[PyLoihiProcessModel]
+    model_class: ty.Type[PyLoihiProcessModel],
 ) -> ty.Dict[str, ty.Callable]:
     """Get a dictionary of callable public members of a class.
 
@@ -618,10 +670,15 @@ def _get_callable_dict(
     ty.Dict[str, ty.Callable]
         Dictionary of callable name and it's pointer.
     """
-    callable_names = [v for v, m in vars(model_class).items()
-                      if callable(m) and not v.startswith('_')]
-    callable_dict = {callable_name: getattr(model_class, callable_name)
-                     for callable_name in callable_names}
+    callable_names = [
+        v
+        for v, m in vars(model_class).items()
+        if callable(m) and not v.startswith("_")
+    ]
+    callable_dict = {
+        callable_name: getattr(model_class, callable_name)
+        for callable_name in callable_names
+    }
     if model_class == PyLoihiProcessModel:
         return {}
     for base in model_class.__bases__:
@@ -630,7 +687,7 @@ def _get_callable_dict(
 
 
 def PyLoihiModelToPyAsyncModel(
-    py_loihi_model: ty.Type[PyLoihiProcessModel]
+    py_loihi_model: ty.Type[PyLoihiProcessModel],
 ) -> ty.Type[PyAsyncProcessModel]:
     """Factory function that converts Py-Loihi process models
     to equivalent Py-Async definition.
@@ -650,34 +707,47 @@ def PyLoihiModelToPyAsyncModel(
     """
     # The exclude_vars and exclude_callables are
     # based on the constructor of PyLoihiProcessModel and PyAsyncProcModel
-    if platform.system() == 'Windows':
-        raise OSError('Conversion of process models on the fly is not '
-                      'supported on Windows system. It will result in '
-                      'pickling error when lava threads for model execution '
-                      'are spawned. The fundamental reason is Windows OS '
-                      'does not support forking and needs to use pickle.')
+    if platform.system() == "Windows":
+        raise OSError(
+            "Conversion of process models on the fly is not "
+            "supported on Windows system. It will result in "
+            "pickling error when lava threads for model execution "
+            "are spawned. The fundamental reason is Windows OS "
+            "does not support forking and needs to use pickle."
+        )
 
-    exclude_vars = ['time_step', 'phase']
-    exclude_callables = ['run_spk',
-                         'pre_guard', 'run_pre_mgmt',
-                         'post_guard', 'run_post_mgmt',
-                         'implements_process', 'implements_protocol']
-    name = py_loihi_model.__name__ + 'Async'
+    exclude_vars = ["time_step", "phase"]
+    exclude_callables = [
+        "run_spk",
+        "pre_guard",
+        "run_pre_mgmt",
+        "post_guard",
+        "run_post_mgmt",
+        "implements_process",
+        "implements_protocol",
+    ]
+    name = py_loihi_model.__name__ + "Async"
     var_dict = _get_attr_dict(py_loihi_model)
-    var_dict['implements_process'] = py_loihi_model.implements_process
-    var_dict['implements_protocol'] = AsyncProtocol
-    callable_dict = {k: v for k, v in _get_callable_dict(py_loihi_model).items()
-                     if k not in exclude_callables}
+    var_dict["implements_process"] = py_loihi_model.implements_process
+    var_dict["implements_protocol"] = AsyncProtocol
+    callable_dict = {
+        k: v
+        for k, v in _get_callable_dict(py_loihi_model).items()
+        if k not in exclude_callables
+    }
 
     def __init__(self, proc_params: dict):
         # New constructor of the PyAsyncModel implementation.
         PyAsyncProcessModel.__init__(self, proc_params)
         ref_model = py_loihi_model(proc_params)
-        attributes = [v for v, m in vars(ref_model).items()
-                      if not (v.startswith('_') or callable(m))
-                      and v not in var_dict.keys()
-                      and v not in vars(self)
-                      and v not in exclude_vars]
+        attributes = [
+            v
+            for v, m in vars(ref_model).items()
+            if not (v.startswith("_") or callable(m))
+            and v not in var_dict.keys()
+            and v not in vars(self)
+            and v not in exclude_vars
+        ]
         for attr in attributes:
             setattr(self, attr, getattr(ref_model, attr))
         self.time_step = 1
@@ -692,9 +762,14 @@ def PyLoihiModelToPyAsyncModel(
                 py_loihi_model.run_post_mgmt(self)
             self.time_step += 1
 
-    py_async_model = type(name, (PyAsyncProcessModel,),
-                          {'__init__': __init__,
-                           'run_async': run_async,
-                           **var_dict,
-                           **callable_dict})
+    py_async_model = type(
+        name,
+        (PyAsyncProcessModel,),
+        {
+            "__init__": __init__,
+            "run_async": run_async,
+            **var_dict,
+            **callable_dict,
+        },
+    )
     return py_async_model

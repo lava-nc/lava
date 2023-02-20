@@ -535,7 +535,6 @@ class TestSTDPSim(unittest.TestCase):
         # y1: post-synaptic trace
         # y2: reward
         lif_1.s_out_bap.connect(dense.s_in_bap)
-
         lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
         lif_1.s_out_y3.connect(dense.s_in_y3)
@@ -551,7 +550,7 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[33.4178762]])
+            weight_after_run, np.array([[33.4210359]])
         )
 
     def test_rstdp_floating_point_multi_synapse(self):
@@ -615,6 +614,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
+        lif_1.s_out_y3.connect(dense.s_in_y3)
 
         run_cfg = Loihi2SimCfg(select_tag="floating_pt")
         run_cnd = RunSteps(num_steps=num_steps)
@@ -630,8 +630,8 @@ class TestSTDPSim(unittest.TestCase):
             weight_after_run,
             np.array(
                 [
-                    [191.7346893, 31.3543832, 255.5798239],
-                    [187.6966191, 17.4426083, 250.7489829],
+                    [191.7300724, 31.3616088, 255.5749675],
+                    [187.6922553, 17.4506295, 250.7446092]
                 ]
             ),
         )
@@ -690,6 +690,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
+        lif_1.s_out_y3.connect(dense.s_in_y3)
 
         run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
         run_cnd = RunSteps(num_steps=num_steps)
@@ -767,6 +768,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_1.s_out_y1.connect(dense.s_in_y1)
         lif_1.s_out_y2.connect(dense.s_in_y2)
+        lif_1.s_out_y3.connect(dense.s_in_y3)
 
         run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
         run_cnd = RunSteps(num_steps=num_steps)

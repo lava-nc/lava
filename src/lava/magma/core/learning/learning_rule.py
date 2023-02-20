@@ -96,29 +96,11 @@ class LoihiLearningRule:
         rng_seed: ty.Optional[int] = None,
     ) -> None:
 
-        self._dw_str = None if dw is None else "dw = " + str(dw)
-        self._dd_str = None if dd is None else "dd = " + str(dd)
-        self._dt_str = None if dt is None else "dt = " + str(dt)
+        self._dw_str = dw
+        self._dd_str = dd
+        self._dt_str = dt
 
-        # dict of string learning rules
-        str_learning_rules = {
-            str_symbols.DW: dw,
-            str_symbols.DD: dd,
-            str_symbols.DT: dt,
-        }
-
-        # dict of string learning rules that were provided only
-        active_str_learning_rules = {
-            key: str_learning_rule
-            for key, str_learning_rule in str_learning_rules.items()
-            if str_learning_rule is not None
-        }
-
-        # validate that at least one learning rule was provided
-        self._validate_at_least_one_learning_rule(active_str_learning_rules)
-        # validate that same k was used throughout all learning rules in case
-        # a uk dependency is used
-        self._decimate_exponent = self._validate_uk(active_str_learning_rules)
+        self._validate_learning_rule_strings()
 
         # extract and validate x trace impulses and taus
         self._x1_impulse = self._validate_impulse(x1_impulse)
@@ -144,13 +126,42 @@ class LoihiLearningRule:
             else np.random.randint(1, np.iinfo(np.int32).max)
         )
 
+        self._create_product_series()
+
+    def _validate_learning_rule_strings(self):
+
+        # dict of string learning rules
+        str_learning_rules = {
+            str_symbols.DW: self._dw_str,
+            str_symbols.DD: self._dd_str,
+            str_symbols.DT: self._dt_str,
+        }
+
+        # dict of string learning rules that were provided only
+        self._active_str_learning_rules = {
+            key: str_learning_rule
+            for key, str_learning_rule in str_learning_rules.items()
+            if str_learning_rule is not None
+        }
+
+        # validate that at least one learning rule was provided
+        self._validate_at_least_one_learning_rule(
+            self._active_str_learning_rules
+        )
+        # validate that same k was used throughout all learning rules in case
+        # a uk dependency is used
+        self._decimate_exponent = self._validate_uk(
+            self._active_str_learning_rules
+        )
+
+    def _create_product_series(self):
         # generate ProductSeries for all learning rules that were provided in
         # string format
         self._active_product_series = {
             key: self._generate_product_series_from_string(
-                key, str_learning_rule
+                key, str_lr
             )
-            for key, str_learning_rule in active_str_learning_rules.items()
+            for key, str_lr in self._active_str_learning_rules.items()
         }
 
         # set attribute for each of the active ProductSeries
@@ -169,8 +180,42 @@ class LoihiLearningRule:
         ) = self._get_active_traces_from_active_product_series()
 
     @property
+    def dw_str(self):
+        return self._dw_str
+
+    @dw_str.setter
+    def dw_str(self, dw_str):
+        self._dw_str = dw_str
+        self._validate_learning_rule_strings()
+        self._create_product_series()
+
+    @property
+    def dd_str(self):
+        return self._dd_str
+
+    @dd_str.setter
+    def dd_str(self, dd_str):
+        self._dd_str = dd_str
+        self._validate_learning_rule_strings()
+        self._create_product_series()
+
+    @property
+    def dt_str(self):
+        return self._dt_str
+
+    @dt_str.setter
+    def dt_str(self, dt_str):
+        self._dt_str = dt_str
+        self._validate_learning_rule_strings()
+        self._create_product_series()
+
+    @property
     def rng_seed(self) -> int:
         return self._rng_seed
+
+    @rng_seed.setter
+    def rng_seed(self, value):
+        self._rng_seed = value
 
     @property
     def x1_impulse(self) -> float:
@@ -183,6 +228,10 @@ class LoihiLearningRule:
         """
         return self._x1_impulse
 
+    @x1_impulse.setter
+    def x1_impulse(self, value):
+        self._x1_impulse = self._validate_impulse(value)
+
     @property
     def x1_tau(self) -> float:
         """Get the tau value for x1 trace.
@@ -193,6 +242,10 @@ class LoihiLearningRule:
             Tau value for x1 trace.
         """
         return self._x1_tau
+
+    @x1_tau.setter
+    def x1_tau(self, value):
+        self._x1_tau = self._validate_tau(value)
 
     @property
     def x2_impulse(self) -> float:
@@ -205,6 +258,10 @@ class LoihiLearningRule:
         """
         return self._x2_impulse
 
+    @x2_impulse.setter
+    def x2_impulse(self, value):
+        self._x2_impulse = self._validate_impulse(value)
+
     @property
     def x2_tau(self) -> float:
         """Get the tau value for x2 trace.
@@ -215,6 +272,10 @@ class LoihiLearningRule:
             Tau value for x2 trace.
         """
         return self._x2_tau
+
+    @x2_tau.setter
+    def x2_tau(self, value):
+        self._x2_tau = self._validate_tau(value)
 
     @property
     def y1_impulse(self) -> float:
@@ -227,6 +288,10 @@ class LoihiLearningRule:
         """
         return self._y1_impulse
 
+    @y1_impulse.setter
+    def y1_impulse(self, value):
+        self._y1_impulse = self._validate_impulse(value)
+
     @property
     def y1_tau(self) -> float:
         """Get the tau value for y1 trace.
@@ -237,6 +302,10 @@ class LoihiLearningRule:
             Tau value for y1 trace.
         """
         return self._y1_tau
+
+    @y1_tau.setter
+    def y1_tau(self, value):
+        self._y1_tau = self._validate_tau(value)
 
     @property
     def y2_impulse(self) -> float:
@@ -249,6 +318,10 @@ class LoihiLearningRule:
         """
         return self._y2_impulse
 
+    @y2_impulse.setter
+    def y2_impulse(self, value):
+        self._y2_impulse = self._validate_impulse(value)
+
     @property
     def y2_tau(self) -> float:
         """Get the tau value for y2 trace.
@@ -259,6 +332,10 @@ class LoihiLearningRule:
             Tau value for y2 trace.
         """
         return self._y2_tau
+
+    @y2_tau.setter
+    def y2_tau(self, value):
+        self._y2_tau = self._validate_tau(value)
 
     @property
     def y3_impulse(self) -> float:
@@ -271,6 +348,10 @@ class LoihiLearningRule:
         """
         return self._y3_impulse
 
+    @y3_impulse.setter
+    def y3_impulse(self, value):
+        self._y3_impulse = self._validate_impulse(value)
+
     @property
     def y3_tau(self) -> float:
         """Get the tau value for y3 trace.
@@ -282,6 +363,10 @@ class LoihiLearningRule:
         """
         return self._y3_tau
 
+    @y3_tau.setter
+    def y3_tau(self, value):
+        self._y3_tau = self._validate_tau(value)
+
     @property
     def t_epoch(self) -> int:
         """Get the epoch length.
@@ -292,6 +377,10 @@ class LoihiLearningRule:
             Epoch length.
         """
         return self._t_epoch
+
+    @t_epoch.setter
+    def t_epoch(self, value):
+        self._t_epoch = self._validate_t_epoch(value)
 
     @property
     def dw(self) -> ty.Optional[ProductSeries]:
@@ -643,7 +732,6 @@ class Loihi3FLearningRule(LoihiLearningRule):
         t_epoch: ty.Optional[int] = 1,
         rng_seed: ty.Optional[int] = None,
     ) -> None:
-
         super().__init__(
             dw=dw,
             dd=dd,
@@ -653,11 +741,11 @@ class Loihi3FLearningRule(LoihiLearningRule):
             x2_impulse=x2_impulse,
             x2_tau=x2_tau,
             y1_impulse=0,
-            y1_tau=2**32 - 1,
+            y1_tau=np.iinfo(np.uint16).max,
             y2_impulse=0,
-            y2_tau=2**32 - 1,
+            y2_tau=np.iinfo(np.uint16).max,
             y3_impulse=0,
-            y3_tau=2**32 - 1,
+            y3_tau=np.iinfo(np.uint16).max,
             t_epoch=t_epoch,
             rng_seed=rng_seed,
         )
