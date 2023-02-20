@@ -65,6 +65,7 @@ class SystemProcess(mp.Process):
         self._cconn.close()
         self._pconn.close()
 
+
 class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
