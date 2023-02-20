@@ -14,7 +14,7 @@ from lava.magma.core.resources import AbstractResource
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
 
-class AbstractProcessModel(ABC):
+class AbstractProcessModel:
     """Represents a model that implements the behavior of a Process.
 
     ProcessModels enable seamless cross-platform execution of Processes. In
