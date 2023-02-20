@@ -8,7 +8,7 @@ from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
 )
-from lava.magma.runtime.message_infrastructure import (SupportTempChannel)
+from lava.magma.runtime.message_infrastructure import SupportTempChannel
 
 
 class Var(AbstractProcessMember):
