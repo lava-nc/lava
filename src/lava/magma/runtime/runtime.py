@@ -453,7 +453,6 @@ class Runtime:
             if idx:
                 buffer = buffer[idx]
 
-            # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             if SupportTempChannel:
                 addr_path = rsp_port.recv()
                 send_port = getTempSendPort(str(addr_path[0]))
@@ -461,6 +460,7 @@ class Runtime:
                 send_port.send(buffer)
                 send_port.join()
             else:
+                # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
                 buffer_shape: ty.Tuple[int, ...] = buffer.shape
                 num_items: int = np.prod(buffer_shape).item()
                 reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
@@ -507,7 +507,6 @@ class Runtime:
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
-            # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
             if SupportTempChannel:
                 addr_path, recv_port = getTempRecvPort()
                 recv_port.start()
@@ -515,6 +514,7 @@ class Runtime:
                 buffer = recv_port.recv()
                 recv_port.join()
             else:
+                # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
                 data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
                 num_items: int = int(data_port.recv()[0].item())
                 buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))

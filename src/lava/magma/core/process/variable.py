@@ -8,7 +8,7 @@ from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
 )
-
+from lava.magma.runtime.message_infrastructure import (SupportTempChannel)
 
 class Var(AbstractProcessMember):
     """Represents a Lava variable. A Var implements the state of a Process and
@@ -134,9 +134,12 @@ class Var(AbstractProcessMember):
             if self.process.runtime:
                 # encode if var is str
                 if isinstance(value, str):
-                    value = np.array(
-                        list(value.encode("ascii")), dtype=np.int32
-                    )
+                    if SupportTempChannel:
+                        value = np.array(value, dtype=str)
+                    else:
+                        value = np.array(
+                            list(value.encode("ascii")), dtype=np.int32
+                        )
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -153,8 +156,11 @@ class Var(AbstractProcessMember):
             if self.process.runtime:
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
-                    # decode if var is string
-                    return bytes(buffer.astype(int).tolist()).decode("ascii")
+                    if SupportTempChannel:
+                        return buffer.tostring()
+                    else:
+                        # decode if var is string
+                        return bytes(buffer.astype(int).tolist()).decode("ascii")
                 else:
                     return buffer
             else:

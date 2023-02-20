@@ -177,8 +177,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
                 #Todo(hexu1): Need debug
-                var_iter = np.nditer(var, op_flags=['readwrite'])
-                setattr(self, var_name, buffer.tostring())
+                setattr(self, var_name, np.array_str(buffer))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             else:
                 self.process_to_service.send(MGMT_RESPONSE.ERROR)
