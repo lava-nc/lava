@@ -67,4 +67,5 @@ jobs:
       run: |
         poetry run git lfs fetch
         poetry run git lfs pull
+        poetry ulimit -n 100000 
         poetry run pytest
