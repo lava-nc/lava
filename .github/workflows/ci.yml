@@ -64,10 +64,12 @@ jobs:
         repository: 'Lava'
         
     - name: Change ulimit
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macOS-latest'
       run: |
+        echo 'This is a test'
         ulimit -a
-        ulimit -n 100000 
+        ulimit -n 100000
+        ulimit -a
 
     - name: Run unit tests
       run: |
