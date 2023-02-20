@@ -76,7 +76,6 @@ class TestSigmaModels(unittest.TestCase):
         self.assertTrue(error < 1e-6)
 
 
-@unittest.skip("Should be active!")
 class TestSigmaDeltaModels(unittest.TestCase):
     """Tests for sigma delta neuron"""
 
