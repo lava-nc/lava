@@ -20,6 +20,7 @@ from lava.magma.runtime.message_infrastructure import (
     DDSTransportType,
     DDSBackendType
 )
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
 def numpy2pil(np_array: np.ndarray) -> Image:
@@ -43,15 +44,11 @@ class RosGetterRunConfig(RunConfig):
 
 class RosFrameGetterProcess(AbstractProcess):
     """Realsense Frame getter object."""
-    def __init__(
-        self,
-        topic: str,
-        num_step: int,
-    ) -> None:
+    def __init__(self, topic: str, num_step: int) -> None:
         super().__init__(topic=topic, num_step=num_step)
 
 
-@implements(proc=RosFrameGetterProcess, protocol=LoihiProtocol)
+@implements(proc=RosFrameGetterProcess, protocol=AsyncProtocol)
 @tag("rs_frame")
 @requires(CPU)
 class RosGetterProcModel(PyAsyncProcessModel):
@@ -68,33 +65,36 @@ class RosGetterProcModel(PyAsyncProcessModel):
         )
         self.dst_port = self.dds_channel.dst_port
         self.dst_port.start()
+        self.current_step = 0
 
-    def run_spk(self) -> None:
-        res = self.dst_port.recv()
-        stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
-                               byteorder='big', signed=False)
-        channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
-                                 byteorder='big', signed=False)
-        width = int.from_bytes(bytearray(np.flipud(res[12:16]).tolist()),
-                               byteorder='big', signed=False)
-        height = int.from_bytes(bytearray(np.flipud(res[16:20]).tolist()),
+    def run_async(self) -> None:
+        while self.num_step > self.current_step:
+            res = self.dst_port.recv()
+            stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
                                 byteorder='big', signed=False)
-        img_data = res[20:]
-        print("stamp nsec = ", stamp)
-        print("channel = ", channel)
-        print("width = ", width)
-        print("height = ", height)
-        print("img_data = ", img_data)
-        img = numpy2pil(img_data.reshape((height, width, channel)))
-        img.show()
-        img.close()
-        time.sleep(0.1)
+            channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
+                                    byteorder='big', signed=False)
+            width = int.from_bytes(bytearray(np.flipud(res[12:16]).tolist()),
+                                byteorder='big', signed=False)
+            height = int.from_bytes(bytearray(np.flipud(res[16:20]).tolist()),
+                                    byteorder='big', signed=False)
+            img_data = res[20:]
+            print("stamp nsec = ", stamp)
+            print("channel = ", channel)
+            print("width = ", width)
+            print("height = ", height)
+            print("img_data = ", img_data)
+            img = numpy2pil(img_data.reshape((height, width, channel)))
+            img.show()
+            img.close()
+            time.sleep(0.1)
 
-    def post_guard(self) -> bool:
-        return self.time_step == self.num_step
+            # Stops async process when desired number of steps is reached
+            self.current_step += 1
 
-    def run_post_mgmt(self) -> None:
-        self.dst_port.join()
+            # Stops async process if stop command is sent by runtime
+            if self.check_for_stop_cmd():
+                self.dst_port.join()
 
 
 def test_dds_from_ros_for_realsense():
@@ -103,6 +103,7 @@ def test_dds_from_ros_for_realsense():
     proc = RosFrameGetterProcess(topic=topic, num_step=num_steps)
     run_condition = RunSteps(num_steps=num_steps)
     run_config = RosGetterRunConfig(select_tag='rs_frame')
+    print("Successful until here")
     proc.run(condition=run_condition, run_cfg=run_config)
     proc.stop()
 
