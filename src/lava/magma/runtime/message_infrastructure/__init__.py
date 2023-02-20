@@ -18,6 +18,10 @@ PURE_PYTHON_VERSION = _get_pure_py()
 
 if PURE_PYTHON_VERSION:
     from abc import ABC, abstractmethod
+    import multiprocessing as mp
+
+    if platform.system() != 'Windows':
+        mp.set_start_method('fork')
 
     class Channel(ABC):
         @property
