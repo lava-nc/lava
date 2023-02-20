@@ -65,7 +65,9 @@ jobs:
         
     - name: Change ulimit
       if: matrix.os == 'macos-latest'
-      run: ulimit -n 100000 
+      run: |
+        ulimit -a
+        ulimit -n 100000 
 
     - name: Run unit tests
       run: |
