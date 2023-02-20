@@ -517,7 +517,7 @@ class Runtime:
             else:
                 data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
                 num_items: int = int(data_port.recv()[0].item())
-                buffer: np.ndarray = np.empty((1, num_items))
+                buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]
                 # 3. Reshape result and return
