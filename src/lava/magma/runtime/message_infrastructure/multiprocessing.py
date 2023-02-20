@@ -84,7 +84,7 @@ class MultiProcessing(MessageInfrastructureInterface):
             temp_dtype = LavaTypeTransfer.cdtype2numpy(dtype)
             channel_bytes = np.prod(shape) * np.dtype(temp_dtype).itemsize \
                 if not sync else SyncChannelBytes
-            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize,
+            return Channel(ChannelBackend.SHMEMCHANNEL, size,
                            channel_bytes, src_name, dst_name, shape, dtype)
         else:
             raise Exception(f"Unsupported channel type {channel_type}")
