@@ -157,7 +157,7 @@ class Var(AbstractProcessMember):
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     if SupportTempChannel:
-                        return buffer.tostring()
+                        return np.array_str(buffer)
                     else:
                         # decode if var is string
                         return bytes(buffer.astype(int).tolist()).decode("ascii")
