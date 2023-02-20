@@ -69,7 +69,7 @@ jobs:
         ulimit -a
         ulimit -n 100000
         ulimit -a
-      if: matrix.os == 'macOS-latest'
+      if: runner.os == 'macOS'
 
 
     - name: Run unit tests
