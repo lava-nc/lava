@@ -31,12 +31,6 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 
 
-import platform
-if platform.system() != 'Windows':
-    if mp.get_context('fork') is None:
-        mp.set_start_method('fork')
-
-
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
 which will participate in exchanging messages. The Channel Infrastructure
@@ -49,7 +43,7 @@ class SystemProcess(mp.Process):
 
     def __init__(self, *args, **kwargs):
         mp.Process.__init__(self, *args, **kwargs)
-        self._pconn, self._cconn = mp.get_context('fork').Pipe()
+        self._pconn, self._cconn = mp.Pipe()
         self._exception = None
 
     def run(self):
