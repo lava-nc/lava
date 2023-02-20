@@ -10,6 +10,7 @@ from lava.magma.core.process.interfaces import (
 )
 from lava.magma.runtime.message_infrastructure import (SupportTempChannel)
 
+
 class Var(AbstractProcessMember):
     """Represents a Lava variable. A Var implements the state of a Process and
     is part of its public user interface. Vars have the following properties:
@@ -160,7 +161,8 @@ class Var(AbstractProcessMember):
                         return np.array_str(buffer)
                     else:
                         # decode if var is string
-                        return bytes(buffer.astype(int).tolist()).decode("ascii")
+                        return bytes(buffer.astype(int).tolist()).  \
+                            decode("ascii")
                 else:
                     return buffer
             else:

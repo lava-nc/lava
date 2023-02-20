@@ -126,7 +126,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
             elif isinstance(var, str):
-                # Todo(hexu1): Need debug
                 data_port.send(np.array(var, dtype=str))
             data_port.join()
         else:
@@ -148,7 +147,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 data_port.send(enum_to_np(len(encoded_str)))
                 for ch in encoded_str:
                     data_port.send(enum_to_np(ch, d_type=np.int32))
-
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -176,7 +174,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
-                #Todo(hexu1): Need debug
                 setattr(self, var_name, np.array_str(buffer))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             else:
@@ -211,7 +208,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
                 s = []
                 for i in range(num_items):
-                    s.append(int(data_port.recv()[0]))  # decode string from ascii
+                    # decode string from ascii
+                    s.append(int(data_port.recv()[0]))
 
                 s = bytes(s).decode("ascii")
                 setattr(self, var_name, s)
