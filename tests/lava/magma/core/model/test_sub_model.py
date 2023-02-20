@@ -8,8 +8,6 @@ from lava.magma.core.model.sub.model import AbstractSubProcessModel
 
 
 class TestSubProcModel(unittest.TestCase):
-
-    @unittest.skip("for test")
     def test_constructor(self):
         """Check SubProcModel creation."""
 
