@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -9,8 +9,7 @@ import numpy as np
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
-import typing as ty
-from lava.proc.lif.process import LIF, AbstractLIF, LogConfig, LearningLIF
+from lava.proc.lif.process import LIF, LearningLIF
 from lava.proc.dense.process import LearningDense, Dense
 from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 from lava.magma.core.model.py.neuron import (
@@ -18,7 +17,7 @@ from lava.magma.core.model.py.neuron import (
     LearningNeuronModelFixed,
 )
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
@@ -191,152 +190,7 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         self.s_out_y3.send(self.y3)
 
 
-class TestSTDPSim(unittest.TestCase):
-    def test_stdp_learning_lif_fixed_point(self):
-        """Known value test. Run a simple learning dense layer between two LIF
-        and compare to the resulting weight from previous runs."""
-
-        learning_rule = STDPLoihi(
-            learning_rate=1,
-            A_plus=4,
-            A_minus=-2,
-            tau_plus=10,
-            tau_minus=10,
-            t_epoch=2,
-            rng_seed=0,
-        )
-
-        size = 1
-        weights_init = np.eye(size) * 1
-
-        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
-
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
-
-        lif_1 = LearningLIF(shape=(size,),
-                            du=0,
-                            dv=0,
-                            vth=10000,
-                            bias_mant=20000)
-
-        lif_0.s_out.connect(dense.s_in)
-        dense.a_out.connect(lif_1.a_in)
-        lif_1.s_out.connect(dense.s_in_bap)
-
-        num_steps = 100
-
-        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
-        run_cnd = RunSteps(num_steps=num_steps)
-
-        weight_before_run = dense.weights.get()
-
-        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-
-        weight_after_run = dense.weights.get()
-        lif_0.stop()
-
-        np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[72]]))
-
-    def test_stdp_fixed_point(self):
-        """Known value test. Run a simple learning dense layer between two LIF
-        and compare to the resulting weight from previous runs."""
-
-        learning_rule = STDPLoihi(
-            learning_rate=1,
-            A_plus=4,
-            A_minus=-2,
-            tau_plus=10,
-            tau_minus=10,
-            t_epoch=2,
-            rng_seed=0,
-        )
-
-        size = 1
-        weights_init = np.eye(size) * 1
-
-        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
-
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
-
-        lif_1 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=20000)
-
-        lif_0.s_out.connect(dense.s_in)
-        dense.a_out.connect(lif_1.a_in)
-        lif_1.s_out.connect(dense.s_in_bap)
-
-        num_steps = 100
-
-        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
-        run_cnd = RunSteps(num_steps=num_steps)
-
-        weight_before_run = dense.weights.get()
-
-        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-
-        weight_after_run = dense.weights.get()
-        lif_0.stop()
-
-        np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(weight_after_run, np.array([[72]]))
-
-    def test_stdp_fixed_point_multi_synapse(self):
-        """Known value test. Run a simple learning dense layer between two LIF
-        population with multiple neurons and compare to the resulting weight
-        from previous runs."""
-        learning_rule = STDPLoihi(
-            learning_rate=1,
-            A_plus=1,
-            A_minus=-2,
-            tau_plus=10,
-            tau_minus=10,
-            t_epoch=1,
-            rng_seed=0,
-        )
-
-        num_pre_neurons = 3
-        num_post_neurons = 2
-
-        weights_init = np.zeros((num_post_neurons, num_pre_neurons))
-
-        lif_0 = LIF(
-            shape=(num_pre_neurons,),
-            du=0,
-            dv=0,
-            vth=10000,
-            bias_mant=np.array([22000, 25000, 26000]),
-        )
-
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
-
-        lif_1 = LIF(
-            shape=(num_post_neurons,),
-            du=0,
-            dv=0,
-            vth=10000,
-            bias_mant=np.array([20000, 23000]),
-        )
-
-        lif_0.s_out.connect(dense.s_in)
-        dense.a_out.connect(lif_1.a_in)
-        lif_1.s_out.connect(dense.s_in_bap)
-
-        num_steps = 100
-
-        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
-        run_cnd = RunSteps(num_steps=num_steps)
-        weight_before_run = dense.weights.get()
-
-        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-
-        weight_after_run = dense.weights.get()
-        lif_0.stop()
-
-        np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(
-            weight_after_run, np.array([[32.0, 3.0, -26.0], [-66.0, 26.0, 5.0]])
-        )
-
+class TestSTDPSimFloatingPoint(unittest.TestCase):
     def test_stdp_floating_point(self):
         """Known value test. Run a simple learning dense layer between two LIF
         and compare to the resulting weight from previous runs."""
@@ -359,49 +213,6 @@ class TestSTDPSim(unittest.TestCase):
         dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
-
-        lif_0.s_out.connect(dense.s_in)
-        dense.a_out.connect(lif_1.a_in)
-        lif_1.s_out.connect(dense.s_in_bap)
-
-        num_steps = 100
-
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
-        run_cnd = RunSteps(num_steps=num_steps)
-        weight_before_run = dense.weights.get()
-
-        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
-
-        weight_after_run = dense.weights.get()
-        lif_0.stop()
-
-        np.testing.assert_almost_equal(weight_before_run, weights_init)
-        np.testing.assert_almost_equal(
-            weight_after_run, np.array([[-79.35744962]])
-        )
-
-    def test_stdp_learning_lif_floating_point(self):
-        """Known value test. Run a simple learning dense layer between two LIF
-        and compare to the resulting weight from previous runs."""
-
-        learning_rule = STDPLoihi(
-            learning_rate=1,
-            A_plus=1,
-            A_minus=-2,
-            tau_plus=10,
-            tau_minus=10,
-            t_epoch=1,
-        )
-
-        size = 1
-
-        weights_init = np.eye(size) * 0
-
-        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.1)
-
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
-
-        lif_1 = LearningLIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
 
         lif_0.s_out.connect(dense.s_in)
         dense.a_out.connect(lif_1.a_in)
@@ -485,6 +296,199 @@ class TestSTDPSim(unittest.TestCase):
             ),
         )
 
+    def test_stdp_learning_lif_floating_point(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        and compare to the resulting weight from previous runs."""
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=1,
+        )
+
+        size = 1
+
+        weights_init = np.eye(size) * 0
+
+        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.1)
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = LearningLIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+        lif_1.s_out.connect(dense.s_in_bap)
+
+        num_steps = 100
+
+        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(
+            weight_after_run, np.array([[-79.35744962]])
+        )
+
+
+class TestSTDPSimBitApproximate(unittest.TestCase):
+    def test_stdp_bit_approximate(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        and compare to the resulting weight from previous runs."""
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=4,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+            rng_seed=0,
+        )
+
+        size = 1
+        weights_init = np.eye(size) * 1
+
+        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=20000)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+        lif_1.s_out.connect(dense.s_in_bap)
+
+        num_steps = 100
+
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(weight_after_run, np.array([[56]]))
+
+    def test_stdp_bit_approximate_multi_synapse(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        population with multiple neurons and compare to the resulting weight
+        from previous runs."""
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=1,
+            rng_seed=0,
+        )
+
+        num_pre_neurons = 3
+        num_post_neurons = 2
+
+        weights_init = np.zeros((num_post_neurons, num_pre_neurons))
+
+        lif_0 = LIF(
+            shape=(num_pre_neurons,),
+            du=0,
+            dv=0,
+            vth=10000,
+            bias_mant=np.array([22000, 25000, 26000]),
+        )
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = LIF(
+            shape=(num_post_neurons,),
+            du=0,
+            dv=0,
+            vth=10000,
+            bias_mant=np.array([20000, 23000]),
+        )
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+        lif_1.s_out.connect(dense.s_in_bap)
+
+        num_steps = 100
+
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(
+            weight_after_run, np.array([[31.0, 2.0, -24.0],
+                                        [-64.0, 30.0, 14.0]])
+        )
+
+    def test_stdp_learning_lif_bit_approximate(self):
+        """Known value test. Run a simple learning dense layer between two LIF
+        and compare to the resulting weight from previous runs."""
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=4,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+            rng_seed=0,
+        )
+
+        size = 1
+        weights_init = np.eye(size) * 1
+
+        lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
+
+        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+
+        lif_1 = LearningLIF(shape=(size,),
+                            du=0,
+                            dv=0,
+                            vth=10000,
+                            bias_mant=20000)
+
+        lif_0.s_out.connect(dense.s_in)
+        dense.a_out.connect(lif_1.a_in)
+        lif_1.s_out.connect(dense.s_in_bap)
+
+        num_steps = 100
+
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+        run_cnd = RunSteps(num_steps=num_steps)
+
+        weight_before_run = dense.weights.get()
+
+        lif_0.run(condition=run_cnd, run_cfg=run_cfg)
+
+        weight_after_run = dense.weights.get()
+        lif_0.stop()
+
+        np.testing.assert_almost_equal(weight_before_run, weights_init)
+        np.testing.assert_almost_equal(weight_after_run, np.array([[56]]))
+
+
+class TestRSTDPSimFloatingPoint(unittest.TestCase):
     def test_rstdp_floating_point(self):
         """Known value test. Run a simple learning dense layer between two LIF
         and compare to the resulting weight from previous runs."""
@@ -519,7 +523,7 @@ class TestSTDPSim(unittest.TestCase):
 
         # reward
         reward_signal = np.zeros((size, num_steps))
-        reward_signal[:, num_steps // 3 : num_steps // 2] = 1
+        reward_signal[:, num_steps // 3: num_steps // 2] = 1
 
         reward = SpikeIn(data=reward_signal.astype(float))
         reward_conn = Dense(weights=np.eye(size))
@@ -595,7 +599,7 @@ class TestSTDPSim(unittest.TestCase):
 
         # reward
         reward_signal = np.zeros((num_post_neurons, num_steps))
-        reward_signal[:, num_steps // 3 : num_steps // 2] = 1
+        reward_signal[:, num_steps // 3: num_steps // 2] = 1
 
         reward = SpikeIn(data=reward_signal.astype(float))
         reward_conn = Dense(weights=np.eye(num_post_neurons))
@@ -635,7 +639,9 @@ class TestSTDPSim(unittest.TestCase):
             ),
         )
 
-    def test_rstdp_fixed_point(self):
+
+class TestRSTDPSimBitApproximate(unittest.TestCase):
+    def test_rstdp_bit_approximate(self):
         """Known value test. Run a simple learning dense layer between two LIF
         and compare to the resulting weight from previous runs."""
 
@@ -671,7 +677,7 @@ class TestSTDPSim(unittest.TestCase):
 
         # reward
         reward_signal = np.zeros((size, num_steps))
-        reward_signal[:, num_steps // 3 : num_steps // 2] = 250
+        reward_signal[:, num_steps // 3: num_steps // 2] = 250
 
         reward = SpikeIn(data=reward_signal)
         reward_conn = Dense(weights=np.eye(size))
@@ -704,7 +710,7 @@ class TestSTDPSim(unittest.TestCase):
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(weight_after_run, np.array([[64]]))
 
-    def test_rstdp_fixed_point_multi_synapse(self):
+    def test_rstdp_bit_approximate_multi_synapse(self):
         """Known value test. Run a simple learning dense layer between two LIF
         population with multiple neurons and compare to the resulting weight
         from previous runs."""
@@ -749,7 +755,7 @@ class TestSTDPSim(unittest.TestCase):
 
         # reward
         reward_signal = np.zeros((num_post_neurons, num_steps))
-        reward_signal[:, num_steps // 3 : num_steps // 2] = 16
+        reward_signal[:, num_steps // 3: num_steps // 2] = 16
 
         reward = SpikeIn(data=reward_signal.astype(float))
         reward_conn = Dense(weights=np.eye(num_post_neurons))
@@ -780,5 +786,5 @@ class TestSTDPSim(unittest.TestCase):
 
         np.testing.assert_almost_equal(weight_before_run, weights_init)
         np.testing.assert_almost_equal(
-            weight_after_run, np.array([[3.0, 2.0, -7.0], [14.0, 19.0, 3.0]])
+            weight_after_run, np.array([[2.0, 1.0, -1.0], [15.0, 20.0, 9.0]])
         )
