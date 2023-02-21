@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_system_default
