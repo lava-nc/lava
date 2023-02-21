@@ -71,11 +71,11 @@ class RosGetterProcModel(PyAsyncProcessModel):
         while self.num_step > self.current_step:
             res = self.dst_port.recv()
             stamp = int.from_bytes(bytearray(np.flipud(res[0:8]).tolist()),
-                                byteorder='big', signed=False)
+                                   byteorder='big', signed=False)
             channel = int.from_bytes(bytearray(np.flipud(res[8:12]).tolist()),
-                                    byteorder='big', signed=False)
+                                     byteorder='big', signed=False)
             width = int.from_bytes(bytearray(np.flipud(res[12:16]).tolist()),
-                                byteorder='big', signed=False)
+                                   byteorder='big', signed=False)
             height = int.from_bytes(bytearray(np.flipud(res[16:20]).tolist()),
                                     byteorder='big', signed=False)
             img_data = res[20:]
