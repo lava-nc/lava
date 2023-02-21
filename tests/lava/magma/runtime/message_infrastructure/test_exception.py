@@ -83,7 +83,7 @@ class PyProcModel3(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
     def run_spk(self):  # pylint: disable=no-self-use
-        ...  # pylint: pointless-statement
+        pass
 
 
 class TestExceptionHandling(unittest.TestCase):

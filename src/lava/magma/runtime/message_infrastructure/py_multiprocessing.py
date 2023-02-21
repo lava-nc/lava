@@ -3,10 +3,10 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process \
-        import AbstractProcess  # pylint: disable=unused-import
-    from lava.magma.compiler.builders.py_builder \
-        import PyProcessBuilder  # pylint: disable=unused-import
+    from lava.magma.core.process.process import \
+        AbstractProcess  # pylint: disable=unused-import
+    from lava.magma.compiler.builders.py_builder import \
+        PyProcessBuilder  # pylint: disable=unused-import
     from lava.magma.compiler.builders.runtimeservice_builder import \
         RuntimeServiceBuilder  # pylint: disable=unused-import
 
@@ -33,11 +33,13 @@ from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 
 
-"""Implements the Message Infrastructure Interface using Python
+"""
+Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
 which will participate in exchanging messages. The Channel Infrastructure
 further uses the SharedMemoryManager from MultiProcessing Library to
-implement the communication backend in this implementation."""
+implement the communication backend in this implementation.
+"""
 
 
 class SystemProcess(mp.Process):

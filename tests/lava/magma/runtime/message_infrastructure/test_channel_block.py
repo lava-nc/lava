@@ -27,7 +27,7 @@ def send_proc(*args, **kwargs):
     if not isinstance(port, SendPort):
         raise AssertionError()
     port.start()
-    for i in range(QUEUE_SIZE + 1):
+    for i in range(QUEUE_SIZE + 1):  # pylint: disable=unused-variable
         data = generate_data()
         port.send(data)
 

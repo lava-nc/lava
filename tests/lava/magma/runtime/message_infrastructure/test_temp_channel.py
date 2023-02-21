@@ -46,7 +46,7 @@ def recv_proc(*args, **kwargs):
 def send_proc(*args, **kwargs):
     port = kwargs.pop("port")
     port.start()
-    for i in range(loop_number):
+    for i in range(loop_number):  # pylint: disable=unused-variable
         path = port.recv()
         send_port = getTempSendPort(str(path[0]))
         send_port.start()
