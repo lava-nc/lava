@@ -3,10 +3,12 @@
 # See: https://spdx.org/licenses/
 import typing as ty
 if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
+    from lava.magma.core.process.process \
+        import AbstractProcess  # pylint: disable=unused-import
+    from lava.magma.compiler.builders.py_builder \
+        import PyProcessBuilder  # pylint: disable=unused-import
     from lava.magma.compiler.builders.runtimeservice_builder import \
-        RuntimeServiceBuilder
+        RuntimeServiceBuilder  # pylint: disable=unused-import
 
 import multiprocessing as mp
 import os
@@ -121,7 +123,8 @@ class MultiProcessing(MessageInfrastructureInterface):
             actors.close_pipe()
         return error_cnt
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
+    def channel_class(self,  # pylint: disable=no-self-use
+                      channel_type: ChannelType) -> ty.Type[Channel]:
         """Given a channel type, returns the shared memory based class
         implementation for the same"""
         if channel_type == ChannelType.PyPy:

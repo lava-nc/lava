@@ -72,7 +72,8 @@ class MultiProcessing(MessageInfrastructureInterface):
         self.stop()
         return 0
 
-    def channel(self, channel_type: ChannelType, src_name, dst_name,
+    def channel(self,  # pylint: disable=no-self-use
+                channel_type: ChannelType, src_name, dst_name,
                 shape, dtype, size, sync=False) -> Channel:
         if channel_type == ChannelType.PyPy:
             channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize \

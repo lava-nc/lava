@@ -20,10 +20,8 @@ import typing as ty
 
 
 class Selector:
-    def select(
-            self,
-            *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
-    ):
+    def select(self,  # pylint: disable=no-self-use
+               *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]]):
         for recv_port, action in args:
             if recv_port.probe():
                 return action()
@@ -98,8 +96,8 @@ class Channel(CppChannel):
 
 
 def create_channel(
-        message_infrastructure:  \
-            "MessageInfrastructureInterface",  # nosec  # noqa
+        message_infrastructure:
+        "MessageInfrastructureInterface",  # silence pyflakes
         src_name, dst_name, shape, dtype, size):
     channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
     return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes,

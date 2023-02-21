@@ -32,7 +32,7 @@ def actor_stop(name):
 def recv_proc(*args, **kwargs):
     port = kwargs.pop("port")
     port.start()
-    for i in range(loop_number):
+    for i in range(loop_number):  # pylint: disable=unused-variable
         path, recv_port = getTempRecvPort()
         recv_port.start()
         port.send(np.array([path]))
@@ -63,7 +63,7 @@ class Builder:
 class TestTempChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
-    def test_tempchannel(self):
+    def test_tempchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing import MultiProcessing
         mp = MultiProcessing()

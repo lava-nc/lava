@@ -43,7 +43,7 @@ class MessageInfrastructureInterface(ABC):
         """Close all resources"""
         pass
 
-    def trace(self, logger) -> int:
+    def trace(self, logger) -> int:  # pylint: disable=no-self-use
         """Trace actors' exceptions"""
         return 0
 

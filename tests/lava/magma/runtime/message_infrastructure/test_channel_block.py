@@ -38,14 +38,14 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     time.sleep(1)
-    for i in range(QUEUE_SIZE + 1):
+    for i in range(QUEUE_SIZE + 1):  # pylint: disable=unused-variable
         port.recv()
 
 
 class TestChannelBlock(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
-    def test_block(self):
+    def test_block(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \

@@ -16,7 +16,7 @@ def nbytes_cal(shape, dtype):
 
 
 class Builder:
-    def build(self, i):
+    def build(self, i):  # pylint: disable=no-self-use
         time.sleep(0.0001)
 
 
@@ -43,7 +43,7 @@ def target_fn(*args, **kwargs):
 class TestMultiprocessing(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib version")
-    def test_multiprocessing_actors(self):
+    def test_multiprocessing_actors(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure.multiprocessing \
             import MultiProcessing
         mp = MultiProcessing()

@@ -82,14 +82,14 @@ class PyProcModel2(PyLoihiProcessModel):
 class PyProcModel3(PyLoihiProcessModel):
     inp: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
 
-    def run_spk(self):
-        ...
+    def run_spk(self):  # pylint: disable=no-self-use
+        ...  # pylint: pointless-statement
 
 
 class TestExceptionHandling(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        global _shm_ack
+        global _shm_ack  # pylint: disable=global-variable-undefined
         _shm_ack = Semaphore(1)
 
     @classmethod

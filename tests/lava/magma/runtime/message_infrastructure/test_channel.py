@@ -53,7 +53,6 @@ class Builder:
 def ddschannel_protocol(transfer_type, backend, topic_name):
     from lava.magma.runtime.message_infrastructure import (
         GetDDSChannel,
-        DDSBackendType,
         ChannelQueueSize)
     from lava.magma.runtime.message_infrastructure \
         .multiprocessing import MultiProcessing
@@ -84,7 +83,7 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
 class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
-    def test_shmemchannel(self):
+    def test_shmemchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \
@@ -122,7 +121,7 @@ class TestChannel(unittest.TestCase):
         mp.cleanup(True)
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
-    def test_single_process_shmemchannel(self):
+    def test_single_process_shmemchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \
@@ -160,7 +159,7 @@ class TestChannel(unittest.TestCase):
         recv_port.join()
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
-    def test_socketchannel(self):
+    def test_socketchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure \
@@ -198,7 +197,7 @@ class TestChannel(unittest.TestCase):
         mp.cleanup(True)
 
     @unittest.skipIf(PURE_PYTHON_VERSION, "cpp msg lib test")
-    def test_single_process_socketchannel(self):
+    def test_single_process_socketchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure \
             .MessageInfrastructurePywrapper import ChannelType
         from lava.magma.runtime.message_infrastructure import \
@@ -232,7 +231,7 @@ class TestChannel(unittest.TestCase):
         recv_port.join()
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
-    def test_grpcchannel(self):
+    def test_grpcchannel(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure import GetRPCChannel
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing import MultiProcessing
@@ -265,7 +264,7 @@ class TestChannel(unittest.TestCase):
         mp.cleanup(True)
 
     @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
-    def test_fastdds_channel_shm(self):
+    def test_fastdds_channel_shm(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSSHM,
@@ -273,7 +272,7 @@ class TestChannel(unittest.TestCase):
                             "test_fastdds_channel_shm")
 
     @unittest.skipIf(not SupportFastDDSChannel, "Not support fastdds channel.")
-    def test_fastdds_channel_udpv4(self):
+    def test_fastdds_channel_udpv4(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSUDPv4,
@@ -282,7 +281,7 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
-    def test_cyclonedds_channel_shm(self):
+    def test_cyclonedds_channel_shm(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSSHM,
@@ -291,7 +290,7 @@ class TestChannel(unittest.TestCase):
 
     @unittest.skipIf(not SupportCycloneDDSChannel,
                      "Not support cyclonedds channel.")
-    def test_cyclonedds_channel_udpv4(self):
+    def test_cyclonedds_channel_udpv4(self):  # pylint: disable=no-self-use
         from lava.magma.runtime.message_infrastructure import DDSTransportType
         from lava.magma.runtime.message_infrastructure import DDSBackendType
         ddschannel_protocol(DDSTransportType.DDSUDPv4,
