@@ -75,9 +75,9 @@ else:
     load_library()
 
     from lava.magma.runtime.message_infrastructure. \
-        MessageInfrastructurePywrapper import (  # noqa # nosec
-            RecvPort, # noqa # nosec
-            AbstractTransferPort, # noqa # nosec
+        MessageInfrastructurePywrapper import (  # noqa  # nosec
+            RecvPort,  # noqa  # nosec
+            AbstractTransferPort,  # noqa  # nosec
             support_grpc_channel,
             support_fastdds_channel,
             support_cyclonedds_channel)
@@ -85,16 +85,16 @@ else:
     ChannelQueueSize = 1
     SyncChannelBytes = 128
 
-    from .ports import (  # noqa # nosec
-        SendPort, # noqa # nosec
-        Channel, # noqa # nosec
-        Selector, # noqa # nosec
-        getTempSendPort, # noqa # nosec
-        getTempRecvPort, # noqa # nosec
-        create_channel) # noqa # nosec
+    from .ports import (  # noqa  # nosec
+        SendPort,  # noqa  # nosec
+        Channel,  # noqa  # nosec
+        Selector,  # noqa  # nosec
+        getTempSendPort,  # noqa  # nosec
+        getTempRecvPort,  # noqa  # nosec
+        create_channel)  # noqa  # nosec
     from .pypychannel import (
-        CspSelector, # noqa # nosec
-        PyPyChannel) # noqa # nosec
+        CspSelector,  # noqa  # nosec
+        PyPyChannel)  # noqa  # nosec
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()
@@ -106,5 +106,5 @@ else:
         from .ports import GetDDSChannel # noqa # nosec
         from lava.magma.runtime.message_infrastructure. \
             MessageInfrastructurePywrapper import (
-                DDSTransportType, # noqa # nosec
-                DDSBackendType) # noqa # nosec
+                DDSTransportType,  # noqa  # nosec
+                DDSBackendType)  # noqa  # nosec

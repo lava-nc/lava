@@ -98,7 +98,8 @@ class Channel(CppChannel):
 
 
 def create_channel(
-        message_infrastructure: "MessageInfrastructureInterface",  # nosec
+        message_infrastructure:  \
+            "MessageInfrastructureInterface",  # nosec  # noqa
         src_name, dst_name, shape, dtype, size):
     channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
     return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes,
