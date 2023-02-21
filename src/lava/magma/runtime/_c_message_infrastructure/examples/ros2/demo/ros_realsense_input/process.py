@@ -8,12 +8,12 @@ from PIL import Image
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.model import PyAsyncProcessModel
 
 from lava.magma.runtime.message_infrastructure import (
     ChannelQueueSize,
@@ -59,9 +59,9 @@ class RosRealsenseInput(AbstractProcess):
         self.event_frame_out = OutPort(shape=out_shape)
 
 
-@implements(proc=RosRealsenseInput, protocol=LoihiProtocol)
+@implements(proc=RosRealsenseInput, protocol=AsyncProtocol)
 @requires(CPU)
-class RosRealsenseInputPM(PyLoihiProcessModel):
+class RosRealsenseInputPM(PyAsyncProcessModel):
     event_frame_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
     def __init__(self, proc_params):
@@ -120,34 +120,36 @@ class RosRealsenseInputPM(PyLoihiProcessModel):
         # * OP: distance between colors
         return np.linalg.norm(real_diffs, axis=2) > self.diff_thresh
 
-    def run_spk(self):
-        self._cur_steps += 1
+    def run_async(self):
+        while self._num_steps > self._cur_steps:
+            self._cur_steps += 1
 
-        res = self.recv_port.recv()
-        width = int.from_bytes(
-            bytearray(np.flipud(res[12:16:]).tolist()),
-            byteorder="big",
-            signed=False,
-        )
-        height = int.from_bytes(
-            bytearray(np.flipud(res[16:20:]).tolist()),
-            byteorder="big",
-            signed=False,
-        )
-        img_data = res[20:]
-        img_data = img_data.reshape((height, width, 3))
+            res = self.recv_port.recv()
+            width = int.from_bytes(
+                bytearray(np.flipud(res[12:16:]).tolist()),
+                byteorder="big",
+                signed=False,
+            )
+            height = int.from_bytes(
+                bytearray(np.flipud(res[16:20:]).tolist()),
+                byteorder="big",
+                signed=False,
+            )
+            img_data = res[20:]
+            img_data = img_data.reshape((height, width, 3))
 
-        # apply gaussian blur
-        event_frame_small = self._gaussian_downsample(img_data)
-        diff = self.diff(self.prev_frame, event_frame_small)
-        self.prev_frame = event_frame_small
+            # apply gaussian blur
+            event_frame_small = self._gaussian_downsample(img_data)
+            diff = self.diff(self.prev_frame, event_frame_small)
+            self.prev_frame = event_frame_small
 
-        # * later codes assume (width, height) shaped image
-        diff = np.transpose(diff, axes=(1, 0))
-        self.event_frame_out.send(diff)
+            # * later codes assume (width, height) shaped image
+            diff = np.transpose(diff, axes=(1, 0))
+            self.event_frame_out.send(diff)
 
-    def post_guard(self) -> bool:
-        return self._cur_steps == self._num_steps
+            # Stops async process if stop command is sent by runtime
+            if self.check_for_stop_cmd():
+                self.dst_port.join()
 
     def run_post_mgmt(self) -> None:
         self.recv_port.join()
