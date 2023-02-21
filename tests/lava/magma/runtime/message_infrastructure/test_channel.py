@@ -53,7 +53,6 @@ class Builder:
 def ddschannel_protocol(transfer_type, backend, topic_name):
     from lava.magma.runtime.message_infrastructure import (
         GetDDSChannel,
-        DDSTransportType,
         DDSBackendType,
         ChannelQueueSize)
     from lava.magma.runtime.message_infrastructure \

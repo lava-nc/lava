@@ -9,6 +9,16 @@ from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import \
     MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure import Channel
+try:
+    from lava.magma.compiler.channels.nccchannel import NcCChannel
+    from lava.magma.compiler.channels.cncchannel import CNcChannel
+except ImportError:
+    class CNcChannel:
+        pass
+
+    class NcCChannel:
+        pass
 
 
 class NxBoardMsgInterface(MessageInfrastructureInterface):

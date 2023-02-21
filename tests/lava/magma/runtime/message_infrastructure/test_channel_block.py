@@ -28,10 +28,8 @@ def send_proc(*args, **kwargs):
         raise AssertionError()
     port.start()
     for i in range(QUEUE_SIZE + 1):
-        start_ts = time.time()
         data = generate_data()
         port.send(data)
-        end_ts = time.time()
 
 
 def recv_proc(*args, **kwargs):
@@ -41,7 +39,7 @@ def recv_proc(*args, **kwargs):
         raise AssertionError()
     time.sleep(1)
     for i in range(QUEUE_SIZE + 1):
-        data = port.recv()
+        port.recv()
 
 
 class TestChannelBlock(unittest.TestCase):
