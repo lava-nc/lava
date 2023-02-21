@@ -36,7 +36,7 @@ bool SocketWrite(int fd, void* data, size_t size) {
 
 bool SocketRead(int fd, void* data, size_t size) {
   char *ptr = reinterpret_cast<char *>(data);
-  while (size > 0) {
+  while (size > 0) {  // Flawfinder: ignore
     size_t length = read(fd, ptr, size);
     size -= length;
     ptr += length;

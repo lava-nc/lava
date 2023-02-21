@@ -119,11 +119,11 @@ and the names for the tests are `test_fastdds_to_ros` and `test_fastdds_from_ros
     ```
     $ cd <lava>/build/test/
     ```
-2. `test_fastdds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+2.  `test_fastdds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_fastdds_to_ros
     ```
-3. `test_fastdds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+3.  `test_fastdds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_fastdds_from_ros
     ```
@@ -166,11 +166,11 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
 ### 2nd Terminal to Run CycloneDDS Port
 #### Python Example
 Users could use Python test files to valid the function of this example.
-1. `test_cyclonedds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
+1.  `test_cyclonedds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
     ```
     $ python test_cyclonedds_to_ros.py
     ```
-2. `test_cyclonedds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
+2.  `test_cyclonedds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
     ```
     $ python test_cyclonedds_from_ros.py
     ```
