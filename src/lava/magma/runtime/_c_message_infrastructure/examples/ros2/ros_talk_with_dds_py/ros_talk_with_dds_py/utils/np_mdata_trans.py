@@ -1,5 +1,4 @@
 import numpy as np
-from enum import Enum
 from ddsmetadata.msg import DDSMetaData
 
 

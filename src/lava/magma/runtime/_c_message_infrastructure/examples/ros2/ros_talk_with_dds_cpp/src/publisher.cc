@@ -27,8 +27,7 @@ using MetaDataPtr = std::shared_ptr<MetaData>;
 class MinimalPublisher : public rclcpp::Node {
  public:
   MinimalPublisher()
-  : Node("minimal_publisher"), count_(0) {
-    metadata = std::make_shared<MetaData>();
+  : Node("minimal_publisher"), count_(0), metadata(std::make_shared<MetaData>()) {
     metadata->nd = 1;
     metadata->type = 7;
     metadata->elsize = 8;

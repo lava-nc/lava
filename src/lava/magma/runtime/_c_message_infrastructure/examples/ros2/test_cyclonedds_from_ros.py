@@ -2,19 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import numpy as np
-import unittest
-from functools import partial
-import time
-
-from lava.magma.runtime.message_infrastructure.multiprocessing \
-    import MultiProcessing
-
 from lava.magma.runtime.message_infrastructure import (
-    ChannelBackend,
-    Channel,
-    SendPort,
-    RecvPort,
     ChannelQueueSize,
     GetDDSChannel,
     DDSTransportType,
