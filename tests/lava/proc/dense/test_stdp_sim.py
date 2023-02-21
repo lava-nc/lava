@@ -6,23 +6,18 @@ import unittest
 
 import numpy as np
 
-from lava.magma.core.learning.constants import GradedSpikeCfg
-from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
-import typing as ty
-from lava.proc.lif.process import LIF, AbstractLIF, LogConfig, LearningLIF
+from lava.proc.lif.process import LIF, LearningLIF
 from lava.proc.dense.process import LearningDense, Dense
-from lava.proc.monitor.process import Monitor
-from lava.proc.io.source import RingBuffer, PySendModelFixed, PySendModelFloat
 from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 from lava.magma.core.model.py.neuron import (
     LearningNeuronModelFloat,
     LearningNeuronModelFixed,
 )
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag

@@ -89,7 +89,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -101,7 +101,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -125,7 +125,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -138,7 +138,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -162,7 +162,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -175,7 +175,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -199,7 +199,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -219,7 +219,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -243,7 +243,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -263,7 +263,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -287,7 +287,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -307,7 +307,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -331,7 +331,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -351,7 +351,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -375,7 +375,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -395,7 +395,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -419,7 +419,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -439,7 +439,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -463,7 +463,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -483,7 +483,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -507,7 +507,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -527,7 +527,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -551,7 +551,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -571,7 +571,7 @@ class TestLearningSimGradedSpikeFloatingPoint(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -661,7 +661,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -673,7 +673,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -697,7 +697,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -710,7 +710,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -734,7 +734,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
@@ -747,7 +747,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -771,7 +771,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -791,7 +791,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -815,7 +815,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -835,7 +835,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -859,7 +859,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -879,7 +879,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -903,7 +903,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -924,7 +924,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -948,7 +948,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -969,7 +969,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -993,7 +993,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITH_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of overwrite
@@ -1014,7 +1014,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -1039,7 +1039,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "x0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -1070,7 +1070,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -1095,7 +1095,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -1126,7 +1126,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
@@ -1151,7 +1151,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "u0"
         graded_spike_cfg = GradedSpikeCfg.ADD_WITHOUT_SATURATION
 
-        pre_ring_buffer, learning_dense, post_ring_buffer = \
+        pre_ring_buffer, learning_dense, _ = \
             self.create_network(5, learning_rule_cnd, graded_spike_cfg)
 
         # initialize x1 to a non-zero value to see clearly effect of addition
@@ -1182,7 +1182,7 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         x1_data = []
         x2_data = []
         wgt_data = []
-        for i in range(num_steps):
+        for _ in range(num_steps):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 

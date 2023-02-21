@@ -14,7 +14,18 @@ from lava.magma.core.learning.learning_rule import (
 from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 
-from lava.magma.core.learning.constants import *
+from lava.magma.core.learning.constants import (
+    GradedSpikeCfg,
+    W_TRACE,
+    W_TRACE_FRACTIONAL_PART,
+    W_SYN_VAR_U,
+    W_SYN_VAR_S,
+    W_WEIGHTS_U,
+    W_TAG_1_U,
+    W_TAG_2_U,
+    W_ACCUMULATOR_U,
+    W_ACCUMULATOR_S,
+)
 from lava.magma.core.learning.random import TraceRandom, ConnVarRandom
 from lava.magma.core.learning.product_series import ProductSeries
 from lava.magma.core.learning.learning_rule_applier import (
@@ -1211,16 +1222,16 @@ class LearningConnectionModelFloat(PyLearningConnection):
         if self._graded_spike_cfg == GradedSpikeCfg.ADD_WITH_SATURATION or \
                 self._graded_spike_cfg == GradedSpikeCfg.ADD_WITHOUT_SATURATION:
             logging.warning(
-                f'The floating-pt PyProcessModel has been selected for the '
-                f'LearningDense Process and '
+                'The floating-pt PyProcessModel has been selected for the '
+                'LearningDense Process and '
                 f'graded_spike_cfg={self._graded_spike_cfg}.')
             logging.warning(
-                f'Incoming graded spike payloads (divided by 2) will be added '
-                f'to the pre-trace x1, with no saturation. This will not '
-                f'effect the pre-trace x2.')
+                'Incoming graded spike payloads (divided by 2) will be added '
+                'to the pre-trace x1, with no saturation. This will not '
+                'effect the pre-trace x2.')
             logging.warning(
-                f'All incoming spikes will be considered by learning rule '
-                f'Products conditioned on x0.')
+                'All incoming spikes will be considered by learning rule '
+                'Products conditioned on x0.')
 
     def _store_impulses_and_taus(self) -> None:
         """Build and store integer ndarrays representing x and y
