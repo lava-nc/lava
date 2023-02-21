@@ -8,7 +8,7 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.proc.lif.process import LIF
 from lava.magma.core.run_configs import Loihi1SimCfg
 from time import sleep
-from subprocess import run
+from subprocess import run  # nosec
 from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
 
@@ -33,7 +33,7 @@ def run_process():
 
 def get_file_descriptor_usage():
     result = run("lsof 2>/dev/null | grep python | grep FIFO | wc -l",  # noqa: S607, E501
-                 shell=True)
+                 shell=True)  # nosec
     sleep(0.1)
     return result.stdout
 

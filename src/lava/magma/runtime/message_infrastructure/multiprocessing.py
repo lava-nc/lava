@@ -6,8 +6,7 @@ import numpy as np
 from functools import partial
 
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-    import (CppMultiProcessing,
-            Actor)
+    import CppMultiProcessing
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import ChannelType as ChannelBackend  # noqa: E402
 from lava.magma.runtime.message_infrastructure \

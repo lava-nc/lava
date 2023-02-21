@@ -19,15 +19,6 @@ from lava.magma.runtime.message_infrastructure import (
 )
 
 
-class process:
-
-    def __init__(self) -> None:
-        pass
-
-    def get_status(self):
-        return ActorStatus.StatusRunning
-
-
 class PyChannel:
 
     def __init__(self, dtype, size, nbytes, name, *_) -> None:
@@ -477,9 +468,7 @@ class TestAllDelivery(unittest.TestCase):
 
     @unittest.skipIf(not SupportGRPCChannel, "Not support grpc channel.")
     def test_grpcchannel(self):
-        from lava.magma.runtime.message_infrastructure import (
-            GetRPCChannel,
-            ChannelQueueSize)
+        from lava.magma.runtime.message_infrastructure import GetRPCChannel
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing \
             import MultiProcessing

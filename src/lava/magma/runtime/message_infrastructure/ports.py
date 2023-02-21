@@ -4,8 +4,6 @@
 
 from lava.magma.runtime.message_infrastructure import ChannelQueueSize
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-    import SendPort as CppSendPort
-from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import Channel as CppChannel
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import (
@@ -99,8 +97,10 @@ class Channel(CppChannel):
         return SendPort(super().src_port)
 
 
-def create_channel(message_infrastructure: "MessageInfrastructureInterface",
-                   src_name, dst_name, shape, dtype, size):
+def create_channel(
+        message_infrastructure:  \
+            "MessageInfrastructureInterface",  # nosec  # noqa
+        src_name, dst_name, shape, dtype, size):
     channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize
     return Channel(ChannelType.SHMEMCHANNEL, ChannelQueueSize, channel_bytes,
                    src_name, dst_name, shape, dtype)

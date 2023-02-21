@@ -51,7 +51,7 @@ class TestMultiprocessing(unittest.TestCase):
         builder = Builder()
         for i in range(5):
             bound_target_fn = partial(target_fn, idx=i)
-            ret = mp.build_actor(bound_target_fn, builder)
+            mp.build_actor(bound_target_fn, builder)
 
         time.sleep(0.1)
         mp.stop()
