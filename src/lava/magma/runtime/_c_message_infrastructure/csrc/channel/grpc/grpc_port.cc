@@ -173,7 +173,7 @@ void GrpcSendPort::Send(DataPtr grpcdata) {
   ClientContext context;
   context.set_wait_for_ready(true);
   Status status = stub_->RecvArrayData(&context,
-                                       *data, &reply);  // cppcheck-suppress status
+                    *data, &reply);  // cppcheck-suppress status
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!\n");
   }
