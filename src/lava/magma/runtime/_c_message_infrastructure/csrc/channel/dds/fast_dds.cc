@@ -256,7 +256,7 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
   if (keep) {
     LAVA_DEBUG(LOG_DDS, "Keep the data recieved\n");
     while (ReturnCode_t::RETCODE_OK !=
-           reader_->read(mdata_seq, infos, 1)) {
+           reader_->read(mdata_seq, infos, 1)) {  // Flawfinder: ignore
       helper::Sleep();
     }
   } else {

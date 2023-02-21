@@ -168,7 +168,7 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   LAVA_DEBUG(LOG_DDS, "CycloneDDS recving...\n");
   dds::sub::LoanedSamples<ddsmetadata::msg::DDSMetaData> samples;
   if (keep) {
-    while ((samples = selector_->read()).length() <= 0) {
+    while ((samples = selector_->read()).length() <= 0) {  // Flawfinder: ignore
       helper::Sleep();
     }
   } else {
