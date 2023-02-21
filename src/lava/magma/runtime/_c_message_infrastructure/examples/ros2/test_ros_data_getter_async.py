@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from typing import Iterable, Tuple, Union, List
+from typing import List
 import numpy as np
 from PIL import Image
 import time
 
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.resources import HostCPU, CPU
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
+from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyAsyncProcessModel
 from lava.magma.core.run_configs import RunConfig
@@ -20,7 +20,6 @@ from lava.magma.runtime.message_infrastructure import (
     DDSTransportType,
     DDSBackendType
 )
-from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 
 
 def numpy2pil(np_array: np.ndarray) -> Image:
@@ -103,7 +102,6 @@ def test_dds_from_ros_for_realsense():
     proc = RosFrameGetterProcess(topic=topic, num_step=num_steps)
     run_condition = RunSteps(num_steps=num_steps)
     run_config = RosGetterRunConfig(select_tag='rs_frame')
-    print("Successful until here")
     proc.run(condition=run_condition, run_cfg=run_config)
     proc.stop()
 
