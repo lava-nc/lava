@@ -50,7 +50,7 @@ Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
   while (recv_queue_->AvailableCount() <=0) {
     helper::Sleep();
     if (done_) {
-      rep = false;  // cppcheck-suppress
+      rep = false;  // cppcheck-suppress rep
       return Status::OK;
     }
   }
@@ -173,7 +173,7 @@ void GrpcSendPort::Send(DataPtr grpcdata) {
   ClientContext context;
   context.set_wait_for_ready(true);
   Status status = stub_->RecvArrayData(&context,
-                                       *data, &reply);  // cppcheck-suppress
+                                       *data, &reply);  // cppcheck-suppress status
   if (!reply.ack()) {
     LAVA_LOG_ERR("Send fail!\n");
   }
