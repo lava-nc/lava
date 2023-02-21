@@ -75,9 +75,9 @@ else:
     load_library()
 
     from lava.magma.runtime.message_infrastructure. \
-        MessageInfrastructurePywrapper import (  # noqa  # nosec
-            RecvPort,  # noqa  # nosec
-            AbstractTransferPort,  # noqa  # nosec
+        MessageInfrastructurePywrapper import (  # noqa: F401
+            RecvPort,  # noqa: F401
+            AbstractTransferPort,  # noqa: F401
             support_grpc_channel,
             support_fastdds_channel,
             support_cyclonedds_channel)
@@ -85,26 +85,26 @@ else:
     ChannelQueueSize = 1
     SyncChannelBytes = 128
 
-    from .ports import (  # noqa  # nosec
-        SendPort,  # noqa  # nosec
-        Channel,  # noqa  # nosec
-        Selector,  # noqa  # nosec
-        getTempSendPort,  # noqa  # nosec
-        getTempRecvPort,  # noqa  # nosec
-        create_channel)  # noqa  # nosec
-    from .pypychannel import (
-        CspSelector,  # noqa  # nosec
-        PyPyChannel)  # noqa  # nosec
+    from .ports import (  # noqa: F401
+        SendPort,  # noqa: F401
+        Channel,  # noqa: F401
+        Selector,  # noqa: F401
+        getTempSendPort,  # noqa: F401
+        getTempRecvPort,  # noqa: F401
+        create_channel)  # noqa: F401
+    from .pypychannel import (  # noqa: F401
+        CspSelector,  # noqa: F401
+        PyPyChannel)  # noqa: F401
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()
     SupportTempChannel = True
 
     if SupportGRPCChannel:
-        from .ports import GetRPCChannel # noqa # nosec
+        from .ports import GetRPCChannel  # noqa: F401
     if SupportFastDDSChannel or SupportCycloneDDSChannel:
-        from .ports import GetDDSChannel # noqa # nosec
+        from .ports import GetDDSChannel  # noqa: F401
         from lava.magma.runtime.message_infrastructure. \
             MessageInfrastructurePywrapper import (
-                DDSTransportType,  # noqa  # nosec
-                DDSBackendType)  # noqa  # nosec
+                DDSTransportType,  # noqa
+                DDSBackendType)  # noqa
