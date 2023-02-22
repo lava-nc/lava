@@ -521,9 +521,10 @@ class Runtime:
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]
             # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
-                else 'C'
-            buffer = buffer.reshape(ev.shape, order=reshape_order)
+            if buffer.dtype.type != np.str_:
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
+                buffer = buffer.reshape(ev.shape, order=reshape_order)
 
             if idx:
                 return buffer[idx]
