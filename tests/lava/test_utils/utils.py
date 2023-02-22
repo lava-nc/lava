@@ -1,12 +1,13 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import os
 import subprocess
 import importlib
 
 
-class Utils():
+class Utils:
     """Utility Class containing testing helper
     code that can be reused between tests
     """

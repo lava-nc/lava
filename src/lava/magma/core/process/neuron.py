@@ -1,3 +1,7 @@
+# Copyright (C) 2021-23 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import typing as ty
 from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
