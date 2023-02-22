@@ -1,10 +1,11 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import numpy as np
 import typing as ty
 
+from lava.magma.core.learning.constants import GradedSpikeCfg
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.connection import LearningConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -126,6 +127,26 @@ class LearningDense(LearningConnectionProcess, Dense):
 
     learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
+
+    graded_spike_cfg: GradedSpikeCfg
+        Indicates how to use incoming graded spike to update pre-synaptic traces
+
+        (0) GradedSpikeCfg.USE_REGULAR_IMPULSE interprets the spike as a
+        binary spike, adds regular impulses to pre-synaptic traces, at the end
+        of the epoch.
+        (1) GradedSpikeCfg.OVERWRITE interprets the spike as a graded spike,
+        overwrites the value of the pre-synaptic trace x1 by payload/2,
+        upon spiking.
+        (2) GradedSpikeCfg.ADD_WITH_SATURATION interprets the spike as a graded
+        spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
+        saturates x1 to 127 (fixed-pt/hw only).
+        (3) GradedSpikeCfg.ADD_WITHOUT_SATURATION interprets the spike as a
+        graded spike, adds payload/2 to the pre-synaptic trace x1, upon spiking,
+        keeps only overflow above 127 in x1 (fixed-pt/hw only), adds regular
+        impulse to x2 on overflow.
+        In addition, only pre-synaptic graded spikes that trigger overflow in
+        x1 and regular impulse addition to x2 will be considered by the
+        learning rule Products conditioned on x0.
     """
 
     def __init__(self,
@@ -135,7 +156,12 @@ class LearningDense(LearningConnectionProcess, Dense):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  learning_rule: LoihiLearningRule = None,
+                 graded_spike_cfg: GradedSpikeCfg =
+                 GradedSpikeCfg.USE_REGULAR_IMPULSE,
                  **kwargs) -> None:
+
+        if graded_spike_cfg != GradedSpikeCfg.USE_REGULAR_IMPULSE:
+            learning_rule.x1_impulse = 0
 
         super().__init__(weights=weights,
                          shape=weights.shape,
@@ -143,6 +169,7 @@ class LearningDense(LearningConnectionProcess, Dense):
                          num_message_bits=num_message_bits,
                          log_config=log_config,
                          learning_rule=learning_rule,
+                         graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
 

@@ -1,7 +1,8 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from enum import IntEnum, auto
 import lava.magma.core.learning.string_symbols as str_symbols
 
 # ---------------------------------------------------------------------------
@@ -85,3 +86,10 @@ TRACE_TO_IDX_DICT = {
     str_symbols.Y2: 1,
     str_symbols.Y3: 2
 }
+
+
+class GradedSpikeCfg(IntEnum):
+    USE_REGULAR_IMPULSE = auto()
+    OVERWRITE = auto()
+    ADD_WITH_SATURATION = auto()
+    ADD_WITHOUT_SATURATION = auto()
