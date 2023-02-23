@@ -1,17 +1,19 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
 import threading
 from abc import ABC
 import logging
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 import typing as ty
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
+from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
+    CloseOnShutdownSMM,
+)
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
@@ -99,7 +101,7 @@ class ChannelBroker(AbstractChannelBroker):
         # Need to pill for COutPorts
         self.c_outports_to_poll: ty.Dict[Channel, COutPort] = {}
 
-        self.smm: SharedMemoryManager = SharedMemoryManager()
+        self.smm: CloseOnShutdownSMM = CloseOnShutdownSMM()
         self.mgmt_channel: ty.Optional[PyPyChannel] = None
         self.grpc_stopping_event: ty.Optional[threading.Event] = None
         self.port_poller: ty.Optional[threading.Thread] = None

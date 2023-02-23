@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
@@ -345,7 +345,7 @@ class PyPyChannel(Channel):
         """
         nbytes = self.nbytes(shape, dtype)
         smm = message_infrastructure.smm
-        shm = smm.SharedMemory(int(nbytes * size))
+        shm = smm.shared_memory(int(nbytes * size))
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)

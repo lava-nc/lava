@@ -1,9 +1,8 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import unittest
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
@@ -11,8 +10,10 @@ from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
-from lava.magma.runtime.runtime_services.runtime_service import \
-    PyRuntimeService
+from lava.magma.runtime.runtime_services.runtime_service import PyRuntimeService
+from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
+    CloseOnShutdownSMM,
+)
 
 
 class MockInterface:
@@ -20,7 +21,7 @@ class MockInterface:
         self.smm = smm
 
 
-def create_channel(smm: SharedMemoryManager, name: str):
+def create_channel(smm: CloseOnShutdownSMM, name: str):
     mock = MockInterface(smm=smm)
     return PyPyChannel(
         mock,
@@ -68,7 +69,7 @@ class TestRuntimeService(unittest.TestCase):
         pm = SimpleProcessModel(proc_params={})
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
-        smm = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         smm.start()
         runtime_to_service = create_channel(smm, name="runtime_to_service")
         service_to_runtime = create_channel(smm, name="service_to_runtime")

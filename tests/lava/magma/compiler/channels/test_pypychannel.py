@@ -1,13 +1,15 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import numpy as np
 import unittest
 from multiprocessing import Process
-from multiprocessing.managers import SharedMemoryManager
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
+    CloseOnShutdownSMM
+)
 
 
 class MockInterface:
@@ -30,7 +32,7 @@ def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
 
 class TestPyPyChannelSingleProcess(unittest.TestCase):
     def test_send_recv_single_process(self):
-        smm = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         try:
             smm.start()
 
@@ -47,7 +49,7 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
             smm.shutdown()
 
     def test_send_recv_single_process_2d_data(self):
-        smm = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         try:
             smm.start()
 
@@ -64,7 +66,7 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
             smm.shutdown()
 
     def test_send_recv_single_process_1d_data(self):
-        smm = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         try:
             smm.start()
 
@@ -127,7 +129,7 @@ def buffer(shape, dst_port, src_port):
 
 class TestPyPyChannelMultiProcess(unittest.TestCase):
     def test_send_recv_relay(self):
-        smm = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         try:
             smm.start()
             data = np.ones((2, 2))

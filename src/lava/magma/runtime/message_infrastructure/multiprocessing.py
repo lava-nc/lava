@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
@@ -11,11 +11,14 @@ if ty.TYPE_CHECKING:
 
 import multiprocessing as mp
 import os
-from multiprocessing.managers import SharedMemoryManager
 import traceback
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
+    CloseOnShutdownSMM,
+)
+
 try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
@@ -50,6 +53,7 @@ class SystemProcess(mp.Process):
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
         self._exception = None
+        self._is_done = False
 
     def run(self):
         try:
@@ -59,10 +63,20 @@ class SystemProcess(mp.Process):
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
 
+    def join(self):
+        if not self._is_done:
+            super().join()
+            super().close()
+            if self._pconn.poll():
+                self._exception = self._pconn.recv()
+            self._cconn.close()
+            self._pconn.close()
+            self._is_done = True
+
     @property
     def exception(self):
         """Exception property."""
-        if self._pconn.poll():
+        if not self._is_done and self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
 
@@ -71,7 +85,7 @@ class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
     def __init__(self):
-        self._smm: ty.Optional[SharedMemoryManager] = None
+        self._smm = None
         self._actors: ty.List[SystemProcess] = []
 
     @property
@@ -86,7 +100,7 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def start(self):
         """Starts the shared memory manager"""
-        self._smm = SharedMemoryManager()
+        self._smm = CloseOnShutdownSMM()
         self._smm.start()
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[

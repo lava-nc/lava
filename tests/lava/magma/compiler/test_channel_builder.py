@@ -1,10 +1,9 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import typing as ty
 import unittest
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 
@@ -15,6 +14,9 @@ from lava.magma.compiler.channels.pypychannel import (
     PyPyChannel,
     CspSendPort,
     CspRecvPort,
+)
+from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
+    CloseOnShutdownSMM
 )
 
 
@@ -29,7 +31,7 @@ class MockMessageInterface:
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        smm: SharedMemoryManager = SharedMemoryManager()
+        smm = CloseOnShutdownSMM()
         try:
             port_initializer: PortInitializer = PortInitializer(
                 name="mock", shape=(1, 2), d_type=np.int32,
