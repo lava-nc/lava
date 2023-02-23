@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
@@ -28,6 +29,11 @@ except ImportError:
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
+
+
+import platform
+if platform.system() != 'Windows':
+    mp.set_start_method('fork')
 
 
 """Implements the Message Infrastructure Interface using Python

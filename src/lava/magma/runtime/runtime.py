@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 from __future__ import annotations
 
 import logging
@@ -134,6 +135,15 @@ class Runtime:
         """
         if self._is_started:
             self.stop()
+
+    def __enter__(self):
+        """Initialize the runtime on entering "with" block of a context manager.
+        """
+        self.initialize()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop the runtime when exiting "with" block of a context manager."""
+        self.stop()
 
     def initialize(self, node_cfg_idx: int = 0):
         """Initializes the runtime"""
@@ -490,7 +500,7 @@ class Runtime:
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
             num_items: int = int(data_port.recv()[0].item())
-            buffer: np.ndarray = np.empty((1, num_items))
+            buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
             for i in range(num_items):
                 buffer[0, i] = data_port.recv()[0]
 
