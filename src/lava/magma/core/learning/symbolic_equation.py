@@ -836,7 +836,7 @@ class SymbolicEquation:
         new_symbol = None
 
         for symbol in SYMBOL_CLASSES:
-            new_symbol, expression = symbol.find(str(expression))
+            new_symbol, expression = symbol.find(expression)
 
             if isinstance(new_symbol, Expression):
                 new_symbol.symbol_list = self._parse(new_symbol.sub_expr)
