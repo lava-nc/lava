@@ -525,7 +525,7 @@ class Runtime:
             if buffer.dtype.type != np.str_:
                 reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
                     else 'C'
-                buffer = buffer.reshape(ev.shape, order=reshape_order)
+                buffer = buffer.ravel(order=reshape_order).reshape(ev.shape)
 
             if idx:
                 return buffer[idx]
