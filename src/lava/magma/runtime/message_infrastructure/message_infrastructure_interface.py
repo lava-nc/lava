@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 import typing as ty
 from abc import ABC, abstractmethod
 from lava.magma.runtime.message_infrastructure import Channel

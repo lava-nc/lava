@@ -1,6 +1,10 @@
-import time
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
+import time
 from multiprocessing import Process
 from multiprocessing.managers import SharedMemoryManager
 from lava.magma.runtime.message_infrastructure import (
