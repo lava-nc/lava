@@ -92,9 +92,6 @@ else:
         getTempSendPort,  # noqa  # nosec
         getTempRecvPort,  # noqa  # nosec
         create_channel)  # noqa  # nosec
-    from .pypychannel import (
-        CspSelector,  # noqa  # nosec
-        PyPyChannel)  # noqa  # nosec
     SupportGRPCChannel = support_grpc_channel()
     SupportFastDDSChannel = support_fastdds_channel()
     SupportCycloneDDSChannel = support_cyclonedds_channel()
