@@ -82,7 +82,7 @@ class TestPyPorts(unittest.TestCase):
             # Send data through second PyOutPort
             send_py_port_2.send(data)
             # Sleep to let message reach the PyInPort
-            time.sleep(0.001)
+            time.sleep(0.01)
             # Probe PyInPort
             probe_value = recv_py_port.probe()
 
