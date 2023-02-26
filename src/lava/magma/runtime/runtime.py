@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
@@ -34,7 +34,7 @@ from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import Channel
+from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
@@ -128,7 +128,7 @@ class Runtime:
         self._req_stop: bool = False
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
-        self._open_ports = []
+        self._open_ports: ty.List[AbstractCspPort] = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to

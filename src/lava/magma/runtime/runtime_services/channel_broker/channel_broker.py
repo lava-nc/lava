@@ -11,8 +11,8 @@ import typing as ty
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM,
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
 )
 
 try:
@@ -101,7 +101,7 @@ class ChannelBroker(AbstractChannelBroker):
         # Need to pill for COutPorts
         self.c_outports_to_poll: ty.Dict[Channel, COutPort] = {}
 
-        self.smm: CloseOnShutdownSMM = CloseOnShutdownSMM()
+        self.smm: SharedMemoryManager = SharedMemoryManager()
         self.mgmt_channel: ty.Optional[PyPyChannel] = None
         self.grpc_stopping_event: ty.Optional[threading.Event] = None
         self.port_poller: ty.Optional[threading.Thread] = None

@@ -358,7 +358,7 @@ class PyPyChannel(Channel):
         """
         nbytes = self.nbytes(shape, dtype)
         smm = message_infrastructure.smm
-        shm = smm.shared_memory(int(nbytes * size))
+        shm = smm.create_shared_memory(int(nbytes * size))
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)

@@ -27,8 +27,8 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM,
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
 )
 
 
@@ -43,7 +43,7 @@ class MockMessageInterface:
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
                 name="mock", shape=(1, 2), d_type=np.int32,

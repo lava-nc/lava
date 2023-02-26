@@ -15,8 +15,8 @@ import traceback
 
 from lava.magma.compiler.channels.interfaces import ChannelType, Channel
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM,
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
 )
 
 try:
@@ -85,7 +85,7 @@ class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
     def __init__(self):
-        self._smm = None
+        self._smm: ty.Optional[SharedMemoryManager] = None
         self._actors: ty.List[SystemProcess] = []
 
     @property
@@ -100,7 +100,7 @@ class MultiProcessing(MessageInfrastructureInterface):
 
     def start(self):
         """Starts the shared memory manager"""
-        self._smm = CloseOnShutdownSMM()
+        self._smm = SharedMemoryManager()
         self._smm.start()
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[

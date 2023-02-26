@@ -11,8 +11,8 @@ from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime_services.runtime_service import PyRuntimeService
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM,
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
 )
 
 
@@ -21,7 +21,7 @@ class MockInterface:
         self.smm = smm
 
 
-def create_channel(smm: CloseOnShutdownSMM, name: str):
+def create_channel(smm: SharedMemoryManager, name: str):
     mock = MockInterface(smm=smm)
     return PyPyChannel(
         mock,
@@ -69,7 +69,7 @@ class TestRuntimeService(unittest.TestCase):
         pm = SimpleProcessModel(proc_params={})
         sp = SimpleSyncProtocol()
         rs = SimplePyRuntimeService(protocol=sp)
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         smm.start()
         runtime_to_service = create_channel(smm, name="runtime_to_service")
         service_to_runtime = create_channel(smm, name="service_to_runtime")

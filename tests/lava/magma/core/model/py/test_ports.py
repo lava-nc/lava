@@ -20,8 +20,8 @@ from lava.magma.core.model.py.ports import (
     PyOutPortVectorDense,
     VirtualPortTransformer,
     IdentityTransformer)
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager
 )
 
 
@@ -46,7 +46,7 @@ class TestPyPorts(unittest.TestCase):
     def probe_test_routine(self, cls):
         """Routine that tests probe method on one implementation of PyInPorts.
         """
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
 
         try:
             smm.start()

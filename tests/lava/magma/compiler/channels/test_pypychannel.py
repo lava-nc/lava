@@ -7,8 +7,8 @@ import unittest
 from multiprocessing import Process
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.magma.runtime.message_infrastructure.close_on_shutdown_smm import (
-    CloseOnShutdownSMM
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager
 )
 
 
@@ -32,7 +32,7 @@ def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
 
 class TestPyPyChannelSingleProcess(unittest.TestCase):
     def test_send_recv_single_process(self):
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         try:
             smm.start()
 
@@ -49,7 +49,7 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
             smm.shutdown()
 
     def test_send_recv_single_process_2d_data(self):
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         try:
             smm.start()
 
@@ -66,7 +66,7 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
             smm.shutdown()
 
     def test_send_recv_single_process_1d_data(self):
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         try:
             smm.start()
 
@@ -129,7 +129,7 @@ def buffer(shape, dst_port, src_port):
 
 class TestPyPyChannelMultiProcess(unittest.TestCase):
     def test_send_recv_relay(self):
-        smm = CloseOnShutdownSMM()
+        smm = SharedMemoryManager()
         try:
             smm.start()
             data = np.ones((2, 2))
