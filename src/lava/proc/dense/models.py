@@ -194,6 +194,9 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Dense synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: np.ndarray = None
+    delays: np.ndarray = None
+    a_buff: np.ndarray = None
 
     @staticmethod
     def get_del_wgts(weights, delays) -> np.ndarray:
@@ -263,7 +266,7 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
-        # The a_out sent on a each timestep is a buffered value from dendritic
+        # The a_out sent on each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff[:, 0])
