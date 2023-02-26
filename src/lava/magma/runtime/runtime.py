@@ -128,6 +128,7 @@ class Runtime:
         self._req_stop: bool = False
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
+        self._open_ports = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -191,6 +192,9 @@ class Runtime:
                         self._messaging_infrastructure
                     )
 
+                    self._open_ports.append(channel.src_port)
+                    self._open_ports.append(channel.dst_port)
+
                     self._get_process_builder_for_process(
                         channel_builder.src_process).set_csp_ports(
                         [channel.src_port])
@@ -214,6 +218,10 @@ class Runtime:
                 channel: Channel = sync_channel_builder.build(
                     self._messaging_infrastructure
                 )
+
+                self._open_ports.append(channel.src_port)
+                self._open_ports.append(channel.dst_port)
+
                 if isinstance(sync_channel_builder, RuntimeChannelBuilderMp):
                     if isinstance(sync_channel_builder.src_process,
                                   RuntimeServiceBuilder):
@@ -407,10 +415,10 @@ class Runtime:
 
     def join(self):
         """Join all ports and processes"""
-        for port in self.runtime_to_service:
+        for port in self._open_ports:
             port.join()
-        for port in self.service_to_runtime:
-            port.join()
+
+        self._open_ports.clear()
 
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
@@ -453,7 +461,8 @@ class Runtime:
                 buffer = buffer[idx]
             buffer_shape: ty.Tuple[int, ...] = buffer.shape
             num_items: int = np.prod(buffer_shape).item()
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            reshape_order = 'F' if isinstance(
+                ev, LoihiSynapseVarModel) else 'C'
             buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
@@ -505,7 +514,8 @@ class Runtime:
                 buffer[0, i] = data_port.recv()[0]
 
             # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            reshape_order = 'F' if isinstance(
+                ev, LoihiSynapseVarModel) else 'C'
             buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]

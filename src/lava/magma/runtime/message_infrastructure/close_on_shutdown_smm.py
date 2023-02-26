@@ -15,10 +15,12 @@ class CloseOnShutdownSMM:
         self._smm.start()
 
     def shutdown(self):
-        for shm in self._shms:
-            shm.close()
-        self._shms.clear()
-        self._smm.shutdown()
+        if self._smm is not None:
+            for shm in self._shms:
+                shm.close()
+            self._shms.clear()
+            self._smm.shutdown()
+            self._smm = None
 
     def shared_memory(self, size: int):
         shm = self._smm.SharedMemory(size)

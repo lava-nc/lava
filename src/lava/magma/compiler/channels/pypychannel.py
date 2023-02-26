@@ -29,6 +29,9 @@ class Proto:
     nbytes: int
 
 
+_SEMAPHORE_TIMEOUT = 0.1
+
+
 class CspSendPort(AbstractCspSendPort):
     """
     CspSendPort is a low level send port implementation based on CSP
@@ -101,11 +104,13 @@ class CspSendPort(AbstractCspSendPort):
     def _ack_callback(self):
         try:
             while not self._done:
-                self._ack.acquire()
-                not_full = self.probe()
-                self._semaphore.release()
-                if self.observer and not not_full:
-                    self.observer()
+                if self._ack.acquire(timeout=_SEMAPHORE_TIMEOUT):
+                    not_full = self.probe()
+                    self._semaphore.release()
+                    if self.observer and not not_full:
+                        self.observer()
+            self._req = None
+            self._ack = None
         except EOFError:
             pass
 
@@ -131,7 +136,10 @@ class CspSendPort(AbstractCspSendPort):
         self._req.release()
 
     def join(self):
-        self._done = True
+        if not self._done:
+            self._ack = None
+            self._req = None
+            self._done = True
 
 
 class CspRecvQueue(Queue):
@@ -243,11 +251,13 @@ class CspRecvPort(AbstractCspRecvPort):
     def _req_callback(self):
         try:
             while not self._done:
-                self._req.acquire()
-                not_empty = self.probe()
-                self._queue.put_nowait(0)
-                if self.observer and not not_empty:
-                    self.observer()
+                if self._req.acquire(timeout=_SEMAPHORE_TIMEOUT):
+                    not_empty = self.probe()
+                    self._queue.put_nowait(0)
+                    if self.observer and not not_empty:
+                        self.observer()
+            self._req = None
+            self._ack = None
         except EOFError:
             pass
 
@@ -279,7 +289,10 @@ class CspRecvPort(AbstractCspRecvPort):
         return result
 
     def join(self):
-        self._done = True
+        if not self._done:
+            self._ack = None
+            self._req = None
+            self._done = True
 
 
 class CspSelector:
