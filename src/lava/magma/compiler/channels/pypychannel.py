@@ -29,9 +29,6 @@ class Proto:
     nbytes: int
 
 
-_SEMAPHORE_TIMEOUT = 0.1
-
-
 class CspSendPort(AbstractCspSendPort):
     """
     CspSendPort is a low level send port implementation based on CSP
@@ -103,14 +100,11 @@ class CspSendPort(AbstractCspSendPort):
 
     def _ack_callback(self):
         try:
-            while not self._done:
-                if self._ack.acquire(timeout=_SEMAPHORE_TIMEOUT):
-                    not_full = self.probe()
-                    self._semaphore.release()
-                    if self.observer and not not_full:
-                        self.observer()
-            self._req = None
-            self._ack = None
+            while self._ack.acquire() and not self._done:
+                not_full = self.probe()
+                self._semaphore.release()
+                if self.observer and not not_full:
+                    self.observer()
         except EOFError:
             pass
 
@@ -137,9 +131,12 @@ class CspSendPort(AbstractCspSendPort):
 
     def join(self):
         if not self._done:
+            self._done = True
+            if self.thread is not None:
+                self._ack.release()
+                self.thread.join()
             self._ack = None
             self._req = None
-            self._done = True
 
 
 class CspRecvQueue(Queue):
@@ -250,14 +247,11 @@ class CspRecvPort(AbstractCspRecvPort):
 
     def _req_callback(self):
         try:
-            while not self._done:
-                if self._req.acquire(timeout=_SEMAPHORE_TIMEOUT):
-                    not_empty = self.probe()
-                    self._queue.put_nowait(0)
-                    if self.observer and not not_empty:
-                        self.observer()
-            self._req = None
-            self._ack = None
+            while self._req.acquire() and not self._done:
+                not_empty = self.probe()
+                self._queue.put_nowait(0)
+                if self.observer and not not_empty:
+                    self.observer()
         except EOFError:
             pass
 
@@ -290,9 +284,12 @@ class CspRecvPort(AbstractCspRecvPort):
 
     def join(self):
         if not self._done:
+            self._done = True
+            if self.thread is not None:
+                self._req.release()
+                self.thread.join()
             self._ack = None
             self._req = None
-            self._done = True
 
 
 class CspSelector:
