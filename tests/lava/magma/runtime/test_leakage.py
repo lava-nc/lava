@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import unittest
+import platform
 
 import numpy as np
 import psutil
@@ -24,8 +25,10 @@ def run_simulation() -> None:
 
 
 class TestLeakage(unittest.TestCase):
+    @unittest.skipIf(
+        platform.system() == "Windows", "Windows has no file descriptors"
+    )
     def test_leakage(self):
-
         # initial run to make sure all components are initialized
         run_simulation()
 
