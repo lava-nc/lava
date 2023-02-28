@@ -10,7 +10,7 @@ import typing as ty
 
 
 class SharedMemoryManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self._shared_memory_handles: ty.List[SharedMemory] = []
         self._inner_shared_memory_manager: ty.Optional[DelegateManager] = (
             DelegateManager())
@@ -18,7 +18,7 @@ class SharedMemoryManager:
     def start(self) -> None:
         self._inner_shared_memory_manager.start()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         if self._inner_shared_memory_manager is not None:
             for shm in self._shared_memory_handles:
                 shm.close()
