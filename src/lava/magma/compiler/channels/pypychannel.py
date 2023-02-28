@@ -94,13 +94,14 @@ class CspSendPort(AbstractCspSendPort):
         self.thread = Thread(
             target=self._ack_callback,
             name="{}.send".format(self._name),
+            args=(self._ack,),
             daemon=True,
         )
         self.thread.start()
 
-    def _ack_callback(self):
+    def _ack_callback(self, ack):
         try:
-            while self._ack.acquire() and not self._done:
+            while ack.acquire() and not self._done:
                 not_full = self.probe()
                 self._semaphore.release()
                 if self.observer and not not_full:
@@ -134,7 +135,6 @@ class CspSendPort(AbstractCspSendPort):
             self._done = True
             if self.thread is not None:
                 self._ack.release()
-                self.thread.join()
             self._ack = None
             self._req = None
 
@@ -241,13 +241,14 @@ class CspRecvPort(AbstractCspRecvPort):
         self.thread = Thread(
             target=self._req_callback,
             name="{}.send".format(self._name),
+            args=(self._req,),
             daemon=True,
         )
         self.thread.start()
 
-    def _req_callback(self):
+    def _req_callback(self, req):
         try:
-            while self._req.acquire() and not self._done:
+            while req.acquire() and not self._done:
                 not_empty = self.probe()
                 self._queue.put_nowait(0)
                 if self.observer and not not_empty:
@@ -287,7 +288,6 @@ class CspRecvPort(AbstractCspRecvPort):
             self._done = True
             if self.thread is not None:
                 self._req.release()
-                self.thread.join()
             self._ack = None
             self._req = None
 
