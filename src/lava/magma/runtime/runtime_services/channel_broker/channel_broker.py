@@ -169,6 +169,7 @@ class ChannelBroker(AbstractChannelBroker):
             action, channel = resp
 
             if action == "stop":
+                self.mgmt_channel.dst_port.recv()
                 return
             elif action is not None:
                 action._recv(channel)
