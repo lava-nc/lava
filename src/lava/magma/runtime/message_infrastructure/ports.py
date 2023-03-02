@@ -36,6 +36,13 @@ class SendPort(AbstractTransferPort):
         self._cpp_send_port = send_port
 
     def send(self, data):
+        # TODO: Workaround for lava-loihi cpplib, need to change later
+        port_type = np.int32 if "LavaCDataType" in str(self.d_type) \
+                else self.d_type
+        if data.dtype.type != np.str_ and \
+            np.dtype(data.dtype).itemsize > np.dtype(port_type).itemsize:
+            print(f"[py warn] transfer {data.dtype} to {port_type}")
+            data = data.astype(port_type)
         # Use np.copy to handle slices input
         self._cpp_send_port.send(np.copy(data))
 
