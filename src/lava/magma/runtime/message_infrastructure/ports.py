@@ -17,6 +17,7 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
 
 import numpy as np
 import typing as ty
+import warnings
 
 
 class Selector:
@@ -41,7 +42,8 @@ class SendPort(AbstractTransferPort):
             else self.d_type
         if data.dtype.type != np.str_ and \
                 np.dtype(data.dtype).itemsize > np.dtype(port_type).itemsize:
-            print(f"[py warn] transfer {data.dtype} to {port_type}")
+            warnings.warn("Sending data with miss matched dtype,"
+                          f"Transfer {data.dtype} to {port_type}")
             data = data.astype(port_type)
         # Use np.copy to handle slices input
         self._cpp_send_port.send(np.copy(data))
