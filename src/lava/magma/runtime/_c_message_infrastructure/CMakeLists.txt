@@ -9,10 +9,15 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+option(RAW_BUILD "Build msglib without python" OFF)
 option(GRPC_CHANNEL "Use grpc_channel" OFF)
 option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
 option(FASTDDS_ENABLE "enable FastDDS" OFF)
 option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
+
+if(RAW_BUILD)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
 
 if(GRPC_CHANNEL AND CycloneDDS_ENABLE)
   message(FATAL_ERROR "Cannot enable GRPC and CycloneDDS together")
@@ -82,6 +87,7 @@ endif()
 
 if(DDS_CHANNEL)
   set(COMMON_DDS_DESTINATION "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/install")
+  message("DDS Library destination: ${COMMON_DDS_DESTINATION}")
   set(COMMON_DDS_INC "${COMMON_DDS_DESTINATION}/include")
   set(DDS_CHANNEL_SRCS
     "csrc/channel/dds/dds.cc"
