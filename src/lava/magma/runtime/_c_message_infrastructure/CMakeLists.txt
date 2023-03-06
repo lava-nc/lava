@@ -9,14 +9,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-option(RAW_BUILD "Build msglib without python" OFF)
 option(GRPC_CHANNEL "Use grpc_channel" OFF)
 option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
 option(FASTDDS_ENABLE "enable FastDDS" OFF)
 option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
 
-if(RAW_BUILD)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
 if(GRPC_CHANNEL AND CycloneDDS_ENABLE)
