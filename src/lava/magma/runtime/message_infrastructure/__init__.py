@@ -68,10 +68,12 @@ else:
             return
 
         extra_lib_folder = os.path.join(os.path.dirname(here), "install", "lib")
-        libs = ["libfastcdr.so.*", "libfastrtps.so.*", "libddsc.so.*", "libddscxx.so.*"]
+        dds_libs = ["libfastcdr.so.*",
+                    "libfastrtps.so.*",
+                    "libddsc.so.*",
+                    "libddscxx.so.*"]
         if os.path.exists(extra_lib_folder):
-            extra_libs = os.listdir(extra_lib_folder)
-            for lib in libs:
+            for lib in dds_libs:
                 files = glob(os.path.join(extra_lib_folder, lib))
                 for file in files:
                     CDLL(file, mode=RTLD_GLOBAL)
