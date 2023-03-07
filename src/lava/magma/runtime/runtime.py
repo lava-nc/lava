@@ -514,6 +514,10 @@ class Runtime:
                 req_port.send(np.array([addr_path]))
                 buffer = recv_port.recv()
                 recv_port.join()
+                if buffer.dtype.type != np.str_:
+                    reshape_order = 'F' \
+                        if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                    buffer = buffer.ravel(order=reshape_order).reshape(ev.shape)
             else:
                 # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
                 data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
@@ -521,11 +525,10 @@ class Runtime:
                 buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]
-            # 3. Reshape result and return
-            if buffer.dtype.type != np.str_:
+                # 3. Reshape result and return
                 reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
                     else 'C'
-                buffer = buffer.ravel(order=reshape_order).reshape(ev.shape)
+                buffer = buffer.reshape(ev.shape, order=reshape_order)
 
             if idx:
                 return buffer[idx]
