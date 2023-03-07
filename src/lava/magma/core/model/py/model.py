@@ -525,8 +525,6 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
         self.num_steps = 0
-        self.stop_rcvd = False
-        self.pause_rcvd = False
         self._req_pause = False
         self._req_stop = False
         self._cmd_handlers.update({MGMT_COMMAND.RUN[0]: self._run_async})
