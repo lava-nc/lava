@@ -417,19 +417,34 @@ class AsyncPyRuntimeService(PyRuntimeService):
         for stop_send_port in self.service_to_process:
             stop_send_port.send(cmd)
 
-    def _get_pm_resp(self) -> ty.Iterable[MGMT_RESPONSE]:
+    def _get_pm_resp(self, stop=False, pause=False) -> ty.Iterable[
+            MGMT_RESPONSE]:
         rcv_msgs = []
         for ptos_recv_port in self.process_to_service:
-            rcv_msgs.append(ptos_recv_port.recv())
+            rcv_msg = ptos_recv_port.recv()
+            if stop or pause:
+                if enum_equal(
+                        rcv_msg, LoihiPyRuntimeService.PMResponse.STATUS_DONE
+                ):
+                    rcv_msg = ptos_recv_port.recv()
+            rcv_msgs.append(rcv_msg)
         return rcv_msgs
 
     def _handle_pause(self):
         # Inform the runtime about successful pausing
+        self._send_pm_cmd(MGMT_COMMAND.PAUSE)
+        rsps = self._get_pm_resp(pause=True)
+        for rsp in rsps:
+            if not enum_equal(
+                    rsp, LoihiPyRuntimeService.PMResponse.STATUS_PAUSED
+            ):
+                self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                raise ValueError(f"Wrong Response Received : {rsp}")
         self.service_to_runtime.send(MGMT_RESPONSE.PAUSED)
 
     def _handle_stop(self):
         self._send_pm_cmd(MGMT_COMMAND.STOP)
-        rsps = self._get_pm_resp()
+        rsps = self._get_pm_resp(stop=True)
         for rsp in rsps:
             if not enum_equal(
                     rsp, LoihiPyRuntimeService.PMResponse.STATUS_TERMINATED
@@ -493,8 +508,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                     ):
                         self._error = True
                     if not enum_equal(resp,
-                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE  # noqa: E501
-                                      ):
+                                      AsyncPyRuntimeService.PMResponse.STATUS_DONE):  # noqa: E501
                         done = False
                 if done:
                     self.service_to_runtime.send(MGMT_RESPONSE.DONE)
