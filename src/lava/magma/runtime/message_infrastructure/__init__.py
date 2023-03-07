@@ -40,9 +40,7 @@ if PURE_PYTHON_VERSION:
     from .pypychannel import (
         SendPort,
         RecvPort,
-        create_channel,
-        CspSelector,
-        PyPyChannel)
+        create_channel)
     from .pypychannel import CspSelector as Selector
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
