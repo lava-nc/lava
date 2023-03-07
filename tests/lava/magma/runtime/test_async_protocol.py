@@ -45,6 +45,8 @@ class AsyncProcessModel1(PyAsyncProcessModel):
             self.v = self.v + 1000
             if self.check_for_stop_cmd():
                 return
+            if self.check_for_pause_cmd():
+                return
 
 
 @implements(proc=AsyncProcess2, protocol=AsyncProtocol)
@@ -73,7 +75,7 @@ class TestProcess(unittest.TestCase):
 
     def test_async_process_model_pause(self):
         """
-        Verifies the working of Asynchronous Process, pause should have no
+        Verifies the working of Asynchronous Process, pause should have
         effect
         """
         process = AsyncProcess1(shape=(2, 2))
