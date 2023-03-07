@@ -19,7 +19,7 @@ from lava.magma.runtime.message_infrastructure import (
 
 
 def prepare_data():
-    return np.random.random_sample((2, 4)).astype(np.int32)
+    return np.random.random_sample((2, 4))
 
 
 const_data = prepare_data()
@@ -104,7 +104,7 @@ class TestChannel(unittest.TestCase):
             name,
             name,
             (2, 4),
-            np.int32)
+            const_data.dtype)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
@@ -139,7 +139,7 @@ class TestChannel(unittest.TestCase):
             name,
             name,
             (2, 4),
-            np.int32)
+            const_data.dtype)
 
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
@@ -180,7 +180,7 @@ class TestChannel(unittest.TestCase):
             name,
             name,
             (2, 4),
-            np.int32)
+            const_data.dtype)
 
         send_port = socket_channel.src_port
         recv_port = socket_channel.dst_port
@@ -214,7 +214,7 @@ class TestChannel(unittest.TestCase):
             name,
             name,
             (2, 4),
-            np.int32)
+            const_data.dtype)
 
         send_port = socket_channel.src_port
         recv_port = socket_channel.dst_port

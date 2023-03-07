@@ -4,6 +4,8 @@
 
 import os
 import platform
+from glob import glob
+import warnings
 
 
 def _get_pure_py() -> bool:
@@ -38,9 +40,7 @@ if PURE_PYTHON_VERSION:
     from .pypychannel import (
         SendPort,
         RecvPort,
-        create_channel,
-        CspSelector,
-        PyPyChannel)
+        create_channel)
     from .pypychannel import CspSelector as Selector
     SupportGRPCChannel = False
     SupportFastDDSChannel = False
@@ -60,17 +60,23 @@ else:
         lib_name = 'libmessage_infrastructure.so'
         here = os.path.abspath(__file__)
         lib_path = os.path.join(os.path.dirname(here), lib_name)
-        if os.path.exists(lib_path):
-            CDLL(lib_path, mode=RTLD_GLOBAL)
-        else:
-            print("Warn: No library file")
+
+        if not os.path.exists(lib_path):
+            warnings.warn("No library file")
+            return
+
         extra_lib_folder = os.path.join(os.path.dirname(here), "install", "lib")
+        dds_libs = ["libfastcdr.so.*",
+                    "libfastrtps.so.*",
+                    "libddsc.so.*",
+                    "libddscxx.so.*"]
         if os.path.exists(extra_lib_folder):
-            extra_libs = os.listdir(extra_lib_folder)
-            for lib in extra_libs:
-                if '.so' in lib and ('idl' not in lib):
-                    lib_file = os.path.join(extra_lib_folder, lib)
-                    CDLL(lib_file, mode=RTLD_GLOBAL)
+            for lib in dds_libs:
+                files = glob(os.path.join(extra_lib_folder, lib))
+                for file in files:
+                    CDLL(file, mode=RTLD_GLOBAL)
+
+        CDLL(lib_path, mode=RTLD_GLOBAL)
 
     load_library()
 

@@ -14,6 +14,10 @@ option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
 option(FASTDDS_ENABLE "enable FastDDS" OFF)
 option(CycloneDDS_ENABLE "enable CycloneDDS" OFF)
 
+if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
+
 if(GRPC_CHANNEL AND CycloneDDS_ENABLE)
   message(FATAL_ERROR "Cannot enable GRPC and CycloneDDS together")
 endif()
@@ -82,6 +86,7 @@ endif()
 
 if(DDS_CHANNEL)
   set(COMMON_DDS_DESTINATION "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/install")
+  message("DDS Library destination: ${COMMON_DDS_DESTINATION}")
   set(COMMON_DDS_INC "${COMMON_DDS_DESTINATION}/include")
   set(DDS_CHANNEL_SRCS
     "csrc/channel/dds/dds.cc"

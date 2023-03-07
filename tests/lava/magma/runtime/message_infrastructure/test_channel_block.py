@@ -62,7 +62,7 @@ class TestChannelBlock(unittest.TestCase):
             "test_block",
             "test_block",
             (2, 4),
-            None)
+            predata.dtype)
         send_port = shmem_channel.src_port
         recv_port = shmem_channel.dst_port
 
