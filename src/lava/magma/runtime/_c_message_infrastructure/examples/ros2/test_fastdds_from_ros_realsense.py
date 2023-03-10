@@ -18,7 +18,7 @@ def numpy2pil(np_array: np.ndarray, n_channels: int) -> Image:
     if n_channels == 3:
         img = Image.fromarray(np_array, mode='RGB')
     elif n_channels == 1:
-        img = Image.fromarray(np_array, mode='I')
+        img = Image.fromarray(np_array, mode='L')
     return img
 
 
@@ -43,8 +43,11 @@ def realsense_msg_process(res):
     if channel == 1:
         # Reading depth image as unsigned 16-bit
         img_data = np.frombuffer(img_data, dtype=np.uint16)
+        print("16-bit: ", img_data)
         # Downsample to unsigned 8-bit for PIL
-        img_numpy_array = img_data.reshape((height, width)).astype(np.uint8)
+        img_data_8bit = (img_data / img_data.max()) * 255
+        img_numpy_array = img_data_8bit.reshape((height, width)).astype(np.uint8)
+        print("8-bit: ", img_numpy_array)
     # Processing for Color channel
     elif channel == 3:
         img_numpy_array = img_data.reshape((height, width, channel))
