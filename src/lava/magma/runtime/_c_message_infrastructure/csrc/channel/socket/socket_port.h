@@ -89,6 +89,7 @@ class TempSocketRecvPort final : public AbstractRecvPort {
   MetaDataPtr Peek();
  private:
   int sfd_;
+  int cfd;
   SocketFile addr_path_;
 };
 using TempSocketRecvPortPtr = std::shared_ptr<TempSocketRecvPort>;
