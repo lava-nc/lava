@@ -3,16 +3,19 @@ import random
 import numpy as np
 
 from lava.magma.runtime.message_infrastructure. \
-        MessageInfrastructurePywrapper import (
-    TempChannel
-)
+    MessageInfrastructurePywrapper import (
+        TempChannel
+    )
 
 C2PY = "./c2py"
 PY2C = "./py2c"
 
 # float equal
+
+
 def f_eq(a, b):
     return abs(a - b) < 0.001
+
 
 def main():
 
@@ -34,17 +37,18 @@ def main():
 
     for i in range(10):
         print("round ", i)
-        rands = np.array([random.random() * 100 for __ in range(10)])
+        rands = np.array([random.random() * 100 for __ in range(10)]) # noqa: S311
         print("Sending array to C: ", rands)
         sd.send(rands)
 
         rands2 = rc.recv()
         print("Got array from C: ", rands2)
 
-        assert(all([f_eq(x, y) for x, y in zip(rands, rands2)]))
+        assert (all([f_eq(x, y) for x, y in zip(rands, rands2)])) # nosec # noqa: S101
         print("========================================")
     sd.join()
     rc.join()
+
 
 if __name__ == "__main__":
     main()
