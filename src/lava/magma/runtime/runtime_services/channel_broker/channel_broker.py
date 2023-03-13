@@ -1,17 +1,19 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
 import threading
 from abc import ABC
 import logging
-from multiprocessing.managers import SharedMemoryManager
 
 import numpy as np
 import typing as ty
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
 from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
+)
 
 try:
     from nxcore.arch.base.nxboard import NxBoard
