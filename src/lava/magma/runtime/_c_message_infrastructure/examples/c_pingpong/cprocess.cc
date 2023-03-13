@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
     for (uint _ = 0; _ < 10; ++_) {
         std::cout << "forwarding\n";
         MetaDataPtr recvd = rc->Recv();
-        std::cout << "received from py, total size: " 
-            << recvd->total_size 
+        std::cout << "received from py, total size: "
+            << recvd->total_size
             << "\n";
         sd->Send(recvd);
     }
