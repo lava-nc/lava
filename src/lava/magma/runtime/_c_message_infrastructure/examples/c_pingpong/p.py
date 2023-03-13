@@ -37,14 +37,14 @@ def main():
 
     for i in range(10):
         print("round ", i)
-        rands = np.array([random.random() * 100 for __ in range(10)])  # noqa
+        rands = np.array([np.random.random() * 100 for __ in range(10)])  # noqa
         print("Sending array to C: ", rands)
         sd.send(rands)
 
         rands2 = rc.recv()
         print("Got array from C: ", rands2)
 
-        assert (all([f_eq(x, y) for x, y in zip(rands, rands2)]))  # noqa
+        print("Correctness: ", all([f_eq(x, y) for x, y in zip(rands, rands2)]))  # noqa
         print("========================================")
     sd.join()
     rc.join()

@@ -1,10 +1,14 @@
+// Copyright (C) 2023 Intel Corporation
+// SPDX-License-Identifier: BSD-3-Clause
+// See: https://spdx.org/licenses/
+
 #include <core/abstract_channel.h>
 #include <core/channel_factory.h>
 #include <core/abstract_port.h>
 #include <core/utils.h>
 #include <channel/socket/socket_port.h>
 
-using namespace message_infrastructure;
+using namespace message_infrastructure;  // NOLINT
 
 int main(int argc, char *argv[]) {
     ChannelFactory &channel_factory = GetChannelFactory();
@@ -19,10 +23,12 @@ int main(int argc, char *argv[]) {
     // order matters
     rc->Start();
 
-    for(uint _ = 0; _ < 10; ++_) {
+    for (uint _ = 0; _ < 10; ++_) {
         std::cout << "forwarding\n";
         MetaDataPtr recvd = rc->Recv();
-        std::cout << "received from py, total size: " << recvd->total_size << "\n";
+        std::cout << "received from py, total size: " 
+            << recvd->total_size 
+            << "\n";
         sd->Send(recvd);
     }
 
