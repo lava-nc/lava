@@ -41,7 +41,7 @@ def main():
         rands = np.array([np.random.random() * 100 for __ in range(10)])  # noqa
         print("Sending array to C: ", rands)
         sd.send(rands)
-        
+
         rands2 = rc.recv()
         print("Got array from C: ", rands2)
 
