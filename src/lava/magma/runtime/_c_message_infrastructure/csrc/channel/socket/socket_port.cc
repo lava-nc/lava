@@ -112,24 +112,21 @@ TempSocketSendPort::TempSocketSendPort(const SocketFile &addr_path) {
   if (cfd_ == -1) {
     LAVA_LOG_ERR("Cannot Create Socket Domain File Descripter\n");
   }
-}
 
-void TempSocketSendPort::Start() {
   size_t skt_addr_len = sizeof(sa_family_t) + addr_path_.size();
   sockaddr *skt_addr = reinterpret_cast<sockaddr*>(malloc(skt_addr_len));
   skt_addr->sa_family = AF_UNIX;
-  memcpy(skt_addr->sa_data, addr_path_.c_str(), addr_path_.size());
+  memcpy(skt_addr->sa_data, addr_path.c_str(), addr_path_.size());
 
   if (connect(cfd_, skt_addr, skt_addr_len) == -1) {
     LAVA_LOG_ERR("Cannot bind socket domain\n");
   }
 }
-
+void TempSocketSendPort::Start() {}
 bool TempSocketSendPort::Probe() {
   LAVA_LOG_ERR("Not Support TempSocket Port Probe()\n");
   return false;
 }
-
 void TempSocketSendPort::Send(DataPtr data) {
   auto metadata = reinterpret_cast<MetaData*>(data.get());
   bool flag;
@@ -176,11 +173,6 @@ void TempSocketRecvPort::Start() {
   if (listen(sfd_, 1) == -1) {
     LAVA_LOG_ERR("Cannot Listen service socket file, %d\n", errno);
   }
-
-  cfd = accept(sfd_, nullptr, nullptr);
-  if (cfd == -1) {
-    LAVA_LOG_ERR("Cannot accept the connection\n");
-  }
 }
 bool TempSocketRecvPort::Probe() {
   LAVA_LOG_ERR("Not Support TempSocket Port Probe()\n");
@@ -188,6 +180,10 @@ bool TempSocketRecvPort::Probe() {
 }
 MetaDataPtr TempSocketRecvPort::Recv() {
   bool flag;
+  int cfd = accept(sfd_, nullptr, nullptr);
+  if (cfd == -1) {
+    LAVA_LOG_ERR("Cannot accept the connection\n");
+  }
   MetaDataPtr data = std::make_shared<MetaData>();
   flag = SocketRead(cfd, data.get(), sizeof(MetaData));
   if (!flag) {
@@ -200,6 +196,7 @@ MetaDataPtr TempSocketRecvPort::Recv() {
   }
   LAVA_DEBUG(LOG_SKP, "Recv %ld data\n", data->elsize * data->total_size);
   data->mdata = ptr;
+  close(cfd);
   return data;
 }
 MetaDataPtr TempSocketRecvPort::Peek() {
@@ -207,7 +204,6 @@ MetaDataPtr TempSocketRecvPort::Peek() {
   return nullptr;
 }
 void TempSocketRecvPort::Join() {
-  close(cfd);
   close(sfd_);
   unlink(addr_path_.c_str());
   GetSktManagerSingleton().DeleteSocketFile(addr_path_);
