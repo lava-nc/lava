@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -21,6 +21,9 @@ from lava.magma.core.model.py.ports import (
     PyOutPortVectorDense,
     VirtualPortTransformer,
     IdentityTransformer)
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager
+)
 
 
 class MockInterface:
