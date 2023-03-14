@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
         std::cout << "received from py, total size: "
             << recvd->total_size
             << "\n";
-        
+
         AbstractChannelPtr ch2 = channel_factory.GetTempChannel("./c2py");
         AbstractSendPortPtr sd = ch2->GetSendPort();
         sd->Start();
