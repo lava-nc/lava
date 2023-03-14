@@ -31,7 +31,6 @@ from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
 )
 
 
-
 class MockMessageInterface:
     def __init__(self, smm):
         self.smm = smm

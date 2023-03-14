@@ -16,14 +16,15 @@ from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        SupportTempChannel,
                                                        Selector,
                                                        getTempSendPort,
-                                                       getTempRecvPort)
+                                                       getTempRecvPort,
+                                                       AbstractTransferPort)
 
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.runtime.message_infrastructure.message_interface_enum import \
     ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
-from lava.magma.runtime.\
+from lava.magma.runtime. \
     message_infrastructure.message_infrastructure_interface import \
     MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
@@ -132,8 +133,7 @@ class Runtime:
         self._req_stop: bool = False
         self.runtime_to_service: ty.Iterable[SendPort] = []
         self.service_to_runtime: ty.Iterable[RecvPort] = []
-        self._open_ports: ty.List[AbstractCspPort] = []
-
+        self._open_ports: ty.List[AbstractTransferPort] = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -462,11 +462,6 @@ class Runtime:
             buffer: np.ndarray = value
             if idx:
                 buffer = buffer[idx]
-            buffer_shape: ty.Tuple[int, ...] = buffer.shape
-            num_items: int = np.prod(buffer_shape).item()
-            reshape_order = 'F' if isinstance(
-                ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             if SupportTempChannel:
                 addr_path = rsp_port.recv()
@@ -543,10 +538,7 @@ class Runtime:
                 reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
                     else 'C'
                 buffer = buffer.reshape(ev.shape, order=reshape_order)
-            # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(
-                ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape(ev.shape, order=reshape_order)
+
             if idx:
                 return buffer[idx]
             else:

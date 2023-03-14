@@ -19,8 +19,6 @@ from lava.magma.runtime.message_infrastructure. \
 import multiprocessing as mp
 import traceback
 
-from lava.magma.compiler.channels.interfaces import ChannelType, Channel
-
 try:
     from lava.magma.core.model.c.type import LavaTypeTransfer
 except ImportError:
