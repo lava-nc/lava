@@ -9,6 +9,7 @@ from lava.magma.runtime.message_infrastructure. \
 C2PY = "./c2py"
 PY2C = "./py2c"
 
+
 # float equal
 def f_eq(a, b):
     return abs(a - b) < 0.001
