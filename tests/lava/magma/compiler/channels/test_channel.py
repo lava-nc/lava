@@ -6,10 +6,12 @@ import numpy as np
 import unittest
 import time
 from multiprocessing import Process
-from multiprocessing.managers import SharedMemoryManager
 from lava.magma.runtime.message_infrastructure import (
     create_channel,
     Channel,
+)
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager
 )
 
 

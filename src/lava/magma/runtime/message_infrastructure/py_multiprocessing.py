@@ -10,12 +10,15 @@ if ty.TYPE_CHECKING:
 
 import multiprocessing as mp
 import os
-from multiprocessing.managers import SharedMemoryManager
 import traceback
 
 from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure import Channel
 from lava.magma.runtime.message_infrastructure.pypychannel import PyPyChannel
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
+)
+
 try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
@@ -45,6 +48,7 @@ class SystemProcess(mp.Process):
         mp.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = mp.Pipe()
         self._exception = None
+        self._is_done = False
 
     def run(self):
         try:
@@ -54,10 +58,20 @@ class SystemProcess(mp.Process):
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
 
+    def join(self):
+        if not self._is_done:
+            super().join()
+            super().close()
+            if self._pconn.poll():
+                self._exception = self._pconn.recv()
+            self._cconn.close()
+            self._pconn.close()
+            self._is_done = True
+
     @property
     def exception(self):
         """Exception property."""
-        if self._pconn.poll():
+        if not self._is_done and self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
 
