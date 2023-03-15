@@ -20,9 +20,9 @@ def soc_names_from_args():
 
     socket_file_names = [C2PY, PY2C]
     filename_args = sys.argv[1:3]
-    if len(filename_args) == 1: 
+    if len(filename_args) == 1:
         socket_file_names[0] = filename_args[0]
-    if len(filename_args) == 2: 
+    if len(filename_args) == 2:
         socket_file_names = filename_args
 
     return socket_file_names
@@ -31,9 +31,9 @@ def soc_names_from_args():
 def main():
     c2py, py2c = soc_names_from_args()
 
-    if os.path.exists(c2py): 
+    if os.path.exists(c2py):
         os.remove(c2py)
-    if os.path.exists(py2c): 
+    if os.path.exists(py2c):
         os.remove(py2c)
 
     # order matters
