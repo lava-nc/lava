@@ -10,6 +10,9 @@
 
 using namespace message_infrastructure;  // NOLINT
 
+/*
+    Please see p.py for detailed notes.
+*/
 int main(int argc, char *argv[]) {
     ChannelFactory &channel_factory = GetChannelFactory();
 
