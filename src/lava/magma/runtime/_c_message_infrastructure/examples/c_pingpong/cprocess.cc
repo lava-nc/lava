@@ -10,13 +10,17 @@
 
 using namespace message_infrastructure;  // NOLINT
 
-/*
-    Please see p.py for detailed notes.
-*/
+
 int main(int argc, char *argv[]) {
+
+    char *c2py = (argc >= 2) ? argv[1] : (char*)"./c2py";
+    char *py2c = (argc >= 3) ? argv[2] : (char*)"./py2c";
+
+    std::cout << "socket files: " << c2py << " " << py2c << "\n";
+
     ChannelFactory &channel_factory = GetChannelFactory();
 
-    AbstractChannelPtr ch = channel_factory.GetTempChannel("./py2c");
+    AbstractChannelPtr ch = channel_factory.GetTempChannel(py2c);
     AbstractRecvPortPtr rc = ch->GetRecvPort();
 
     // order matters
@@ -29,7 +33,7 @@ int main(int argc, char *argv[]) {
             << recvd->total_size
             << "\n";
 
-        AbstractChannelPtr ch2 = channel_factory.GetTempChannel("./c2py");
+        AbstractChannelPtr ch2 = channel_factory.GetTempChannel(c2py);
         AbstractSendPortPtr sd = ch2->GetSendPort();
         sd->Start();
         sd->Send(recvd);
