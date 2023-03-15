@@ -10,11 +10,9 @@
 
 using namespace message_infrastructure; // NOLINT
 
-int main(int argc, char *argv[])
-{
-
-    char *c2py = (argc >= 2) ? argv[1] : (char *)"./c2py";
-    char *py2c = (argc >= 3) ? argv[2] : (char *)"./py2c";
+int main(int argc, char *argv[]) {
+    char *c2py = (argc >= 2) ? argv[1] : const_cast<char *>("./c2py");
+    char *py2c = (argc >= 3) ? argv[2] : const_cast<char *>("./py2c");
 
     std::cout << "socket files: " << c2py << " " << py2c << "\n";
 
@@ -26,8 +24,7 @@ int main(int argc, char *argv[])
     // order matters
     rc->Start();
 
-    for (uint _ = 0; _ < 10; ++_)
-    {
+    for (uint _ = 0; _ < 10; ++_) {
         std::cout << "receiving\n";
         MetaDataPtr recvd = rc->Recv();
         std::cout << "received from py, total size: "
