@@ -25,7 +25,7 @@ class TestTutorials(unittest.TestCase):
 
     def _execute_notebook(
         self, base_dir: str, path: str
-    ) -> int:
+    ) -> ty.Tuple[ty.Type[nbformat.NotebookNode], ty.List[str]]:
         """Execute a notebook via nbconvert and collect output.
 
         Parameters
@@ -37,22 +37,23 @@ class TestTutorials(unittest.TestCase):
 
         Returns
         -------
-        int
-            (return code)
+        Tuple
+            (parsed nbformat.NotebookNode object, list of execution errors)
         """
 
         cwd = os.getcwd()
         dir_name, notebook = os.path.split(path)
         try:
             env = self._update_pythonpath(base_dir, dir_name)
-            result = self._convert_and_execute_notebook(notebook, env)
-            errors = self._collect_errors_from_all_cells(result)
+            nb = self._convert_and_execute_notebook(notebook, env)
+            errors = self._collect_errors_from_all_cells(nb)
         except Exception as e:
-            errors = -1
+            nb = None
+            errors = str(e)
         finally:
             os.chdir(cwd)
 
-        return errors
+        return nb, errors
 
     def _update_pythonpath(
         self, base_dir: str, dir_name: str
@@ -90,7 +91,7 @@ class TestTutorials(unittest.TestCase):
 
     def _convert_and_execute_notebook(
         self, notebook: str, env: ty.Dict[str, str]
-    ):
+    ) -> ty.Type[nbformat.NotebookNode]:
         """Covert notebook and execute it.
 
         Parameters
@@ -105,23 +106,25 @@ class TestTutorials(unittest.TestCase):
         nb : nbformat.NotebookNode
             Notebook dict-like node with attribute-access
         """
-        with tempfile.NamedTemporaryFile(mode="w+t", suffix=".py") as fout:
+        with tempfile.NamedTemporaryFile(mode="w+t", suffix=".ipynb") as fout:
             args = [
                 "jupyter",
                 "nbconvert",
                 "--to",
-                "python",
+                "notebook",
+                "--execute",
+                "--ExecutePreprocessor.timeout=-1",
                 "--output",
-                fout.name[0:-3],
+                fout.name,
                 notebook,
             ]
             subprocess.check_call(args, env=env)  # noqa: S603
+
             fout.seek(0)
-            return subprocess.run(["ipython", "-c", fout.read()],  # noqa  # nosec
-                                  env=env)  # noqa  # nosec
+            return nbformat.read(fout, nbformat.current_nbformat)
 
     def _collect_errors_from_all_cells(
-        self, result
+        self, nb: nbformat.NotebookNode
     ) -> ty.List[str]:
         """Collect errors from executed notebook.
 
@@ -135,9 +138,13 @@ class TestTutorials(unittest.TestCase):
         List
             Collection of errors
         """
-        if result.returncode != 0:
-            result.check_returncode()
-        return result.returncode
+        errors = []
+        for cell in nb.cells:
+            if "outputs" in cell:
+                for output in cell["outputs"]:
+                    if output.output_type == "error":
+                        errors.append(output)
+        return errors
 
     def _run_notebook(self, notebook: str, e2e_tutorial: bool = False):
         """Run a specific notebook
@@ -176,10 +183,22 @@ class TestTutorials(unittest.TestCase):
 
             # If the notebook is found execute it and store any errors
             for notebook_name in discovered_notebooks:
-                errors = self._execute_notebook(
+                nb, errors = self._execute_notebook(
                     str(tutorials_directory), notebook_name
                 )
-                self.assertEqual(errors, 0)
+                errors_joined = (
+                    "\n".join(errors) if isinstance(errors, list) else errors
+                )
+                if errors:
+                    errors_record[notebook_name] = (errors_joined, nb)
+
+            self.assertFalse(
+                errors_record,
+                "Failed to execute Jupyter Notebooks \
+                                 with errors: \n {}".format(
+                    errors_record
+                ),
+            )
         finally:
             os.chdir(cwd)
 
