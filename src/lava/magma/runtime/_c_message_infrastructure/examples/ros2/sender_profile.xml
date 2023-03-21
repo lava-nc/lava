@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles>
+    <transport_descriptors>
+        <transport_descriptor>
+            <transport_id>TransportUDPv4</transport_id>
+            <type>UDPv4</type>
+            <non_blocking_send>true</non_blocking_send>
+            <maxInitialPeersRange>100</maxInitialPeersRange>
+            <output_port>7412</output_port>
+        </transport_descriptor>
+    </transport_descriptors>
+
+     <participant profile_name="participant_profile_ros2" is_default_profile="true">
+        <rtps>
+            <name>profile_for_ros2_context</name>
+            <builtin>
+                <discovery_config>
+                    <initialAnnouncements>
+                        <count>5</count>
+                        <period>
+                            <nanosec>100000000</nanosec>
+                        </period>
+                    </initialAnnouncements>
+
+                    <EDP>SIMPLE</EDP>
+                    <simpleEDP>
+                        <PUBWRITER_SUBREADER>true</PUBWRITER_SUBREADER>
+                        <PUBREADER_SUBWRITER>false</PUBREADER_SUBWRITER>
+                    </simpleEDP>
+                </discovery_config>
+                <initialPeersList>
+                    <locator>
+                        <udpv4>
+                            <address>173.16.0.2</address>
+                            <port>7412</port>
+                        </udpv4>
+                    </locator>
+                </initialPeersList>
+            </builtin>
+            <userTransports>
+            <transport_id>TransportUDPv4</transport_id>
+            </userTransports>
+            <useBuiltinTransports>false</useBuiltinTransports>
+        </rtps>
+    </participant>
+</profiles>
