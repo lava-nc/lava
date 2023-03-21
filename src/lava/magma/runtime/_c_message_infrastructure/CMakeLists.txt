@@ -200,3 +200,5 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   message("not debug mode and disable cpp unit test")
 endif()
+
+add_subdirectory(examples/c_pingpong)
