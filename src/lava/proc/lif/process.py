@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -347,3 +347,75 @@ class LIFReset(LIF):
 
         self.proc_params["reset_interval"] = reset_interval
         self.proc_params["reset_offset"] = reset_offset
+
+
+class LIFRefractory(LIF):
+
+    """Leaky-Integrate-and-Fire (LIF) process with refractory period.
+
+    Parameters
+    ----------
+    shape : tuple(int)
+        Number and topology of LIF neurons.
+    u : float, list, numpy.ndarray, optional
+        Initial value of the neurons' current.
+    v : float, list, numpy.ndarray, optional
+        Initial value of the neurons' voltage (membrane potential).
+    du : float, optional
+        Inverse of decay time-constant for current decay. Currently, only a
+        single decay can be set for the entire population of neurons.
+    dv : float, optional
+        Inverse of decay time-constant for voltage decay. Currently, only a
+        single decay can be set for the entire population of neurons.
+    bias_mant : float, list, numpy.ndarray, optional
+        Mantissa part of neuron bias.
+    bias_exp : float, list, numpy.ndarray, optional
+        Exponent part of neuron bias, if needed. Mostly for fixed point
+        implementations. Ignored for floating point implementations.
+    vth : float, optional
+        Neuron threshold voltage, exceeding which, the neuron will spike.
+        Currently, only a single threshold can be set for the entire
+        population of neurons.
+    refractory_period : int, optional
+        The interval of the refractory period. 1 timestep by default.
+
+
+    See Also
+    --------
+    lava.proc.lif.process.LIF: 'Regular' leaky-integrate-and-fire neuron for
+    documentation on rest of the behavior.
+    """
+
+    def __init__(
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        du: ty.Optional[float] = 0,
+        dv: ty.Optional[float] = 0,
+        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        vth: ty.Optional[float] = 10,
+        refractory_period: ty.Optional[int] = 1,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            vth=vth,
+            name=name,
+            log_config=log_config,
+        )
+
+        if refractory_period < 1:
+            raise ValueError("Refractory period must be > 0.")
+
+        self.proc_params["refractory_period"] = refractory_period
+        self.refractory_period_end = Var(shape=shape, init=0)
