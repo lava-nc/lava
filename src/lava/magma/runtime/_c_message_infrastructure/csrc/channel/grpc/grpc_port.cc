@@ -123,8 +123,9 @@ void GrpcChannelBlockServerImpl::Stop() {
 
 GrpcRecvPort::GrpcRecvPort(const std::string& name,
                            const size_t &size,
-                           const std::string& url)
-  :name_(name), size_(size), done_(false), url_(url) {
+                           const std::string& url):
+  AbstractRecvPort(name, 1, size),
+  name_(name), size_(size), done_(false), url_(url) {
   if (size_ > 1) {
     service_ptr_ = std::make_shared<GrpcChannelServerImpl>(name_, size_);
   } else {
