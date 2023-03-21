@@ -21,6 +21,7 @@ class SocketSendPort final : public AbstractSendPort {
   SocketSendPort(const std::string &name,
                  const SocketPair &socket,
                  const size_t &nbytes) :
+                 AbstractSendPort(name, 1, nbytes),
                  name_(name), nbytes_(nbytes), socket_(socket) {}
   ~SocketSendPort() override {}
   void Start();
@@ -44,6 +45,7 @@ class SocketRecvPort final : public AbstractRecvPort {
   SocketRecvPort(const std::string &name,
                  const SocketPair &socket,
                  const size_t &nbytes) :
+                 AbstractRecvPort(name, 1, nbytes),
                  name_(name), nbytes_(nbytes), socket_(socket) {}
   ~SocketRecvPort() override {}
   void Start();

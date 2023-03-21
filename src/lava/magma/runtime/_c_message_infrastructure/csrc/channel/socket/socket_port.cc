@@ -70,11 +70,13 @@ void SocketSendPort::Join() {
   close(socket_.second);
 }
 bool SocketSendPort::Probe() {
+  LAVA_LOG_ERR("Not Support SocketSendPort Port Probe()\n");
   return false;
 }
 
 void SocketRecvPort::Start() {}
 bool SocketRecvPort::Probe() {
+  LAVA_LOG_ERR("Not Support SocketRecvPort Port Probe()\n");
   return false;
 }
 MetaDataPtr SocketRecvPort::Recv() {

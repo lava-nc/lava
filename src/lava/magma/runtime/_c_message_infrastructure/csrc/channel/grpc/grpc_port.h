@@ -134,8 +134,10 @@ class GrpcSendPort final : public AbstractSendPort {
   GrpcSendPort() = delete;
   GrpcSendPort(const std::string &name,
                const size_t &size,
-               const std::string& url)
-  :name_(name), size_(size), done_(false), url_(url) {}
+               const std::string& url):
+  AbstractSendPort(name, 1, size),
+  name_(name), size_(size), done_(false), url_(url) {}
+
   ~GrpcSendPort() override {}
 
   void Start();
