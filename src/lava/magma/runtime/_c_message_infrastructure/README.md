@@ -79,5 +79,5 @@ Also users could choose to use poetry to enbale the whole environment.
 ```bash
 $ export CMAKE_ARGS="..."
 $ poetry install
-$ source .venc/bin/activate
+$ source .venv/bin/activate
 ```
