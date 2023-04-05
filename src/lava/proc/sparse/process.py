@@ -19,7 +19,8 @@ class Sparse(AbstractProcess):
     Parameters
     ----------
     weights : scipy.sparse.spmatrix 
-        2D connection weight matrix as sparse matrix.
+        2D connection weight matrix as sparse matrix of form 
+        (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
         Shared weight exponent of base 2 used to scale magnitude of

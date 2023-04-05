@@ -5,6 +5,7 @@
 import typing as ty
 
 import numpy as np
+from scipy.sparse import csr_matrix
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 
 from lava.magma.compiler.channels.interfaces import AbstractCspPort
@@ -400,7 +401,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             if issubclass(lt.cls, np.ndarray):
                 var = lt.cls(v.shape, lt.d_type)
                 var[:] = v.value
-            elif issubclass(lt.cls, (int, float, str)):
+            elif issubclass(lt.cls, (int, float, str, csr_matrix)):
                 var = v.value
             else:
                 raise NotImplementedError(
