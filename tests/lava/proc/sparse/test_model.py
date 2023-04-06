@@ -112,6 +112,8 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         
         # sparsify
         weights[np.abs(weights) < 0.7] = 0
+        weights *= 20
+        weights = weights.astype(int)
         
         inp = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
 
@@ -149,6 +151,8 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         
         # sparsify
         weights[np.abs(weights) < 0.7] = 0
+        weights *= 20
+        weights = weights.astype(int)
         
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
 
