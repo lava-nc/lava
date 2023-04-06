@@ -198,10 +198,10 @@ def _determine_num_weight_bits(weights: np.ndarray,
     return num_weight_bits
 
 
-def truncate_weights(weights: np.ndarray,
+def truncate_weights(weights: ty.Union[np.ndarray, spmatrix],
                      sign_mode: SignMode,
                      num_weight_bits: int,
-                     max_num_weight_bits: ty.Optional[int] = 8) -> np.ndarray:
+                     max_num_weight_bits: ty.Optional[int] = 8) -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
@@ -244,7 +244,7 @@ def truncate_weights(weights: np.ndarray,
 
 def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
                  sign_mode: SignMode,
-                 num_bits: int) -> np.ndarray:
+                 num_bits: int) -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
