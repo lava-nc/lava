@@ -13,9 +13,8 @@ from lava.proc.io.sink import RingBuffer as Sink
 from lava.magma.core.run_configs import Loihi2SimCfg 
 from lava.magma.core.run_conditions import RunSteps
 
-def create_network(input_data, conn_type, weights):
+def create_network(input_data, conn, weights):
     source = Source(data=input_data)
-    conn = conn_type(weights=weights)
     sink = Sink(shape=(weights.shape[0], ),
                 buffer=input_data.shape[1])
 
@@ -37,9 +36,11 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         # sparsify
         weights[np.abs(weights) < 0.7] = 0
         
-        inp = np.random.rand(shape[1], simtime) 
+        inp = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        print(inp)
 
-        dense_net = create_network(inp, Dense, weights)
+        conn = Dense(weights=weights)
+        dense_net = create_network(inp, conn, weights)
 
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
@@ -53,7 +54,8 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         # convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
-        sparse_net = create_network(inp, Sparse, weights_sparse)
+        conn = Sparse(weights=weights_sparse)
+        sparse_net = create_network(inp, conn, weights_sparse)
         sparse_net[0].run(condition=run_cond, run_cfg=run_cfg)
 
         result_sparse = sparse_net[2].data.get()
@@ -62,7 +64,40 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
 
-    # TODO add test for num_message_bits > 0
+    def test_consitency_with_dense_random_shape_graded(self):
+        """Tests if the results of Sparse and Dense are consistent. """
+ 
+        simtime = 10
+        shape = np.random.randint(1, 300, 2).tolist() 
+        weights = (np.random.random(shape) - 0.5) * 2
+        
+        # sparsify
+        weights[np.abs(weights) < 0.7] = 0
+        
+        inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
+        print(inp)
 
+        conn = Dense(weights=weights, num_message_bits=8)
+        dense_net = create_network(inp, conn, weights)
 
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='floating_pt')
+
+        dense_net[0].run(condition=run_cond, run_cfg=run_cfg)
+        result_dense = dense_net[2].data.get()
+        dense_net[0].stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = Sparse(weights=weights_sparse, num_message_bits=8)
+        sparse_net = create_network(inp, conn, weights_sparse)
+        sparse_net[0].run(condition=run_cond, run_cfg=run_cfg)
+
+        result_sparse = sparse_net[2].data.get()
+        sparse_net[0].stop()
+
+        np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
