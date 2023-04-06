@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+from scipy.sparse import spmatrix
 import typing as ty
 from enum import Enum, unique
 from dataclasses import dataclass
@@ -222,7 +223,7 @@ def truncate_weights(weights: np.ndarray,
     numpy.ndarray
         Truncated weight matrix.
     """
-    weights = np.copy(weights).astype(np.int32)
+    weights = weights.copy().astype(np.int32)
 
     if sign_mode == SignMode.INHIBITORY:
         weights = -weights
@@ -230,17 +231,18 @@ def truncate_weights(weights: np.ndarray,
     mixed_flag = int(sign_mode == SignMode.MIXED)
     num_truncate_bits = max_num_weight_bits - num_weight_bits + mixed_flag
 
-    truncated_weights = np.left_shift(
-        np.right_shift(weights, num_truncate_bits),
-        num_truncate_bits).astype(np.int32)
+    if isinstance(weights, np.ndarray):
+        weights = (weights >> num_truncate_bits) << num_truncate_bits
+    elif isinstance(weights, spmatrix):
+        weights.data = (weights.data >> num_truncate_bits) << num_truncate_bits
 
     if sign_mode == SignMode.INHIBITORY:
-        truncated_weights = -truncated_weights
+        weights = -weights
 
-    return truncated_weights
+    return weights
 
 
-def clip_weights(weights: np.ndarray,
+def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
                  sign_mode: SignMode,
                  num_bits: int) -> np.ndarray:
     """Truncate the least significant bits of the weight matrix given the
@@ -260,7 +262,7 @@ def clip_weights(weights: np.ndarray,
     numpy.ndarray
         Truncated weight matrix.
     """
-    weights = np.copy(weights).astype(np.int32)
+    weights = weights.copy().astype(np.int32)
 
     mixed_flag = int(sign_mode == SignMode.MIXED)
     inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
@@ -271,9 +273,13 @@ def clip_weights(weights: np.ndarray,
     min_wgt = (-2 ** num_bits) * mixed_flag
     max_wgt = 2 ** num_bits - 1
 
-    clipped_weights = np.clip(weights, min_wgt, max_wgt)
+    if isinstance(weights, np.ndarray):
+        weights = np.clip(weights, min_wgt, max_wgt)
+    elif isinstance(weights, spmatrix):
+        weights[weights > max_wgt] = max_wgt
+        weights[weights < min_wgt] = min_wgt
 
     if inhibitory_flag:
-        clipped_weights = -clipped_weights
+        weights = -weights
 
-    return clipped_weights
+    return weights

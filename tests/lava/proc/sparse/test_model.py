@@ -37,7 +37,6 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         weights[np.abs(weights) < 0.7] = 0
         
         inp = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
-        print(inp)
 
         conn = Dense(weights=weights)
         dense_net = create_network(inp, conn, weights)
@@ -75,13 +74,89 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         weights[np.abs(weights) < 0.7] = 0
         
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
-        print(inp)
 
         conn = Dense(weights=weights, num_message_bits=8)
         dense_net = create_network(inp, conn, weights)
 
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
+
+        dense_net[0].run(condition=run_cond, run_cfg=run_cfg)
+        result_dense = dense_net[2].data.get()
+        dense_net[0].stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = Sparse(weights=weights_sparse, num_message_bits=8)
+        sparse_net = create_network(inp, conn, weights_sparse)
+        sparse_net[0].run(condition=run_cond, run_cfg=run_cfg)
+
+        result_sparse = sparse_net[2].data.get()
+        sparse_net[0].stop()
+
+        np.testing.assert_array_almost_equal(result_sparse, result_dense)
+
+
+class TestSparseProcessModelFixed(unittest.TestCase):
+    """Tests for Sparse class in fixed point precision. """
+
+    def test_consitency_with_dense_random_shape(self):
+        """Tests if the results of Sparse and Dense are consistent. """
+ 
+        simtime = 10
+        shape = np.random.randint(1, 300, 2).tolist() 
+        weights = (np.random.random(shape) - 0.5) * 2
+        
+        # sparsify
+        weights[np.abs(weights) < 0.7] = 0
+        
+        inp = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+
+        conn = Dense(weights=weights)
+        dense_net = create_network(inp, conn, weights)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
+
+        dense_net[0].run(condition=run_cond, run_cfg=run_cfg)
+        result_dense = dense_net[2].data.get()
+        dense_net[0].stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = Sparse(weights=weights_sparse)
+        sparse_net = create_network(inp, conn, weights_sparse)
+        sparse_net[0].run(condition=run_cond, run_cfg=run_cfg)
+
+        result_sparse = sparse_net[2].data.get()
+        sparse_net[0].stop()
+
+        np.testing.assert_array_almost_equal(result_sparse, result_dense)
+
+
+    def test_consitency_with_dense_random_shape_graded(self):
+        """Tests if the results of Sparse and Dense are consistent. """
+ 
+        simtime = 10
+        shape = np.random.randint(1, 300, 2).tolist() 
+        weights = (np.random.random(shape) - 0.5) * 2
+        
+        # sparsify
+        weights[np.abs(weights) < 0.7] = 0
+        
+        inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
+
+        conn = Dense(weights=weights, num_message_bits=8)
+        dense_net = create_network(inp, conn, weights)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
 
         dense_net[0].run(condition=run_cond, run_cfg=run_cfg)
         result_dense = dense_net[2].data.get()
