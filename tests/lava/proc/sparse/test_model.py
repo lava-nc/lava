@@ -26,7 +26,7 @@ def create_network(input_data, conn, weights):
 class TestSparseProcessModelFloat(unittest.TestCase):
     """Tests for Sparse class in floating point precision. """
 
-    def test_consitency_with_dense_random_shape(self):
+    def test_consistency_with_dense_random_shape(self):
         """Tests if the results of Sparse and Dense are consistent. """
  
         simtime = 10
@@ -44,9 +44,10 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        dense_net[0].run(condition=run_cond, run_cfg=run_cfg)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        weights_got_dense = conn.weights.get()
         result_dense = dense_net[2].data.get()
-        dense_net[0].stop()
+        conn.stop()
 
         # Run the same network with Sparse
 
@@ -55,15 +56,19 @@ class TestSparseProcessModelFloat(unittest.TestCase):
 
         conn = Sparse(weights=weights_sparse)
         sparse_net = create_network(inp, conn, weights_sparse)
-        sparse_net[0].run(condition=run_cond, run_cfg=run_cfg)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
 
+        weights_got_sparse = conn.weights.get()
         result_sparse = sparse_net[2].data.get()
-        sparse_net[0].stop()
+        conn.stop()
 
+        print(weights_got_sparse, weights_got_dense)
+        
+        np.testing.assert_array_equal(weights_got_dense, weights_got_sparse)
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
 
-    def test_consitency_with_dense_random_shape_graded(self):
+    def test_consistency_with_dense_random_shape_graded(self):
         """Tests if the results of Sparse and Dense are consistent. """
  
         simtime = 10

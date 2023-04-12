@@ -45,20 +45,20 @@ def determine_sign_mode(weights: np.ndarray) -> SignMode:
 
 @dataclass
 class OptimizedWeights:
-    weights: np.ndarray
+    weights:  ty.Union[np.ndarray, spmatrix]
     num_weight_bits: int
     weight_exp: int
 
 
 def optimize_weight_bits(
-        weights: np.ndarray,
+        weights: ty.Union[np.ndarray, spmatrix],
         sign_mode: SignMode,
         loihi2: ty.Optional[bool] = False) -> OptimizedWeights:
     """Optimizes the weight matrix to best fit in Loihi's synapse.
 
     Parameters
     ----------
-    weights : np.ndarray
+    weights : np.ndarray, spmatrix
         Standard 8-bit signed weight matrix.
     sign_mode : SignMode
         Determines whether the weights are purely excitatory, inhibitory,
@@ -76,26 +76,29 @@ def optimize_weight_bits(
     weight_exp = _determine_weight_exp(weights, sign_mode)
     num_weight_bits = _determine_num_weight_bits(weights, weight_exp, sign_mode)
 
-    weights = np.left_shift(weights.astype(np.int32), int(-weight_exp))
+    if isinstance(weights, np.ndarray):
+        weights = weights.astype(np.int32) << int(-weight_exp)
+    elif isinstance(weights, spmatrix):
+        weights.data = weights.data.astype(np.int32) << int(-weight_exp)
 
     if loihi2:
-        weights = weights // (1 << (8 - num_weight_bits))
+        weights = (weights / (1 << (8 - num_weight_bits))).astype(np.int32)
         if sign_mode == SignMode.MIXED:
-            weights = weights // 2
+            weights = (weights / 2).astype(np.int32)
 
-    optimized_weights = OptimizedWeights(weights=weights.astype(int),
+    optimized_weights = OptimizedWeights(weights=weights,
                                          num_weight_bits=num_weight_bits,
                                          weight_exp=weight_exp)
     return optimized_weights
 
 
-def _validate_weights(weights: np.ndarray,
+def _validate_weights(weights: ty.Union[np.ndarray, spmatrix],
                       sign_mode: SignMode) -> None:
     """Validate the weight values against the given sign mode.
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix
     sign_mode : SignMode
         Sign mode specified for the weight matrix
@@ -108,11 +111,11 @@ def _validate_weights(weights: np.ndarray,
     min_weight += inhibitory_flag
     max_weight = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)
 
-    if np.any(weights > max_weight) or np.any(weights < min_weight):
+    if weights.max() > max_weight or weights.min() < min_weight:
         raise ValueError(f"weights have to be between {min_weight} and "
                          f"{max_weight} for {sign_mode=}. Got "
-                         f"weights between {np.min(weights)} and "
-                         f"{np.max(weights)}.")
+                         f"weights between {weights.min()} and "
+                         f"{weights.max()}.")
 
 
 def _determine_weight_exp(weights: np.ndarray,
@@ -207,7 +210,7 @@ def truncate_weights(weights: ty.Union[np.ndarray, spmatrix],
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix that is to be truncated.
     sign_mode : SignMode
         Sign mode to use for truncation. See SignMode class for the
@@ -250,7 +253,7 @@ def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix that is to be truncated.
     sign_mode : SignMode
         Sign mode to use for truncation.

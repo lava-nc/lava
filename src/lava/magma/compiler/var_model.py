@@ -64,6 +64,7 @@ class AbstractVarModel(ABC):
 
     def __post_init__(self, var: Var) -> None:
         if var is not None:
+            self._var = var
             self.var_id: int = var.id
             self.name: str = var.name
             self.shape: ty.Tuple[int, ...] = var.shape
