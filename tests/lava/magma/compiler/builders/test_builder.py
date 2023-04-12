@@ -1,8 +1,7 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from multiprocessing.managers import SharedMemoryManager
 import typing as ty
 import unittest
 import numpy as np
@@ -28,6 +27,9 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager,
+)
 
 
 class MockMessageInterface:
@@ -41,7 +43,7 @@ class MockMessageInterface:
 class TestChannelBuilder(unittest.TestCase):
     def test_channel_builder(self):
         """Tests Channel Builder creation"""
-        smm: SharedMemoryManager = SharedMemoryManager()
+        smm = SharedMemoryManager()
         try:
             port_initializer: PortInitializer = PortInitializer(
                 name="mock", shape=(1, 2), d_type=np.int32,

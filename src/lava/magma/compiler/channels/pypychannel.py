@@ -1,6 +1,7 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 import typing as ty
 from dataclasses import dataclass
 from multiprocessing import Semaphore
@@ -93,14 +94,14 @@ class CspSendPort(AbstractCspSendPort):
         self.thread = Thread(
             target=self._ack_callback,
             name="{}.send".format(self._name),
+            args=(self._ack,),
             daemon=True,
         )
         self.thread.start()
 
-    def _ack_callback(self):
+    def _ack_callback(self, ack):
         try:
-            while not self._done:
-                self._ack.acquire()
+            while ack.acquire() and not self._done:
                 not_full = self.probe()
                 self._semaphore.release()
                 if self.observer and not not_full:
@@ -130,7 +131,12 @@ class CspSendPort(AbstractCspSendPort):
         self._req.release()
 
     def join(self):
-        self._done = True
+        if not self._done:
+            self._done = True
+            if self.thread is not None:
+                self._ack.release()
+            self._ack = None
+            self._req = None
 
 
 class CspRecvQueue(Queue):
@@ -235,14 +241,14 @@ class CspRecvPort(AbstractCspRecvPort):
         self.thread = Thread(
             target=self._req_callback,
             name="{}.send".format(self._name),
+            args=(self._req,),
             daemon=True,
         )
         self.thread.start()
 
-    def _req_callback(self):
+    def _req_callback(self, req):
         try:
-            while not self._done:
-                self._req.acquire()
+            while req.acquire() and not self._done:
                 not_empty = self.probe()
                 self._queue.put_nowait(0)
                 if self.observer and not not_empty:
@@ -278,7 +284,12 @@ class CspRecvPort(AbstractCspRecvPort):
         return result
 
     def join(self):
-        self._done = True
+        if not self._done:
+            self._done = True
+            if self.thread is not None:
+                self._req.release()
+            self._ack = None
+            self._req = None
 
 
 class CspSelector:
@@ -344,7 +355,7 @@ class PyPyChannel(Channel):
         """
         nbytes = self.nbytes(shape, dtype)
         smm = message_infrastructure.smm
-        shm = smm.SharedMemory(int(nbytes * size))
+        shm = smm.create_shared_memory(int(nbytes * size))
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)

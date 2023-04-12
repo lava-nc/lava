@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 import typing as ty
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess

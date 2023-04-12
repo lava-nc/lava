@@ -1,9 +1,15 @@
+# Copyright (C) 2021-23 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
 from multiprocessing import Process
-from multiprocessing.managers import SharedMemoryManager
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
+    SharedMemoryManager
+)
 
 
 class MockInterface:

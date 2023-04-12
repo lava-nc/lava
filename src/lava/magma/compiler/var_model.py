@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 from __future__ import annotations
 
 import typing as ty
@@ -47,6 +48,12 @@ class LoihiNeuronAddress(LoihiAddress):
 class LoihiSynapseAddress(LoihiAddress):
     # To which SynEntry on the core a synapse belongs
     syn_entry_id: int
+
+
+@dataclass
+class LoihiInAxonAddress(LoihiAddress):
+    # To which Profile on the core a synapse belongs
+    profile_id: int
 
 
 @dataclass

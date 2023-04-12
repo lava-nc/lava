@@ -1,17 +1,5 @@
-# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
-#
-# Copyright © 2021-2022 Intel Corporation.
-#
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2021-23 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
@@ -57,13 +45,13 @@ class STDPLoihi(Loihi2FLearningRule):
         self.tau_minus = tau_minus
 
         # String learning rule for dw
-        dw = f"{self.learning_rate} * {self.A_plus} * x0 * y1 +" \
-             f"{self.learning_rate} * {self.A_minus} * y0 * x1"
+        dw = f"{self.learning_rate} * {self.A_minus} * x0 * y1 +" \
+             f"{self.learning_rate} * {self.A_plus} * y0 * x1"
 
         # Other learning-related parameters
         # Trace impulse values
-        x1_impulse = kwargs.get("x1_impulse", 16)
-        y1_impulse = kwargs.get("y1_impulse", 16)
+        x1_impulse = kwargs.pop("x1_impulse", 16)
+        y1_impulse = kwargs.pop("y1_impulse", 16)
 
         # Trace decay constants
         x1_tau = tau_plus

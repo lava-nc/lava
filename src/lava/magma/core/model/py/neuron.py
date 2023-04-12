@@ -1,5 +1,9 @@
+# Copyright (C) 2021-23 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 import numpy as np
 
@@ -19,6 +23,7 @@ class LearningNeuronModel(PyLoihiProcessModel):
     """
 
     # Learning Ports
+    a_third_factor_in = None
     s_out_bap = None
     s_out_y1 = None
     s_out_y2 = None
@@ -33,6 +38,7 @@ class LearningNeuronModel(PyLoihiProcessModel):
         super().__init__(proc_params)
 
         self._shape = self.proc_params["shape"]
+        self._learning_rule = self.proc_params["learning_rule"]
 
 
 class LearningNeuronModelFixed(LearningNeuronModel):
@@ -50,6 +56,10 @@ class LearningNeuronModelFixed(LearningNeuronModel):
     """
 
     # Learning Ports
+    a_third_factor_in: PyInPort = LavaPyType(
+        PyInPort.VEC_DENSE, np.int32, precision=7
+    )
+
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool, precision=1)
     s_out_y1: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
     s_out_y2: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=7)
@@ -79,6 +89,8 @@ class LearningNeuronModelFloat(LearningNeuronModel):
     """
 
     # Learning Ports
+    a_third_factor_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
     s_out_bap: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, bool)
     s_out_y1: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     s_out_y2: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
