@@ -11,7 +11,7 @@ import typing
 import typing as ty
 
 import numpy as np
-from scipy.sparse import csr_matrix
+# from scipy.sparse import csr_matrix
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
@@ -469,11 +469,6 @@ class Runtime:
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             data_port.send(enum_to_np(num_items))
-
-            if isinstance(ev._var.init, csr_matrix):
-                # TODO : Handle CSR matrix
-                return
-
             for i in range(num_items):
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
             rsp = rsp_port.recv()
@@ -516,13 +511,14 @@ class Runtime:
             data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
             num_items: int = int(data_port.recv()[0].item())
 
-            if isinstance(ev._var.init, csr_matrix):
-                buffer = ev._var.init.copy()
+            if num_items < np.prod(ev.shape):
+                # This can happen for sparse matrices
+                buffer = np.zeros(num_items)
+
                 for i in range(num_items):
-                    buffer.data[i] = data_port.recv()[0]
+                    buffer[i] = data_port.recv()[0]
 
                 return buffer[idx] if idx else buffer
-
 
             buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
             for i in range(num_items):

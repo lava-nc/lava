@@ -4,6 +4,7 @@
 
 import typing as ty
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
@@ -156,6 +157,10 @@ class Var(AbstractProcessMember):
                 if isinstance(self.init, str):
                     # decode if var is string
                     return bytes(buffer.astype(int).tolist()).decode("ascii")
+                if isinstance(self.init, csr_matrix):
+                    ret: csr_matrix = self.init.copy()
+                    ret.data = buffer
+                    return ret 
                 else:
                     return buffer
             else:
