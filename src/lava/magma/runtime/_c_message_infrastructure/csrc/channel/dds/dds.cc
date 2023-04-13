@@ -19,6 +19,7 @@ DDSPtr DDSManager::AllocDDS(const std::string &topic_name,
                             const DDSBackendType &dds_backend,
                             const size_t &max_samples) {
   std::lock_guard<std::mutex> lg(dds_lock_);
+
   if (dds_topics_.find(topic_name) != dds_topics_.end()) {
     LAVA_LOG_ERR("The topic %s has already been used\n", topic_name.c_str());
     return nullptr;
@@ -45,6 +46,7 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                const DDSTransportType &dds_transfer_type,
                                const size_t &max_samples) {
 #if defined(FASTDDS_ENABLE)
+  LAVA_LOG_ERR("DDS::CreateFastDDSBackend\n");
   dds_publisher_ = std::make_shared<FastDDSPublisher>(topic_name,
                                                       dds_transfer_type,
                                                       max_samples);

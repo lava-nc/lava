@@ -69,10 +69,12 @@ class GetRPCChannelProxy {
 #if defined(DDS_CHANNEL)
 class GetDDSChannelProxy {
  public:
-  GetDDSChannelProxy(const std::string &topic_name,
-                     const DDSTransportType &transport_type,
-                     const DDSBackendType &dds_backend,
-                     const size_t &size);
+  GetDDSChannelProxy(const std::string &src_name,
+                     const std::string &dst_name,
+                     const size_t &size,
+                     const size_t &nbytes,
+                     const DDSTransportType &dds_transfer_type,
+                     const DDSBackendType &dds_backend);
   SendPortProxyPtr GetSendPort();
   RecvPortProxyPtr GetRecvPort();
  private:

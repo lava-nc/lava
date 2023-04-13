@@ -20,10 +20,12 @@ class DDSChannel : public AbstractChannel {
  public:
   DDSChannel() = delete;
   ~DDSChannel() override {}
-  DDSChannel(const std::string &topic_name,
+  DDSChannel(const std::string &src_name,
+            const std::string &dst_name,
+            const size_t &size,
+            const size_t &nbytes,
             const DDSTransportType &dds_transfer_type,
-            const DDSBackendType &dds_backend,
-            const size_t &size);
+            const DDSBackendType &dds_backend);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
 
@@ -32,6 +34,12 @@ class DDSChannel : public AbstractChannel {
   DDSSendPortPtr send_port_ = nullptr;
   DDSRecvPortPtr recv_port_ = nullptr;
 };
+
+std::shared_ptr<DDSChannel> GetDefaultDDSChannel(const size_t &nbytes,
+                                                 const size_t &size,
+                                                 const std::string &src_name,
+                                                 const std::string &dst_name);
+
 }  // namespace message_infrastructure
 
 #endif  // CHANNEL_DDS_DDS_CHANNEL_H_

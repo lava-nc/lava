@@ -22,8 +22,10 @@ AbstractChannelPtr ChannelFactory::GetChannel(const ChannelType &channel_type,
                                               const std::string &src_name,
                                               const std::string &dst_name) {
   switch (channel_type) {
+#if defined(DDS_CHANNEL)
     case ChannelType::DDSCHANNEL:
-      break;
+      return GetDefaultDDSChannel(nbytes, size, src_name, dst_name);
+#endif
     case ChannelType::SOCKETCHANNEL:
       return GetSocketChannel(nbytes, src_name, dst_name);
     default:
@@ -39,14 +41,18 @@ AbstractChannelPtr ChannelFactory::GetTempChannel(
 
 #if defined(DDS_CHANNEL)
 AbstractChannelPtr ChannelFactory::GetDDSChannel(
-                                   const std::string &topic_name,
-                                   const DDSTransportType &transport_type,
-                                   const DDSBackendType &dds_backend,
-                                   const size_t &size) {
-  return std::make_shared<DDSChannel>(topic_name,
-                                      transport_type,
-                                      dds_backend,
-                                      size);
+                                  const std::string &src_name,
+                                  const std::string &dst_name,
+                                  const size_t &size,
+                                  const size_t &nbytes,
+                                  const DDSTransportType &dds_transfer_type,
+                                  const DDSBackendType &dds_backend) {
+  return std::make_shared<DDSChannel>(src_name,
+                                      dst_name,
+                                      size,
+                                      nbytes,
+                                      dds_transfer_type,
+                                      dds_backend);
 }
 #endif
 
