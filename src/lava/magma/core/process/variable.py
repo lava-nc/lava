@@ -4,7 +4,7 @@
 
 import typing as ty
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, spmatrix
 
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
@@ -127,9 +127,15 @@ class Var(AbstractProcessMember):
                     f"."
                 )
 
-    def set(self, value: ty.Union[np.ndarray, str], idx: np.ndarray = None):
+    def set(self, value: ty.Union[np.ndarray, str, sparray], idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
+        if isinstance(value, spmatrix):
+            value = value.tocsr()
+            if not value.indices == self.init.indices or not value.shape == self.init.shape:
+                raise ValueError("The indices must stay equal when setting a sparse matrix.")
+            value = value.data
+
         if self.aliased_var is not None:
             self.aliased_var.set(value, idx)
         else:
