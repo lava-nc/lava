@@ -127,12 +127,14 @@ class Var(AbstractProcessMember):
                     f"."
                 )
 
-    def set(self, value: ty.Union[np.ndarray, str, sparray], idx: np.ndarray = None):
+    def set(self, value: ty.Union[np.ndarray, str, spmatrix], idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if isinstance(value, spmatrix):
             value = value.tocsr()
-            if not value.indices == self.init.indices or not value.shape == self.init.shape:
+            if value.shape != self.init.shape or \
+                    (value.indices != self.init.indices).any() or \
+                    (value.indptr != self.init.indptr).any():
                 raise ValueError("The indices must stay equal when setting a sparse matrix.")
             value = value.data
 

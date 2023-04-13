@@ -128,8 +128,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
-            # TODO: Handle CSR_Matrix
-            return
+            num_items = var.data.size
+            data_port.send(enum_to_np(num_items))
+            for value in var.data:
+                data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))
             data_port.send(enum_to_np(len(encoded_str)))
@@ -167,8 +169,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 i[...] = data_port.recv()[0]
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         elif isinstance(var, csr_matrix):
-            # TODO: Handle CSR_Matrix
-            return
+            # First item is number of items
+            num_items = int(data_port.recv()[0])
+            # Set data one by one
+            for i in range(num_items):
+                var.data[i] = data_port.recv()[0]
+            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         elif isinstance(var, str):
             # First item is number of items
             num_items = int(data_port.recv()[0])
@@ -180,7 +186,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             s = bytes(s).decode("ascii")
             setattr(self, var_name, s)
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-
         else:
             self.process_to_service.send(MGMT_RESPONSE.ERROR)
             raise RuntimeError("Unsupported type")
