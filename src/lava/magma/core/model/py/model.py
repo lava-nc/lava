@@ -6,6 +6,7 @@ import typing as ty
 from abc import ABC, abstractmethod
 import logging
 import numpy as np
+from scipy.sparse import csr_matrix
 import platform
 
 from lava.magma.compiler.channels.pypychannel import (
@@ -126,6 +127,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
+        elif isinstance(var, csr_matrix):
+            # TODO: Handle CSR_Matrix
+            return
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))
             data_port.send(enum_to_np(len(encoded_str)))
@@ -162,6 +166,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 num_items -= 1
                 i[...] = data_port.recv()[0]
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+        elif isinstance(var, csr_matrix):
+            # TODO: Handle CSR_Matrix
+            return
         elif isinstance(var, str):
             # First item is number of items
             num_items = int(data_port.recv()[0])

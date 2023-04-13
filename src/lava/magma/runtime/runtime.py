@@ -469,6 +469,11 @@ class Runtime:
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
             data_port.send(enum_to_np(num_items))
+
+            if isinstance(ev._var.init, csr_matrix):
+                # TODO : Handle CSR matrix
+                return
+
             for i in range(num_items):
                 data_port.send(enum_to_np(buffer[0, i], np.float64))
             rsp = rsp_port.recv()
