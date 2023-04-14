@@ -42,7 +42,6 @@ std::shared_ptr<DDSChannel> GetDefaultDDSChannel(const size_t &nbytes,
   #if defined(CycloneDDS_ENABLE)
     BackendType = DDSBackendType::CycloneDDSBackend;
   #endif
-  LAVA_LOG_ERR("GetDefaultDDSChannel function====\n");
   return std::make_shared<DDSChannel>(src_name,
                                       dst_name,
                                       size,

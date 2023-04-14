@@ -15,7 +15,6 @@ ChannelProxy::ChannelProxy(const ChannelType &channel_type,
                            const std::string &dst_name,
                            py::tuple shape,
                            py::object type) {
-  LAVA_LOG_ERR("ChannelProxy::ChannelProxy\n");
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetChannel(channel_type,
                                         size,
@@ -100,7 +99,6 @@ GetDDSChannelProxy::GetDDSChannelProxy(
                                   const size_t &nbytes,
                                   const DDSTransportType &dds_transfer_type,
                                   const DDSBackendType &dds_backend) {
-  LAVA_LOG_ERR("GetDDSChannelProxy::GetDDSChannelProxy\n");
   ChannelFactory &channel_factory = GetChannelFactory();
   channel_ = channel_factory.GetDDSChannel(src_name,
                                            dst_name,

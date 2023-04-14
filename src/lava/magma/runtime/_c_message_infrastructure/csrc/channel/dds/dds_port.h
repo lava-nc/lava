@@ -20,7 +20,6 @@ class DDSSendPort final : public AbstractSendPort {
               publisher_(dds->dds_publisher_) {}
   ~DDSSendPort() = default;
   void Start() {
-    LAVA_LOG_ERR("void Start() ===\n");
     auto flag = publisher_->Init();
     if (static_cast<int>(flag)) {
       LAVA_LOG_FATAL("Publisher Init return error, %d\n",
@@ -57,7 +56,6 @@ class DDSRecvPort final : public AbstractRecvPort {
               subscriber_(dds->dds_subscriber_) {}
   ~DDSRecvPort() override {}
   void Start() {
-    LAVA_LOG_ERR("void Start() ===\n");
     auto flag = subscriber_->Init();
     if (static_cast<int>(flag)) {
       LAVA_LOG_FATAL("Subscriber Init return error, %d\n",
@@ -74,7 +72,6 @@ class DDSRecvPort final : public AbstractRecvPort {
     return subscriber_->Recv(true);
   }
   bool Probe() {
-    // return true;
     return subscriber_->Probe();
   }
 
