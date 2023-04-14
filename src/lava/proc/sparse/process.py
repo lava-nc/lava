@@ -199,3 +199,91 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                              f"got {weights}.")
 
 
+class DelaySparse(Sparse):
+    def __init__(self,
+                 *,
+                 weights: spmatrix,
+                 delays: ty.Union[spmatrix, int],
+                 max_delay: ty.Optional[int] = 0,
+                 name: ty.Optional[str] = None,
+                 num_message_bits: ty.Optional[int] = 0,
+                 log_config: ty.Optional[LogConfig] = None,
+                 **kwargs) -> None:
+        """Dense, delayed connections between neurons. Realizes the following
+        abstract behavior: a_out = weights * s_in
+
+        Parameters
+        ----------
+        weights : spmatrix
+            2D connection weight matrix of form (num_flat_output_neurons,
+            num_flat_input_neurons) in C-order (row major).
+
+        delays : spmatrix, int
+            2D connection delay matrix of form (num_flat_output_neurons,
+            num_flat_input_neurons) in C-order (row major) or integer value if
+            the same delay should be used for all synapses.
+
+        max_delay: int, optional
+            Maximum expected delay. Should be set if delays change during
+            execution. Default value is 0, in this case the maximum delay
+            will be determined from the values given in 'delays'.
+
+        weight_exp : int, optional
+            Shared weight exponent of base 2 used to scale magnitude of
+            weights, if needed. Mostly for fixed point implementations.
+            Unnecessary for floating point implementations.
+            Default value is 0.
+
+        num_weight_bits : int, optional
+            Shared weight width/precision used by weight. Mostly for fixed
+            point implementations. Unnecessary for floating point
+            implementations.
+            Default is for weights to use full 8 bit precision.
+
+        sign_mode : SignMode, optional
+            Shared indicator whether synapse is of type SignMode.NULL,
+            SignMode.MIXED, SignMode.EXCITATORY, or SignMode.INHIBITORY. If
+            SignMode.MIXED, the sign of the weight is
+            included in the weight bits and the fixed point weight used for
+            inference is scaled by 2.
+            Unnecessary for floating point implementations.
+
+            In the fixed point implementation, weights are scaled according to
+            the following equations:
+            w_scale = 8 - num_weight_bits + weight_exp + isMixed()
+            weights = weights * (2 ** w_scale)
+
+        num_message_bits : int, optional
+            Determines whether the Dense Process deals with the incoming
+            spikes as binary spikes (num_message_bits = 0) or as graded
+            spikes (num_message_bits > 0). Default is 0.
+        """
+
+        super().__init__(weights=weights,
+                         num_message_bits=num_message_bits,
+                         name=name,
+                         log_config=log_config,
+                         **kwargs)
+
+        self._validate_delays(weights, delays)
+        shape = weights.shape
+        if max_delay == 0:
+            max_delay = int(np.max(delays))
+
+        # Variables
+        self.delays = Var(shape=shape, init=delays)
+        self.a_buff = Var(shape=(shape[0], max_delay + 1) , init=0)
+
+    @staticmethod
+    def _validate_delays(weights: spmatrix, delays: spmatrix) -> None:
+        if delays.min() < 0:
+            raise ValueError("DelaySparse Process 'delays' expects only "
+                             f"positive values, got {delays}.")
+        if not isinstance(delays, int):
+            if weights.shape != delays.shape:
+                raise ValueError("DelaySparse Process 'delays' expects same "
+                                 f"shape as the weight matrix or int, got "
+                                 f"{delays}.")
+            if delays.dtype != int:
+                raise ValueError("DelaySparse Process 'delays' expects integer "
+                                 f"value(s), got {delays}.")

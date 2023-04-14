@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix
 
-from lava.proc.sparse.process import Sparse, LearningSparse 
+from lava.proc.sparse.process import Sparse, LearningSparse, DelaySparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
 
@@ -61,3 +61,24 @@ class TestLearningSparseProcess(unittest.TestCase):
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
 
 
+class TestDelaySparseProcess(unittest.TestCase):
+    """Tests for Sparse class"""
+
+    def test_init(self):
+        """Tests instantiation of Sparse"""
+        shape = (100, 200)
+        weights = np.random.random(shape)
+        delays = np.random.randint(0,3, shape)
+
+        # sparsify
+        weights[weights < 0.7] = 0
+        delays[weights < 0.7] = 0
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+        delays_sparse= csr_matrix(delays)
+
+        conn = DelaySparse(weights=weights_sparse, delays=delays_sparse)
+
+        self.assertIsInstance(conn.weights.init, spmatrix)
+        np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
