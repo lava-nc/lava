@@ -276,7 +276,7 @@ class DelaySparse(Sparse):
 
     @staticmethod
     def _validate_delays(weights: spmatrix, delays: spmatrix) -> None:
-        if delays.min() < 0:
+        if np.min(delays) < 0:
             raise ValueError("DelaySparse Process 'delays' expects only "
                              f"positive values, got {delays}.")
         if not isinstance(delays, int):
