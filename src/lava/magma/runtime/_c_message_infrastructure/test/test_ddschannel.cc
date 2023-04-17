@@ -71,24 +71,32 @@ void dds_protocol(std::string topic_name,
   int loop = loop_number;
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
     .GetDDSChannel(topic_name + "mp_to_a1",
+                   topic_name + "mp_to_a1",
+                   DEPTH,
+                   0,
                    transfer_type,
-                   dds_backend,
-                   DEPTH);
+                   dds_backend);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()
     .GetDDSChannel(topic_name + "a1_to_mp",
+                   topic_name + "a1_to_mp",
+                   DEPTH,
+                   0,
                    transfer_type,
-                   dds_backend,
-                   DEPTH);
+                   dds_backend);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory()
     .GetDDSChannel(topic_name + "a1_to_a2",
+                   topic_name + "a1_to_a2",
+                   DEPTH,
+                   0,
                    transfer_type,
-                   dds_backend,
-                   DEPTH);
+                   dds_backend);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory()
     .GetDDSChannel(topic_name + "a2_to_a1",
+                   topic_name + "a2_to_a1",
+                   DEPTH,
+                   0,
                    transfer_type,
-                   dds_backend,
-                   DEPTH);
+                   dds_backend);
 
   auto target_fn_a1 = std::bind(&dds_target_fn_a1_bound, loop,
                                 mp_to_a1, a1_to_mp, a1_to_a2,
@@ -159,9 +167,11 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
     .GetDDSChannel("test_DDSChannel",
+    "test_DDSChannel",
+    5,
+    0,
     DDSTransportType::DDSSHM,
-    DDSBackendType::FASTDDSBackend,
-    5);
+    DDSBackendType::FASTDDSBackend);
 
   auto send_port = dds_channel->GetSendPort();
   send_port->Start();
