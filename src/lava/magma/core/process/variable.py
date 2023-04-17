@@ -4,7 +4,7 @@
 
 import typing as ty
 import numpy as np
-from scipy.sparse import csr_matrix, spmatrix
+from scipy.sparse import csr_matrix, spmatrix, find
 
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
@@ -136,7 +136,7 @@ class Var(AbstractProcessMember):
                     (value.indices != self.init.indices).any() or \
                     (value.indptr != self.init.indptr).any():
                 raise ValueError("The indices must stay equal when setting a sparse matrix.")
-            value = value.data
+            value = find(value)[2]
 
         if self.aliased_var is not None:
             self.aliased_var.set(value, idx)
@@ -161,13 +161,14 @@ class Var(AbstractProcessMember):
             return self.aliased_var.get(idx)
         else:
             if self.process.runtime:
+                
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     # decode if var is string
                     return bytes(buffer.astype(int).tolist()).decode("ascii")
                 if isinstance(self.init, csr_matrix):
-                    ret: csr_matrix = self.init.copy()
-                    ret.data = buffer
+                    dst, src, _ = find(self.init)
+                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
                     return ret 
                 else:
                     return buffer

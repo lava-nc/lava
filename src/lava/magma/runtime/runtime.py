@@ -11,7 +11,6 @@ import typing
 import typing as ty
 
 import numpy as np
-# from scipy.sparse import csr_matrix
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
