@@ -6,7 +6,7 @@ import typing as ty
 from abc import ABC, abstractmethod
 import logging
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, find
 import platform
 
 from lava.magma.compiler.channels.pypychannel import (
@@ -130,7 +130,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         elif isinstance(var, csr_matrix):
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
-            for value in var.data:
+            for value in find(var)[2]:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))

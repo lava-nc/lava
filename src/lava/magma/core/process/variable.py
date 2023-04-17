@@ -168,7 +168,7 @@ class Var(AbstractProcessMember):
                     return bytes(buffer.astype(int).tolist()).decode("ascii")
                 if isinstance(self.init, csr_matrix):
                     dst, src, _ = find(self.init)
-                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
+                    ret = csr_matrix((buffer.flatten(order='F'), (dst, src)), self.init.shape)
                     return ret 
                 else:
                     return buffer

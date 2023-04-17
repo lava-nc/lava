@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import unittest
+import numpy as np
 from scipy.sparse import csr_matrix
 
+from lava.proc.sparse.process import Sparse
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse, DelaySparse
 from lava.proc.sparse.models import AbstractPyDelaySparseModel
