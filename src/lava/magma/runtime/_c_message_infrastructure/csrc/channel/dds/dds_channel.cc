@@ -26,6 +26,21 @@ DDSChannel::DDSChannel(const std::string &src_name,
   recv_port_ = std::make_shared<DDSRecvPort>(dst_name, size, nbytes, dds_);
 }
 
+DDSChannel::DDSChannel(const std::string &topic_name,
+                       const DDSTransportType &dds_transfer_type,
+                       const DDSBackendType &dds_backend,
+                       const size_t &size) {
+  LAVA_DEBUG(LOG_DDS, "Creating DDSChannel...\n");
+  dds_ = GetDDSManagerSingleton().AllocDDS(topic_name,
+                                  dds_transfer_type,
+                                  dds_backend,
+                                  size);
+  send_port_ = std::make_shared<DDSSendPort>(
+            topic_name+"_src_" + std::to_string(std::rand()), 0, 0, dds_);
+  recv_port_ = std::make_shared<DDSRecvPort>(
+            topic_name+"_dst_" + std::to_string(std::rand()), 0, 0, dds_);
+}
+
 AbstractSendPortPtr DDSChannel::GetSendPort() {
   return send_port_;
 }

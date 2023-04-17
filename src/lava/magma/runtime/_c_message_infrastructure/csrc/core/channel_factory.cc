@@ -54,6 +54,17 @@ AbstractChannelPtr ChannelFactory::GetDDSChannel(
                                       dds_transfer_type,
                                       dds_backend);
 }
+
+AbstractChannelPtr ChannelFactory::GetDDSChannel(
+                                   const std::string &topic_name,
+                                   const DDSTransportType &transport_type,
+                                   const DDSBackendType &dds_backend,
+                                   const size_t &size) {
+  return std::make_shared<DDSChannel>(topic_name,
+                                      transport_type,
+                                      dds_backend,
+                                      size);
+}
 #endif
 
 #if defined(GRPC_CHANNEL)

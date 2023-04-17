@@ -26,6 +26,10 @@ class DDSChannel : public AbstractChannel {
             const size_t &nbytes,
             const DDSTransportType &dds_transfer_type,
             const DDSBackendType &dds_backend);
+  DDSChannel(const std::string &topic_name,
+            const DDSTransportType &dds_transfer_type,
+            const DDSBackendType &dds_backend,
+            const size_t &size);
   AbstractSendPortPtr GetSendPort();
   AbstractRecvPortPtr GetRecvPort();
 

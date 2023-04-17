@@ -34,6 +34,10 @@ class ChannelFactory {
                                    const size_t &nbytes,
                                    const DDSTransportType &dds_transfer_type,
                                    const DDSBackendType &dds_backend);
+  AbstractChannelPtr GetDDSChannel(const std::string &topic_name,
+                                   const DDSTransportType &transport_type,
+                                   const DDSBackendType &dds_backend,
+                                   const size_t &size);
 #endif
 
 #if defined(GRPC_CHANNEL)
