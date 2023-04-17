@@ -5,13 +5,17 @@
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix
 
+from lava.magma.core.model.py.connection import (
+    LearningConnectionModelFloat,
+    LearningConnectionModelBitApproximate,
+)
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.sparse.process import Sparse, DelaySparse
+from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
@@ -110,6 +114,81 @@ class PySparseModelBitAcc(AbstractPySparseModelBitAcc):
     pass
 
 
+@implements(proc=LearningSparse, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyLearningSparseModelFloat(
+        LearningConnectionModelFloat, AbstractPySparseModelFloat):
+    """Implementation of Conn Process with Sparse synaptic connections in
+    floating point precision. This short and simple ProcessModel can be used
+    for quick algorithmic prototyping, without engaging with the nuances of a
+    fixed point implementation.
+    """
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+
+    def run_spk(self):
+        # The a_out sent at each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
+        self.a_out.send(self.a_buff)
+        if self.num_message_bits.item() > 0:
+            s_in = self.s_in.recv()
+            self.a_buff = self.weights.dot(s_in)
+        else:
+            s_in = self.s_in.recv().astype(bool)
+            self.a_buff = self.weights[:, s_in].sum(axis=1)
+
+        self.recv_traces(s_in)
+
+
+@implements(proc=LearningSparse, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("bit_approximate_loihi", "fixed_pt")
+class PyLearningSparseModelBitApproximate(
+        LearningConnectionModelBitApproximate, AbstractPySparseModelBitAcc):
+    """Implementation of Conn Process with Sparse synaptic connections that is
+    bit-accurate with Loihi's hardware implementation of Dense, which means,
+    it mimics Loihi behaviour bit-by-bit.
+    """
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        # Flag to determine whether weights have already been scaled.
+        self.num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
+
+    def run_spk(self):
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+
+        # Since this Process has no learning, weights are assumed to be static
+        # and only require scaling on the first timestep of run_spk().
+        if not self.weights_set:
+            self.weights = truncate_weights(
+                self.weights,
+                sign_mode=self.sign_mode,
+                num_weight_bits=self.num_weight_bits
+            )
+            self.weights_set = True
+
+        # The a_out sent at each timestep is a buffered value from dendritic
+        # accumulation at timestep t-1. This prevents deadlocking in
+        # networks with recurrent connectivity structures.
+        self.a_out.send(self.a_buff)
+        if self.num_message_bits.item() > 0:
+            s_in = self.s_in.recv()
+            a_accum = self.weights.dot(s_in)
+        else:
+            s_in = self.s_in.recv().astype(bool)
+            a_accum = self.weights[:, s_in].sum(axis=1)
+
+        self.a_buff = (
+            np.left_shift(a_accum, self.weight_exp)
+            if self.weight_exp > 0
+            else np.right_shift(a_accum, -self.weight_exp)
+        )
+
+        self.recv_traces(s_in)
 
 
 class AbstractPyDelaySparseModel(PyLoihiProcessModel):

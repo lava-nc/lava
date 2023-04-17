@@ -5,6 +5,7 @@
 from abc import abstractmethod
 import numpy as np
 import typing
+from scipy.sparse import csr_matrix
 
 from lava.magma.core.learning.learning_rule import (
     LoihiLearningRule,
@@ -945,7 +946,10 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             syn_var = np.left_shift(
                 syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             )
-            syn_var = lr_applier.apply(syn_var, **applier_args)
+            if(isinstance(syn_var, csr_matrix)):
+                syn_var[syn_var.nonzero()] = lr_applier.apply(syn_var, **applier_args)[syn_var.nonzero()]
+            else:
+                syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable_accumulator(
                 syn_var_name, syn_var
             )
@@ -1423,7 +1427,10 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            syn_var = lr_applier.apply(syn_var, **applier_args)
+            if (isinstance(syn_var, csr_matrix)):
+                syn_var[syn_var.nonzero()] = lr_applier.apply(syn_var, **applier_args)[syn_var.nonzero()]
+            else:
+                syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 

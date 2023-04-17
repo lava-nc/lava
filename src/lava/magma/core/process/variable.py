@@ -168,7 +168,16 @@ class Var(AbstractProcessMember):
                     return bytes(buffer.astype(int).tolist()).decode("ascii")
                 if isinstance(self.init, csr_matrix):
                     dst, src, _ = find(self.init)
-                    ret = csr_matrix((buffer.flatten(order='F'), (dst, src)), self.init.shape)
+
+                    print("VARIABLE", "dst")
+                    print(dst)
+                    print("VARIABLE", "src")
+                    print(src)
+                    print("VARIABLE", "buffer")
+                    print(buffer)
+
+                    # Change this to order="C" makes the LearningSparse tests pass
+                    ret = csr_matrix((buffer.flatten(order="F"), (dst, src)), self.init.shape)
                     return ret 
                 else:
                     return buffer
