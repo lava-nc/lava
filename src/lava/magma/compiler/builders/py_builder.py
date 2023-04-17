@@ -401,8 +401,14 @@ class PyProcessBuilder(AbstractProcessBuilder):
             if issubclass(lt.cls, np.ndarray):
                 var = lt.cls(v.shape, lt.d_type)
                 var[:] = v.value
-            elif issubclass(lt.cls, (int, float, str, csr_matrix)):
+            elif issubclass(lt.cls, (int, float, str)):
                 var = v.value
+            elif issubclass(lt.cls, (csr_matrix)):
+                if isinstance(v.value,int):
+                    var = csr_matrix(v.shape, dtype=lt.d_type)
+                    var[:] = v.value
+                else:
+                    var = v.value
             else:
                 raise NotImplementedError(
                     "Cannot initiliaze variable "

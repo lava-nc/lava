@@ -171,9 +171,15 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         elif isinstance(var, csr_matrix):
             # First item is number of items
             num_items = int(data_port.recv()[0])
+
+            buffer = np.empty(num_items) 
             # Set data one by one
             for i in range(num_items):
-                var.data[i] = data_port.recv()[0]
+                buffer[i] = data_port.recv()[0]
+            dst, src, _ = find(var)
+            var = csr_matrix((buffer, (dst, src)), var.shape)
+            setattr(self, var_name, var)
+
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         elif isinstance(var, str):
             # First item is number of items
