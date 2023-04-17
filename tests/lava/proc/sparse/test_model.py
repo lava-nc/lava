@@ -80,9 +80,6 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         result_sparse = sparse_net[2].data.get()
         conn.stop()
 
-        # print(weights_got_sparse, weights_got_dense)
-        
-        # np.testing.assert_array_equal(weights_got_dense, weights_got_sparse)
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
 
@@ -171,6 +168,9 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
+        weights_to_set_sparse = conn.weights.init.copy()
+        weights_to_set_sparse.data = np.random.permutation(weights_to_set_sparse.data)
+
         conn.weights.set(weights_to_set_sparse)
 
         conn.run(condition=run_cond, run_cfg=run_cfg)
@@ -182,42 +182,6 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         self.assertIsInstance(weights_got_ts_2, csr_matrix)
         np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
 
-    # def test_weights_get_set(self):
-    #     """Tests the get and set method on weights."""
-    #     simtime = 2
-    #     shape = np.random.randint(1, 300, 2).tolist()
-    #     weights_init = (np.random.random(shape) - 0.5) * 2
-    #
-    #     # sparsify
-    #     weights_init[np.abs(weights_init) < 0.7] = 0
-    #     weights_init_sparse = csr_matrix(weights_init)
-    #
-    #     weights_to_set_sparse = weights_init_sparse.copy()
-    #     weights_to_set_sparse.data = (np.random.random(weights_to_set_sparse.data.shape) - 0.5) * 2
-    #
-    #     inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
-    #
-    #     run_cond = RunSteps(num_steps=1)
-    #     run_cfg = Loihi2SimCfg(select_tag='floating_pt')
-    #
-    #     conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
-    #     sparse_net = create_network(inp, conn, weights_init_sparse)
-    #     conn.run(condition=run_cond, run_cfg=run_cfg)
-    #
-    #     weights_got_ts_1 = conn.weights.get()
-    #
-    #     conn.weights.set(weights_to_set_sparse)
-    #
-    #     conn.run(condition=run_cond, run_cfg=run_cfg)
-    #
-    #     weights_got_ts_2 = conn.weights.get()
-    #
-    #     conn.stop()
-    #
-    #     self.assertIsInstance(weights_got_ts_1, csr_matrix)
-    #     self.assertIsInstance(weights_got_ts_2, csr_matrix)
-    #     np.testing.assert_array_equal(weights_got_ts_1.toarray(), weights_init)
-    #     np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
 
 class TestSparseProcessModelFixed(unittest.TestCase):
     """Tests for Sparse class in fixed point precision. """
@@ -339,11 +303,6 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         weights_init = weights_init.astype(int)
         weights_init_sparse = csr_matrix(weights_init)
 
-        weights_to_set_sparse = weights_init_sparse.copy()
-        weights_to_set_sparse.data = (np.random.random(weights_to_set_sparse.data.shape) - 0.5) * 2
-        weights_to_set_sparse *= 20
-        weights_to_set_sparse = weights_to_set_sparse.astype(int)
-
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
 
         run_cond = RunSteps(num_steps=1)
@@ -352,6 +311,9 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        weights_to_set_sparse = conn.weights.init.copy()
+        weights_to_set_sparse.data = np.random.permutation(weights_to_set_sparse.data)
 
         conn.weights.set(weights_to_set_sparse)
 
@@ -364,46 +326,6 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         self.assertIsInstance(weights_got_ts_2, csr_matrix)
         np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
 
-    # def test_weights_get_set(self):
-    #     """Tests the get and set method on weights."""
-    #     simtime = 2
-    #     shape = np.random.randint(3, 4, 2).tolist()
-    #     weights_init = (np.random.random(shape) - 0.5) * 2
-    #
-    #     # sparsify
-    #     weights_init[np.abs(weights_init) < 0.7] = 0
-    #     weights_init *= 20
-    #     weights_init = weights_init.astype(int)
-    #     weights_init_sparse = csr_matrix(weights_init)
-    #
-    #     weights_to_set_sparse = weights_init_sparse.copy()
-    #     weights_to_set_sparse.data = (np.random.random(weights_to_set_sparse.data.shape) - 0.5) * 2
-    #     weights_to_set_sparse *= 20
-    #     weights_to_set_sparse = weights_to_set_sparse.astype(int)
-    #
-    #     inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
-    #
-    #     run_cond = RunSteps(num_steps=1)
-    #     run_cfg = Loihi2SimCfg(select_tag='floating_pt')
-    #
-    #     conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
-    #     sparse_net = create_network(inp, conn, weights_init_sparse)
-    #     conn.run(condition=run_cond, run_cfg=run_cfg)
-    #
-    #     weights_got_ts_1 = conn.weights.get()
-    #
-    #     conn.weights.set(weights_to_set_sparse)
-    #
-    #     conn.run(condition=run_cond, run_cfg=run_cfg)
-    #
-    #     weights_got_ts_2 = conn.weights.get()
-    #
-    #     conn.stop()
-    #
-    #     self.assertIsInstance(weights_got_ts_1, csr_matrix)
-    #     self.assertIsInstance(weights_got_ts_2, csr_matrix)
-    #     np.testing.assert_array_equal(weights_got_ts_1.toarray(), weights_init)
-    #     np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
 
 class VecSendandRecvProcess(AbstractProcess):
     """
