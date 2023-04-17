@@ -114,6 +114,8 @@ class TestSparseProcessModelFloat(unittest.TestCase):
 
         # sparsify
         weights[np.abs(weights) < 0.7] = 0
+
+        print(weights)
         # convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
