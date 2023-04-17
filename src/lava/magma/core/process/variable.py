@@ -131,7 +131,7 @@ class Var(AbstractProcessMember):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if isinstance(value, spmatrix):
-            value = value.tocsr()
+            #value = value.tocsr()
             if value.shape != self.init.shape or \
                     (value.indices != self.init.indices).any() or \
                     (value.indptr != self.init.indptr).any():
