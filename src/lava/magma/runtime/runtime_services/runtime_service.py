@@ -197,12 +197,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
         if self.req_pre_lrn_mgmt:
             self.req_pre_lrn_mgmt = False
             return LoihiPyRuntimeService.Phase.PRE_MGMT
-        if self.req_post_lrn_mgmt:
-            self.req_post_lrn_mgmt = False
-            return LoihiPyRuntimeService.Phase.POST_MGMT
         if self.req_lrn:
             self.req_lrn = False
             return LoihiPyRuntimeService.Phase.LRN
+        if self.req_post_lrn_mgmt:
+            self.req_post_lrn_mgmt = False
+            return LoihiPyRuntimeService.Phase.POST_MGMT
         if self.req_pause:
             self.req_pause = False
             return MGMT_COMMAND.PAUSE
