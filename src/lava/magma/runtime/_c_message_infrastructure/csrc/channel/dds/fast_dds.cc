@@ -316,30 +316,14 @@ bool FastDDSSubscriber::Probe() {
 
 void FastDDSSubscriber::Stop() {
   LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release\n");
-  bool valid = true;
-  if (reader_ != nullptr) {
+  if (reader_ != nullptr)
     subscriber_->delete_datareader(reader_);
-  } else {
-    valid = false;
-  }
-  if (topic_ != nullptr) {
+  if (topic_ != nullptr)
     participant_->delete_topic(topic_);
-  } else {
-    valid = false;
-  }
-  if (subscriber_ != nullptr) {
+  if (subscriber_ != nullptr)
     participant_->delete_subscriber(subscriber_);
-  } else {
-    valid = false;
-  }
-  if (participant_ != nullptr) {
+  if (participant_ != nullptr)
     DomainParticipantFactory::get_instance()->delete_participant(participant_);
-  } else {
-    valid = false;
-  }
-  if (!valid) {
-    LAVA_LOG_ERR("Stop function is not valid\n");
-  }
   stop_ = true;
 }
 

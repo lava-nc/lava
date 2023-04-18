@@ -46,7 +46,7 @@ void DDS::CreateFastDDSBackend(const std::string &topic_name,
                                const DDSTransportType &dds_transfer_type,
                                const size_t &max_samples) {
 #if defined(FASTDDS_ENABLE)
-  LAVA_LOG_ERR("DDS::CreateFastDDSBackend\n");
+  LAVA_DEBUG(LOG_DDS, "DDS::CreateFastDDSBackend\n");
   dds_publisher_ = std::make_shared<FastDDSPublisher>(topic_name,
                                                       dds_transfer_type,
                                                       max_samples);
