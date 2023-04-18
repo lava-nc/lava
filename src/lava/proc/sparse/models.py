@@ -113,7 +113,7 @@ class PySparseModelBitAcc(AbstractPySparseModelBitAcc):
 
 
 class AbstractPyDelaySparseModel(PyLoihiProcessModel):
-    """Abstract Conn Process with Dense synaptic connections which incorporates
+    """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
     """
 
@@ -175,10 +175,10 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
 @requires(CPU)
 @tag("floating_pt")
 class PyDelaySparseModelFloat(AbstractPyDelaySparseModel):
-    """Implementation of Conn Process with Dense synaptic connections in
+    """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
-    fixed point implementation. DelayDense incorporates delays into the Conn
+    fixed point implementation. DelaySparse incorporates delays into the Conn
     Process.
     """
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -207,10 +207,10 @@ class PyDelaySparseModelFloat(AbstractPyDelaySparseModel):
 @implements(proc=DelaySparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class PyDelayDenseModelBitAcc(AbstractPyDelaySparseModel):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit. DelayDense incorporates delays into
+class PyDelaySparseModelBitAcc(AbstractPyDelaySparseModel):
+    """Implementation of Conn Process with Sparse synaptic connections that is
+    bit-accurate with Loihi's hardware implementation of Sparse, which means,
+    it mimics Loihi behaviour bit-by-bit. DelaySparse incorporates delays into
     the Conn Process. Loihi 2 has a maximum of 6 bits for delays, meaning a
     spike can be delayed by 0 to 63 time steps."""
 
@@ -246,7 +246,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelaySparseModel):
 
             # Check if delays are within Loihi 2 constraints
             if np.max(self.delays) > 63:
-                raise ValueError("DelayDense Process 'delays' expects values "
+                raise ValueError("DelaySparse Process 'delays' expects values "
                                  f"between 0 and 63 for Loihi, got "
                                  f"{self.delays}.")
 

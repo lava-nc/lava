@@ -209,7 +209,7 @@ class DelaySparse(Sparse):
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
-        """Dense, delayed connections between neurons. Realizes the following
+        """Sparse, delayed connections between neurons. Realizes the following
         abstract behavior: a_out = weights * s_in
 
         Parameters
@@ -254,7 +254,7 @@ class DelaySparse(Sparse):
             weights = weights * (2 ** w_scale)
 
         num_message_bits : int, optional
-            Determines whether the Dense Process deals with the incoming
+            Determines whether the Sparse Process deals with the incoming
             spikes as binary spikes (num_message_bits = 0) or as graded
             spikes (num_message_bits > 0). Default is 0.
         """

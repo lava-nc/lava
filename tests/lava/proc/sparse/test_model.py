@@ -3,17 +3,13 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import numpy as np
 from scipy.sparse import csr_matrix
-
-from lava.proc.sparse.process import Sparse
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse, DelaySparse
 from lava.proc.sparse.models import AbstractPyDelaySparseModel
 from lava.proc.io.source import RingBuffer as Source
 from lava.proc.io.sink import RingBuffer as Sink
-from lava.magma.core.run_configs import Loihi2SimCfg 
-import unittest
+from lava.magma.core.run_configs import Loihi2SimCfg
 import numpy as np
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -445,7 +441,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
         spk_in = self.s_in.recv()
         self.spk_data[self.time_step - 1, :] = spk_in
 
-class TestDelayDenseProcessModel(unittest.TestCase):
+class TestDelaySparseProcessModel(unittest.TestCase):
         """Tests for ProcessModels of Dense with synaptic delay."""
 
         def test_matrix_weight_delay_expansion(self):
@@ -761,7 +757,7 @@ class TestDelayDenseProcessModel(unittest.TestCase):
             dense.a_out.connect(spr.s_in)
             # Configure execution and run
             rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
+            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
             dense.run(condition=rcnd, run_cfg=rcfg)
             # Gather spike data and stop
             spk_data_through_run = spr.spk_data.get()
@@ -915,7 +911,7 @@ class TestDelayDenseProcessModel(unittest.TestCase):
             dense.a_out.connect(spr.s_in)
             # Configure execution and run
             rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
+            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
             dense.run(condition=rcnd, run_cfg=rcfg)
             # Gather spike data and stop
             spk_data_through_run = spr.spk_data.get()
