@@ -11,6 +11,7 @@ namespace message_infrastructure {
 
 DDSChannel::DDSChannel(const std::string &src_name,
                        const std::string &dst_name,
+                       const std::string &topic_name,
                        const size_t &size,
                        const size_t &nbytes,
                        const DDSTransportType &dds_transfer_type,
@@ -18,27 +19,12 @@ DDSChannel::DDSChannel(const std::string &src_name,
   LAVA_DEBUG(LOG_DDS, "Creating DDSChannel...\n");
 
   dds_ = GetDDSManagerSingleton().AllocDDS(
-                                  "dds_topic_" + std::to_string(std::rand()),
+                                  topic_name,
                                   dds_transfer_type,
                                   dds_backend,
                                   size);
   send_port_ = std::make_shared<DDSSendPort>(src_name, size, nbytes, dds_);
   recv_port_ = std::make_shared<DDSRecvPort>(dst_name, size, nbytes, dds_);
-}
-
-DDSChannel::DDSChannel(const std::string &topic_name,
-                       const DDSTransportType &dds_transfer_type,
-                       const DDSBackendType &dds_backend,
-                       const size_t &size) {
-  LAVA_DEBUG(LOG_DDS, "Creating DDSChannel...\n");
-  dds_ = GetDDSManagerSingleton().AllocDDS(topic_name,
-                                  dds_transfer_type,
-                                  dds_backend,
-                                  size);
-  send_port_ = std::make_shared<DDSSendPort>(
-            topic_name+"_src_" + std::to_string(std::rand()), 0, 0, dds_);
-  recv_port_ = std::make_shared<DDSRecvPort>(
-            topic_name+"_dst_" + std::to_string(std::rand()), 0, 0, dds_);
 }
 
 AbstractSendPortPtr DDSChannel::GetSendPort() {
@@ -57,12 +43,14 @@ std::shared_ptr<DDSChannel> GetDefaultDDSChannel(const size_t &nbytes,
   #if defined(CycloneDDS_ENABLE)
     BackendType = DDSBackendType::CycloneDDSBackend;
   #endif
-  return std::make_shared<DDSChannel>(src_name,
-                                      dst_name,
-                                      size,
-                                      nbytes,
-                                      DDSTransportType::DDSUDPv4,
-                                      BackendType);
+  return std::make_shared<DDSChannel>(
+                          src_name,
+                          dst_name,
+                          "dds_topic_" + std::to_string(std::rand()),
+                          size,
+                          nbytes,
+                          DDSTransportType::DDSUDPv4,
+                          BackendType);
 }
 
 }  // namespace message_infrastructure

@@ -160,7 +160,8 @@ static void Sleep() {
 #define HEARTBEAT_PERIOD_NANOSEC (200 * 1000 * 1000)
 // Topic
 #define DDS_DATATYPE_NAME "ddsmetadata::msg::dds_::DDSMetaData_"
-
+// DDSChannel Create
+#define DEFAULT_NBYTES 0
 
 enum class DDSTransportType {
   DDSSHM = 0,

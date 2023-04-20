@@ -5,17 +5,20 @@
 #include <channel/dds/cyclone_dds.h>
 #include <core/channel_factory.h>
 #include <channel/dds/dds_channel.h>
-
+#include <core/utils.h>
 using namespace message_infrastructure;  // NOLINT
 
 #define LOOP_NUM 100
 
 int main() {
   auto dds_channel = GetChannelFactory()
-    .GetDDSChannel("rt/dds_topic",
+    .GetDDSChannel("test_channel_src",
+                   "test_channel_dst",
+                   "rt/dds_topic",
+                   10,
+                   DEFAULT_NBYTES,
                    DDSTransportType::DDSUDPv4,
-                   DDSBackendType::CycloneDDSBackend,
-                   10);
+                   DDSBackendType::CycloneDDSBackend);
   auto dds_recv = dds_channel->GetRecvPort();
   int loop = LOOP_NUM;
 

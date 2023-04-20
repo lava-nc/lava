@@ -72,29 +72,33 @@ void dds_protocol(std::string topic_name,
   AbstractChannelPtr mp_to_a1 = GetChannelFactory()
     .GetDDSChannel(topic_name + "mp_to_a1",
                    topic_name + "mp_to_a1",
+                   "mp_to_a1_topic",
                    DEPTH,
-                   0,
+                   sizeof(int64_t)*10000,
                    transfer_type,
                    dds_backend);
   AbstractChannelPtr a1_to_mp = GetChannelFactory()
     .GetDDSChannel(topic_name + "a1_to_mp",
                    topic_name + "a1_to_mp",
+                   "a1_to_mp_topic",
                    DEPTH,
-                   0,
+                   sizeof(int64_t)*10000,
                    transfer_type,
                    dds_backend);
   AbstractChannelPtr a1_to_a2 = GetChannelFactory()
     .GetDDSChannel(topic_name + "a1_to_a2",
                    topic_name + "a1_to_a2",
+                   "a1_to_a2_topic",
                    DEPTH,
-                   0,
+                   sizeof(int64_t)*10000,
                    transfer_type,
                    dds_backend);
   AbstractChannelPtr a2_to_a1 = GetChannelFactory()
     .GetDDSChannel(topic_name + "a2_to_a1",
                    topic_name + "a2_to_a1",
+                   "a2_to_a1_topic",
                    DEPTH,
-                   0,
+                   sizeof(int64_t)*10000,
                    transfer_type,
                    dds_backend);
 
@@ -166,12 +170,13 @@ TEST(TestDDSSingleProcess, DDS1Process) {
   GTEST_SKIP();
   LAVA_DUMP(LOG_UTTEST, "TestDDSSingleProcess starts.\n");
   AbstractChannelPtr dds_channel = GetChannelFactory()
-    .GetDDSChannel("test_DDSChannel",
-    "test_DDSChannel",
-    5,
-    0,
-    DDSTransportType::DDSSHM,
-    DDSBackendType::FASTDDSBackend);
+    .GetDDSChannel("test_DDSChannel_src",
+                   "test_DDSChannel_dst",
+                   "TestDDSSingleProcess_topic",
+                   5,
+                   sizeof(int64_t),
+                   DDSTransportType::DDSSHM,
+                   DDSBackendType::FASTDDSBackend);
 
   auto send_port = dds_channel->GetSendPort();
   send_port->Start();

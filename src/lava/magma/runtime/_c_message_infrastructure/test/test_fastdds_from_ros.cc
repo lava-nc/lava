@@ -12,10 +12,13 @@ using namespace message_infrastructure;  // NOLINT
 
 int main() {
   auto dds_channel = GetChannelFactory()
-    .GetDDSChannel("rt/dds_topic",
+    .GetDDSChannel("test_channel_src",
+                   "test_channel_dst",
+                   "rt/dds_topic",
+                   10,
+                   DEFAULT_NBYTES,
                    DDSTransportType::DDSUDPv4,
-                   DDSBackendType::FASTDDSBackend,
-                   10);
+                   DDSBackendType::FASTDDSBackend);
   auto dds_recv = dds_channel->GetRecvPort();
   int loop = LOOP_NUM;
 

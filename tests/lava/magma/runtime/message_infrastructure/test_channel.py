@@ -61,9 +61,9 @@ def ddschannel_protocol(transfer_type, backend, topic_name):
     mp.start()
     dds_channel = GetDDSChannel(
         topic_name,
+        ChannelQueueSize,
         transfer_type,
-        backend,
-        ChannelQueueSize)
+        backend)
 
     send_port = dds_channel.src_port
     recv_port = dds_channel.dst_port
