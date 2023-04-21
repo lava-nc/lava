@@ -127,7 +127,9 @@ class Var(AbstractProcessMember):
                     f"."
                 )
 
-    def set(self, value: ty.Union[np.ndarray, str, spmatrix], idx: np.ndarray = None):
+    def set(self,
+            value: ty.Union[np.ndarray, str, spmatrix],
+            idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if isinstance(value, spmatrix):
@@ -136,8 +138,9 @@ class Var(AbstractProcessMember):
                     (value.indices != self.init.indices).any() or \
                     (value.indptr != self.init.indptr).any() or \
                     (len(find(value)[2]) != len(find(self.init)[2])):
-                raise ValueError("The indices and number of non-zero elements " +
-                                 "must stay equal when setting a sparse matrix.")
+                raise ValueError("Indices and number of non-zero elements "
+                                 "must stay equal when using set on a"
+                                 "sparse matrix.")
             value = find(value)[2]
 
         if self.aliased_var is not None:
@@ -163,7 +166,6 @@ class Var(AbstractProcessMember):
             return self.aliased_var.get(idx)
         else:
             if self.process.runtime:
-                
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     # decode if var is string
@@ -172,7 +174,7 @@ class Var(AbstractProcessMember):
                     dst, src, _ = find(self.init)
 
                     ret = csr_matrix((buffer, (dst, src)), self.init.shape)
-                    return ret 
+                    return ret
                 else:
                     return buffer
             else:

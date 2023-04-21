@@ -11,7 +11,7 @@ from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse, DelaySparse
-from lava.proc.sparse.models import AbstractPyDelaySparseModel
+from lava.proc.sparse.models import AbstractPyDelaySparseModel as APDSM
 from lava.proc.io.source import RingBuffer as Source
 from lava.proc.io.sink import RingBuffer as Sink
 import unittest
@@ -29,7 +29,6 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.models import AbstractPyDelayDenseModel
 from lava.utils.weightutils import SignMode
-
 
 
 def create_network(input_data, conn, weights):
@@ -94,7 +93,6 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         conn.stop()
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
-
 
     def test_consistency_with_dense_random_shape_graded(self):
         """Tests if the results of Sparse and Dense are consistent. """
@@ -169,8 +167,9 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         weights_init[np.abs(weights_init) < 0.7] = 0
         weights_init_sparse = csr_matrix(weights_init)
 
-        weights_to_set_sparse = weights_init_sparse.copy()
-        weights_to_set_sparse.data = (np.random.random(weights_to_set_sparse.data.shape) - 0.5) * 2
+        new_weights_sparse = weights_init_sparse.copy()
+        new_weights_sparse.data = (np.random.random(
+            new_weights_sparse.data.shape) - 0.5) * 2
 
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
 
@@ -181,10 +180,10 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
-        weights_to_set_sparse = conn.weights.init.copy()
-        weights_to_set_sparse.data = np.random.permutation(weights_to_set_sparse.data)
+        new_weights_sparse = conn.weights.init.copy()
+        new_weights_sparse.data = np.random.permutation(new_weights_sparse.data)
 
-        conn.weights.set(weights_to_set_sparse)
+        conn.weights.set(new_weights_sparse)
 
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -193,8 +192,8 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         conn.stop()
 
         self.assertIsInstance(weights_got_ts_2, csr_matrix)
-        np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
-
+        np.testing.assert_array_equal(weights_got_ts_2.toarray(),
+                                      new_weights_sparse.toarray())
 
 
 class TestSparseProcessModelFixed(unittest.TestCase):
@@ -325,10 +324,10 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
-        weights_to_set_sparse = conn.weights.init.copy()
-        weights_to_set_sparse.data = np.random.permutation(weights_to_set_sparse.data)
+        new_weights_sparse = conn.weights.init.copy()
+        new_weights_sparse.data = np.random.permutation(new_weights_sparse.data)
 
-        conn.weights.set(weights_to_set_sparse)
+        conn.weights.set(new_weights_sparse)
 
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -337,20 +336,21 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         conn.stop()
 
         self.assertIsInstance(weights_got_ts_2, csr_matrix)
-        np.testing.assert_array_equal(weights_got_ts_2.toarray(), weights_to_set_sparse.toarray())
-  
+        np.testing.assert_array_equal(weights_got_ts_2.toarray(),
+                                      new_weights_sparse.toarray())
+
     def test_weights_set_failure(self):
-        """This tests tries to use set() to change weights but fails as 
+        """This tests tries to use set() to change weights but fails as
         the number of non-zero weights and their indices change"""
         simtime = 2
         shape = (2, 2)
         weights_init = np.array([[0, 32], [13, 0]])
-        weights_to_set = np.array([[0, 0], [13, 0]])
-        weights_to_set_2 = np.array([[32, 0], [13, 0]])
-        
+        new_weights = np.array([[0, 0], [13, 0]])
+        new_weights_2 = np.array([[32, 0], [13, 0]])
+
         weights_init_sparse = csr_matrix(weights_init)
-        weights_to_set_sparse = csr_matrix(weights_to_set)
-        weights_to_set_sparse_2 = csr_matrix(weights_to_set_2)
+        new_weights_sparse = csr_matrix(new_weights)
+        new_weights_sparse_2 = csr_matrix(new_weights_2)
 
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
 
@@ -361,17 +361,17 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
-
-        self.assertRaises(ValueError, conn.weights.set, weights_to_set_sparse)
-        self.assertRaises(ValueError, conn.weights.set, weights_to_set_sparse_2)
+        self.assertRaises(ValueError, conn.weights.set, new_weights_sparse)
+        self.assertRaises(ValueError, conn.weights.set, new_weights_sparse_2)
         conn.stop()
-  
+
 
 class TestLearningSparseProcessModelFloat(unittest.TestCase):
     """Tests for Sparse class in floating point precision. """
 
     def test_consistency_with_learning_dense_random_shape(self):
-        """Tests if the results of LearningSparse and LearningDense are consistent. """
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
 
         simtime = 10
         shape = np.random.randint(1, 100, 2).tolist()
@@ -418,7 +418,9 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
         weights_got_sparse = conn.weights.get()
         conn.stop()
 
-        np.testing.assert_array_equal(weights_got_dense, weights_got_sparse.toarray())
+        np.testing.assert_array_equal(weights_got_dense,
+                                      weights_got_sparse.toarray())
+
 
 class VecSendandRecvProcess(AbstractProcess):
     """
@@ -533,514 +535,525 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
         spk_in = self.s_in.recv()
         self.spk_data[self.time_step - 1, :] = spk_in
 
+
 class TestDelaySparseProcessModel(unittest.TestCase):
-        """Tests for ProcessModels of Sparse with synaptic delay."""
+    """Tests for ProcessModels of Sparse with synaptic delay."""
 
-        def test_matrix_weight_delay_expansion(self):
-            """"""
-            shape = (5, 4)
-            weights = np.zeros(shape, dtype=float)
-            weights[3, 3] = 1
-            weights[1,2] = 3
-            weights[3,1] = 1
-            delays = np.zeros(shape, dtype=int)
-            delays[3, 3] = 1
-            delays[1,2] = 3
-            delays[3,1] = 2
+    def test_matrix_weight_delay_expansion(self):
+        """"""
+        shape = (5, 4)
+        weights = np.zeros(shape, dtype=float)
+        weights[3, 3] = 1
+        weights[1, 2] = 3
+        weights[3, 1] = 1
+        delays = np.zeros(shape, dtype=int)
+        delays[3, 3] = 1
+        delays[1, 2] = 3
+        delays[3, 1] = 2
 
-            weights_sparse = csr_matrix(weights)
-            delays_sparse = csr_matrix(delays)
-            wgt_dly_dense = AbstractPyDelayDenseModel.get_del_wgts(weights, delays)
-            wgt_dly_sparse = AbstractPyDelaySparseModel.get_del_wgts(weights_sparse, delays_sparse)
-            self.assertTrue(np.all(wgt_dly_sparse==wgt_dly_dense))
+        weights_sparse = csr_matrix(weights)
+        delays_sparse = csr_matrix(delays)
+        wgt_dly_dense = AbstractPyDelayDenseModel.get_del_wgts(weights,
+                                                               delays)
+        wgt_dly_sparse = APDSM.get_del_wgts(weights_sparse,
+                                            delays_sparse)
+        self.assertTrue(np.all(wgt_dly_sparse == wgt_dly_dense))
 
-        def test_float_pm_buffer_delay(self):
-            """Tests floating point Sparse ProcessModel connectivity and temporal
-            dynamics. All input 'neurons' from the VecSendandRcv fire
-            once at time t=4, and only 1 connection weight
-            in the Sparse Process is non-zero. The value of the delay matrix for
-            this weight is 2. The non-zero connection should have an activation of
-            1 at timestep t=7.
-            """
-            shape=(3,4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process with a single non-zero connection weight at
-            # entry [2, 2] of the connectivity matrix and a delay of 2 at entry
-            # [2, 2] in the delay matrix.
-            weights = np.zeros(shape, dtype=float)
-            weights[2, 2] = 1
-            delays = np.zeros(shape, dtype=int)
-            delays[2, 2] = 2
-            weights = csr_matrix(weights)
-            delays = csr_matrix(delays)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # a_out will be equal to 1 at timestep 7, because the dendritic
-            #  accumulators work on inputs from the previous timestep + 2.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[6, 2] = 1.
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_float_pm_buffer_delay(self):
+        """Tests floating point Sparse ProcessModel connectivity and temporal
+        dynamics. All input 'neurons' from the VecSendandRcv fire
+        once at time t=4, and only 1 connection weight
+        in the Sparse Process is non-zero. The value of the delay matrix for
+        this weight is 2. The non-zero connection should have an activation
+        of 1 at timestep t=7.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],),
+                                    num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process with a single non-zero connection weight at
+        # entry [2, 2] of the connectivity matrix and a delay of 2 at entry
+        # [2, 2] in the delay matrix.
+        weights = np.zeros(shape, dtype=float)
+        weights[2, 2] = 1
+        delays = np.zeros(shape, dtype=int)
+        delays[2, 2] = 2
+        weights = csr_matrix(weights)
+        delays = csr_matrix(delays)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # a_out will be equal to 1 at timestep 7, because the dendritic
+        #  accumulators work on inputs from the previous timestep + 2.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[6, 2] = 1.
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_float_pm_fan_in_delay(self):
-            """
-            Tests floating point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-in to a receiving neuron is greater than 1
-            and synaptic delays are configured.
-            """
-            shape = (3, 4)
-            num_steps = 10
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up a Sparse Process where all input layer neurons project to a
-            # single output layer neuron with varying delays.
-            weights = np.zeros(shape, dtype=float)
-            weights[2, :] = [2, -3, 4, -5]
-            delays = np.zeros(shape, dtype=int)
-            delays[2, :] = [1, 2, 2, 4]
-            weights = csr_matrix(weights)
-            delays = csr_matrix(delays)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neuron 3 will be equal to 2 at timestep 6, 1=-3+4 at timestep 7 and
-            # -5 at timestep 9
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[5, 2] = 2
-            expected_spk_data[6, 2] = 1
-            expected_spk_data[8, 2] = -5
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_float_pm_fan_in_delay(self):
+        """
+        Tests floating point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-in to a receiving neuron is greater than 1
+        and synaptic delays are configured.
+        """
+        shape = (3, 4)
+        num_steps = 10
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up a Sparse Process where all input layer neurons project to a
+        # single output layer neuron with varying delays.
+        weights = np.zeros(shape, dtype=float)
+        weights[2, :] = [2, -3, 4, -5]
+        delays = np.zeros(shape, dtype=int)
+        delays[2, :] = [1, 2, 2, 4]
+        weights = csr_matrix(weights)
+        delays = csr_matrix(delays)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neuron 3 will be equal to 2 at timestep 6, 1=-3+4 at timestep 7
+        # and -5 at timestep 9
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[5, 2] = 2
+        expected_spk_data[6, 2] = 1
+        expected_spk_data[8, 2] = -5
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_float_pm_fan_out_delay(self):
-            """
-            Tests floating point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-out of a projecting neuron is greater than 1
-            and synaptic delays are configured.
-            """
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep t=4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up a Sparse Process where a single input layer neuron projects to
-            # all output layer neurons with a delay of 2 for all synapses.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [3, 4, 5]
-            delays = np.zeros(shape, dtype=int)
-            delays = 2
-            weights = csr_matrix(weights)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 3, 4, and 5, respectively, at timestep 7.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[6, :] = [3, 4, 5]
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_float_pm_fan_out_delay(self):
+        """
+        Tests floating point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        and synaptic delays are configured.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep t=4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up a Sparse Process where a single input layer neuron
+        # projects to all output layer neurons with a delay of 2 for
+        # all synapses.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [3, 4, 5]
+        delays = np.zeros(shape, dtype=int)
+        delays = 2
+        weights = csr_matrix(weights)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 3, 4, and 5, respectively, at
+        # timestep 7.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[6, :] = [3, 4, 5]
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_float_pm_fan_out_delay_2(self):
-            """
-            Tests floating point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-out of a projecting neuron is greater than 1
-            and synaptic delays are configured.
-            """
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep t=4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up a Sparse Process where a single input layer neuron projects to
-            # all output layer neurons with varying delays.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [3, 4, 5]
-            delays = np.zeros(shape, dtype=int)
-            delays[:, 2] = [0, 1, 2]
-            weights = csr_matrix(weights)
-            delays = csr_matrix(delays)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 3, 4, and 5, respectively, at timestep
-            # 5, 6 and 7, respectively.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[4, 0] = 3
-            expected_spk_data[5, 1] = 4
-            expected_spk_data[6, 2] = 5
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_float_pm_fan_out_delay_2(self):
+        """
+        Tests floating point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        and synaptic delays are configured.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep t=4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up a Sparse Process where a single input layer neuron projects
+        # to all output layer neurons with varying delays.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [3, 4, 5]
+        delays = np.zeros(shape, dtype=int)
+        delays[:, 2] = [0, 1, 2]
+        weights = csr_matrix(weights)
+        delays = csr_matrix(delays)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 3, 4, and 5, respectively, at
+        # timestep 5, 6 and 7, respectively.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[4, 0] = 3
+        expected_spk_data[5, 1] = 4
+        expected_spk_data[6, 2] = 5
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_float_pm_recurrence_delays(self):
-            """
-             Tests that floating Sparse ProcessModel has non-blocking dynamics for
-             recurrent connectivity architectures and synaptic delays are
-             configured.
-             """
-            shape = (3, 3)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(True, (num_steps,))
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process with fully connected recurrent connectivity
-            # architecture
-            weights = np.ones(shape, dtype=float)
-            delays = 2
-            weights = csr_matrix(weights)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(sps.a_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            sparse.stop()
+    def test_float_pm_recurrence_delays(self):
+        """
+         Tests that floating Sparse ProcessModel has non-blocking dynamics
+         for recurrent connectivity architectures and synaptic delays are
+         configured.
+         """
+        shape = (3, 3)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(True, (num_steps,))
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process with fully connected recurrent connectivity
+        # architecture
+        weights = np.ones(shape, dtype=float)
+        delays = 2
+        weights = csr_matrix(weights)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(sps.a_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        sparse.stop()
 
-        def test_bitacc_pm_fan_out_excitatory_delay(self):
-            """
-            Tests fixed-point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-out of a projecting neuron is greater than 1
-            and all connections are excitatory (sign_mode = 2) and synaptic delays
-            are configured.
-            """
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process in which a single input neuron projects to all
-            #  output neurons.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [0.5, 300, 40]
-            delays = np.zeros(shape, dtype=int)
-            delays[:, 2] = [0, 1, 2]
-            weights = csr_matrix(weights)
-            delays = csr_matrix(delays)
-            sparse = DelaySparse(weights=weights, delays=delays,
-                               sign_mode=SignMode.EXCITATORY)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 0, 255, and 40, respectively,
-            # at timestep 5, 6 and 7, because a_out can only have integer values
-            # between 0 and 255 and we have a delay of 0, 1, 2 on the synapses,
-            # respectively.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[4, 0] = 0
-            expected_spk_data[5, 1] = 255
-            expected_spk_data[6, 2] = 40
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_bitacc_pm_fan_out_excitatory_delay(self):
+        """
+        Tests fixed-point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        and all connections are excitatory (sign_mode = 2) and synaptic
+        delays are configured.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process in which a single input neuron projects
+        # to all output neurons.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [0.5, 300, 40]
+        delays = np.zeros(shape, dtype=int)
+        delays[:, 2] = [0, 1, 2]
+        weights = csr_matrix(weights)
+        delays = csr_matrix(delays)
+        sparse = DelaySparse(weights=weights,
+                             delays=delays,
+                             sign_mode=SignMode.EXCITATORY)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='fixed_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 0, 255, and 40, respectively,
+        # at timestep 5, 6 and 7, because a_out can only have integer values
+        # between 0 and 255 and we have a delay of 0, 1, 2 on the synapses,
+        # respectively.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[4, 0] = 0
+        expected_spk_data[5, 1] = 255
+        expected_spk_data[6, 2] = 40
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_bitacc_pm_fan_out_mixed_sign_delay(self):
-            """
-            Tests fixed-point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-out of a projecting neuron is greater than 1
-            and connections are both excitatory and inhibitory (sign_mode = 1).
-            When using mixed sign weights and full 8 bit weight precision,
-            a_out can take even values from -256 to 254. A delay of 2 for all
-            synapses is configured.
-            """
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process in which a single input neuron projects to all
-            # output neurons with both excitatory and inhibitory weights.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [300, -300, 39]
-            delays = np.zeros(shape, dtype=int)
-            delays = 2
-            weights = csr_matrix(weights)
-            sparse = DelaySparse(weights=weights, delays=delays,
-                               sign_mode=SignMode.MIXED)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 254, -256, and 38, respectively,
-            # at timestep 7, because a_out can only have even values between -256
-            # and 254 and a delay of 2 is configured.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[6, :] = [254, -256, 38]
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_bitacc_pm_fan_out_mixed_sign_delay(self):
+        """
+        Tests fixed-point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-out of a projecting neuron is greater than 1
+        and connections are both excitatory and inhibitory (sign_mode = 1).
+        When using mixed sign weights and full 8 bit weight precision,
+        a_out can take even values from -256 to 254. A delay of 2 for all
+        synapses is configured.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process in which a single input neuron projects to
+        # all output neurons with both excitatory and inhibitory weights.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [300, -300, 39]
+        delays = np.zeros(shape, dtype=int)
+        delays = 2
+        weights = csr_matrix(weights)
+        sparse = DelaySparse(weights=weights,
+                             delays=delays,
+                             sign_mode=SignMode.MIXED)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='fixed_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 254, -256, and 38, respectively,
+        # at timestep 7, because a_out can only have even values between
+        # -256 and 254 and a delay of 2 is configured.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[6, :] = [254, -256, 38]
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_bitacc_pm_fan_out_weight_exp_delay(self):
-            """
-             Tests fixed-point Sparse ProcessModel dendritic accumulation
-             behavior when the fan-out of a projecting neuron is greater than 1
-             , connections are both excitatory and inhibitory (sign_mode = 1),
-             and weight_exp = 1.
-             When using mixed sign weights, full 8 bit weight precision,
-             and weight_exp = 1, a_out can take even values from -512 to 508.
-             As a result of setting weight_exp = 1, the expected a_out result is 2x
-             that of the previous unit test. A delay of 0, 1, 2 is configured for
-             respective synapses.
-             """
+    def test_bitacc_pm_fan_out_weight_exp_delay(self):
+        """
+         Tests fixed-point Sparse ProcessModel dendritic accumulation
+         behavior when the fan-out of a projecting neuron is greater than 1
+         , connections are both excitatory and inhibitory (sign_mode = 1),
+         and weight_exp = 1.
+         When using mixed sign weights, full 8 bit weight precision,
+         and weight_exp = 1, a_out can take even values from -512 to 508.
+         As a result of setting weight_exp = 1, the expected a_out result
+         is 2x that of the previous unit test. A delay of 0, 1, 2 is
+         configured for respective synapses.
+         """
 
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process in which all input neurons project to a single
-            # output neuron with mixed sign connection weights.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [300, -300, 39]
-            delays = np.zeros(shape, dtype=int)
-            delays[:, 2] = [0, 1, 2]
-            weights = csr_matrix(weights)
-            delays = csr_matrix(delays)
-            # Set weight_exp = 1. This affects weight scaling.
-            sparse = DelaySparse(weights=weights, weight_exp=1, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 508, -512, and 76, respectively,
-            # at timestep 5, 6, and 7, respectively, because a_out can only
-            # have values between -512 and 508 such that a_out % 4 = 0.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[4, 0] = 508
-            expected_spk_data[5, 1] = -512
-            expected_spk_data[6, 2] = 76
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process in which all input neurons project to a
+        # single output neuron with mixed sign connection weights.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [300, -300, 39]
+        delays = np.zeros(shape, dtype=int)
+        delays[:, 2] = [0, 1, 2]
+        weights = csr_matrix(weights)
+        delays = csr_matrix(delays)
+        # Set weight_exp = 1. This affects weight scaling.
+        sparse = DelaySparse(weights=weights, weight_exp=1, delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='fixed_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 508, -512, and 76, respectively,
+        # at timestep 5, 6, and 7, respectively, because a_out can only
+        # have values between -512 and 508 such that a_out % 4 = 0.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[4, 0] = 508
+        expected_spk_data[5, 1] = -512
+        expected_spk_data[6, 2] = 76
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_bitacc_pm_fan_out_weight_precision_delay(self):
-            """
-             Tests fixed-point Sparse ProcessModel dendritic accumulation
-             behavior when the fan-out of a projecting neuron is greater than 1
-             , connections are both excitatory and inhibitory (sign_mode = 1),
-             and num_weight_bits = 7.
-             When using mixed sign weights and 7 bit weight precision,
-             a_out can take values from -256 to 252 such that a_out % 4 = 0.
-             All synapses have a delay of 2 configured.
-             """
+    def test_bitacc_pm_fan_out_weight_precision_delay(self):
+        """
+         Tests fixed-point Sparse ProcessModel dendritic accumulation
+         behavior when the fan-out of a projecting neuron is greater than 1
+         , connections are both excitatory and inhibitory (sign_mode = 1),
+         and num_weight_bits = 7.
+         When using mixed sign weights and 7 bit weight precision,
+         a_out can take values from -256 to 252 such that a_out % 4 = 0.
+         All synapses have a delay of 2 configured.
+         """
 
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process in which all input neurons project to a single
-            # output neuron with mixed sign connection weights.
-            weights = np.zeros(shape, dtype=float)
-            weights[:, 2] = [300, -300, 39]
-            delays = np.zeros(shape, dtype=int)
-            delays = 2
-            weights = csr_matrix(weights)
-            # Set num_weight_bits = 7. This affects weight scaling.
-            sparse = DelaySparse(weights=weights, num_weight_bits=7, delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neurons 1-3 will be equal to 252, -256, and 36, respectively,
-            # at timestep 7, because a_out can only have values between -256
-            # and 252 such that a_out % 4 = 0.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[6, :] = [252, -256, 36]
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process in which all input neurons project to a
+        # single output neuron with mixed sign connection weights.
+        weights = np.zeros(shape, dtype=float)
+        weights[:, 2] = [300, -300, 39]
+        delays = np.zeros(shape, dtype=int)
+        delays = 2
+        weights = csr_matrix(weights)
+        # Set num_weight_bits = 7. This affects weight scaling.
+        sparse = DelaySparse(weights=weights,
+                             num_weight_bits=7,
+                             delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='fixed_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neurons 1-3 will be equal to 252, -256, and 36, respectively,
+        # at timestep 7, because a_out can only have values between -256
+        # and 252 such that a_out % 4 = 0.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[6, :] = [252, -256, 36]
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_bitacc_pm_fan_in_mixed_sign_delay(self):
-            """
-            Tests fixed-point Sparse ProcessModel dendritic accumulation
-            behavior when the fan-in of a receiving neuron is greater than 1
-            and connections are both excitatory and inhibitory (sign_mode = 1).
-            When using mixed sign weights and full 8 bit weight precision,
-            a_out can take even values from -256 to 254. All synapses have a
-            delay of 2 configured.
-            """
-            shape = (3, 4)
-            num_steps = 8
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(False, (num_steps,))
-            send_at_times[3] = True
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process in which all input layer neurons project to a
-            # single output layer neuron with both excitatory and inhibitory
-            # weights.
-            weights = np.zeros(shape, dtype=float)
-            weights[2, :] = [300, -300, 39, -0.4]
-            delays = np.zeros(shape, dtype=int)
-            delays = 2
-            weights = csr_matrix(weights)
-            sparse = DelaySparse(weights=weights, sign_mode=SignMode.MIXED,
-                               delays=delays)
-            # Receive neuron spikes
-            spr = VecRecvProcess(shape=(num_steps, shape[0]))
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(spr.s_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='fixed_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            # Gather spike data and stop
-            spk_data_through_run = spr.spk_data.get()
-            sparse.stop()
-            # Gold standard for the test
-            # Expected behavior is that a_out corresponding to output
-            # neuron 3 will be equal to 36=254-256+38-0 at timestep 7, because
-            # weights can only have even values between -256 and 254.
-            expected_spk_data = np.zeros((num_steps, shape[0]))
-            expected_spk_data[6, 2] = 36
-            self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
+    def test_bitacc_pm_fan_in_mixed_sign_delay(self):
+        """
+        Tests fixed-point Sparse ProcessModel dendritic accumulation
+        behavior when the fan-in of a receiving neuron is greater than 1
+        and connections are both excitatory and inhibitory (sign_mode = 1).
+        When using mixed sign weights and full 8 bit weight precision,
+        a_out can take even values from -256 to 254. All synapses have a
+        delay of 2 configured.
+        """
+        shape = (3, 4)
+        num_steps = 8
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(False, (num_steps,))
+        send_at_times[3] = True
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process in which all input layer neurons project to
+        # a single output layer neuron with both excitatory and inhibitory
+        # weights.
+        weights = np.zeros(shape, dtype=float)
+        weights[2, :] = [300, -300, 39, -0.4]
+        delays = np.zeros(shape, dtype=int)
+        delays = 2
+        weights = csr_matrix(weights)
+        sparse = DelaySparse(weights=weights,
+                             sign_mode=SignMode.MIXED,
+                             delays=delays)
+        # Receive neuron spikes
+        spr = VecRecvProcess(shape=(num_steps, shape[0]))
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(spr.s_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='fixed_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        # Gather spike data and stop
+        spk_data_through_run = spr.spk_data.get()
+        sparse.stop()
+        # Gold standard for the test
+        # Expected behavior is that a_out corresponding to output
+        # neuron 3 will be equal to 36=254-256+38-0 at timestep 7, because
+        # weights can only have even values between -256 and 254.
+        expected_spk_data = np.zeros((num_steps, shape[0]))
+        expected_spk_data[6, 2] = 36
+        self.assertTrue(np.all(expected_spk_data == spk_data_through_run))
 
-        def test_bitacc_pm_recurrence_delay(self):
-            """
-            Tests that bit accurate Sparse ProcessModel has non-blocking dynamics for
-            recurrent connectivity architectures. All synapses have a delay of 2
-            configured.
-            """
-            shape = (3, 3)
-            num_steps = 6
-            # Set up external input to emulate every neuron spiking once on
-            # timestep 4.
-            vec_to_send = np.ones((shape[1],), dtype=float)
-            send_at_times = np.repeat(True, (num_steps,))
-            sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
-                                        vec_to_send=vec_to_send,
-                                        send_at_times=send_at_times)
-            # Set up Sparse Process with fully connected recurrent connectivity
-            # architecture.
-            weights = np.ones(shape, dtype=float)
-            delays = 2
-            weights = csr_matrix(weights)
-            sparse = DelaySparse(weights=weights, delays=delays)
-            # Receive neuron spikes
-            sps.s_out.connect(sparse.s_in)
-            sparse.a_out.connect(sps.a_in)
-            # Configure execution and run
-            rcnd = RunSteps(num_steps=num_steps)
-            rcfg = Loihi2SimCfg(select_tag='floating_pt')
-            sparse.run(condition=rcnd, run_cfg=rcfg)
-            sparse.stop()
+    def test_bitacc_pm_recurrence_delay(self):
+        """
+        Tests that bit accurate Sparse ProcessModel has non-blocking
+        dynamics for recurrent connectivity architectures. All
+        synapses have a delay of 2 configured.
+        """
+        shape = (3, 3)
+        num_steps = 6
+        # Set up external input to emulate every neuron spiking once on
+        # timestep 4.
+        vec_to_send = np.ones((shape[1],), dtype=float)
+        send_at_times = np.repeat(True, (num_steps,))
+        sps = VecSendandRecvProcess(shape=(shape[1],), num_steps=num_steps,
+                                    vec_to_send=vec_to_send,
+                                    send_at_times=send_at_times)
+        # Set up Sparse Process with fully connected recurrent connectivity
+        # architecture.
+        weights = np.ones(shape, dtype=float)
+        delays = 2
+        weights = csr_matrix(weights)
+        sparse = DelaySparse(weights=weights, delays=delays)
+        # Receive neuron spikes
+        sps.s_out.connect(sparse.s_in)
+        sparse.a_out.connect(sps.a_in)
+        # Configure execution and run
+        rcnd = RunSteps(num_steps=num_steps)
+        rcfg = Loihi2SimCfg(select_tag='floating_pt')
+        sparse.run(condition=rcnd, run_cfg=rcfg)
+        sparse.stop()

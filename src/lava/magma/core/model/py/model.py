@@ -180,7 +180,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             # First item is number of items
             num_items = int(data_port.recv()[0])
 
-            buffer = np.empty(num_items) 
+            buffer = np.empty(num_items)
             # Set data one by one
             for i in range(num_items):
                 buffer[i] = data_port.recv()[0]

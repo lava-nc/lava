@@ -404,7 +404,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             elif issubclass(lt.cls, (int, float, str)):
                 var = v.value
             elif issubclass(lt.cls, (csr_matrix)):
-                if isinstance(v.value,int):
+                if isinstance(v.value, int):
                     var = csr_matrix(v.shape, dtype=lt.d_type)
                     var[:] = v.value
                 else:

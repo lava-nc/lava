@@ -1057,8 +1057,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
     @staticmethod
     def _stochastic_round_synaptic_variable(
-        synaptic_variable_name: str,
-        synaptic_variable_values: typing.Union[np.ndarray, csr_matrix],
+        syn_var_name: str,
+        syn_var_values: typing.Union[np.ndarray, csr_matrix],
         random: float,
     ) -> typing.Union[np.ndarray, csr_matrix]:
         """Stochastically round synaptic variable after learning rule
@@ -1066,9 +1066,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_values: ndarray
             Synaptic variable values to stochastically round.
 
         Returns
@@ -1076,27 +1076,25 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         result : ndarray
             Stochastically rounded synaptic variable values.
         """
-        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[syn_var_name])
 
-        if isinstance(synaptic_variable_values, csr_matrix):
-            integer_part = synaptic_variable_values.data / exp_mant
+        if isinstance(syn_var_values, csr_matrix):
+            integer_part = syn_var_values.data / exp_mant
         else:
-            integer_part = synaptic_variable_values / exp_mant
+            integer_part = syn_var_values / exp_mant
         fractional_part = integer_part % 1
 
         integer_part = np.floor(integer_part)
         integer_part = stochastic_round(integer_part, random, fractional_part)
 
-        if isinstance(synaptic_variable_values, csr_matrix):
-            synaptic_variable_values.data = (integer_part * exp_mant).astype(
-                        synaptic_variable_values.dtype
-                    )
-            return synaptic_variable_values
+        if isinstance(syn_var_values, csr_matrix):
+            syn_var_values.data = (integer_part
+                                   * exp_mant).astype(syn_var_values.dtype)
+            return syn_var_values
         else:
             return (integer_part * exp_mant).astype(
-                synaptic_variable_values.dtype
+                syn_var_values.dtype
             )
-
 
     def _saturate_synaptic_variable(
             self, synaptic_variable_name: str,
@@ -1433,7 +1431,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             if (isinstance(syn_var, csr_matrix)):
-                syn_var[syn_var.nonzero()] = lr_applier.apply(syn_var, **applier_args)[syn_var.nonzero()]
+                idx = syn_var.nonzero()
+                syn_var[idx] = lr_applier.apply(syn_var,
+                                                **applier_args)[idx]
             else:
                 syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)

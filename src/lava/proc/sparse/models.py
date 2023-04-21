@@ -19,6 +19,7 @@ from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
+
 class AbstractPySparseModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
@@ -142,6 +143,7 @@ class PyLearningSparseModelFloat(
 
         self.recv_traces(s_in)
 
+
 class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
@@ -166,12 +168,13 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         for r in range(weights.shape[0]):
             for ind in range(weights.indptr[r], weights.indptr[r + 1]):
                 col = weights.indices[ind]
-                weight_delay_row.append(r + (delays[r,col] * weights.shape[0]))
+                weight_delay_row.append(r + (delays[r, col] * weights.shape[0]))
                 weight_delay_column.append(weights.indices[ind])
                 weight_delay_data.append(weights.data[ind])
-        return csr_matrix((weight_delay_data,(weight_delay_row, weight_delay_column)),
-                          shape=(weights.shape[0] * (delays.max()+1), weights.shape[1]))
-
+        return csr_matrix((weight_delay_data, (weight_delay_row,
+                                               weight_delay_column)),
+                          shape=(weights.shape[0] * (delays.max() + 1),
+                                 weights.shape[1]))
 
     def calc_act(self, s_in) -> np.ndarray:
         """
@@ -183,8 +186,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         which is then transposed to get the activation matrix.
         """
         return np.reshape(self.get_del_wgts(self.weights,
-                                     self.delays).dot(s_in),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
+                                            self.delays).dot(s_in),
+                          (np.max(self.delays) + 1,
+                          self.weights.shape[0])).T
 
     def update_act(self, s_in):
         """
@@ -296,5 +300,3 @@ class PyDelaySparseModelBitAcc(AbstractPyDelaySparseModel):
             if self.weight_exp > 0
             else np.right_shift(a_accum, -self.weight_exp)
         )
-
-

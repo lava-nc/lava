@@ -45,7 +45,7 @@ def determine_sign_mode(weights: np.ndarray) -> SignMode:
 
 @dataclass
 class OptimizedWeights:
-    weights:  ty.Union[np.ndarray, spmatrix]
+    weights: ty.Union[np.ndarray, spmatrix]
     num_weight_bits: int
     weight_exp: int
 
@@ -204,7 +204,8 @@ def _determine_num_weight_bits(weights: np.ndarray,
 def truncate_weights(weights: ty.Union[np.ndarray, spmatrix],
                      sign_mode: SignMode,
                      num_weight_bits: int,
-                     max_num_weight_bits: ty.Optional[int] = 8) -> ty.Union[np.ndarray, spmatrix]:
+                     max_num_weight_bits: ty.Optional[int] = 8
+                     ) -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
