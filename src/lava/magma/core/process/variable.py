@@ -131,11 +131,13 @@ class Var(AbstractProcessMember):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if isinstance(value, spmatrix):
-            #value = value.tocsr()
+            value = value.tocsr()
             if value.shape != self.init.shape or \
                     (value.indices != self.init.indices).any() or \
-                    (value.indptr != self.init.indptr).any():
-                raise ValueError("The indices must stay equal when setting a sparse matrix.")
+                    (value.indptr != self.init.indptr).any() or \
+                    (len(find(value)[2]) != len(find(self.init)[2])):
+                raise ValueError("The indices and number of non-zero elements " +
+                                 "must stay equal when setting a sparse matrix.")
             value = find(value)[2]
 
         if self.aliased_var is not None:
@@ -169,15 +171,7 @@ class Var(AbstractProcessMember):
                 if isinstance(self.init, csr_matrix):
                     dst, src, _ = find(self.init)
 
-                    print("VARIABLE", "dst")
-                    print(dst)
-                    print("VARIABLE", "src")
-                    print(src)
-                    print("VARIABLE", "buffer")
-                    print(buffer)
-
-                    # Change this to order="C" makes the LearningSparse tests pass
-                    ret = csr_matrix((buffer.flatten(order="F"), (dst, src)), self.init.shape)
+                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
                     return ret 
                 else:
                     return buffer
