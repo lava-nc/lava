@@ -74,9 +74,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
         """
         self.__dict__[key] = value
-        if isinstance(value, AbstractPyPort) and not value in self.py_ports:
+        if isinstance(value, AbstractPyPort) and value not in self.py_ports:
             self.py_ports.append(value)
-            if isinstance(value, PyVarPort) and not value in self.var_ports:
+            if isinstance(value, PyVarPort) and value not in self.var_ports:
                 self.var_ports.append(value)
 
     def start(self):

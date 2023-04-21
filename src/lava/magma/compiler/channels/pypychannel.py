@@ -271,7 +271,6 @@ class CspRecvPort(AbstractCspRecvPort):
         if there is no data on the channel.
         """
         self._queue.get(peek=True)
-        #result = self._array[self._idx].copy()
         np.copyto(self._result, self._array[self._idx])
         return self._result
 
@@ -280,12 +279,10 @@ class CspRecvPort(AbstractCspRecvPort):
         Receive from the channel. Blocks if there is no data on the channel.
         """
         self._queue.get()
-        #result = self._array[self._idx].copy()
         np.copyto(self._result, self._array[self._idx])
         self._idx = (self._idx + 1) % self._size
         self._ack.release()
         return self._result
-        #return self._array[self._idx]
 
     def join(self):
         if not self._done:
