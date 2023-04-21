@@ -943,12 +943,11 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            syn_var = np.left_shift(
-                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            )
             if(isinstance(syn_var, csr_matrix)):
+                syn_var.data = syn_var.data << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
                 syn_var[syn_var.nonzero()] = lr_applier.apply(syn_var, **applier_args)[syn_var.nonzero()]
             else:
+                syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
                 syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable_accumulator(
                 syn_var_name, syn_var
@@ -958,9 +957,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 syn_var,
                 self._conn_var_random.random_stochastic_round,
             )
-            syn_var = np.right_shift(
-                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            )
+
+            if(isinstance(syn_var, csr_matrix)):
+
+                syn_var.data = syn_var.data >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+            else:
+                syn_var = np.right_shift(
+                    syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                )
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
@@ -1062,9 +1066,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
     @staticmethod
     def _stochastic_round_synaptic_variable(
         synaptic_variable_name: str,
-        synaptic_variable_values: np.ndarray,
+        synaptic_variable_values: typing.Union[np.ndarray, csr_matrix],
         random: float,
-    ) -> np.ndarray:
+    ) -> typing.Union[np.ndarray, csr_matrix]:
         """Stochastically round synaptic variable after learning rule
         application.
 
@@ -1082,16 +1086,25 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         """
         exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
 
-        integer_part = synaptic_variable_values / exp_mant
+        if isinstance(synaptic_variable_values, csr_matrix):
+            integer_part = synaptic_variable_values.data / exp_mant
+        else:
+            integer_part = synaptic_variable_values / exp_mant
         fractional_part = integer_part % 1
 
         integer_part = np.floor(integer_part)
         integer_part = stochastic_round(integer_part, random, fractional_part)
-        result = (integer_part * exp_mant).astype(
-            synaptic_variable_values.dtype
-        )
 
-        return result
+        if isinstance(synaptic_variable_values, csr_matrix):
+            synaptic_variable_values.data = (integer_part * exp_mant).astype(
+                        synaptic_variable_values.dtype
+                    )
+            return synaptic_variable_values
+        else:
+            return (integer_part * exp_mant).astype(
+                synaptic_variable_values.dtype
+            )
+
 
     def _saturate_synaptic_variable(
             self, synaptic_variable_name: str,

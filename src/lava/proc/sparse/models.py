@@ -180,7 +180,7 @@ class PyLearningSparseModelBitApproximate(
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            a_accum = self.weights[:, s_in].sum(axis=1)
+            a_accum = self.weights[:, s_in].sum(axis=1).A1
 
         self.a_buff = (
             np.left_shift(a_accum, self.weight_exp)
