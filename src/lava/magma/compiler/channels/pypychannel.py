@@ -202,6 +202,7 @@ class CspRecvPort(AbstractCspRecvPort):
         self._idx = 0
         self._done = False
         self._array = []
+        self._result = None
         self._queue = None
         self.observer = None
         self.thread = None
@@ -237,6 +238,7 @@ class CspRecvPort(AbstractCspRecvPort):
             )
             for i in range(self._size)
         ]
+        self._result = np.ndarray(shape=self._shape, dtype=self._dtype)
         self._queue = CspRecvQueue(self._size)
         self.thread = Thread(
             target=self._req_callback,
@@ -269,19 +271,21 @@ class CspRecvPort(AbstractCspRecvPort):
         if there is no data on the channel.
         """
         self._queue.get(peek=True)
-        result = self._array[self._idx].copy()
-        return result
+        #result = self._array[self._idx].copy()
+        np.copyto(self._result, self._array[self._idx])
+        return self._result
 
     def recv(self):
         """
         Receive from the channel. Blocks if there is no data on the channel.
         """
         self._queue.get()
-        result = self._array[self._idx].copy()
+        #result = self._array[self._idx].copy()
+        np.copyto(self._result, self._array[self._idx])
         self._idx = (self._idx + 1) % self._size
         self._ack.release()
-
-        return result
+        return self._result
+        #return self._array[self._idx]
 
     def join(self):
         if not self._done:
