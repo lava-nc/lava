@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-"""
-This module will contain a tool to visualize a network of interconnected Lava
-Processes and Vars.
-"""
+from lava.proc.rf.process import RF
+
+
+class RF_IZ(RF):
+    pass

@@ -1,6 +1,10 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import typing as ty
 import unittest
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock
 
 from lava.magma.compiler.executable import Executable
 from lava.magma.core.process.message_interface_enum import ActorType

@@ -77,15 +77,13 @@ cd $HOME
 curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git checkout v0.6.0
 ./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
 source .venv/bin/activate
 pytest
 
-## When running tests if you see 'OSError: [Errno 24] Too many open files'
-## consider setting ulimit using `ulimit -n 4096`
 ## See FAQ for more info: https://github.com/lava-nc/lava/wiki/Frequently-Asked-Questions-(FAQ)#install
 ```
 
@@ -96,7 +94,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.4.0
+git checkout v0.6.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
@@ -175,7 +173,7 @@ Open a Python terminal and run:
 python -m venv .venv
 source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
 pip install -U pip
-pip install lava-nc-0.4.0.tar.gz
+pip install lava-nc-0.6.0.tar.gz
 ```
 
 ## Linting, testing, documentation and packaging

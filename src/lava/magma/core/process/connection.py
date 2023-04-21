@@ -1,6 +1,9 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
+import typing as ty
+
 from lava.magma.core.learning.learning_rule import LoihiLearningRule
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.process import AbstractProcess
@@ -9,12 +12,11 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 
 
-class ConnectionProcess(AbstractProcess):
+class LearningConnectionProcess(AbstractProcess):
     """Base class for connection Processes.
 
     This base class holds all necessary Vars, Ports and functionality for
-    online learning in fixed and floating point simulations. If the
-    learning_rule parameter is not set, plasticity is disabled.
+    online learning in fixed and floating point simulations.
 
     Attributes
     ----------
@@ -52,19 +54,25 @@ class ConnectionProcess(AbstractProcess):
     learning_rule: LoihiLearningRule
         Learning rule which determines the parameters for online learning.
     """
+
     def __init__(
         self,
-        shape: tuple = (1, 1),
-        learning_rule: LoihiLearningRule = None,
+        shape: tuple,
+        learning_rule: ty.Optional[LoihiLearningRule],
         **kwargs,
     ):
         kwargs["learning_rule"] = learning_rule
         kwargs["shape"] = shape
+        tag_1 = kwargs.get("tag_1", 0)
+        tag_2 = kwargs.get("tag_2", 0)
 
-        self.learning_rule = learning_rule
+        self._learning_rule = learning_rule
 
         # Learning Ports
         self.s_in_bap = InPort(shape=(shape[0],))
+        self.s_in_y1 = InPort(shape=(shape[0],))
+        self.s_in_y2 = InPort(shape=(shape[0],))
+        self.s_in_y3 = InPort(shape=(shape[0],))
 
         # Learning Vars
         self.x0 = Var(shape=(shape[-1],), init=0)
@@ -78,7 +86,23 @@ class ConnectionProcess(AbstractProcess):
         self.y2 = Var(shape=(shape[0],), init=0)
         self.y3 = Var(shape=(shape[0],), init=0)
 
-        self.tag_2 = Var(shape=shape, init=0)
-        self.tag_1 = Var(shape=shape, init=0)
+        self.tag_1 = Var(shape=shape, init=tag_1)
+        self.tag_2 = Var(shape=shape, init=tag_2)
+
+        self.dw = Var(shape=(256,), init=learning_rule.dw_str)
+        self.dd = Var(shape=(256,), init=learning_rule.dd_str)
+        self.dt = Var(shape=(256,), init=learning_rule.dt_str)
+
+        self.x1_tau = Var(shape=(1,), init=learning_rule.x1_tau)
+        self.x1_impulse = Var(shape=(1,), init=learning_rule.x1_impulse)
+        self.x2_tau = Var(shape=(1,), init=learning_rule.x2_tau)
+        self.x2_impulse = Var(shape=(1,), init=learning_rule.x2_impulse)
+
+        self.y1_tau = Var(shape=(1,), init=learning_rule.y1_tau)
+        self.y1_impulse = Var(shape=(1,), init=learning_rule.y1_impulse)
+        self.y2_tau = Var(shape=(1,), init=learning_rule.y2_tau)
+        self.y2_impulse = Var(shape=(1,), init=learning_rule.y2_impulse)
+        self.y3_tau = Var(shape=(1,), init=learning_rule.y3_tau)
+        self.y3_impulse = Var(shape=(1,), init=learning_rule.y3_impulse)
 
         super().__init__(**kwargs)

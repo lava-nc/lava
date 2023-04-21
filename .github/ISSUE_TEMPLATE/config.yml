@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Lava Developer Guide
+    url: https://lava-nc.org/developer_guide.html#how-to-contribute-to-lava
+    about: How to contribute to Lava.
+  - name: Lava Community Support
+    url: https://github.com/lava-nc/lava/discussions
+    about: Please ask and answer questions here.

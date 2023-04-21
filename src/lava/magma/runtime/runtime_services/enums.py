@@ -1,6 +1,7 @@
 # Copyright (C) 2021-22 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
+
 from enum import IntEnum
 from lava.magma.runtime.mgmt_token_enums import enum_to_np
 
