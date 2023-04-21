@@ -280,7 +280,6 @@ class CspRecvPort(AbstractCspRecvPort):
         result = self._array[self._idx].copy()
         self._idx = (self._idx + 1) % self._size
         self._ack.release()
-        
         return result
 
     def join(self):
