@@ -169,8 +169,9 @@ class Var(AbstractProcessMember):
                     # decode if var is string
                     return bytes(buffer.astype(int).tolist()).decode("ascii")
                 if isinstance(self.init, csr_matrix):
-                    ret = self.init.copy()
-                    ret.data = buffer
+                    dst, src, _ = find(self.init)
+
+                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
                     return ret 
                 else:
                     return buffer

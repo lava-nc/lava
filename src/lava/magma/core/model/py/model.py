@@ -128,9 +128,17 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
+            # find only sends non-zero elements, but
+            # we need to make sure that explicit zeros are sent, too
+            zero_ids = var.data == 0
+            var.data[zero_ids] = 1
+            dst, src, _ = find(var)
+            var.data[zero_ids] = 0
+
+            values = var[dst, src].A1
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
-            for value in var.data:
+            for value in values:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))

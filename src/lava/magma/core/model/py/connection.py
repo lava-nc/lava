@@ -943,12 +943,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            if(isinstance(syn_var, csr_matrix)):
-                syn_var.data = syn_var.data << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-                syn_var[syn_var.nonzero()] = lr_applier.apply(syn_var, **applier_args)[syn_var.nonzero()]
-            else:
-                syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-                syn_var = lr_applier.apply(syn_var, **applier_args)
+            syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+            syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable_accumulator(
                 syn_var_name, syn_var
             )
@@ -958,13 +954,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 self._conn_var_random.random_stochastic_round,
             )
 
-            if(isinstance(syn_var, csr_matrix)):
-
-                syn_var.data = syn_var.data >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            else:
-                syn_var = np.right_shift(
-                    syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-                )
+            syn_var = np.right_shift(
+                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+            )
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
