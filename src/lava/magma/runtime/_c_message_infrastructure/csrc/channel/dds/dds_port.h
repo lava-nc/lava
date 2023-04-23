@@ -7,13 +7,17 @@
 
 #include <atomic>
 #include <memory>
-
+#include <string>
 namespace message_infrastructure {
 
 class DDSSendPort final : public AbstractSendPort {
  public:
   DDSSendPort() = delete;
-  DDSSendPort(DDSPtr dds) : publisher_(dds->dds_publisher_) {}
+  DDSSendPort(const std::string &name,
+              const size_t &size,
+              const size_t &nbytes,
+              DDSPtr dds) :AbstractSendPort(name, size, nbytes),
+              publisher_(dds->dds_publisher_) {}
   ~DDSSendPort() = default;
   void Start() {
     auto flag = publisher_->Init();
@@ -45,7 +49,11 @@ using DDSSendPortPtr = std::shared_ptr<DDSSendPort>;
 class DDSRecvPort final : public AbstractRecvPort {
  public:
   DDSRecvPort() = delete;
-  DDSRecvPort(DDSPtr dds) : subscriber_(dds->dds_subscriber_) {}
+  DDSRecvPort(const std::string &name,
+              const size_t &size,
+              const size_t &nbytes,
+              DDSPtr dds) :AbstractRecvPort(name, size, nbytes),
+              subscriber_(dds->dds_subscriber_) {}
   ~DDSRecvPort() override {}
   void Start() {
     auto flag = subscriber_->Init();
@@ -64,7 +72,7 @@ class DDSRecvPort final : public AbstractRecvPort {
     return subscriber_->Recv(true);
   }
   bool Probe() {
-    return false;
+    return subscriber_->Probe();
   }
 
  private:

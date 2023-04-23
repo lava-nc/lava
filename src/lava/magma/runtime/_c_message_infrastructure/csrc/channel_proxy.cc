@@ -92,21 +92,28 @@ RecvPortProxyPtr GetRPCChannelProxy::GetRecvPort() {
 #endif
 
 #if defined(DDS_CHANNEL)
-GetDDSChannelProxy::GetDDSChannelProxy(const std::string &topic_name,
-                                       const DDSTransportType
-                                             &transport_type,
-                                       const DDSBackendType &dds_backend,
-                                       const size_t &size) {
+GetDDSChannelProxy::GetDDSChannelProxy(
+                                  const std::string &src_name,
+                                  const std::string &dst_name,
+                                  const std::string &topic_name,
+                                  const size_t &size,
+                                  const size_t &nbytes,
+                                  const DDSTransportType &dds_transfer_type,
+                                  const DDSBackendType &dds_backend) {
   ChannelFactory &channel_factory = GetChannelFactory();
-  channel_ = channel_factory.GetDDSChannel(topic_name,
-                                           transport_type,
-                                           dds_backend,
-                                           size);
+  channel_ = channel_factory.GetDDSChannel(src_name,
+                                           dst_name,
+                                           topic_name,
+                                           size,
+                                           nbytes,
+                                           dds_transfer_type,
+                                           dds_backend);
   send_port_ = std::make_shared<SendPortProxy>(ChannelType::DDSCHANNEL,
                                                channel_->GetSendPort());
   recv_port_ = std::make_shared<RecvPortProxy>(ChannelType::DDSCHANNEL,
                                                channel_->GetRecvPort());
 }
+
 SendPortProxyPtr GetDDSChannelProxy::GetSendPort() {
     return send_port_;
 }

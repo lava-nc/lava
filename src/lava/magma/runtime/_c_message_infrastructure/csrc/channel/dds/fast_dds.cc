@@ -36,7 +36,6 @@ DDSInitErrorType FastDDSPublisher::Init() {
   InitParticipant();
   if (participant_ == nullptr)
     return DDSInitErrorType::DDSParticipantError;
-
   type_.register_type(participant_);
   publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT);
   if (publisher_ == nullptr)
@@ -100,6 +99,9 @@ void FastDDSPublisher::InitParticipant() {
 }
 
 bool FastDDSPublisher::Publish(DataPtr data) {
+  LAVA_DEBUG(LOG_DDS,
+             "FastDDS Publish topic name = %s\n",
+             topic_name_.c_str());
   MetaData* metadata = reinterpret_cast<MetaData*>(data.get());
   if (listener_->matched_ > 0) {
     LAVA_DEBUG(LOG_DDS, "FastDDS publisher start publishing...\n");
@@ -129,7 +131,7 @@ bool FastDDSPublisher::Publish(DataPtr data) {
 
 void FastDDSPublisher::Stop() {
   LAVA_LOG(LOG_DDS, "Stop FastDDS Publisher, waiting unmatched...\n");
-  while (listener_->matched_ > 0) {
+  while (listener_ != nullptr && listener_->matched_ > 0) {
     helper::Sleep();
   }
   if (writer_ != nullptr) {
@@ -250,6 +252,7 @@ DDSInitErrorType FastDDSSubscriber::Init() {
 }
 
 MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
+  LAVA_DEBUG(LOG_DDS, "FastDDS Recv topic name = %s\n", topic_name_.c_str());
   FASTDDS_CONST_SEQUENCE(MDataSeq, ddsmetadata::msg::DDSMetaData);
   MDataSeq mdata_seq;
   SampleInfoSeq infos;
@@ -261,6 +264,7 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
     }
   } else {
     LAVA_DEBUG(LOG_DDS, "Take the data recieved\n");
+
     while (ReturnCode_t::RETCODE_OK !=
            reader_->take(mdata_seq, infos, 1)) {
       helper::Sleep();
@@ -298,32 +302,28 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
   return nullptr;
 }
 
+bool FastDDSSubscriber::Probe() {
+  FASTDDS_CONST_SEQUENCE(MDataSeq, ddsmetadata::msg::DDSMetaData);
+  MDataSeq mdata_seq;
+  SampleInfoSeq infos;
+  bool res = false;
+  if (ReturnCode_t::RETCODE_OK == reader_->read(mdata_seq, infos, 1)) {
+    reader_->return_loan(mdata_seq, infos);
+    res = true;
+  }
+  return res;
+}
+
 void FastDDSSubscriber::Stop() {
   LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release\n");
-  bool valid = true;
-  if (reader_ != nullptr) {
+  if (reader_ != nullptr)
     subscriber_->delete_datareader(reader_);
-  } else {
-    valid = false;
-  }
-  if (topic_ != nullptr) {
+  if (topic_ != nullptr)
     participant_->delete_topic(topic_);
-  } else {
-    valid = false;
-  }
-  if (subscriber_ != nullptr) {
+  if (subscriber_ != nullptr)
     participant_->delete_subscriber(subscriber_);
-  } else {
-    valid = false;
-  }
-  if (participant_ != nullptr) {
+  if (participant_ != nullptr)
     DomainParticipantFactory::get_instance()->delete_participant(participant_);
-  } else {
-    valid = false;
-  }
-  if (!valid) {
-    LAVA_LOG_ERR("Stop function is not valid\n");
-  }
   stop_ = true;
 }
 

@@ -86,6 +86,7 @@ class CycloneDDSSubscriber final : public DDSSubscriber {
   DDSInitErrorType Init();
   void Stop();
   MetaDataPtr Recv(bool keep);
+  bool Probe();
 
  private:
   CycloneDDSSubListenerPtr listener_ = nullptr;

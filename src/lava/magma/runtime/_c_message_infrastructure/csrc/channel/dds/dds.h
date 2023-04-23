@@ -31,6 +31,7 @@ class DDSSubscriber {
  public:
   virtual DDSInitErrorType Init() = 0;
   virtual MetaDataPtr Recv(bool keep) = 0;
+  virtual bool Probe() = 0;
   virtual void Stop() = 0;
   virtual ~DDSSubscriber() {}
 };

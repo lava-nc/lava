@@ -39,6 +39,9 @@ void CycloneDDSPubListener::on_publication_matched(
 
 DDSInitErrorType CycloneDDSPublisher::Init() {
   LAVA_LOG(LOG_DDS, "publisher init\n");
+  LAVA_DEBUG(LOG_DDS,
+             "Init CycloneDDS Publisher Successfully, topic name: %s\n",
+             topic_name_.c_str());
   dds_metadata_ = std::make_shared<ddsmetadata::msg::DDSMetaData>();
   if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
@@ -65,12 +68,12 @@ DDSInitErrorType CycloneDDSPublisher::Init() {
 
 bool CycloneDDSPublisher::Publish(DataPtr data) {
   LAVA_DEBUG(LOG_DDS,
-             "CycloneDDS publisher start publishing, matched:%d\n",
-             listener_->matched_.load());
+          "CycloneDDS publisher start publishing topic name = %s, matched:%d\n",
+          topic_name_.c_str(), listener_->matched_.load());
   LAVA_DEBUG(LOG_DDS,
              "writer_ matched: %d\n",
              writer_.publication_matched_status().current_count());
-  while (listener_->matched_.load() == 0) {
+  while (writer_.publication_matched_status().current_count() == 0) {
     helper::Sleep();
   }
   LAVA_DEBUG(LOG_DDS, "CycloneDDS publisher find matched reader\n");
@@ -95,20 +98,26 @@ bool CycloneDDSPublisher::Publish(DataPtr data) {
 }
 
 void CycloneDDSPublisher::Stop() {
-  LAVA_LOG(LOG_DDS, "Stop CycloneDDS Publisher, waiting unmatched...\n");
+  LAVA_LOG(LOG_DDS, \
+           "Stop CycloneDDS Publisher, topic_name%s, waiting unmatched...\n",
+           topic_name_.c_str());
   if (stop_) {
     return;
   }
-  while (listener_->matched_.load() > 0) {
+  while (listener_ != nullptr && listener_->matched_.load() > 0) {
     helper::Sleep();
   }
-  try {
-    participant_ = dds::core::null;
-    publisher_ = dds::core::null;
-    topic_ = dds::core::null;
+  if (writer_ != dds::core::null) {
     writer_ = dds::core::null;
-  } catch (const dds::core::Exception& e) {
-    LAVA_LOG_ERR("DDS Exception: %s\n", e.what());
+  }
+  if (publisher_ != dds::core::null) {
+    publisher_ = dds::core::null;
+  }
+  if (topic_ != dds::core::null) {
+    topic_ = dds::core::null;
+  }
+  if (participant_ != dds::core::null) {
+    participant_ = dds::core::null;
   }
   stop_ = true;
 }
@@ -136,6 +145,9 @@ void CycloneDDSSubListener::on_subscription_matched(
 }
 DDSInitErrorType CycloneDDSSubscriber::Init() {
   LAVA_LOG(LOG_DDS, "subscriber init\n");
+  LAVA_DEBUG(LOG_DDS,
+             "Init CycloneDDS Subscriber, topic name: %s\n",
+              topic_name_.c_str());
   if (dds_transfer_type_ != DDSTransportType::DDSUDPv4) {
     LAVA_LOG_WARN(LOG_DDS, "Unsupport Transfer type and will use UDP\n");
   }
@@ -165,7 +177,9 @@ DDSInitErrorType CycloneDDSSubscriber::Init() {
 }
 
 MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
-  LAVA_DEBUG(LOG_DDS, "CycloneDDS recving...\n");
+  LAVA_DEBUG(LOG_DDS,
+             "CycloneDDS topic name= %s recving...\n",
+             topic_name_.c_str());
   dds::sub::LoanedSamples<ddsmetadata::msg::DDSMetaData> samples;
   if (keep) {
     while ((samples = selector_->read()).length() <= 0) {
@@ -204,19 +218,22 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
   return nullptr;
 }
 
+bool CycloneDDSSubscriber::Probe() {
+  return (selector_->read()).length() > 0;
+}
 void CycloneDDSSubscriber::Stop() {
   if (stop_)
     return;
-  LAVA_DEBUG(LOG_DDS, "Subscriber Stop and release...\n");
-  try {
+  LAVA_DEBUG(LOG_DDS,
+            "CycloneDDSSubscriber topic name = %s Stop and release...\n",
+             topic_name_.c_str());
+  if (listener_ != nullptr && reader_  != dds::core::null) {
     reader_.~DataReader();
-    participant_ = dds::core::null;
-    subscriber_ = dds::core::null;
-    topic_ = dds::core::null;
     reader_ = dds::core::null;
-  } catch (const dds::core::Exception& e) {
-    LAVA_LOG_ERR("DDS Exception: %s\n", e.what());
   }
+  if (participant_ != dds::core::null) participant_ = dds::core::null;
+  if (subscriber_ != dds::core::null) subscriber_ = dds::core::null;
+  if (topic_ != dds::core::null) topic_ = dds::core::null;
   stop_ = true;
 }
 

@@ -139,11 +139,39 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .export_values();
 
   py::class_<GetDDSChannelProxy, GetDDSChannelProxyPtr> (m, "GetDDSChannel")
-    .def(py::init<std::string, DDSTransportType, DDSBackendType, size_t>())
+    .def(py::init([](
+            const std::string& topic_name,
+            size_t size,
+            DDSTransportType dds_transfer_type,
+            DDSBackendType dds_backend) {
+              std::string src_name =
+                    topic_name+"_src_" + std::to_string(std::rand());
+              std::string dst_name =
+                    topic_name+"_dst_" + std::to_string(std::rand());
+              return new GetDDSChannelProxy(src_name, dst_name,
+                                            topic_name, size, DEFAULT_NBYTES,
+                                            dds_transfer_type, dds_backend);
+            })
+        )
+    .def(py::init([](
+            const std::string& src_name,
+            const std::string& dst_name,
+            size_t size,
+            size_t nbytes,
+            DDSTransportType dds_transfer_type,
+            DDSBackendType dds_backend) {
+              std::string topic_name =
+                    "dds_topic_" + std::to_string(std::rand());
+              return new GetDDSChannelProxy(src_name, dst_name,
+                                            topic_name, size, nbytes,
+                                            dds_transfer_type, dds_backend);
+            })
+        )
     .def_property_readonly("src_port", &GetDDSChannelProxy::GetSendPort,
                                        py::return_value_policy::reference)
     .def_property_readonly("dst_port", &GetDDSChannelProxy::GetRecvPort,
                                        py::return_value_policy::reference);
+
 #endif
 
   m.def("support_fastdds_channel", [](){

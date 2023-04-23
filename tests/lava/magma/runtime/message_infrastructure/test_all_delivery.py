@@ -547,27 +547,27 @@ class TestAllDelivery(unittest.TestCase):
         loop = self.loop_
         a1_to_a2 = GetDDSChannel(
             "a1_to_a2",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.FASTDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.FASTDDSBackend
         )
         a2_to_a1 = GetDDSChannel(
             "a2_to_a1",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.FASTDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.FASTDDSBackend
         )
         mp_to_a1 = GetDDSChannel(
             "mp_to_a1",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.FASTDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.FASTDDSBackend
         )
         a1_to_mp = GetDDSChannel(
             "a1_to_mp",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.FASTDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.FASTDDSBackend
         )
 
         recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
@@ -608,9 +608,9 @@ class TestAllDelivery(unittest.TestCase):
     def test_cyclonedds_channel(self):
         from lava.magma.runtime.message_infrastructure import (
             GetDDSChannel,
+            ChannelQueueSize,
             DDSTransportType,
-            DDSBackendType,
-            ChannelQueueSize)
+            DDSBackendType)
         from lava.magma.runtime.message_infrastructure \
             .multiprocessing \
             import MultiProcessing
@@ -620,27 +620,27 @@ class TestAllDelivery(unittest.TestCase):
         loop = self.loop_
         a1_to_a2 = GetDDSChannel(
             "a1_to_a2",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.CycloneDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.CycloneDDSBackend
         )
         a2_to_a1 = GetDDSChannel(
             "a2_to_a1",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.CycloneDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.CycloneDDSBackend
         )
         mp_to_a1 = GetDDSChannel(
             "mp_to_a1",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.CycloneDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.CycloneDDSBackend
         )
         a1_to_mp = GetDDSChannel(
             "a1_to_mp",
+            ChannelQueueSize,
             DDSTransportType.DDSUDPv4,
-            DDSBackendType.CycloneDDSBackend,
-            ChannelQueueSize
+            DDSBackendType.CycloneDDSBackend
         )
 
         recv_port_fn = partial(bound_target_a1, loop, mp_to_a1,
