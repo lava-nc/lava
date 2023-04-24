@@ -3,8 +3,8 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from scipy.sparse import csr_matrix, spmatrix
-
+from scipy.sparse import csr_matrix, spmatrix, vstack
+import warnings
 from lava.magma.core.model.py.connection import (
     LearningConnectionModelFloat,
     LearningConnectionModelBitApproximate,
@@ -209,18 +209,10 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         This allows for the updating of the activation buffer and updating
         weights.
         """
-        weight_delay_row = []
-        weight_delay_column = []
-        weight_delay_data = []
-        for r in range(weights.shape[0]):
-            for ind in range(weights.indptr[r], weights.indptr[r + 1]):
-                col = weights.indices[ind]
-                weight_delay_row.append(r + (delays[r,col] * weights.shape[0]))
-                weight_delay_column.append(weights.indices[ind])
-                weight_delay_data.append(weights.data[ind])
-        return csr_matrix((weight_delay_data,(weight_delay_row, weight_delay_column)),
-                          shape=(weights.shape[0] * (delays.max()+1), weights.shape[1]))
-
+        warnings.simplefilter('ignore')
+        weight_delay = vstack([weights.multiply(delays == k) for k in range(np.max(delays) + 1)])
+        warnings.resetwarnings()
+        return weight_delay
 
     def calc_act(self, s_in) -> np.ndarray:
         """
