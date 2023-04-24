@@ -148,8 +148,8 @@ class PyLearningDenseModelFloat(
 class PyLearningDenseModelBitApproximate(
         LearningConnectionModelBitApproximate, AbstractPyDenseModelBitAcc):
     """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit.
+    uses similar constraints as the  Loihi's hardware implementation of Dense,
+    but does not mimics Loihi behaviour bit-by-bit.
     """
 
     def __init__(self, proc_params):

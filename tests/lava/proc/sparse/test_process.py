@@ -6,9 +6,24 @@ import unittest
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix
 
+from lava.utils.sparse import find_with_explicit_zeros
 from lava.proc.sparse.process import Sparse, LearningSparse, DelaySparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
+
+class TestFunctions(unittest.TestCase):
+    """Test helper function for Sparse"""
+
+    def test_find_with_explicit_zeros(self): 
+
+        mat = np.random.randint(-10, 10, (3, 5))
+        spmat = csr_matrix(mat)
+        spmat.data[0] = 0
+
+        dst, src, vals = find_with_explicit_zeros(spmat)
+
+        self.assertTrue(np.all(spmat.data in vals))
+        
 
 class TestSparseProcess(unittest.TestCase):
     """Tests for Sparse class"""
@@ -17,7 +32,7 @@ class TestSparseProcess(unittest.TestCase):
         """Tests instantiation of Sparse"""
         shape = (100, 200)
         weights = np.random.random(shape)
-        
+
         # sparsify
         weights[weights < 0.7] = 0
 
@@ -47,7 +62,7 @@ class TestLearningSparseProcess(unittest.TestCase):
 
         shape = (100, 200)
         weights = np.random.random(shape)
-        
+
         # sparsify
         weights[weights < 0.7] = 0
 
@@ -68,7 +83,7 @@ class TestDelaySparseProcess(unittest.TestCase):
         """Tests instantiation of Sparse"""
         shape = (100, 200)
         weights = np.random.random(shape)
-        delays = np.random.randint(0,3, shape)
+        delays = np.random.randint(0, 3, shape)
 
         # sparsify
         weights[weights < 0.7] = 0
@@ -76,7 +91,7 @@ class TestDelaySparseProcess(unittest.TestCase):
 
         # convert to spmatrix
         weights_sparse = csr_matrix(weights)
-        delays_sparse= csr_matrix(delays)
+        delays_sparse = csr_matrix(delays)
 
         conn = DelaySparse(weights=weights_sparse, delays=delays_sparse)
 

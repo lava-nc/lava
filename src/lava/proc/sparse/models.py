@@ -19,6 +19,7 @@ from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
+
 class AbstractPySparseModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
@@ -123,6 +124,9 @@ class PyLearningSparseModelFloat(
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
+
+    Warning: LearningSparse on CPU is not offereing any memory usage benefits
+    over using LearningDense.
     """
 
     def __init__(self, proc_params):
@@ -138,7 +142,7 @@ class PyLearningSparseModelFloat(
             self.a_buff = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            self.a_buff = self.weights[:, s_in].sum(axis=1)
+            self.a_buff = self.weights[:, s_in].sum(axis=1).A1
 
         self.recv_traces(s_in)
 
@@ -149,8 +153,11 @@ class PyLearningSparseModelFloat(
 class PyLearningSparseModelBitApproximate(
         LearningConnectionModelBitApproximate, AbstractPySparseModelBitAcc):
     """Implementation of Conn Process with Sparse synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit.
+    uses similar constraints as the  Loihi's hardware implementation of Sparse,
+    but does not mimics Loihi behaviour bit-by-bit.
+
+    Warning: LearningSparse on CPU is not offereing any memory usage benefits
+    over using LearningDense.
     """
 
     def __init__(self, proc_params):
@@ -180,7 +187,7 @@ class PyLearningSparseModelBitApproximate(
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            a_accum = self.weights[:, s_in].sum(axis=1)
+            a_accum = self.weights[:, s_in].sum(axis=1).A1
 
         self.a_buff = (
             np.left_shift(a_accum, self.weight_exp)
@@ -189,6 +196,7 @@ class PyLearningSparseModelBitApproximate(
         )
 
         self.recv_traces(s_in)
+
 
 
 class AbstractPyDelaySparseModel(PyLoihiProcessModel):
@@ -224,8 +232,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         which is then transposed to get the activation matrix.
         """
         return np.reshape(self.get_del_wgts(self.weights,
-                                     self.delays).dot(s_in),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
+                                            self.delays).dot(s_in),
+                          (np.max(self.delays) + 1,
+                          self.weights.shape[0])).T
 
     def update_act(self, s_in):
         """
@@ -337,5 +346,3 @@ class PyDelaySparseModelBitAcc(AbstractPyDelaySparseModel):
             if self.weight_exp > 0
             else np.right_shift(a_accum, -self.weight_exp)
         )
-
-

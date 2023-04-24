@@ -16,13 +16,13 @@ from lava.magma.core.learning.learning_rule import LoihiLearningRule
 
 class Sparse(AbstractProcess):
     """Sparse connections between neurons. Realizes the following abstract
-    behavior: a_out = weights * s_in. The weights are stored as 
+    behavior: a_out = weights * s_in. The weights are stored as
     scipy.sparse.csr_matrix.
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix 
-        2D connection weight matrix as sparse matrix of form 
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
@@ -69,7 +69,7 @@ class Sparse(AbstractProcess):
                          **kwargs)
 
         # transform weights to csr matrix
-        weights = weights.tocsr() 
+        weights = weights.tocsr()
 
         self._validate_weights(weights)
         shape = weights.shape
@@ -92,13 +92,13 @@ class Sparse(AbstractProcess):
 
 class LearningSparse(LearningConnectionProcess, Sparse):
     """Sparse connections between neurons. Realizes the following abstract
-    behavior: a_out = weights * s_in. The weights are stored as 
+    behavior: a_out = weights * s_in. The weights are stored as
     scipy.sparse.csr_matrix.
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix 
-        2D connection weight matrix as sparse matrix of form 
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
@@ -178,7 +178,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          **kwargs)
 
         # transform weights to csr matrix
-        weights = weights.tocsr() 
+        weights = weights.tocsr()
 
         self._validate_weights(weights)
         shape = weights.shape

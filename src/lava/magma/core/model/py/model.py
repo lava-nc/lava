@@ -5,6 +5,7 @@
 import typing as ty
 from abc import ABC, abstractmethod
 import logging
+from lava.utils.sparse import find_with_explicit_zeros
 import numpy as np
 from scipy.sparse import csr_matrix, find
 import platform
@@ -128,9 +129,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
+            dst, src, values = find_with_explicit_zeros(var) 
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
-            for value in find(var)[2]:
+            for value in values:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))
@@ -172,7 +174,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             # First item is number of items
             num_items = int(data_port.recv()[0])
 
-            buffer = np.empty(num_items) 
+            buffer = np.empty(num_items)
             # Set data one by one
             for i in range(num_items):
                 buffer[i] = data_port.recv()[0]
