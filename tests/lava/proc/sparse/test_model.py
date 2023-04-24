@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import unittest
+from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from scipy.sparse import csr_matrix
 
 from lava.proc.sparse.process import Sparse
@@ -29,6 +30,7 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.models import AbstractPyDelayDenseModel
 from lava.utils.weightutils import SignMode
+from tests.lava.magma.core import learning
 
 
 def create_network(input_data, conn, weights):
@@ -42,14 +44,23 @@ def create_network(input_data, conn, weights):
     return source, conn, sink
 
 
-def create_learning_network(data_pre, conn, data_post):
+def create_learning_network(data_pre, conn, data_post, weights=None):
     pre = Source(data=data_pre)
     post = Source(data=data_post)
+
+    if not weights is None:
+        sink = Sink(shape=(weights.shape[0], ),
+                    buffer=data_post.shape[1])
+
+        conn.a_out.connect(sink.a_in)
 
     pre.s_out.connect(conn.s_in)
     post.s_out.connect(conn.s_in_bap)
 
-    return pre, conn, post
+    if not weights is None:
+        return pre, conn, post, sink
+    else:
+        return pre, conn, post
 
 
 class TestSparseProcessModelFloat(unittest.TestCase):
@@ -147,7 +158,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        conn = Sparse(weights=weights_sparse, num_message_bits=8)
+        conn = Sparse(weights=weights_sparse)
         sparse_net = create_network(inp, conn, weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -176,7 +187,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cond = RunSteps(num_steps=1)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
+        conn = Sparse(weights=weights_init_sparse)
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -293,7 +304,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        conn = Sparse(weights=weights_sparse, num_message_bits=8)
+        conn = Sparse(weights=weights_sparse)
         sparse_net = create_network(inp, conn, weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -320,7 +331,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         run_cond = RunSteps(num_steps=1)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
+        conn = Sparse(weights=weights_init_sparse)
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -357,7 +368,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         run_cond = RunSteps(num_steps=1)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
-        conn = Sparse(weights=weights_init_sparse, num_message_bits=8)
+        conn = Sparse(weights=weights_init_sparse)
         sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -409,8 +420,8 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
-                              tag_1=weights.copy(),
-                              tag_2=weights.copy(),
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
                               learning_rule=learning_rule)
         sparse_net = create_learning_network(pre, conn, post)
         conn.run(condition=run_cond, run_cfg=run_cfg)
@@ -421,6 +432,166 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
         np.testing.assert_array_equal(weights_got_dense,
                                       weights_got_sparse.toarray())
 
+    def test_consistency_with_learning_dense_random_shape_dt(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = (np.random.random(shape) - 0.5) * 2
+        weights[weights == 0] = 0.1
+
+        learning_rule = Loihi2FLearningRule(dt="x0 * y1 - y0 * x1",
+                                            x1_tau=10,
+                                            y1_tau=16,
+                                            x1_impulse=16,
+                                            y1_impulse=15,
+                                            t_epoch=2)
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        post = (np.random.rand(shape[0], simtime) > 0.7).astype(int)
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule)
+        dense_net = create_learning_network(pre, conn, post)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='floating_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        tags_got_dense = conn.tag_1.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule)
+        sparse_net = create_learning_network(pre, conn, post)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        tags_got_sparse = conn.tag_1.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(tags_got_dense,
+                                      tags_got_sparse.toarray())
+
+    def test_consistency_with_learning_dense_random_shape_dd(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = (np.random.random(shape) - 0.5) * 2
+        weights[weights == 0] = 0.1
+
+        learning_rule = Loihi2FLearningRule(dd="x0 * y1 - y0 * x1",
+                                            x1_tau=10,
+                                            y1_tau=16,
+                                            x1_impulse=16,
+                                            y1_impulse=15,
+                                            t_epoch=2)
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        post = (np.random.rand(shape[0], simtime) > 0.7).astype(int)
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule)
+        dense_net = create_learning_network(pre, conn, post)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='floating_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        tags_got_dense = conn.tag_2.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule)
+        sparse_net = create_learning_network(pre, conn, post)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        tags_got_sparse = conn.tag_2.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(tags_got_dense,
+                                      tags_got_sparse.toarray())
+
+    def test_consistency_with_learning_dense_random_shape_graded(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = (np.random.random(shape) - 0.5) * 2
+        weights[weights == 0] = 0.1
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-1,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+        )
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7) * 3
+        post = (np.random.rand(shape[0], simtime) > 0.7) * 2
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule,
+                             num_message_bits=8)
+
+        dense_net = create_learning_network(pre, conn, post, weights=weights)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='floating_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        weights_got_dense = conn.weights.get()
+        result_dense = dense_net[-1].data.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule,
+                              num_message_bits=8)
+
+        sparse_net = create_learning_network(pre, conn, post, weights=weights_sparse)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        weights_got_sparse = conn.weights.get()
+        result_sparse = sparse_net[-1].data.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(weights_got_dense,
+                                      weights_got_sparse.toarray())
+
+        np.testing.assert_array_almost_equal(result_sparse, result_dense)
+
 
 class TestLearningSparseProcessModelFixed(unittest.TestCase):
     """Tests for LearningSparse class in fixed point precision. """
@@ -430,7 +601,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
         are consistent. """
 
         simtime = 100
-        shape = np.random.randint(3, 5, 2).tolist()
+        shape = np.random.randint(1, 100, 2).tolist()
         weights = ((np.random.random(shape) - 0.5) * 20).astype(int)
         weights[abs(weights) < 2] = 2
 
@@ -465,8 +636,8 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
-                              tag_1=weights.copy(),
-                              tag_2=weights.copy(),
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
                               learning_rule=learning_rule)
         sparse_net = create_learning_network(pre, conn, post)
         conn.run(condition=run_cond, run_cfg=run_cfg)
@@ -477,6 +648,165 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
         np.testing.assert_array_equal(weights_got_dense,
                                       weights_got_sparse.toarray())
 
+    def test_consistency_with_learning_dense_random_shape_dt(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = ((np.random.random(shape) - 0.5) * 20).astype(int)
+        weights[abs(weights) < 2] = 2
+
+        learning_rule = Loihi2FLearningRule(dt="x0 * y1 - y0 * x1",
+                                            x1_tau=10,
+                                            y1_tau=16,
+                                            x1_impulse=16,
+                                            y1_impulse=15,
+                                            t_epoch=2)
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        post = (np.random.rand(shape[0], simtime) > 0.7).astype(int)
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule)
+        dense_net = create_learning_network(pre, conn, post)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        tags_got_dense = conn.tag_1.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule)
+        sparse_net = create_learning_network(pre, conn, post)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        tags_got_sparse = conn.tag_1.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(tags_got_dense,
+                                      tags_got_sparse.toarray())
+
+    def test_consistency_with_learning_dense_random_shape_dd(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = ((np.random.random(shape) - 0.5) * 20).astype(int)
+        weights[abs(weights) < 2] = 2
+
+        learning_rule = Loihi2FLearningRule(dd="x0 * y1 - y0 * x1",
+                                            x1_tau=10,
+                                            y1_tau=16,
+                                            x1_impulse=16,
+                                            y1_impulse=15,
+                                            t_epoch=2)
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        post = (np.random.rand(shape[0], simtime) > 0.7).astype(int)
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule)
+        dense_net = create_learning_network(pre, conn, post)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        tags_got_dense = conn.tag_2.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule)
+        sparse_net = create_learning_network(pre, conn, post)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        tags_got_sparse = conn.tag_2.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(tags_got_dense,
+                                      tags_got_sparse.toarray())
+
+    def test_consistency_with_learning_dense_random_shape_graded(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 10
+        shape = np.random.randint(1, 100, 2).tolist()
+        weights = ((np.random.random(shape) - 0.5) * 20).astype(int)
+        weights[abs(weights) < 2] = 2
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-1,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+        )
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7) * 3
+        post = (np.random.rand(shape[0], simtime) > 0.7) * 2
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule,
+                             num_message_bits=8)
+
+        dense_net = create_learning_network(pre, conn, post, weights=weights)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        weights_got_dense = conn.weights.get()
+        result_dense = dense_net[-1].data.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights_sparse.copy(),
+                              tag_2=weights_sparse.copy(),
+                              learning_rule=learning_rule,
+                              num_message_bits=8)
+
+        sparse_net = create_learning_network(pre, conn, post, weights=weights_sparse)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        weights_got_sparse = conn.weights.get()
+        result_sparse = sparse_net[-1].data.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(weights_got_dense,
+                                      weights_got_sparse.toarray())
+
+        np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
 
 class VecSendandRecvProcess(AbstractProcess):

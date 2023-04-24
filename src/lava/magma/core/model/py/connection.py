@@ -1023,8 +1023,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         return applier_args
 
     def _saturate_synaptic_variable_accumulator(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+            self, syn_var_name: str,
+            syn_var_values: typing.Union[np.ndarray, csr_matrix]
     ) -> np.ndarray:
         """Saturate synaptic variable accumulator.
 
@@ -1032,9 +1032,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_values: ndarray
             Synaptic variable values to saturate.
 
         Returns
@@ -1043,24 +1043,27 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             Saturated synaptic variable values.
         """
         # Weights
-        if synaptic_variable_name == "weights":
+        if syn_var_name == "weights":
             if self.sign_mode == SignMode.MIXED:
-                return synaptic_variable_values
+                return syn_var_values
             elif self.sign_mode == SignMode.EXCITATORY:
-                return np.maximum(0, synaptic_variable_values)
+                return np.maximum(0, syn_var_values)
             elif self.sign_mode == SignMode.INHIBITORY:
-                return np.minimum(0, synaptic_variable_values)
+                return np.minimum(0, syn_var_values)
         # Delays
-        elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
+        elif syn_var_name == "tag_2":
+            if isinstance(syn_var_values, csr_matrix):
+                syn_var_values.data[syn_var_values.data < 0] = 0
+                return syn_var_values
+            return np.maximum(0, syn_var_values)
         # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
+        elif syn_var_name == "tag_1":
+            return syn_var_values
         else:
             raise ValueError(
-                f"synaptic_variable_name can be 'weights', "
+                f"syn_var_name can be 'weights', "
                 f"'tag_1', or 'tag_2'."
-                f"Got {synaptic_variable_name=}."
+                f"Got {syn_var_name=}."
             )
 
     @staticmethod
@@ -1105,8 +1108,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             )
 
     def _saturate_synaptic_variable(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+            self, syn_var_name: str,
+            syn_var_val: typing.Union[np.ndarray, csr_matrix]
     ) -> np.ndarray:
         """Saturate synaptic variable.
 
@@ -1115,9 +1118,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_val: ndarray
             Synaptic variable values to saturate.
 
         Returns
@@ -1125,30 +1128,44 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         result : ndarray
             Saturated synaptic variable values.
         """
+
         # Weights
-        if synaptic_variable_name == "weights":
+        if syn_var_name == "weights":
             return clip_weights(
-                synaptic_variable_values,
+                syn_var_val,
                 sign_mode=self.sign_mode,
                 num_bits=W_WEIGHTS_U,
             )
         # Delays
-        elif synaptic_variable_name == "tag_2":
+        elif syn_var_name == "tag_2":
+            if isinstance(syn_var_val, csr_matrix):
+                _min = -(2 ** W_TAG_2_U) - 1
+                _max = (2 ** W_TAG_2_U) - 1
+                syn_var_val.data[syn_var_val.data < _min] = _min 
+                syn_var_val.data[syn_var_val.data > _max] = _max 
+                return syn_var_val
+
             return np.clip(
-                synaptic_variable_values, a_min=0, a_max=2 ** W_TAG_2_U - 1
+                syn_var_val, a_min=0, a_max=2 ** W_TAG_2_U - 1
             )
         # Tags
-        elif synaptic_variable_name == "tag_1":
+        elif syn_var_name == "tag_1":
+            if isinstance(syn_var_val, csr_matrix):
+                _min = -(2 ** W_TAG_1_U) - 1
+                _max = (2 ** W_TAG_1_U) - 1
+                syn_var_val.data[syn_var_val.data < _min] = _min 
+                syn_var_val.data[syn_var_val.data > _max] = _max 
+                return syn_var_val
             return np.clip(
-                synaptic_variable_values,
+                syn_var_val,
                 a_min=-(2 ** W_TAG_1_U) - 1,
                 a_max=2 ** W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
-                f"synaptic_variable_name can be 'weights', "
+                f"syn_var_name can be 'weights', "
                 f"'tag_1', or 'tag_2'."
-                f"Got {synaptic_variable_name=}."
+                f"Got {syn_var_name=}."
             )
 
 
@@ -1531,6 +1548,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
         elif synaptic_variable_name == "tag_1":
             return synaptic_variable_values
         elif synaptic_variable_name == "tag_2":
+            if isinstance(synaptic_variable_values, csr_matrix):
+                synaptic_variable_values[synaptic_variable_values < 0] = 0
+                return synaptic_variable_values
             return np.maximum(0, synaptic_variable_values)
         else:
             raise ValueError(

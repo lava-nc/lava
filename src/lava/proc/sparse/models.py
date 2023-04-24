@@ -32,7 +32,7 @@ class AbstractPySparseModelFloat(PyLoihiProcessModel):
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons)in C-order (row major).
-    weights: np.ndarray = LavaPyType(csr_matrix, float)
+    weights: csr_matrix = LavaPyType(csr_matrix, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
@@ -129,6 +129,10 @@ class PyLearningSparseModelFloat(
     over using LearningDense.
     """
 
+    # overwrite dense PyTypes with sparse 
+    tag_1: csr_matrix = LavaPyType(csr_matrix, float)
+    tag_2: csr_matrix = LavaPyType(csr_matrix, float)
+
     def __init__(self, proc_params):
         super().__init__(proc_params)
 
@@ -159,6 +163,10 @@ class PyLearningSparseModelBitApproximate(
     Warning: LearningSparse on CPU is not offereing any memory usage benefits 
     over using LearningDense.
     """
+    # overwrite dense PyTypes with sparse 
+    tag_1: csr_matrix = LavaPyType(csr_matrix, int, precision=8)
+    tag_2: csr_matrix = LavaPyType(csr_matrix, int, precision=6)
+
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
