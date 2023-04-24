@@ -367,7 +367,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
 
 class TestLearningSparseProcessModelFloat(unittest.TestCase):
-    """Tests for Sparse class in floating point precision. """
+    """Tests for LearningSparse class in floating point precision. """
 
     def test_consistency_with_learning_dense_random_shape(self):
         """Tests if the results of LearningSparse and LearningDense
@@ -420,6 +420,63 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         np.testing.assert_array_equal(weights_got_dense,
                                       weights_got_sparse.toarray())
+
+
+class TestLearningSparseProcessModelFixed(unittest.TestCase):
+    """Tests for LearningSparse class in fixed point precision. """
+
+    def test_consistency_with_learning_dense_random_shape(self):
+        """Tests if the results of LearningSparse and LearningDense
+        are consistent. """
+
+        simtime = 100
+        shape = np.random.randint(3, 5, 2).tolist()
+        weights = ((np.random.random(shape) - 0.5) * 20).astype(int)
+        weights[abs(weights) < 2] = 2
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-1,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+        )
+
+        pre = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
+        post = (np.random.rand(shape[0], simtime) > 0.7).astype(int)
+
+        conn = LearningDense(weights=weights,
+                             tag_1=weights.copy(),
+                             tag_2=weights.copy(),
+                             learning_rule=learning_rule)
+        dense_net = create_learning_network(pre, conn, post)
+
+        run_cond = RunSteps(num_steps=simtime)
+        run_cfg = Loihi2SimCfg(select_tag='fixed_pt')
+
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+        weights_got_dense = conn.weights.get()
+        conn.stop()
+
+        # Run the same network with Sparse
+
+        # convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+
+        conn = LearningSparse(weights=weights_sparse,
+                              tag_1=weights.copy(),
+                              tag_2=weights.copy(),
+                              learning_rule=learning_rule)
+        sparse_net = create_learning_network(pre, conn, post)
+        conn.run(condition=run_cond, run_cfg=run_cfg)
+
+        weights_got_sparse = conn.weights.get()
+        conn.stop()
+
+        np.testing.assert_array_equal(weights_got_dense,
+                                      weights_got_sparse.toarray())
+
 
 
 class VecSendandRecvProcess(AbstractProcess):

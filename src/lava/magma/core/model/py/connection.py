@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 from abc import abstractmethod
+from lava.utils.sparse import find_with_explicit_zeros
 import numpy as np
 import typing
 from scipy.sparse import csr_matrix
@@ -943,8 +944,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            syn_var = lr_applier.apply(syn_var, **applier_args)
+            if isinstance(syn_var, csr_matrix):
+                syn_var.data = syn_var.data << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                dst, src, _ = find_with_explicit_zeros(syn_var)
+                syn_var[dst, src] = lr_applier.apply(syn_var, **applier_args)[dst, src]
+            else:
+                syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                syn_var = lr_applier.apply(syn_var, **applier_args)
+
             syn_var = self._saturate_synaptic_variable_accumulator(
                 syn_var_name, syn_var
             )
@@ -954,9 +961,10 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 self._conn_var_random.random_stochastic_round,
             )
 
-            syn_var = np.right_shift(
-                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            )
+            if isinstance(syn_var, csr_matrix):
+                syn_var.data = syn_var.data >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+            else:
+                syn_var = syn_var >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
@@ -1431,9 +1439,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             if (isinstance(syn_var, csr_matrix)):
-                idx = syn_var.nonzero()
-                syn_var[idx] = lr_applier.apply(syn_var,
-                                                **applier_args)[idx]
+                dst, src, _ = find_with_explicit_zeros(syn_var) 
+                syn_var[dst, src] = lr_applier.apply(syn_var,
+                                                     **applier_args)[dst, src]
             else:
                 syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
