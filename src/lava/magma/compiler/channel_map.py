@@ -85,8 +85,9 @@ class ChannelMap(dict):
         the list of process groups given as input.
         """
         port_pairs = self._get_port_pairs_from_proc_groups(proc_groups)
-        default_payload = Payload(multiplicity=1)
-        channel_map = ChannelMap.fromkeys(port_pairs, default_payload)
+        channel_map = ChannelMap()
+        for port_pair in port_pairs:
+            channel_map[port_pair] = Payload(multiplicity=1)
         return channel_map
 
     @classmethod
