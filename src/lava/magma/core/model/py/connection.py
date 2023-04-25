@@ -829,11 +829,12 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         t_spike_y = self.ty
 
         # most naive algorithm to decay traces
-        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
+        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, 0,
                                    dtype=int)
         x_traces_history[0] = x_traces
-        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
+        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, 0,
                                    dtype=int)
+
         y_traces_history[0] = y_traces
 
         for t in range(1, t_epoch + 1):
