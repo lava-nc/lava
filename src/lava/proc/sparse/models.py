@@ -227,7 +227,8 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         weight_delay_zeros = weights.copy()
         weight_delay_zeros[r, c] = 0
         weight_delay_zeros.eliminate_zeros()
-        weight_delay_from_1 = vstack([weights.multiply(delays == k) for k in range(1, np.max(delays) + 1)])
+        weight_delay_from_1 = vstack([weights.multiply(delays == k)
+                                      for k in range(1, np.max(delays) + 1)])
         return vstack([weight_delay_zeros, weight_delay_from_1])
 
     def calc_act(self, s_in) -> np.ndarray:
