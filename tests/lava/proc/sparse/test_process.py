@@ -14,7 +14,7 @@ from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 class TestFunctions(unittest.TestCase):
     """Test helper function for Sparse"""
 
-    def test_find_with_explicit_zeros(self): 
+    def test_find_with_explicit_zeros(self):
 
         mat = np.random.randint(-10, 10, (3, 5))
         spmat = csr_matrix(mat)
@@ -23,7 +23,7 @@ class TestFunctions(unittest.TestCase):
         dst, src, vals = find_with_explicit_zeros(spmat)
 
         self.assertTrue(np.all(spmat.data in vals))
-        
+
 
 class TestSparseProcess(unittest.TestCase):
     """Tests for Sparse class"""

@@ -48,7 +48,7 @@ def create_learning_network(data_pre, conn, data_post, weights=None):
     pre = Source(data=data_pre)
     post = Source(data=data_post)
 
-    if not weights is None:
+    if weights is not None:
         sink = Sink(shape=(weights.shape[0], ),
                     buffer=data_post.shape[1])
 
@@ -57,7 +57,7 @@ def create_learning_network(data_pre, conn, data_post, weights=None):
     pre.s_out.connect(conn.s_in)
     post.s_out.connect(conn.s_in_bap)
 
-    if not weights is None:
+    if weights is not None:
         return pre, conn, post, sink
     else:
         return pre, conn, post
@@ -580,7 +580,10 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
                               learning_rule=learning_rule,
                               num_message_bits=8)
 
-        sparse_net = create_learning_network(pre, conn, post, weights=weights_sparse)
+        sparse_net = create_learning_network(pre,
+                                             conn,
+                                             post,
+                                             weights=weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         weights_got_sparse = conn.weights.get()
@@ -796,7 +799,10 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
                               learning_rule=learning_rule,
                               num_message_bits=8)
 
-        sparse_net = create_learning_network(pre, conn, post, weights=weights_sparse)
+        sparse_net = create_learning_network(pre,
+                                             conn,
+                                             post,
+                                             weights=weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         weights_got_sparse = conn.weights.get()

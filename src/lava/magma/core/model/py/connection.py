@@ -944,12 +944,14 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
+            shift = W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             if isinstance(syn_var, csr_matrix):
-                syn_var.data = syn_var.data << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                syn_var.data = syn_var.data << shift
                 dst, src, _ = find_with_explicit_zeros(syn_var)
-                syn_var[dst, src] = lr_applier.apply(syn_var, **applier_args)[dst, src]
+                syn_var[dst, src] = lr_applier.apply(syn_var,
+                                                     **applier_args)[dst, src]
             else:
-                syn_var = syn_var << W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                syn_var = syn_var << shift
                 syn_var = lr_applier.apply(syn_var, **applier_args)
 
             syn_var = self._saturate_synaptic_variable_accumulator(
@@ -962,9 +964,9 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             )
 
             if isinstance(syn_var, csr_matrix):
-                syn_var.data = syn_var.data >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                syn_var.data = syn_var.data >> shift
             else:
-                syn_var = syn_var >> W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+                syn_var = syn_var >> shift
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
@@ -1141,8 +1143,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             if isinstance(syn_var_val, csr_matrix):
                 _min = -(2 ** W_TAG_2_U) - 1
                 _max = (2 ** W_TAG_2_U) - 1
-                syn_var_val.data[syn_var_val.data < _min] = _min 
-                syn_var_val.data[syn_var_val.data > _max] = _max 
+                syn_var_val.data[syn_var_val.data < _min] = _min
+                syn_var_val.data[syn_var_val.data > _max] = _max
                 return syn_var_val
 
             return np.clip(
@@ -1153,8 +1155,8 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             if isinstance(syn_var_val, csr_matrix):
                 _min = -(2 ** W_TAG_1_U) - 1
                 _max = (2 ** W_TAG_1_U) - 1
-                syn_var_val.data[syn_var_val.data < _min] = _min 
-                syn_var_val.data[syn_var_val.data > _max] = _max 
+                syn_var_val.data[syn_var_val.data < _min] = _min
+                syn_var_val.data[syn_var_val.data > _max] = _max
                 return syn_var_val
             return np.clip(
                 syn_var_val,
@@ -1456,7 +1458,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             if (isinstance(syn_var, csr_matrix)):
-                dst, src, _ = find_with_explicit_zeros(syn_var) 
+                dst, src, _ = find_with_explicit_zeros(syn_var)
                 syn_var[dst, src] = lr_applier.apply(syn_var,
                                                      **applier_args)[dst, src]
             else:

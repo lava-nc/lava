@@ -129,7 +129,7 @@ class PyLearningSparseModelFloat(
     over using LearningDense.
     """
 
-    # overwrite dense PyTypes with sparse 
+    # overwrite dense PyTypes with sparse
     tag_1: csr_matrix = LavaPyType(csr_matrix, float)
     tag_2: csr_matrix = LavaPyType(csr_matrix, float)
 
@@ -163,10 +163,9 @@ class PyLearningSparseModelBitApproximate(
     Warning: LearningSparse on CPU is not offereing any memory usage benefits
     over using LearningDense.
     """
-    # overwrite dense PyTypes with sparse 
+    # overwrite dense PyTypes with sparse
     tag_1: csr_matrix = LavaPyType(csr_matrix, int, precision=8)
     tag_2: csr_matrix = LavaPyType(csr_matrix, int, precision=6)
-
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -206,7 +205,6 @@ class PyLearningSparseModelBitApproximate(
         self.recv_traces(s_in)
 
 
-
 class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
@@ -226,7 +224,8 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         weights.
         """
         warnings.simplefilter('ignore')
-        weight_delay = vstack([weights.multiply(delays == k) for k in range(np.max(delays) + 1)])
+        weight_delay = vstack([weights.multiply(delays == k) for k
+                               in range(np.max(delays) + 1)])
         warnings.resetwarnings()
         return weight_delay
 

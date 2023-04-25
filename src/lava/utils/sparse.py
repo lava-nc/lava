@@ -1,5 +1,6 @@
 from scipy.sparse import csr_matrix, find
 
+
 def find_with_explicit_zeros(mat: csr_matrix):
     """Behaves as find but also returns explict zeros."""
     idx = mat.data == 0
