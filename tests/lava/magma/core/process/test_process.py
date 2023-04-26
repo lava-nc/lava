@@ -44,6 +44,7 @@ class MinimalRuntimeService:
     def __init__(self):
         pass
 
+
 class MinimalProtocol(AbstractSyncProtocol):
     @property
     def runtime_service(self):
