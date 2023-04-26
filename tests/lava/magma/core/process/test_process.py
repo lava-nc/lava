@@ -38,11 +38,16 @@ class MinimalProcess(AbstractProcess):
         super().__init__(name=name)
 
 
+class MinimalRuntimeService:
+    __name__ = 'MinimalRuntimeService'
+
+    def __init__(self):
+        pass
+
 class MinimalProtocol(AbstractSyncProtocol):
     @property
     def runtime_service(self):
-        rt_svc = type('MinimalRuntimeService', (object,), {})
-        return {CPU: rt_svc}
+        return {CPU: MinimalRuntimeService()}
 
 
 @implements(proc=MinimalProcess, protocol=MinimalProtocol)
@@ -311,7 +316,7 @@ class TestProcess(unittest.TestCase):
         p.create_runtime(run_cfg)
         r = p.runtime
         self.assertIsInstance(r, Runtime)
-        self.assert_(r._is_initialized)
+        self.assertTrue(r._is_initialized)
         self.assertFalse(r._is_started)
         self.assertFalse(r._is_running)
 
