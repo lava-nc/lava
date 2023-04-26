@@ -330,6 +330,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         being no longer satisfied, run() can be called again to resume
         execution from the current state.
 
+        NOTE: run_cfg will be ignored when re-running a previously compiled
+        process.
+
         Parameters
         ----------
         condition : AbstractRunCondition
@@ -343,18 +346,37 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """
         if not self._runtime:
             if not run_cfg:
-                raise ValueError("The Processes that are to be executed have "
-                                 "not been compiled yet. This requires that a"
-                                 "RunConfig is passed to the run() method.")
-
-            executable = self.compile(run_cfg, compile_config)
-            self._runtime = Runtime(executable,
-                                    ActorType.MultiProcessing,
-                                    loglevel=self._log_config.level)
-            executable.assign_runtime_to_all_processes(self._runtime)
-            self._runtime.initialize()
-
+                raise ValueError("run_cfg must not be None when calling"
+                                 " Process.run() unless the process has already"
+                                 " been compiled.")
+            self.create_runtime(run_cfg, compile_config)
         self._runtime.start(condition)
+
+    def create_runtime(self, run_cfg: RunConfig,
+                       compile_config:
+                       ty.Optional[ty.Dict[str, ty.Any]] = None):
+        """Creates a runtime for this process and all connected processes by
+        compiling the process to an executable and assigning that executable to
+        the process and connected processes.
+
+        See Process.run() for information on Process blocking, which must be
+        specified in the run_cfg passed to create_runtime.
+
+        Parameters
+        ----------
+        run_cfg : RunConfig, optional
+            Used by the compiler to select a ProcessModel for each Process.
+            Must be provided when Processes have to be compiled, can be
+            omitted otherwise.
+        compile_config: Dict[str, Any], optional
+            Configuration options for the Compiler and SubCompilers.
+        """
+        executable = self.compile(run_cfg, compile_config)
+        self._runtime = Runtime(executable,
+                                ActorType.MultiProcessing,
+                                loglevel=self._log_config.level)
+        executable.assign_runtime_to_all_processes(self._runtime)
+        self._runtime.initialize()
 
     def compile(self,
                 run_cfg: RunConfig,
