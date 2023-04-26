@@ -33,10 +33,10 @@ class TestSparseProcess(unittest.TestCase):
         shape = (100, 200)
         weights = np.random.random(shape)
 
-        # sparsify
+        # Sparsify
         weights[weights < 0.7] = 0
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = Sparse(weights=weights_sparse)
@@ -63,10 +63,10 @@ class TestLearningSparseProcess(unittest.TestCase):
         shape = (100, 200)
         weights = np.random.random(shape)
 
-        # sparsify
+        # Sparsify
         weights[weights < 0.7] = 0
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -85,11 +85,11 @@ class TestDelaySparseProcess(unittest.TestCase):
         weights = np.random.random(shape)
         delays = np.random.randint(0, 3, shape)
 
-        # sparsify
+        # Sparsify
         weights[weights < 0.7] = 0
         delays[weights < 0.7] = 0
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
         delays_sparse = csr_matrix(delays)
 

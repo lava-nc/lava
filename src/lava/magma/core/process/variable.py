@@ -132,17 +132,6 @@ class Var(AbstractProcessMember):
             idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
-        if isinstance(value, spmatrix):
-            value = value.tocsr()
-            if value.shape != self.init.shape or \
-                    (value.indices != self.init.indices).any() or \
-                    (value.indptr != self.init.indptr).any() or \
-                    (len(find(value)[2]) != len(find(self.init)[2])):
-                raise ValueError("Indices and number of non-zero elements "
-                                 "must stay equal when using set on a"
-                                 "sparse matrix.")
-            value = find(value)[2]
-
         if self.aliased_var is not None:
             self.aliased_var.set(value, idx)
         else:
@@ -152,6 +141,17 @@ class Var(AbstractProcessMember):
                     value = np.array(
                         list(value.encode("ascii")), dtype=np.int32
                     )
+                elif isinstance(value, spmatrix):
+                    value = value.tocsr()
+                    if value.shape != self.init.shape or \
+                            (value.indices != self.init.indices).any() or \
+                            (value.indptr != self.init.indptr).any() or \
+                            (len(find(value)[2]) != len(find(self.init)[2])):
+                        raise ValueError("Indices and number of non-zero "
+                                         "elements must stay equal when using"
+                                         "set on a sparse matrix.")
+                    value = find(value)[2]
+
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(

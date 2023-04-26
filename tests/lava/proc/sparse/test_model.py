@@ -66,7 +66,6 @@ def create_learning_network(data_pre, conn, data_post, weights=None):
 class TestSparseProcessModelFloat(unittest.TestCase):
     """Tests for Sparse class in floating point precision. """
 
-    # TODO add dedicated tests for get and set
     def test_consistency_with_dense_random_shape(self):
         """Tests if the results of Sparse and Dense are consistent. """
 
@@ -74,7 +73,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights[np.abs(weights) < 0.7] = 0
 
         inp = (np.random.rand(shape[1], simtime) > 0.7).astype(int)
@@ -86,20 +85,20 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
         conn.run(condition=run_cond, run_cfg=run_cfg)
-        # weights_got_dense = conn.weights.get()
+        # Weights_got_dense = conn.weights.get()
         result_dense = dense_net[2].data.get()
         conn.stop()
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = Sparse(weights=weights_sparse)
         sparse_net = create_network(inp, conn, weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
-        # weights_got_sparse = conn.weights.get()
+        # Weights_got_sparse = conn.weights.get()
         result_sparse = sparse_net[2].data.get()
         conn.stop()
 
@@ -112,7 +111,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights[np.abs(weights) < 0.7] = 0
 
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
@@ -129,7 +128,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = Sparse(weights=weights_sparse, num_message_bits=8)
@@ -148,9 +147,9 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights[np.abs(weights) < 0.7] = 0
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         inp = (np.random.rand(shape[1], simtime) * 10).astype(int)
@@ -174,7 +173,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights_init = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights_init[np.abs(weights_init) < 0.7] = 0
         weights_init_sparse = csr_matrix(weights_init)
 
@@ -217,7 +216,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights[np.abs(weights) < 0.7] = 0
         weights *= 20
         weights = weights.astype(int)
@@ -236,7 +235,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = Sparse(weights=weights_sparse)
@@ -255,7 +254,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights[np.abs(weights) < 0.7] = 0
         weights *= 20
         weights = weights.astype(int)
@@ -274,7 +273,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = Sparse(weights=weights_sparse, num_message_bits=8)
@@ -293,7 +292,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights_init = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights_init[np.abs(weights_init) < 0.7] = 0
         weights_init *= 20
         weights_init = weights_init.astype(int)
@@ -320,7 +319,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         shape = np.random.randint(1, 300, 2).tolist()
         weights_init = (np.random.random(shape) - 0.5) * 2
 
-        # sparsify
+        # Sparsify
         weights_init[np.abs(weights_init) < 0.7] = 0
         weights_init *= 20
         weights_init = weights_init.astype(int)
@@ -416,7 +415,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -466,7 +465,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -516,7 +515,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -571,7 +570,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -635,7 +634,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -685,7 +684,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -735,7 +734,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -790,7 +789,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
         # Run the same network with Sparse
 
-        # convert to spmatrix
+        # Convert to spmatrix
         weights_sparse = csr_matrix(weights)
 
         conn = LearningSparse(weights=weights_sparse,
@@ -842,7 +841,7 @@ class VecSendandRecvProcess(AbstractProcess):
         self.vec_to_send = Var(shape=shape, init=vec_to_send)
         self.send_at_times = Var(shape=(num_steps,), init=send_at_times)
         self.s_out = OutPort(shape=shape)
-        self.a_in = InPort(shape=shape)  # enables recurrence test
+        self.a_in = InPort(shape=shape)
 
 
 class VecRecvProcess(AbstractProcess):
@@ -859,7 +858,7 @@ class VecRecvProcess(AbstractProcess):
         shape = kwargs.get("shape", (1,))
         self.shape = shape
         self.s_in = InPort(shape=(shape[1],))
-        self.spk_data = Var(shape=shape, init=0)  # This Var expands with time
+        self.spk_data = Var(shape=shape, init=0)
 
 
 @implements(proc=VecSendandRecvProcess, protocol=LoihiProtocol)
