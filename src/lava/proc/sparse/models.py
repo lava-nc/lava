@@ -223,12 +223,14 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         This allows for the updating of the activation buffer and updating
         weights.
         """
+        # Can only start at 1, as delays==0 raises inefficiency warning
+        weight_delay_from_1 = vstack([weights.multiply(delays == k)
+                                      for k in range(1, np.max(delays) + 1)])
+        # Create weight matrix at delays == 0
         r, c, _ = find(delays)
         weight_delay_zeros = weights.copy()
         weight_delay_zeros[r, c] = 0
         weight_delay_zeros.eliminate_zeros()
-        weight_delay_from_1 = vstack([weights.multiply(delays == k)
-                                      for k in range(1, np.max(delays) + 1)])
         return vstack([weight_delay_zeros, weight_delay_from_1])
 
     def calc_act(self, s_in) -> np.ndarray:
