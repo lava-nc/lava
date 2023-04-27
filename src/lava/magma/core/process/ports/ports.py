@@ -653,7 +653,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
                 while not found_unique_name:
                     i += 1
                     name = vp.name + "_" + str(i)
-                    if not hasattr(var.process, vp.name):
+                    if not hasattr(var.process, name):
                         found_unique_name = True
                 vp.name = name
             setattr(var.process, vp.name, vp)
