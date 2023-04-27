@@ -646,9 +646,11 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             vp.process = var.process
             # VarPort name could shadow existing attribute
             if hasattr(var.process, vp.name):
-                raise AssertionError(
-                    "Name of implicit VarPort might conflict"
-                    " with existing attribute.")
+                # TODO : Implement proper strategy to handle this case
+                # raise AssertionError(
+                #     "Name of implicit VarPort might conflict"
+                #     " with existing attribute.")
+                vp.name = vp.name + "_1"
             setattr(var.process, vp.name, vp)
             var.process.var_ports.add_members({vp.name: vp})
 
