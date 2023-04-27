@@ -646,11 +646,16 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             vp.process = var.process
             # VarPort name could shadow existing attribute
             if hasattr(var.process, vp.name):
-                # TODO : Implement proper strategy to handle this case
-                # raise AssertionError(
-                #     "Name of implicit VarPort might conflict"
-                #     " with existing attribute.")
-                vp.name = vp.name + "_1"
+                found_unique_name = False
+                name = ""
+                i = 0
+                # Find a unique name
+                while not found_unique_name:
+                    i += 1
+                    name = vp.name + "_" + str(i)
+                    if not hasattr(var.process, vp.name):
+                        found_unique_name = True
+                vp.name = name
             setattr(var.process, vp.name, vp)
             var.process.var_ports.add_members({vp.name: vp})
 
