@@ -310,6 +310,15 @@ class TestRVPorts(unittest.TestCase):
         # ... and connect it directly via connect_var(..)
         rp.connect_var(v)
 
+        # This has the same effect as connecting a RefPort explicitly via a
+        # VarPort to a Var...
+        self.assertEqual(rp.get_dst_vars(), [v])
+        # ... but still creates a VarPort implicitly
+        vp = rp.get_dst_ports()[0]
+        self.assertIsInstance(vp, VarPort)
+        # ... which wraps the original Var
+        self.assertEqual(vp.var, v)
+
         # In this case, the VarPort inherits its name and parent process from
         # the Var it wraps + _implicit_port + _k with k=1,2,3...
         self.assertEqual(vp.name, "_" + v.name + "_implicit_port" + "_1")
