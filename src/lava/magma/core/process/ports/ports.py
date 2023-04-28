@@ -647,7 +647,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             # VarPort name could shadow existing attribute
             if hasattr(var.process, vp.name):
                 name = str(vp.name)
-                name_suffix = 0
+                name_suffix = 1
                 while hasattr(var.process, vp.name):
                     vp.name = name + "_" + str(name_suffix)
                     name_suffix += 1
