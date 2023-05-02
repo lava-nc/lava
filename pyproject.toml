@@ -17,7 +17,7 @@ repository = "https://github.com/lava-nc/lava"
 authors = [ 
     "Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"
 ]
-license = "Lava uses multiple licenses and is licensed under BSD-3-Clause or LGPL-2.1-or-later"
+license = "(BSD-3-Clause), (LGPL-2.1-or-later)"
 keywords = [
     "neuromorphic",
     "ai",
