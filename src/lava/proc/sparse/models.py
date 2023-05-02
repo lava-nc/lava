@@ -215,7 +215,7 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         Calculate the activation matrix based on s_in by performing
         delay_wgts * s_in.
         """
-        # first calulating the activations through delay_wgts * s_in
+        # First calculating the activations through delay_wgts * s_in
         # This matrix is then summed across each row to get the
         # activations to the output neurons for different delays.
         # This activation vector is reshaped to a matrix of the form
