@@ -212,13 +212,15 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
 
     def calc_act(self, s_in) -> np.ndarray:
         """
-        Calculate the activations by performing delay_wgts * s_in. This matrix
-        is then summed across each row to get the activations to the output
-        neurons for different delays. This activation vector is reshaped to a
-        matrix of the form
-        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
-        which is then transposed to get the activation matrix.
+        Calculate the activation matrix based on s_in by performing
+        delay_wgts * s_in.
         """
+        # first calulating the activations through delay_wgts * s_in
+        # This matrix is then summed across each row to get the
+        # activations to the output neurons for different delays.
+        # This activation vector is reshaped to a matrix of the form
+        # (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
+        #  which is then transposed to get the activation matrix.
         return np.reshape(self.get_delay_wgts_mat(self.weights,
                                                   self.delays).dot(s_in),
                           (np.max(self.delays) + 1,
@@ -227,8 +229,13 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     @staticmethod
     def get_delay_wgts_mat(weights, delays) -> spmatrix:
         """
-        Use self.weights and self.delays to create a matrix where the
-        weights are separated by delay. Returns 2D matrix of form
+        Create a matrix where the synaptic weights are separated
+        by their corresponding delays. The first matrix contains all the
+        weights, where the delay is equal to zero. The second matrix
+        contains all the weights, where the delay is equal to one and so on.
+        These matrices are then stacked together vertically.
+
+        Returns 2D matrix of form
         (num_flat_output_neurons * max_delay + 1, num_flat_input_neurons) where
         delay_wgts[
             k * num_flat_output_neurons : (k + 1) * num_flat_output_neurons, :
