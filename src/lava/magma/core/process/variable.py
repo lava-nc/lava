@@ -165,7 +165,7 @@ class Var(AbstractProcessMember):
         if self.aliased_var is not None:
             return self.aliased_var.get(idx)
         else:
-            if self.process.runtime:
+            if self.process and self.process.runtime:
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     # decode if var is string
