@@ -269,7 +269,7 @@ def clip_weights(weights: np.ndarray,
         weights = -weights
 
     min_wgt = (-2 ** num_bits) * mixed_flag
-    max_wgt = 2 ** (num_bits - mixed_flag) - 1
+    max_wgt = 2 ** num_bits - 1
 
     clipped_weights = np.clip(weights, min_wgt, max_wgt)
 
