@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix
 
-from lava.utils.sparse import find_with_explicit_zeros
+from lava.utils.sparse import find
 from lava.proc.sparse.process import Sparse, LearningSparse, DelaySparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 
@@ -20,7 +20,7 @@ class TestFunctions(unittest.TestCase):
         spmat = csr_matrix(mat)
         spmat.data[0] = 0
 
-        dst, src, vals = find_with_explicit_zeros(spmat)
+        dst, src, vals = find(spmat, explicit_zeros=True)
 
         self.assertTrue(np.all(spmat.data in vals))
 
@@ -97,3 +97,38 @@ class TestDelaySparseProcess(unittest.TestCase):
 
         self.assertIsInstance(conn.weights.init, spmatrix)
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
+
+    def test_validate_shapes(self):
+        """Tests if the weights and delay have correct shape"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+
+        shape = (2, 3)
+        delays = np.random.randint(0, 3, shape)
+
+        # Convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+        delays_sparse = csr_matrix(delays)
+
+        np.testing.assert_raises(ValueError,
+                                 DelaySparse,
+                                 weights=weights_sparse,
+                                 delays=delays_sparse)
+
+    def test_validate_nonzero_delays(self):
+        """Tests if the weights and delay have correct shape"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+        delays = np.random.randint(0, 3, shape)
+        delays[0] = -1
+
+        # Convert to spmatrix
+        weights_sparse = csr_matrix(weights)
+        delays_sparse = csr_matrix(delays)
+
+        np.testing.assert_raises(ValueError,
+                                 DelaySparse,
+                                 weights=weights_sparse,
+                                 delays=delays_sparse)

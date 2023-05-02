@@ -5,9 +5,9 @@
 import typing as ty
 from abc import ABC, abstractmethod
 import logging
-from lava.utils.sparse import find_with_explicit_zeros
+from lava.utils.sparse import find
 import numpy as np
-from scipy.sparse import csr_matrix, find
+from scipy.sparse import csr_matrix
 import platform
 
 from lava.magma.compiler.channels.pypychannel import (
@@ -128,7 +128,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
-            dst, src, values = find_with_explicit_zeros(var)
+            dst, src, values = find(var, explicit_zeros=True)
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
             for value in values:

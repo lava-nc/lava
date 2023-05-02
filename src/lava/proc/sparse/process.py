@@ -68,10 +68,9 @@ class Sparse(AbstractProcess):
                          log_config=log_config,
                          **kwargs)
 
-        # transform weights to csr matrix
+        # Transform weights to csr matrix
         weights = weights.tocsr()
 
-        self._validate_weights(weights)
         shape = weights.shape
 
         # Ports
@@ -82,12 +81,6 @@ class Sparse(AbstractProcess):
         self.weights = Var(shape=shape, init=weights)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
-
-    @staticmethod
-    def _validate_weights(weights: spmatrix) -> None:
-        if len(np.shape(weights)) != 2:
-            raise ValueError("Sparse Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
 
 
 class LearningSparse(LearningConnectionProcess, Sparse):
@@ -180,7 +173,6 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         # transform weights to csr matrix
         weights = weights.tocsr()
 
-        self._validate_weights(weights)
         shape = weights.shape
 
         # Ports
@@ -191,12 +183,6 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         self.weights = Var(shape=shape, init=weights)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
-
-    @staticmethod
-    def _validate_weights(weights: spmatrix) -> None:
-        if len(np.shape(weights)) != 2:
-            raise ValueError("Sparse Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
 
 
 class DelaySparse(Sparse):

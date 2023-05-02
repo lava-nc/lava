@@ -147,9 +147,9 @@ class PyLearningDenseModelFloat(
 @tag("bit_approximate_loihi", "fixed_pt")
 class PyLearningDenseModelBitApproximate(
         LearningConnectionModelBitApproximate, AbstractPyDenseModelBitAcc):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    uses similar constraints as the  Loihi's hardware implementation of Dense,
-    but does not mimics Loihi behaviour bit-by-bit.
+    """Implementation of Conn Process with Dense synaptic connections that
+    uses similar constraints as Loihi's hardware implementation of dense
+    connectivity but does not reproduce Loihi bit-by-bit.
     """
 
     def __init__(self, proc_params):
@@ -195,13 +195,27 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     delays into the Conn Process.
     """
 
+    def calc_act(self, s_in) -> np.ndarray:
+        """
+        Calculate the activations by performing delay_wgts * s_in. This matrix
+        is then summed across each row to get the activations to the output
+        neurons for different delays. This activation vector is reshaped to a
+        matrix of the form
+        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
+        which is then transposed to get the activation matrix.
+        """
+        return np.reshape(
+            np.sum(self.get_delay_wgts_mat(self.weights,
+                                           self.delays) * s_in, axis=1),
+            (np.max(self.delays) + 1, self.weights.shape[0])).T
+
     @staticmethod
-    def get_del_wgts(weights, delays) -> np.ndarray:
+    def get_delay_wgts_mat(weights, delays) -> np.ndarray:
         """
         Use self.weights and self.delays to create a matrix where the
         weights are separated by delay. Returns 2D matrix of form
         (num_flat_output_neurons * max_delay + 1, num_flat_input_neurons) where
-        del_wgts[
+        delay_wgts[
             k * num_flat_output_neurons : (k + 1) * num_flat_output_neurons, :
         ]
         contains the weights for all connections with a delay equal to k.
@@ -212,20 +226,6 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
             np.where(delays == k, weights, 0)
             for k in range(np.max(delays) + 1)
         ])
-
-    def calc_act(self, s_in) -> np.ndarray:
-        """
-        Calculate the activations by performing del_wgts * s_in. This matrix
-        is then summed across each row to get the activations to the output
-        neurons for different delays. This activation vector is reshaped to a
-        matrix of the form
-        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
-        which is then transposed to get the activation matrix.
-        """
-        return np.reshape(
-            np.sum(self.get_del_wgts(self.weights,
-                                     self.delays) * s_in, axis=1),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
 
     def update_act(self, s_in):
         """

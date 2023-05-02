@@ -652,7 +652,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
     def test_consistency_with_learning_dense_random_shape_dt(self):
         """Tests if the results of LearningSparse and LearningDense
-        are consistent. """
+        are consistent using dt in the learning rule. """
 
         simtime = 10
         shape = np.random.randint(1, 100, 2).tolist()
@@ -702,7 +702,7 @@ class TestLearningSparseProcessModelFixed(unittest.TestCase):
 
     def test_consistency_with_learning_dense_random_shape_dd(self):
         """Tests if the results of LearningSparse and LearningDense
-        are consistent. """
+        are consistent using dd in the learning rule. """
 
         simtime = 10
         shape = np.random.randint(1, 100, 2).tolist()
@@ -932,7 +932,8 @@ class TestDelaySparseProcessModel(unittest.TestCase):
     """Tests for ProcessModels of Sparse with synaptic delay."""
 
     def test_matrix_weight_delay_expansion(self):
-        """"""
+        """Tests if the weight-delay matrix is consistent between Dense
+        and Sparse"""
         shape = (5, 4)
         weights = np.zeros(shape, dtype=float)
         weights[3, 3] = 1
@@ -945,10 +946,10 @@ class TestDelaySparseProcessModel(unittest.TestCase):
 
         weights_sparse = csr_matrix(weights)
         delays_sparse = csr_matrix(delays)
-        wgt_dly_dense = AbstractPyDelayDenseModel.get_del_wgts(weights,
-                                                               delays)
-        wgt_dly_sparse = APDSM.get_del_wgts(weights_sparse,
-                                            delays_sparse)
+        wgt_dly_dense = AbstractPyDelayDenseModel.get_delay_wgts_mat(weights,
+                                                                     delays)
+        wgt_dly_sparse = APDSM.get_delay_wgts_mat(weights_sparse,
+                                                  delays_sparse)
         self.assertTrue(np.all(wgt_dly_sparse == wgt_dly_dense))
 
     def test_float_pm_buffer_delay(self):

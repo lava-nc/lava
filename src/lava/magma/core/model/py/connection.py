@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 from abc import abstractmethod
-from lava.utils.sparse import find_with_explicit_zeros
+from lava.utils.sparse import find
 import numpy as np
 import typing
 from scipy.sparse import csr_matrix
@@ -948,7 +948,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
             shift = W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
             if isinstance(syn_var, csr_matrix):
                 syn_var.data = syn_var.data << shift
-                dst, src, _ = find_with_explicit_zeros(syn_var)
+                dst, src, _ = find(syn_var, explicit_zeros=True)
                 syn_var[dst, src] = lr_applier.apply(syn_var,
                                                      **applier_args)[dst, src]
             else:
@@ -1028,7 +1028,7 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
     def _saturate_synaptic_variable_accumulator(
             self, syn_var_name: str,
             syn_var_values: typing.Union[np.ndarray, csr_matrix]
-    ) -> np.ndarray:
+    ) -> typing.Union[np.ndarray, csr_matrix]:
         """Saturate synaptic variable accumulator.
 
         Checks that sign is valid.
@@ -1037,12 +1037,12 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         ----------
         syn_var_name: str
             Synaptic variable name.
-        syn_var_values: ndarray
+        syn_var_values: ndarray, csr_matrix
             Synaptic variable values to saturate.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Saturated synaptic variable values.
         """
         # Weights
@@ -1082,12 +1082,12 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         ----------
         syn_var_name: str
             Synaptic variable name.
-        syn_var_values: ndarray
+        syn_var_values: ndarray, csr_matrix
             Synaptic variable values to stochastically round.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Stochastically rounded synaptic variable values.
         """
         exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[syn_var_name])
@@ -1123,12 +1123,12 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         ----------
         syn_var_name: str
             Synaptic variable name.
-        syn_var_val: ndarray
+        syn_var_val: ndarray, csr_matrix
             Synaptic variable values to saturate.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Saturated synaptic variable values.
         """
 
@@ -1459,7 +1459,7 @@ class LearningConnectionModelFloat(PyLearningConnection):
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
             if (isinstance(syn_var, csr_matrix)):
-                dst, src, _ = find_with_explicit_zeros(syn_var)
+                dst, src, _ = find(syn_var, explicit_zeros=True)
                 syn_var[dst, src] = lr_applier.apply(syn_var,
                                                      **applier_args)[dst, src]
             else:

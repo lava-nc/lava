@@ -4,8 +4,8 @@
 
 import typing as ty
 import numpy as np
-from scipy.sparse import csr_matrix, spmatrix, find
-
+from scipy.sparse import csr_matrix, spmatrix
+from lava.utils.sparse import find
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
@@ -143,14 +143,17 @@ class Var(AbstractProcessMember):
                     )
                 elif isinstance(value, spmatrix):
                     value = value.tocsr()
+                    init_dst, init_src, init_val = find(self.init,
+                                                        explicit_zeros=True)
+                    dst, src, val = find(value, explicit_zeros=True)
                     if value.shape != self.init.shape or \
-                            (value.indices != self.init.indices).any() or \
-                            (value.indptr != self.init.indptr).any() or \
-                            (len(find(value)[2]) != len(find(self.init)[2])):
+                            np.any(init_dst != dst) or \
+                            np.any(init_src != src) or \
+                            len(val) != len(init_val):
                         raise ValueError("Indices and number of non-zero "
                                          "elements must stay equal when using"
                                          "set on a sparse matrix.")
-                    value = find(value)[2]
+                    value = val
 
                 self.process.runtime.set_var(self.id, value, idx)
             else:
