@@ -128,7 +128,8 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         Learning rule which determines the parameters for online learning.
 
     graded_spike_cfg: GradedSpikeCfg
-        Indicates how to use incoming graded spike to update pre-synaptic traces
+        Indicates how to use incoming graded spike to update pre-synaptic
+        traces.
 
         (0) GradedSpikeCfg.USE_REGULAR_IMPULSE interprets the spike as a
         binary spike, adds regular impulses to pre-synaptic traces, at the end
@@ -170,7 +171,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
-        # transform weights to csr matrix
+        # Transform weights to csr matrix
         weights = weights.tocsr()
 
         shape = weights.shape
