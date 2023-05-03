@@ -221,6 +221,14 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         """
         self.stop()
 
+    def __enter__(self):
+        """Executed when Process enters a "with" block of a context manager."""
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop the runtime when exiting "with" block of a context manager."""
+        self.stop()
+
     def _post_init(self):
         """Called after __init__() method of any sub class via
         ProcessMetaClass to finalize initialization leading to following
