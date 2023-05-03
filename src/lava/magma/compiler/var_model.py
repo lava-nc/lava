@@ -68,6 +68,7 @@ class AbstractVarModel(ABC):
             self.name: str = var.name
             self.shape: ty.Tuple[int, ...] = var.shape
             self.proc_id: int = var.process.id
+            self.dtype = type(var.init)
 
 
 @dataclass

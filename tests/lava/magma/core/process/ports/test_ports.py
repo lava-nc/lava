@@ -290,7 +290,8 @@ class TestRVPorts(unittest.TestCase):
 
     def test_connect_RefPort_to_Var_process_conflict(self):
         """Checks connecting RefPort implicitly to Var, with registered
-        processes and conflicting names. -> AssertionError"""
+        processes and conflicting names. -> adding _k with k=1,2,3... to
+        the name."""
 
         # Create a mock parent process
         class VarProcess(AbstractProcess):
@@ -307,9 +308,21 @@ class TestRVPorts(unittest.TestCase):
         v.name = "existing_attr"
 
         # ... and connect it directly via connect_var(..)
-        # The naming conflict should raise an AssertionError
-        with self.assertRaises(AssertionError):
-            rp.connect_var(v)
+        rp.connect_var(v)
+
+        # This has the same effect as connecting a RefPort explicitly via a
+        # VarPort to a Var...
+        self.assertEqual(rp.get_dst_vars(), [v])
+        # ... but still creates a VarPort implicitly
+        vp = rp.get_dst_ports()[0]
+        self.assertIsInstance(vp, VarPort)
+        # ... which wraps the original Var
+        self.assertEqual(vp.var, v)
+
+        # In this case, the VarPort inherits its name and parent process from
+        # the Var it wraps + _implicit_port + _k with k=1,2,3...
+        self.assertEqual(vp.name, "_" + v.name + "_implicit_port" + "_1")
+        self.assertEqual(vp.process, v.process)
 
     @unittest.skip("Currently not supported")
     def test_connect_RefPort_to_many_Vars(self):
