@@ -3,8 +3,10 @@
 # See: https://spdx.org/licenses/
 
 from abc import abstractmethod
+from lava.utils.sparse import find
 import numpy as np
 import typing
+from scipy.sparse import csr_matrix
 
 from lava.magma.core.learning.learning_rule import (
     LoihiLearningRule,
@@ -827,11 +829,12 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         t_spike_y = self.ty
 
         # most naive algorithm to decay traces
-        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, np.nan,
+        x_traces_history = np.full((t_epoch + 1,) + x_traces.shape, 0,
                                    dtype=int)
         x_traces_history[0] = x_traces
-        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, np.nan,
+        y_traces_history = np.full((t_epoch + 1,) + y_traces.shape, 0,
                                    dtype=int)
+
         y_traces_history[0] = y_traces
 
         for t in range(1, t_epoch + 1):
@@ -942,10 +945,16 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            syn_var = np.left_shift(
-                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            )
-            syn_var = lr_applier.apply(syn_var, **applier_args)
+            shift = W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
+            if isinstance(syn_var, csr_matrix):
+                syn_var.data = syn_var.data << shift
+                dst, src, _ = find(syn_var, explicit_zeros=True)
+                syn_var[dst, src] = lr_applier.apply(syn_var,
+                                                     **applier_args)[dst, src]
+            else:
+                syn_var = syn_var << shift
+                syn_var = lr_applier.apply(syn_var, **applier_args)
+
             syn_var = self._saturate_synaptic_variable_accumulator(
                 syn_var_name, syn_var
             )
@@ -954,9 +963,11 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
                 syn_var,
                 self._conn_var_random.random_stochastic_round,
             )
-            syn_var = np.right_shift(
-                syn_var, W_ACCUMULATOR_S - W_SYN_VAR_S[syn_var_name]
-            )
+
+            if isinstance(syn_var, csr_matrix):
+                syn_var.data = syn_var.data >> shift
+            else:
+                syn_var = syn_var >> shift
 
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
@@ -1015,83 +1026,93 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
         return applier_args
 
     def _saturate_synaptic_variable_accumulator(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
-    ) -> np.ndarray:
+            self, syn_var_name: str,
+            syn_var_values: typing.Union[np.ndarray, csr_matrix]
+    ) -> typing.Union[np.ndarray, csr_matrix]:
         """Saturate synaptic variable accumulator.
 
         Checks that sign is valid.
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_values: ndarray, csr_matrix
             Synaptic variable values to saturate.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Saturated synaptic variable values.
         """
         # Weights
-        if synaptic_variable_name == "weights":
+        if syn_var_name == "weights":
             if self.sign_mode == SignMode.MIXED:
-                return synaptic_variable_values
+                return syn_var_values
             elif self.sign_mode == SignMode.EXCITATORY:
-                return np.maximum(0, synaptic_variable_values)
+                return np.maximum(0, syn_var_values)
             elif self.sign_mode == SignMode.INHIBITORY:
-                return np.minimum(0, synaptic_variable_values)
+                return np.minimum(0, syn_var_values)
         # Delays
-        elif synaptic_variable_name == "tag_2":
-            return np.maximum(0, synaptic_variable_values)
+        elif syn_var_name == "tag_2":
+            if isinstance(syn_var_values, csr_matrix):
+                syn_var_values.data[syn_var_values.data < 0] = 0
+                return syn_var_values
+            return np.maximum(0, syn_var_values)
         # Tags
-        elif synaptic_variable_name == "tag_1":
-            return synaptic_variable_values
+        elif syn_var_name == "tag_1":
+            return syn_var_values
         else:
             raise ValueError(
-                f"synaptic_variable_name can be 'weights', "
+                f"syn_var_name can be 'weights', "
                 f"'tag_1', or 'tag_2'."
-                f"Got {synaptic_variable_name=}."
+                f"Got {syn_var_name=}."
             )
 
     @staticmethod
     def _stochastic_round_synaptic_variable(
-        synaptic_variable_name: str,
-        synaptic_variable_values: np.ndarray,
+        syn_var_name: str,
+        syn_var_values: typing.Union[np.ndarray, csr_matrix],
         random: float,
-    ) -> np.ndarray:
+    ) -> typing.Union[np.ndarray, csr_matrix]:
         """Stochastically round synaptic variable after learning rule
         application.
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_values: ndarray, csr_matrix
             Synaptic variable values to stochastically round.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Stochastically rounded synaptic variable values.
         """
-        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[synaptic_variable_name])
+        exp_mant = 2 ** (W_ACCUMULATOR_U - W_SYN_VAR_U[syn_var_name])
 
-        integer_part = synaptic_variable_values / exp_mant
+        if isinstance(syn_var_values, csr_matrix):
+            integer_part = syn_var_values.data / exp_mant
+        else:
+            integer_part = syn_var_values / exp_mant
         fractional_part = integer_part % 1
 
         integer_part = np.floor(integer_part)
         integer_part = stochastic_round(integer_part, random, fractional_part)
-        result = (integer_part * exp_mant).astype(
-            synaptic_variable_values.dtype
-        )
 
-        return result
+        if isinstance(syn_var_values, csr_matrix):
+            syn_var_values.data = (integer_part
+                                   * exp_mant).astype(syn_var_values.dtype)
+            return syn_var_values
+        else:
+            return (integer_part * exp_mant).astype(
+                syn_var_values.dtype
+            )
 
     def _saturate_synaptic_variable(
-            self, synaptic_variable_name: str,
-            synaptic_variable_values: np.ndarray
+            self, syn_var_name: str,
+            syn_var_val: typing.Union[np.ndarray, csr_matrix]
     ) -> np.ndarray:
         """Saturate synaptic variable.
 
@@ -1100,40 +1121,54 @@ class LearningConnectionModelBitApproximate(PyLearningConnection):
 
         Parameters
         ----------
-        synaptic_variable_name: str
+        syn_var_name: str
             Synaptic variable name.
-        synaptic_variable_values: ndarray
+        syn_var_val: ndarray, csr_matrix
             Synaptic variable values to saturate.
 
         Returns
         ----------
-        result : ndarray
+        result : ndarray, csr_matrix
             Saturated synaptic variable values.
         """
+
         # Weights
-        if synaptic_variable_name == "weights":
+        if syn_var_name == "weights":
             return clip_weights(
-                synaptic_variable_values,
+                syn_var_val,
                 sign_mode=self.sign_mode,
                 num_bits=W_WEIGHTS_U,
             )
         # Delays
-        elif synaptic_variable_name == "tag_2":
+        elif syn_var_name == "tag_2":
+            if isinstance(syn_var_val, csr_matrix):
+                _min = -(2 ** W_TAG_2_U) - 1
+                _max = (2 ** W_TAG_2_U) - 1
+                syn_var_val.data[syn_var_val.data < _min] = _min
+                syn_var_val.data[syn_var_val.data > _max] = _max
+                return syn_var_val
+
             return np.clip(
-                synaptic_variable_values, a_min=0, a_max=2 ** W_TAG_2_U - 1
+                syn_var_val, a_min=0, a_max=2 ** W_TAG_2_U - 1
             )
         # Tags
-        elif synaptic_variable_name == "tag_1":
+        elif syn_var_name == "tag_1":
+            if isinstance(syn_var_val, csr_matrix):
+                _min = -(2 ** W_TAG_1_U) - 1
+                _max = (2 ** W_TAG_1_U) - 1
+                syn_var_val.data[syn_var_val.data < _min] = _min
+                syn_var_val.data[syn_var_val.data > _max] = _max
+                return syn_var_val
             return np.clip(
-                synaptic_variable_values,
+                syn_var_val,
                 a_min=-(2 ** W_TAG_1_U) - 1,
                 a_max=2 ** W_TAG_1_U - 1,
             )
         else:
             raise ValueError(
-                f"synaptic_variable_name can be 'weights', "
+                f"syn_var_name can be 'weights', "
                 f"'tag_1', or 'tag_2'."
-                f"Got {synaptic_variable_name=}."
+                f"Got {syn_var_name=}."
             )
 
 
@@ -1423,7 +1458,12 @@ class LearningConnectionModelFloat(PyLearningConnection):
 
         for syn_var_name, lr_applier in self._learning_rule_appliers.items():
             syn_var = getattr(self, syn_var_name).copy()
-            syn_var = lr_applier.apply(syn_var, **applier_args)
+            if (isinstance(syn_var, csr_matrix)):
+                dst, src, _ = find(syn_var, explicit_zeros=True)
+                syn_var[dst, src] = lr_applier.apply(syn_var,
+                                                     **applier_args)[dst, src]
+            else:
+                syn_var = lr_applier.apply(syn_var, **applier_args)
             syn_var = self._saturate_synaptic_variable(syn_var_name, syn_var)
             setattr(self, syn_var_name, syn_var)
 
@@ -1511,6 +1551,9 @@ class LearningConnectionModelFloat(PyLearningConnection):
         elif synaptic_variable_name == "tag_1":
             return synaptic_variable_values
         elif synaptic_variable_name == "tag_2":
+            if isinstance(synaptic_variable_values, csr_matrix):
+                synaptic_variable_values[synaptic_variable_values < 0] = 0
+                return synaptic_variable_values
             return np.maximum(0, synaptic_variable_values)
         else:
             raise ValueError(
