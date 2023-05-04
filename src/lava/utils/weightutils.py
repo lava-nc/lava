@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+from scipy.sparse import spmatrix
 import typing as ty
 from enum import Enum, unique
 from dataclasses import dataclass
@@ -44,20 +45,20 @@ def determine_sign_mode(weights: np.ndarray) -> SignMode:
 
 @dataclass
 class OptimizedWeights:
-    weights: np.ndarray
+    weights: ty.Union[np.ndarray, spmatrix]
     num_weight_bits: int
     weight_exp: int
 
 
 def optimize_weight_bits(
-        weights: np.ndarray,
+        weights: ty.Union[np.ndarray, spmatrix],
         sign_mode: SignMode,
         loihi2: ty.Optional[bool] = False) -> OptimizedWeights:
     """Optimizes the weight matrix to best fit in Loihi's synapse.
 
     Parameters
     ----------
-    weights : np.ndarray
+    weights : np.ndarray, spmatrix
         Standard 8-bit signed weight matrix.
     sign_mode : SignMode
         Determines whether the weights are purely excitatory, inhibitory,
@@ -75,26 +76,29 @@ def optimize_weight_bits(
     weight_exp = _determine_weight_exp(weights, sign_mode)
     num_weight_bits = _determine_num_weight_bits(weights, weight_exp, sign_mode)
 
-    weights = np.left_shift(weights.astype(np.int32), int(-weight_exp))
+    if isinstance(weights, np.ndarray):
+        weights = weights.astype(np.int32) << int(-weight_exp)
+    elif isinstance(weights, spmatrix):
+        weights.data = weights.data.astype(np.int32) << int(-weight_exp)
 
     if loihi2:
-        weights = weights // (1 << (8 - num_weight_bits))
+        weights = (weights / (1 << (8 - num_weight_bits))).astype(np.int32)
         if sign_mode == SignMode.MIXED:
-            weights = weights // 2
+            weights = (weights / 2).astype(np.int32)
 
-    optimized_weights = OptimizedWeights(weights=weights.astype(int),
+    optimized_weights = OptimizedWeights(weights=weights,
                                          num_weight_bits=num_weight_bits,
                                          weight_exp=weight_exp)
     return optimized_weights
 
 
-def _validate_weights(weights: np.ndarray,
+def _validate_weights(weights: ty.Union[np.ndarray, spmatrix],
                       sign_mode: SignMode) -> None:
     """Validate the weight values against the given sign mode.
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix
     sign_mode : SignMode
         Sign mode specified for the weight matrix
@@ -107,11 +111,11 @@ def _validate_weights(weights: np.ndarray,
     min_weight += inhibitory_flag
     max_weight = (2 ** 8 - 1) * (mixed_flag + excitatory_flag)
 
-    if np.any(weights > max_weight) or np.any(weights < min_weight):
+    if weights.max() > max_weight or weights.min() < min_weight:
         raise ValueError(f"weights have to be between {min_weight} and "
                          f"{max_weight} for {sign_mode=}. Got "
-                         f"weights between {np.min(weights)} and "
-                         f"{np.max(weights)}.")
+                         f"weights between {weights.min()} and "
+                         f"{weights.max()}.")
 
 
 def _determine_weight_exp(weights: np.ndarray,
@@ -197,16 +201,17 @@ def _determine_num_weight_bits(weights: np.ndarray,
     return num_weight_bits
 
 
-def truncate_weights(weights: np.ndarray,
+def truncate_weights(weights: ty.Union[np.ndarray, spmatrix],
                      sign_mode: SignMode,
                      num_weight_bits: int,
-                     max_num_weight_bits: ty.Optional[int] = 8) -> np.ndarray:
+                     max_num_weight_bits: ty.Optional[int] = 8
+                     ) -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix that is to be truncated.
     sign_mode : SignMode
         Sign mode to use for truncation. See SignMode class for the
@@ -222,7 +227,7 @@ def truncate_weights(weights: np.ndarray,
     numpy.ndarray
         Truncated weight matrix.
     """
-    weights = np.copy(weights).astype(np.int32)
+    weights = weights.copy().astype(np.int32)
 
     if sign_mode == SignMode.INHIBITORY:
         weights = -weights
@@ -230,25 +235,26 @@ def truncate_weights(weights: np.ndarray,
     mixed_flag = int(sign_mode == SignMode.MIXED)
     num_truncate_bits = max_num_weight_bits - num_weight_bits + mixed_flag
 
-    truncated_weights = np.left_shift(
-        np.right_shift(weights, num_truncate_bits),
-        num_truncate_bits).astype(np.int32)
+    if isinstance(weights, np.ndarray):
+        weights = (weights >> num_truncate_bits) << num_truncate_bits
+    elif isinstance(weights, spmatrix):
+        weights.data = (weights.data >> num_truncate_bits) << num_truncate_bits
 
     if sign_mode == SignMode.INHIBITORY:
-        truncated_weights = -truncated_weights
+        weights = -weights
 
-    return truncated_weights
+    return weights
 
 
-def clip_weights(weights: np.ndarray,
+def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
                  sign_mode: SignMode,
-                 num_bits: int) -> np.ndarray:
+                 num_bits: int) -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
     Parameters
     ----------
-    weights : numpy.ndarray
+    weights : numpy.ndarray, spmatrix
         Weight matrix that is to be truncated.
     sign_mode : SignMode
         Sign mode to use for truncation.
@@ -260,7 +266,7 @@ def clip_weights(weights: np.ndarray,
     numpy.ndarray
         Truncated weight matrix.
     """
-    weights = np.copy(weights).astype(np.int32)
+    weights = weights.copy().astype(np.int32)
 
     mixed_flag = int(sign_mode == SignMode.MIXED)
     inhibitory_flag = int(sign_mode == SignMode.INHIBITORY)
@@ -271,9 +277,13 @@ def clip_weights(weights: np.ndarray,
     min_wgt = (-2 ** num_bits) * mixed_flag
     max_wgt = 2 ** num_bits - 1
 
-    clipped_weights = np.clip(weights, min_wgt, max_wgt)
+    if isinstance(weights, np.ndarray):
+        weights = np.clip(weights, min_wgt, max_wgt)
+    elif isinstance(weights, spmatrix):
+        weights[weights > max_wgt] = max_wgt
+        weights[weights < min_wgt] = min_wgt
 
     if inhibitory_flag:
-        clipped_weights = -clipped_weights
+        weights = -weights
 
-    return clipped_weights
+    return weights
