@@ -89,6 +89,7 @@ TRACE_TO_IDX_DICT = {
 
 
 class GradedSpikeCfg(IntEnum):
+    # Do not change the values below as they determine hardware behavior
     USE_REGULAR_IMPULSE = 0
     OVERWRITE = 1
     ADD_WITH_SATURATION = 2
