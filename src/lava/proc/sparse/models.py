@@ -209,6 +209,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: csr_matrix = None
+    delays: csr_matrix = None
+    a_buff: np.ndarray = None
 
     def calc_act(self, s_in) -> np.ndarray:
         """
