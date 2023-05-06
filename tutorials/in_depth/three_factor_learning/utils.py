@@ -181,8 +181,7 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         self.s_out_y3.send(self.y3)
 
 
-def generate_post_spikes(pre_spike_times, 
-        num_steps, spike_prob_post):
+def generate_post_spikes(pre_spike_times, num_steps, spike_prob_post):
     """generates specific post synaptic spikes to
     demonstrate potentiation and depression.
     """
@@ -204,16 +203,17 @@ def generate_post_spikes(pre_spike_times,
     
     return spike_raster_post
 
+
 def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     offsets = list(range(1, len(spikes) + 1))
     num_x_ticks = np.arange(0, num_steps+1, 25)
     
     plt.figure(figsize=figsize)
 
-    spikes_plot = plt.eventplot(positions=spikes, 
-                                lineoffsets=offsets,
-                                linelength=0.9,
-                                colors=colors)
+    plt.eventplot(positions=spikes,
+                  lineoffsets=offsets,
+                  linelength=0.9,
+                  colors=colors)
 
     plt.title(title)
     plt.xlabel("Time steps")
@@ -226,8 +226,8 @@ def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     
     plt.yticks(ticks=offsets, labels=legend)
 
-    
     plt.show()
+
 
 def plot_time_series(time, time_series, ylabel, title, figsize, color):
     plt.figure(figsize=figsize)
@@ -243,7 +243,10 @@ def plot_time_series(time, time_series, ylabel, title, figsize, color):
     
     plt.show()
 
-def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, title, figsize, color, legend, leg_loc="upper left"):    
+
+def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel,
+                              title, figsize, color, legend,
+                              leg_loc="upper left"):
     plt.figure(figsize=figsize)
     
     plt.step(time, time_series_y1, label=legend[0], color=color[0])
@@ -261,7 +264,9 @@ def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, titl
     
     plt.show()
 
-def plot_spikes_time_series(time, time_series, spikes, figsize, legend, colors, title, num_steps):
+
+def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
+                            colors, title, num_steps):
 
     offsets = list(range(1, len(spikes) + 1))
     num_x_ticks = np.arange(0, num_steps+1, 25)

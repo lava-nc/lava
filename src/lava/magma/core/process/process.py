@@ -282,7 +282,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def register_sub_procs(self, procs: ty.Dict[str, AbstractProcess]):
         """Registers other processes as sub processes of this process."""
-        for name, p in procs.items():
+        for p in procs.values():
             if not isinstance(p, AbstractProcess):
                 raise AssertionError
             p.parent_proc = self

@@ -149,7 +149,7 @@ class RunCfg(RunConfig):
     def select(self, proc, proc_models):
         py_proc_model = None
         sub_proc_model = None
-        c_proc_model = None
+
         # Find PyProcModel or SubProcModel
         for pm in proc_models:
             if issubclass(pm, AbstractSubProcessModel):
@@ -157,7 +157,6 @@ class RunCfg(RunConfig):
             if issubclass(pm, AbstractPyProcessModel):
                 py_proc_model = pm
         # Make selection
-
         if self.select_sub_proc_model and sub_proc_model:
             return sub_proc_model
         if py_proc_model and not self.select_lmt:

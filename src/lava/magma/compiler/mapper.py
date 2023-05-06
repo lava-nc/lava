@@ -76,7 +76,7 @@ class Mapper:
         executable: Compiled Executable
 
         """
-        py_builders, c_builders, nc_builders = split_proc_builders_by_type(
+        _, c_builders, nc_builders = split_proc_builders_by_type(
             executable.proc_builders)
         # Iterate over all the ncbuilder and map them
         for ncb in nc_builders.values():
@@ -124,7 +124,6 @@ class Mapper:
                 # src or dst and its initializers
                 for port_pair in channel_map:
                     src = port_pair.src
-                    dst = port_pair.dst
                     # Checking if the initializers are same
                     if channel_map[port_pair].src_port_initializer == ports[
                             port]:
