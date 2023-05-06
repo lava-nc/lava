@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
@@ -11,6 +11,7 @@ import typing
 import typing as ty
 
 import numpy as np
+from scipy.sparse import csr_matrix
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
@@ -34,7 +35,7 @@ from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import Channel
+from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
@@ -128,6 +129,7 @@ class Runtime:
         self._req_stop: bool = False
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
+        self._open_ports: ty.List[AbstractCspPort] = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -191,6 +193,9 @@ class Runtime:
                         self._messaging_infrastructure
                     )
 
+                    self._open_ports.append(channel.src_port)
+                    self._open_ports.append(channel.dst_port)
+
                     self._get_process_builder_for_process(
                         channel_builder.src_process).set_csp_ports(
                         [channel.src_port])
@@ -214,6 +219,10 @@ class Runtime:
                 channel: Channel = sync_channel_builder.build(
                     self._messaging_infrastructure
                 )
+
+                self._open_ports.append(channel.src_port)
+                self._open_ports.append(channel.dst_port)
+
                 if isinstance(sync_channel_builder, RuntimeChannelBuilderMp):
                     if isinstance(sync_channel_builder.src_process,
                                   RuntimeServiceBuilder):
@@ -407,10 +416,10 @@ class Runtime:
 
     def join(self):
         """Join all ports and processes"""
-        for port in self.runtime_to_service:
+        for port in self._open_ports:
             port.join()
-        for port in self.service_to_runtime:
-            port.join()
+
+        self._open_ports.clear()
 
     def set_var(self, var_id: int, value: np.ndarray, idx: np.ndarray = None):
         """Sets value of a variable with id 'var_id'."""
@@ -453,7 +462,8 @@ class Runtime:
                 buffer = buffer[idx]
             buffer_shape: ty.Tuple[int, ...] = buffer.shape
             num_items: int = np.prod(buffer_shape).item()
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            reshape_order = 'F' if isinstance(
+                ev, LoihiSynapseVarModel) else 'C'
             buffer = buffer.reshape((1, num_items), order=reshape_order)
 
             # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
@@ -500,12 +510,22 @@ class Runtime:
             # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
             data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
             num_items: int = int(data_port.recv()[0].item())
+
+            if ev.dtype == csr_matrix:
+                buffer = np.zeros(num_items)
+
+                for i in range(num_items):
+                    buffer[i] = data_port.recv()[0]
+
+                return buffer[idx] if idx else buffer
+
             buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
             for i in range(num_items):
                 buffer[0, i] = data_port.recv()[0]
 
             # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) else 'C'
+            reshape_order = 'F' if isinstance(
+                ev, LoihiSynapseVarModel) else 'C'
             buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]

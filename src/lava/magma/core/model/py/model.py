@@ -5,7 +5,9 @@
 import typing as ty
 from abc import ABC, abstractmethod
 import logging
+from lava.utils.sparse import find
 import numpy as np
+from scipy.sparse import csr_matrix
 import platform
 
 from lava.magma.compiler.channels.pypychannel import (
@@ -37,9 +39,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
     """
 
     def __init__(
-        self,
-        proc_params: ty.Type["ProcessParameters"],
-        loglevel: ty.Optional[int] = logging.WARNING,
+            self,
+            proc_params: ty.Type["ProcessParameters"],
+            loglevel: ty.Optional[int] = logging.WARNING,
     ) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
@@ -74,10 +76,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
         """
         self.__dict__[key] = value
-        if isinstance(value, AbstractPyPort):
+        if isinstance(value, AbstractPyPort) and value not in self.py_ports:
             self.py_ports.append(value)
-            # Store all VarPorts for efficient RefPort -> VarPort handling
-            if isinstance(value, PyVarPort):
+            if isinstance(value, PyVarPort) and value not in self.var_ports:
                 self.var_ports.append(value)
 
     def start(self):
@@ -126,6 +127,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port.send(enum_to_np(num_items))
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
+        elif isinstance(var, csr_matrix):
+            dst, src, values = find(var, explicit_zeros=True)
+            num_items = var.data.size
+            data_port.send(enum_to_np(num_items))
+            for value in values:
+                data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, str):
             encoded_str = list(var.encode("ascii"))
             data_port.send(enum_to_np(len(encoded_str)))
@@ -162,6 +169,19 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 num_items -= 1
                 i[...] = data_port.recv()[0]
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+        elif isinstance(var, csr_matrix):
+            # First item is number of items
+            num_items = int(data_port.recv()[0])
+
+            buffer = np.empty(num_items)
+            # Set data one by one
+            for i in range(num_items):
+                buffer[i] = data_port.recv()[0]
+            dst, src, _ = find(var)
+            var = csr_matrix((buffer, (dst, src)), var.shape)
+            setattr(self, var_name, var)
+
+            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
         elif isinstance(var, str):
             # First item is number of items
             num_items = int(data_port.recv()[0])
@@ -173,7 +193,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             s = bytes(s).decode("ascii")
             setattr(self, var_name, s)
             self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-
         else:
             self.process_to_service.send(MGMT_RESPONSE.ERROR)
             raise RuntimeError("Unsupported type")
@@ -479,14 +498,13 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         Add various ports to poll for communication on ports
         """
         if (
-            enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT)
-            or enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT)
-            or enum_equal(self.phase, PyLoihiProcessModel.Phase.HOST)
+                enum_equal(self.phase, PyLoihiProcessModel.Phase.PRE_MGMT)
+                or enum_equal(self.phase, PyLoihiProcessModel.Phase.POST_MGMT)
+                or enum_equal(self.phase, PyLoihiProcessModel.Phase.HOST)
         ):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
                     if isinstance(csp_port, CspRecvPort):
-
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
 
@@ -526,6 +544,8 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
         self.num_steps = 0
+        self._req_pause = False
+        self._req_stop = False
         self._cmd_handlers.update({MGMT_COMMAND.RUN[0]: self._run_async})
 
     class Response:
@@ -546,12 +566,6 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         REQ_STOP = enum_to_np(-5)
         """Signifies Request of STOP"""
 
-    def _pause(self):
-        """
-        Command handler for Pause Command.
-        """
-        pass
-
     def check_for_stop_cmd(self) -> bool:
         """
         Checks if the RS has sent a STOP command.
@@ -559,8 +573,16 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         if self.service_to_process.probe():
             cmd = self.service_to_process.peek()
             if enum_equal(cmd, MGMT_COMMAND.STOP):
-                self.service_to_process.recv()
-                self._stop()
+                return True
+        return False
+
+    def check_for_pause_cmd(self) -> bool:
+        """
+        Checks if the RS has sent a PAUSE command.
+        """
+        if self.service_to_process.probe():
+            cmd = self.service_to_process.peek()
+            if enum_equal(cmd, MGMT_COMMAND.PAUSE):
                 return True
         return False
 
@@ -577,7 +599,15 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
         """
         self.num_steps = int(self.service_to_process.recv()[0].item())
         self.run_async()
-        self.process_to_service.send(PyAsyncProcessModel.Response.STATUS_DONE)
+        if self._req_stop:
+            self.process_to_service.send(PyAsyncProcessModel.Response.REQ_STOP)
+            self._req_stop = False
+        elif self._req_pause:
+            self.process_to_service.send(PyAsyncProcessModel.Response.REQ_PAUSE)
+            self._req_pause = False
+        else:
+            self.process_to_service.send(
+                PyAsyncProcessModel.Response.STATUS_DONE)
 
     def add_ports_for_polling(self):
         """
@@ -587,7 +617,7 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
 
 
 def _get_attr_dict(
-    model_class: ty.Type[PyLoihiProcessModel],
+        model_class: ty.Type[PyLoihiProcessModel],
 ) -> ty.Dict[str, ty.Any]:
     """Get a dictionary of non-callable public attributes of a class.
 
@@ -617,7 +647,7 @@ def _get_attr_dict(
 
 
 def _get_callable_dict(
-    model_class: ty.Type[PyLoihiProcessModel],
+        model_class: ty.Type[PyLoihiProcessModel],
 ) -> ty.Dict[str, ty.Callable]:
     """Get a dictionary of callable public members of a class.
 
@@ -648,7 +678,7 @@ def _get_callable_dict(
 
 
 def PyLoihiModelToPyAsyncModel(
-    py_loihi_model: ty.Type[PyLoihiProcessModel],
+        py_loihi_model: ty.Type[PyLoihiProcessModel],
 ) -> ty.Type[PyAsyncProcessModel]:
     """Factory function that converts Py-Loihi process models
     to equivalent Py-Async definition.
