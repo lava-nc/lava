@@ -3,21 +3,14 @@
 # See: https://spdx.org/licenses/
 
 import matplotlib.pyplot as plt
-import typing as ty
 import numpy as np
 
-from lava.proc.lif.process import LIF, AbstractLIF, LogConfig, LearningLIF
-from lava.proc.io.source import RingBuffer
-from lava.proc.dense.process import LearningDense, Dense
-from lava.magma.core.process.neuron import LearningNeuronProcess
-from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.proc.lif.process import LearningLIF
 from lava.magma.core.model.py.neuron import (
     LearningNeuronModelFloat, LearningNeuronModelFixed
 )
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag

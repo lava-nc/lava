@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from scipy.sparse import spmatrix, csr_matrix
+from scipy.sparse import spmatrix
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess, LogConfig

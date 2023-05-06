@@ -30,7 +30,6 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.models import AbstractPyDelayDenseModel
 from lava.utils.weightutils import SignMode
-from tests.lava.magma.core import learning
 
 
 def create_network(input_data, conn, weights):

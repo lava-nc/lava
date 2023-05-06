@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix, vstack, find
-import warnings
 from lava.magma.core.model.py.connection import (
     LearningConnectionModelFloat,
     LearningConnectionModelBitApproximate,

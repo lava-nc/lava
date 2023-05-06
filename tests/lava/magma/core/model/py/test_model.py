@@ -13,7 +13,6 @@ from lava.magma.core.model.py.model import (
     PyLoihiProcessModel, PyLoihiModelToPyAsyncModel
 )
 
-from lava.proc import io
 from lava.proc.lif.process import LIF
 from lava.proc.sdn.process import SigmaDelta
 from lava.proc.dense.process import Dense

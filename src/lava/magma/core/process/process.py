@@ -18,7 +18,6 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
-from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.model.model import AbstractProcessModel

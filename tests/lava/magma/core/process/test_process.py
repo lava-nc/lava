@@ -9,7 +9,6 @@ import typing as ty
 from lava.magma.compiler.executable import Executable
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.sub.model import AbstractSubProcessModel
 
 from lava.magma.core.process.ports.ports import (
     InPort,

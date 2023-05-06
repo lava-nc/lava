@@ -15,7 +15,6 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import HostCPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.sdn.models import AbstractDeltaModel
 
 
 @unique
