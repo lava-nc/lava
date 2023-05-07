@@ -17,21 +17,17 @@ class NxBoardMsgInterface(MessageInfrastructureInterface):
     @property
     def actors(self):
         """Returns a list of actors"""
-        pass
 
     def start(self):
         """Starts the shared memory manager"""
-        pass
 
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
             SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
-        pass
 
     def stop(self):
         """Stops the shared memory manager"""
-        pass
 
     def channel_class(self, channel_type: ChannelType) -> ty.Type[ChannelType]:
         """Given a channel type, returns the shared memory based class

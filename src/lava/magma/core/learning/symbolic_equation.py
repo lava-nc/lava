@@ -132,7 +132,6 @@ class SymbolList(Symbol):
 
 class Operator(Symbol):
     """Abstract super class for operator Symbols."""
-    pass
 
 
 class Addition(Operator):

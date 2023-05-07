@@ -20,7 +20,6 @@ class AbstractSubCompiler(ABC):
     def compile(self, channel_map: ChannelMap) -> ChannelMap:
         """Partitions all Processes in the SubCompiler's ProcGroup onto the
         available resources."""
-        pass
 
     @abstractmethod
     def get_builders(

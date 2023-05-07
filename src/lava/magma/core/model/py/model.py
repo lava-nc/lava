@@ -242,7 +242,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         Add various ports to poll for communication on ports
         """
-        pass
 
     def join(self):
         """

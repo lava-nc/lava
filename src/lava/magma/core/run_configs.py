@@ -79,11 +79,9 @@ class RunConfig(ABC):
 
     def exclude_nodes(self, nodes: ty.List[AbstractNode]):
         """Excludes given nodes from consideration by compiler."""
-        pass
 
     def require_nodes(self, nodes: ty.List[AbstractNode]):
         """Requires that compiler maps processes to given nodes."""
-        pass
 
     def select(self,
                process: AbstractProcess,

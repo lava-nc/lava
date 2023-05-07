@@ -222,7 +222,6 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def __enter__(self):
         """Executed when Process enters a "with" block of a context manager."""
-        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop the runtime when exiting "with" block of a context manager."""

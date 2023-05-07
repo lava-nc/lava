@@ -25,28 +25,23 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def start(self):
         """Starts the messaging infrastructure"""
-        pass
 
     @abstractmethod
     def stop(self):
         """Stops the messaging infrastructure"""
-        pass
 
     @abstractmethod
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
             SyncDomain, 'RuntimeServiceBuilder']]):
         """Given a target_fn starts a system process"""
-        pass
 
     @property
     @abstractmethod
     def actors(self) -> ty.List[ty.Any]:
         """Returns a list of actors"""
-        pass
 
     @abstractmethod
     def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
-        pass

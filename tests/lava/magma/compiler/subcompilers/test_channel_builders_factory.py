@@ -63,7 +63,6 @@ class ProcC(AbstractProcess):
 
 class MockRuntimeService:
     __name__ = "MockRuntimeService"
-    pass
 
 
 # Define minimal Protocol to be implemented

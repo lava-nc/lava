@@ -14,7 +14,6 @@ class AbstractBuilder(ABC):
     @abstractmethod
     def build(self):
         """Build the actual process."""
-        pass
 
 
 class ResourceAddress(ABC):

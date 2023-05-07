@@ -78,7 +78,6 @@ class PyRuntimeService(AbstractRuntimeService):
         """Override this method to implement the runtime service. The run
         method is invoked upon start which called when the execution is
         started by the runtime."""
-        pass
 
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group

@@ -383,16 +383,12 @@ class AbstractIOPort(AbstractPort):
     type hierarchy needed for validating connections.
     """
 
-    pass
-
 
 class AbstractRVPort(AbstractPort):
     """Abstract base class for RefPorts and VarPorts.
     This class needs no implementation and only serves to establish a clear
     type hierarchy needed for validating connections.
     """
-
-    pass
 
 
 class AbstractSrcPort(ABC):
@@ -402,8 +398,6 @@ class AbstractSrcPort(ABC):
     type hierarchy needed for validating connections.
     """
 
-    pass
-
 
 class AbstractDstPort(ABC):
     """Interface for destination ports such as InPorts and VarPorts in which
@@ -411,8 +405,6 @@ class AbstractDstPort(ABC):
     This class needs no implementation and only serves to establish a clear
     type hierarchy needed for validating connections.
     """
-
-    pass
 
 
 class OutPort(AbstractIOPort, AbstractSrcPort):
