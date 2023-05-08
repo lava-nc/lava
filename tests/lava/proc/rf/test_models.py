@@ -67,15 +67,15 @@ class TestrfProcessModels(unittest.TestCase):
         self,
         period: float,
         alpha: float,
-        input: np.ndarray,
+        input_: np.ndarray,
         state_exp: int = 0,
         decay_bits: int = 0,
         vth: float = 1,
         tag: str = 'floating_pt',
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        input = np.int32(input.reshape(1, -1))
-        num_steps = input.size
-        source = io.source.RingBuffer(data=input)
+        input_ = np.int32(input_.reshape(1, -1))
+        num_steps = input_.size
+        source = io.source.RingBuffer(data=input_)
         rf = RF(shape=(1,),
                 period=period,
                 alpha=alpha,
@@ -102,7 +102,7 @@ class TestrfProcessModels(unittest.TestCase):
         imag = imag_monitor.get_data()[rf.name]["imag"]
         rf.stop()
 
-        return input, real, imag, s_out
+        return input_, real, imag, s_out
 
     def test_float_no_decay(self):
         """Verify that a neuron with no voltage decay spikes
@@ -112,9 +112,9 @@ class TestrfProcessModels(unittest.TestCase):
         alpha = 0
 
         num_steps = 100
-        input = np.zeros(num_steps)
-        input[0] = 1.1  # spike at first timestep
-        _, _, _, s_out = self.run_test(period, alpha, input)
+        input_ = np.zeros(num_steps)
+        input_[0] = 1.1  # spike at first timestep
+        _, _, _, s_out = self.run_test(period, alpha, input_)
 
         # observe differences in spike times
         spike_idx = np.argwhere(s_out[0, :])
@@ -134,9 +134,9 @@ class TestrfProcessModels(unittest.TestCase):
         vth = 1.1
 
         num_steps = 100
-        input = np.zeros(num_steps)
+        input_ = np.zeros(num_steps)
         input[0] = 1  # spike at first timestep
-        _, real, _, _ = self.run_test(period, alpha, input, vth=vth)
+        _, real, _, _ = self.run_test(period, alpha, input_, vth=vth)
 
         ideal_real = np.round((1 - alpha)**np.arange(num_steps), 6)
         round_real = np.round(real.flatten(), 6)
@@ -155,10 +155,10 @@ class TestrfProcessModels(unittest.TestCase):
         period = 10
 
         num_steps = 100
-        input = np.zeros(num_steps)
-        input[0] = 1  # spike at first timestep
+        input_ = np.zeros(num_steps)
+        input_[0] = 1  # spike at first timestep
 
-        _, _, _, s_out = self.run_test(period, alpha, input, vth=vth,
+        _, _, _, s_out = self.run_test(period, alpha, input_, vth=vth,
                                        state_exp=state_exp,
                                        decay_bits=decay_bits,
                                        tag="fixed_pt")
@@ -173,7 +173,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         # Run Test RF Dynamics
         real, imag = rf_dynamics(0, 0, sin_decay, cos_decay,
-                                 input * (1 << state_exp),
+                                 input_ * (1 << state_exp),
                                  np.zeros(num_steps),
                                  decay_bits)
 
@@ -197,10 +197,10 @@ class TestrfProcessModels(unittest.TestCase):
         period = 10
 
         num_steps = 100
-        input = np.zeros(num_steps)
+        input_ = np.zeros(num_steps)
         input[0] = 2  # spike at first timestep
 
-        _, _, _, s_out = self.run_test(period, alpha, input, vth=vth,
+        _, _, _, s_out = self.run_test(period, alpha, input_, vth=vth,
                                        state_exp=state_exp,
                                        decay_bits=decay_bits,
                                        tag="fixed_pt")
@@ -215,7 +215,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         # Run Test RF Dynamics
         real, imag = rf_dynamics(0, 0, sin_decay, cos_decay,
-                                 input * (1 << state_exp),
+                                 input_ * (1 << state_exp),
                                  np.zeros(num_steps),
                                  decay_bits)
 
@@ -248,12 +248,12 @@ class TestrfProcessModels(unittest.TestCase):
         cos_decay = int(cos_decay * (1 << decay_bits))
 
         num_steps = 100
-        input = np.zeros(num_steps)
+        input_ = np.zeros(num_steps)
         input[0] = 1  # spike at first timestep
         decay_bits = 12
         state_exp = 6
 
-        _, real, _, _ = self.run_test(period, alpha, input, vth=vth,
+        _, real, _, _ = self.run_test(period, alpha, input_, vth=vth,
                                       state_exp=state_exp,
                                       decay_bits=decay_bits,
                                       tag="fixed_pt")
