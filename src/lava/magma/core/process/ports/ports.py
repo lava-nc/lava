@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from __future__ import annotations
 import typing as ty
 from abc import ABC, abstractmethod
 import math
@@ -627,7 +628,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
 
     @staticmethod
-    def create_implicit_var_port(var: Var) -> "ImplicitVarPort":
+    def create_implicit_var_port(var: Var) -> ImplicitVarPort:
         """Creates and returns an ImplicitVarPort for the given Var."""
         # Create a VarPort to wrap Var
         vp = ImplicitVarPort(var)
@@ -743,7 +744,9 @@ class VarPort(AbstractRVPort, AbstractDstPort):
 class ImplicitVarPort(VarPort):
     """Sub class for VarPort to identify implicitly created VarPorts when
     a RefPort connects directly to a Var."""
-    pass
+
+    def __init__(self, var: Var) -> None:
+        super().__init__(var)
 
 
 class AbstractVirtualPort(AbstractPort):

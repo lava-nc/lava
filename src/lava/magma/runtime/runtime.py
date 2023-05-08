@@ -341,15 +341,15 @@ class Runtime:
         if self._is_started:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
-                self.num_steps = run_condition.num_steps
+                num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
-                    send_port.send(enum_to_np(self.num_steps))
+                    send_port.send(enum_to_np(num_steps))
                 if run_condition.blocking:
                     self._get_resp_for_run()
             elif isinstance(run_condition, RunContinuous):
-                self.num_steps = sys.maxsize
+                num_steps = sys.maxsize
                 for send_port in self.runtime_to_service:
-                    send_port.send(enum_to_np(self.num_steps))
+                    send_port.send(enum_to_np(num_steps))
             else:
                 raise ValueError(f"Wrong type of run_condition : "
                                  f"{run_condition.__class__}")

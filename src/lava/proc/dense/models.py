@@ -72,9 +72,10 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
     def run_spk(self):
-        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+        self.weight_exp = self.proc_params.get("weight_exp", 0)
 
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
