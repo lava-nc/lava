@@ -157,19 +157,19 @@ flake8-bandit = ["+*", "-S322", "-B101", "-S404", "-S602"]       # Enable a plug
 #pep8-naming = ["-*"]
 
 # Excluding until lint fix is pushed
-flake8-bugbear = ["+*"]                     # Enable a plugin
-flake8-builtins = ["+*"]
-flake8-comprehensions = ["+*"]
-flake8-darglint = ["+*"]
-flake8-docstrings = ["+*"]
-flake8-eradicate = ["+*"]
-flake8-isort = ["+*"]
-flake8-mutable = ["+*"]
-flake8-pytest-style = ["+*"]
-flake8-spellcheck = ["-*"]
-mccabe = ["+*"]
-pep8-naming = ["+*"]
-pyflakes = ["+*"]
+#flake8-bugbear = ["+*"]                     # Enable a plugin
+#flake8-builtins = ["+*"]
+#flake8-comprehensions = ["+*"]
+#flake8-darglint = ["+*"]
+#flake8-docstrings = ["+*"]
+#flake8-eradicate = ["+*"]
+#flake8-isort = ["+*"]
+#flake8-mutable = ["+*"]
+#flake8-pytest-style = ["+*"]
+#flake8-spellcheck = ["-*"]
+#mccabe = ["+*"]
+#pep8-naming = ["+*"]
+#pyflakes = ["+*"]
 pylint = ["+*"]
 
 pycodestyle = ["+*", "-W503", "-E203"]
@@ -179,4 +179,4 @@ pycodestyle = ["+*", "-W503", "-E203"]
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check
 flake8-bandit = ["-S101"]                   # Ignore asserts for tests
-# pyflakes = ["-*"]                           # Disable a plugin
+pyflakes = ["-*"]                           # Disable a plugin
