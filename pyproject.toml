@@ -143,40 +143,40 @@ exclude = ["./docs/"]
 flake8-bandit = ["+*", "-S322", "-B101", "-S404", "-S602"]       # Enable a plugin, disable specific checks
 
 # Disable below plugins temporarily until lint fix is pushed
-flake8-bugbear = ["-*"]
-flake8-builtins = ["-*"]
-flake8-comprehensions = ["-*"]
-flake8-darglint = ["-*"]
-flake8-docstrings = ["-*"]
-flake8-eradicate = ["-*"]
-flake8-isort = ["-*"]
-flake8-mutable = ["-*"]
-flake8-pytest-style = ["-*"]
-flake8-spellcheck = ["-*"]
-mccabe = ["-*"]
-pep8-naming = ["-*"]
+#flake8-bugbear = ["-*"]
+#flake8-builtins = ["-*"]
+#flake8-comprehensions = ["-*"]
+#flake8-darglint = ["-*"]
+#flake8-docstrings = ["-*"]
+#flake8-eradicate = ["-*"]
+#flake8-isort = ["-*"]
+#flake8-mutable = ["-*"]
+#flake8-pytest-style = ["-*"]
+#flake8-spellcheck = ["-*"]
+#mccabe = ["-*"]
+#pep8-naming = ["-*"]
 
 # Excluding until lint fix is pushed
-# flake8-bugbear = ["+*"]                     # Enable a plugin
-# flake8-builtins = ["+*"]
-# flake8-comprehensions = ["+*"]
-# flake8-darglint = ["+*"]
-# flake8-docstrings = ["+*"]
-# flake8-eradicate = ["+*"]
-# flake8-isort = ["+*"]
-# flake8-mutable = ["+*"]
-# flake8-pytest-style = ["+*"]
-# flake8-spellcheck = ["-*"]
-# mccabe = ["+*"]
-# pep8-naming = ["+*"]
-# pyflakes = ["+*"]
-# pylint = ["+*"]
+flake8-bugbear = ["+*"]                     # Enable a plugin
+flake8-builtins = ["+*"]
+flake8-comprehensions = ["+*"]
+flake8-darglint = ["+*"]
+flake8-docstrings = ["+*"]
+flake8-eradicate = ["+*"]
+flake8-isort = ["+*"]
+flake8-mutable = ["+*"]
+flake8-pytest-style = ["+*"]
+flake8-spellcheck = ["-*"]
+mccabe = ["+*"]
+pep8-naming = ["+*"]
+pyflakes = ["+*"]
+pylint = ["+*"]
 
 pycodestyle = ["+*", "-W503", "-E203"]
-pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
-pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
+# pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
+# pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
 
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check
 flake8-bandit = ["-S101"]                   # Ignore asserts for tests
-pyflakes = ["-*"]                           # Disable a plugin
+# pyflakes = ["-*"]                           # Disable a plugin
