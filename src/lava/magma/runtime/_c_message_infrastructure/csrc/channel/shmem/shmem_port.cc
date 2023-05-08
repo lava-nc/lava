@@ -85,6 +85,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const size_t &nbytes)
   : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false) {
   recv_queue_ = std::make_shared<RecvQueue<MetaDataPtr>>(name_, size_);
+  observer = nullptr;
 }
 
 ShmemRecvPort::~ShmemRecvPort() {
@@ -98,12 +99,16 @@ void ShmemRecvPort::Start() {
 void ShmemRecvPort::QueueRecv() {
   while (!done_.load()) {
     bool ret = false;
+    bool not_empty = recv_queue_->Probe();
     if (this->recv_queue_->AvailableCount() > 0) {
-      ret = shm_->Load([this](void* data){
+      ret = shm_->Load([this, &not_empty](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
         MetaDataPtrFromPointer(metadata_res, data,
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
+        if (observer && !not_empty) {
+          observer();
+        }
       });
     }
     if (!ret) {

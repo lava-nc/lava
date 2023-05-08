@@ -166,6 +166,9 @@ std::string RecvPortProxy::Name() {
 size_t RecvPortProxy::Size() {
   return recv_port_->Size();
 }
+void RecvPortProxy::Set_observer(const std::function<void()> &obs) {
+  recv_port_->observer = obs;
+}
 
 int trick() {
     // to solve the warning "converting to non-pointer type 'int'
