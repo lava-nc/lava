@@ -214,7 +214,8 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("name", &RecvPortProxy::Name)
     .def_property_readonly("shape", &RecvPortProxy::Shape)
     .def_property_readonly("d_type", &RecvPortProxy::DType)
-    .def_property_readonly("size", &RecvPortProxy::Size);
+    .def_property_readonly("size", &RecvPortProxy::Size)
+    .def("set_observer", &RecvPortProxy::Set_observer);
 }
 
 }  // namespace message_infrastructure
