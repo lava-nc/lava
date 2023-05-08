@@ -3,21 +3,19 @@
 # See: https://spdx.org/licenses/
 
 import unittest
+import numpy as np
 from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from scipy.sparse import csr_matrix
 
-from lava.proc.sparse.process import Sparse
-from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.dense.process import LearningDense
 from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 from lava.proc.dense.process import Dense
-from lava.proc.sparse.process import Sparse, DelaySparse
 from lava.proc.sparse.models import AbstractPyDelaySparseModel as APDSM
 from lava.proc.io.source import RingBuffer as Source
 from lava.proc.io.sink import RingBuffer as Sink
-import unittest
+
 from lava.magma.core.run_configs import Loihi2SimCfg
-import numpy as np
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyOutPort, PyInPort

@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import typing
 import typing as ty
 from collections import UserList, OrderedDict
 
@@ -27,7 +26,7 @@ class Node:
         processes: ty.List[AbstractProcess],
     ):
         self.id: int = -1
-        self.node_type: typing.Type[AbstractNode] = node_type
+        self.node_type: ty.Type[AbstractNode] = node_type
         self.processes = processes
 
     def add_process(self, process: AbstractProcess):

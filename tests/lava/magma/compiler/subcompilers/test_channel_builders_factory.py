@@ -351,9 +351,6 @@ class TestChannelBuildersMp(unittest.TestCase):
         channel_builders = self.factory.from_channel_map(channel_map, self.cfg)
 
         # This should result in 5 channel builders (one for each arrow above)
-        from lava.magma.compiler.builders.channel_builder import \
-            ChannelBuilderMp
-
         self.assertEqual(len(channel_builders), 5)
         for cb in channel_builders:
             self.assertIsInstance(cb, ChannelBuilderMp)
