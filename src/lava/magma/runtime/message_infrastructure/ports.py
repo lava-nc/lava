@@ -21,16 +21,16 @@ import typing as ty
 import warnings
 import datetime
 
+
 class Selector:
     def __init__(self):
         self.all_time = datetime.timedelta(seconds=0)
         self._cv = LavaCondition()
-    # def _changed(self):
-    #     # with self._cv:
-    #         self._cv.notifyfunc()
+
     def _set_observer(self, channel_actions, observer):
         for channel, _ in channel_actions:
             channel.set_observer(observer)
+
     def select(
             self,
             *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
@@ -43,6 +43,7 @@ class Selector:
                     self._set_observer(args, None)
                     return action()
             self._cv.waitfunc()
+
 
 class SendPort(AbstractTransferPort):
     def __init__(self, send_port):
