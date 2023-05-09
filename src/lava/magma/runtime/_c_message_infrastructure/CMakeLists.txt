@@ -201,4 +201,7 @@ else()
   message("not debug mode and disable cpp unit test")
 endif()
 
-add_subdirectory(examples/c_pingpong)
+option(C_PINGPONG_EXAMPLE "C process pingpong example" OFF)
+if(C_PINGPONG_EXAMPLE)
+  add_subdirectory(examples/c_pingpong)
+endif()
