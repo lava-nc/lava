@@ -5,7 +5,7 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
-#include <condition_variable>
+#include <condition_variable>  // NOLINT
 #if defined(GRPC_CHANNEL)
 #include <channel/grpc/grpcchannel.grpc.pb.h>
 #endif
