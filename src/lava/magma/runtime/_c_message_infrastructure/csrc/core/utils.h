@@ -155,7 +155,7 @@ class LavaCondition {
  public:
   void Waitfunc() {
     std::unique_lock<std::mutex> lk(mtx);
-    cv.wait(lk);
+    cv.wait(lk, [] {return true;});
   }
   void Notifyfunc() {
     std::unique_lock<std::mutex> lk(mtx);
