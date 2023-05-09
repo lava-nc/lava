@@ -13,79 +13,21 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
         support_cyclonedds_channel,
         AbstractTransferPort,
         ChannelType,
-        RecvPort)
+        RecvPort,
+        LavaCondition)
 from threading import Condition, Thread
 import numpy as np
 import typing as ty
 import warnings
 import datetime
 
-
-# class RecvPort(AbstractTransferPort):
-#     def __init__(self, recv_port):
-#         super().__init__()
-#         self._cpp_recv_port = recv_port
-#         self.observer = None
-#         self.thread = None
-#         self._done = False
-
-#     def recv(self):
-#         return self._cpp_recv_port.recv()
-
-#     def start(self):
-#         self._cpp_recv_port.start()
-#         self.thread = Thread(
-#             target=self._req_callback,
-#             name="{}.send".format(self._cpp_recv_port.name),
-#             daemon=True,
-#         )
-#         self.thread.start()
-        
-
-#     def probe(self):
-#         return self._cpp_recv_port.probe()
-
-#     def join(self):
-#         self._done = True
-#         self._cpp_recv_port.join()
-        
-#     def _req_callback(self):
-#         try:
-#             while not self._done:
-#                 not_empty = self.probe()
-#                 # print("================",not_empty)
-#                 if self.observer and not not_empty:
-#                     self.observer()
-#         except EOFError:
-#             pass
-
-#     @property
-#     def name(self):
-#         return self._cpp_recv_port.name
-
-#     @property
-#     def shape(self):
-#         return self._cpp_recv_port.shape
-
-#     @property
-#     def d_type(self):
-#         return self._cpp_recv_port.d_type
-
-#     @property
-#     def size(self):
-#         return self._cpp_recv_port.size
-
-#     def get_channel_type(self):
-#         return self._cpp_recv_port.get_channel_type()
-
-
 class Selector:
     def __init__(self):
         self.all_time = datetime.timedelta(seconds=0)
-        self._cv = Condition()
-    def _changed(self):
-        with self._cv:
-            self._cv.notify_all()
+        self._cv = LavaCondition()
+    # def _changed(self):
+    #     # with self._cv:
+    #         self._cv.notifyfunc()
     def _set_observer(self, channel_actions, observer):
         for channel, _ in channel_actions:
             channel.set_observer(observer)
@@ -93,14 +35,14 @@ class Selector:
             self,
             *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
     ):
-        with self._cv:
-            self._set_observer(args, self._changed)
-            while True:
-                for channel, action in args:
-                    if channel.probe():
-                        self._set_observer(args, None)
-                        return action()
-                self._cv.wait()
+        # with self._cv:
+        self._set_observer(args, self._cv.notifyfunc())
+        while True:
+            for channel, action in args:
+                if channel.probe():
+                    self._set_observer(args, None)
+                    return action()
+            self._cv.waitfunc()
 
 class SendPort(AbstractTransferPort):
     def __init__(self, send_port):

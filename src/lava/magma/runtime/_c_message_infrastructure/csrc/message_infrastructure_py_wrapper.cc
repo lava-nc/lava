@@ -216,6 +216,10 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("d_type", &RecvPortProxy::DType)
     .def_property_readonly("size", &RecvPortProxy::Size)
     .def("set_observer", &RecvPortProxy::Set_observer);
+  py::class_<LavaCondition, std::shared_ptr<LavaCondition>> (m, "LavaCondition")
+    .def(py::init<>())
+    .def("waitfunc", &LavaCondition::Waitfunc)
+    .def("notifyfunc", &LavaCondition::Notifyfunc);
 }
 
 }  // namespace message_infrastructure

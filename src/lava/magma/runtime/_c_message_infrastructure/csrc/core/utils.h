@@ -5,6 +5,7 @@
 #ifndef CORE_UTILS_H_
 #define CORE_UTILS_H_
 
+#include <condition_variable>
 #if defined(GRPC_CHANNEL)
 #include <channel/grpc/grpcchannel.grpc.pb.h>
 #endif
@@ -146,6 +147,21 @@ static void Sleep() {
 #endif
 }
 }
+
+class LavaCondition {
+ private:
+  std::mutex mtx;
+  std::condition_variable cv;
+ public:
+  void Waitfunc() {
+    std::unique_lock<std::mutex> lk(mtx);
+    cv.wait(lk);
+  }
+  void Notifyfunc() {
+    std::unique_lock<std::mutex> lk(mtx);
+    cv.notify_all();
+  }
+};
 
 #if defined(DDS_CHANNEL)
 // Default Parameters
