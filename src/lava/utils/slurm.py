@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 import os
-import subprocess
+import subprocess  # nosec
 import typing as ty
 from dataclasses import dataclass
 import enum
@@ -28,16 +28,16 @@ def use_slurm_host(
 ) -> None:
 
     if not lava_loihi.is_installed():
-        raise ImportError(f'Attempting to use SLURM for Loihi2 but '
-                          f'Lava-Loihi is not installed.')
+        raise ImportError("Attempting to use SLURM for Loihi2 but "
+                          "Lava-Loihi is not installed.")
 
     if not is_available():
-        raise ValueError(f'Attempting to use SLURM for Loihi2 but '
-                         f'SLURM controller is not available.')
+        raise ValueError("Attempting to use SLURM for Loihi2 but "
+                         "SLURM controller is not available.")
 
-    os.environ['SLURM'] = '1'
-    os.environ.pop('NOSLURM', None)
-    os.environ['LOIHI_GEN'] = loihi_gen.value
+    os.environ["SLURM"] = "1"
+    os.environ.pop("NOSLURM", None)
+    os.environ["LOIHI_GEN"] = loihi_gen.value
 
     if board:
         set_board(board)
@@ -46,37 +46,37 @@ def use_slurm_host(
         set_partition(partition)
 
     global host
-    host = 'SLURM'
+    host = "SLURM"
 
 
 def set_board(board: str) -> None:
     board_info = get_board_info(board)
 
-    if board_info is None or 'down' in board_info.state:
+    if board_info is None or "down" in board_info.state:
         raise ValueError(
-            f'Attempting to use SLURM for Loihi2 but board {board} '
-            f'is not found or board is down. Run sinfo to check '
-            f'available boards.')
+            f"Attempting to use SLURM for Loihi2 but board {board} "
+            f"is not found or board is down. Run sinfo to check "
+            f"available boards.")
 
     if partition and partition != board_info.partition:
         raise ValueError(
-            f'Attempting to use SLURM for Loihi2 with board {board} '
-            f'and partition {partition} but board is not in partition. '
-            f'Specify only board or partition.')
+            f"Attempting to use SLURM for Loihi2 with board {board} "
+            f"and partition {partition} but board is not in partition. "
+            f"Specify only board or partition.")
 
-    os.environ['BOARD'] = board
+    os.environ["BOARD"] = board
 
 
 def set_partition(partition: str) -> None:
     partition_info = get_partition_info(partition)
 
-    if partition_info is None or 'down' in partition_info.state:
+    if partition_info is None or "down" in partition_info.state:
         raise ValueError(
-            f'Attempting to use SLURM for Loihi2 but partition {partition} '
-            f'is not found or board is down. Run sinfo to check available '
-            f'boards.')
+            f"Attempting to use SLURM for Loihi2 but partition {partition} "
+            f"is not found or board is down. Run sinfo to check available "
+            f"boards.")
 
-    os.environ['PARTITION'] = partition
+    os.environ["PARTITION"] = partition
 
 
 def use_ethernet_host(
@@ -100,35 +100,35 @@ def use_ethernet_host(
         values are N3B2, N3B3, and N3C1.
     """
     if not lava_loihi.is_installed():
-        raise ImportError(f'Attempting to use SLURM for Loihi2 but '
-                          f'Lava-Loihi is not installed.')
+        raise ImportError("Attempting to use SLURM for Loihi2 but "
+                          "Lava-Loihi is not installed.")
 
-    if not try_run_command(['ping', host_address, '-c 1']):
-        raise ValueError(f'Attempting to use ethernet host for Loihi2 '
-                         f'but `ping {host_address}` failed.')
+    if not try_run_command(["ping", host_address, "-c 1"]):
+        raise ValueError(f"Attempting to use ethernet host for Loihi2 "
+                         f"but `ping {host_address}` failed.")
 
-    os.environ['NXSDKHOST'] = host_address
-    os.environ['HOST_BINARY'] = host_binary_path
-    os.environ.pop('SLURM', None)
+    os.environ["NXSDKHOST"] = host_address
+    os.environ["HOST_BINARY"] = host_binary_path
+    os.environ.pop("SLURM", None)
 
-    os.environ['NOSLURM'] = '1'
-    os.environ['LOIHI_GEN'] = loihi_gen.value
+    os.environ["NOSLURM"] = "1"
+    os.environ["LOIHI_GEN"] = loihi_gen.value
 
     global host
-    host = 'ETHERNET'
+    host = "ETHERNET"
 
 
 def partition() -> str:
     """Get the partition information."""
-    if 'PARTITION' in os.environ.keys():
-        return os.environ['PARTITION']
+    if "PARTITION" in os.environ.keys():
+        return os.environ["PARTITION"]
 
-    return 'Unspecified'
+    return "Unspecified"
 
 
 def is_available():
     """Returns true iff the current system has a SLURM controller enabled."""
-    if try_run_command(['sinfo']) == '':
+    if try_run_command(["sinfo"]) == "":
         return False
     return True
 
@@ -139,8 +139,8 @@ def get_partitions() -> ty.List[PartitionInfo]:
     if not is_available():
         return []
 
-    out = try_run_command(['sinfo'])
-    lines = out.stdout.split('\n')
+    out = try_run_command(["sinfo"])
+    lines = out.stdout.split("\n")
 
     def parse_partition(line: str) -> PartitionInfo:
         fields = line.split()
@@ -191,8 +191,8 @@ def get_boards() -> ty.List[BoardInfo]:
     if not is_available():
         return []
 
-    out = try_run_command(['sinfo', '-N'])
-    lines = out.stdout.split('\n')
+    out = try_run_command(["sinfo", "-N"])
+    lines = out.stdout.split("\n")
 
     def parse_board(line: str) -> BoardInfo:
         fields = line.split()
@@ -234,10 +234,10 @@ class BoardInfo:
 def try_run_command(
         command: ty.List[str]) -> ty.Union[subprocess.CompletedProcess, str]:
     try:
-        return subprocess.run(command,
+        return subprocess.run(command,  # nosec
                               capture_output=True,
                               text=True,
                               check=True,
                               timeout=1)
     except subprocess.SubprocessError:
-        return ''
+        return ""
