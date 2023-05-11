@@ -234,10 +234,10 @@ class BoardInfo:
 def try_run_command(
         command: ty.List[str]) -> ty.Union[subprocess.CompletedProcess, str]:
     try:
-        return subprocess.run(command,
+        return subprocess.run(command,  # nosec S603 - commands are trusted
                               capture_output=True,
                               text=True,
                               check=True,
-                              timeout=1)  # nosec S603 - commands are trusted
+                              timeout=1)
     except subprocess.SubprocessError:
         return ""
