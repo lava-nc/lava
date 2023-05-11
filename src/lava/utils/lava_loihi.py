@@ -17,4 +17,3 @@ def is_installed() -> bool:
     spec = importlib.util.find_spec(lava_loihi_module)
 
     return True if spec is not None else False
-
