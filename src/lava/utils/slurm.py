@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 import os
-import subprocess  # nosec
+import subprocess  # nosec - commands are trusted
 import typing as ty
 from dataclasses import dataclass
 import enum
@@ -234,10 +234,10 @@ class BoardInfo:
 def try_run_command(
         command: ty.List[str]) -> ty.Union[subprocess.CompletedProcess, str]:
     try:
-        return subprocess.run(command,  # nosec S603
+        return subprocess.run(command,
                               capture_output=True,
                               text=True,
                               check=True,
-                              timeout=1)
+                              timeout=1)  # nosec S603 - commands are trusted
     except subprocess.SubprocessError:
         return ""
