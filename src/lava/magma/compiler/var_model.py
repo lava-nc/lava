@@ -203,3 +203,43 @@ class ConvNeuronVarModel(LoihiNeuronVarModel):
     alloc_dims: ty.List[ty.Tuple[int, int, int]] = None
     valid_dims: ty.List[ty.Tuple[int, int, int]] = None
     var_shape: ty.Tuple[int, int, int] = None
+
+
+@dataclass
+class ByteEncoder:
+    """Encodes ptr, len, base"""
+    base: int
+    len: int
+    ptr: int
+
+
+@dataclass
+class CoreEncoder:
+    """ Encodes a core xyp """
+    x: ByteEncoder
+    y: ByteEncoder
+    p: ByteEncoder
+
+
+@dataclass
+class ChipEncoder:
+    """ Encoding for chip field """
+    x: ByteEncoder
+    y: ByteEncoder
+    z: ByteEncoder
+
+
+@dataclass
+class AxonEncoder:
+    """ Encoding for axon field """
+    hi: ByteEncoder
+    lo: ByteEncoder
+
+
+@dataclass
+class NcSpikeIOVarModel(NcVarModel):
+    is_long: int
+    core: CoreEncoder
+    axon: AxonEncoder
+    chip: ChipEncoder
+    payload: ty.List[ByteEncoder]
