@@ -23,7 +23,6 @@ except ImportError:
     class AbstractCProcessModel:
         pass
 
-
     class AbstractNcProcessModel:
         pass
 

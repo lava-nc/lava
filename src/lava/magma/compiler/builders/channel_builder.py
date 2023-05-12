@@ -193,6 +193,7 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         """
         pass
 
+
 class ChannelBuilderPyNc(ChannelBuilderNx):
     """A ChannelBuilder for PyNc and NcPy Channels with NxBoard as the messaging
     infrastructure.
