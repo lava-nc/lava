@@ -15,7 +15,7 @@ from lava.utils import lava_loihi
 host: ty.Optional[str] = None
 
 
-class LoihiGeneration(enum.StrEnum):
+class LoihiGeneration(enum.Enum):
     N3B2 = "N3B2"
     N3B3 = "N3B3"
     N3C1 = "N3C1"
@@ -126,9 +126,9 @@ def partition() -> str:
     return "Unspecified"
 
 
-def is_available():
+def is_available() -> bool:
     """Returns true iff the current system has a SLURM controller enabled."""
-    if try_run_command(["sinfo"]) == "":
+    if not try_run_command(["sinfo"]):
         return False
     return True
 
@@ -139,8 +139,8 @@ def get_partitions() -> ty.List[PartitionInfo]:
     if not is_available():
         return []
 
-    out = try_run_command(["sinfo"])
-    lines = out.stdout.split("\n")
+    lines = try_run_command(["sinfo"])
+    del lines[0]  # Remove header of table
 
     def parse_partition(line: str) -> PartitionInfo:
         fields = line.split()
@@ -166,7 +166,7 @@ def get_partition_info(partition_name: str) -> ty.Optional[PartitionInfo]:
     Returns
     -------
     Optional[PartitionInfo]
-        The partition information  for the partition or None if the SLURM
+        The partition information for the partition or None if the SLURM
         controller does not have the specified partition.
     """
     matching_partitions = [p for p in get_partitions()
@@ -191,8 +191,8 @@ def get_boards() -> ty.List[BoardInfo]:
     if not is_available():
         return []
 
-    out = try_run_command(["sinfo", "-N"])
-    lines = out.stdout.split("\n")
+    lines = try_run_command(["sinfo", "-N"])
+    del lines[0]  # Remove header of table
 
     def parse_board(line: str) -> BoardInfo:
         fields = line.split()
@@ -231,13 +231,16 @@ class BoardInfo:
     state: str
 
 
-def try_run_command(
-        command: ty.List[str]) -> ty.Union[subprocess.CompletedProcess, str]:
+def try_run_command(command: ty.List[str]) -> ty.List[str]:
     try:
-        return subprocess.run(command,  # nosec S603 - commands are trusted
-                              capture_output=True,
-                              text=True,
-                              check=True,
-                              timeout=1)
+        process = subprocess.run(  # nosec S603 - commands are trusted
+            command,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=1
+        )
+        return process.stdout.split("\n")
+
     except subprocess.SubprocessError:
-        return ""
+        return []
