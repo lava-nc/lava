@@ -237,9 +237,32 @@ class AxonEncoder:
 
 
 @dataclass
-class NcSpikeIOVarModel(NcVarModel):
+class TimeCompare:
+    """Used by SpikeBlock to determine when to inject spikes"""
+    time_mode: int
+    num_time_bits: int
+    time_len: int
+    time_ptr: int
+
+
+@dataclass
+class DecodeConfig:
+    receive_mode: int
+    decode_mode: int
+
+
+@dataclass
+class SpikeEncoder:
     is_long: int
     core: CoreEncoder
     axon: AxonEncoder
     chip: ChipEncoder
     payload: ty.List[ByteEncoder]
+
+
+@dataclass
+class NcSpikeIOVarModel(NcVarModel):
+    num_message_bits: int = 8
+    decode_config: ty.Optional[DecodeConfig] = None
+    time_compare: ty.Optional[TimeCompare] = None
+    spike_encoder: ty.Optional[SpikeEncoder] = None
