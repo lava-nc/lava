@@ -103,6 +103,8 @@ class LoihiConnectedPortType(IntEnum):
     C_C = 2
     # Denotes port is associated with C/PY Process
     C_PY = 3
+    # Denotes port is associated with PY/NC Process
+    PY_NC = 4
 
 
 class LoihiConnectedPortEncodingType(IntEnum):

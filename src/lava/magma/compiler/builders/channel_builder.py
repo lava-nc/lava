@@ -161,7 +161,8 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
 
 @dataclass
 class ChannelBuilderNx(AbstractChannelBuilder):
-    """A ChannelBuilder for CNc and NcC Channels with NxBoard as the messaging
+    """A ChannelBuilder for CNc and NcC Channels with NxBoard as
+    the messaging
     infrastructure.
     """
 
@@ -191,3 +192,9 @@ class ChannelBuilderNx(AbstractChannelBuilder):
             Can't build channel of type specified
         """
         pass
+
+class ChannelBuilderPyNc(ChannelBuilderNx):
+    """A ChannelBuilder for PyNc and NcPy Channels with NxBoard as the messaging
+    infrastructure.
+    """
+    pass
