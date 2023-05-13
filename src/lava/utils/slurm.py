@@ -265,7 +265,7 @@ def try_run_command(command: ty.List[str]) -> ty.List[str]:
         Output of stdout of the command, separated into a list of lines (str).
     """
     try:
-        process = subprocess.run(command, capture_output=True, text=True, check=True, timeout=1)  # nosec
+        process = subprocess.run(command, capture_output=True, text=True, check=True, timeout=1)  # nosec #noqa
         return process.stdout.split("\n")
 
     except subprocess.SubprocessError:
