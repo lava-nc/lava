@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import subprocess
+import subprocess  # nosec
 import unittest
 from unittest.mock import patch, MagicMock
 import typing as ty
