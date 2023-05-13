@@ -40,16 +40,21 @@ def use_slurm_host(
     os.environ["LOIHI_GEN"] = loihi_gen.value
 
     if board:
-        set_board(board)
+        _set_board(board, partition)
+    else:
+        os.environ.pop("BOARD", None)
 
     if partition:
-        set_partition(partition)
+        _set_partition(partition)
+    else:
+        os.environ.pop("PARTITION", None)
 
     global host
     host = "SLURM"
 
 
-def set_board(board: str) -> None:
+def _set_board(board: str,
+               partition: ty.Optional[str] = None) -> None:
     board_info = get_board_info(board)
 
     if board_info is None or "down" in board_info.state:
@@ -67,7 +72,7 @@ def set_board(board: str) -> None:
     os.environ["BOARD"] = board
 
 
-def set_partition(partition: str) -> None:
+def _set_partition(partition: str) -> None:
     partition_info = get_partition_info(partition)
 
     if partition_info is None or "down" in partition_info.state:
@@ -81,8 +86,9 @@ def set_partition(partition: str) -> None:
 
 def use_ethernet_host(
         host_address: str,
-        host_binary_path: str = 'nxcore/bin/nx_driver_server',
-        loihi_gen: LoihiGeneration = LoihiGeneration.N3B3) -> None:
+        host_binary_path: ty.Optional[str] = "nxcore/bin/nx_driver_server",
+        loihi_gen: ty.Optional[LoihiGeneration] = LoihiGeneration.N3B3
+) -> None:
     """Set environment to connect directly to an Oheo Gulch host on the network.
     This should be used to run on Kapoho Point and Kapoho Point SC systems when
     SLURM is not available.
@@ -135,7 +141,13 @@ def is_available() -> bool:
 
 def get_partitions() -> ty.List[PartitionInfo]:
     """Returns the list of available partitions from the SLURM controller
-    or an empty list if SLURM is not available or has no partitions."""
+    or an empty list if SLURM is not available or has no partitions.
+
+    Returns
+    -------
+    List[PartitionInfo]
+        A list of all available partitions.
+    """
     if not is_available():
         return []
 
@@ -177,17 +189,23 @@ def get_partition_info(partition_name: str) -> ty.Optional[PartitionInfo]:
 
 @dataclass
 class PartitionInfo:
-    name: str
-    available: str
-    timelimit: str
-    nodes: str
-    state: str
-    nodelist: str
+    name: str = ""
+    available: str = ""
+    timelimit: str = ""
+    nodes: str = ""
+    state: str = ""
+    nodelist: str = ""
 
 
 def get_boards() -> ty.List[BoardInfo]:
     """Returns the list of available boards from the SLURM controller
-    or an empty list if SLURM is not available or has no boards."""
+    or an empty list if SLURM is not available or has no boards.
+
+    Returns
+    -------
+    List[BoardInfo]
+        A list of all available boards.
+    """
     if not is_available():
         return []
 
@@ -226,12 +244,26 @@ def get_board_info(nodename: str) -> ty.Optional[BoardInfo]:
 
 @dataclass
 class BoardInfo:
-    nodename: str
-    partition: str
-    state: str
+    nodename: str = ""
+    partition: str = ""
+    state: str = ""
 
 
 def try_run_command(command: ty.List[str]) -> ty.List[str]:
+    """Executes a command, captures the output, and splits it into a list of
+    lines (strings). Returns an empty list if executing the command raises
+    and exception.
+
+    Parameters
+    ----------
+    command : List[str]
+        Command and options, for instance 'sinfo -N' becomes ['sinfo', '-N']
+
+    Returns
+    -------
+    List[str]
+        Output of stdout of the command, separated into a list of lines (str).
+    """
     try:
         process = subprocess.run(  # nosec S603 - commands are trusted
             command,
