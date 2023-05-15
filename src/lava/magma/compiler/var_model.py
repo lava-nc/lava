@@ -11,6 +11,7 @@ from dataclasses import dataclass, InitVar
 from lava.magma.compiler.mappable_interface import Mappable
 from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
+from lava.magma.compiler.utils import InterfaceType
 
 if ty.TYPE_CHECKING:
     pass
@@ -263,6 +264,7 @@ class SpikeEncoder:
 @dataclass
 class NcSpikeIOVarModel(NcVarModel):
     num_message_bits: int = 8
+    interface: InterfaceType = InterfaceType.SUPER_SPEED
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
