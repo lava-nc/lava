@@ -150,11 +150,3 @@ class LoihiOutPortInitializer(LoihiIOPortInitializer):
 class LoihiVarPortInitializer(LoihiPortInitializer):
     # This address needs to be defined based on var model
     pass
-
-
-class InterfaceType(IntEnum):
-    """Interface type for spike io communication"""
-    SUPER_SPEED: 0
-    """Ethernet"""
-    HIGH_SPEED: 1
-    """FPGA/PIO"""

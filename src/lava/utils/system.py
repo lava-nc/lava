@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import os
+from enum import IntEnum
 from typing import Optional
 
 
@@ -60,3 +61,11 @@ class Loihi2:
         if 'PARTITION' in os.environ.keys():
             return os.environ['PARTITION']
         return 'Unspecified'
+
+
+class InterfaceType(IntEnum):
+    """Interface type for spike io communication"""
+    SUPER_SPEED = 0
+    """Ethernet"""
+    HIGH_SPEED = 1
+    """FPGA/PIO"""

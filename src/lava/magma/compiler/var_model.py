@@ -11,7 +11,7 @@ from dataclasses import dataclass, InitVar
 from lava.magma.compiler.mappable_interface import Mappable
 from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
-from lava.magma.compiler.utils import InterfaceType
+from lava.utils.system import InterfaceType
 
 if ty.TYPE_CHECKING:
     pass
