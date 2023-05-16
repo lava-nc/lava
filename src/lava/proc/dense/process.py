@@ -232,8 +232,6 @@ class DelayDense(Dense):
             spikes as binary spikes (num_message_bits = 0) or as graded
             spikes (num_message_bits > 0). Default is 0.
         """
-        self._validate_delays(weights, delays)
-        shape = weights.shape
         if max_delay == 0:
             max_delay = int(np.max(delays))
 
@@ -243,6 +241,9 @@ class DelayDense(Dense):
                          log_config=log_config,
                          max_delay=max_delay,
                          **kwargs)
+
+        self._validate_delays(weights, delays)
+        shape = weights.shape
 
         # Variables
         self.delays = Var(shape=shape, init=delays)
