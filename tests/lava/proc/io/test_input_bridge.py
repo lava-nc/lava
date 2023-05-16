@@ -3,7 +3,7 @@ import unittest
 import multiprocessing as mp
 
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
@@ -13,10 +13,10 @@ from lava.magma.core.resources import CPU
 
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyInPort
 
 from lava.magma.core.run_configs import Loihi2SimCfg
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
+from lava.magma.core.run_conditions import RunSteps
 
 from lava.proc.io.input_bridge import InputBridge, \
     PyLoihiFloatingPointInputBridgeProcessModel, \
@@ -66,7 +66,7 @@ class TestInputBridge(unittest.TestCase):
     def test_init(self):
         out_shape = (1, )
 
-        input_bridge = InputBridge(out_shape=out_shape)
+        input_bridge = InputBridge(shape=out_shape)
 
         self.assertIsInstance(input_bridge, InputBridge)
         self.assertIsInstance(input_bridge._send_pipe, mp.connection.PipeConnection)
@@ -83,7 +83,7 @@ class TestInputBridge(unittest.TestCase):
     def test_send_data(self):
         out_shape = (1,)
 
-        input_bridge = InputBridge(out_shape=out_shape)
+        input_bridge = InputBridge(shape=out_shape)
 
         send_data = np.ones(out_shape)
         input_bridge.send_data(send_data)
@@ -95,7 +95,7 @@ class TestInputBridge(unittest.TestCase):
     def test_send_data_shape_different_from_out_shape(self):
         out_shape = (1,)
 
-        input_bridge = InputBridge(out_shape=out_shape)
+        input_bridge = InputBridge(shape=out_shape)
 
         data_shape = (1, 2)
         send_data = np.ones(data_shape)
@@ -125,7 +125,7 @@ class TestInputBridge(unittest.TestCase):
         num_consecutive_send_before_receive = 50
         out_shape = (4, )
 
-        input_bridge = InputBridge(out_shape=out_shape)
+        input_bridge = InputBridge(shape=out_shape)
 
         complete_send_data = [np.full(out_shape, i) for i in range(num_consecutive_send_before_receive)]
 
@@ -159,7 +159,7 @@ class TestInputBridgeFloatingPointProcessModel(unittest.TestCase):
         data_shape = (1,)
         send_data = np.ones(data_shape)
 
-        input_bridge = InputBridge(out_shape=data_shape)
+        input_bridge = InputBridge(shape=data_shape)
         recv = Recv(shape=data_shape)
 
         input_bridge.out_port.connect(recv.in_port)
@@ -200,7 +200,7 @@ class TestInputBridgeFixedPointProcessModel(unittest.TestCase):
         data_shape = (1,)
         send_data = np.ones(data_shape, dtype=int)
 
-        input_bridge = InputBridge(out_shape=data_shape)
+        input_bridge = InputBridge(shape=data_shape)
         recv = Recv(shape=data_shape)
 
         input_bridge.out_port.connect(recv.in_port)
