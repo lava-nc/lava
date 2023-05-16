@@ -97,9 +97,12 @@ class AbstractPyAsyncInputBridgeProcessModel(PyAsyncProcessModel):
 
     def run_async(self):
         while True:
+            print("yo!")
+
             self.out_port.send(self._recv_pipe.recv())
 
             if self.check_for_stop_cmd():
+                print("lol")
                 return
 
 

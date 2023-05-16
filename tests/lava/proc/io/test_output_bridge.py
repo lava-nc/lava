@@ -84,7 +84,7 @@ class TestOutputBridge(unittest.TestCase):
     #     in_shape = (1.5, )
     #
     #     with self.assertRaises(ValueError):
-    #         OutputBridge(in_shape=in_shape)
+    #         OutputBridge(shape=in_shape)
 
     def test_send_data(self):
         in_shape = (1,)
@@ -135,7 +135,7 @@ class TestOutputBridge(unittest.TestCase):
         np.testing.assert_equal(complete_recv_data, complete_send_data)
 
 
-class TestInputBridgeFloatingPointProcessModel(unittest.TestCase):
+class TestInputBridgePyLoihiFloatingPointProcessModel(unittest.TestCase):
     def test_init(self):
         in_shape = (1, )
         _, send_pipe = mp.Pipe(duplex=False)
@@ -171,7 +171,7 @@ class TestInputBridgeFloatingPointProcessModel(unittest.TestCase):
         np.testing.assert_equal(recv_data, send_data)
 
 
-class TestInputBridgeFixedPointProcessModel(unittest.TestCase):
+class TestInputBridgePyLoihiFixedPointProcessModel(unittest.TestCase):
     def test_init(self):
         in_shape = (1, )
         _, send_pipe = mp.Pipe(duplex=False)

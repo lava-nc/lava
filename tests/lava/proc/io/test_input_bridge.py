@@ -20,7 +20,9 @@ from lava.magma.core.run_conditions import RunSteps
 
 from lava.proc.io.input_bridge import InputBridge, \
     PyLoihiFloatingPointInputBridgeProcessModel, \
-    PyLoihiFixedPointInputBridgeProcessModel
+    PyLoihiFixedPointInputBridgeProcessModel, \
+    PyAsyncFloatingPointInputBridgeProcessModel, \
+    PyAsyncFixedPointInputBridgeProcessModel
 
 
 class Recv(AbstractProcess):
@@ -78,7 +80,7 @@ class TestInputBridge(unittest.TestCase):
     #     out_shape = (1.5, )
     #
     #     with self.assertRaises(ValueError):
-    #         InputBridge(out_shape=out_shape)
+    #         InputBridge(shape=out_shape)
 
     def test_send_data(self):
         out_shape = (1,)
@@ -140,7 +142,7 @@ class TestInputBridge(unittest.TestCase):
         np.testing.assert_equal(complete_recv_data, complete_send_data)
 
 
-class TestInputBridgeFloatingPointProcessModel(unittest.TestCase):
+class TestInputBridgePyLoihiFloatingPointProcessModel(unittest.TestCase):
     def test_init(self):
         out_shape = (1, )
         recv_pipe, _ = mp.Pipe(duplex=False)
@@ -181,7 +183,7 @@ class TestInputBridgeFloatingPointProcessModel(unittest.TestCase):
         np.testing.assert_equal(recv_data, send_data)
 
 
-class TestInputBridgeFixedPointProcessModel(unittest.TestCase):
+class TestInputBridgePyLoihiFixedPointProcessModel(unittest.TestCase):
     def test_init(self):
         out_shape = (1, )
         recv_pipe, _ = mp.Pipe(duplex=False)
@@ -208,6 +210,103 @@ class TestInputBridgeFixedPointProcessModel(unittest.TestCase):
         # run_condition has to be non-blocking in order to get past the call to run
         run_condition = RunSteps(num_steps=num_steps, blocking=False)
         run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+
+        input_bridge.run(condition=run_condition, run_cfg=run_cfg)
+
+        input_bridge.send_data(send_data)
+
+        input_bridge.wait()
+
+        recv_data = recv.var.get()
+
+        input_bridge.stop()
+
+        np.testing.assert_equal(recv_data, send_data)
+
+
+class TestInputBridgePyAsyncFloatingPointProcessModel(unittest.TestCase):
+    def test_init(self):
+        out_shape = (1, )
+        recv_pipe, _ = mp.Pipe(duplex=False)
+        proc_params = {
+            "out_shape": out_shape,
+            "recv_pipe": recv_pipe
+        }
+
+        process_model = PyAsyncFloatingPointInputBridgeProcessModel(
+            proc_params=proc_params)
+
+        self.assertIsInstance(process_model,
+                              PyAsyncFloatingPointInputBridgeProcessModel)
+        self.assertIsInstance(process_model._recv_pipe, mp.connection.PipeConnection)
+
+    def test_run(self):
+        num_steps = 1
+        data_shape = (1,)
+        send_data = np.ones(data_shape)
+
+        input_bridge = InputBridge(shape=data_shape)
+        recv = Recv(shape=data_shape)
+
+        input_bridge.out_port.connect(recv.in_port)
+
+        exception_pm_map = {
+            InputBridge: PyAsyncFloatingPointInputBridgeProcessModel
+        }
+
+        # run_condition has to be non-blocking in order to get past the call to run
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg(select_tag="floating_pt",
+                               exception_proc_model_map=exception_pm_map)
+
+        input_bridge.run(condition=run_condition, run_cfg=run_cfg)
+
+        input_bridge.send_data(send_data)
+
+        # input_bridge.wait()
+        input_bridge.pause()
+
+        recv_data = recv.var.get()
+
+        input_bridge.stop()
+
+        np.testing.assert_equal(recv_data, send_data)
+
+
+class TestInputBridgePyAsyncFixedPointProcessModel(unittest.TestCase):
+    def test_init(self):
+        out_shape = (1, )
+        recv_pipe, _ = mp.Pipe(duplex=False)
+        proc_params = {
+            "out_shape": out_shape,
+            "recv_pipe": recv_pipe
+        }
+
+        process_model = PyAsyncFixedPointInputBridgeProcessModel(
+            proc_params=proc_params)
+
+        self.assertIsInstance(process_model,
+                              PyAsyncFixedPointInputBridgeProcessModel)
+        self.assertIsInstance(process_model._recv_pipe, mp.connection.PipeConnection)
+
+    def test_run(self):
+        num_steps = 1
+        data_shape = (1,)
+        send_data = np.ones(data_shape, dtype=int)
+
+        input_bridge = InputBridge(shape=data_shape)
+        recv = Recv(shape=data_shape)
+
+        input_bridge.out_port.connect(recv.in_port)
+
+        exception_pm_map = {
+            InputBridge: PyAsyncFixedPointInputBridgeProcessModel
+        }
+
+        # run_condition has to be non-blocking in order to get past the call to run
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt",
+                               exception_proc_model_map=exception_pm_map)
 
         input_bridge.run(condition=run_condition, run_cfg=run_cfg)
 
