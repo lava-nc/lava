@@ -46,6 +46,12 @@ class InputBridge(AbstractProcess):
         data : np.ndarray
             Data to get into Lava.
         """
+        # Checks:
+        # data.shape != out_port.shape
+        # self.runtime._is_running == True
+
+
+
         if data.shape != self.out_port.shape:
             raise ValueError(f"Shape of data to send must be the same as the "
                              f"shape of the OutPort. "
