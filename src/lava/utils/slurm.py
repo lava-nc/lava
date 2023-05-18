@@ -196,7 +196,7 @@ def try_run_command(command: ty.List[str]) -> ty.List[str]:
     """
     try:
         kwargs = dict(capture_output=True, check=True, timeout=1)
-        process = subprocess.run(command, text=True, **kwargs)  # nosec
+        process = subprocess.run(command, text=True, **kwargs)  # nosec # noqa
         return process.stdout.split("\n")
 
     except subprocess.SubprocessError:
