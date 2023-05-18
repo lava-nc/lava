@@ -3,14 +3,14 @@
 # See: https://spdx.org/licenses/
 
 import re
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import typing as ty
 import ast
 
 import lava.magma.core.learning.string_symbols as str_symbols
 
 
-class Symbol(object):
+class Symbol(ABC):
     """Super class for all possible symbols."""
 
     def __init__(self, expr: ty.Optional[str] = "") -> None:
@@ -50,8 +50,9 @@ class Symbol(object):
         pass
 
     @staticmethod
-    def find_expr(expr: str, reg_expr: str, symbol: "Symbol") \
-            -> ty.Tuple[ty.Optional["Symbol"], str]:
+    def find_expr(expr: str,
+                  reg_expr: str,
+                  symbol: "Symbol") -> ty.Tuple[ty.Optional["Symbol"], str]:
         """Factory method for creating symbols.
 
         Matches an expression to a regular expression and if there is a match,

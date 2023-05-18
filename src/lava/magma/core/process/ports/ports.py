@@ -938,18 +938,3 @@ class TransposePort(AbstractVirtualPort):
         function_pointer : functools.partial
             a function pointer that can be applied to incoming data"""
         return ft.partial(np.transpose, axes=np.argsort(self.axes))
-
-
-class ReIndexPort(AbstractVirtualPort):
-    """A ReIndexPort is a virtual port that allows to re-index the elements
-    of a port before connecting to another port.
-    It is used by the compiler to map the indices of the underlying
-    tensor-valued data array from the derived to the new shape.
-
-    Example:
-        out_port = OutPort((2, 2))
-        in_port = InPort((2, 2))
-        out_port.reindex([3, 1, 0, 2]).connect(in_port)
-    """
-
-    pass

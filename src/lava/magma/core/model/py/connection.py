@@ -1561,3 +1561,6 @@ class LearningConnectionModelFloat(PyLearningConnection):
                 f"'tag_1', or 'tag_2'."
                 f"Got {synaptic_variable_name=}."
             )
+
+    def _init_randoms(self) -> None:
+        pass
