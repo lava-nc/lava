@@ -9,7 +9,7 @@
 #include <string>
 #include <list>
 #include <memory>
-
+#include <functional>
 namespace message_infrastructure {
 
 class AbstractPort {
@@ -48,6 +48,7 @@ class AbstractRecvPort : public AbstractPort {
   virtual MetaDataPtr Recv() = 0;
   virtual MetaDataPtr Peek() = 0;
   virtual void Join() = 0;
+  std::function<void()> observer;
 };
 
 // Users should be allowed to copy port objects.

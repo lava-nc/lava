@@ -18,17 +18,40 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
 import numpy as np
 import typing as ty
 import warnings
-
+import datetime
+from threading import Condition
 
 class Selector:
+    def __init__(self):
+        self.all_time = datetime.timedelta(seconds=0)
+        self._cv = Condition()
+        self.count = 0
+    def get_all_time(self):
+        return self.all_time.total_seconds()
+    def get_count(self):
+        return self.count
+    def _changed(self):
+        with self._cv:
+            self._cv.notify_all()
+    def _set_observer(self, channel_actions, observer):
+        for channel, _ in channel_actions:
+            channel.set_observer(observer)
     def select(
             self,
             *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
     ):
-        for recv_port, action in args:
-            if recv_port.probe():
-                return action()
-        return None
+        with self._cv:
+            self._set_observer(args, self._changed)
+            while True:
+                start_time = datetime.datetime.now()
+                for channel, action in args:
+                    if channel.probe():
+                        self._set_observer(args, None)
+                        return action()
+                end_time = datetime.datetime.now()
+                self.count = self.count + 1
+                self.all_time = self.all_time + end_time - start_time
+                self._cv.wait()
 
 
 class SendPort(AbstractTransferPort):

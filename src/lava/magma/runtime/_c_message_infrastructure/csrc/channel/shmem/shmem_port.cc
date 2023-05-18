@@ -14,6 +14,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+#include <Python.h>
 
 namespace message_infrastructure {
 
@@ -85,6 +86,7 @@ ShmemRecvPort::ShmemRecvPort(const std::string &name,
                 const size_t &nbytes)
   : AbstractRecvPort(name, size, nbytes), shm_(shm), done_(false) {
   recv_queue_ = std::make_shared<RecvQueue<MetaDataPtr>>(name_, size_);
+  observer = nullptr;
 }
 
 ShmemRecvPort::~ShmemRecvPort() {
@@ -98,16 +100,25 @@ void ShmemRecvPort::Start() {
 void ShmemRecvPort::QueueRecv() {
   while (!done_.load()) {
     bool ret = false;
+
     if (this->recv_queue_->AvailableCount() > 0) {
-      ret = shm_->Load([this](void* data){
+      // const clock_t start = std::clock();
+      bool not_empty = recv_queue_->Probe();
+      ret = shm_->Load([this, &not_empty](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
         MetaDataPtrFromPointer(metadata_res, data,
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
+        if (observer && !not_empty) {
+          PyGILState_STATE gstate;
+          gstate = PyGILState_Ensure();
+          if (observer)
+            observer();
+          PyGILState_Release(gstate);
+        }
       });
     }
     if (!ret) {
-      // sleep
       helper::Sleep();
     }
   }
@@ -124,7 +135,8 @@ MetaDataPtr ShmemRecvPort::Recv() {
 void ShmemRecvPort::Join() {
   if (!done_) {
     done_ = true;
-    recv_queue_thread_.join();
+    if (recv_queue_thread_.joinable())
+      recv_queue_thread_.join();
     recv_queue_->Stop();
   }
 }

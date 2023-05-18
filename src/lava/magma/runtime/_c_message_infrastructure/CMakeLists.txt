@@ -159,7 +159,9 @@ target_include_directories(message_infrastructure PUBLIC
                           $<BUILD_INTERFACE:${CYCLONE_DDS_INC}>)
 
 target_link_libraries(message_infrastructure
-                      rt)
+                      rt
+                      pybind11::module
+                      python3.8)
 if(GRPC_CHANNEL)
   target_link_libraries(message_infrastructure
                         ${_REFLECTION}

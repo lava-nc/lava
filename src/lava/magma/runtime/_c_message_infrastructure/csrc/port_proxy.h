@@ -73,6 +73,7 @@ class RecvPortProxy : public PortProxy {
   py::object Peek();
   std::string Name();
   size_t Size();
+  void Set_observer(std::function<void()> obs);
 
  private:
   py::object MDataToObject_(MetaDataPtr metadata);
