@@ -13,7 +13,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_board_and_partition(
             self,
@@ -38,7 +38,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_board(
             self,
@@ -62,7 +62,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_partition(
             self,
@@ -107,7 +107,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_when_slurm_is_not_available(
             self,
@@ -128,7 +128,7 @@ class TestUseSlurmHost(unittest.TestCase):
 
 class TestUseEthernetHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.try_run_command")
     def test_use_ethernet_host(
             self,
@@ -156,7 +156,7 @@ class TestUseEthernetHost(unittest.TestCase):
             loihi.use_ethernet_host(host_address="test_host",
                                     host_binary_path="test_path")
 
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch("lava.utils.loihi.is_lava_loihi_installed")
     @patch("lava.utils.slurm.try_run_command")
     def test_use_ethernet_host_when_ping_fails(
             self,
