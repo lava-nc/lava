@@ -29,277 +29,133 @@ def sinfo_n() -> ty.List[str]:
     return sinfo_msg.split("\n")
 
 
-class TestUseSlurmHost(unittest.TestCase):
+class TestEnable(unittest.TestCase):
     @patch.dict(os.environ, {"NOSLURM": "1"}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_with_board_and_partition(
-            self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
+    def test_enable(self, is_available) -> None:
         is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
-        get_board_info.return_value = slurm.BoardInfo(partition="partition1")
 
-        slurm.use_slurm_host(board="board1",
-                             partition="partition1",
-                             loihi_gen=slurm.LoihiGeneration.N3C1)
+        slurm.enable()
 
         self.assertEqual(os.environ["SLURM"], "1")
-        self.assertEqual(os.environ["LOIHI_GEN"], "N3C1")
-        self.assertEqual(os.environ["BOARD"], "board1")
-        self.assertEqual(os.environ["PARTITION"], "partition1")
         self.assertTrue("NOSLURM" not in os.environ.keys())
-        self.assertEqual(slurm.host, "SLURM")
 
-    @patch.dict(os.environ, {"NOSLURM": "1", "PARTITION": "test"}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
+    @patch.dict(os.environ, {"NOSLURM": "1"}, clear=True)
     @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_with_board(
-            self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
+    def test_enable(self, is_available) -> None:
         is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
-        get_board_info.return_value = slurm.BoardInfo()
 
-        slurm.use_slurm_host(board="board1",
-                             loihi_gen=slurm.LoihiGeneration.N3C1)
+        slurm.enable()
 
         self.assertEqual(os.environ["SLURM"], "1")
-        self.assertEqual(os.environ["LOIHI_GEN"], "N3C1")
-        self.assertEqual(os.environ["BOARD"], "board1")
-        self.assertTrue("PARTITION" not in os.environ.keys())
         self.assertTrue("NOSLURM" not in os.environ.keys())
-        self.assertEqual(slurm.host, "SLURM")
-
-    @patch.dict(os.environ, {"NOSLURM": "1", "PARTITION": "test"}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_with_partition(
-            self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
-        get_board_info.return_value = slurm.BoardInfo()
-
-        slurm.use_slurm_host(partition="partition1",
-                             loihi_gen=slurm.LoihiGeneration.N3C1)
-
-        self.assertEqual(os.environ["SLURM"], "1")
-        self.assertEqual(os.environ["LOIHI_GEN"], "N3C1")
-        self.assertEqual(os.environ["PARTITION"], "partition1")
-        self.assertTrue("BOARD" not in os.environ.keys())
-        self.assertTrue("NOSLURM" not in os.environ.keys())
-        self.assertEqual(slurm.host, "SLURM")
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_lava_loihi_is_not_installed(
-            self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = False
-        get_partition_info.return_value = slurm.PartitionInfo()
-        get_board_info.return_value = slurm.BoardInfo()
-
-        with self.assertRaises(ImportError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
-
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_slurm_is_not_available(
-            self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
+    def test_enable_when_slurm_is_not_available(self, is_available) -> None:
         is_available.return_value = False
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
-        get_board_info.return_value = slurm.BoardInfo()
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
+            slurm.enable()
+
+
+class TestDisable(unittest.TestCase):
+    @patch.dict(os.environ, {"SLURM": "1"}, clear=True)
+    @patch("lava.utils.slurm.is_available")
+    def test_disable(self, is_available) -> None:
+        is_available.return_value = True
+
+        slurm.disable()
+
+        self.assertEqual(os.environ["NOSLURM"], "1")
+        self.assertTrue("SLURM" not in os.environ.keys())
+
+
+class TestSetBoard(unittest.TestCase):
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("lava.utils.slurm.get_board_info")
+    def test_set_board_with_board_and_partition(
+            self,
+            get_board_info) -> None:
+        get_board_info.return_value = slurm.BoardInfo(partition="partition1")
+
+        slurm.set_board(board="board1", partition="partition1")
+
+        self.assertEqual(os.environ["BOARD"], "board1")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_board_does_not_exist(
+    def test_set_board_with_board_alone(
             self,
-            is_available,
-            is_installed,
-            get_partition_info,
             get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
+        get_board_info.return_value = slurm.BoardInfo()
+
+        slurm.set_board(board="board1")
+
+        self.assertEqual(os.environ["BOARD"], "board1")
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("lava.utils.slurm.get_board_info")
+    def test_set_board_when_board_does_not_exist(
+            self,
+            get_board_info) -> None:
         get_board_info.return_value = None
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
+            slurm.set_board(board="board1", partition="partition1")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_board_is_down(
+    def test_set_board_when_board_is_down(
             self,
-            is_available,
-            is_installed,
-            get_partition_info,
             get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
         get_board_info.return_value = slurm.BoardInfo(state="down")
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
+            slurm.set_board(board="board1", partition="partition1")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_board_is_not_in_partition(
+    def test_set_board_when_board_is_not_in_partition(
             self,
-            is_available,
-            is_installed,
-            get_partition_info,
             get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
-        get_partition_info.return_value = slurm.PartitionInfo()
         get_board_info.return_value = slurm.BoardInfo(partition="not-p1")
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="p1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
+            slurm.set_board(board="board1", partition="p1")
+
+
+class TestSetPartition(unittest.TestCase):
+    @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
+    @patch("lava.utils.slurm.get_partition_info")
+    def test_set_partition(
+            self,
+            get_partition_info) -> None:
+        get_partition_info.return_value = slurm.PartitionInfo()
+
+        slurm.set_partition(partition="partition1")
+
+        self.assertEqual(os.environ["PARTITION"], "partition1")
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_partition_does_not_exist(
+    def test_set_partition_when_partition_does_not_exist(
             self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
+            get_partition_info) -> None:
         get_partition_info.return_value = None
-        get_board_info.return_value = slurm.BoardInfo()
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
+            slurm.set_partition(partition="partition1")
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
-    def test_use_slurm_host_when_partition_is_down(
+    def test_set_board_when_partition_is_down(
             self,
-            is_available,
-            is_installed,
-            get_partition_info,
-            get_board_info) -> None:
-        is_available.return_value = True
-        is_installed.return_value = True
+            get_partition_info) -> None:
         get_partition_info.return_value = slurm.PartitionInfo(state="down")
-        get_board_info.return_value = slurm.BoardInfo()
 
         with self.assertRaises(ValueError):
-            slurm.use_slurm_host(board="board1",
-                                 partition="partition1",
-                                 loihi_gen=slurm.LoihiGeneration.N3C1)
-
-
-class TestUseEthernetHost(unittest.TestCase):
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.try_run_command")
-    def test_use_ethernet_host(
-            self,
-            try_run_command,
-            is_installed) -> None:
-        try_run_command.return_value = ["1 packets transmitted, 1 received"]
-        is_installed.return_value = True
-
-        slurm.use_ethernet_host(host_address="test_address",
-                                host_binary_path="test_path",
-                                loihi_gen=slurm.LoihiGeneration.N3C1)
-
-        self.assertEqual(os.environ["NXSDKHOST"], "test_address")
-        self.assertEqual(os.environ["HOST_BINARY"], "test_path")
-        self.assertEqual(os.environ["NOSLURM"], "1")
-        self.assertEqual(os.environ["LOIHI_GEN"], "N3C1")
-        self.assertEqual(slurm.host, "ETHERNET")
-
-    @patch("lava.utils.lava_loihi.is_installed")
-    def test_use_ethernet_host_when_lava_loihi_is_not_installed(
-            self,
-            is_installed) -> None:
-        is_installed.return_value = False
-
-        with self.assertRaises(ImportError):
-            slurm.use_ethernet_host(host_address="test_host",
-                                    host_binary_path="test_path")
-
-    @patch("lava.utils.lava_loihi.is_installed")
-    @patch("lava.utils.slurm.try_run_command")
-    def test_use_ethernet_host_when_ping_fails(
-            self,
-            try_run_command,
-            is_installed) -> None:
-        try_run_command.return_value = []
-        is_installed.return_value = True
-
-        with self.assertRaises(ValueError):
-            slurm.use_ethernet_host(host_address="test_host",
-                                    host_binary_path="test_path")
+            slurm.set_partition(partition="partition1")
 
 
 class TestPartition(unittest.TestCase):

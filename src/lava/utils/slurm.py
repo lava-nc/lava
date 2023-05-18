@@ -7,54 +7,31 @@ import os
 import subprocess  # nosec - commands are trusted
 import typing as ty
 from dataclasses import dataclass
-import enum
-
-from lava.utils import lava_loihi
 
 
-host: ty.Optional[str] = None
+def is_available() -> bool:
+    """Returns true iff the current system has a SLURM controller enabled."""
+    if not try_run_command(["sinfo"]):
+        return False
+    return True
 
 
-class LoihiGeneration(enum.Enum):
-    N3B2 = "N3B2"
-    N3B3 = "N3B3"
-    N3C1 = "N3C1"
-
-
-def use_slurm_host(
-        partition: ty.Optional[str] = None,
-        board: ty.Optional[str] = None,
-        loihi_gen: ty.Optional[LoihiGeneration] = LoihiGeneration.N3B3
-) -> None:
-
-    if not lava_loihi.is_installed():
-        raise ImportError("Attempting to use SLURM for Loihi2 but "
-                          "Lava-Loihi is not installed.")
-
+def enable() -> None:
     if not is_available():
         raise ValueError("Attempting to use SLURM for Loihi2 but "
                          "SLURM controller is not available.")
 
     os.environ["SLURM"] = "1"
     os.environ.pop("NOSLURM", None)
-    os.environ["LOIHI_GEN"] = loihi_gen.value
-
-    if board:
-        _set_board(board, partition)
-    else:
-        os.environ.pop("BOARD", None)
-
-    if partition:
-        _set_partition(partition)
-    else:
-        os.environ.pop("PARTITION", None)
-
-    global host
-    host = "SLURM"
 
 
-def _set_board(board: str,
-               partition: ty.Optional[str] = None) -> None:
+def disable() -> None:
+    os.environ.pop("SLURM", None)
+    os.environ["NOSLURM"] = "1"
+
+
+def set_board(board: str,
+              partition: ty.Optional[str] = None) -> None:
     board_info = get_board_info(board)
 
     if board_info is None or "down" in board_info.state:
@@ -72,7 +49,7 @@ def _set_board(board: str,
     os.environ["BOARD"] = board
 
 
-def _set_partition(partition: str) -> None:
+def set_partition(partition: str) -> None:
     partition_info = get_partition_info(partition)
 
     if partition_info is None or "down" in partition_info.state:
@@ -84,59 +61,12 @@ def _set_partition(partition: str) -> None:
     os.environ["PARTITION"] = partition
 
 
-def use_ethernet_host(
-        host_address: str,
-        host_binary_path: ty.Optional[str] = "nxcore/bin/nx_driver_server",
-        loihi_gen: ty.Optional[LoihiGeneration] = LoihiGeneration.N3B3
-) -> None:
-    """Set environment to connect directly to an Oheo Gulch host on the network.
-    This should be used to run on Kapoho Point and Kapoho Point SC systems when
-    SLURM is not available.
-
-    Call slurm.is_available() to determine whether SLURM is available.
-
-    Parameters
-    ----------
-    host_address : str
-        The IP address for the host system to connect to.
-    host_binary_path : str
-        The path to the nxcore binary on the host.
-    loihi_gen : LoihiGeneration
-        The generation of the Loihi board to compile. Supported
-        values are N3B2, N3B3, and N3C1.
-    """
-    if not lava_loihi.is_installed():
-        raise ImportError("Attempting to use SLURM for Loihi2 but "
-                          "Lava-Loihi is not installed.")
-
-    if not try_run_command(["ping", host_address, "-c 1"]):
-        raise ValueError(f"Attempting to use ethernet host for Loihi2 "
-                         f"but `ping {host_address}` failed.")
-
-    os.environ["NXSDKHOST"] = host_address
-    os.environ["HOST_BINARY"] = host_binary_path
-    os.environ.pop("SLURM", None)
-
-    os.environ["NOSLURM"] = "1"
-    os.environ["LOIHI_GEN"] = loihi_gen.value
-
-    global host
-    host = "ETHERNET"
-
-
 def partition() -> str:
     """Get the partition information."""
     if "PARTITION" in os.environ.keys():
         return os.environ["PARTITION"]
 
     return "Unspecified"
-
-
-def is_available() -> bool:
-    """Returns true iff the current system has a SLURM controller enabled."""
-    if not try_run_command(["sinfo"]):
-        return False
-    return True
 
 
 def get_partitions() -> ty.List[PartitionInfo]:
