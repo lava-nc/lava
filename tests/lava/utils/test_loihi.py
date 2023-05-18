@@ -13,7 +13,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_board_and_partition(
             self,
@@ -38,7 +38,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_board(
             self,
@@ -62,7 +62,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_with_partition(
             self,
@@ -86,7 +86,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_when_lava_loihi_is_not_installed(
             self,
@@ -107,7 +107,7 @@ class TestUseSlurmHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.get_board_info")
     @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.is_available")
     def test_use_slurm_host_when_slurm_is_not_available(
             self,
@@ -128,7 +128,7 @@ class TestUseSlurmHost(unittest.TestCase):
 
 class TestUseEthernetHost(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.try_run_command")
     def test_use_ethernet_host(
             self,
@@ -146,7 +146,7 @@ class TestUseEthernetHost(unittest.TestCase):
         self.assertEqual(os.environ["LOIHI_GEN"], "N3C1")
         self.assertEqual(loihi.host, "ETHERNET")
 
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     def test_use_ethernet_host_when_lava_loihi_is_not_installed(
             self,
             is_installed) -> None:
@@ -156,7 +156,7 @@ class TestUseEthernetHost(unittest.TestCase):
             loihi.use_ethernet_host(host_address="test_host",
                                     host_binary_path="test_path")
 
-    @patch("lava.utils.loihi.is_lava_loihi_installed")
+    @patch("lava.utils.loihi.is_installed")
     @patch("lava.utils.slurm.try_run_command")
     def test_use_ethernet_host_when_ping_fails(
             self,
@@ -170,24 +170,24 @@ class TestUseEthernetHost(unittest.TestCase):
                                     host_binary_path="test_path")
 
 
-class TestIsLavaLoihiInstalled(unittest.TestCase):
+class TestIsInstalled(unittest.TestCase):
     def test_on_known_installed_lava_module(self) -> None:
         """Tests whether the method for checking on an installed library
         works in general."""
-        self.assertTrue(loihi.is_lava_loihi_installed("lava"))
+        self.assertTrue(loihi.is_installed("lava"))
 
     @patch("importlib.util.find_spec")
-    def test_is_lava_loihi_installed(self, find_spec) -> None:
+    def test_is_installed(self, find_spec) -> None:
         """Tests whether the function detects when Lava-Loihi is installed."""
         find_spec.return_value = \
             MagicMock(spec="importlib.machinery.ModuleSpec")
 
-        self.assertTrue(loihi.is_lava_loihi_installed())
+        self.assertTrue(loihi.is_installed())
 
     @patch("importlib.util.find_spec")
-    def test_is_lava_loihi_not_installed(self, find_spec) -> None:
+    def test_is_not_installed(self, find_spec) -> None:
         """Tests whether the function detects when Lava-Loihi is not
         installed."""
         find_spec.return_value = None
 
-        self.assertFalse(loihi.is_lava_loihi_installed())
+        self.assertFalse(loihi.is_installed())

@@ -24,7 +24,7 @@ def use_slurm_host(
         board: ty.Optional[str] = None,
         loihi_gen: ty.Optional[ChipGeneration] = ChipGeneration.N3B3
 ) -> None:
-    if not is_lava_loihi_installed():
+    if not is_installed():
         raise ImportError("Attempting to use SLURM for Loihi2 but "
                           "Lava-Loihi is not installed.")
 
@@ -67,7 +67,7 @@ def use_ethernet_host(
         The generation of the Loihi board to compile. Supported
         values are N3B2, N3B3, and N3C1.
     """
-    if not is_lava_loihi_installed():
+    if not is_installed():
         raise ImportError("Attempting to use Loihi2 but Lava-Loihi is "
                           "not installed.")
 
@@ -85,7 +85,7 @@ def use_ethernet_host(
     host = "ETHERNET"
 
 
-def is_lava_loihi_installed(module_name: ty.Optional[str] = None) -> bool:
+def is_installed(module_name: ty.Optional[str] = None) -> bool:
     """Returns whether the Lava extension for Loihi is installed.
 
     Parameters
