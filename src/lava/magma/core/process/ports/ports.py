@@ -823,7 +823,7 @@ class ReshapePort(AbstractVirtualPort):
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
                  old_shape: ty.Tuple[int, ...]):
-        AbstractPort.__init__(self, new_shape)
+        super().__init__(new_shape)
         self.old_shape = old_shape
 
     def get_transform_func_fwd(self) -> ft.partial:
@@ -858,7 +858,7 @@ class ConcatPort(AbstractVirtualPort):
     tensor-valued data array from the derived to the new shape."""
 
     def __init__(self, ports: ty.List[AbstractPort], axis: int):
-        AbstractPort.__init__(self, self._get_new_shape(ports, axis))
+        super().__init__(self._get_new_shape(ports, axis))
         self._connect_backward(
             ports, AbstractPort, assert_same_shape=False, assert_same_type=True
         )
@@ -913,7 +913,7 @@ class TransposePort(AbstractVirtualPort):
                  new_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]):
         self.axes = axes
-        AbstractPort.__init__(self, new_shape)
+        super().__init__(new_shape)
 
     def get_transform_func_fwd(self) -> ft.partial:
         """Returns a function pointer that implements the forward (fwd)
