@@ -40,16 +40,6 @@ class TestEnable(unittest.TestCase):
         self.assertEqual(os.environ["SLURM"], "1")
         self.assertTrue("NOSLURM" not in os.environ.keys())
 
-    @patch.dict(os.environ, {"NOSLURM": "1"}, clear=True)
-    @patch("lava.utils.slurm.is_available")
-    def test_enable(self, is_available) -> None:
-        is_available.return_value = True
-
-        slurm.enable()
-
-        self.assertEqual(os.environ["SLURM"], "1")
-        self.assertTrue("NOSLURM" not in os.environ.keys())
-
     @patch.dict(os.environ, {}, clear=True)
     @patch("lava.utils.slurm.is_available")
     def test_enable_when_slurm_is_not_available(self, is_available) -> None:

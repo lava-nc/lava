@@ -5,16 +5,28 @@
 import os
 import unittest
 from unittest.mock import MagicMock, patch
+import typing as ty
 
 from lava.utils import loihi, slurm
 
 
+def patch_use_slurm_host(environ: ty.Dict[str, ty.Any]):
+
+    def decorator(func):
+        @patch.dict(os.environ, environ, clear=True)
+        @patch("lava.utils.slurm.get_board_info")
+        @patch("lava.utils.slurm.get_partition_info")
+        @patch("lava.utils.loihi.is_installed")
+        @patch("lava.utils.slurm.is_available")
+        def wrapper(*args):
+            func(*args)
+
+        return wrapper
+    return decorator
+
+
 class TestUseSlurmHost(unittest.TestCase):
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
+    @patch_use_slurm_host(environ={})
     def test_use_slurm_host_with_board_and_partition(
             self,
             is_available,
@@ -35,11 +47,7 @@ class TestUseSlurmHost(unittest.TestCase):
         self.assertEqual(os.environ["PARTITION"], "partition1")
         self.assertEqual(loihi.host, "SLURM")
 
-    @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
+    @patch_use_slurm_host(environ={"PARTITION": "test"})
     def test_use_slurm_host_with_board(
             self,
             is_available,
@@ -59,11 +67,7 @@ class TestUseSlurmHost(unittest.TestCase):
         self.assertTrue("PARTITION" not in os.environ.keys())
         self.assertEqual(loihi.host, "SLURM")
 
-    @patch.dict(os.environ, {"PARTITION": "test"}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
+    @patch_use_slurm_host(environ={"PARTITION": "test"})
     def test_use_slurm_host_with_partition(
             self,
             is_available,
@@ -83,11 +87,7 @@ class TestUseSlurmHost(unittest.TestCase):
         self.assertTrue("BOARD" not in os.environ.keys())
         self.assertEqual(loihi.host, "SLURM")
 
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
+    @patch_use_slurm_host(environ={})
     def test_use_slurm_host_when_lava_loihi_is_not_installed(
             self,
             is_available,
@@ -104,11 +104,7 @@ class TestUseSlurmHost(unittest.TestCase):
                                  partition="partition1",
                                  loihi_gen=loihi.ChipGeneration.N3C1)
 
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("lava.utils.slurm.get_board_info")
-    @patch("lava.utils.slurm.get_partition_info")
-    @patch("lava.utils.loihi.is_installed")
-    @patch("lava.utils.slurm.is_available")
+    @patch_use_slurm_host(environ={})
     def test_use_slurm_host_when_slurm_is_not_available(
             self,
             is_available,
