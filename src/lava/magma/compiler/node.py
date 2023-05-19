@@ -56,7 +56,7 @@ class NodeConfig(UserList):
         result.append(str(self.node_map))
         return "\n".join(result)
 
-    def append(self, node: Node):  # noqa W0237 (renamed variable)
+    def append(self, node: Node):  # pylint: disable=arguments-differ
         """Appends a new node to the NodeConfig."""
         node.id = self._node_ctr
         self._node_ctr += 1
