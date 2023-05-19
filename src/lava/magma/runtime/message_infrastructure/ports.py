@@ -26,16 +26,21 @@ class Selector:
         self.all_time = datetime.timedelta(seconds=0)
         self._cv = Condition()
         self.count = 0
+
     def get_all_time(self):
         return self.all_time.total_seconds()
+
     def get_count(self):
         return self.count
+
     def _changed(self):
         with self._cv:
             self._cv.notify_all()
+
     def _set_observer(self, channel_actions, observer):
         for channel, _ in channel_actions:
             channel.set_observer(observer)
+
     def select(
             self,
             *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
