@@ -69,4 +69,13 @@ jobs:
         poetry run git lfs pull
         # poetry run pytest
         poetry run coverage run -m unittest discover -s tests/ -t . -vv
-        poetry run coverage xml
+
+    - name: Generate coverage report
+      run: poetry run coverage xml
+
+    - name: Archive coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage
+        path: coverage.xml
+        retention-days: 30
