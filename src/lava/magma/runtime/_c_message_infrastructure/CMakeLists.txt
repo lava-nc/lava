@@ -34,6 +34,8 @@ endif()
 option(PY_WRAPPER "Use pybind11 to wrapper the message infrastructure lib" ON)
 if(PY_WRAPPER)
   find_package(pybind11 REQUIRED)
+  find_package(PythonLibs REQUIRED)
+  include_directories(${PYTHON_INCLUDE_DIRS})
 endif()
 
 set(MESSAGE_INFRASTRUCTURE_SRCS
@@ -160,8 +162,8 @@ target_include_directories(message_infrastructure PUBLIC
 
 target_link_libraries(message_infrastructure
                       rt
-                      pybind11::module
-                      python3.8)
+                      $<$<BOOL:${PY_WRAPPER}>:${PYTHON_LIBRARIES}>
+                      )
 if(GRPC_CHANNEL)
   target_link_libraries(message_infrastructure
                         ${_REFLECTION}
