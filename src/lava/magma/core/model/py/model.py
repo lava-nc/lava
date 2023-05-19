@@ -128,7 +128,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
-            _, src, values = find(var, explicit_zeros=True)
+            _, _, values = find(var, explicit_zeros=True)
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
             for value in values:
