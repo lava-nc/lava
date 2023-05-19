@@ -5,6 +5,7 @@ on:
     workflows: ["Run CI"]
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
   codacy-coverage-reporter:
