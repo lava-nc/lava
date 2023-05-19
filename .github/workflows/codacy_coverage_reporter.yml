@@ -6,7 +6,12 @@ jobs:
   codacy-coverage-reporter:
     runs-on: ubuntu-latest
     name: codacy-coverage-reporter
+    needs: unit-tests
     steps:
+      - uses: actions/download-artifact@master
+        with:
+          name: coverage
+
       - uses: actions/checkout@v3
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@v1
