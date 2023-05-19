@@ -135,7 +135,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         num_steps = 100
         input_ = np.zeros(num_steps)
-        input[0] = 1  # spike at first timestep
+        input_[0] = 1  # spike at first timestep
         _, real, _, _ = self.run_test(period, alpha, input_, vth=vth)
 
         ideal_real = np.round((1 - alpha)**np.arange(num_steps), 6)
@@ -198,7 +198,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         num_steps = 100
         input_ = np.zeros(num_steps)
-        input[0] = 2  # spike at first timestep
+        input_[0] = 2  # spike at first timestep
 
         _, _, _, s_out = self.run_test(period, alpha, input_, vth=vth,
                                        state_exp=state_exp,
@@ -249,7 +249,7 @@ class TestrfProcessModels(unittest.TestCase):
 
         num_steps = 100
         input_ = np.zeros(num_steps)
-        input[0] = 1  # spike at first timestep
+        input_[0] = 1  # spike at first timestep
         decay_bits = 12
         state_exp = 6
 

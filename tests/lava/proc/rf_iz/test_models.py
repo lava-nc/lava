@@ -85,7 +85,7 @@ class Testrf_izProcessModels(unittest.TestCase):
         state_exp = 6
         num_steps = 100
         input_ = np.zeros(num_steps)
-        input[[0, 10, 20]] = 1  # Will ensure 3 spikes
+        input_[[0, 10, 20]] = 1  # Will ensure 3 spikes
         _, real, imag, s_out = self.run_test(period, alpha, input_,
                                              tag="fixed_pt",
                                              state_exp=state_exp,
