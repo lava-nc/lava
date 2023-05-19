@@ -8,7 +8,7 @@ jobs:
     name: codacy-coverage-reporter
     needs: unit-tests
     steps:
-      - uses: actions/download-artifact@master
+      - uses: actions/download-artifact@v3
         with:
           name: coverage
 
