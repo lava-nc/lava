@@ -21,6 +21,7 @@ import warnings
 import datetime
 from threading import Condition
 
+
 class Selector:
     def __init__(self):
         self.all_time = datetime.timedelta(seconds=0)
