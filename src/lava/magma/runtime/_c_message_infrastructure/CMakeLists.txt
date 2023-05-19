@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(message_passing)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -8,6 +8,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build: Debug, Release" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
+
+execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print('{}.{}'.format(sys.version_info.major, sys.version_info.minor))"
+    OUTPUT_VARIABLE PYTHON_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(PYTHON_INCLUDE_DIRS "/usr/include/python${PYTHON_VERSION}")
 
 option(GRPC_CHANNEL "Use grpc_channel" OFF)
 option(DDS_CHANNEL "Message library supports DDS Channel" OFF)
