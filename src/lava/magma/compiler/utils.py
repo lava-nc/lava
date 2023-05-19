@@ -140,7 +140,6 @@ class LoihiCInPortInitializer(LoihiIOPortInitializer):
 @dataclass
 class LoihiOutPortInitializer(LoihiIOPortInitializer):
     """Port Initializer for a OutPort for C/NC Models"""
-    pass
 
 
 @dataclass

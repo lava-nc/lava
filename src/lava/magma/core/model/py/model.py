@@ -256,7 +256,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """This method is called if a Var is updated. It
         can be used as callback function to calculate dependent
         changes."""
-        pass
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):

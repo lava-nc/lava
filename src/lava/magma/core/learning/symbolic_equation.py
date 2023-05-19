@@ -231,8 +231,6 @@ class Multiplication(Operator):
 class FactorSym(Symbol):
     """Abstract super class for factor Symbols."""
 
-    pass
-
 
 class Dependency(FactorSym):
     """Abstract super class for dependency Symbols."""

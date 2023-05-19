@@ -307,7 +307,7 @@ class PyLearningConnection(AbstractLearningConnection):
         pass
 
     @abstractmethod
-    def _init_randoms(self):
+    def _init_randoms(self) -> None:
         pass
 
     @property

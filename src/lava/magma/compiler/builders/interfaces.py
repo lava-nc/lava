@@ -23,7 +23,6 @@ class ResourceAddress(ABC):
 class Resource(ABC):
     def write(self, hw: ty.Any):
         """Given hw, write this compiled resource"""
-        pass
 
 
 class CompiledResource(Resource):

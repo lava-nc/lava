@@ -26,7 +26,6 @@ class AbstractSubCompiler(ABC):
         self, channel_map: ChannelMap
     ) -> ty.Tuple[ty.Dict[AbstractProcess, AbstractProcessBuilder], ChannelMap]:
         """After compilation, creates and returns builders for all Processes."""
-        pass
 
 
 class SubCompiler(AbstractSubCompiler):
