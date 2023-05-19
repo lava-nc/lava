@@ -68,4 +68,5 @@ jobs:
         poetry run git lfs fetch
         poetry run git lfs pull
         # poetry run pytest
-        poetry run python -m unittest discover -s tests/ -t . -vv
+        poetry run coverage run -m unittest discover -s tests/ -t . -vv
+        poetry run coverage xml
