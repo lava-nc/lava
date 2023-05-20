@@ -72,12 +72,11 @@ jobs:
 
     - name: Generate coverage report
       if: runner.os == 'Linux'
-      run: poetry run coverage xml
+      run: poetry run coverage xml -o coverage.xml
 
-    - name: Archive coverage report
+    - name: Send coverage report to Codacy
       if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v3
+      uses: codacy/codacy-coverage-reporter-action@v1
       with:
-        name: coverage
-        path: coverage.xml
-        retention-days: 30
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: coverage.xml
