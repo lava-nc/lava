@@ -10,18 +10,27 @@ import typing as ty
 from lava.utils import loihi, slurm
 
 
-def patch_use_slurm_host(environ: ty.Dict[str, ty.Any]):
+def patch_use_slurm_host(environ: ty.Dict[str, ty.Any]) -> ty.Callable:
+    """Decorator to enable reuse of a set of patches.
 
-    def decorator(func):
+    Parameters
+    ----------
+    environ : dict
+        Dictionary that replaces all environment variables (os.environ) for
+        the duration of the test.
+    """
+
+    def decorator(test_function: ty.Callable) -> ty.Callable:
         @patch.dict(os.environ, environ, clear=True)
         @patch("lava.utils.slurm.get_board_info")
         @patch("lava.utils.slurm.get_partition_info")
         @patch("lava.utils.loihi.is_installed")
         @patch("lava.utils.slurm.is_available")
-        def wrapper(*args):
-            func(*args)
+        def wrapper(*args) -> None:
+            test_function(*args)
 
         return wrapper
+
     return decorator
 
 
