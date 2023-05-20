@@ -245,6 +245,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         weights.
         """
         # Can only start at 1, as delays==0 raises inefficiency warning
+        if np.max(delays) == 0:
+            return weights
+
         weight_delay_from_1 = vstack([weights.multiply(delays == k)
                                       for k in range(1, np.max(delays) + 1)])
         # Create weight matrix at delays == 0

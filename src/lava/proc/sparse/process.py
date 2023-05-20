@@ -245,17 +245,18 @@ class DelaySparse(Sparse):
             spikes as binary spikes (num_message_bits = 0) or as graded
             spikes (num_message_bits > 0). Default is 0.
         """
+        if max_delay == 0:
+            max_delay = int(np.max(delays))
 
         super().__init__(weights=weights,
                          num_message_bits=num_message_bits,
                          name=name,
                          log_config=log_config,
+                         max_delay=max_delay,
                          **kwargs)
 
         self._validate_delays(weights, delays)
         shape = weights.shape
-        if max_delay == 0:
-            max_delay = int(np.max(delays))
 
         # Variables
         self.delays = Var(shape=shape, init=delays)
