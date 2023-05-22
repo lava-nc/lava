@@ -67,16 +67,4 @@ jobs:
       run: |
         poetry run git lfs fetch
         poetry run git lfs pull
-        # poetry run pytest
-        poetry run coverage run -m unittest discover -s tests/ -t . -vv
-
-    - name: Generate coverage report
-      if: runner.os == 'Linux'
-      run: poetry run coverage xml -o coverage.xml
-
-    - name: Send coverage report to Codacy
-      if: runner.os == 'Linux'
-      uses: codacy/codacy-coverage-reporter-action@v1
-      with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: coverage.xml
+        poetry run python -m unittest discover -s tests/ -t . -vv
