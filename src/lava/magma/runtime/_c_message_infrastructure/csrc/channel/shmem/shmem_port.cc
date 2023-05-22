@@ -93,6 +93,7 @@ ShmemRecvPort::~ShmemRecvPort() {
 }
 
 void ShmemRecvPort::Start() {
+  PyEval_InitThreads();
   recv_queue_thread_ = std::thread(
     &message_infrastructure::ShmemRecvPort::QueueRecv, this);
 }
