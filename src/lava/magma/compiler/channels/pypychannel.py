@@ -8,6 +8,9 @@ from multiprocessing import Semaphore
 from queue import Queue, Empty
 from threading import BoundedSemaphore, Condition, Thread
 from time import time
+from scipy.sparse import csr_matrix
+from lava.utils.sparse import find
+
 
 import numpy as np
 from lava.magma.compiler.channels.interfaces import (
@@ -125,6 +128,10 @@ class CspSendPort(AbstractCspSendPort):
         """
         if data.shape != self._shape:
             raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
+
+        if isinstance(data, csr_matrix):
+            data = find(data, explicit_zeros=True)[2]
+
         self._semaphore.acquire()
         self._array[self._idx][:] = data[:]
         self._idx = (self._idx + 1) % self._size
@@ -280,7 +287,6 @@ class CspRecvPort(AbstractCspRecvPort):
         result = self._array[self._idx].copy()
         self._idx = (self._idx + 1) % self._size
         self._ack.release()
-
         return result
 
     def join(self):

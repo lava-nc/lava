@@ -3,25 +3,27 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+from scipy.sparse import spmatrix, csr_matrix
 import typing as ty
 
-from lava.magma.core.learning.constants import GradedSpikeCfg
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
-from lava.magma.core.process.connection import LearningConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.connection import LearningConnectionProcess
+from lava.magma.core.learning.constants import GradedSpikeCfg
+from lava.magma.core.learning.learning_rule import LoihiLearningRule
 
 
-class Dense(AbstractProcess):
-    """Dense connections between neurons. Realizes the following abstract
-    behavior: a_out = weights * s_in
+class Sparse(AbstractProcess):
+    """Sparse connections between neurons. Realizes the following abstract
+    behavior: a_out = weights * s_in. The weights are stored as
+    scipy.sparse.csr_matrix.
 
     Parameters
     ----------
-    weights : numpy.ndarray
-        2D connection weight matrix of form (num_flat_output_neurons,
-        num_flat_input_neurons) in C-order (row major).
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
+        (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
         Shared weight exponent of base 2 used to scale magnitude of
@@ -49,26 +51,28 @@ class Dense(AbstractProcess):
         weights = weights * (2 ** w_scale)
 
     num_message_bits : int, optional
-        Determines whether the Dense Process deals with the incoming
+        Determines whether the Sparse Process deals with the incoming
         spikes as binary spikes (num_message_bits = 0) or as graded
         spikes (num_message_bits > 0). Default is 0.
         """
     def __init__(self,
                  *,
-                 weights: np.ndarray,
+                 weights: spmatrix,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
 
-        super().__init__(weights=weights,
-                         num_message_bits=num_message_bits,
+        super().__init__(num_message_bits=num_message_bits,
                          name=name,
                          log_config=log_config,
                          **kwargs)
 
-        self._validate_weights(weights)
+        # Transform weights to csr matrix
+        weights = weights.tocsr()
+
         shape = weights.shape
+
         # Ports
         self.s_in = InPort(shape=(shape[1],))
         self.a_out = OutPort(shape=(shape[0],))
@@ -78,22 +82,17 @@ class Dense(AbstractProcess):
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
-    @staticmethod
-    def _validate_weights(weights: np.ndarray) -> None:
-        if len(np.shape(weights)) != 2:
-            raise ValueError("Dense Process 'weights' expects a 2D matrix, "
-                             f"got {weights}.")
 
-
-class LearningDense(LearningConnectionProcess, Dense):
-    """Dense connections between neurons. Realizes the following abstract
-    behavior: a_out = weights * s_in '
+class LearningSparse(LearningConnectionProcess, Sparse):
+    """Sparse connections between neurons. Realizes the following abstract
+    behavior: a_out = weights * s_in. The weights are stored as
+    scipy.sparse.csr_matrix.
 
     Parameters
     ----------
-    weights : numpy.ndarray
-        2D connection weight matrix of form (num_flat_output_neurons,
-        num_flat_input_neurons) in C-order (row major).
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
+        (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
         Shared weight exponent of base 2 used to scale magnitude of
@@ -121,7 +120,7 @@ class LearningDense(LearningConnectionProcess, Dense):
         weights = weights * (2 ** w_scale)
 
     num_message_bits : int, optional
-        Determines whether the LearningDense Process deals with the incoming
+        Determines whether the Sparse Process deals with the incoming
         spikes as binary spikes (num_message_bits = 0) or as graded
         spikes (num_message_bits > 0). Default is 0.
 
@@ -129,7 +128,8 @@ class LearningDense(LearningConnectionProcess, Dense):
         Learning rule which determines the parameters for online learning.
 
     graded_spike_cfg: GradedSpikeCfg
-        Indicates how to use incoming graded spike to update pre-synaptic traces
+        Indicates how to use incoming graded spike to update pre-synaptic
+        traces.
 
         (0) GradedSpikeCfg.USE_REGULAR_IMPULSE interprets the spike as a
         binary spike, adds regular impulses to pre-synaptic traces, at the end
@@ -147,11 +147,10 @@ class LearningDense(LearningConnectionProcess, Dense):
         In addition, only pre-synaptic graded spikes that trigger overflow in
         x1 and regular impulse addition to x2 will be considered by the
         learning rule Products conditioned on x0.
-    """
-
+        """
     def __init__(self,
                  *,
-                 weights: np.ndarray,
+                 weights: spmatrix,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -165,34 +164,48 @@ class LearningDense(LearningConnectionProcess, Dense):
 
         super().__init__(weights=weights,
                          shape=weights.shape,
-                         name=name,
                          num_message_bits=num_message_bits,
+                         name=name,
                          log_config=log_config,
                          learning_rule=learning_rule,
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
+        # Transform weights to csr matrix
+        weights = weights.tocsr()
 
-class DelayDense(Dense):
+        shape = weights.shape
+
+        # Ports
+        self.s_in = InPort(shape=(shape[1],))
+        self.a_out = OutPort(shape=(shape[0],))
+
+        # Variables
+        self.weights = Var(shape=shape, init=weights)
+        self.a_buff = Var(shape=(shape[0],), init=0)
+        self.num_message_bits = Var(shape=(1,), init=num_message_bits)
+
+
+class DelaySparse(Sparse):
     def __init__(self,
                  *,
-                 weights: np.ndarray,
-                 delays: ty.Union[np.ndarray, int],
+                 weights: spmatrix,
+                 delays: ty.Union[spmatrix, int],
                  max_delay: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
-        """Dense, delayed connections between neurons. Realizes the following
+        """Sparse, delayed connections between neurons. Realizes the following
         abstract behavior: a_out = weights * s_in
 
         Parameters
         ----------
-        weights : numpy.ndarray
+        weights : spmatrix
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
 
-        delays : numpy.ndarray, int
+        delays : spmatrix, int
             2D connection delay matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major) or integer value if
             the same delay should be used for all synapses.
@@ -228,7 +241,7 @@ class DelayDense(Dense):
             weights = weights * (2 ** w_scale)
 
         num_message_bits : int, optional
-            Determines whether the Dense Process deals with the incoming
+            Determines whether the Sparse Process deals with the incoming
             spikes as binary spikes (num_message_bits = 0) or as graded
             spikes (num_message_bits > 0). Default is 0.
         """
@@ -250,15 +263,15 @@ class DelayDense(Dense):
         self.a_buff = Var(shape=(shape[0], max_delay + 1) , init=0)
 
     @staticmethod
-    def _validate_delays(weights: np.ndarray, delays: np.ndarray) -> None:
+    def _validate_delays(weights: spmatrix, delays: spmatrix) -> None:
         if np.min(delays) < 0:
-            raise ValueError("DelayDense Process 'delays' expects only "
+            raise ValueError("DelaySparse Process 'delays' expects only "
                              f"positive values, got {delays}.")
         if not isinstance(delays, int):
-            if np.shape(weights) != np.shape(delays):
-                raise ValueError("DelayDense Process 'delays' expects same "
-                                 f"shape than the weight matrix or int, got "
+            if weights.shape != delays.shape:
+                raise ValueError("DelaySparse Process 'delays' expects same "
+                                 f"shape as the weight matrix or int, got "
                                  f"{delays}.")
             if delays.dtype != int:
-                raise ValueError("DelayDense Process 'delays' expects integer "
+                raise ValueError("DelaySparse Process 'delays' expects integer "
                                  f"value(s), got {delays}.")
