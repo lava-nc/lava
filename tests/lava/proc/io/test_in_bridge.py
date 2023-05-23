@@ -3,7 +3,7 @@ import unittest
 import multiprocessing as mp
 import threading
 import time
-
+from time import sleep
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
@@ -38,9 +38,9 @@ class PyLoihiFloatingPointRecvProcessModel(PyLoihiProcessModel):
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     def run_spk(self) -> None:
-        print(f"Recv run_spk {self.time_step} before recv...")
+       # print(f"Recv run_spk {self.time_step} before recv...")
         recv = self.in_port.recv()
-        print(f"Recv run_spk {self.time_step} after recv!")
+      #  print(f"Recv run_spk {self.time_step} after recv!")
         self.var = recv
 
 
@@ -61,8 +61,10 @@ class TestAsyncInputBridge(unittest.TestCase):
         run_cfg = Loihi2SimCfg()
 
         def thread_2_fn():
-            for i in range(num_send):
-                input_bridge.send_data(np.random.randint(100, size=data_shape))
+            for i in range(100000):
+                input_bridge.send_data(np.ones(data_shape))
+                if i % 100 == 0:
+                    sleep(0.01)
 
         thread = threading.Thread(target=thread_2_fn, daemon=True)
         thread.start()
