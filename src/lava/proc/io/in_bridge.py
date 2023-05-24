@@ -30,15 +30,14 @@ class AsyncInputBridge(AbstractProcess):
                                    dtype=dtype,
                                    size=size)
         self.channel.src_port.start()
-        self.channel.dst_port.start()
+        # self.channel.dst_port.start()
 
-        super().__init__(shape=shape, channel=self.channel)
+        super().__init__(shape=shape, dst_port=self.channel.dst_port)
 
         self.out_port = OutPort(shape=shape)
 
     def send_data(self, data):
         self.channel.src_port.send(data)
-
 
 @implements(proc=AsyncInputBridge, protocol=LoihiProtocol)
 @requires(CPU)
@@ -47,17 +46,18 @@ class AsyncProcessDenseModel(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super().__init__(proc_params=proc_params)
-        self.channel = self.proc_params["channel"]
+        self.dst_port = self.proc_params["dst_port"]
+        self.dst_port.start()
         self.shape = self.proc_params["shape"]
 
     def run_spk(self) -> None:
         data = np.zeros(self.shape)
         # Get number of elements in queue right now
         # Changes as sensor sends more data
-        elements_in_q = self.channel.dst_port._queue._qsize()
+        elements_in_q = self.dst_port._queue._qsize()
         print(elements_in_q)
         for _ in range(elements_in_q):
-            data += self.channel.dst_port.recv()
+            data += self.dst_port.recv()
         print("sending: ")
         print(data)
         self.out_port.send(data)

@@ -235,6 +235,7 @@ class TestAsyncInputBridge(unittest.TestCase):
         input_bridge.run(condition=run_condition, run_cfg=run_cfg)
 
         for i in range(num_send):
+
             input_bridge.send_data(np.random.randint(100, size=data_shape))
 
         print("Stopping...")
