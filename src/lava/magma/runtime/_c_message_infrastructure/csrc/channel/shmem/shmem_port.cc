@@ -111,7 +111,7 @@ void ShmemRecvPort::QueueRecv() {
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
         if (observer && !not_empty) {
-          if(!Py_IsInitialized()) {
+          if (!Py_IsInitialized()) {
             Py_Initialize();
           }
           PyGILState_STATE gstate;
@@ -119,7 +119,7 @@ void ShmemRecvPort::QueueRecv() {
           if (observer)
             observer();
           PyGILState_Release(gstate);
-          if(!Py_IsInitialized()) {
+          if (!Py_IsInitialized()) {
             Py_Finalize();
         }
         }
