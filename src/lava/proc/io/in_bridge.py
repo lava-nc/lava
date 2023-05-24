@@ -2,6 +2,7 @@ import numpy as np
 import time
 import multiprocessing as mp
 
+from lava.magma.compiler.channels.pypychannel import PyPyChannel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
 
@@ -15,15 +16,28 @@ from lava.magma.core.model.py.ports import PyOutPort
 
 # AsyncInput assumes that the sensor is not synced
 # it still runs in Loihiprotocol (synced with other processes)
+from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
+
+
 class AsyncInputBridge(AbstractProcess):
-    def __init__(self, shape):
-        self.q = mp.Queue()
-        super().__init__(shape=shape, q=self.q)
+    def __init__(self, shape, dtype, size):
+        mp = MultiProcessing()
+        mp.start()
+        self.channel = PyPyChannel(message_infrastructure=mp,
+                                   src_name="source",
+                                   dst_name="destination",
+                                   shape=shape,
+                                   dtype=dtype,
+                                   size=size)
+        self.channel.src_port.start()
+        self.channel.dst_port.start()
+
+        super().__init__(shape=shape, channel=self.channel)
 
         self.out_port = OutPort(shape=shape)
 
     def send_data(self, data):
-        self.q.put(data)
+        self.channel.src_port.send(data)
 
 
 @implements(proc=AsyncInputBridge, protocol=LoihiProtocol)
@@ -33,17 +47,17 @@ class AsyncProcessDenseModel(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super().__init__(proc_params=proc_params)
-        self.q = self.proc_params["q"]
+        self.channel = self.proc_params["channel"]
         self.shape = self.proc_params["shape"]
 
     def run_spk(self) -> None:
         data = np.zeros(self.shape)
         # Get number of elements in queue right now
         # Changes as sensor sends more data
-        elements_in_q = self.q.qsize()
+        elements_in_q = self.channel.dst_port._queue._qsize()
         print(elements_in_q)
         for _ in range(elements_in_q):
-            data += self.q.get()
+            data += self.channel.dst_port.recv()
         print("sending: ")
         print(data)
         self.out_port.send(data)

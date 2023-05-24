@@ -46,13 +46,10 @@ class PyLoihiFloatingPointRecvProcessModel(PyLoihiProcessModel):
 
 class TestAsyncInputBridge(unittest.TestCase):
     def test_run_steps_blocking(self):
-        np.random.seed(0)
-
         num_steps = 300
-        num_send = num_steps
         data_shape = (1,)
 
-        input_bridge = AsyncInputBridge(shape=data_shape)
+        input_bridge = AsyncInputBridge(shape=data_shape, size=100, dtype=float)
         recv = Recv(shape=data_shape)
 
         input_bridge.out_port.connect(recv.in_port)
