@@ -14,7 +14,7 @@ from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.run_configs import Loihi1SimCfg, Loihi2SimCfg, RunConfig
+from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LIFRefractory
@@ -835,7 +835,7 @@ class TestLIFRefractory(unittest.TestCase):
         """Test float model"""
         num_neurons = 2
         num_steps = 8
-        refractory_period = 2
+        refractory_period = 1
 
         # two neurons with different biases
         lif_refractory = LIFRefractory(shape=(num_neurons,),
