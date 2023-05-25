@@ -1,0 +1,24 @@
+name: Codacy Coverage Reporter
+
+on:
+  workflow_run:
+    workflows: ["Run CI"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  codacy-coverage-reporter:
+    runs-on: ubuntu-latest
+    name: codacy-coverage-reporter
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: coverage
+
+      - uses: actions/checkout@v3
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage.xml
