@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <cassert>
+#include <Python.h>
 
 namespace message_infrastructure {
 
@@ -37,11 +38,13 @@ class RecvQueue{
     }
   }
   T Pop(bool block) {
+    PyThreadState* threadState = PyEval_SaveThread();
     while (block && Empty()) {
       helper::Sleep();
       if (done_)
         return nullptr;
     }
+    PyEval_RestoreThread(threadState);
     auto const curr_read_index = read_index_.load(std::memory_order_relaxed);
     assert(curr_read_index != write_index_.load(std::memory_order_acquire));
     T data_ = array_[curr_read_index];

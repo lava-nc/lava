@@ -93,6 +93,9 @@ ShmemRecvPort::~ShmemRecvPort() {
 }
 
 void ShmemRecvPort::Start() {
+  if (!Py_IsInitialized()) {
+    Py_Initialize();
+  }
   PyEval_InitThreads();
   recv_queue_thread_ = std::thread(
     &message_infrastructure::ShmemRecvPort::QueueRecv, this);
@@ -111,17 +114,10 @@ void ShmemRecvPort::QueueRecv() {
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
         if (observer && !not_empty) {
-          if (!Py_IsInitialized()) {
-            Py_Initialize();
-          }
-          PyGILState_STATE gstate;
-          gstate = PyGILState_Ensure();
+          PyGILState_STATE gstate = PyGILState_Ensure();
           if (observer)
             observer();
           PyGILState_Release(gstate);
-          if (!Py_IsInitialized()) {
-            Py_Finalize();
-        }
         }
       });
     }
