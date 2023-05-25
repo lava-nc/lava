@@ -26,21 +26,39 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProce
 class Injector(AbstractProcess):
     def __init__(self, shape, dtype, size):
         super().__init__(shape=shape)
+        self._validate_shape(shape)
         mp = MultiProcessing()
         mp.start()
-        self.channel = PyPyChannel(message_infrastructure=mp,
+        self._channel = PyPyChannel(message_infrastructure=mp,
                                    src_name="source",
                                    dst_name="destination",
                                    shape=shape,
                                    dtype=dtype,
                                    size=size)
-        self.proc_params["dst_port"] = self.channel.dst_port
-        self.src_port = self.channel.src_port
-        self.src_port.start()
+        self.proc_params["dst_port"] = self._channel.dst_port
+        self._src_port = self._channel.src_port
+        self._src_port.start()
         self.out_port = OutPort(shape=shape)
 
     def send_data(self, data):
-        self.src_port.send(data)
+        # First ensure runtime is running
+        if not self.runtime._is_running:
+            raise Exception("Data can only be sent once the runtime has started.")
+        self._src_port.send(data)
+
+    def _validate_shape(self, shape):
+        # If <shape> is not yet a tuple, raise a TypeError
+        if not isinstance(shape, tuple):
+            raise TypeError("<shape> must be of type int or tuple(int)")
+
+        # Check whether all elements in the tuple are of type int
+        # and positive
+        for s in shape:
+            if not isinstance(s, (int, np.integer)):
+                raise TypeError("all elements of <shape> must be of type int")
+            if s < 0:
+                raise ValueError("all elements of <shape> must be greater "
+                         "than zero")
 
 
 class AsyncInjector(Injector):

@@ -3,6 +3,8 @@ import unittest
 import threading
 import time
 from time import sleep
+
+from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, CspSendPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
@@ -64,17 +66,39 @@ class PyLoihiFixedPointRecvProcessModel(PyLoihiProcessModel):
 
 class TestSyncInjector(unittest.TestCase):
     def test_init(self):
-        pass
+        out_shape = (1,)
+        dtype = float
+        sync_injector = SyncInjector(shape=out_shape, dtype=dtype)
+        self.assertIsInstance(sync_injector, SyncInjector)
+        self.assertIsInstance(sync_injector._channel, PyPyChannel)
+        self.assertIsInstance(sync_injector.proc_params["dst_port"], CspRecvPort)
+        self.assertIsInstance(sync_injector._src_port, CspSendPort)
+        self.assertEqual(sync_injector.out_port.shape, out_shape)
 
     def test_invalid_shape(self):
-        pass
+        out_shape = (1.5,)
+        with self.assertRaises(TypeError):
+            SyncInjector(shape=out_shape, dtype=float)
 
-    def test_invalid_dtype(self):
-        pass
+        out_shape = (-1,)
+        with self.assertRaises(ValueError):
+            SyncInjector(shape=out_shape, dtype=float)
+
+        out_shape = 4
+        with self.assertRaises(TypeError):
+            SyncInjector(shape=out_shape, dtype=float)
+
+    # Add Input Handling in Process
+    #def test_invalid_dtype(self):
+    #    dtype = "floati"
+    #    SyncInjector(shape=(1,), dtype=dtype)
 
     def test_send_data_throws_error_if_runtime_not_running(self):
-        pass
-
+        shape = (1,)
+        data = np.ones(shape)
+        SyncInjector(shape=shape, dtype=float)
+        with self.assertRaises(Exception):
+            SyncInjector.send_data(data)
 
 class TestAsyncInjector(unittest.TestCase):
     def test_init(self):
