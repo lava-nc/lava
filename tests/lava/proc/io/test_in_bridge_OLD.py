@@ -1,11 +1,10 @@
 import numpy as np
 import unittest
-import multiprocessing as mp
 import threading
 import time
 from time import sleep
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
