@@ -5,18 +5,18 @@ While this release offers few high-level application examples, Lava v0.4.0 provi
 ## New Features and Improvements
 Features marked with * are available as part of the Loihi 2 extension.
 -   *Extended Process library including new ProcessModels and additional improvements:
-  -   LIF, Sigma-Delta, and Dense Processes execute on Loihi NeuroCores.
-  -   Prototype Convolutional Process added.
-  -   Sending and receiving spikes to NeuroCores via embedded processes that can be programmed in C with examples included. 
-  -   All Lava Processes now list all constructor arguments explicitly with type annotations. 
+    -   LIF, Sigma-Delta, and Dense Processes execute on Loihi NeuroCores.
+    -   Prototype Convolutional Process added.
+    -   Sending and receiving spikes to NeuroCores via embedded processes that can be programmed in C with examples included. 
+    -   All Lava Processes now list all constructor arguments explicitly with type annotations. 
 -   *Added high-level API to develop custom ProcessModels that use Loihi 2 features:
-  -   Loihi NeuroCores can be programmed in Python by allocating neural network resources like Axons, Synapses or Neurons. In particular, Loihi 2 NeuroCore Neurons can be configured by writing highly flexible assembly programs.
-  -   Loihi embedded processors can be programmed in C. But unlike the prior NxSDK, no knowledge of low-level registers details is required anymore. Instead, the C API mirrors the high-level Python API to interact with other processes via channels.
+    -   Loihi NeuroCores can be programmed in Python by allocating neural network resources like Axons, Synapses or Neurons. In particular, Loihi 2 NeuroCore Neurons can be configured by writing highly flexible assembly programs.
+    -   Loihi embedded processors can be programmed in C. But unlike the prior NxSDK, no knowledge of low-level registers details is required anymore. Instead, the C API mirrors the high-level Python API to interact with other processes via channels.
 -   Compiler and Runtime support for Loihi 2:
-  -   General redesign of Compiler and Runtime architecture to support compilation of Processes that execute across a heterogenous backend of different compute resources. CPU and Loihi are supported via separate sub compilers.
-  -   *The Loihi NeuroCore sub compiler automatically distributes neural network resources across multiple cores.
-  -   *The Runtime supports direct channel-based communication between Processes running on Loihi NeuroCores, embedded CPUs or host CPUs written in Python or C. Of all combinations, only Python<->C and C<->NeuroCore are currently supported.
-  -   *Added support to access Process Variables on Loihi NeuroCores at runtime via Var.set and Var.get().
+    -   General redesign of Compiler and Runtime architecture to support compilation of Processes that execute across a heterogenous backend of different compute resources. CPU and Loihi are supported via separate sub compilers.
+    -   *The Loihi NeuroCore sub compiler automatically distributes neural network resources across multiple cores.
+    -   *The Runtime supports direct channel-based communication between Processes running on Loihi NeuroCores, embedded CPUs or host CPUs written in Python or C. Of all combinations, only Python<->C and C<->NeuroCore are currently supported.
+    -   *Added support to access Process Variables on Loihi NeuroCores at runtime via Var.set and Var.get().
 -   New tutorials and improved class and method docstrings explain how new Lava features can be used such as *NeuroCore and *embedded processor programming.
 -   An extended suite of unit tests and new *integration tests validate the correctness of the Lava framework.
 
