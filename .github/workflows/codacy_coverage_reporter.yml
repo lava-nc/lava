@@ -10,7 +10,7 @@ on:
 jobs:
   codacy-coverage-reporter:
      runs-on: ubuntu-latest
-     if: ${{ github.event.workflow_run.conclusion == 'success' || || github.event_name == 'workflow_dispatch' }}
+     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
      name: codacy-coverage-reporter
      steps:
        - name: Download artifact
