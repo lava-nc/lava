@@ -5,10 +5,7 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.learning.learning_rule import (
-    LoihiLearningRule,
-    Loihi2FLearningRule,
-)
+from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort

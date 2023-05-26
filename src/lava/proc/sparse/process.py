@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from scipy.sparse import spmatrix, csr_matrix
+from scipy.sparse import spmatrix
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -260,7 +260,7 @@ class DelaySparse(Sparse):
 
         # Variables
         self.delays = Var(shape=shape, init=delays)
-        self.a_buff = Var(shape=(shape[0], max_delay + 1) , init=0)
+        self.a_buff = Var(shape=(shape[0], max_delay + 1), init=0)
 
     @staticmethod
     def _validate_delays(weights: spmatrix, delays: spmatrix) -> None:
