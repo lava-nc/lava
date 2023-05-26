@@ -128,7 +128,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             for value in var_iter:
                 data_port.send(enum_to_np(value, np.float64))
         elif isinstance(var, csr_matrix):
-            dst, src, values = find(var, explicit_zeros=True)
+            _, _, values = find(var, explicit_zeros=True)
             num_items = var.data.size
             data_port.send(enum_to_np(num_items))
             for value in values:
@@ -242,7 +242,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         Add various ports to poll for communication on ports
         """
-        pass
 
     def join(self):
         """
@@ -257,7 +256,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """This method is called if a Var is updated. It
         can be used as callback function to calculate dependent
         changes."""
-        pass
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):

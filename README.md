@@ -3,6 +3,11 @@
   A Software Framework for Neuromorphic Computing
 </b></p>
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+
+
+
 # Overview
 
 Lava is an open source SW framework to develop applications for
@@ -35,22 +40,13 @@ supporting architectures like Intel Loihi may remain proprietary
 to Intel and will be shared as extensions to eligible users.
 
 >### Lava extension for Intel's Loihi
->The Lava extension for Loihi is available for members of the Intel
-Neuromorphic Research Community (INRC). The extension enables execution of
-Lava on Intel's Loihi hardware platform.
+>The Lava extension for Loihi is available for members of the Intel Neuromorphic Research Community (INRC). The extension enables execution of Lava on Intel's Loihi hardware platform.
 >
->Developers interested in using Lava with Loihi systems need to join the
-INRC. Loihi 1 and 2 research systems are currently not available
-commercially. Once a member of the INRC, developers will gain access to
-cloud-hosted Loihi systems or may be able to obtain physical Loihi systems on a
-loan basis.
+>Developers interested in using Lava with Loihi systems need to join the INRC. Loihi 1 and 2 research systems are currently not available commercially. Once a member of the INRC, developers will gain access to cloud-hosted Loihi systems or may be able to obtain physical Loihi systems on a loan basis.
 >
->To join the INRC, visit [http://neuromorphic.intel.com](http://neuromorphic.intel.com)
-or email at [inrc_interest@intel.com](mailto:inrc_interest@intel.com).
+>To join the INRC, visit [http://neuromorphic.intel.com](http://neuromorphic.intel.com) or email at [inrc_interest@intel.com](mailto:inrc_interest@intel.com).
 >
-> If you are already a member of the INRC, please read how to [get
-  started with the Lava extension for Loihi.](https://intel-ncl.atlassian.net/wiki/spaces/NAP/pages/1785856001/Get+started+with+the+Lava+extension+for+Loihi)
-> This page is **only** accessible to members of the INRC.
+> If you are already a member of the INRC, please read how to [get started with the Lava extension for Loihi](https://intel-ncl.atlassian.net/wiki/spaces/NAP/pages/1785856001/Get+started+with+the+Lava+extension+for+Loihi). This page is **only** accessible to members of the INRC.
 
 
 # Getting started
@@ -70,7 +66,7 @@ will need to install the `poetry` Python package.
 
 Open a **python 3** terminal and run based on the OS you are on:
 
-### [Linux/MacOS]
+### Linux/MacOS
 
 ```bash
 cd $HOME
@@ -87,7 +83,7 @@ pytest
 ## See FAQ for more info: https://github.com/lava-nc/lava/wiki/Frequently-Asked-Questions-(FAQ)#install
 ```
 
-### [Windows]
+### Windows
 
 ```powershell
 # Commands using PowerShell
@@ -140,7 +136,7 @@ Required test coverage of 85.0% reached. Total coverage: 88.81%
 
 ```
 
-## [Alternative] Installing Lava via Conda
+## Alternative: Installing Lava via Conda
 
 If you use the Conda package manager, you can simply install the Lava package
 via:
@@ -158,7 +154,7 @@ conda install -n lava -c intel numpy scipy
 conda install -n lava -c conda-forge lava --freeze-installed
 ```
 
-## [Alternative] Installing Lava from binaries
+## Alternative: Installing Lava from binaries
 
 If you only need to install Lava as a user in your python environment, we will
 publish Lava releases via
@@ -167,7 +163,7 @@ the package and install it.
 
 Open a Python terminal and run:
 
-### [Windows/MacOS/Linux]
+### Windows/MacOS/Linux
 
 ```bash
 python -m venv .venv
@@ -203,7 +199,7 @@ bandit -r src/lava/.
 bandit -r src/lava/. --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'
 ```
 ##
-> Refer to the tutorials directory for in-depth as well as end-to-end tutorials on how to write Lava Processes, connect them, and execute the code.
+>Refer to the tutorials directory for in-depth as well as end-to-end tutorials on how to write Lava Processes, connect them, and execute the code.
 
 # Stay in touch
 

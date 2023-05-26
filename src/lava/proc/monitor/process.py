@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import matplotlib.pyplot as plt
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort
@@ -131,23 +130,19 @@ class Monitor(AbstractProcess):
         # Create names for Ports/Vars to be created in Monitor process for
         # probing purposes. Names are given incrementally each time probe(..)
         # method is called.
-        self.new_ref_port_name = "ref_port_" + \
-                                 str(self.proc_params["n_ref_ports"])
-        self.new_var_read_name = "var_read_" + \
-                                 str(self.proc_params["n_ref_ports"])
-        self.new_in_port_name = "in_port_" + \
-                                str(self.proc_params["n_in_ports"])
-        self.new_out_read_name = "out_read_" + \
-                                 str(self.proc_params["n_in_ports"])
+        new_ref_port_name = f"ref_port_{self.proc_params['n_ref_ports']}"
+        new_var_read_name = f"var_read_{self.proc_params['n_ref_ports']}"
+        new_in_port_name = f"in_port_{self.proc_params['n_in_ports']}"
+        new_out_read_name = f"out_read_{self.proc_params['n_in_ports']}"
 
         # Create and set new Refport and corresponding Var to store data
-        setattr(self, self.new_ref_port_name, RefPort(shape=target.shape))
-        setattr(self, self.new_var_read_name,
+        setattr(self, new_ref_port_name, RefPort(shape=target.shape))
+        setattr(self, new_var_read_name,
                 Var(shape=(num_steps,) + target.shape, init=0))
 
         # Create and set new InPort and corresponding Var to store data
-        setattr(self, self.new_in_port_name, InPort(shape=target.shape))
-        setattr(self, self.new_out_read_name,
+        setattr(self, new_in_port_name, InPort(shape=target.shape))
+        setattr(self, new_out_read_name,
                 Var(shape=(num_steps,) + target.shape, init=0))
 
         # Add the names of new RefPort and Var_read name to proc_params dict
@@ -179,11 +174,11 @@ class Monitor(AbstractProcess):
             self.proc_params.overwrite("n_ref_ports", n_ref_ports + 1)
 
             # Connect newly created Refport to the var to be monitored
-            getattr(self, self.new_ref_port_name).connect_var(target)
+            getattr(self, new_ref_port_name).connect_var(target)
 
             # Add the name of probed Var and its process to the target_names
-            self.target_names[self.new_var_read_name] = [target.process.name,
-                                                         target.name]
+            self.target_names[new_var_read_name] = [target.process.name,
+                                                    target.name]
         # If target to be monitored is an OutPort
         elif isinstance(target, OutPort):
 
@@ -192,11 +187,11 @@ class Monitor(AbstractProcess):
             self.proc_params.overwrite("n_in_ports", n_in_ports + 1)
 
             # Connect newly created InPort from the OutPort to be monitored
-            getattr(self, self.new_in_port_name).connect_from(target)
+            getattr(self, new_in_port_name).connect_from(target)
 
             # Add the name of OutPort and its process to the target_names
-            self.target_names[self.new_out_read_name] = [target.process.name,
-                                                         target.name]
+            self.target_names[new_out_read_name] = [target.process.name,
+                                                    target.name]
 
         # If target is an InPort raise a Type error, as monitoring InPorts is
         # not supported yet

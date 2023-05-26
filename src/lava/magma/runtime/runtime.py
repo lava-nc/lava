@@ -7,12 +7,10 @@ from __future__ import annotations
 import logging
 import sys
 import traceback
-import typing
 import typing as ty
 
 import numpy as np
 from scipy.sparse import csr_matrix
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
@@ -115,7 +113,7 @@ class Runtime:
                  loglevel: int = logging.WARNING):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
-        self._run_cond: typing.Optional[AbstractRunCondition] = None
+        self._run_cond: ty.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
         self._messaging_infrastructure_type: ActorType = \
@@ -130,6 +128,7 @@ class Runtime:
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
         self._open_ports: ty.List[AbstractCspPort] = []
+        self.num_steps: int = 0
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to

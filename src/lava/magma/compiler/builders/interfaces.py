@@ -14,7 +14,6 @@ class AbstractBuilder(ABC):
     @abstractmethod
     def build(self):
         """Build the actual process."""
-        pass
 
 
 class ResourceAddress(ABC):
@@ -24,7 +23,6 @@ class ResourceAddress(ABC):
 class Resource(ABC):
     def write(self, hw: ty.Any):
         """Given hw, write this compiled resource"""
-        pass
 
 
 class CompiledResource(Resource):

@@ -3,13 +3,13 @@
 # See: https://spdx.org/licenses/
 
 import os
-import subprocess
+import subprocess  # noqa S404
 import importlib
 
 
 class Utils:
-    """Utility Class containing testing helper
-    code that can be reused between tests
+    """Utility Class containing testing helper code that can be reused
+    between tests.
     """
 
     @staticmethod
@@ -26,7 +26,7 @@ class Utils:
 
     @staticmethod
     def is_loihi2_available() -> bool:
-        """"Checks if Loihi2 is available and can be accessed."""
+        """Checks if Loihi 2 is available and can be accessed."""
 
         is_loihi2 = False
         is_slurm = False
@@ -37,7 +37,7 @@ class Utils:
             is_slurm = True
 
             # Check if Loihi2 is available
-            sinfo = subprocess.run("sinfo",  # noqa: S603, S607
+            sinfo = subprocess.run("sinfo",  # nosec # noqa: S603, S607
                                    stdout=subprocess.PIPE).stdout.decode(
                 'utf-8')
             for line in sinfo.split("\n"):

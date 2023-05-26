@@ -170,11 +170,11 @@ pep8-naming = ["-*"]
 # mccabe = ["+*"]
 # pep8-naming = ["+*"]
 # pyflakes = ["+*"]
-# pylint = ["+*"]
+pylint = ["+*"]
 
 pycodestyle = ["+*", "-W503", "-E203"]
-pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
-pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
+# pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
+# pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
 
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check

@@ -245,7 +245,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         rcfg = LifRunConfig(select_tag='floating_pt')
         lif_v = []
         # Run 1 timestep at a time and collect state variable u
-        for j in range(num_steps):
+        for _ in range(num_steps):
             lif.run(condition=rcnd, run_cfg=rcfg)
             lif_v.append(lif.v.get()[0])
         lif.stop()
@@ -394,7 +394,6 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         """
         Tests fixed point LIF ProcessModel's scaling of threshold.
         """
-        num_steps = 1
         bias_mant = 2 ** 12 - 1
         bias_exp = 5
         # Set up high threshold and high bias current to check for potential
