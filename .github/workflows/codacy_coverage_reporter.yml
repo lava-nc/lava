@@ -22,7 +22,6 @@ jobs:
            event: push
            name: coverage
 
-       - uses: actions/checkout@v3
        - name: Run codacy-coverage-reporter
          uses: codacy/codacy-coverage-reporter-action@v1
          with:
