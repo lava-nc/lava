@@ -22,15 +22,15 @@ A clear and concise description of what the bug is.
 
 **To reproduce current behavior**
 Steps to reproduce the behavior:
- 1. When I run this code (add code or minimum test case) ...
- ```python
- def my_code():
-     pass
- ```
- 2. I get this error ...
- ```
- Error...
- ```
+1.  When I run this code (add code or minimum test case) ...
+```python
+def my_code():
+    pass
+```
+2.  I get this error ...
+```
+Error...
+```
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -39,9 +39,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem. Remove section otherwise.
 
 **Environment (please complete the following information):**
-  - Device: [e.g. Laptop, Intel cloud]
-  - OS: [e.g. Linux]
-  - Lava version [e.g. 0.6.1]
+-   Device: [e.g. Laptop, Intel cloud]
+-   OS: [e.g. Linux]
+-   Lava version [e.g. 0.6.1]
 
 **Additional context**
 Add any other context about the problem here. Remove section otherwise.
