@@ -128,6 +128,7 @@ class Runtime:
         self.runtime_to_service: ty.Iterable[CspSendPort] = []
         self.service_to_runtime: ty.Iterable[CspRecvPort] = []
         self._open_ports: ty.List[AbstractCspPort] = []
+        self.num_steps: int = 0
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -339,15 +340,15 @@ class Runtime:
         if self._is_started:
             self._is_running = True
             if isinstance(run_condition, RunSteps):
-                num_steps = run_condition.num_steps
+                self.num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
-                    send_port.send(enum_to_np(num_steps))
+                    send_port.send(enum_to_np(self.num_steps))
                 if run_condition.blocking:
                     self._get_resp_for_run()
             elif isinstance(run_condition, RunContinuous):
-                num_steps = sys.maxsize
+                self.num_steps = sys.maxsize
                 for send_port in self.runtime_to_service:
-                    send_port.send(enum_to_np(num_steps))
+                    send_port.send(enum_to_np(self.num_steps))
             else:
                 raise ValueError(f"Wrong type of run_condition : "
                                  f"{run_condition.__class__}")
