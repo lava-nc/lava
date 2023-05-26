@@ -17,19 +17,19 @@ Objective of issue:
 
 **Lava version:**
 <!-- remove versions not chosen below -->
-- [ ] **0.6.0** (feature release)
-- [ ] **0.5.1** (bug fixes)
-- [x] **0.5.0** (current version)
-- [ ] **0.4.1**
-- [ ] **0.4.0**
-- [ ] **0.3.0**
-- [ ] **0.1.2**
+  - [ ] **0.6.0** (feature release)
+  - [ ] **0.5.1** (bug fixes)
+  - [x] **0.5.0** (current version)
+  - [ ] **0.4.1**
+  - [ ] **0.4.0**
+  - [ ] **0.3.0**
+  - [ ] **0.1.2**
 
 **I'm submitting a ...** 
 <!--  (Mark one with "x") remove not chosen below -->
-- [ ] bug report
-- [ ] feature request
-- [ ] documentation request
+  - [ ] bug report
+  - [ ] feature request
+  - [ ] documentation request
 
 <!-- Please do not submit support requests or "How to" questions here, use discussions Q&A https://github.com/lava-nc/lava/discussions/categories/q-a -->
 
