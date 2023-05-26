@@ -3,6 +3,11 @@
   A Software Framework for Neuromorphic Computing
 </b></p>
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+
+
+
 # Overview
 
 Lava is an open source SW framework to develop applications for
