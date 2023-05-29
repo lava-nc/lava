@@ -87,16 +87,16 @@ class RecvPortProxy : public PortProxy {
 
 class Selector {
  private:
-  std::condition_variable cv;
-  mutable std::mutex cv_mutex;
+  std::condition_variable cv_;
+  mutable std::mutex cv_mutex_;
 
  public:
-  void _changed() {
-      std::unique_lock<std::mutex> lock(cv_mutex);
-      cv.notify_all();
+  void Changed() {
+      std::unique_lock<std::mutex> lock(cv_mutex_);
+      cv_.notify_all();
   }
 
-  void _set_observer(const std::vector<std::pair<RecvPortProxy,
+  void Set_observer(const std::vector<std::pair<RecvPortProxy,
                         std::function<void()>>> &channel_actions,
                      const std::function<void()> &observer) {
       for (auto channel_action : channel_actions) {
@@ -106,17 +106,17 @@ class Selector {
 
   auto select(const std::vector<std::pair<RecvPortProxy,
                                 std::function<void()>>> &args) {
-    std::function<void()> observer = std::bind(&Selector::_changed, this);
-    std::unique_lock<std::mutex> lock(cv_mutex);
-    _set_observer(args, observer);
+    std::function<void()> observer = std::bind(&Selector::Changed, this);
+    std::unique_lock<std::mutex> lock(cv_mutex_);
+    Set_observer(args, observer);
       while (true) {
           for (auto channel_action : args) {
               if (channel_action.first.Probe()) {
-                  _set_observer(args, nullptr);
+                  Set_observer(args, nullptr);
                   return channel_action.second;
               }
           }
-          cv.wait(lock);
+          cv_.wait(lock);
       }
     }
 };
