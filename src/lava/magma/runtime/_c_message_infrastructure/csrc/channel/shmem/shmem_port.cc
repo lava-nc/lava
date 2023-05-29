@@ -99,15 +99,19 @@ void ShmemRecvPort::QueueRecv() {
   while (!done_.load()) {
     bool ret = false;
     if (this->recv_queue_->AvailableCount() > 0) {
-      ret = shm_->Load([this](void* data){
+      bool not_empty = recv_queue_->Probe();
+      ret = shm_->Load([this, &not_empty](void* data){
         MetaDataPtr metadata_res = std::make_shared<MetaData>();
         MetaDataPtrFromPointer(metadata_res, data,
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
+        if (observer && !not_empty) {
+          if (observer)
+            observer();
+        }
       });
     }
     if (!ret) {
-      // sleep
       helper::Sleep();
     }
   }

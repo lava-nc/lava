@@ -167,6 +167,14 @@ size_t RecvPortProxy::Size() {
   return recv_port_->Size();
 }
 
+void RecvPortProxy::Set_observer(std::function<void()> obs) {
+  if (obs) {
+    recv_port_->observer = obs;
+  } else {
+    recv_port_->observer = nullptr;
+  }
+}
+
 int trick() {
     // to solve the warning "converting to non-pointer type 'int'
     // from NULL [-Wconversion-null] import_array()"

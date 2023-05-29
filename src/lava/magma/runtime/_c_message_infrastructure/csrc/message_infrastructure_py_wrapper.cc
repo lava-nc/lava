@@ -215,6 +215,9 @@ PYBIND11_MODULE(MessageInfrastructurePywrapper, m) {
     .def_property_readonly("shape", &RecvPortProxy::Shape)
     .def_property_readonly("d_type", &RecvPortProxy::DType)
     .def_property_readonly("size", &RecvPortProxy::Size);
+  py::class_<Selector, std::shared_ptr<Selector>> (m, "CPPSelector")
+  .def(py::init<>())
+  .def("select", &Selector::select);
 }
 
 }  // namespace message_infrastructure
