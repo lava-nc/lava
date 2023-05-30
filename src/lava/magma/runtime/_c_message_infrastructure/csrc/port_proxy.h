@@ -97,6 +97,7 @@ class Selector {
  private:
   std::condition_variable cv_;
   mutable std::mutex cv_mutex_;
+  std::function<void()> tmp;
 
  public:
   void Changed() {
@@ -105,7 +106,7 @@ class Selector {
   }
 
   void Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
-                        std::function<void()>>> *channel_actions,
+                        py::function>> *channel_actions,
                      std::function<void()> observer) {
       for (auto it = channel_actions->begin();
            it != channel_actions->end(); ++it) {
@@ -114,19 +115,20 @@ class Selector {
   }
 
   auto Select(std::vector<std::tuple<RecvPortProxyPtr,
-                                std::function<void()>>> *args) {
+                                py::function>> *args) {
     std::function<void()> observer = std::bind(&Selector::Changed, this);
     Set_observer(args, observer);
-    std::unique_lock<std::mutex> lock(cv_mutex_);
       while (true) {
           for (auto it = args->begin(); it != args->end(); ++it) {
               if (std::get<0>(*it)->Probe()) {
                   Set_observer(args, nullptr);
-                  std::function<void()> tmp = std::get<1>(*it);
-                  return tmp();
+                  return std::get<1>(*it)();
               }
           }
+          std::unique_lock<std::mutex> lock(cv_mutex_);
+        //   LAVA_LOG_ERR("go wait11111\n");
           cv_.wait(lock);
+        //   LAVA_LOG_ERR("go wait22222\n");
       }
     }
 };

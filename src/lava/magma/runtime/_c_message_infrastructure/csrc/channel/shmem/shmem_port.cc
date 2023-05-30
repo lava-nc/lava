@@ -105,9 +105,16 @@ void ShmemRecvPort::QueueRecv() {
         MetaDataPtrFromPointer(metadata_res, data,
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
+        // LAVA_LOG_ERR("go if (observer && !not_empty\n");
+        // if (observer) LAVA_LOG_ERR("observer okok\n");
+        // else LAVA_LOG_ERR("observer nonono\n");
         if (observer && !not_empty) {
-          if (observer)
+          // LAVA_LOG_ERR("if (observer && !not_empty) OKOKOK\n");
+          if (observer) {
+            // LAVA_LOG_ERR("go observer11111\n");
             observer();
+            // LAVA_LOG_ERR("go observer22222\n");
+          }
         }
       });
     }
@@ -128,7 +135,8 @@ MetaDataPtr ShmemRecvPort::Recv() {
 void ShmemRecvPort::Join() {
   if (!done_) {
     done_ = true;
-    recv_queue_thread_.join();
+    if (recv_queue_thread_.joinable())
+      recv_queue_thread_.join();
     recv_queue_->Stop();
   }
 }
