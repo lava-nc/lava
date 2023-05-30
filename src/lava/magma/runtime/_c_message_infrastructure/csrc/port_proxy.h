@@ -116,13 +116,14 @@ class Selector {
   auto Select(std::vector<std::tuple<RecvPortProxyPtr,
                                 std::function<void()>>> *args) {
     std::function<void()> observer = std::bind(&Selector::Changed, this);
-    std::unique_lock<std::mutex> lock(cv_mutex_);
     Set_observer(args, observer);
+    std::unique_lock<std::mutex> lock(cv_mutex_);
       while (true) {
           for (auto it = args->begin(); it != args->end(); ++it) {
               if (std::get<0>(*it)->Probe()) {
                   Set_observer(args, nullptr);
-                  return std::get<0>(*it);
+                  std::function<void()> tmp = std::get<1>(*it);
+                  return tmp();
               }
           }
           cv_.wait(lock);
