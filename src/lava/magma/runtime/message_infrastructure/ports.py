@@ -19,15 +19,17 @@ import numpy as np
 import typing as ty
 import warnings
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
-    import CPPSelector as Selector
+    import CPPSelector
 
 
-# class Selector(CPPSelector):
-#     def select(
-#             self,
-#             *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
-#     ):
-#         return 
+class Selector(CPPSelector):
+    def __init__(self):
+        super().__init__()
+    def select(
+            self,
+            *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
+    ):
+        return super().select(args)
 
 
 class SendPort(AbstractTransferPort):

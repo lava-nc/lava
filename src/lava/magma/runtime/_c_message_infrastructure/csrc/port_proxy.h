@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 #include <utility>
 #include <mutex>
 #include <condition_variable>
@@ -96,25 +97,25 @@ class Selector {
       cv_.notify_all();
   }
 
-  void Set_observer(std::vector<std::pair<RecvPortProxy,
+  void Set_observer(std::vector<std::tuple<RecvPortProxy,
                         std::function<void()>>> *channel_actions,
                      std::function<void()> observer) {
       for (auto it = channel_actions->begin();
            it != channel_actions->end(); ++it) {
-          it->first.Set_observer(observer);
+          std::get<0>(*it).Set_observer(observer);
       }
   }
 
-  auto Select(std::vector<std::pair<RecvPortProxy,
+  auto Select(std::vector<std::tuple<RecvPortProxy,
                                 std::function<void()>>> *args) {
     std::function<void()> observer = std::bind(&Selector::Changed, this);
     std::unique_lock<std::mutex> lock(cv_mutex_);
     Set_observer(args, observer);
       while (true) {
           for (auto it = args->begin(); it != args->end(); ++it) {
-              if (it->first.Probe()) {
+              if (std::get<0>(*it).Probe()) {
                   Set_observer(args, nullptr);
-                  return it->second;
+                  return std::get<0>(*it);
               }
           }
           cv_.wait(lock);
