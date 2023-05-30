@@ -85,6 +85,13 @@ class RecvPortProxy : public PortProxy {
   AbstractRecvPortPtr recv_port_;
 };
 
+// Users should be allowed to copy port objects.
+// Use std::shared_ptr.
+using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
+using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
+using SendPortProxyList = std::vector<SendPortProxyPtr>;
+using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
+
 
 class Selector {
  private:
@@ -97,23 +104,23 @@ class Selector {
       cv_.notify_all();
   }
 
-  void Set_observer(std::vector<std::tuple<RecvPortProxy,
+  void Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
                         std::function<void()>>> *channel_actions,
                      std::function<void()> observer) {
       for (auto it = channel_actions->begin();
            it != channel_actions->end(); ++it) {
-          std::get<0>(*it).Set_observer(observer);
+          std::get<0>(*it)->Set_observer(observer);
       }
   }
 
-  auto Select(std::vector<std::tuple<RecvPortProxy,
+  auto Select(std::vector<std::tuple<RecvPortProxyPtr,
                                 std::function<void()>>> *args) {
     std::function<void()> observer = std::bind(&Selector::Changed, this);
     std::unique_lock<std::mutex> lock(cv_mutex_);
     Set_observer(args, observer);
       while (true) {
           for (auto it = args->begin(); it != args->end(); ++it) {
-              if (std::get<0>(*it).Probe()) {
+              if (std::get<0>(*it)->Probe()) {
                   Set_observer(args, nullptr);
                   return std::get<0>(*it);
               }
@@ -122,14 +129,6 @@ class Selector {
       }
     }
 };
-
-
-// Users should be allowed to copy port objects.
-// Use std::shared_ptr.
-using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
-using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
-using SendPortProxyList = std::vector<SendPortProxyPtr>;
-using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 
 }  // namespace message_infrastructure
 
