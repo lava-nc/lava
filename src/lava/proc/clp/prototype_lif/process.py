@@ -60,16 +60,15 @@ class PrototypeLIF(LearningLIF):
             **kwargs,
     ) -> None:
         super().__init__(
-                shape=shape,
-                u=u,
-                v=v,
-                du=du,
-                dv=dv,
-                bias_mant=bias_mant,
-                bias_exp=bias_exp,
-                vth=vth,
-                name=name,
-                log_config=log_config,
-                learning_rule=learning_rule,
-                **kwargs,
-        )
+            shape=shape,
+            u=u,
+            v=v,
+            du=du,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            vth=vth,
+            name=name,
+            log_config=log_config,
+            learning_rule=learning_rule,
+            **kwargs)
