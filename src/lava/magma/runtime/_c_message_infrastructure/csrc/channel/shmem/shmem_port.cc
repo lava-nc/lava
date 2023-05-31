@@ -93,6 +93,7 @@ ShmemRecvPort::~ShmemRecvPort() {
 void ShmemRecvPort::Start() {
   recv_queue_thread_ = std::thread(
     &message_infrastructure::ShmemRecvPort::QueueRecv, this);
+  observer = [](){};
 }
 
 void ShmemRecvPort::QueueRecv() {
@@ -110,11 +111,9 @@ void ShmemRecvPort::QueueRecv() {
         // else LAVA_LOG_ERR("observer nonono\n");
         if (observer && !not_empty) {
           // LAVA_LOG_ERR("if (observer && !not_empty) OKOKOK\n");
-          if (observer) {
-            // LAVA_LOG_ERR("go observer11111\n");
-            observer();
-            // LAVA_LOG_ERR("go observer22222\n");
-          }
+          // LAVA_LOG_ERR("go observer11111\n");
+          observer();
+          // LAVA_LOG_ERR("go observer22222\n");
         }
       });
     }

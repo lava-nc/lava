@@ -98,10 +98,12 @@ class Selector {
   std::condition_variable cv_;
   mutable std::mutex cv_mutex_;
   std::function<void()> tmp;
+  bool ready = false;
 
  public:
   void Changed() {
       std::unique_lock<std::mutex> lock(cv_mutex_);
+      ready = true;
       cv_.notify_all();
   }
 
@@ -126,9 +128,10 @@ class Selector {
               }
           }
           std::unique_lock<std::mutex> lock(cv_mutex_);
-        //   LAVA_LOG_ERR("go wait11111\n");
-          cv_.wait(lock);
-        //   LAVA_LOG_ERR("go wait22222\n");
+          // LAVA_LOG_ERR("go wait11111\n");
+          cv_.wait(lock, [this]{return ready;});
+          ready = false;
+          // LAVA_LOG_ERR("go wait22222\n");
       }
     }
 };

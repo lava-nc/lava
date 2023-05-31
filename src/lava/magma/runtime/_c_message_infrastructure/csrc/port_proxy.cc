@@ -173,7 +173,7 @@ void RecvPortProxy::Set_observer(std::function<void()> obs) {
     recv_port_->observer = obs;
   } else {
     // LAVA_LOG_ERR("obs else\n");
-    recv_port_->observer = nullptr;
+    recv_port_->observer = [](){};
   }
 }
 
