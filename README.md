@@ -6,7 +6,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/40792fa7db054279bdf7532e36f0cfab)](https://app.codacy.com/gh/lava-nc/lava/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 
-
+If you like lava and want to support it, the easiest way is to star our repo (click star in the upper right corner).
 
 # Overview
 
