@@ -25,6 +25,7 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
 class Selector(CPPSelector):
     def __init__(self):
         super().__init__()
+
     def select(self, *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]]):
         return super().select(args)
 
