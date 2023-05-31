@@ -168,13 +168,10 @@ size_t RecvPortProxy::Size() {
 }
 
 void RecvPortProxy::Set_observer(std::function<void()> obs) {
-  if (obs) {
-    // LAVA_LOG_ERR("obs if\n");
+  if (obs)
     recv_port_->observer = obs;
-  } else {
-    // LAVA_LOG_ERR("obs else\n");
+  else
     recv_port_->observer = [](){};
-  }
 }
 
 int trick() {

@@ -128,10 +128,8 @@ class Selector {
               }
           }
           std::unique_lock<std::mutex> lock(cv_mutex_);
-          // LAVA_LOG_ERR("go wait11111\n");
           cv_.wait(lock, [this]{return ready;});
           ready = false;
-          // LAVA_LOG_ERR("go wait22222\n");
       }
     }
 };

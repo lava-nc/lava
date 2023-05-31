@@ -324,7 +324,6 @@ class CspSelector:
                 for channel, action in args:
                     if channel.probe():
                         self._set_observer(args, None)
-                        tmp = action()
                         return action()
                 self._cv.wait()
 
