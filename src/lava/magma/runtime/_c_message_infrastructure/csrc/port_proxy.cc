@@ -244,7 +244,7 @@ void Selector::SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
                            py::function>> *channel_actions,
                            std::function<void()> observer) {
   for (auto it = channel_actions->begin();
-       it != channel_actions->end(); ++it) {
+      it != channel_actions->end(); ++it) {
     std::get<0>(*it)->SetObserver(observer);
   }
 }
@@ -264,7 +264,6 @@ pybind11::object Selector::Select(std::vector<std::tuple<RecvPortProxyPtr,
     cv_.wait(lock, [this]{return ready_;});
     ready_ = false;
   }
-  }
-
+}
 
 }  // namespace message_infrastructure
