@@ -13,28 +13,29 @@ from lava.magma.core.model.py.ports import PyOutPort
 # it still runs in Loihiprotocol (synced with other processes)
 from lava.magma.runtime.message_infrastructure.multiprocessing import MultiProcessing
 
-# Inheritance Structure
+
+# Inheritance Structure -> removed sync for now
 # Processes
-#               Injector
-# AsyncInjector            SyncInjector
+#               (Injector)
+# AsyncInjector            (SyncInjector)
 
 # Process Models
-#               PyInjectorModel
-# PyAsyncInjectorModel       PySyncInjectorModel
-# fixed floating             fixed floating
+#               (PyInjectorModel)
+# PyAsyncInjectorModel       (PySyncInjectorModel)
+# fixed floating             (fixed floating)
 
-class Injector(AbstractProcess):
+class AsyncInjector(AbstractProcess):
     def __init__(self, shape, dtype, size):
         super().__init__(shape=shape)
         self._validate_shape(shape)
         mp = MultiProcessing()
         mp.start()
         self._channel = PyPyChannel(message_infrastructure=mp,
-                                   src_name="source",
-                                   dst_name="destination",
-                                   shape=shape,
-                                   dtype=dtype,
-                                   size=size)
+                                    src_name="source",
+                                    dst_name="destination",
+                                    shape=shape,
+                                    dtype=dtype,
+                                    size=size)
         self.proc_params["dst_port"] = self._channel.dst_port
         self._src_port = self._channel.src_port
         self._src_port.start()
@@ -58,19 +59,10 @@ class Injector(AbstractProcess):
                 raise TypeError("all elements of <shape> must be of type int")
             if s < 0:
                 raise ValueError("all elements of <shape> must be greater "
-                         "than zero")
+                                 "than zero")
 
 
-class AsyncInjector(Injector):
-    pass
-
-
-class SyncInjector(Injector):
-    def __init__(self, shape, dtype):
-        # Ensure there is always just one object in the PyPyChannel
-        super().__init__(shape=shape, dtype=dtype, size=1)
-
-class PyInjectorModel(PyLoihiProcessModel):
+class PyAsyncInjectorModel(PyLoihiProcessModel):
     out_port = None
 
     def __init__(self, proc_params):
@@ -79,7 +71,11 @@ class PyInjectorModel(PyLoihiProcessModel):
         self.dst_port.start()
         self.shape = self.proc_params["shape"]
 
-class PyAsyncInjectorModel(PyInjectorModel):
+@implements(proc=AsyncInjector, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyAsyncInjectorModelFloat(PyAsyncInjectorModel):
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     # Implementing Default FiFO behavior
     def run_spk(self):
         data = np.zeros(self.shape)
@@ -96,23 +92,3 @@ class PyAsyncInjectorModel(PyInjectorModel):
     #     for _ in range(elements_in_q):
     #         data += self.dst_port.recv()
     #     self.out_port.send(data)
-
-
-class PySyncInjectorModel(PyInjectorModel):
-    def run_spk(self):
-        # Block unless data arrives
-        data = self.dst_port.recv()
-        self.out_port.send(data)
-
-@implements(proc=SyncInjector, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PySyncInjectorModelFloat(PySyncInjectorModel):
-    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-
-
-@implements(proc=AsyncInjector, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PyAsyncInjectorModelFloat(PyAsyncInjectorModel):
-    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
