@@ -97,41 +97,17 @@ class Selector {
  private:
   std::condition_variable cv_;
   mutable std::mutex cv_mutex_;
-  std::function<void()> tmp;
-  bool ready = false;
+  bool ready_ = false;
 
  public:
-  void Changed() {
-      std::unique_lock<std::mutex> lock(cv_mutex_);
-      ready = true;
-      cv_.notify_all();
-  }
+  void Changed();
 
   void Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
                         py::function>> *channel_actions,
-                     std::function<void()> observer) {
-      for (auto it = channel_actions->begin();
-           it != channel_actions->end(); ++it) {
-          std::get<0>(*it)->Set_observer(observer);
-      }
-  }
+                     std::function<void()> observer);
 
-  auto Select(std::vector<std::tuple<RecvPortProxyPtr,
-                                py::function>> *args) {
-    std::function<void()> observer = std::bind(&Selector::Changed, this);
-    Set_observer(args, observer);
-      while (true) {
-          for (auto it = args->begin(); it != args->end(); ++it) {
-              if (std::get<0>(*it)->Probe()) {
-                  Set_observer(args, nullptr);
-                  return std::get<1>(*it)();
-              }
-          }
-          std::unique_lock<std::mutex> lock(cv_mutex_);
-          cv_.wait(lock, [this]{return ready;});
-          ready = false;
-      }
-    }
+  pybind11::object Select(std::vector<std::tuple<RecvPortProxyPtr,
+                                py::function>> *args);
 };
 
 }  // namespace message_infrastructure

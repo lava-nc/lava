@@ -168,12 +168,12 @@ size_t RecvPortProxy::Size() {
 }
 
 void RecvPortProxy::Set_observer(std::function<void()> obs) {
-  recv_port_->obs_lk.lock();
+  recv_port_->obs_lk_.lock();
   if (obs)
-    recv_port_->observer = obs;
+    recv_port_->observer_ = obs;
   else
-    recv_port_->observer = nullptr;
-  recv_port_->obs_lk.unlock();
+    recv_port_->observer_ = nullptr;
+  recv_port_->obs_lk_.unlock();
 }
 
 int trick() {
@@ -232,5 +232,40 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
                   capsule), 0);
   return py::reinterpret_steal<py::object>(array);
 }
+
+
+
+void Selector::Changed() {
+    std::unique_lock<std::mutex> lock(cv_mutex_);
+    ready_ = true;
+    cv_.notify_all();
+}
+
+void Selector::Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
+                      py::function>> *channel_actions,
+                    std::function<void()> observer) {
+    for (auto it = channel_actions->begin();
+          it != channel_actions->end(); ++it) {
+        std::get<0>(*it)->Set_observer(observer);
+    }
+}
+
+pybind11::object Selector::Select(std::vector<std::tuple<RecvPortProxyPtr,
+                              py::function>> *args) {
+  std::function<void()> observer = std::bind(&Selector::Changed, this);
+  Set_observer(args, observer);
+    while (true) {
+        for (auto it = args->begin(); it != args->end(); ++it) {
+            if (std::get<0>(*it)->Probe()) {
+                Set_observer(args, nullptr);
+                return std::get<1>(*it)();
+            }
+        }
+        std::unique_lock<std::mutex> lock(cv_mutex_);
+        cv_.wait(lock, [this]{return ready_;});
+        ready_ = false;
+    }
+  }
+
 
 }  // namespace message_infrastructure
