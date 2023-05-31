@@ -50,6 +50,7 @@ class AbstractRecvPort : public AbstractPort {
   virtual MetaDataPtr Peek() = 0;
   virtual void Join() = 0;
   std::function<void()> observer;
+  std::mutex obs_lk;
 };
 
 // Users should be allowed to copy port objects.

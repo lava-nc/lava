@@ -14,8 +14,8 @@
 #include <vector>
 #include <tuple>
 #include <utility>
-#include <mutex>
-#include <condition_variable>
+#include <mutex>  // NOLINT
+#include <condition_variable>  // NOLINT
 
 namespace message_infrastructure {
 

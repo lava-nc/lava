@@ -168,10 +168,12 @@ size_t RecvPortProxy::Size() {
 }
 
 void RecvPortProxy::Set_observer(std::function<void()> obs) {
+  recv_port_->obs_lk.lock();
   if (obs)
     recv_port_->observer = obs;
   else
-    recv_port_->observer = [](){};
+    recv_port_->observer = nullptr;
+  recv_port_->obs_lk.unlock();
 }
 
 int trick() {
