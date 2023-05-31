@@ -167,7 +167,7 @@ size_t RecvPortProxy::Size() {
   return recv_port_->Size();
 }
 
-void RecvPortProxy::Set_observer(std::function<void()> obs) {
+void RecvPortProxy::SetObserver(std::function<void()> obs) {
   recv_port_->obs_lk_.lock();
   if (obs)
     recv_port_->observer_ = obs;
@@ -234,37 +234,36 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
 }
 
 
-
 void Selector::Changed() {
-    std::unique_lock<std::mutex> lock(cv_mutex_);
-    ready_ = true;
-    cv_.notify_all();
+  std::unique_lock<std::mutex> lock(cv_mutex_);
+  ready_ = true;
+  cv_.notify_all();
 }
 
-void Selector::Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
-                      py::function>> *channel_actions,
-                    std::function<void()> observer) {
-    for (auto it = channel_actions->begin();
-          it != channel_actions->end(); ++it) {
-        std::get<0>(*it)->Set_observer(observer);
-    }
+void Selector::SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
+                           py::function>> *channel_actions,
+                           std::function<void()> observer) {
+  for (auto it = channel_actions->begin();
+       it != channel_actions->end(); ++it) {
+    std::get<0>(*it)->SetObserver(observer);
+  }
 }
 
 pybind11::object Selector::Select(std::vector<std::tuple<RecvPortProxyPtr,
-                              py::function>> *args) {
+                                  py::function>> *args) {
   std::function<void()> observer = std::bind(&Selector::Changed, this);
-  Set_observer(args, observer);
-    while (true) {
-        for (auto it = args->begin(); it != args->end(); ++it) {
-            if (std::get<0>(*it)->Probe()) {
-                Set_observer(args, nullptr);
-                return std::get<1>(*it)();
-            }
-        }
-        std::unique_lock<std::mutex> lock(cv_mutex_);
-        cv_.wait(lock, [this]{return ready_;});
-        ready_ = false;
+  SetObserver(args, observer);
+  while (true) {
+    for (auto it = args->begin(); it != args->end(); ++it) {
+      if (std::get<0>(*it)->Probe()) {
+        SetObserver(args, nullptr);
+        return std::get<1>(*it)();
+      }
     }
+    std::unique_lock<std::mutex> lock(cv_mutex_);
+    cv_.wait(lock, [this]{return ready_;});
+    ready_ = false;
+  }
   }
 
 

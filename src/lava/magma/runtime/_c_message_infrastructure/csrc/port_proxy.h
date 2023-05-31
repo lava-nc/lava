@@ -77,7 +77,7 @@ class RecvPortProxy : public PortProxy {
   py::object Peek();
   std::string Name();
   size_t Size();
-  void Set_observer(std::function<void()> obs);
+  void SetObserver(std::function<void()> obs);
 
  private:
   py::object MDataToObject_(MetaDataPtr metadata);
@@ -102,7 +102,7 @@ class Selector {
  public:
   void Changed();
 
-  void Set_observer(std::vector<std::tuple<RecvPortProxyPtr,
+  void SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
                         py::function>> *channel_actions,
                      std::function<void()> observer);
 
