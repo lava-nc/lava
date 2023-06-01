@@ -836,7 +836,7 @@ class TestLIFRefractory(unittest.TestCase):
         num_steps = 8
         refractory_period = 1
 
-        # two neurons with different biases
+        # Two neurons with different biases
         lif_refractory = LIFRefractory(shape=(num_neurons,),
                                        u=np.arange(num_neurons),
                                        bias_mant=np.arange(num_neurons) + 1,
@@ -854,7 +854,7 @@ class TestLIFRefractory(unittest.TestCase):
         v = v_logger.data.get()
         lif_refractory.stop()
 
-        # voltage is expected to remain at reset level for two time steps
+        # Voltage is expected to remain at reset level for two time steps
         v_expected = np.array([[1, 2, 3, 4, 0, 0, 1, 2],
                                [2, 0, 0, 2, 0, 0, 2, 0]], dtype=float)
 
