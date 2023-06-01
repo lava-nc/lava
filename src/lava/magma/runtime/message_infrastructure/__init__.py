@@ -88,7 +88,7 @@ else:
             support_fastdds_channel,
             support_cyclonedds_channel)
 
-    ChannelQueueSize = 128
+    ChannelQueueSize = 1
     SyncChannelBytes = 128
 
     from .ports import (  # noqa  # nosec

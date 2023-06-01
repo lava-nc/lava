@@ -252,17 +252,17 @@ void Selector::SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
 pybind11::object Selector::Select(std::vector<std::tuple<RecvPortProxyPtr,
                                   py::function>> *args) {
   std::function<void()> observer = std::bind(&Selector::Changed, this);
-  SetObserver(args, observer);
+  // SetObserver(args, observer);
   while (true) {
     for (auto it = args->begin(); it != args->end(); ++it) {
       if (std::get<0>(*it)->Probe()) {
-        SetObserver(args, nullptr);
+        // SetObserver(args, nullptr);
         return std::get<1>(*it)();
       }
     }
-    std::unique_lock<std::mutex> lock(cv_mutex_);
-    cv_.wait(lock, [this]{return ready_;});
-    ready_ = false;
+    // std::unique_lock<std::mutex> lock(cv_mutex_);
+    // cv_.wait(lock, [this]{return ready_;});
+    // ready_ = false;
   }
 }
 
