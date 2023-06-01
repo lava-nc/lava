@@ -86,7 +86,8 @@ else:
             AbstractTransferPort,  # noqa  # nosec
             support_grpc_channel,
             support_fastdds_channel,
-            support_cyclonedds_channel)
+            support_cyclonedds_channel,
+            CPPSelector)
 
     ChannelQueueSize = 1
     SyncChannelBytes = 128

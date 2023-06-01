@@ -9,7 +9,6 @@
 #include <string>
 #include <list>
 #include <memory>
-#include <functional>
 
 namespace message_infrastructure {
 

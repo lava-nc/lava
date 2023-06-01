@@ -14,8 +14,6 @@
 #include <vector>
 #include <tuple>
 #include <utility>
-#include <mutex>  // NOLINT
-#include <condition_variable>  // NOLINT
 
 namespace message_infrastructure {
 
@@ -77,7 +75,6 @@ class RecvPortProxy : public PortProxy {
   py::object Peek();
   std::string Name();
   size_t Size();
-  void SetObserver(std::function<void()> obs);
 
  private:
   py::object MDataToObject_(MetaDataPtr metadata);
