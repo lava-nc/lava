@@ -21,7 +21,7 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
 
-from lava.proc.io.in_bridge import AsyncInjector, SyncInjector
+from lava.proc.io.in_bridge import AsyncInjector
 
 
 class Recv(AbstractProcess):
@@ -64,86 +64,55 @@ class PyLoihiFixedPointRecvProcessModel(PyLoihiProcessModel):
         self.var = self.in_port.recv()
 
 
-class TestSyncInjector(unittest.TestCase):
+class TestAsyncInjector(unittest.TestCase):
     def test_init(self):
         out_shape = (1,)
+        size = 10
         dtype = float
-        sync_injector = SyncInjector(shape=out_shape, dtype=dtype)
-        self.assertIsInstance(sync_injector, SyncInjector)
-        self.assertIsInstance(sync_injector._channel, PyPyChannel)
-        self.assertIsInstance(sync_injector.proc_params["dst_port"], CspRecvPort)
-        self.assertIsInstance(sync_injector._src_port, CspSendPort)
-        self.assertEqual(sync_injector.out_port.shape, out_shape)
+        injector = AsyncInjector(shape=out_shape, dtype=dtype, size=size)
+        self.assertIsInstance(injector, AsyncInjector)
+        self.assertIsInstance(injector._channel, PyPyChannel)
+        self.assertIsInstance(injector.proc_params["dst_port"], CspRecvPort)
+        self.assertIsInstance(injector._src_port, CspSendPort)
+        self.assertEqual(injector.out_port.shape, out_shape)
 
     def test_invalid_shape(self):
         out_shape = (1.5,)
+        size = 10
         with self.assertRaises(TypeError):
-            SyncInjector(shape=out_shape, dtype=float)
+            AsyncInjector(shape=out_shape, dtype=float, size=size)
 
         out_shape = (-1,)
         with self.assertRaises(ValueError):
-            SyncInjector(shape=out_shape, dtype=float)
+            AsyncInjector(shape=out_shape, dtype=float, size=size)
 
         out_shape = 4
         with self.assertRaises(TypeError):
-            SyncInjector(shape=out_shape, dtype=float)
+            AsyncInjector(shape=out_shape, dtype=float, size=size)
+
+    def test_invalid_size(self):
+        out_shape = (1,)
+        dtype = float
+        size = 0.5
+        with self.assertRaises(TypeError):
+            AsyncInjector(shape=out_shape, dtype=float, size=size)
+
+        size = -5
+        with self.assertRaises(ValueError):
+            AsyncInjector(shape=out_shape, dtype=float, size=size)
 
     # Add Input Handling in Process
     #def test_invalid_dtype(self):
     #    dtype = "floati"
-    #    SyncInjector(shape=(1,), dtype=dtype)
+    #    AsyncInjector(shape=(1,), dtype=dtype)
 
     def test_send_data_throws_error_if_runtime_not_running(self):
         shape = (1,)
+        size = 10
         data = np.ones(shape)
-        SyncInjector(shape=shape, dtype=float)
+        injector = AsyncInjector(shape=shape, dtype=float, size=size)
         with self.assertRaises(Exception):
-            SyncInjector.send_data(data)
-
-class TestAsyncInjector(unittest.TestCase):
-    def test_init(self):
-        pass
-
-    def test_invalid_shape(self):
-        pass
-
-    def test_invalid_size(self):
-        pass
-
-    def test_invalid_dtype(self):
-        pass
-
-    def test_send_data_throws_error_if_runtime_not_running(self):
-        pass
-
-
-class TestPySyncInjectorModelFloat(unittest.TestCase):
-    def test_init(self):
-        pass
-
-    def test_send_data(self):
-        pass
-
-    def test_run_steps_blocking_num_send_lt_num_steps(self):
-        pass
-
-    def test_run_steps_blocking_num_send_eq_num_steps(self):
-        pass
-
-    def test_run_steps_blocking_num_send_gt_num_steps(self):
-        pass
-
-    def test_run_steps_nonblocking_num_send_lt_num_steps(self):
-        pass
-
-    def test_run_steps_nonblocking_num_send_eq_num_steps(self):
-        pass
-
-    def test_run_steps_nonblocking_num_send_gt_num_steps(self):
-        pass
-
-    def test_run_coninouus(self):
-        pass
+            injector.send_data(data)
 
 
 class TestPyAsyncInjectorModelFloat(unittest.TestCase):

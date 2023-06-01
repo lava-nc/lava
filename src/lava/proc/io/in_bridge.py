@@ -28,6 +28,8 @@ class AsyncInjector(AbstractProcess):
     def __init__(self, shape, dtype, size):
         super().__init__(shape=shape)
         self._validate_shape(shape)
+        self._validate_size(size)
+        self.size = size
         mp = MultiProcessing()
         mp.start()
         self._channel = PyPyChannel(message_infrastructure=mp,
@@ -35,9 +37,10 @@ class AsyncInjector(AbstractProcess):
                                     dst_name="destination",
                                     shape=shape,
                                     dtype=dtype,
-                                    size=size)
+                                    size=self.size)
         self.proc_params["dst_port"] = self._channel.dst_port
         self._src_port = self._channel.src_port
+        self._dst_port = self._channel.dst_port
         self._src_port.start()
         self.out_port = OutPort(shape=shape)
 
@@ -45,6 +48,11 @@ class AsyncInjector(AbstractProcess):
         # First ensure runtime is running
         if not self.runtime._is_running:
             raise Exception("Data can only be sent once the runtime has started.")
+        # Check if queue is full
+        elements_in_q = self._dst_port._queue.qsize()
+        if elements_in_q == self.size:
+            # Queue is full, we need to discard one element in the queue
+            self._dst_port.recv()
         self._src_port.send(data)
 
     def _validate_shape(self, shape):
@@ -61,34 +69,57 @@ class AsyncInjector(AbstractProcess):
                 raise ValueError("all elements of <shape> must be greater "
                                  "than zero")
 
+    def _validate_size(self, size):
+        if not isinstance(size, int):
+            raise TypeError("size must be positive and of type int")
+        if size <= 0:
+            raise ValueError("size must be positive and of type int")
+
 
 class PyAsyncInjectorModel(PyLoihiProcessModel):
     out_port = None
 
     def __init__(self, proc_params):
         super().__init__(proc_params=proc_params)
-        self.dst_port = self.proc_params["dst_port"]
-        self.dst_port.start()
+        self._dst_port = self.proc_params["dst_port"]
+        self._dst_port.start()
         self.shape = self.proc_params["shape"]
+
 
 @implements(proc=AsyncInjector, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyAsyncInjectorModelFloat(PyAsyncInjectorModel):
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    # Implementing Default FiFO behavior
-    def run_spk(self):
+
+    def run_spk(self) -> None:
         data = np.zeros(self.shape)
-        if self.dst_port.probe():
-            data = self.dst_port.recv()
+        # Get number of elements in queue right now
+        # Changes as sensor sends more data
+        elements_in_q = self._dst_port._queue._qsize()
+        for _ in range(elements_in_q):
+            data += self._dst_port.recv()
         self.out_port.send(data)
 
-    # ADD different modes of synchronizing later
-    # def run_spk(self) -> None:
-    #     data = np.zeros(self.shape)
-    #     # Get number of elements in queue right now
-    #     # Changes as sensor sends more data
-    #     elements_in_q = self.dst_port._queue._qsize()
-    #     for _ in range(elements_in_q):
-    #         data += self.dst_port.recv()
-    #     self.out_port.send(data)
+
+@implements(proc=AsyncInjector, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("fixed_pt")
+class PyAsyncInjectorModelFixed(PyAsyncInjectorModel):
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params=proc_params)
+        self.data_bitwidth = 32
+        self.max_data_val = 2 ** (self.data_bitwidth-1) - 1
+        self.min_data_val = - 2 ** (self.data_bitwidth-1)
+
+    def run_spk(self) -> None:
+        data = np.zeros(self.shape, np.int32)
+        # Get number of elements in queue right now
+        # Changes as sensor sends more data
+        elements_in_q = self._dst_port._queue._qsize()
+        for _ in range(elements_in_q):
+            data += self._dst_port.recv()
+        data = np.clip(data, self.min_data_val, self.max_data_val)
+        self.out_port.send(np.int32(data))
