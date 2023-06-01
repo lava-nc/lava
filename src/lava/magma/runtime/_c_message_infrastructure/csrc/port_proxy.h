@@ -94,20 +94,17 @@ using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 
 
 class Selector {
- private:
-  std::condition_variable cv_;
-  mutable std::mutex cv_mutex_;
-  bool ready_ = false;
-
  public:
-  void Changed();
-
-  void SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
-                        py::function>> *channel_actions,
-                     std::function<void()> observer);
-
   pybind11::object Select(std::vector<std::tuple<RecvPortProxyPtr,
-                                py::function>> *args);
+                          py::function>> *args) {
+    while (true) {
+      for (auto it = args->begin(); it != args->end(); ++it) {
+        if (std::get<0>(*it)->Probe()) {
+          return std::get<1>(*it)();
+        }
+      }
+    }
+  }
 };
 
 }  // namespace message_infrastructure

@@ -167,15 +167,6 @@ size_t RecvPortProxy::Size() {
   return recv_port_->Size();
 }
 
-void RecvPortProxy::SetObserver(std::function<void()> obs) {
-  recv_port_->obs_lk_.lock();
-  if (obs)
-    recv_port_->observer_ = obs;
-  else
-    recv_port_->observer_ = nullptr;
-  recv_port_->obs_lk_.unlock();
-}
-
 int trick() {
     // to solve the warning "converting to non-pointer type 'int'
     // from NULL [-Wconversion-null] import_array()"
@@ -233,37 +224,5 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   return py::reinterpret_steal<py::object>(array);
 }
 
-
-void Selector::Changed() {
-  std::unique_lock<std::mutex> lock(cv_mutex_);
-  ready_ = true;
-  cv_.notify_all();
-}
-
-void Selector::SetObserver(std::vector<std::tuple<RecvPortProxyPtr,
-                           py::function>> *channel_actions,
-                           std::function<void()> observer) {
-  for (auto it = channel_actions->begin();
-      it != channel_actions->end(); ++it) {
-    std::get<0>(*it)->SetObserver(observer);
-  }
-}
-
-pybind11::object Selector::Select(std::vector<std::tuple<RecvPortProxyPtr,
-                                  py::function>> *args) {
-  std::function<void()> observer = std::bind(&Selector::Changed, this);
-  // SetObserver(args, observer);
-  while (true) {
-    for (auto it = args->begin(); it != args->end(); ++it) {
-      if (std::get<0>(*it)->Probe()) {
-        // SetObserver(args, nullptr);
-        return std::get<1>(*it)();
-      }
-    }
-    // std::unique_lock<std::mutex> lock(cv_mutex_);
-    // cv_.wait(lock, [this]{return ready_;});
-    // ready_ = false;
-  }
-}
 
 }  // namespace message_infrastructure

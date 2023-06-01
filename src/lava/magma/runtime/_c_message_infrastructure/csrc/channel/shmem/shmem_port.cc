@@ -93,7 +93,6 @@ ShmemRecvPort::~ShmemRecvPort() {
 void ShmemRecvPort::Start() {
   recv_queue_thread_ = std::thread(
     &message_infrastructure::ShmemRecvPort::QueueRecv, this);
-  observer_ = nullptr;
 }
 
 void ShmemRecvPort::QueueRecv() {
@@ -106,11 +105,6 @@ void ShmemRecvPort::QueueRecv() {
         MetaDataPtrFromPointer(metadata_res, data,
                                nbytes_ - sizeof(MetaData));
         this->recv_queue_->Push(metadata_res);
-        obs_lk_.lock();
-        if (observer_ && !not_empty) {
-          observer_();
-        }
-        obs_lk_.unlock();
       });
     }
     if (!ret) {
