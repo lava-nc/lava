@@ -17,6 +17,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
+        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -28,7 +29,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait)
+        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
         monitor = Monitor()
 
         # Connections
@@ -39,17 +40,17 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         in_aval.run(condition=run_cond, run_cfg=run_cfg)
 
         result = monitor.get_data()
-        result = result[nvl_det.name][nvl_det.novelty_detected_out.name]
+        result = result[nvl_det.name][nvl_det.novelty_detected_out.name].T
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((t_run, 1))
-        expected_result[14, 0] = 1
+        expected_result = np.zeros((n_protos, t_run))
+        expected_result[0, 14] = 127
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
@@ -57,6 +58,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
+        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -68,7 +70,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait)
+        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
         monitor = Monitor()
 
         # Connections
@@ -79,16 +81,16 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         in_aval.run(condition=run_cond, run_cfg=run_cfg)
 
         result = monitor.get_data()
-        result = result[nvl_det.name][nvl_det.novelty_detected_out.name]
+        result = result[nvl_det.name][nvl_det.novelty_detected_out.name].T
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((t_run, 1))
+        expected_result = np.zeros((n_protos, t_run))
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
@@ -96,6 +98,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
+        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -107,7 +110,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait)
+        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
         monitor = Monitor()
 
         # Connections
@@ -118,16 +121,16 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         in_aval.run(condition=run_cond, run_cfg=run_cfg)
 
         result = monitor.get_data()
-        result = result[nvl_det.name][nvl_det.novelty_detected_out.name]
+        result = result[nvl_det.name][nvl_det.novelty_detected_out.name].T
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((t_run, 1))
-        expected_result[14, 0] = 1
+        expected_result = np.zeros((n_protos, t_run))
+        expected_result[0, 14] = 127
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)

@@ -16,7 +16,7 @@ from lava.proc.clp.novelty_detector.process import NoveltyDetector
 
 @implements(proc=NoveltyDetector, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("floating_pt")
+@tag("fixed_pt")
 class PyNoveltyDetectorModel(PyLoihiProcessModel):
     """Python implementation of the NoveltyDetector process
 
@@ -24,13 +24,15 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
     input_aval_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
     output_aval_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
 
-    novelty_detected_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+    novelty_detected_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.t_wait = proc_params['t_wait']
+        self.n_protos = proc_params['n_protos']
         self.waiting = False  # A variable to know if we are waiting for output
         self.t_passed = 0  # The time passed since the injection of the input
+        self.next_alloc_id = 0  # The id of the next neuron to be allocated
         self.novelty_detected = False
 
     def run_spk(self) -> None:
@@ -65,8 +67,19 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
         # If we have detected novelty, send this signal downstream, and set
         # the flag back to the False
         if self.novelty_detected:
-            self.novelty_detected_out.send(np.array([1]))
+            # Choose the specific element of the OutPort to send novelty
+            # signal to allocate the next neuron. We use 7-bit fixed-point
+            # numbers as this value would be written into post-synaptic trace
+            # in the Loihi which is also 7-bit
+            alloc_signal = np.zeros(shape=self.novelty_detected_out.shape)
+            alloc_signal[self.next_alloc_id] = 127  # ~1 as 7-bit number
+            self.novelty_detected_out.send(alloc_signal)
+
+            # Increment this counter to point to the next neuron
+            self.next_alloc_id += 1
             self.novelty_detected = False
+
         else:
-            # Otherwise, just send zero (i.e. no signal)
-            self.novelty_detected_out.send(np.array([0]))
+            # Otherwise, just send zeros (i.e. no signal)
+            self.novelty_detected_out.send(
+                np.zeros(shape=self.novelty_detected_out.shape))

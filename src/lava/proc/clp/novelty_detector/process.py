@@ -23,12 +23,18 @@ class NoveltyDetector(AbstractProcess):
             novelty detection signal. If in this time window the system (the
             Prototype neurons) generates an output, then the process will be
             reset and NO novelty detection signal will be sent out.
+        n_protos: int
+            The number of prototypes that this novelty detector process can
+            target. Each time a novel input is detected the next unallocated
+            prototype will be targeted by the output of the NoveltyDetector
+            process.
     """
 
     def __init__(self, *,
-                 t_wait: int
+                 t_wait: int,
+                 n_protos: int,
                  ) -> None:
-        super().__init__(t_wait=t_wait)
+        super().__init__(t_wait=t_wait, n_protos=n_protos)
 
         # An input is being processed by the system
         self.input_aval_in = InPort(shape=(1,))
@@ -37,4 +43,4 @@ class NoveltyDetector(AbstractProcess):
         self.output_aval_in = InPort(shape=(1,))
 
         # OutPort for sending out the novelty detection signal
-        self.novelty_detected_out = OutPort(shape=(1,))
+        self.novelty_detected_out = OutPort(shape=(n_protos,))
