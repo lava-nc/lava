@@ -7,15 +7,18 @@ from lava.magma.runtime.message_infrastructure import (
     PURE_PYTHON_VERSION,
     Channel)
 
+
 class Builder:
     def build(self, i):
         pass
+
 
 def prepare_data():
     arr1 = np.array([1] * 9990)
     arr2 = np.array([1, 2, 3, 4, 5,
                     6, 7, 8, 9, 0])
     return np.concatenate((arr2, arr1))
+
 
 def bound_target_a1(loop, actor_0_to_mp, actor_1_to_mp,
                     actor_2_to_mp, builder):
@@ -50,7 +53,7 @@ class TestSelector(unittest.TestCase):
             .multiprocessing \
             import MultiProcessing
 
-        loop = self.loop_*3
+        loop = self.loop_ * 3
         mp = MultiProcessing()
         mp.start()
         predata = prepare_data()
@@ -96,10 +99,10 @@ class TestSelector(unittest.TestCase):
         from_a0.start()
         from_a1.start()
         from_a2.start()
-        expect_result = predata*3*self.loop_
-        recv_port_list = [from_a0, from_a1,from_a2]
+        expect_result = predata * 3 * self.loop_
+        recv_port_list = [from_a0, from_a1, from_a2]
         channel_actions = [(recv_port, (lambda y: (lambda: y))(
-                recv_port)) for recv_port in recv_port_list]
+            recv_port)) for recv_port in recv_port_list]
         real_result = np.array(0)
         while loop > 0:
             loop = loop - 1
@@ -115,6 +118,7 @@ class TestSelector(unittest.TestCase):
         from_a2.join()
         mp.stop()
         mp.cleanup(True)
-        
+
+
 if __name__ == '__main__':
     unittest.main()
