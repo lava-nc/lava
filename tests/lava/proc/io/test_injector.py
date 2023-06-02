@@ -189,6 +189,41 @@ class TestPyAsyncInjectorModelFloat(unittest.TestCase):
 
         np.testing.assert_equal(received_data, np.full(data_shape, 100))
 
+    """
+        def test_discarding_data_accumulation(self):
+        Test that multiple data items are accumulated when Python script
+        sends data to the AsyncInjector at a higher rate than it is executing
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+        num_steps = 1
+        num_send = 20
+
+        injector = AsyncInjector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for i in range(num_send):
+            print(i)
+            injector.send_data(np.full(data_shape, 10))
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        received_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(received_data, np.full(data_shape, 100))
+    """
+
     def test_send_data_no_data(self):
         """Test that the AsyncInjector sends 0s when it does not receive
         data."""
