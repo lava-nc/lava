@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from lava.magma.runtime.message_infrastructure import ChannelQueueSize
+from lava.magma.runtime.message_infrastructure \
+    import ChannelQueueSize, CPPSelector
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import Channel as CppChannel
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
@@ -20,15 +21,9 @@ import typing as ty
 import warnings
 
 
-class Selector:
-    def select(
-            self,
-            *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]],
-    ):
-        for recv_port, action in args:
-            if recv_port.probe():
-                return action()
-        return None
+class Selector(CPPSelector):
+    def select(self, *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]]):
+        return super().select(args)
 
 
 class SendPort(AbstractTransferPort):

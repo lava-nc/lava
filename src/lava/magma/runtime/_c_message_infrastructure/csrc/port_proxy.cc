@@ -224,4 +224,5 @@ py::object RecvPortProxy::MDataToObject_(MetaDataPtr metadata) {
   return py::reinterpret_steal<py::object>(array);
 }
 
+
 }  // namespace message_infrastructure

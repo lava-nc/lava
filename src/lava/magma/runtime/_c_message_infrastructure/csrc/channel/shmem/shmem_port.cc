@@ -107,7 +107,6 @@ void ShmemRecvPort::QueueRecv() {
       });
     }
     if (!ret) {
-      // sleep
       helper::Sleep();
     }
   }
@@ -124,7 +123,8 @@ MetaDataPtr ShmemRecvPort::Recv() {
 void ShmemRecvPort::Join() {
   if (!done_) {
     done_ = true;
-    recv_queue_thread_.join();
+    if (recv_queue_thread_.joinable())
+      recv_queue_thread_.join();
     recv_queue_->Stop();
   }
 }

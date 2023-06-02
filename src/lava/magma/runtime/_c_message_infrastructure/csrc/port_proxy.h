@@ -12,6 +12,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
+#include <utility>
 
 namespace message_infrastructure {
 
@@ -86,6 +88,21 @@ using SendPortProxyPtr = std::shared_ptr<SendPortProxy>;
 using RecvPortProxyPtr = std::shared_ptr<RecvPortProxy>;
 using SendPortProxyList = std::vector<SendPortProxyPtr>;
 using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
+
+
+class Selector {
+ public:
+  pybind11::object Select(std::vector<std::tuple<RecvPortProxyPtr,
+                          py::function>> *args) {
+    while (true) {
+      for (auto it = args->begin(); it != args->end(); ++it) {
+        if (std::get<0>(*it)->Probe()) {
+          return std::get<1>(*it)();
+        }
+      }
+    }
+  }
+};
 
 }  // namespace message_infrastructure
 
