@@ -20,11 +20,11 @@ def prepare_data():
     return np.concatenate((arr2, arr1))
 
 
-def bound_target_a1(loop, actor_0_to_mp, actor_1_to_mp,
-                    actor_2_to_mp, builder):
-    to_mp_0 = actor_0_to_mp.src_port
-    to_mp_1 = actor_1_to_mp.src_port
-    to_mp_2 = actor_2_to_mp.src_port
+def bound_target_a1(loop, actor_to_mp_0, actor_to_mp_1,
+                    actor_to_mp_2, builder):
+    to_mp_0 = actor_to_mp_0.src_port
+    to_mp_1 = actor_to_mp_1.src_port
+    to_mp_2 = actor_to_mp_2.src_port
     to_mp_0.start()
     to_mp_1.start()
     to_mp_2.start()
@@ -60,41 +60,41 @@ class TestSelector(unittest.TestCase):
         queue_size = 1
         nbytes = np.prod(predata.shape) * predata.dtype.itemsize
         selector = Selector()
-        actor_0_to_mp = Channel(
+        actor_to_mp_0 = Channel(
             ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
-            "actor_0_to_mp",
-            "actor_0_to_mp",
+            "actor_to_mp_0",
+            "actor_to_mp_0",
             (2, 2),
             np.int32)
-        actor_1_to_mp = Channel(
+        actor_to_mp_1 = Channel(
             ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
-            "actor_1_to_mp",
-            "actor_1_to_mp",
+            "actor_to_mp_1",
+            "actor_to_mp_1",
             (2, 2),
             np.int32)
-        actor_2_to_mp = Channel(
+        actor_to_mp_2 = Channel(
             ChannelType.SHMEMCHANNEL,
             queue_size,
             nbytes,
-            "actor_2_to_mp",
-            "actor_2_to_mp",
+            "actor_to_mp_2",
+            "actor_to_mp_2",
             (2, 2),
             np.int32)
 
-        target_a1 = partial(bound_target_a1, self.loop_, actor_0_to_mp,
-                            actor_1_to_mp, actor_2_to_mp)
+        target_a1 = partial(bound_target_a1, self.loop_, actor_to_mp_0,
+                            actor_to_mp_1, actor_to_mp_2)
 
         builder = Builder()
 
         mp.build_actor(target_a1, builder)  # actor1
 
-        from_a0 = actor_0_to_mp.dst_port
-        from_a1 = actor_1_to_mp.dst_port
-        from_a2 = actor_2_to_mp.dst_port
+        from_a0 = actor_to_mp_0.dst_port
+        from_a1 = actor_to_mp_1.dst_port
+        from_a2 = actor_to_mp_2.dst_port
 
         from_a0.start()
         from_a1.start()
