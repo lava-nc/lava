@@ -4,7 +4,8 @@ import threading
 import time
 from time import sleep
 
-from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, CspSendPort
+from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
+    CspSendPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
@@ -20,8 +21,10 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
+from lava.magma.runtime.message_infrastructure.multiprocessing import \
+    MultiProcessing
 
-from lava.proc.io.in_bridge import AsyncInjector
+from lava.proc.io.in_bridge import AsyncInjector, PyAsyncInjectorModelFloat
 
 
 class Recv(AbstractProcess):
@@ -102,11 +105,11 @@ class TestAsyncInjector(unittest.TestCase):
             AsyncInjector(shape=out_shape, dtype=float, size=size)
 
     # Add Input Handling in Process
-    #def test_invalid_dtype(self):
+    # def test_invalid_dtype(self):
     #    dtype = "floati"
     #    AsyncInjector(shape=(1,), dtype=dtype)
 
-    def test_send_data_throws_error_if_runtime_not_running(self):
+    def test_send_data_throws_error_if_runtime_not_started(self):
         shape = (1,)
         size = 10
         data = np.ones(shape)
@@ -114,7 +117,131 @@ class TestAsyncInjector(unittest.TestCase):
         with self.assertRaises(Exception):
             injector.send_data(data)
 
+    def test_send_data_invalid_data(self):
+        shape = (1,)
+        size = 10
+        data = [1]
+        injector = AsyncInjector(shape=shape, dtype=float, size=size)
+
+        with self.assertRaises(ValueError):
+            injector.send_data(data)
+
+        data = np.ones((2, ))
+        with self.assertRaises(ValueError):
+            injector.send_data(data)
+
 
 class TestPyAsyncInjectorModelFloat(unittest.TestCase):
     def test_init(self):
-        pass
+        shape = (1, )
+        dtype = float
+        size = 10
+
+        proc_params = {"shape": shape}
+
+        mp = MultiProcessing()
+        mp.start()
+        channel = PyPyChannel(message_infrastructure=mp,
+                              src_name="source",
+                              dst_name="destination",
+                              shape=shape,
+                              dtype=dtype,
+                              size=size)
+
+        proc_params["dst_port"] = channel.dst_port
+
+        pm = PyAsyncInjectorModelFloat(proc_params)
+
+        self.assertIsInstance(pm, PyAsyncInjectorModelFloat)
+        self.assertEqual(pm._shape, shape)
+        self.assertEqual(pm._dst_port, channel.dst_port)
+        self.assertIsNotNone(pm._dst_port.thread)
+
+    def test_send_data_accumulation(self):
+        """Test that multiple data items are accumulated when Python script
+        sends data to the AsyncInjector at a higher rate than it is executing"""
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+        num_steps = 1
+        num_send = 10
+
+        injector = AsyncInjector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for i in range(num_send):
+            injector.send_data(np.full(data_shape, 10))
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        received_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(received_data, np.full(data_shape, 100))
+
+    def test_send_data_no_data(self):
+        """Test that the AsyncInjector sends 0s when it does not receive
+        data."""
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+        num_steps = 1
+
+        injector = AsyncInjector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        received_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(received_data, np.zeros(data_shape))
+
+    def test_run_steps_non_blocking_multiple_time_steps(self):
+        """"""
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+        num_steps = 50
+        num_send = 100
+
+        injector = AsyncInjector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg()
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for i in range(num_send):
+            injector.send_data(np.full(data_shape, 10))
+
+        injector.wait()
+
+        received_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(received_data, np.full(data_shape, 100))

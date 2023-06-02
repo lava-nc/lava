@@ -45,14 +45,23 @@ class AsyncInjector(AbstractProcess):
         self.out_port = OutPort(shape=shape)
 
     def send_data(self, data):
+        if not isinstance(data, np.ndarray):
+            raise ValueError("Data can only be a np.ndarray.")
+
+        if data.shape != self.out_port.shape:
+            raise ValueError("Data can only be of the same shape as the shape "
+                             "of the OutPort.")
+
         # First ensure runtime is running
-        if not self.runtime._is_running:
+        if not self.runtime._is_started:
             raise Exception("Data can only be sent once the runtime has started.")
-        # Check if queue is full
-        elements_in_q = self._dst_port._queue.qsize()
-        if elements_in_q == self.size:
-            # Queue is full, we need to discard one element in the queue
-            self._dst_port.recv()
+
+        # # Check if queue is full
+        # elements_in_q = self._dst_port._queue.qsize()
+        # if elements_in_q == self.size:
+        #     # Queue is full, we need to discard one element in the queue
+        #     self._dst_port.recv()
+
         self._src_port.send(data)
 
     def _validate_shape(self, shape):
@@ -83,7 +92,7 @@ class PyAsyncInjectorModel(PyLoihiProcessModel):
         super().__init__(proc_params=proc_params)
         self._dst_port = self.proc_params["dst_port"]
         self._dst_port.start()
-        self.shape = self.proc_params["shape"]
+        self._shape = self.proc_params["shape"]
 
 
 @implements(proc=AsyncInjector, protocol=LoihiProtocol)
@@ -93,7 +102,7 @@ class PyAsyncInjectorModelFloat(PyAsyncInjectorModel):
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     def run_spk(self) -> None:
-        data = np.zeros(self.shape)
+        data = np.zeros(self._shape)
         # Get number of elements in queue right now
         # Changes as sensor sends more data
         elements_in_q = self._dst_port._queue._qsize()
@@ -115,7 +124,7 @@ class PyAsyncInjectorModelFixed(PyAsyncInjectorModel):
         self.min_data_val = - 2 ** (self.data_bitwidth-1)
 
     def run_spk(self) -> None:
-        data = np.zeros(self.shape, np.int32)
+        data = np.zeros(self._shape, np.int32)
         # Get number of elements in queue right now
         # Changes as sensor sends more data
         elements_in_q = self._dst_port._queue._qsize()
