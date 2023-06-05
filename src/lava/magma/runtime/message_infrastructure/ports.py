@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 from lava.magma.runtime.message_infrastructure \
-    import ChannelQueueSize, CPPSelector
+    import ChannelQueueSize, SelectorSleepNs
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
     import Channel as CppChannel
 from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
@@ -14,6 +14,7 @@ from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
         support_cyclonedds_channel,
         AbstractTransferPort,
         ChannelType,
+        CPPSelector,
         RecvPort)
 
 import numpy as np
@@ -23,7 +24,7 @@ import warnings
 
 class Selector(CPPSelector):
     def select(self, *args: ty.Tuple[RecvPort, ty.Callable[[], ty.Any]]):
-        return super().select(args)
+        return super().select(args, SelectorSleepNs)
 
 
 class SendPort(AbstractTransferPort):
