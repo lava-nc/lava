@@ -18,7 +18,7 @@
 #endif
 
 #define MAX_ARRAY_DIMS (5)
-#define SLEEP_NS (1)
+#define SLEEP_MS (1)
 
 #define LAVA_SIZEOF_CHAR       (sizeof(char))
 #define LAVA_SIZEOF_UCHAR      (LAVA_SIZEOF_CHAR)
@@ -142,7 +142,7 @@ static void Sleep() {
 #if defined(ENABLE_MM_PAUSE)
   _mm_pause();
 #else
-  std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_NS));
+  std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
 #endif
 }
 
@@ -154,7 +154,7 @@ static void Sleep(int64_t ns) {
 #endif
 }
 
-}
+}  // namespace helper
 
 #if defined(DDS_CHANNEL)
 // Default Parameters
