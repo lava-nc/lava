@@ -86,11 +86,11 @@ else:
             AbstractTransferPort,  # noqa  # nosec
             support_grpc_channel,
             support_fastdds_channel,
-            support_cyclonedds_channel,
-            CPPSelector)
+            support_cyclonedds_channel)
 
     ChannelQueueSize = 1
     SyncChannelBytes = 128
+    SelectorSleepNs = 1
 
     from .ports import (  # noqa  # nosec
         SendPort,  # noqa  # nosec

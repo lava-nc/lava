@@ -93,12 +93,15 @@ using RecvPortProxyList = std::vector<RecvPortProxyPtr>;
 class Selector {
  public:
   pybind11::object Select(std::vector<std::tuple<RecvPortProxyPtr,
-                          py::function>> *args) {
+                          py::function>> *args, int64_t sleep_ns) {
     while (true) {
       for (auto it = args->begin(); it != args->end(); ++it) {
         if (std::get<0>(*it)->Probe()) {
           return std::get<1>(*it)();
         }
+      }
+      if (sleep_ns > 0) {
+        helper::Sleep(sleep_ns);
       }
     }
   }

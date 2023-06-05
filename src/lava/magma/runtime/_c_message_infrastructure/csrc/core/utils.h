@@ -145,6 +145,15 @@ static void Sleep() {
   std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_NS));
 #endif
 }
+
+static void Sleep(int64_t ns) {
+#if defined(ENABLE_MM_PAUSE)
+  _mm_pause();
+#else
+  std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
+#endif
+}
+
 }
 
 #if defined(DDS_CHANNEL)
