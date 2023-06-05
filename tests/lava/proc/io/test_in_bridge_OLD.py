@@ -19,7 +19,7 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
 
-from lava.proc.io.in_bridge import AsyncInputBridge, SyncInputBridge
+from lava.proc.io.injector import AsyncInputBridge, SyncInputBridge
 
 
 class Recv(AbstractProcess):
