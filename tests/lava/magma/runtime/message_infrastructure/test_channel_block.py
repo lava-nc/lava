@@ -27,7 +27,7 @@ def send_proc(*args, **kwargs):
     if not isinstance(port, SendPort):
         raise AssertionError()
     port.start()
-    for i in range(QUEUE_SIZE + 1):
+    for _ in range(QUEUE_SIZE + 1):
         data = generate_data()
         port.send(data)
 
@@ -38,7 +38,7 @@ def recv_proc(*args, **kwargs):
     if not isinstance(port, RecvPort):
         raise AssertionError()
     time.sleep(1)
-    for i in range(QUEUE_SIZE + 1):
+    for _ in range(QUEUE_SIZE + 1):
         port.recv()
 
 

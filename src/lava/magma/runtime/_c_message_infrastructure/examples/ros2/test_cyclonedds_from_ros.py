@@ -21,7 +21,7 @@ def test_ddschannel():
 
     recv_port = dds_channel.dst_port
     recv_port.start()
-    for i in range(100):
+    for _ in range(100):
         res = recv_port.recv()
         print(res)
     recv_port.join()

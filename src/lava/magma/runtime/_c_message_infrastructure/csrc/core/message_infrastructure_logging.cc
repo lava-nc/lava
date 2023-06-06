@@ -73,7 +73,6 @@ void MessageInfrastructureLog::Clear() {
 // multithread unsafe
 void MessageInfrastructureLog::WriteDown() {
   if (log_queue_.empty()) return;
-  int i = 0;
   signed int pid = GetPid();
   std::stringstream log_file_name;
   log_file_name << log_path_ << "/" << DEBUG_LOG_MODULE << "_pid_" << pid \

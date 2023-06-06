@@ -259,7 +259,7 @@ MetaDataPtr FastDDSSubscriber::Recv(bool keep) {
   if (keep) {
     LAVA_DEBUG(LOG_DDS, "Keep the data recieved\n");
     while (ReturnCode_t::RETCODE_OK !=
-           reader_->read(mdata_seq, infos, 1)) {
+           reader_->read(mdata_seq, infos, 1)) {  // Flawfinder: ignore
       helper::Sleep();
     }
   } else {
@@ -307,7 +307,7 @@ bool FastDDSSubscriber::Probe() {
   MDataSeq mdata_seq;
   SampleInfoSeq infos;
   bool res = false;
-  if (ReturnCode_t::RETCODE_OK == reader_->read(mdata_seq, infos, 1)) {
+  if (ReturnCode_t::RETCODE_OK == reader_->read(mdata_seq, infos, 1)) {  // Flawfinder: ignore
     reader_->return_loan(mdata_seq, infos);
     res = true;
   }
