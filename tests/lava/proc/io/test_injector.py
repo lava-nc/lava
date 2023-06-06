@@ -63,7 +63,7 @@ class PyRecvProcModel(PyLoihiProcessModel):
         self._buffer_size = proc_params["buffer_size"]
 
     def run_spk(self) -> None:
-        self.var[self.time_step-1 % self._buffer_size] = self.in_port.recv()
+        self.var[(self.time_step-1) % self._buffer_size] = self.in_port.recv()
 
 
 @implements(proc=Recv, protocol=LoihiProtocol)
@@ -350,7 +350,8 @@ class TestPyAsyncInjectorModelFloat(unittest.TestCase):
 
         injector.stop()
 
-        np.testing.assert_equal(recv_var_data, np.sum(send_data, axis=0))
+        np.testing.assert_equal(recv_var_data,
+                                np.sum(send_data, axis=0)[np.newaxis, :])
 
     def test_run_send_data_no_data(self):
         data_shape = (1,)
@@ -360,7 +361,7 @@ class TestPyAsyncInjectorModelFloat(unittest.TestCase):
         num_steps = 1
 
         injector = Injector(shape=data_shape, dtype=dtype, size=size)
-        recv = Recv(shape=data_shape)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
 
@@ -369,11 +370,12 @@ class TestPyAsyncInjectorModelFloat(unittest.TestCase):
 
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
-        received_data = recv.var.get()
+        recv_var_data = recv.var.get()
 
         injector.stop()
 
-        np.testing.assert_equal(received_data, np.zeros(data_shape))
+        np.testing.assert_equal(recv_var_data,
+                                np.zeros(data_shape)[np.newaxis, :])
 
     def test_run_steps_blocking(self):
         np.random.seed(0)
@@ -386,65 +388,199 @@ class TestPyAsyncInjectorModelFloat(unittest.TestCase):
         num_send = num_steps
 
         injector = Injector(shape=data_shape, dtype=dtype, size=size)
-        recv = Recv(shape=data_shape)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
+        send_data = np.random.random(size=(num_send, ) + data_shape)
+
+        def thread_2_fn() -> None:
+            for send_data_single_item in send_data:
+                injector.send_data(send_data_single_item)
+
+        thread_2 = threading.Thread(target=thread_2_fn,
+                                    daemon=True)
+        thread_2.start()
+
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
-        for i in range(num_send):
-            injector.send_data(np.full(data_shape, 10))
-
-        injector.wait()
-
-        received_data = recv.var.get()
+        recv_var_data = recv.var.get()
 
         injector.stop()
 
-        np.testing.assert_equal(received_data, np.full(data_shape, 100))
+        np.testing.assert_equal(recv_var_data, send_data)
 
     def test_run_steps_non_blocking(self):
-        pass
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+
+        num_steps = 50
+        num_send = num_steps
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg()
+
+        send_data = np.random.random(size=(num_send,) + data_shape)
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for send_data_single_item in send_data:
+            injector.send_data(send_data_single_item)
+
+        injector.wait()
+
+        recv_var_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(recv_var_data, send_data)
 
     def test_run_steps_non_blocking_num_send_lt_num_steps(self):
-        pass
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+
+        num_steps = 50
+        num_send = 40
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg()
+
+        send_data = np.random.random(size=(num_send,) + data_shape)
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for send_data_single_item in send_data:
+            injector.send_data(send_data_single_item)
+
+        injector.wait()
+
+        recv_var_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(recv_var_data[:num_send, :], send_data)
 
     def test_run_steps_non_blocking_num_send_gt_num_steps(self):
-        pass
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+
+        num_steps = 50
+        num_send = 60
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg()
+
+        send_data = np.random.random(size=(num_send,) + data_shape)
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for send_data_single_item in send_data:
+            injector.send_data(send_data_single_item)
+
+        injector.wait()
+
+        recv_var_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(recv_var_data, send_data[:num_steps, :])
+
+    @unittest.skip("Will hang with InjectorSendMode.BLOCKING.")
+    def test_run_steps_non_blocking_num_send_gt_num_steps_plus_size(self):
+        np.random.seed(0)
+
+        data_shape = (1,)
+        size = 10
+        dtype = float
+
+        num_steps = 50
+        num_send = 65
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps, blocking=False)
+        run_cfg = Loihi2SimCfg()
+
+        send_data = np.random.random(size=(num_send,) + data_shape)
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for send_data_single_item in send_data:
+            injector.send_data(send_data_single_item)
+
+        injector.wait()
+
+        recv_var_data = recv.var.get()
+
+        injector.stop()
+
+        print("send_data")
+        print(send_data[:num_steps, :])
+        print("recv_var_data")
+        print(recv_var_data)
+
+        np.testing.assert_equal(recv_var_data, send_data[:num_steps, :])
 
     def test_run_continuous(self):
-        pass
+        np.random.seed(0)
 
-    # def test_run_steps_non_blocking_multiple_time_steps(self):
-    #     """"""
-    #     np.random.seed(0)
-    #
-    #     data_shape = (1,)
-    #     size = 10
-    #     dtype = float
-    #     num_steps = 50
-    #     num_send = 100
-    #
-    #     injector = AsyncInjector(shape=data_shape, dtype=dtype, size=size)
-    #     recv = Recv(shape=data_shape)
-    #
-    #     injector.out_port.connect(recv.in_port)
-    #
-    #     run_condition = RunSteps(num_steps=num_steps, blocking=False)
-    #     run_cfg = Loihi2SimCfg()
-    #
-    #     injector.run(condition=run_condition, run_cfg=run_cfg)
-    #
-    #     for i in range(num_send):
-    #         injector.send_data(np.full(data_shape, 10))
-    #
-    #     injector.wait()
-    #
-    #     received_data = recv.var.get()
-    #
-    #     injector.stop()
-    #
-    #     np.testing.assert_equal(received_data, np.full(data_shape, 100))
+        data_shape = (1,)
+        size = 10
+        dtype = float
+
+        num_send = 50
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        recv = Recv(shape=data_shape, buffer_size=num_send)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunContinuous()
+        run_cfg = Loihi2SimCfg()
+
+        send_data = np.random.random(size=(num_send,) + data_shape)
+
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        for send_data_single_item in send_data:
+            injector.send_data(send_data_single_item)
+
+        injector.pause()
+        injector.wait()
+
+        recv_var_data = recv.var.get()
+
+        injector.stop()
+
+        np.testing.assert_equal(recv_var_data[:num_send//10],
+                                send_data[:num_send//10])
