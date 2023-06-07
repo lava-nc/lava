@@ -503,12 +503,17 @@ class PyOutPortVectorSparse(PyOutPort):
         data_length: np.ndarray = np.array([len(data.flatten())],
                                            dtype=np.int32)
         for csp_port in self.csp_ports:
-            data_length.resize(csp_port.shape)
-            data_clone.resize(csp_port.shape)
-            indices_clone.resize(csp_port.shape)
-            csp_port.send(data_length)
-            csp_port.send(data_clone)
-            csp_port.send(indices_clone)
+            if csp_port.is_msg_size_static():
+                data_length.resize(csp_port.shape)
+                data_clone.resize(csp_port.shape)
+                indices_clone.resize(csp_port.shape)
+                csp_port.send(data_length)
+                csp_port.send(data_clone)
+                csp_port.send(indices_clone)
+            else:
+                csp_port.send(np.concatenate([data_length,
+                                             data_clone,
+                                             indices_clone]))
 
 
 class PyOutPortScalarDense(PyOutPort):
