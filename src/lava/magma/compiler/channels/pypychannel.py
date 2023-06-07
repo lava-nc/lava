@@ -8,6 +8,9 @@ from multiprocessing import Semaphore
 from queue import Queue, Empty
 from threading import BoundedSemaphore, Condition, Thread
 from time import time
+from scipy.sparse import csr_matrix
+from lava.utils.sparse import find
+
 
 import numpy as np
 from lava.magma.compiler.channels.interfaces import (
@@ -59,7 +62,7 @@ class CspSendPort(AbstractCspSendPort):
         self._done = False
         self._array = []
         self._semaphore = None
-        self.observer = None
+        self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
 
     @property
@@ -125,6 +128,10 @@ class CspSendPort(AbstractCspSendPort):
         """
         if data.shape != self._shape:
             raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
+
+        if isinstance(data, csr_matrix):
+            data = find(data, explicit_zeros=True)[2]
+
         self._semaphore.acquire()
         self._array[self._idx][:] = data[:]
         self._idx = (self._idx + 1) % self._size
@@ -203,7 +210,7 @@ class CspRecvPort(AbstractCspRecvPort):
         self._done = False
         self._array = []
         self._queue = None
-        self.observer = None
+        self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
 
     @property
@@ -304,26 +311,30 @@ class CspSelector:
         with self._cv:
             self._cv.notify_all()
 
-    def _set_observer(self, channel_actions, observer):
+    @staticmethod
+    def _set_observer(
+            channel_actions: ty.Tuple,
+            observer: ty.Union[ty.Callable[[], ty.Any], None]) -> None:
         for channel, _ in channel_actions:
             channel.observer = observer
 
     def select(
             self,
-            *args: ty.Tuple[
-                ty.Union[CspSendPort, CspRecvPort], ty.Callable[[], ty.Any]
+            *channel_actions: ty.Tuple[
+                ty.Union[CspSendPort, CspRecvPort],
+                ty.Callable[[], ty.Any]
             ],
-    ):
+    ) -> None:
         """
         Wait for any channel to become ready, then execute the corresponding
         callable and return the result.
         """
         with self._cv:
-            self._set_observer(args, self._changed)
+            self._set_observer(channel_actions, self._changed)
             while True:
-                for channel, action in args:
+                for channel, action in channel_actions:
                     if channel.probe():
-                        self._set_observer(args, None)
+                        self._set_observer(channel_actions, None)
                         return action()
                 self._cv.wait()
 

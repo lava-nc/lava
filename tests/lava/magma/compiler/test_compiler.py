@@ -66,7 +66,6 @@ class ProcC(AbstractProcess):
 
 class MockRuntimeService:
     __name__ = "MockRuntimeService"
-    pass
 
 
 # Define minimal Protocol to be implemented
@@ -436,9 +435,6 @@ class TestCompiler(unittest.TestCase):
         # Create some mock Processes.
         proc1 = Mock(spec_set=AbstractProcess)
         proc2 = Mock(spec_set=AbstractProcess)
-        proc3 = Mock(spec_set=AbstractProcess)
-        proc4 = Mock(spec_set=AbstractProcess)
-        proc5 = Mock(spec_set=AbstractProcess)
 
         # Create some Builders.
         py_builder1 = PyProcessBuilder(AbstractPyProcessModel, 0)

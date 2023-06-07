@@ -106,10 +106,10 @@ class ChannelBuildersFactory:
                 src_pt_init.connected_port_type = LoihiConnectedPortType.C_PY
                 dst_pt_init.connected_port_type = LoihiConnectedPortType.C_PY
                 if ch_type is ChannelType.PyC:
-                    p_port, c_port = src_port, dst_port
+                    p_port = src_port
                     pi = dst_pt_init
                 else:
-                    c_port, p_port = src_port, dst_port
+                    p_port = dst_port
                     pi = src_pt_init
                 lt = getattr(p_port.process.model_class, p_port.name).cls
                 if lt in [PyInPort.VEC_DENSE, PyOutPort.VEC_DENSE]:

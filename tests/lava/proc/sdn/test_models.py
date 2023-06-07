@@ -24,13 +24,13 @@ class TestSigmaModels(unittest.TestCase):
         num_steps: int,
         tag: str = 'fixed_pt'
     ) -> Tuple[np.ndarray, np.ndarray]:
-        input = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
+        input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
         if tag == 'fixed_pt':
-            input *= (1 << 12)
-            input = input.astype(int)
-        input[:, 1:] -= input[:, :-1]
+            input_ *= (1 << 12)
+            input_ = input_.astype(int)
+        input_[:, 1:] -= input_[:, :-1]
 
-        source = io.source.RingBuffer(data=input)
+        source = io.source.RingBuffer(data=input_)
         sigma = Sigma(shape=(1,))
         sink = io.sink.RingBuffer(shape=sigma.shape, buffer=num_steps)
 
@@ -44,18 +44,18 @@ class TestSigmaModels(unittest.TestCase):
         output = sink.data.get()
         sigma.stop()
 
-        return input, output
+        return input_, output
 
     def test_sigma_decoding_fixed(self) -> None:
         """Test sigma decoding with cumulative sum."""
         num_steps = 100
 
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             tag='fixed_pt'
         )
 
-        error = np.abs(np.cumsum(input, axis=1) - output).max()
+        error = np.abs(np.cumsum(input_, axis=1) - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -65,12 +65,12 @@ class TestSigmaModels(unittest.TestCase):
         """Test sigma decoding with cumulative sum."""
         num_steps = 100
 
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             tag='floating_pt'
         )
 
-        error = np.abs(np.cumsum(input, axis=1) - output).max()
+        error = np.abs(np.cumsum(input_, axis=1) - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -90,11 +90,11 @@ class TestSigmaDeltaModels(unittest.TestCase):
         cum_error: bool,
         tag: str = 'fixed_pt',
     ) -> Tuple[np.ndarray, np.ndarray]:
-        input = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        input *= (1 << spike_exp + state_exp)
-        input[:, 1:] -= input[:, :-1]
+        input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
+        input_ *= (1 << spike_exp + state_exp)
+        input_[:, 1:] -= input_[:, :-1]
 
-        source = io.source.RingBuffer(data=input.astype(int) * (1 << 6))
+        source = io.source.RingBuffer(data=input_.astype(int) * (1 << 6))
         sdn = SigmaDelta(
             shape=(1,),
             vth=vth,
@@ -115,10 +115,10 @@ class TestSigmaDeltaModels(unittest.TestCase):
         output = sink.data.get()
         sdn.stop()
 
-        input = np.cumsum(input, axis=1)
+        input_ = np.cumsum(input_, axis=1)
         output = np.cumsum(output, axis=1)
 
-        return input, output
+        return input_, output
 
     def test_reconstruction_fixed(self) -> None:
         """Tests fixed point sigma delta reconstruction. The max absolute
@@ -128,7 +128,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         spike_exp = 6
         state_exp = 6
         vth = 10 << (spike_exp + state_exp)
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.UNIT,
@@ -137,7 +137,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             cum_error=False,
         )
 
-        error = np.abs(input - output).max()
+        error = np.abs(input_ - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -151,7 +151,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         spike_exp = 0
         state_exp = 0
         vth = 10
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.UNIT,
@@ -161,7 +161,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             tag='floating_pt'
         )
 
-        error = np.abs(input - output).max()
+        error = np.abs(input_ - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -175,7 +175,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         spike_exp = 6
         state_exp = 6
         vth = 10 << (spike_exp + state_exp)
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.UNIT,
@@ -184,7 +184,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             cum_error=True,
         )
 
-        error = np.abs(input - output).max()
+        error = np.abs(input_ - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -198,7 +198,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         spike_exp = 0
         state_exp = 0
         vth = 10
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.UNIT,
@@ -208,7 +208,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             tag='floating_pt'
         )
 
-        error = np.abs(input - output).max()
+        error = np.abs(input_ - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -222,7 +222,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         spike_exp = 0
         state_exp = 0
         vth = 10 << (spike_exp + state_exp)
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.RELU,
@@ -231,7 +231,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             cum_error=False,
         )
 
-        error = np.abs(np.maximum(input, 0) - output).max()
+        error = np.abs(np.maximum(input_, 0) - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')
@@ -245,7 +245,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         vth = 10
         spike_exp = 0
         state_exp = 0
-        input, output = self.run_test(
+        input_, output = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.RELU,
@@ -255,7 +255,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
             tag='floating_pt',
         )
 
-        error = np.abs(np.maximum(input, 0) - output).max()
+        error = np.abs(np.maximum(input_, 0) - output).max()
 
         if verbose:
             print(f'Max abs error = {error}')

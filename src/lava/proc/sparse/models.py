@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix, vstack, find
-import warnings
 from lava.magma.core.model.py.connection import (
     LearningConnectionModelFloat,
     LearningConnectionModelBitApproximate,
@@ -209,6 +208,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: csr_matrix = None
+    delays: csr_matrix = None
+    a_buff: np.ndarray = None
 
     def calc_act(self, s_in) -> np.ndarray:
         """
@@ -245,6 +247,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         weights.
         """
         # Can only start at 1, as delays==0 raises inefficiency warning
+        if np.max(delays) == 0:
+            return weights
+
         weight_delay_from_1 = vstack([weights.multiply(delays == k)
                                       for k in range(1, np.max(delays) + 1)])
         # Create weight matrix at delays == 0

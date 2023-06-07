@@ -18,7 +18,6 @@ from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
 try:
     from nxcore.arch.base.nxboard import NxBoard
     from nxcore.graph.channel import Channel
-    from nxcore.graph.processes.phase_enums import Phase
     from nxcore.graph.processes.embedded.embedded_snip import EmbeddedSnip
 except ImportError:
     class NxBoard:

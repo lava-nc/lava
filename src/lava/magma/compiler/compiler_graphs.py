@@ -8,7 +8,6 @@ import inspect
 import itertools
 import os
 import pkgutil
-import re
 import sys
 import types
 import typing as ty
