@@ -210,6 +210,16 @@ class Runtime:
                         channel_builder.src_process.id,
                         channel_builder.src_port_initializer.name)
                     dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
+                else:
+                    channel = channel_builder.build(
+                        self._messaging_infrastructure
+                    )
+
+                    self._open_ports.append(channel.src_port)
+
+                    self._get_process_builder_for_process(
+                        channel_builder.src_process).set_csp_ports(
+                        [channel.src_port])
 
     def _build_sync_channels(self):
         """Builds the channels needed for synchronization between runtime

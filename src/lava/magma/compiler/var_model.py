@@ -254,7 +254,7 @@ class DecodeConfig:
 
 @dataclass
 class SpikeEncoder:
-    is_long: int
+    islong: int
     core: CoreEncoder
     axon: AxonEncoder
     chip: ChipEncoder
