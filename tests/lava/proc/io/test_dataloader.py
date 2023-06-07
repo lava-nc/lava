@@ -50,8 +50,8 @@ class DummyDataset:
     def __len__(self) -> int:
         return 10
 
-    def __getitem__(self, id: int) -> Tuple[np.ndarray, int]:
-        data = np.arange(np.prod(self.shape)).reshape(self.shape) + id
+    def __getitem__(self, id_: int) -> Tuple[np.ndarray, int]:
+        data = np.arange(np.prod(self.shape)).reshape(self.shape) + id_
         data = data % np.prod(self.shape)
         data = data.astype(self.dtype)
         label = id
@@ -59,11 +59,11 @@ class DummyDataset:
 
 
 class SpikeDataset(DummyDataset):
-    def __getitem__(self, id: int) -> Tuple[np.ndarray, int]:
-        data = np.arange(np.prod(self.shape)).reshape(self.shape[::-1]) + id
+    def __getitem__(self, id_: int) -> Tuple[np.ndarray, int]:
+        data = np.arange(np.prod(self.shape)).reshape(self.shape[::-1]) + id_
         data = data.transpose(np.arange(len(self.shape))[::-1]) % 13
         data = data >= 10
-        label = id
+        label = id_
         return data, label
 
 

@@ -4,7 +4,8 @@
 
 import typing as ty
 import numpy as np
-
+from scipy.sparse import csr_matrix, spmatrix
+from lava.utils.sparse import find
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
@@ -127,7 +128,9 @@ class Var(AbstractProcessMember):
                     f"."
                 )
 
-    def set(self, value: ty.Union[np.ndarray, str], idx: np.ndarray = None):
+    def set(self,
+            value: ty.Union[np.ndarray, str, spmatrix],
+            idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if self.aliased_var is not None:
@@ -142,6 +145,20 @@ class Var(AbstractProcessMember):
                         value = np.array(
                             list(value.encode("ascii")), dtype=np.int32
                         )
+                elif isinstance(value, spmatrix):
+                    value = value.tocsr()
+                    init_dst, init_src, init_val = find(self.init,
+                                                        explicit_zeros=True)
+                    dst, src, val = find(value, explicit_zeros=True)
+                    if value.shape != self.init.shape or \
+                            np.any(init_dst != dst) or \
+                            np.any(init_src != src) or \
+                            len(val) != len(init_val):
+                        raise ValueError("Indices and number of non-zero "
+                                         "elements must stay equal when using"
+                                         "set on a sparse matrix.")
+                    value = val
+
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -155,7 +172,7 @@ class Var(AbstractProcessMember):
         if self.aliased_var is not None:
             return self.aliased_var.get(idx)
         else:
-            if self.process.runtime:
+            if self.process and self.process.runtime:
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     if SupportTempChannel:
@@ -164,6 +181,11 @@ class Var(AbstractProcessMember):
                         # decode if var is string
                         return bytes(buffer.astype(int).tolist()).  \
                             decode("ascii")
+                if isinstance(self.init, csr_matrix):
+                    dst, src, _ = find(self.init)
+
+                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
+                    return ret
                 else:
                     return buffer
             else:

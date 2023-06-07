@@ -1,9 +1,9 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import numpy as np
-
+from scipy.sparse import csr_matrix, spmatrix, vstack, find
 from lava.magma.core.model.py.connection import (
     LearningConnectionModelFloat,
     LearningConnectionModelBitApproximate,
@@ -14,13 +14,13 @@ from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.dense.process import Dense, LearningDense, DelayDense
+from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.utils.weightutils import SignMode, determine_sign_mode,\
     truncate_weights, clip_weights
 
 
-class AbstractPyDenseModelFloat(PyLoihiProcessModel):
-    """Implementation of Conn Process with Dense synaptic connections in
+class AbstractPySparseModelFloat(PyLoihiProcessModel):
+    """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
@@ -30,12 +30,12 @@ class AbstractPyDenseModelFloat(PyLoihiProcessModel):
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
     # weights is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons)in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    # num_flat_input_neurons) in C-order (row major).
+    weights: csr_matrix = LavaPyType(csr_matrix, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
-        # The a_out sent on a each timestep is a buffered value from dendritic
+        # The a_out sent on each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff)
@@ -44,20 +44,21 @@ class AbstractPyDenseModelFloat(PyLoihiProcessModel):
             self.a_buff = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            self.a_buff = self.weights[:, s_in].sum(axis=1)
+            # A1: return as flattend array
+            self.a_buff = self.weights[:, s_in].sum(axis=1).A1
 
 
-@implements(proc=Dense, protocol=LoihiProtocol)
+@implements(proc=Sparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyDenseModelFloat(AbstractPyDenseModelFloat):
+class PySparseModelFloat(AbstractPySparseModelFloat):
     pass
 
 
-class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behavior bit-by-bit.
+class AbstractPySparseModelBitAcc(PyLoihiProcessModel):
+    """Implementation of Conn Process with Sparse synaptic connections that is
+    bit-accurate with Loihi's hardware implementation of Sparse, which means,
+    it reproduces Loihi behavior bit-by-bit.
     """
 
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -65,17 +66,16 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
     a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
+    weights: np.ndarray = LavaPyType(csr_matrix, np.int32, precision=8)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
-        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
     def run_spk(self):
-        self.weight_exp = self.proc_params.get("weight_exp", 0)
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
@@ -93,14 +93,13 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
         # The a_out sent at each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
-        self.a_buff = self.a_buff.astype(np.int32)
         self.a_out.send(self.a_buff)
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            a_accum = self.weights[:, s_in].sum(axis=1)
+            a_accum = self.weights[:, s_in].sum(axis=1).A1
         self.a_buff = (
             np.left_shift(a_accum, self.weight_exp)
             if self.weight_exp > 0
@@ -108,23 +107,30 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
         )
 
 
-@implements(proc=Dense, protocol=LoihiProtocol)
+@implements(proc=Sparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class PyDenseModelBitAcc(AbstractPyDenseModelBitAcc):
+class PySparseModelBitAcc(AbstractPySparseModelBitAcc):
     pass
 
 
-@implements(proc=LearningDense, protocol=LoihiProtocol)
+@implements(proc=LearningSparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyLearningDenseModelFloat(
-        LearningConnectionModelFloat, AbstractPyDenseModelFloat):
-    """Implementation of Conn Process with Dense synaptic connections in
+class PyLearningSparseModelFloat(
+        LearningConnectionModelFloat, AbstractPySparseModelFloat):
+    """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
     fixed point implementation.
+
+    Warning: LearningSparse on CPU is not offering any memory usage benefits
+    over using LearningDense.
     """
+
+    # Overwrite dense PyTypes with sparse
+    tag_1: csr_matrix = LavaPyType(csr_matrix, float)
+    tag_2: csr_matrix = LavaPyType(csr_matrix, float)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -139,20 +145,26 @@ class PyLearningDenseModelFloat(
             self.a_buff = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            self.a_buff = self.weights[:, s_in].sum(axis=1)
+            self.a_buff = self.weights[:, s_in].sum(axis=1).A1
 
         self.recv_traces(s_in)
 
 
-@implements(proc=LearningDense, protocol=LoihiProtocol)
+@implements(proc=LearningSparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_approximate_loihi", "fixed_pt")
-class PyLearningDenseModelBitApproximate(
-        LearningConnectionModelBitApproximate, AbstractPyDenseModelBitAcc):
-    """Implementation of Conn Process with Dense synaptic connections that
-    uses similar constraints as Loihi's hardware implementation of dense
+class PyLearningSparseModelBitApproximate(
+        LearningConnectionModelBitApproximate, AbstractPySparseModelBitAcc):
+    """Implementation of Conn Process with Sparse synaptic connections that
+    uses similar constraints as Loihi's hardware implementation of sparse
     connectivity but does not reproduce Loihi bit-by-bit.
+
+    Warning: LearningSparse on CPU is not offering any memory usage benefits
+    over using LearningDense.
     """
+    # Overwrite dense PyTypes with sparse
+    tag_1: csr_matrix = LavaPyType(csr_matrix, int, precision=8)
+    tag_2: csr_matrix = LavaPyType(csr_matrix, int, precision=6)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -181,161 +193,9 @@ class PyLearningDenseModelBitApproximate(
             a_accum = self.weights.dot(s_in)
         else:
             s_in = self.s_in.recv().astype(bool)
-            a_accum = self.weights[:, s_in].sum(axis=1)
+            a_accum = self.weights[:, s_in].sum(axis=1).A1
 
         self.a_buff = (
-            np.left_shift(a_accum, self.weight_exp).astype(self.a_buff.dtype)
-            if self.weight_exp > 0
-            else np.right_shift(
-                a_accum, -self.weight_exp).astype(self.a_buff.dtype)
-        )
-
-        self.recv_traces(s_in)
-
-
-class AbstractPyDelayDenseModel(PyLoihiProcessModel):
-    """Abstract Conn Process with Dense synaptic connections which incorporates
-    delays into the Conn Process.
-    """
-
-    @staticmethod
-    def get_del_wgts(weights, delays) -> np.ndarray:
-        """
-        Use self.weights and self.delays to create a matrix where the
-        weights are separated by delay. Returns 2D matrix of form
-        (num_flat_output_neurons * max_delay + 1, num_flat_input_neurons) where
-        del_wgts[
-            k * num_flat_output_neurons : (k + 1) * num_flat_output_neurons, :
-        ]
-        contains the weights for all connections with a delay equal to k.
-        This allows for the updating of the activation buffer and updating
-        weights.
-        """
-        return np.vstack([
-            np.where(delays == k, weights, 0)
-            for k in range(np.max(delays) + 1)
-        ])
-
-    def calc_act(self, s_in) -> np.ndarray:
-        """
-        Calculate the activations by performing del_wgts * s_in. This matrix
-        is then summed across each row to get the activations to the output
-        neurons for different delays. This activation vector is reshaped to a
-        matrix of the form
-        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
-        which is then transposed to get the activation matrix.
-        """
-        return np.reshape(
-            np.sum(self.get_del_wgts(self.weights,
-                                     self.delays) * s_in, axis=1),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
-
-    def update_act(self, s_in):
-        """
-        Updates the activations for the connection.
-        Clears first column of a_buff and rolls them to the last column.
-        Finally, calculates the activations for the current time step and adds
-        them to a_buff.
-        This order of operations ensures that delays of 0 correspond to
-        the next time step.
-        """
-        self.a_buff[:, 0] = 0
-        self.a_buff = np.roll(self.a_buff, -1)
-        self.a_buff += self.calc_act(s_in)
-
-
-@implements(proc=DelayDense, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
-    """Implementation of Conn Process with Dense synaptic connections in
-    floating point precision. This short and simple ProcessModel can be used
-    for quick algorithmic prototyping, without engaging with the nuances of a
-    fixed point implementation. DelayDense incorporates delays into the Conn
-    Process.
-    """
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
-    # weights is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, float)
-    # delays is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
-    delays: np.ndarray = LavaPyType(np.ndarray, int)
-    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
-
-    def run_spk(self):
-        # The a_out sent on a each timestep is a buffered value from dendritic
-        # accumulation at timestep t-1. This prevents deadlocking in
-        # networks with recurrent connectivity structures.
-        self.a_out.send(self.a_buff[:, 0])
-        if self.num_message_bits.item() > 0:
-            s_in = self.s_in.recv()
-        else:
-            s_in = self.s_in.recv().astype(bool)
-        self.update_act(s_in)
-
-
-@implements(proc=DelayDense, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("bit_accurate_loihi", "fixed_pt")
-class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit. DelayDense incorporates delays into
-    the Conn Process. Loihi 2 has a maximum of 6 bits for delays, meaning a
-    spike can be delayed by 0 to 63 time steps."""
-
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
-    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=16)
-    a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
-    # weights is a 2D matrix of form (num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    delays: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=6)
-    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
-
-    def __init__(self, proc_params):
-        super().__init__(proc_params)
-        # Flag to determine whether weights have already been scaled.
-        self.weights_set = False
-
-    def run_spk(self):
-        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
-
-        # Since this Process has no learning, weights are assumed to be static
-        # and only require scaling on the first timestep of run_spk().
-        if not self.weights_set:
-            num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
-            sign_mode: SignMode = self.proc_params.get("sign_mode") \
-                or determine_sign_mode(self.weights)
-
-            self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
-            self.weights = truncate_weights(self.weights,
-                                            sign_mode,
-                                            num_weight_bits)
-            self.weights_set = True
-
-            # Check if delays are within Loihi 2 constraints
-            if np.max(self.delays) > 63:
-                raise ValueError("DelayDense Process 'delays' expects values "
-                                 f"between 0 and 63 for Loihi, got "
-                                 f"{self.delays}.")
-
-        # The a_out sent at each timestep is a buffered value from dendritic
-        # accumulation at timestep t-1. This prevents deadlocking in
-        # networks with recurrent connectivity structures.
-        self.a_out.send(self.a_buff[:, 0])
-        if self.num_message_bits.item() > 0:
-            s_in = self.s_in.recv()
-        else:
-            s_in = self.s_in.recv().astype(bool)
-
-        a_accum = self.calc_act(s_in)
-        self.a_buff[:, 0] = 0
-        self.a_buff = np.roll(self.a_buff, -1)
-        self.a_buff += (
             np.left_shift(a_accum, self.weight_exp)
             if self.weight_exp > 0
             else np.right_shift(a_accum, -self.weight_exp)
@@ -344,12 +204,12 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
         self.recv_traces(s_in)
 
 
-class AbstractPyDelayDenseModel(PyLoihiProcessModel):
-    """Abstract Conn Process with Dense synaptic connections which incorporates
+class AbstractPyDelaySparseModel(PyLoihiProcessModel):
+    """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
     """
-    weights: np.ndarray = None
-    delays: np.ndarray = None
+    weights: csr_matrix = None
+    delays: csr_matrix = None
     a_buff: np.ndarray = None
 
     def calc_act(self, s_in) -> np.ndarray:
@@ -363,13 +223,13 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         # This activation vector is reshaped to a matrix of the form
         # (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
         #  which is then transposed to get the activation matrix.
-        return np.reshape(
-            np.sum(self.get_delay_wgts_mat(self.weights,
-                                           self.delays) * s_in, axis=1),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
+        return np.reshape(self.get_delay_wgts_mat(self.weights,
+                                                  self.delays).dot(s_in),
+                          (np.max(self.delays) + 1,
+                          self.weights.shape[0])).T
 
     @staticmethod
-    def get_delay_wgts_mat(weights, delays) -> np.ndarray:
+    def get_delay_wgts_mat(weights, delays) -> spmatrix:
         """
         Create a matrix where the synaptic weights are separated
         by their corresponding delays. The first matrix contains all the
@@ -386,10 +246,18 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         This allows for the updating of the activation buffer and updating
         weights.
         """
-        return np.vstack([
-            np.where(delays == k, weights, 0)
-            for k in range(np.max(delays) + 1)
-        ])
+        # Can only start at 1, as delays==0 raises inefficiency warning
+        if np.max(delays) == 0:
+            return weights
+
+        weight_delay_from_1 = vstack([weights.multiply(delays == k)
+                                      for k in range(1, np.max(delays) + 1)])
+        # Create weight matrix at delays == 0
+        r, c, _ = find(delays)
+        weight_delay_zeros = weights.copy()
+        weight_delay_zeros[r, c] = 0
+        weight_delay_zeros.eliminate_zeros()
+        return vstack([weight_delay_zeros, weight_delay_from_1])
 
     def update_act(self, s_in):
         """
@@ -405,14 +273,14 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         self.a_buff += self.calc_act(s_in)
 
 
-@implements(proc=DelayDense, protocol=LoihiProtocol)
+@implements(proc=DelaySparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
-    """Implementation of Conn Process with Dense synaptic connections in
+class PyDelaySparseModelFloat(AbstractPyDelaySparseModel):
+    """Implementation of Conn Process with Sparse synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
-    fixed point implementation. DelayDense incorporates delays into the Conn
+    fixed point implementation. DelaySparse incorporates delays into the Conn
     Process.
     """
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -420,15 +288,15 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    weights: np.ndarray = LavaPyType(csr_matrix, float)
     # delays is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons) in C-order (row major).
-    delays: np.ndarray = LavaPyType(np.ndarray, int)
+    delays: np.ndarray = LavaPyType(csr_matrix, int)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
         # The a_out sent on each timestep is a buffered value from dendritic
-        # accumulation at timestep t-1. This prevents deadlocking in
+        # accumulation at timestep t-1; this prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff[:, 0])
         if self.num_message_bits.item() > 0:
@@ -438,13 +306,13 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
         self.update_act(s_in)
 
 
-@implements(proc=DelayDense, protocol=LoihiProtocol)
+@implements(proc=DelaySparse, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit. DelayDense incorporates delays into
+class PyDelaySparseModelBitAcc(AbstractPyDelaySparseModel):
+    """Implementation of Conn Process with Sparse synaptic connections that is
+    bit-accurate with Loihi's hardware implementation of Sparse, which means,
+    it mimics Loihi behaviour bit-by-bit. DelaySparse incorporates delays into
     the Conn Process. Loihi 2 has a maximum of 6 bits for delays, meaning a
     spike can be delayed by 0 to 63 time steps."""
 
@@ -453,8 +321,8 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
     a_buff: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
     # weights is a 2D matrix of form (num_flat_output_neurons,
     # num_flat_input_neurons) in C-order (row major).
-    weights: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=8)
-    delays: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=6)
+    weights: csr_matrix = LavaPyType(csr_matrix, np.int32, precision=8)
+    delays: csr_matrix = LavaPyType(csr_matrix, np.int32, precision=6)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def __init__(self, proc_params):
@@ -480,7 +348,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
 
             # Check if delays are within Loihi 2 constraints
             if np.max(self.delays) > 63:
-                raise ValueError("DelayDense Process 'delays' expects values "
+                raise ValueError("DelaySparse Process 'delays' expects values "
                                  f"between 0 and 63 for Loihi, got "
                                  f"{self.delays}.")
 

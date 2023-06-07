@@ -48,21 +48,21 @@ class Decorators(unittest.TestCase):
         # We must pass a class, not an instance or anything else
         with self.assertRaises(TypeError):
             @implements(proc=TestProc(), protocol=TestProtocol)  # type: ignore
-            class TestModel(AbstractProcessModel):  # type: ignore
+            class TestModel(AbstractProcessModel):  # pylint: disable=W0612
                 def run(self):
                     pass
 
         # Same for 'protocol'
         with self.assertRaises(TypeError):
             @implements(proc=TestProc, protocol=TestProtocol())  # type: ignore
-            class TestModel2(AbstractProcessModel):
+            class TestModel2(AbstractProcessModel):  # pylint: disable=W0612
                 def run(self):
                     pass
 
         # And we can only decorate a subclass of 'AbstractProcessModel'
         with self.assertRaises(AssertionError):
             @implements(proc=TestProc, protocol=TestProtocol)
-            class TestProcess2(AbstractProcess):
+            class TestProcess2(AbstractProcess):  # pylint: disable=W0612
                 pass
 
     def test_implements_subclassing(self):
@@ -125,7 +125,7 @@ class Decorators(unittest.TestCase):
         # attributes must fail
         with self.assertRaises(AssertionError):
             @implements(protocol=TestProtocol2)
-            class SubTestModel(TestModel):
+            class SubTestModel(TestModel):  # pylint: disable=W0612
                 pass
 
     def test_requires(self):
@@ -190,7 +190,7 @@ class Decorators(unittest.TestCase):
         # We must decorate a ProcessModel and nothing else:
         with self.assertRaises(AssertionError):
             @requires(CPU)
-            class Something(AbstractProcess):
+            class Something(AbstractProcess):  # pylint: disable=W0612
                 pass
 
         # We must decorate a ProcessModel with an 'AbstractResource' class
@@ -198,7 +198,7 @@ class Decorators(unittest.TestCase):
         with self.assertRaises(TypeError):
 
             @requires(CPU())  # type: ignore
-            class TestModel(AbstractProcessModel):
+            class TestModel(AbstractProcessModel):  # pylint: disable=W0612
                 def run(self):
                     pass
 
@@ -241,20 +241,20 @@ class Decorators(unittest.TestCase):
         # Only decorating ProcessModels is allowed
         with self.assertRaises(AssertionError):
             @tag('some-tag')
-            class SomeClass(AbstractProcess):
+            class SomeClass(AbstractProcess):  # pylint: disable=W0612
                 pass
 
         # Tags should be just comma-separated keywords
         with self.assertRaises(AssertionError):
             @tag('keyword1', ['keyword2', 'keyword3'])
-            class TestModel2(AbstractProcessModel):
+            class TestModel2(AbstractProcessModel):  # pylint: disable=W0612
                 def run(self):
                     pass
 
         # Tags should be just comma-separated keywords
         with self.assertRaises(AssertionError):
             @tag('tag1', [['tag2'], 'tag4'])
-            class SomeOtherClass(AbstractProcess):
+            class SomeOtherClass(AbstractProcess):  # pylint: disable=W0612
                 pass
 
 

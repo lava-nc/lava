@@ -18,11 +18,6 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
-"""
-This test checks if Process with Loihi Protocol works properly with
-process with Async Protocol.
-"""
-
 
 class AsyncProcessDest(AbstractProcess):
     def __init__(self, **kwargs):
@@ -92,6 +87,10 @@ class LoihiProcessModel(PyLoihiProcessModel):
 
 
 class TestProcess(unittest.TestCase):
+    """This test checks if Process with Loihi Protocol works properly with
+    process with Async Protocol.
+    """
+
     def test_async_with_loihi_protocol(self):
         """
         Test is to send the data to AsyncProcessSrc from AsyncProcessSrc via

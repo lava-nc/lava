@@ -5,6 +5,7 @@
 import typing as ty
 
 import numpy as np
+from scipy.sparse import csr_matrix
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 
 from lava.magma.runtime.message_infrastructure import (
@@ -392,6 +393,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 var[:] = v.value
             elif issubclass(lt.cls, (int, float, str)):
                 var = v.value
+            elif issubclass(lt.cls, (csr_matrix)):
+                if isinstance(v.value, int):
+                    var = csr_matrix(v.shape, dtype=lt.d_type)
+                    var[:] = v.value
+                else:
+                    var = v.value
             else:
                 raise NotImplementedError(
                     "Cannot initiliaze variable "

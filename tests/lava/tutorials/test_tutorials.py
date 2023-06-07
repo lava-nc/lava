@@ -5,7 +5,7 @@
 import glob
 import os
 import platform
-import subprocess  # noqa: S404
+import subprocess  # noqa S404
 import sys
 import tempfile
 import typing as ty
@@ -115,7 +115,8 @@ class TestTutorials(unittest.TestCase):
                 fout.name[0:-3],
                 notebook,
             ]
-            subprocess.check_call(args, env=env)  # noqa: S603
+            subprocess.check_call(args, env=env)  # nosec # noqa: S603
+
             fout.seek(0)
             return subprocess.run(["ipython", "-c", fout.read()],  # noqa  # nosec
                                   env=env)  # noqa  # nosec

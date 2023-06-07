@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 import sys
 import traceback
-import typing
 import typing as ty
 import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
@@ -19,6 +18,7 @@ from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        getTempRecvPort,
                                                        AbstractTransferPort)
 
+from scipy.sparse import csr_matrix
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.runtime.message_infrastructure.message_interface_enum import \
     ActorType
@@ -119,7 +119,7 @@ class Runtime:
                  loglevel: int = logging.WARNING):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
-        self._run_cond: typing.Optional[AbstractRunCondition] = None
+        self._run_cond: ty.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
         self._messaging_infrastructure_type: ActorType = \
@@ -134,6 +134,7 @@ class Runtime:
         self.runtime_to_service: ty.Iterable[SendPort] = []
         self.service_to_runtime: ty.Iterable[RecvPort] = []
         self._open_ports: ty.List[AbstractTransferPort] = []
+        self.num_steps: int = 0
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -531,6 +532,13 @@ class Runtime:
                 # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
                 data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
                 num_items: int = int(data_port.recv()[0].item())
+                if ev.dtype == csr_matrix:
+                    buffer = np.zeros(num_items)
+
+                    for i in range(num_items):
+                        buffer[i] = data_port.recv()[0]
+
+                    return buffer[idx] if idx else buffer
                 buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]

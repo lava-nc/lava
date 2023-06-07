@@ -54,7 +54,6 @@ class ProcB(AbstractProcess):
 
 class MockRuntimeService:
     __name__ = "MockRuntimeService"
-    pass
 
 
 # Define minimal Protocol to be implemented.
@@ -124,7 +123,7 @@ class TestPyProcCompiler(unittest.TestCase):
 
         # There should be three PyProcessBuilders...
         self.assertEqual(len(builders), 3)
-        for proc, builder in builders.items():
+        for builder in builders.values():
             self.assertIsInstance(builder, PyProcessBuilder)
         # ... one for each Process.
         b1 = ty.cast(PyProcessBuilder, builders[p1])

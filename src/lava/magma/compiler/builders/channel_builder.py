@@ -174,4 +174,3 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        pass
