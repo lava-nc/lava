@@ -54,7 +54,7 @@ class DummyDataset:
         data = np.arange(np.prod(self.shape)).reshape(self.shape) + id_
         data = data % np.prod(self.shape)
         data = data.astype(self.dtype)
-        label = id
+        label = id_
         return data, label
 
 
