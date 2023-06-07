@@ -307,7 +307,8 @@ bool FastDDSSubscriber::Probe() {
   MDataSeq mdata_seq;
   SampleInfoSeq infos;
   bool res = false;
-  if (ReturnCode_t::RETCODE_OK == reader_->read(mdata_seq, infos, 1)) {  // Flawfinder: ignore
+  if (ReturnCode_t::RETCODE_OK ==
+        reader_->read(mdata_seq, infos, 1)) {  // Flawfinder: ignore
     reader_->return_loan(mdata_seq, infos);
     res = true;
   }

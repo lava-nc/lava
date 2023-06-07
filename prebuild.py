@@ -27,6 +27,7 @@ class CMake:
         self.build_args = []
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
             self.parallel = multiprocessing.cpu_count()
+
     def _check_poetry(self):
         exec_code = self.env.get('_', "").rsplit('/')[-1]
         if exec_code == 'poetry':
