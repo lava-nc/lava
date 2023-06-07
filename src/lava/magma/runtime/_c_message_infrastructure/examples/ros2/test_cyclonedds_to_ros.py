@@ -28,7 +28,7 @@ def test_ddschannel():
 
     send_port = dds_channel.src_port
     send_port.start()
-    for i in range(100):
+    for _ in range(100):
         send_port.send(prepare_data())
         time.sleep(0.1)
     send_port.join()

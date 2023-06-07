@@ -58,7 +58,7 @@ class SystemProcess(mp.Process):
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
 
-    def join(self):
+    def join(self, timeout=None):
         if not self._is_done:
             super().join()
             super().close()

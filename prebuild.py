@@ -25,6 +25,8 @@ class CMake:
             if self.from_cd_action and self.from_poetry else ["cmake"]
         self.cmake_args = []
         self.build_args = []
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+            self.parallel = multiprocessing.cpu_count()
 
     def _check_poetry(self):
         exec_code = self.env.get('_', "").rsplit('/')[-1]
@@ -67,7 +69,6 @@ class CMake:
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            self.parallel = multiprocessing.cpu_count()
             self.build_args += [f"-j{self.parallel}"]
 
     def run(self):

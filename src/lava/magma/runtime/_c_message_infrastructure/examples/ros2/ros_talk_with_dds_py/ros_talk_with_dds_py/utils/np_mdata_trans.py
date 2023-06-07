@@ -46,7 +46,7 @@ def nparray_to_metadata(np_array):
     metadata.elsize = np_array.itemsize
     metadata.total_size = np_array.size
     shape_list = list(np_array.shape)
-    for i in range(5 - len(shape_list)):
+    for _ in range(5 - len(shape_list)):
         shape_list.append(0)
     metadata.dims = shape_list
     strides_list = list(np_array.strides)

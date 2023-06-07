@@ -182,11 +182,11 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
              topic_name_.c_str());
   dds::sub::LoanedSamples<ddsmetadata::msg::DDSMetaData> samples;
   if (keep) {
-    while ((samples = selector_->read()).length() <= 0) {
+    while ((samples = selector_->read()).length() <= 0) {  // Flawfinder: ignore
       helper::Sleep();
     }
   } else {
-    while ((samples = selector_->take()).length() <= 0) {
+    while ((samples = selector_->take()).length() <= 0) {  // Flawfinder: ignore
       helper::Sleep();
     }
   }

@@ -32,7 +32,7 @@ def actor_stop(name):
 def recv_proc(*args, **kwargs):
     port = kwargs.pop("port")
     port.start()
-    for i in range(loop_number):
+    for _ in range(loop_number):
         path, recv_port = getTempRecvPort()
         recv_port.start()
         port.send(np.array([path]))
@@ -46,7 +46,7 @@ def recv_proc(*args, **kwargs):
 def send_proc(*args, **kwargs):
     port = kwargs.pop("port")
     port.start()
-    for i in range(loop_number):
+    for _ in range(loop_number):
         path = port.recv()
         send_port = getTempSendPort(str(path[0]))
         send_port.start()

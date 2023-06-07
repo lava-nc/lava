@@ -114,7 +114,6 @@ void RwSharedMemory::Close() {
 void SharedMemManager::DeleteAllSharedMemory() {
   if (alloc_pid_ != getpid())
     return;
-  int result = 0;
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of shm to free: %zd.\n",
              shm_fd_strs_.size());
   LAVA_DEBUG(LOG_SMMP, "Delete: Number of sem to free: %zd.\n",
