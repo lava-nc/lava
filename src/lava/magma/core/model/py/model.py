@@ -121,14 +121,14 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             addr_path = self.service_to_process.recv()
             data_port = getTempSendPort(str(addr_path[0]))
             data_port.start()
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 data_port.send(enum_to_np(var))
             elif isinstance(var, np.ndarray):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
             elif isinstance(var, csr_matrix):
-                print("model  get====")
-                data_port.send(var.data)
+                _, _, data = find(var, explicit_zeros=True)
+                data_port.send(data)
             elif isinstance(var, str):
                 data_port.send(np.array(var, dtype=str))
             data_port.join()
@@ -172,7 +172,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             self.process_to_service.send(np.array([addr_path]))
             buffer = data_port.recv()
             data_port.join()
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 buffer = buffer[0]
                 if isinstance(var, int):
                     setattr(self, var_name, buffer.item())
@@ -184,7 +184,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, csr_matrix):
-                print("model set =====")
                 dst, src, _ = find(var)
                 var = csr_matrix((buffer, (dst, src)), var.shape)
                 setattr(self, var_name, var)

@@ -536,10 +536,8 @@ class Runtime:
                 num_items: int = int(data_port.recv()[0].item())
                 if ev.dtype == csr_matrix:
                     buffer = np.zeros(num_items)
-
                     for i in range(num_items):
                         buffer[i] = data_port.recv()[0]
-
                     return buffer[idx] if idx else buffer
                 buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):

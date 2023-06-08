@@ -6,7 +6,6 @@ from lava.magma.runtime.message_infrastructure.message_interface_enum \
 from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
 
-
 class MessageInfrastructureFactory:
     """Creates the message infrastructure instance based on type"""
 
