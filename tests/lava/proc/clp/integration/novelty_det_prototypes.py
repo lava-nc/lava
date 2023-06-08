@@ -293,7 +293,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
             # point values
             weights_proto = weights_proto * 2 ** b_fraction
 
-            # Novelty detection input connection weights (all-to-one connections)
+            # Novelty detection input connection weights (all-to-one
+            # connections)
             weights_in_aval = np.ones(shape=(1, n_features))
             weights_out_aval = np.ones(shape=(1, n_protos))
 
@@ -373,7 +374,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
                              exception_proc_model_map=exception_map)
             run_cond = RunSteps(num_steps=t_run)
 
-            return data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond
+            return data_input, nvl_det, prototypes, dense_proto, run_cfg, \
+                run_cond
 
         def test_nvl_detection_triggers_one_shot_learning(self):
             # Params
@@ -469,10 +471,6 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         # Trace decay constants
         x1_tau = 0
-        y1_tau = 127
-
-        # Impulses
-        y1_impulse = 64
 
         # Epoch length
         t_epoch = 1
@@ -537,7 +535,6 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         monitor_nvl = Monitor()
         monitor_protos = Monitor()
         monitor_weights = Monitor()
-        monitor_y1 = Monitor()
         monitor_x1_trace = Monitor()
 
         # Connections
@@ -578,7 +575,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         # Get results
         result_nvl = monitor_nvl.get_data()
-        result_nvl = result_nvl[nvl_det.name][nvl_det.novelty_detected_out.name].T
+        result_nvl = result_nvl[nvl_det.name][
+            nvl_det.novelty_detected_out.name].T
 
         result_protos = monitor_protos.get_data()
         result_protos = result_protos[prototypes.name][prototypes.s_out.name]
@@ -599,8 +597,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         print(result_nvl)
         np.testing.assert_array_equal(result_nvl, expected_nvl)
 
-        exp_x1_0 = inp_pattern[0, :]/2
-        exp_x1_1 = inp_pattern[1, :]/2
+        exp_x1_0 = inp_pattern[0, :] / 2
+        exp_x1_1 = inp_pattern[1, :] / 2
 
         expected_x1 = np.zeros((n_features, t_run))
         expected_x1[:, 3:13] = np.tile(exp_x1_0[:, None], 10)
