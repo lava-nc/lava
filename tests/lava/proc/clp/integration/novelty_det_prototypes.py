@@ -15,8 +15,7 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.clp.prototype_lif.process import PrototypeLIF
 from lava.proc.clp.novelty_detector.process import NoveltyDetector
-from lava.proc.io.source import RingBuffer as Source, RingBuffer, \
-    PySendModelFixed
+from lava.proc.io.source import RingBuffer, PySendModelFixed
 from lava.proc.monitor.process import Monitor
 from lava.proc.dense.process import Dense, LearningDense
 
@@ -55,14 +54,14 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         # Normalize the input pattern
         inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
-                inp_pattern, axis=1), axis=1)
+            inp_pattern, axis=1), axis=1)
         # Convert this to 8-bit fixed-point pattern and inject it at the t=3
         for i in range(inp_times.shape[0]):
             s_pattern_inp[:, inp_times[i]] = inp_pattern[i, :] * 2 ** b_fraction
 
         # Processes
 
-        data_input = Source(data=s_pattern_inp)
+        data_input = RingBuffer(data=s_pattern_inp)
 
         nvl_det = NoveltyDetector(t_wait=t_wait,
                                   n_protos=n_protos)
@@ -95,7 +94,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         nvl_det.novelty_detected_out.connect(prototypes.a_third_factor_in)
 
         exception_map = {
-                RingBuffer: PySendModelFixed
+            RingBuffer: PySendModelFixed
         }
         run_cfg = \
             Loihi2SimCfg(select_tag="bit_accurate_loihi",
@@ -112,7 +111,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55]])
         inp_times = np.array([3])
 
-        data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -144,7 +143,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
         inp_times = np.array([3, 13])
 
-        data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -177,7 +176,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55]])
         inp_times = np.array([3])
 
-        data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -218,7 +217,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
         inp_times = np.array([3, 13])
 
-        data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -303,7 +302,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
             # Normalize the input pattern
             inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
-                    inp_pattern, axis=1), axis=1)
+                inp_pattern, axis=1), axis=1)
             # Convert this to 8-bit fixed-point pattern
             inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
             print(inp_pattern)
@@ -321,7 +320,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
             # Processes
 
-            data_input = Source(data=s_pattern_inp)
+            data_input = RingBuffer(data=s_pattern_inp)
 
             nvl_det = NoveltyDetector(t_wait=t_wait,
                                       n_protos=n_protos)
@@ -367,7 +366,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
             prototypes.s_out_y1.connect(dense_proto.s_in_y1)
 
             exception_map = {
-                    RingBuffer: PySendModelFixed
+                RingBuffer: PySendModelFixed
             }
             run_cfg = \
                 Loihi2SimCfg(select_tag="bit_accurate_loihi",
@@ -386,7 +385,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
             inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
             inp_times = np.array([3, 13])
 
-            data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+            _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
                 self.create_network(t_run, n_protos, n_features, weights_proto,
                                     inp_pattern, inp_times)
 
@@ -492,7 +491,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
         # Normalize the input pattern
         inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
-                inp_pattern, axis=1), axis=1)
+            inp_pattern, axis=1), axis=1)
         # Convert this to 8-bit fixed-point pattern
         inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
         # and inject it at the t=3
@@ -507,7 +506,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
                                             t_epoch=t_epoch)
 
         # Processes
-        data_input = Source(data=s_pattern_inp)
+        data_input = RingBuffer(data=s_pattern_inp)
 
         nvl_det = NoveltyDetector(t_wait=t_wait,
                                   n_protos=n_protos)
@@ -565,7 +564,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         # Run
         exception_map = {
-                RingBuffer: PySendModelFixed
+            RingBuffer: PySendModelFixed
         }
         run_cond = RunSteps(num_steps=t_run)
         run_cfg = Loihi2SimCfg(select_tag="bit_accurate_loihi",
