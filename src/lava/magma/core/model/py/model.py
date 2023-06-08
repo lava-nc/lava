@@ -127,7 +127,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
             elif isinstance(var, csr_matrix):
-                data_port.send(var)
+                data_port.send(var.toarray())
             elif isinstance(var, str):
                 data_port.send(np.array(var, dtype=str))
             data_port.join()

@@ -182,6 +182,8 @@ class Var(AbstractProcessMember):
                         return bytes(buffer.astype(int).tolist()).  \
                             decode("ascii")
                 if isinstance(self.init, csr_matrix):
+                    if SupportTempChannel:
+                        return csr_matrix(buffer)
                     dst, src, _ = find(self.init)
 
                     ret = csr_matrix((buffer, (dst, src)), self.init.shape)
