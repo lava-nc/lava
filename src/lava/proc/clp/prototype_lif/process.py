@@ -6,7 +6,8 @@ import typing as ty
 import numpy as np
 
 from lava.proc.lif.process import LogConfig, LearningLIF
-from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
+from lava.magma.core.learning.learning_rule import Loihi2FLearningRule, \
+    Loihi3FLearningRule
 
 
 class PrototypeLIF(LearningLIF):
@@ -56,19 +57,20 @@ class PrototypeLIF(LearningLIF):
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
-            learning_rule: Loihi2FLearningRule = None,
+            learning_rule: ty.Optional[ty.Union[Loihi2FLearningRule,
+                                                Loihi3FLearningRule]] = None,
             **kwargs,
     ) -> None:
         super().__init__(
-            shape=shape,
-            u=u,
-            v=v,
-            du=du,
-            dv=dv,
-            bias_mant=bias_mant,
-            bias_exp=bias_exp,
-            vth=vth,
-            name=name,
-            log_config=log_config,
-            learning_rule=learning_rule,
-            **kwargs)
+                shape=shape,
+                u=u,
+                v=v,
+                du=du,
+                dv=dv,
+                bias_mant=bias_mant,
+                bias_exp=bias_exp,
+                vth=vth,
+                name=name,
+                log_config=log_config,
+                learning_rule=learning_rule,
+                **kwargs)
