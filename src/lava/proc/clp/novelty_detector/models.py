@@ -16,7 +16,7 @@ from lava.proc.clp.novelty_detector.process import NoveltyDetector
 
 @implements(proc=NoveltyDetector, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("fixed_pt")
+@tag("fixed_pt", 'bit_accurate_loihi')
 class PyNoveltyDetectorModel(PyLoihiProcessModel):
     """Python implementation of the NoveltyDetector process
 
