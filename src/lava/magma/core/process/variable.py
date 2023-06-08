@@ -157,10 +157,7 @@ class Var(AbstractProcessMember):
                         raise ValueError("Indices and number of non-zero "
                                          "elements must stay equal when using"
                                          "set on a sparse matrix.")
-                    if SupportTempChannel:
-                        value = value.toarray()
-                    else:
-                        value = val
+                    value = val
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -184,10 +181,7 @@ class Var(AbstractProcessMember):
                         return bytes(buffer.astype(int).tolist()).  \
                             decode("ascii")
                 if isinstance(self.init, csr_matrix):
-                    if SupportTempChannel:
-                        return csr_matrix(buffer)
                     dst, src, _ = find(self.init)
-
                     ret = csr_matrix((buffer, (dst, src)), self.init.shape)
                     return ret
                 else:

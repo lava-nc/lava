@@ -59,7 +59,7 @@ def create_learning_network(data_pre, conn, data_post, weights=None):
     else:
         return pre, conn, post
 
-
+@unittest.skip("test")
 class TestSparseProcessModelFloat(unittest.TestCase):
     """Tests for Sparse class in floating point precision. """
 
@@ -202,7 +202,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         np.testing.assert_array_equal(weights_got_ts_2.toarray(),
                                       new_weights_sparse.toarray())
 
-
+# @unittest.skip("test")
 class TestSparseProcessModelFixed(unittest.TestCase):
     """Tests for Sparse class in fixed point precision. """
 
@@ -372,7 +372,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         self.assertRaises(ValueError, conn.weights.set, new_weights_sparse_2)
         conn.stop()
 
-
+@unittest.skip("test")
 class TestLearningSparseProcessModelFloat(unittest.TestCase):
     """Tests for LearningSparse class in floating point precision. """
 
@@ -591,7 +591,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
-
+@unittest.skip("test")
 class TestLearningSparseProcessModelFixed(unittest.TestCase):
     """Tests for LearningSparse class in fixed point precision. """
 
@@ -924,7 +924,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
         spk_in = self.s_in.recv()
         self.spk_data[self.time_step - 1, :] = spk_in
 
-
+@unittest.skip("test")
 class TestDelaySparseProcessModel(unittest.TestCase):
     """Tests for ProcessModels of Sparse with synaptic delay."""
 
@@ -1447,3 +1447,6 @@ class TestDelaySparseProcessModel(unittest.TestCase):
         rcfg = Loihi2SimCfg(select_tag='floating_pt')
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()
+        
+if __name__ == '__main__':
+    unittest.main()

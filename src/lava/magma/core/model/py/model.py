@@ -127,7 +127,8 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
             elif isinstance(var, csr_matrix):
-                data_port.send(var.toarray())
+                print("model  get====")
+                data_port.send(var.data)
             elif isinstance(var, str):
                 data_port.send(np.array(var, dtype=str))
             data_port.join()
@@ -183,8 +184,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, csr_matrix):
-                buffer = csr_matrix(buffer)
-                setattr(self, var_name, buffer.astype(var.dtype))
+                print("model set =====")
+                dst, src, _ = find(var)
+                var = csr_matrix((buffer, (dst, src)), var.shape)
+                setattr(self, var_name, var)
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
                 setattr(self, var_name, np.array_str(buffer))

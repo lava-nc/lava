@@ -525,7 +525,7 @@ class Runtime:
                 buffer = recv_port.recv()
                 recv_port.join()
                 if ev.dtype == csr_matrix:
-                    return csr_matrix(buffer)
+                    return buffer[idx] if idx else buffer
                 if buffer.dtype.type != np.str_:
                     reshape_order = 'F' \
                         if isinstance(ev, LoihiSynapseVarModel) else 'C'
