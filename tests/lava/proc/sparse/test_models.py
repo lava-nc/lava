@@ -59,10 +59,10 @@ def create_learning_network(data_pre, conn, data_post, weights=None):
     else:
         return pre, conn, post
 
-# @unittest.skip("test")
+
 class TestSparseProcessModelFloat(unittest.TestCase):
     """Tests for Sparse class in floating point precision. """
-    @unittest.skip("CI ok")
+
     def test_consistency_with_dense_random_shape(self):
         """Tests if the results of Sparse and Dense are consistent. """
 
@@ -100,7 +100,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         conn.stop()
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
-    @unittest.skip("CI ok")
+
     def test_consistency_with_dense_random_shape_graded(self):
         """Tests if the results of Sparse and Dense are consistent. """
 
@@ -136,7 +136,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         sparse_net[0].stop()
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
-    # @unittest.skip("ok")
+
     def test_weights_get(self):
         """Tests the get method on weights."""
 
@@ -163,7 +163,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
 
         self.assertIsInstance(weights_got, csr_matrix)
         np.testing.assert_array_equal(weights_got.toarray(), weights)
-    # @unittest.skip("fail")
+
     def test_weights_set(self):
         """Tests the set method on weights."""
         simtime = 2
@@ -202,10 +202,10 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         np.testing.assert_array_equal(weights_got_ts_2.toarray(),
                                       new_weights_sparse.toarray())
 
-@unittest.skip("test")
+
 class TestSparseProcessModelFixed(unittest.TestCase):
     """Tests for Sparse class in fixed point precision. """
-    @unittest.skip("OK")
+
     def test_consitency_with_dense_random_shape(self):
         """Tests if the results of Sparse and Dense are consistent. """
 
@@ -243,7 +243,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse_net[0].stop()
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
-    @unittest.skip("ok")
+
     def test_consitency_with_dense_random_shape_graded(self):
         """Tests if the results of Sparse and Dense are consistent. """
 
@@ -281,7 +281,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         sparse_net[0].stop()
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
-    @unittest.skip("ok")
+
     def test_weights_get(self):
         """Tests the get method on weights."""
 
@@ -309,7 +309,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
 
         self.assertIsInstance(weights_got, csr_matrix)
         np.testing.assert_array_equal(weights_got.toarray(), weights_init)
-    @unittest.skip("fail")
+
     def test_weights_set(self):
         """tests the set method on weights."""
         simtime = 2
@@ -345,7 +345,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         self.assertIsInstance(weights_got_ts_2, csr_matrix)
         np.testing.assert_array_equal(weights_got_ts_2.toarray(),
                                       new_weights_sparse.toarray())
-    # @unittest.skip("ok")
+
     def test_weights_set_failure(self):
         """This tests tries to use set() to change weights but fails as
         the number of non-zero weights and their indices change"""
@@ -372,7 +372,7 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         self.assertRaises(ValueError, conn.weights.set, new_weights_sparse_2)
         conn.stop()
 
-@unittest.skip("CI OK")
+
 class TestLearningSparseProcessModelFloat(unittest.TestCase):
     """Tests for LearningSparse class in floating point precision. """
 
@@ -591,7 +591,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(result_sparse, result_dense)
 
-@unittest.skip("CI OK")
+
 class TestLearningSparseProcessModelFixed(unittest.TestCase):
     """Tests for LearningSparse class in fixed point precision. """
 
@@ -924,7 +924,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
         spk_in = self.s_in.recv()
         self.spk_data[self.time_step - 1, :] = spk_in
 
-@unittest.skip("CI ok")
+
 class TestDelaySparseProcessModel(unittest.TestCase):
     """Tests for ProcessModels of Sparse with synaptic delay."""
 
@@ -1447,7 +1447,3 @@ class TestDelaySparseProcessModel(unittest.TestCase):
         rcfg = Loihi2SimCfg(select_tag='floating_pt')
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()
-
-
-if __name__ == '__main__':
-    unittest.main()

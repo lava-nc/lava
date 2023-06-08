@@ -157,8 +157,10 @@ class Var(AbstractProcessMember):
                         raise ValueError("Indices and number of non-zero "
                                          "elements must stay equal when using"
                                          "set on a sparse matrix.")
-                    value = val
-
+                    if SupportTempChannel:
+                        value = value.toarray()
+                    else:
+                        value = val
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(

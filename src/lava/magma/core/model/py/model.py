@@ -183,6 +183,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, csr_matrix):
+                buffer = csr_matrix(buffer)
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
