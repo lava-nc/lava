@@ -111,7 +111,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55]])
         inp_times = np.array([3])
 
-        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, _, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -143,7 +143,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
         inp_times = np.array([3, 13])
 
-        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, _, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -176,7 +176,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55]])
         inp_times = np.array([3])
 
-        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, _, prototypes, _, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -217,7 +217,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
         inp_times = np.array([3, 13])
 
-        _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
+        _, nvl_det, prototypes, _, run_cfg, run_cond = \
             self.create_network(t_run, n_protos, n_features, weights_proto,
                                 inp_pattern, inp_times)
 
@@ -252,207 +252,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         expected_nvl = np.zeros((n_protos, t_run))
         np.testing.assert_array_equal(result_nvl, expected_nvl)
 
-    class TestOneShotLearning(unittest.TestCase):
-        @staticmethod
-        def create_network(t_run: int,
-                           n_protos: int,
-                           n_features: int,
-                           weights_proto: np.ndarray,
-                           inp_pattern: np.ndarray,
-                           inp_times: np.ndarray) \
-                -> ty.Tuple[RingBuffer, NoveltyDetector, PrototypeLIF,
-                            LearningDense, Loihi2SimCfg, RunSteps]:
-            # Static params
-            t_wait = 4  # Waiting window for novelty detection
-            b_fraction = 8  # Fractional bits for fixed point representation
 
-            # LIF parameters
-            du = 4095
-            dv = 4095
-            vth = 62000
-
-            # Trace decay constants
-            x1_tau = 0
-
-            # Epoch length
-            t_epoch = 1
-
-            # Config for Writing graded payload to x1-trace
-            graded_spike_cfg = GradedSpikeCfg.OVERWRITE
-
-            # Variable params
-            n_protos = n_protos
-            n_features = n_features
-            t_run = t_run
-            inp_pattern = inp_pattern  # Original input pattern
-            weights_proto = weights_proto
-            inp_times = inp_times  # when the input patterns should be injected
-
-            # These are already stored patterns. Let's convert them to fixed
-            # point values
-            weights_proto = weights_proto * 2 ** b_fraction
-
-            # Novelty detection input connection weights (all-to-one
-            # connections)
-            weights_in_aval = np.ones(shape=(1, n_features))
-            weights_out_aval = np.ones(shape=(1, n_protos))
-
-            # The graded spike array for input
-            s_pattern_inp = np.zeros((n_features, t_run))
-
-            # Normalize the input pattern
-            inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
-                inp_pattern, axis=1), axis=1)
-            # Convert this to 8-bit fixed-point pattern
-            inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
-            print(inp_pattern)
-
-            # Inject input at the given times
-            for i in range(inp_times.shape[0]):
-                s_pattern_inp[:, inp_times[i]] = inp_pattern[i, :]
-
-            # Create custom LearningRule. Define dw as string
-            dw = "2^-2*y1*x1*y0"
-
-            learning_rule = Loihi3FLearningRule(dw=dw,
-                                                x1_tau=x1_tau,
-                                                t_epoch=t_epoch)
-
-            # Processes
-
-            data_input = RingBuffer(data=s_pattern_inp)
-
-            nvl_det = NoveltyDetector(t_wait=t_wait,
-                                      n_protos=n_protos)
-
-            # Prototype Lif Process
-            prototypes = PrototypeLIF(du=du,
-                                      dv=dv,
-                                      bias_mant=0,
-                                      bias_exp=0,
-                                      vth=vth,
-                                      shape=(n_protos,),
-                                      name='lif_prototypes',
-                                      sign_mode=SignMode.EXCITATORY,
-                                      learning_rule=learning_rule)
-
-            dense_proto = LearningDense(weights=weights_proto,
-                                        learning_rule=learning_rule,
-                                        name="proto_weights",
-                                        num_message_bits=8,
-                                        graded_spike_cfg=graded_spike_cfg)
-
-            dense_in_aval = Dense(weights=weights_in_aval)
-            dense_out_aval = Dense(weights=weights_out_aval)
-
-            # Connections
-
-            data_input.s_out.connect(dense_proto.s_in)
-            dense_proto.a_out.connect(prototypes.a_in)
-
-            data_input.s_out.connect(dense_in_aval.s_in)
-            dense_in_aval.a_out.connect(nvl_det.input_aval_in)
-
-            prototypes.s_out.connect(dense_out_aval.s_in)
-            dense_out_aval.a_out.connect(nvl_det.output_aval_in)
-
-            # Novelty detector to prototypes connection
-            nvl_det.novelty_detected_out.connect(prototypes.a_third_factor_in)
-
-            # lif_prototypes.s_out.connect(proto_weights_dense.s_in_bap)
-            prototypes.s_out_bap.connect(dense_proto.s_in_bap)
-
-            # Sending y1 spike
-            prototypes.s_out_y1.connect(dense_proto.s_in_y1)
-
-            exception_map = {
-                RingBuffer: PySendModelFixed
-            }
-            run_cfg = \
-                Loihi2SimCfg(select_tag="bit_accurate_loihi",
-                             exception_proc_model_map=exception_map)
-            run_cond = RunSteps(num_steps=t_run)
-
-            return data_input, nvl_det, prototypes, dense_proto, run_cfg, \
-                run_cond
-
-        def test_nvl_detection_triggers_one_shot_learning(self):
-            # Params
-            t_run = 20
-            n_protos = 3
-            n_features = 2
-            weights_proto = np.array([[0, 0], [0, 0], [0, 0]])
-            inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
-            inp_times = np.array([3, 13])
-
-            _, nvl_det, prototypes, dense_proto, run_cfg, run_cond = \
-                self.create_network(t_run, n_protos, n_features, weights_proto,
-                                    inp_pattern, inp_times)
-
-            monitor_nvl = Monitor()
-            monitor_protos = Monitor()
-            monitor_weights = Monitor()
-            monitor_x1_trace = Monitor()
-
-            # Probe novelty detector and prototypes
-            monitor_nvl.probe(target=nvl_det.novelty_detected_out,
-                              num_steps=t_run)
-            monitor_protos.probe(target=prototypes.s_out, num_steps=t_run)
-            monitor_x1_trace.probe(target=dense_proto.x1, num_steps=t_run)
-            monitor_weights.probe(target=dense_proto.weights, num_steps=t_run)
-
-            # Run
-            prototypes.run(condition=run_cond, run_cfg=run_cfg)
-
-            # Get results
-            result_nvl = monitor_nvl.get_data()
-            result_nvl = result_nvl[nvl_det.name][
-                nvl_det.novelty_detected_out.name].T
-
-            result_protos = monitor_protos.get_data()
-            result_protos = result_protos[prototypes.name][
-                prototypes.s_out.name]
-
-            result_x1_trace = monitor_x1_trace.get_data()['proto_weights'][
-                'x1'].T
-
-            result_weights = monitor_weights.get_data()
-            result_weights = result_weights[dense_proto.name][
-                dense_proto.weights.name].T
-
-            # Stop the run
-            prototypes.stop()
-
-            # Do the tests
-            expected_nvl = np.zeros((n_protos, t_run))
-            expected_nvl[0, 9] = 127
-            expected_nvl[1, 19] = 127
-            print(result_nvl)
-            np.testing.assert_array_equal(result_nvl, expected_nvl)
-
-            exp_x1_0 = inp_pattern[0, :] / 2
-            exp_x1_1 = inp_pattern[1, :] / 2
-
-            expected_x1 = np.zeros((n_features, t_run))
-            expected_x1[:, 3:13] = np.tile(exp_x1_0[:, None], 10)
-            expected_x1[:, 13:] = np.tile(exp_x1_1[:, None], 7)
-            np.testing.assert_array_equal(expected_x1, result_x1_trace)
-
-            print(result_x1_trace)
-            print(result_protos)
-            print(result_weights)
-
-            exp_w_0 = (exp_x1_0 - 1) * 2
-            exp_w_1 = (exp_x1_1 - 1) * 2
-
-            expected_weights = np.zeros((n_features, n_protos, t_run))
-
-            expected_weights[:, 0, 9:] = np.tile(exp_w_0[:, None], t_run - 9)
-            expected_weights[:, 1, 19:] = exp_w_1[:, None]
-
-            np.testing.assert_array_equal(expected_weights, result_weights)
-
-            print(expected_weights)
+class TestOneShotLearning(unittest.TestCase):
 
     def test_nvl_detection_triggers_one_shot_learning(self):
 
@@ -481,7 +282,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         # Config for Writing graded payload to x1-trace
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
-        # Novelty detection input connection weights (all-to-one connections)
+        # Novelty detection input connection weights  (all-to-one
+        # connections)
         weights_in_aval = np.ones(shape=(1, n_features))
         weights_out_aval = np.ones(shape=(1, n_protos))
 
