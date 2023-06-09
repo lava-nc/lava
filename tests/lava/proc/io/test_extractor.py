@@ -12,18 +12,15 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
 from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.resources import CPU
 
-from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 
 from lava.magma.core.run_configs import Loihi2SimCfg
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
+from lava.magma.core.run_conditions import RunSteps
 
 from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.process.message_interface_enum import ActorType
-from lava.magma.runtime.runtime import Runtime
 
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
@@ -31,8 +28,6 @@ from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
     CspSendPort
 from lava.proc.io.extractor import Extractor, PyExtractorModelFloat
 
-from lava.proc.io.injector import Injector, PyInjectorModelFloat, \
-    PyInjectorModelFixed, InjectorSendMode, InjectorRecvMode
 from lava.proc.io.source import RingBuffer
 
 
