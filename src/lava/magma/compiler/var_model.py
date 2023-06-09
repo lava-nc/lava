@@ -263,6 +263,7 @@ class SpikeEncoder:
 
 @dataclass
 class NcSpikeIOVarModel(NcVarModel):
+    msg_queue_id: int = 0
     num_message_bits: int = 8
     interface: InterfaceType = InterfaceType.SUPER_SPEED
     decode_config: ty.Optional[DecodeConfig] = None
