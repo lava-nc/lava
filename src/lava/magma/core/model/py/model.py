@@ -268,7 +268,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
                         if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
-                            break
+                            return
                     else:
                         raise ValueError(
                             f"Illegal RuntimeService command! ProcessModels of "
