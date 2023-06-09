@@ -178,7 +178,38 @@ class TestInjector(unittest.TestCase):
             Injector(shape=out_shape, dtype=dtype, size=size)
 
     def test_invalid_injector_channel_config(self):
-        self.assertTrue(False)
+        out_shape = (1,)
+        dtype = float
+        size = 1
+
+        channel_config = "config"
+        with self.assertRaises(TypeError):
+            Injector(shape=out_shape, dtype=dtype, size=size,
+                     injector_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=1,
+            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
+            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        with self.assertRaises(TypeError):
+            Injector(shape=out_shape, dtype=dtype, size=size,
+                     injector_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=ChannelSendBufferFull.BLOCKING,
+            recv_buffer_empty=1,
+            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        with self.assertRaises(TypeError):
+            Injector(shape=out_shape, dtype=dtype, size=size,
+                     injector_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=ChannelSendBufferFull.BLOCKING,
+            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
+            recv_buffer_not_empty=1)
+        with self.assertRaises(TypeError):
+            Injector(shape=out_shape, dtype=dtype, size=size,
+                     injector_channel_config=channel_config)
 
     def test_send_data_invalid_data(self):
         shape = (1,)
@@ -333,7 +364,64 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         self.assertLess(time_2, 1)
 
     def test_send_data_recv_buffer_empty_blocking(self):
-        self.assertTrue(False)
+        data_shape = (1,)
+        dtype = float
+        size = 1
+        channel_config = ChannelConfig(
+            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING)
+
+        num_steps = 1
+
+        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+                            injector_channel_config=channel_config)
+        recv = Recv(shape=data_shape)
+
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+
+        injector.send_data(np.ones(data_shape))
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+
+        shared_queue = Queue(2)
+
+        def thread_2_fn(queue: Queue) -> None:
+            checkpoint_1 = time.perf_counter()
+            injector.run(condition=run_condition, run_cfg=run_cfg)
+            checkpoint_2 = time.perf_counter()
+            injector.run(condition=run_condition, run_cfg=run_cfg)
+            checkpoint_3 = time.perf_counter()
+
+            queue.put(checkpoint_2 - checkpoint_1)
+            queue.put(checkpoint_3 - checkpoint_2)
+
+        injector.send_data(np.ones(data_shape))
+
+        thread_2 = threading.Thread(target=thread_2_fn,
+                                    daemon=True,
+                                    args=[shared_queue])
+        thread_2.start()
+
+        time.sleep(2)
+
+        injector.send_data(np.ones(data_shape))
+
+        time.sleep(1)
+
+        injector.stop()
+
+        thread_2.join()
+
+        time_1 = shared_queue.get()
+        time_2 = shared_queue.get()
+
+        print(time_1)
+        print(time_2)
+
+        self.assertFalse(thread_2.is_alive())
+        self.assertLess(time_1, 1)
+        self.assertGreater(time_2, 1)
 
     def test_send_data_recv_buffer_empty_non_blocking(self):
         data_shape = (1,)

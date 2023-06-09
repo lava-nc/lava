@@ -84,11 +84,11 @@ def validate_channel_config(
             "<channel_config>.recv_buffer_empty = "
             f"{channel_config.recv_buffer_empty}.")
 
-    if not isinstance(channel_config.recv_buffer_empty,
-                      ChannelRecvBufferEmpty):
+    if not isinstance(channel_config.recv_buffer_not_empty,
+                      ChannelRecvBufferNotEmpty):
         raise TypeError(
             "Expected <channel_config>.recv_buffer_not_empty "
-            "to be of type ChannelRecvBufferEmpty. Got "
+            "to be of type ChannelRecvBufferNotEmpty. Got "
             "<channel_config>.recv_buffer_not_empty = "
             f"{channel_config.recv_buffer_not_empty}.")
 
