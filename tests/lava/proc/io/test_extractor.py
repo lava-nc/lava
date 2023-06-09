@@ -5,9 +5,11 @@ import time
 from queue import Queue
 import typing as ty
 
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
+from lava.magma.core.resources import CPU
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
@@ -15,6 +17,12 @@ from lava.magma.core.decorator import implements, requires, tag
 
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+
+from lava.proc.io.bridge.extractor import Extractor, PyExtractorModelFloat, \
+    PyExtractorModelFixed
+
+from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
+    ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
 
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
@@ -26,9 +34,35 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
 from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
     CspSendPort
-from lava.proc.io.extractor import Extractor, PyExtractorModelFloat
 
 from lava.proc.io.source import RingBuffer
+
+# Send class (Ring Buffer inspired)
+class Send(AbstractProcess):
+    """Spike generator process from circular data buffer.
+
+    Parameters
+    ----------
+    data: np array
+        data to generate spike from. Last dimension is assumed as time.
+    """
+    def __init__(self,
+                 *,
+                 data: np.ndarray) -> None:
+        super().__init__(data=data)
+        self.data = Var(shape=data.shape, init=data)
+        self.s_out = OutPort(shape=data.shape[:-1])  # last dimension is time
+
+@implements(proc=Send, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class PySendModelFloat(PyLoihiProcessModel):
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    data: np.ndarray = LavaPyType(np.ndarray, float)
+
+    def run_spk(self) -> None:
+        buffer = self.data.shape[-1]
+        self.s_out.send(self.data[..., (self.time_step - 1) % buffer])
 
 
 class TestExtractor(unittest.TestCase):
@@ -101,7 +135,7 @@ class TestExtractor(unittest.TestCase):
 
 class TestPyExtractorModelFloat(unittest.TestCase):
     def test_init(self):
-        shape = (1, )
+        shape = (1,)
         dtype = float
         size = 10
 
@@ -125,35 +159,14 @@ class TestPyExtractorModelFloat(unittest.TestCase):
         self.assertEqual(pm._extractor_channel_src_port, channel.src_port)
         self.assertIsNotNone(pm._extractor_channel_src_port.thread)
 
-
-    def test_run_discard_data_lifo_clear_mode(self):
+    def test_run_receive_all_data(self):
         data_shape = (1,)
         dtype = float
         size = 1
         num_steps = 10
         data_to_send = np.ones((1, 10))
 
-        input = RingBuffer(data=data_to_send)
-        extractor = Extractor(shape=data_shape, dtype=dtype, size=size)
-
-        input.s_out.connect(extractor.in_port)
-
-        run_condition = RunSteps(num_steps=num_steps)
-        run_cfg = Loihi2SimCfg()
-        extractor.run(condition=run_condition, run_cfg=run_cfg)
-        received_data = extractor.rcv_data()
-        extractor.stop()
-        np.testing.assert_equal(received_data, np.full(data_shape, 1))
-
-"""
-      def test_run_receive_all_data(self):
-        data_shape = (1,)
-        dtype = float
-        size = 1
-        num_steps = 10
-        data_to_send = np.ones((1, 10))
-
-        input = RingBuffer(data=data_to_send)
+        input = Send(data=data_to_send)
         extractor = Extractor(shape=data_shape, dtype=dtype, size=size)
 
         input.s_out.connect(extractor.in_port)
@@ -165,15 +178,12 @@ class TestPyExtractorModelFloat(unittest.TestCase):
 
         def receiver_thread(shared_list):
             while True:
-                shared_list[0] += extractor.rcv_data()
+                shared_list[0] += extractor.recv_data()
+                print("pause")
 
         thread = threading.Thread(target=receiver_thread, daemon=True, args=[shared_list])
         thread.start()
         time.sleep(1)
         extractor.run(condition=run_condition, run_cfg=run_cfg)
         extractor.stop()
-
         np.testing.assert_equal(shared_list[0], np.full(data_shape, 10))
-"""
-
-
