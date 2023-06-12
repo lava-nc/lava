@@ -127,10 +127,10 @@ class Extractor(AbstractProcess):
         data : np.ndarray
             Data received.
         """
-        elements_in_channel_queue = \
+        elements_in_buffer = \
             self._extractor_channel_dst_port._queue._qsize()
 
-        if elements_in_channel_queue == 0:
+        if elements_in_buffer == 0:
             data = self._recv_empty(
                 dst_port=self._extractor_channel_dst_port,
                 zeros=np.zeros(self._shape))
@@ -138,7 +138,7 @@ class Extractor(AbstractProcess):
             data = self._recv_not_empty(
                 dst_port=self._extractor_channel_dst_port,
                 zeros=np.zeros(self._shape),
-                elements_in_queue=elements_in_channel_queue)
+                elements_in_buffer=elements_in_buffer)
 
         return data
 

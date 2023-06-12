@@ -53,8 +53,7 @@ class Recv(AbstractProcess):
 @implements(proc=Recv, protocol=LoihiProtocol)
 @requires(CPU)
 class PyRecvProcModel(PyLoihiProcessModel):
-    """Receives dense floating point data from PyInPort and stores it in a
-    Var."""
+    """Receives dense data from PyInPort and stores it in a Var."""
     var: np.ndarray = LavaPyType(np.ndarray, float)
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
@@ -499,7 +498,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
-        send_data = np.random.random(size=(num_send, ) + data_shape) * 10
+        send_data = np.random.random(size=(num_send, ) + data_shape)
 
         def thread_2_fn() -> None:
             for send_data_single_item in send_data:
