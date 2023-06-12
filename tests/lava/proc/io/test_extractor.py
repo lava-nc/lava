@@ -18,8 +18,7 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 
-from lava.proc.io.bridge.extractor import Extractor, PyExtractorModelFloat, \
-    PyExtractorModelFixed
+from lava.proc.io.bridge.extractor import Extractor, PyLoihiExtractorModel
 
 from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
@@ -68,10 +67,8 @@ class PySendModelFloat(PyLoihiProcessModel):
 class TestExtractor(unittest.TestCase):
     def test_init(self):
         in_shape = (1,)
-        size = 10
-        dtype = int
 
-        extractor = Extractor(shape=in_shape, dtype=dtype, size=size)
+        extractor = Extractor(shape=in_shape)
 
         self.assertIsInstance(extractor, Extractor)
         self.assertIsInstance(extractor._multi_processing, MultiProcessing)
@@ -85,52 +82,58 @@ class TestExtractor(unittest.TestCase):
         self.assertEqual(extractor.in_port.shape, in_shape)
 
     def test_invalid_shape(self):
-        dtype = float
-        size = 10
-
         in_shape = (1.5,)
         with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
+            Extractor(shape=in_shape)
 
         in_shape = (-1,)
         with self.assertRaises(ValueError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
+            Extractor(shape=in_shape)
 
         in_shape = 4
         with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
+            Extractor(shape=in_shape)
 
-    def test_invalid_dtype(self):
+    def test_invalid_buffer_size(self):
         in_shape = (1,)
-        size = 10
 
-        dtype = 1
+        buffer_size = 0.5
         with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
+            Extractor(shape=in_shape, buffer_size=buffer_size)
 
-        dtype = [1]
-        with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
-
-        dtype = np.ones(in_shape)
-        with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
-
-        dtype = "float"
-        with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
-
-    def test_invalid_size(self):
-        in_shape = (1,)
-        dtype = float
-
-        size = 0.5
-        with self.assertRaises(TypeError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
-
-        size = -5
+        buffer_size = -5
         with self.assertRaises(ValueError):
-            Extractor(shape=in_shape, dtype=dtype, size=size)
+            Extractor(shape=in_shape, buffer_size=buffer_size)
+
+    def test_invalid_channel_config(self):
+        """Test that instantiating the Extractor Process with an invalid
+        extractor_channel_config parameter raises errors."""
+        out_shape = (1,)
+
+        channel_config = "config"
+        with self.assertRaises(TypeError):
+            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=1,
+            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
+            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        with self.assertRaises(TypeError):
+            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=ChannelSendBufferFull.BLOCKING,
+            recv_buffer_empty=1,
+            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        with self.assertRaises(TypeError):
+            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+
+        channel_config = ChannelConfig(
+            send_buffer_full=ChannelSendBufferFull.BLOCKING,
+            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
+            recv_buffer_not_empty=1)
+        with self.assertRaises(TypeError):
+            Extractor(shape=out_shape, extractor_channel_config=channel_config)
 
 
 class TestPyExtractorModelFloat(unittest.TestCase):
@@ -152,9 +155,9 @@ class TestPyExtractorModelFloat(unittest.TestCase):
 
         proc_params["extractor_channel_src_port"] = channel.src_port
 
-        pm = PyExtractorModelFloat(proc_params)
+        pm = PyLoihiExtractorModel(proc_params)
 
-        self.assertIsInstance(pm, PyExtractorModelFloat)
+        self.assertIsInstance(pm, PyLoihiExtractorModel)
         self.assertEqual(pm._shape, shape)
         self.assertEqual(pm._extractor_channel_src_port, channel.src_port)
         self.assertIsNotNone(pm._extractor_channel_src_port.thread)

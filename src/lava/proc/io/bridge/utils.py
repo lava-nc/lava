@@ -1,38 +1,67 @@
 from enum import IntEnum, auto
 from dataclasses import dataclass
 import numpy as np
-import warnings
 import typing as ty
+import warnings
 
+from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
 
 
 class ChannelSendBufferFull(IntEnum):
+    """Enum specifying a channel's sender policy when the buffer is full.
+
+    ChannelSendBufferFull.BLOCKING : The sender blocks when the buffer is full.
+    ChannelSendBufferFull.NON_BLOCKING_DROP : The sender does not block when
+    the buffer is full. Instead, it issues a warning and does not send the data.
+    """
     BLOCKING = auto()
     NON_BLOCKING_DROP = auto()
 
 
 class ChannelRecvBufferEmpty(IntEnum):
+    """Enum specifying a channel's receiver policy when the buffer is empty.
+
+    ChannelRecvBufferEmpty.BLOCKING : The receiver blocks when the buffer is
+    empty.
+    ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS : The receiver does not block
+    when the buffer is empty. Instead, it receives zeros.
+    """
     BLOCKING = auto()
     NON_BLOCKING_ZEROS = auto()
 
 
 class ChannelRecvBufferNotEmpty(IntEnum):
+    """Enum specifying a channel's receiver policy when the buffer is not empty.
+
+    ChannelRecvBufferNotEmpty.FIFO : The receiver receives a single item,
+    being the oldest one in the buffer.
+    ChannelRecvBufferNotEmpty.ACCUMULATE : The receiver receives all items,
+    accumulating them.
+    """
     FIFO = auto()
     ACCUMULATE = auto()
 
 
 @dataclass
 class ChannelConfig:
-    send_buffer_full: ChannelSendBufferFull = \
+    """Dataclass wrapping the different channel configuration parameters."""
+    send_buffer_full: ty.Optional[ChannelSendBufferFull] = \
         ChannelSendBufferFull.BLOCKING
-    recv_buffer_empty: ChannelRecvBufferEmpty = \
+    recv_buffer_empty: ty.Optional[ChannelRecvBufferEmpty] = \
         ChannelRecvBufferEmpty.BLOCKING
-    recv_buffer_not_empty: ChannelRecvBufferNotEmpty = \
+    recv_buffer_not_empty: ty.Optional[ChannelRecvBufferNotEmpty] = \
         ChannelRecvBufferNotEmpty.FIFO
 
 
-def validate_shape(shape):
+def validate_shape(shape: tuple[int, ...]):
+    """Validate the shape parameter.
+
+    Parameters
+    ----------
+    shape : tuple
+        Shape to validate.
+    """
     if not isinstance(shape, tuple):
         raise TypeError("Expected <shape> to be of type tuple. Got "
                         f"<shape> = {shape}.")
@@ -46,22 +75,30 @@ def validate_shape(shape):
                              f"strictly positive. Got <shape> = {shape}.")
 
 
-def validate_dtype(dtype: ty.Union[ty.Type, np.dtype]) -> None:
-    if not isinstance(dtype, (type, np.dtype)):
-        raise TypeError("Expected <dtype> to be of type type or np.dtype. "
-                        f"Got <dtype> = {dtype}.")
+def validate_buffer_size(buffer_size: int):
+    """Validate the buffer_size parameter.
 
-def validate_size(size):
-    if not isinstance(size, int):
-        raise TypeError("Expected <size> to be of type int. Got <size> = "
-                        f"{size}.")
-    if size <= 0:
-        raise ValueError("Expected <size> to be strictly positive. Got "
-                         f"<size> = {size}.")
+    Parameters
+    ----------
+    buffer_size : int
+        Buffer size to validate.
+    """
+    if not isinstance(buffer_size, int):
+        raise TypeError("Expected <buffer_size> to be of type int. Got "
+                        f"<buffer_size> = {buffer_size}.")
+    if buffer_size <= 0:
+        raise ValueError("Expected <buffer_size> to be strictly positive. Got "
+                         f"<buffer_size> = {buffer_size}.")
 
 
-def validate_channel_config(
-        channel_config: ChannelConfig) -> None:
+def validate_channel_config(channel_config: ChannelConfig) -> None:
+    """Validate the channel_config parameter.
+
+    Parameters
+    ----------
+    channel_config : ChannelConfig
+        Channel configuration to validate.
+    """
     if not isinstance(channel_config, ChannelConfig):
         raise TypeError(
             "Expected <channel_config> to be of type "
@@ -93,23 +130,57 @@ def validate_channel_config(
             f"{channel_config.recv_buffer_not_empty}.")
 
 
-def validate_send_data(data: np.ndarray, out_port_shape: tuple) -> None:
+def validate_send_data(data: np.ndarray, out_port: OutPort) -> None:
+    """Validate that the data is of the same shape as the OutPort.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Data to be sent.
+    out_port : OutPort
+        OutPort through which the data will ultimately be sent.
+    """
     if not isinstance(data, np.ndarray):
         raise TypeError("Expected <data> to be of type np.ndarray. Got "
                         f"<data> = {data}")
 
-    if data.shape != out_port_shape:
+    if data.shape != out_port.shape:
         raise ValueError("Expected <data>.shape to be equal to shape of "
                          f"OutPort. Got <data>.shape = {data.shape} and "
-                         f"<out_port>.shape = {out_port_shape}.")
+                         f"<out_port>.shape = {out_port.shape}.")
 
 
 def send_data_blocking(src_port: CspSendPort, data: np.ndarray) -> None:
+    """Send data through the src_port, when using
+    ChannelSendBufferFull.BLOCKING.
+
+    If the channel buffer is full, this method blocks.
+
+    Parameters
+    ----------
+    src_port : CspSendPort
+        Port through which the data is sent.
+    data : np.ndarray
+        Data to be sent.
+    """
     src_port.send(data)
 
 
 def send_data_non_blocking_drop(src_port: CspSendPort, data: np.ndarray) -> \
         None:
+    """Send data through the src_port, when using
+    ChannelSendBufferFull.NON_BLOCKING_DROP.
+
+    If the channel buffer is full, the data is not sent, a warning is issued,
+    and this method does not block.
+
+    Parameters
+    ----------
+    src_port : CspSendPort
+        Port through which the data is sent.
+    data : np.ndarray
+        Data to be sent.
+    """
     if src_port.probe():
         src_port.send(data)
     else:
@@ -117,21 +188,88 @@ def send_data_non_blocking_drop(src_port: CspSendPort, data: np.ndarray) -> \
 
 
 def recv_empty_blocking(dst_port: CspRecvPort, **kwargs) -> np.ndarray:
+    """Receive data through the dst_port, when using
+    ChannelRecvBufferEmpty.BLOCKING.
+
+    This method is blocking.
+
+    Parameters
+    ----------
+    dst_port : CspRecvPort
+        Port through which the data is received.
+
+    Returns
+    ----------
+    data : np.ndarray
+        Data received.
+    """
     return dst_port.recv()
+
 
 def recv_empty_non_blocking_zeros(zeros: np.ndarray, **kwargs) \
         -> np.ndarray:
+    """Receive data through the dst_port, when using
+    ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS.
+
+    This method returns zeros.
+
+    Parameters
+    ----------
+    zeros : np.ndarray
+        Zeros array to be returned.
+
+    Returns
+    ----------
+    data : np.ndarray
+        Data received (zeros).
+    """
     return zeros
 
+
 def recv_not_empty_fifo(dst_port: CspRecvPort, **kwargs) -> np.ndarray:
+    """Receive data through the dst_port, when using
+    ChannelRecvBufferNotEmpty.FIFO.
+
+    This method receives a single item from the dst_port and returns it.
+
+    Parameters
+    ----------
+    dst_port : CspRecvPort
+        Port through which the data is received.
+
+    Returns
+    ----------
+    data : np.ndarray
+        Data received.
+    """
     return dst_port.recv()
 
+
 def recv_not_empty_accumulate(dst_port: CspRecvPort, zeros: np.ndarray,
-                              elements_in_queue: int) -> \
-        np.ndarray:
+                              elements_in_buffer: int) -> np.ndarray:
+    """Receive data through the dst_port, when using
+    ChannelRecvBufferNotEmpty.ACCUMULATE.
+
+    This method receives a all items from the dst_port, accumulates them and
+    returns the result.
+
+    Parameters
+    ----------
+    dst_port : CspRecvPort
+        Port through which the data is received.
+    zeros : np.ndarray
+        Initial value of the accumulator.
+    elements_in_buffer : int
+        Number of elements in the buffer.
+
+    Returns
+    ----------
+    data : np.ndarray
+        Data received (accumulated).
+    """
     data = zeros
 
-    for _ in range(elements_in_queue):
+    for _ in range(elements_in_buffer):
         data += dst_port.recv()
 
     return data

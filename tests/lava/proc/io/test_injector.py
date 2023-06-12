@@ -11,7 +11,7 @@ from lava.magma.core.process.variable import Var
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 
-from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import CPU
 
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -26,8 +26,7 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import \
 from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
     CspSendPort
 
-from lava.proc.io.bridge.injector import Injector, PyInjectorModelFloat, \
-    PyInjectorModelFixed
+from lava.proc.io.bridge.injector import Injector, PyLoihiInjectorModel
 from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
 
@@ -51,10 +50,13 @@ class Recv(AbstractProcess):
         self.var = Var(shape=(buffer_size, ) + shape, init=0)
         self.in_port = InPort(shape=shape)
 
-
+@implements(proc=Recv, protocol=LoihiProtocol)
+@requires(CPU)
 class PyRecvProcModel(PyLoihiProcessModel):
-    var = None
-    in_port = None
+    """Receives dense floating point data from PyInPort and stores it in a
+    Var."""
+    var: np.ndarray = LavaPyType(np.ndarray, float)
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     def __init__(self, proc_params: dict) -> None :
         super().__init__(proc_params)
@@ -64,33 +66,12 @@ class PyRecvProcModel(PyLoihiProcessModel):
         self.var[(self.time_step-1) % self._buffer_size] = self.in_port.recv()
 
 
-@implements(proc=Recv, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PyRecvProcModelFloat(PyRecvProcModel):
-    """Receives dense floating point data from PyInPort and stores it in a
-    Var."""
-    var: np.ndarray = LavaPyType(np.ndarray, float)
-    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-
-
-
-@implements(proc=Recv, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("fixed_pt")
-class PyRecvProcModelFixed(PyRecvProcModel):
-    """Receives dense fixed point data from PyInPort and stores it in a Var."""
-    var: np.ndarray = LavaPyType(np.ndarray, int)
-    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
-
-
 class TestInjector(unittest.TestCase):
     def test_init(self):
+        """Test that the Injector Process is instantiated correctly."""
         out_shape = (1,)
-        size = 10
-        dtype = int
 
-        injector = Injector(shape=out_shape, dtype=dtype, size=size)
+        injector = Injector(shape=out_shape)
 
         self.assertIsInstance(injector, Injector)
 
@@ -130,93 +111,69 @@ class TestInjector(unittest.TestCase):
         self.assertEqual(injector.out_port.shape, out_shape)
 
     def test_invalid_shape(self):
-        dtype = float
-        size = 10
-
+        """Test that instantiating the Injector Process with an invalid
+        shape parameter raises errors."""
         out_shape = (1.5,)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
+            Injector(shape=out_shape)
 
         out_shape = (-1,)
         with self.assertRaises(ValueError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
+            Injector(shape=out_shape)
 
         out_shape = 4
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
+            Injector(shape=out_shape)
 
-    def test_invalid_dtype(self):
+    def test_invalid_buffer_size(self):
+        """Test that instantiating the Injector Process with an invalid
+        buffer_size parameter raises errors."""
         out_shape = (1,)
-        size = 10
 
-        dtype = 1
+        buffer_size = 0.5
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
+            Injector(shape=out_shape, buffer_size=buffer_size)
 
-        dtype = [1]
-        with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
-
-        dtype = np.ones(out_shape)
-        with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
-
-        dtype = "float"
-        with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
-
-    def test_invalid_size(self):
-        out_shape = (1,)
-        dtype = float
-
-        size = 0.5
-        with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
-
-        size = -5
+        buffer_size = -5
         with self.assertRaises(ValueError):
-            Injector(shape=out_shape, dtype=dtype, size=size)
+            Injector(shape=out_shape, buffer_size=buffer_size)
 
-    def test_invalid_injector_channel_config(self):
+    def test_invalid_channel_config(self):
+        """Test that instantiating the Injector Process with an invalid
+        injector_channel_config parameter raises errors."""
         out_shape = (1,)
-        dtype = float
-        size = 1
 
         channel_config = "config"
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size,
-                     injector_channel_config=channel_config)
+            Injector(shape=out_shape, injector_channel_config=channel_config)
 
         channel_config = ChannelConfig(
             send_buffer_full=1,
             recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
             recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size,
-                     injector_channel_config=channel_config)
+            Injector(shape=out_shape, injector_channel_config=channel_config)
 
         channel_config = ChannelConfig(
             send_buffer_full=ChannelSendBufferFull.BLOCKING,
             recv_buffer_empty=1,
             recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size,
-                     injector_channel_config=channel_config)
+            Injector(shape=out_shape, injector_channel_config=channel_config)
 
         channel_config = ChannelConfig(
             send_buffer_full=ChannelSendBufferFull.BLOCKING,
             recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
             recv_buffer_not_empty=1)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, dtype=dtype, size=size,
-                     injector_channel_config=channel_config)
+            Injector(shape=out_shape, injector_channel_config=channel_config)
 
     def test_send_data_invalid_data(self):
+        """Test that calling send_data on an instance of the Injector Process
+        with an invalid data parameter throws errors."""
         shape = (1,)
-        dtype = float
-        size = 10
 
-        injector = Injector(shape=shape, dtype=dtype, size=size)
+        injector = Injector(shape=shape)
 
         data = [1]
         with self.assertRaises(TypeError):
@@ -227,11 +184,12 @@ class TestInjector(unittest.TestCase):
             injector.send_data(data)
 
 
-class TestPyInjectorModelFloat(unittest.TestCase):
+class TestPyLoihiInjectorModel(unittest.TestCase):
     def test_init(self):
+        """Test that the PyLoihiInjectorModel ProcessModel is instantiated
+        correctly."""
         shape = (1, )
-        dtype = float
-        size = 10
+        buffer_size = 10
 
         multi_processing = MultiProcessing()
         multi_processing.start()
@@ -239,16 +197,16 @@ class TestPyInjectorModelFloat(unittest.TestCase):
                               src_name="src",
                               dst_name="dst",
                               shape=shape,
-                              dtype=dtype,
-                              size=size)
+                              dtype=float,
+                              size=buffer_size)
 
         proc_params = {"shape": shape,
                        "injector_channel_config": ChannelConfig(),
                        "injector_channel_dst_port": channel.dst_port}
 
-        pm = PyInjectorModelFloat(proc_params)
+        pm = PyLoihiInjectorModel(proc_params)
 
-        self.assertIsInstance(pm, PyInjectorModelFloat)
+        self.assertIsInstance(pm, PyLoihiInjectorModel)
         self.assertEqual(pm._shape, shape)
         self.assertIsInstance(pm._injector_channel_config,
                               ChannelConfig)
@@ -265,15 +223,16 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         self.assertIsNotNone(pm._injector_channel_dst_port.thread)
 
     def test_send_data_send_buffer_full_blocking(self):
+        """Test that calling send_data on an instance of the Injector Process
+        with ChannelSendBufferFull.BLOCKING blocks."""
         data_shape = (1,)
-        dtype = float
-        size = 1
+        buffer_size = 1
         channel_config = ChannelConfig(
             send_buffer_full=ChannelSendBufferFull.BLOCKING)
 
         num_steps = 1
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
@@ -314,15 +273,16 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         self.assertGreater(time_2, 1)
 
     def test_send_data_send_buffer_full_non_blocking_drop(self):
+        """Test that calling send_data on an instance of the Injector Process
+        with ChannelSendBufferFull.NON_BLOCKING_DROP does not block."""
         data_shape = (1,)
-        dtype = float
-        size = 1
+        buffer_size = 1
         channel_config = ChannelConfig(
             send_buffer_full=ChannelSendBufferFull.NON_BLOCKING_DROP)
 
         num_steps = 1
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
@@ -364,15 +324,16 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         self.assertLess(time_2, 1)
 
     def test_send_data_recv_buffer_empty_blocking(self):
+        """Test that running an instance of the Injector Process with
+        ChannelRecvBufferEmpty.BLOCKING without calling send_data blocks."""
         data_shape = (1,)
-        dtype = float
-        size = 1
+        buffer_size = 1
         channel_config = ChannelConfig(
             recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING)
 
         num_steps = 1
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
@@ -416,23 +377,22 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         time_1 = shared_queue.get()
         time_2 = shared_queue.get()
 
-        print(time_1)
-        print(time_2)
-
         self.assertFalse(thread_2.is_alive())
         self.assertLess(time_1, 1)
         self.assertGreater(time_2, 1)
 
     def test_send_data_recv_buffer_empty_non_blocking(self):
+        """Test that running an instance of the Injector Process with
+        ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS without calling send_data
+        does not block and that zeros are received instead."""
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
         channel_config = ChannelConfig(
             recv_buffer_empty=ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS)
 
         num_steps = 1
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
@@ -451,9 +411,12 @@ class TestPyInjectorModelFloat(unittest.TestCase):
                                 np.zeros(data_shape)[np.newaxis, :])
 
     def test_send_data_recv_buffer_not_empty_fifo(self):
+        """Test that running an instance of the Injector Process with
+        ChannelRecvBufferNotEmpty.FIFO after calling send_data two times in a
+        row has the effect of making the ProcessModel receive the two
+        sent items one by one."""
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
         channel_config = ChannelConfig(
             recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
 
@@ -461,7 +424,7 @@ class TestPyInjectorModelFloat(unittest.TestCase):
 
         send_data = np.array([[10], [15]])
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
@@ -482,9 +445,12 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         np.testing.assert_equal(recv_var_data, send_data)
 
     def test_send_data_recv_buffer_not_empty_accumulate(self):
+        """Test that running an instance of the Injector Process with
+        ChannelRecvBufferNotEmpty.ACCUMULATE after calling send_data two times
+        in a row has the effect of making the ProcessModel receive the two
+        sent items, accumulated, in the first time step."""
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
         channel_config = ChannelConfig(
             recv_buffer_not_empty=ChannelRecvBufferNotEmpty.ACCUMULATE)
 
@@ -492,7 +458,7 @@ class TestPyInjectorModelFloat(unittest.TestCase):
 
         send_data = np.array([[10], [15]])
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size,
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
                             injector_channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
@@ -514,16 +480,18 @@ class TestPyInjectorModelFloat(unittest.TestCase):
                                 np.sum(send_data, axis=0)[np.newaxis, :])
 
     def test_run_steps_blocking(self):
+        """Test that running the a Lava network involving the Injector
+        Process, with RunSteps(blocking=True), for multiple time steps, with a
+        separate thread calling send_data, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
 
         num_steps = 50
         num_send = num_steps
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        injector = Injector(shape=data_shape, buffer_size=buffer_size)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
@@ -531,7 +499,7 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
-        send_data = np.random.random(size=(num_send, ) + data_shape)
+        send_data = np.random.random(size=(num_send, ) + data_shape) * 10
 
         def thread_2_fn() -> None:
             for send_data_single_item in send_data:
@@ -550,16 +518,18 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         np.testing.assert_equal(recv_var_data, send_data)
 
     def test_run_steps_non_blocking(self):
+        """Test that running the a Lava network involving the Injector
+        Process, with RunSteps(blocking=False), for multiple time steps, runs
+        and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
 
         num_steps = 50
         num_send = num_steps
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        injector = Injector(shape=data_shape, buffer_size=buffer_size)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
@@ -583,15 +553,17 @@ class TestPyInjectorModelFloat(unittest.TestCase):
         np.testing.assert_equal(recv_var_data, send_data)
 
     def test_run_continuous(self):
+        """Test that running the a Lava network involving the Injector
+        Process, with RunContinuous(), for multiple time steps, runs
+        and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
-        size = 10
-        dtype = float
+        buffer_size = 10
 
         num_send = 50
 
-        injector = Injector(shape=data_shape, dtype=dtype, size=size)
+        injector = Injector(shape=data_shape, buffer_size=buffer_size)
         recv = Recv(shape=data_shape, buffer_size=num_send)
 
         injector.out_port.connect(recv.in_port)
