@@ -209,32 +209,32 @@ class ConvNeuronVarModel(LoihiNeuronVarModel):
 @dataclass
 class ByteEncoder:
     """Encodes ptr, len, base"""
-    base: int
-    len: int
-    ptr: int
+    base: int = 0
+    len: int = 0
+    ptr: int = 0
 
 
 @dataclass
 class CoreEncoder:
     """ Encodes a core xyp """
-    x: ByteEncoder
-    y: ByteEncoder
-    p: ByteEncoder
+    x: ByteEncoder = ByteEncoder()
+    y: ByteEncoder = ByteEncoder()
+    p: ByteEncoder = ByteEncoder()
 
 
 @dataclass
 class ChipEncoder:
     """ Encoding for chip field """
-    x: ByteEncoder
-    y: ByteEncoder
-    z: ByteEncoder
+    x: ByteEncoder = ByteEncoder()
+    y: ByteEncoder = ByteEncoder()
+    z: ByteEncoder = ByteEncoder()
 
 
 @dataclass
 class AxonEncoder:
     """ Encoding for axon field """
-    hi: ByteEncoder
-    lo: ByteEncoder
+    hi: ByteEncoder = ByteEncoder()
+    lo: ByteEncoder = ByteEncoder()
 
 
 @dataclass
