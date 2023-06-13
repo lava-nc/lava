@@ -5,7 +5,7 @@
 import typing as ty
 from dataclasses import dataclass
 from multiprocessing import Semaphore
-from queue import Queue, Empty, Full
+from queue import Queue, Empty
 from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from scipy.sparse import csr_matrix
