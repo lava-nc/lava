@@ -145,6 +145,7 @@ class CspSendPort(AbstractCspSendPort):
             self._ack = None
             self._req = None
 
+
 class CspRecvQueue(Queue):
     """
     Underlying queue which backs the CspRecvPort
