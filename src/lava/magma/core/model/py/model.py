@@ -248,9 +248,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         # notify PM that Vars have been changed
         self.on_var_update()
 
-        # notify PM that Vars have been changed
-        self.on_var_update()
-
     def _handle_var_port(self, var_port):
         """Handles read/write requests on the given VarPort."""
         var_port.service()
