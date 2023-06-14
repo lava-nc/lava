@@ -475,6 +475,11 @@ class PyOutPort(AbstractPyIOPort):
         """TBD"""
         pass
 
+    def advance_time(self, ts):
+        for csp_port in self.csp_ports:
+            if hasattr(csp_port, "advance_time"):
+                csp_port.advance_time(ts)
+
 
 class PyOutPortVectorDense(PyOutPort):
     """Python implementation of PyOutPort for dense vector data."""
