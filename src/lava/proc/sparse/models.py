@@ -75,6 +75,7 @@ class AbstractPySparseModelBitAcc(PyLoihiProcessModel):
         self.weights_set = False
 
     def run_spk(self):
+        # pylint: disable=W0201
         self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
         # Since this Process has no learning, weights are assumed to be static

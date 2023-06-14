@@ -703,6 +703,7 @@ class PyRefPortVectorDense(PyRefPort):
         """
         if self._csp_send_port and self._csp_recv_port:
             if not hasattr(self, 'get_header'):
+                # pylint: disable=W0201
                 self.get_header = (np.ones(self._csp_send_port.shape,
                                    dtype=self._d_type)
                                    * VarPortCmd.GET.astype(self._d_type))
@@ -711,6 +712,7 @@ class PyRefPortVectorDense(PyRefPort):
                                                self._csp_recv_port)
         else:
             if not hasattr(self, 'get_zeros'):
+                # pylint: disable=W0201
                 self.get_zeros = np.zeros(self._shape, self._d_type)
             return self.get_zeros
 
@@ -725,6 +727,7 @@ class PyRefPortVectorDense(PyRefPort):
         """
         if self._csp_send_port:
             if not hasattr(self, 'set_header'):
+                # pylint: disable=W0201
                 self.set_header = (np.ones(self._csp_send_port.shape,
                                    dtype=data.dtype)
                                    * VarPortCmd.SET.astype(self._d_type))
