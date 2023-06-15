@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import sys
 import warnings
 import typing as ty
 from lava.magma.core.run_configs import RunConfig, Loihi2HwCfg
