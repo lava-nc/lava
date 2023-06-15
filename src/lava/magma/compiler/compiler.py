@@ -132,7 +132,7 @@ class Compiler:
         proc_builders, channel_map = self._compile_proc_groups(
             proc_groups, channel_map
         )
-        py_builders, c_builders, nc_builders = split_proc_builders_by_type(
+        _, c_builders, nc_builders = split_proc_builders_by_type(
             proc_builders
         )
 

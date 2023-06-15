@@ -23,8 +23,8 @@ from lava.magma.core.run_conditions import RunSteps, RunContinuous
 
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
-from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
-    CspSendPort
+from lava.magma.compiler.channels.pypychannel import (PyPyChannel, CspRecvPort,
+                                                      CspSendPort)
 
 from lava.proc.io.injector import Injector, PyLoihiInjectorModel
 from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
@@ -50,6 +50,7 @@ class Recv(AbstractProcess):
         self.var = Var(shape=(buffer_size, ) + shape, init=0)
         self.in_port = InPort(shape=shape)
 
+
 @implements(proc=Recv, protocol=LoihiProtocol)
 @requires(CPU)
 class PyRecvProcModel(PyLoihiProcessModel):
@@ -62,7 +63,8 @@ class PyRecvProcModel(PyLoihiProcessModel):
         self._buffer_size = proc_params["buffer_size"]
 
     def run_spk(self) -> None:
-        self.var[(self.time_step-1) % self._buffer_size] = self.in_port.recv()
+        self.var[
+            (self.time_step - 1) % self._buffer_size] = self.in_port.recv()
 
 
 class TestInjector(unittest.TestCase):
@@ -234,8 +236,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
             injector.send(np.ones(data_shape))
             checkpoint_3 = time.perf_counter()
 
-            queue.put(checkpoint_2-checkpoint_1)
-            queue.put(checkpoint_3-checkpoint_2)
+            queue.put(checkpoint_2 - checkpoint_1)
+            queue.put(checkpoint_3 - checkpoint_2)
 
         thread_2 = threading.Thread(target=thread_2_fn,
                                     daemon=True,
@@ -570,5 +572,5 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         injector.stop()
 
-        np.testing.assert_equal(recv_var_data[:num_send//10],
-                                send_data[:num_send//10])
+        np.testing.assert_equal(recv_var_data[:num_send // 10],
+                                send_data[:num_send // 10])

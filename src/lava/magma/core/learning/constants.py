@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from enum import IntEnum, auto
+from enum import IntEnum
 import lava.magma.core.learning.string_symbols as str_symbols
 
 # ---------------------------------------------------------------------------

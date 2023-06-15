@@ -3,21 +3,19 @@
 # See: https://spdx.org/licenses/
 
 import unittest
+import numpy as np
 from lava.magma.core.learning.learning_rule import Loihi2FLearningRule
 from scipy.sparse import csr_matrix
 
-from lava.proc.sparse.process import Sparse
-from lava.proc.dense.process import Dense, LearningDense
+from lava.proc.dense.process import LearningDense
 from lava.proc.sparse.process import Sparse, DelaySparse, LearningSparse
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 from lava.proc.dense.process import Dense
-from lava.proc.sparse.process import Sparse, DelaySparse
 from lava.proc.sparse.models import AbstractPyDelaySparseModel as APDSM
 from lava.proc.io.source import RingBuffer as Source
 from lava.proc.io.sink import RingBuffer as Sink
-import unittest
+
 from lava.magma.core.run_configs import Loihi2SimCfg
-import numpy as np
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.ports import PyOutPort, PyInPort
@@ -30,7 +28,6 @@ from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.dense.models import AbstractPyDelayDenseModel
 from lava.utils.weightutils import SignMode
-from tests.lava.magma.core import learning
 
 
 def create_network(input_data, conn, weights):
@@ -158,7 +155,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
         conn = Sparse(weights=weights_sparse)
-        sparse_net = create_network(inp, conn, weights_sparse)
+        create_network(inp, conn, weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         weights_got = conn.weights.get()
@@ -187,7 +184,7 @@ class TestSparseProcessModelFloat(unittest.TestCase):
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
         conn = Sparse(weights=weights_init_sparse)
-        sparse_net = create_network(inp, conn, weights_init_sparse)
+        create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         new_weights_sparse = conn.weights.init.copy()
@@ -404,7 +401,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
                              tag_1=weights.copy(),
                              tag_2=weights.copy(),
                              learning_rule=learning_rule)
-        dense_net = create_learning_network(pre, conn, post)
+        create_learning_network(pre, conn, post)
 
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
@@ -422,7 +419,7 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
                               tag_1=weights_sparse.copy(),
                               tag_2=weights_sparse.copy(),
                               learning_rule=learning_rule)
-        sparse_net = create_learning_network(pre, conn, post)
+        create_learning_network(pre, conn, post)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         weights_got_sparse = conn.weights.get()

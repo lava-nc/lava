@@ -12,8 +12,6 @@ from lava.magma.compiler.node import Node, NodeConfig
 class MockProcess(AbstractProcess):
     """A mock process"""
 
-    pass
-
 
 class TestNode(unittest.TestCase):
     def test_node_creation(self):

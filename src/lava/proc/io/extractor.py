@@ -130,6 +130,7 @@ class Extractor(AbstractProcess):
         self._multi_processing.stop()
         self._extractor_channel_dst_port.join()
 
+
 @implements(proc=Extractor, protocol=LoihiProtocol)
 @requires(CPU)
 class PyLoihiExtractorModel(PyLoihiProcessModel):

@@ -20,15 +20,15 @@ class Testrf_izProcessModels(unittest.TestCase):
         self,
         period: float,
         alpha: float,
-        input: np.ndarray,
+        input_: np.ndarray,
         state_exp: int = 0,
         decay_bits: int = 0,
         vth: float = 1,
         tag: str = 'floating_pt',
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        input = input.reshape(1, -1)
-        num_steps = input.size
-        source = io.source.RingBuffer(data=input)
+        input_ = input_.reshape(1, -1)
+        num_steps = input_.size
+        source = io.source.RingBuffer(data=input_)
         rf = RF_IZ(shape=(1,),
                    period=period,
                    alpha=alpha,
@@ -55,7 +55,7 @@ class Testrf_izProcessModels(unittest.TestCase):
         imag = imag_monitor.get_data()[rf.name]["imag"]
         rf.stop()
 
-        return input, real, imag, s_out
+        return input_, real, imag, s_out
 
     def test_float_reset(self):
         """Ensure that spikes events are followed by proper rf_iz reset
@@ -65,9 +65,9 @@ class Testrf_izProcessModels(unittest.TestCase):
         eps = 1e-5
 
         num_steps = 100
-        input = np.zeros(num_steps)
-        input[[0, 10, 20]] = 1  # Will ensure 3 spikes
-        _, real, imag, s_out = self.run_test(period, alpha, input)
+        input_ = np.zeros(num_steps)
+        input_[[0, 10, 20]] = 1  # Will ensure 3 spikes
+        _, real, imag, s_out = self.run_test(period, alpha, input_)
         s_out = s_out.flatten() == 1  # change to bool
         self.assertGreaterEqual(s_out.sum(), 1)  # ensure network is spiking
         self.assertListEqual(real.flatten()[s_out].tolist(),
@@ -84,9 +84,9 @@ class Testrf_izProcessModels(unittest.TestCase):
         eps = 1  # in fixed point 1 is the smallest value we can have
         state_exp = 6
         num_steps = 100
-        input = np.zeros(num_steps)
-        input[[0, 10, 20]] = 1  # Will ensure 3 spikes
-        _, real, imag, s_out = self.run_test(period, alpha, input,
+        input_ = np.zeros(num_steps)
+        input_[[0, 10, 20]] = 1  # Will ensure 3 spikes
+        _, real, imag, s_out = self.run_test(period, alpha, input_,
                                              tag="fixed_pt",
                                              state_exp=state_exp,
                                              decay_bits=12)
