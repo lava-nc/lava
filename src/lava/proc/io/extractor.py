@@ -9,13 +9,13 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
+from lava.magma.core.model.py.ports import PyInPort
 
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
 
-from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
+from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty,\
     validate_shape, validate_buffer_size, validate_channel_config, \
     send_data_blocking, send_data_non_blocking_drop, \
@@ -24,11 +24,10 @@ from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
 
 
 class Extractor(AbstractProcess):
-    """Process that gets data out of Lava.
+    """Extractor allows non-Lava code, such as a third-party Python library
+    to extract data from a Lava Process while the Lava Runtime is running,
+    by calling receive.
 
-    The Extractor Process exposes a method, recv_data, which enables users to
-    receive data in external Python scripts from the ProcessModel of the
-    Process, while the Lava Runtime is running.
     Internally, this Process builds a channel (extractor_channel, of type
     PyPyChannel).
     The src_port of the channel lives in the ProcessModel.
@@ -36,26 +35,8 @@ class Extractor(AbstractProcess):
 
     In the ProcessModel, data is received from this Process's InPort,
     and relayed to the extractor_channel.src_port.
-    When the recv_data is called from the external Python script, data is
+    When the receive method is called from the external Python script, data is
     received from the extractor_channel.dst_port.
-
-    For the sending part of the extractor_channel (src_port), the following
-    property can be parametrized:
-        (1) When the channel buffer is full, sending new data will either:
-            (a) Block until free space is available (until the receiving part
-            receives an item).
-            (b) Not block, and the new data will not be sent.
-
-    For the receiving part of the extractor_channel (recv_port), the following
-    properties can be parametrized:
-        (1) When the channel buffer is empty, receiving will either:
-            (a) Block until an item is available (until the sending part
-            sends an item).
-            (b) Not block, and the received data will be zeros.
-        (2) When the channel buffer is not empty, receiving will either:
-            (a) Receive a single item, being the oldest item put in the
-            channel (FIFO).
-            (b) Receive all items available, accumulated.
 
     Parameters
     ----------
@@ -80,8 +61,8 @@ class Extractor(AbstractProcess):
         validate_channel_config(extractor_channel_config)
 
         self._shape = shape
-
         self._extractor_channel_config = extractor_channel_config
+        self._zeros = np.zeros(self._shape)
 
         self._multi_processing = MultiProcessing()
         self._multi_processing.start()
@@ -117,7 +98,7 @@ class Extractor(AbstractProcess):
 
         self.in_port = InPort(shape=shape)
 
-    def recv_data(self) -> np.ndarray:
+    def receive(self) -> np.ndarray:
         """Receive data from the ProcessModel.
 
         The data is received from extractor_channel.dst_port.
@@ -127,17 +108,18 @@ class Extractor(AbstractProcess):
         data : np.ndarray
             Data received.
         """
+        self._zeros.fill(0)
         elements_in_buffer = \
             self._extractor_channel_dst_port._queue._qsize()
 
         if elements_in_buffer == 0:
             data = self._recv_empty(
                 dst_port=self._extractor_channel_dst_port,
-                zeros=np.zeros(self._shape))
+                zeros=self._zeros)
         else:
             data = self._recv_not_empty(
                 dst_port=self._extractor_channel_dst_port,
-                zeros=np.zeros(self._shape),
+                zeros=self._zeros,
                 elements_in_buffer=elements_in_buffer)
 
         return data
@@ -151,7 +133,7 @@ class Extractor(AbstractProcess):
 @implements(proc=Extractor, protocol=LoihiProtocol)
 @requires(CPU)
 class PyLoihiExtractorModel(PyLoihiProcessModel):
-    in_port: PyOutPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params=proc_params)

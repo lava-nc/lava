@@ -130,26 +130,6 @@ def validate_channel_config(channel_config: ChannelConfig) -> None:
             f"{channel_config.recv_buffer_not_empty}.")
 
 
-def validate_send_data(data: np.ndarray, out_port: OutPort) -> None:
-    """Validate that the data is of the same shape as the OutPort.
-
-    Parameters
-    ----------
-    data : np.ndarray
-        Data to be sent.
-    out_port : OutPort
-        OutPort through which the data will ultimately be sent.
-    """
-    if not isinstance(data, np.ndarray):
-        raise TypeError("Expected <data> to be of type np.ndarray. Got "
-                        f"<data> = {data}")
-
-    if data.shape != out_port.shape:
-        raise ValueError("Expected <data>.shape to be equal to shape of "
-                         f"OutPort. Got <data>.shape = {data.shape} and "
-                         f"<out_port>.shape = {out_port.shape}.")
-
-
 def send_data_blocking(src_port: CspSendPort, data: np.ndarray) -> None:
     """Send data through the src_port, when using
     ChannelSendBufferFull.BLOCKING.

@@ -26,8 +26,8 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import \
 from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
     CspSendPort
 
-from lava.proc.io.bridge.injector import Injector, PyLoihiInjectorModel
-from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
+from lava.proc.io.injector import Injector, PyLoihiInjectorModel
+from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
 
 
@@ -167,21 +167,6 @@ class TestInjector(unittest.TestCase):
         with self.assertRaises(TypeError):
             Injector(shape=out_shape, injector_channel_config=channel_config)
 
-    def test_send_data_invalid_data(self):
-        """Test that calling send_data on an instance of the Injector Process
-        with an invalid data parameter throws errors."""
-        shape = (1,)
-
-        injector = Injector(shape=shape)
-
-        data = [1]
-        with self.assertRaises(TypeError):
-            injector.send_data(data)
-
-        data = np.ones((2, ))
-        with self.assertRaises(ValueError):
-            injector.send_data(data)
-
 
 class TestPyLoihiInjectorModel(unittest.TestCase):
     def test_init(self):
@@ -222,8 +207,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         self.assertIsNotNone(pm._injector_channel_dst_port.thread)
 
     def test_send_data_send_buffer_full_blocking(self):
-        """Test that calling send_data on an instance of the Injector Process
-        with ChannelSendBufferFull.BLOCKING blocks."""
+        """Test that calling send on an instance of the Injector Process
+        with ChannelSendBufferFull.BLOCKING blocks when the channel is full."""
         data_shape = (1,)
         buffer_size = 1
         channel_config = ChannelConfig(
@@ -244,9 +229,9 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         def thread_2_fn(queue: Queue) -> None:
             checkpoint_1 = time.perf_counter()
-            injector.send_data(np.ones(data_shape))
+            injector.send(np.ones(data_shape))
             checkpoint_2 = time.perf_counter()
-            injector.send_data(np.ones(data_shape))
+            injector.send(np.ones(data_shape))
             checkpoint_3 = time.perf_counter()
 
             queue.put(checkpoint_2-checkpoint_1)
@@ -272,8 +257,9 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         self.assertGreater(time_2, 1)
 
     def test_send_data_send_buffer_full_non_blocking_drop(self):
-        """Test that calling send_data on an instance of the Injector Process
-        with ChannelSendBufferFull.NON_BLOCKING_DROP does not block."""
+        """Test that calling send on an instance of the Injector Process
+        with ChannelSendBufferFull.NON_BLOCKING_DROP does not block when the
+        channel is full."""
         data_shape = (1,)
         buffer_size = 1
         channel_config = ChannelConfig(
@@ -294,10 +280,10 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         def thread_2_fn(queue: Queue) -> None:
             checkpoint_1 = time.perf_counter()
-            injector.send_data(np.ones(data_shape))
+            injector.send(np.ones(data_shape))
             checkpoint_2 = time.perf_counter()
             with self.assertWarns(UserWarning):
-                injector.send_data(np.ones(data_shape))
+                injector.send(np.ones(data_shape))
             checkpoint_3 = time.perf_counter()
 
             queue.put(checkpoint_2 - checkpoint_1)
@@ -341,7 +327,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
-        injector.send_data(np.ones(data_shape))
+        injector.send(np.ones(data_shape))
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
         shared_queue = Queue(2)
@@ -356,7 +342,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
             queue.put(checkpoint_2 - checkpoint_1)
             queue.put(checkpoint_3 - checkpoint_2)
 
-        injector.send_data(np.ones(data_shape))
+        injector.send(np.ones(data_shape))
 
         thread_2 = threading.Thread(target=thread_2_fn,
                                     daemon=True,
@@ -365,7 +351,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         time.sleep(2)
 
-        injector.send_data(np.ones(data_shape))
+        injector.send(np.ones(data_shape))
 
         time.sleep(1)
 
@@ -432,8 +418,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
-        injector.send_data(send_data[0])
-        injector.send_data(send_data[1])
+        injector.send(send_data[0])
+        injector.send(send_data[1])
 
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
@@ -466,8 +452,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
 
-        injector.send_data(send_data[0])
-        injector.send_data(send_data[1])
+        injector.send(send_data[0])
+        injector.send(send_data[1])
 
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
@@ -502,7 +488,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         def thread_2_fn() -> None:
             for send_data_single_item in send_data:
-                injector.send_data(send_data_single_item)
+                injector.send(send_data_single_item)
 
         thread_2 = threading.Thread(target=thread_2_fn,
                                     daemon=True)
@@ -541,7 +527,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
         for send_data_single_item in send_data:
-            injector.send_data(send_data_single_item)
+            injector.send(send_data_single_item)
 
         injector.wait()
 
@@ -575,7 +561,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         injector.run(condition=run_condition, run_cfg=run_cfg)
 
         for send_data_single_item in send_data:
-            injector.send_data(send_data_single_item)
+            injector.send(send_data_single_item)
 
         injector.pause()
         injector.wait()

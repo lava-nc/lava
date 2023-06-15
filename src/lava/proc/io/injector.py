@@ -14,47 +14,28 @@ from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
+from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty,\
     validate_shape, validate_buffer_size, validate_channel_config, \
-    validate_send_data, send_data_blocking, send_data_non_blocking_drop, \
+    send_data_blocking, send_data_non_blocking_drop, \
     recv_empty_blocking, recv_empty_non_blocking_zeros, recv_not_empty_fifo, \
     recv_not_empty_accumulate
 
 
 class Injector(AbstractProcess):
-    """Process that gets data into Lava.
+    """Injector allows non-Lava code, such as a third-party Python library or
+    to inject data to a Lava Process while the Lava Runtime is running,
+    by calling send.
 
-    The Injector Process exposes a method, send_data, which enables users to
-    send data from external Python scripts to the ProcessModel of the
-    Process, while the Lava Runtime is running.
     Internally, this Process builds a channel (injector_channel, of type
     PyPyChannel).
     The src_port of the channel lives in the Process.
     The dst_port of the channel lives in the ProcessModel.
 
-    When the send_data method is called from the external Python script, data is
+    When the send method is called from the external Python script, data is
     sent through the injector_channel.src_port.
     In the ProcessModel, data is received through the
-    injector_channel.recv_port, and relayed to this Process's OutPort.
-
-    For the sending part of the injector_channel (src_port), the following
-    property can be parametrized:
-        (1) When the channel buffer is full, sending new data will either:
-            (a) Block until free space is available (until the receiving part
-            receives an item).
-            (b) Not block, and the new data will not be sent.
-
-    For the receiving part of the injector_channel (recv_port), the following
-    properties can be parametrized:
-        (1) When the channel buffer is empty, receiving will either:
-            (a) Block until an item is available (until the sending part
-            sends an item).
-            (b) Not block, and the received data will be zeros.
-        (2) When the channel buffer is not empty, receiving will either:
-            (a) Receive a single item, being the oldest item put in the
-            channel (FIFO).
-            (b) Receive all items available, accumulated.
+    injector_channel.dst_port, and relayed to this Process's OutPort.
 
     Parameters
     ----------
@@ -108,7 +89,7 @@ class Injector(AbstractProcess):
 
         self.out_port = OutPort(shape=shape)
 
-    def send_data(self, data: np.ndarray) -> None:
+    def send(self, data: np.ndarray) -> None:
         """Send data to the ProcessModel.
 
         The data is sent through injector_channel.src_port.
@@ -118,7 +99,6 @@ class Injector(AbstractProcess):
         data : np.ndarray
             Data to be sent.
         """
-        validate_send_data(data, self.out_port)
         self._send_data(self._injector_channel_src_port, data)
 
     def __del__(self) -> None:
@@ -143,6 +123,8 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
         self._injector_channel_dst_port = \
             self.proc_params["injector_channel_dst_port"]
 
+        self._zeros = np.zeros(self._shape)
+
         self._injector_channel_dst_port.start()
 
         if self._injector_channel_config.recv_buffer_empty == \
@@ -160,17 +142,18 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
             self._recv_not_empty = recv_not_empty_accumulate
 
     def run_spk(self) -> None:
+        self._zeros.fill(0)
         elements_in_buffer = \
             self._injector_channel_dst_port._queue._qsize()
 
         if elements_in_buffer == 0:
             data = self._recv_empty(
                 dst_port=self._injector_channel_dst_port,
-                zeros=np.zeros(self._shape))
+                zeros=self._zeros)
         else:
             data = self._recv_not_empty(
                 dst_port=self._injector_channel_dst_port,
-                zeros=np.zeros(self._shape),
+                zeros=self._zeros,
                 elements_in_buffer=elements_in_buffer)
 
         self.out_port.send(data)

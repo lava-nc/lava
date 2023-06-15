@@ -17,9 +17,9 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyOutPort
 
-from lava.proc.io.bridge.extractor import Extractor, PyLoihiExtractorModel
+from lava.proc.io.extractor import Extractor, PyLoihiExtractorModel
 
-from lava.proc.io.bridge.utils import ChannelConfig, ChannelSendBufferFull, \
+from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
     ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
 
 from lava.magma.core.run_configs import Loihi2SimCfg
@@ -62,6 +62,7 @@ class PySendProcModel(PyLoihiProcessModel):
 
 class TestExtractor(unittest.TestCase):
     def test_init(self):
+        """Test that the Extractor Process is instantiated correctly."""
         in_shape = (1,)
 
         extractor = Extractor(shape=in_shape)
@@ -80,6 +81,8 @@ class TestExtractor(unittest.TestCase):
         self.assertEqual(extractor.in_port.shape, in_shape)
 
     def test_invalid_shape(self):
+        """Test that instantiating the Extractor Process with an invalid
+        shape parameter raises errors."""
         in_shape = (1.5,)
         with self.assertRaises(TypeError):
             Extractor(shape=in_shape)
@@ -93,6 +96,8 @@ class TestExtractor(unittest.TestCase):
             Extractor(shape=in_shape)
 
     def test_invalid_buffer_size(self):
+        """Test that instantiating the Extractor Process with an invalid
+        buffer_size parameter raises errors."""
         in_shape = (1,)
 
         buffer_size = 0.5
@@ -136,6 +141,8 @@ class TestExtractor(unittest.TestCase):
 
 class TestPyLoihiExtractorModel(unittest.TestCase):
     def test_init(self):
+        """Test that the PyLoihiExtractorrModel ProcessModel is instantiated
+        correctly."""
         shape = (1, )
         buffer_size = 10
 
@@ -171,6 +178,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         self.assertIsNotNone(pm._extractor_channel_src_port.thread)
 
     def test_recv_data_send_buffer_full_blocking(self):
+        """Test that calling receive on an instance of the Extractor Process
+        with ChannelSendBufferFull.BLOCKING blocks when the channel is full."""
         data_shape = (1,)
         buffer_size = 1
         channel_config = ChannelConfig(
@@ -190,7 +199,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         run_cfg = Loihi2SimCfg()
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
-        extractor.recv_data()
+        extractor.receive()
 
         shared_queue = Queue(2)
 
@@ -211,7 +220,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         time.sleep(2)
 
-        extractor.recv_data()
+        extractor.receive()
 
         time.sleep(1)
 
@@ -246,7 +255,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         run_cfg = Loihi2SimCfg()
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
-        extractor.recv_data()
+        extractor.receive()
 
         shared_queue = Queue(2)
 
@@ -267,7 +276,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         time.sleep(2)
 
-        extractor.recv_data()
+        extractor.receive()
 
         time.sleep(1)
 
@@ -305,9 +314,9 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         def thread_2_fn(queue: Queue) -> None:
             checkpoint_1 = time.perf_counter()
-            extractor.recv_data()
+            extractor.receive()
             checkpoint_2 = time.perf_counter()
-            extractor.recv_data()
+            extractor.receive()
             checkpoint_3 = time.perf_counter()
 
             queue.put(checkpoint_2 - checkpoint_1)
@@ -346,7 +355,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
                               extractor_channel_config=channel_config)
 
-        recv_data = extractor.recv_data()
+        recv_data = extractor.receive()
 
         np.testing.assert_equal(recv_data,
                                 np.zeros(data_shape))
@@ -372,7 +381,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
 
-        recv_data = [extractor.recv_data(), extractor.recv_data()]
+        recv_data = [extractor.receive(), extractor.receive()]
 
         extractor.stop()
 
@@ -399,7 +408,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
 
-        recv_data = [extractor.recv_data()]
+        recv_data = [extractor.receive()]
 
         extractor.stop()
 
@@ -429,7 +438,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         def thread_2_fn(queue: Queue) -> None:
             for _ in range(num_steps):
-                queue.put(extractor.recv_data())
+                queue.put(extractor.receive())
 
         thread_2 = threading.Thread(target=thread_2_fn,
                                     daemon=True,
@@ -466,7 +475,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         recv_data = []
 
         for _ in range(num_steps):
-            recv_data.append(extractor.recv_data())
+            recv_data.append(extractor.receive())
 
         extractor.wait()
 
@@ -498,7 +507,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         recv_data = []
 
         for _ in range(num_steps):
-            recv_data.append(extractor.recv_data())
+            recv_data.append(extractor.receive())
 
         extractor.pause()
         extractor.wait()
