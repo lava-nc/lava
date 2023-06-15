@@ -5,15 +5,16 @@
 import typing as ty
 from abc import ABC, abstractmethod
 import math
-from dataclasses import dataclass
-
 import numpy as np
 import functools as ft
 
 from lava.magma.core.process.interfaces import AbstractProcessMember
 import lava.magma.core.process.ports.exceptions as pe
+from lava.magma.core.process.ports.connection_config import ConnectionConfig
 from lava.magma.core.process.ports.reduce_ops import AbstractReduceOp
 from lava.magma.core.process.variable import Var
+
+ConnectionConfigs = ty.Union["ConnectionConfig", ty.List["ConnectionConfig"]]
 
 
 def to_list(obj: ty.Any) -> ty.List[ty.Any]:
@@ -74,7 +75,7 @@ class AbstractPort(AbstractProcessMember):
         super().__init__(shape)
         self.in_connections: ty.List[AbstractPort] = []
         self.out_connections: ty.List[AbstractPort] = []
-        self.config: ty.Dict[AbstractPort, ty.Dict[str, ty.Any]] = {}
+        self.connection_configs: ty.Dict[AbstractPort, ConnectionConfig] = {}
 
     def _validate_ports(
             self,
@@ -121,9 +122,9 @@ class AbstractPort(AbstractProcessMember):
             self,
             ports: ty.List["AbstractPort"],
             port_type: ty.Type["AbstractPort"],
+            connection_configs: ty.List[ty.Optional[ConnectionConfig]],
             assert_same_shape: bool = True,
-            assert_same_type: bool = True,
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            assert_same_type: bool = True):
         """Creates a forward connection from this AbstractPort to other
         ports by adding other ports to this AbstractPort's out_connection and
         by adding this AbstractIOPort to other port's in_connections."""
@@ -133,24 +134,20 @@ class AbstractPort(AbstractProcessMember):
         )
         # Add other ports to this port's output connections
         self._add_outputs(ports)
-
-        # Store the channel stubs
-        channel_stubs: ty.List["ChannelStub"] = []
-
         # Add this port to input connections of other ports
-        for p in ports:
+        for p, connection_config in zip(ports, connection_configs):
             p._add_inputs([self])
-            channel_stubs.append(ChannelStub(self, p))
-
-        return channel_stubs[0] if len(channel_stubs) == 1 else channel_stubs
+            if connection_config:
+                self.connection_configs[p] = connection_config
+                p.connection_configs[self] = connection_config
 
     def _connect_backward(
             self,
             ports: ty.List["AbstractPort"],
             port_type: ty.Type["AbstractPort"],
+            connection_configs: ty.List[ty.Optional[ConnectionConfig]],
             assert_same_shape: bool = True,
-            assert_same_type: bool = True,
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            assert_same_type: bool = True):
         """Creates a backward connection from other ports to this
         AbstractPort by adding other ports to this AbstractPort's
         in_connection and by adding this AbstractPort to other port's
@@ -161,16 +158,12 @@ class AbstractPort(AbstractProcessMember):
         )
         # Add other ports to this port's input connections
         self._add_inputs(ports)
-
-        # Store the channel stubs
-        channel_stubs: ty.List["ChannelStub"] = []
-
         # Add this port to output connections of other ports
-        for p in ports:
+        for p, connection_config in zip(ports, connection_configs):
             p._add_outputs([self])
-            channel_stubs.append(ChannelStub(p, self))
-
-        return channel_stubs[0] if len(channel_stubs) == 1 else channel_stubs
+            if connection_config:
+                p.connection_configs[self] = connection_config
+                self.connection_configs[p] = connection_config
 
     def get_src_ports(self, _include_self=False) -> ty.List["AbstractSrcPort"]:
         """Returns the list of all source ports that connect either directly
@@ -443,8 +436,9 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
     """
 
     def connect(
-            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            self,
+            ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]],
+            connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this OutPort to other InPort(s) of another process
         or to OutPort(s) of its parent process.
 
@@ -452,11 +446,16 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
         ----------
         ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
             The AbstractIOPort(s) to connect to.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
-        return self._connect_forward(to_list(ports), AbstractIOPort)
+        self._connect_forward(to_list(ports),
+                              AbstractIOPort,
+                              to_list(connection_configs))
 
-    def connect_from(self, ports: ty.Union["OutPort", ty.List["OutPort"]]) ->\
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+    def connect_from(self,
+                     ports: ty.Union["OutPort", ty.List["OutPort"]],
+                     connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects other OutPort(s) of a nested process to this OutPort.
         OutPorts cannot receive connections from other InPorts.
 
@@ -464,8 +463,12 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
         ----------
         ports: ty.Union["OutPort", ty.List["OutPort"]]
             The OutPorts(s) that connect to this OutPort.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
-        return self._connect_backward(to_list(ports), OutPort)
+        self._connect_backward(to_list(ports),
+                               OutPort,
+                               to_list(connection_configs))
 
 
 class InPort(AbstractIOPort, AbstractDstPort):
@@ -493,8 +496,9 @@ class InPort(AbstractIOPort, AbstractDstPort):
         super().__init__(shape)
         self._reduce_op = reduce_op
 
-    def connect(self, ports: ty.Union["InPort", ty.List["InPort"]]) -> \
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+    def connect(self,
+                ports: ty.Union["InPort", ty.List["InPort"]],
+                connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this InPort to other InPort(s) of a nested process. InPorts
         cannot connect to other OutPorts.
 
@@ -502,12 +506,16 @@ class InPort(AbstractIOPort, AbstractDstPort):
         ----------
         ports: ty.Union["InPort", ty.List["InPort"]]
             The InPort(s) to connect to.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
-        return self._connect_forward(to_list(ports), InPort)
+        self._connect_forward(to_list(ports),
+                              InPort,
+                              to_list(connection_configs))
 
     def connect_from(
-            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            self, ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]],
+            connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects other OutPort(s) to this InPort or connects other
         InPort(s) of parent process to this InPort.
 
@@ -515,8 +523,12 @@ class InPort(AbstractIOPort, AbstractDstPort):
         ----------
         ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]]
             The AbstractIOPort(s) that connect to this InPort.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
-        return self._connect_backward(to_list(ports), AbstractIOPort)
+        self._connect_backward(to_list(ports),
+                               AbstractIOPort,
+                               to_list(connection_configs))
 
 
 class RefPort(AbstractRVPort, AbstractSrcPort):
@@ -540,8 +552,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
     RefPort to a Var via the connect_var(..) method."""
 
     def connect(
-            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]],
+            connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this RefPort to other VarPort(s) of another process
         or to RefPort(s) of its parent process.
 
@@ -549,6 +561,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
             The AbstractRVPort(s) to connect to.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -570,10 +584,12 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
                     "to a Var, use <connect_var>".format(
                         self.process.__class__.__name__, self.name,
                         p.process.__class__.__name__, p.name))
-        return self._connect_forward(to_list(ports), AbstractRVPort)
+        self._connect_forward(to_list(ports),
+                              AbstractRVPort,
+                              to_list(connection_configs))
 
-    def connect_from(self, ports: ty.Union["RefPort", ty.List["RefPort"]]) ->\
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+    def connect_from(self, ports: ty.Union["RefPort", ty.List["RefPort"]],
+                     connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects other RefPort(s) of a nested process to this RefPort.
         RefPorts cannot receive connections from other VarPorts.
 
@@ -581,6 +597,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         ports: ty.Union["RefPort", ty.List["RefPort"]]
             The RefPort(s) that connect to this RefPort.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -601,10 +619,12 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
                     "{!r}: {!r} -> {!r}: {!r}".format(
                         self.process.__class__.__name__, self.name,
                         p.process.__class__.__name__, p.name))
-        return self._connect_backward(to_list(ports), RefPort)
+        self._connect_backward(to_list(ports),
+                               RefPort,
+                               to_list(connection_configs))
 
-    def connect_var(self, variables: ty.Union[Var, ty.List[Var]]) ->\
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+    def connect_var(self, variables: ty.Union[Var, ty.List[Var]],
+                    connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this RefPort to Lava Process Var(s) to facilitate shared
         memory access.
 
@@ -612,6 +632,8 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         ----------
         variables: ty.Union[Var, ty.List[Var]]
             Var or list of Vars to connect to.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -649,7 +671,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             vp = self.create_implicit_var_port(v)
             var_ports.append(vp)
         # Connect RefPort to VarPorts that wrap Vars
-        return self.connect(var_ports)
+        self.connect(var_ports, to_list(connection_configs))
 
     def get_dst_vars(self) -> ty.List[Var]:
         """Returns destination Vars this RefPort is connected to."""
@@ -706,8 +728,8 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         AbstractRVPort.__init__(self, var.shape)
         self.var = var
 
-    def connect(self, ports: ty.Union["VarPort", ty.List["VarPort"]]) ->\
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+    def connect(self, ports: ty.Union["VarPort", ty.List["VarPort"]],
+                connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this VarPort to other VarPort(s) of a nested process.
         VarPorts cannot connect to other RefPorts.
 
@@ -715,6 +737,8 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         ports: ty.Union["VarPort", ty.List["VarPort"]]
             The VarPort(s) to connect to.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -735,11 +759,13 @@ class VarPort(AbstractRVPort, AbstractDstPort):
                     "{!r}: {!r} -> {!r}: {!r}".format(
                         self.process.__class__.__name__, self.name,
                         p.process.__class__.__name__, p.name))
-        return self._connect_forward(to_list(ports), VarPort)
+        self._connect_forward(to_list(ports),
+                              VarPort,
+                              to_list(connection_configs))
 
     def connect_from(
-            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
-    ) -> ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+            self, ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]],
+            connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects other RefPort(s) to this VarPort or connects other
         VarPort(s) of parent process to this VarPort.
 
@@ -747,6 +773,8 @@ class VarPort(AbstractRVPort, AbstractDstPort):
         ----------
         ports: ty.Union["AbstractRVPort", ty.List["AbstractRVPort"]]
             The AbstractRVPort(s) that connect to this VarPort.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
 
         # Check if multiple ports should be connected (currently not supported)
@@ -767,7 +795,9 @@ class VarPort(AbstractRVPort, AbstractDstPort):
                     "VarPorts: {!r}: {!r} -> {!r}: {!r}".format(
                         self.process.__class__.__name__, self.name,
                         p.process.__class__.__name__, p.name))
-        return self._connect_backward(to_list(ports), AbstractRVPort)
+        self._connect_backward(to_list(ports),
+                               AbstractRVPort,
+                               to_list(connection_configs))
 
 
 class ImplicitVarPort(VarPort):
@@ -792,8 +822,8 @@ class AbstractVirtualPort(AbstractPort):
         return self._parent_port.process
 
     def connect(self,
-                ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]) ->\
-            ty.Union["ChannelStub", ty.List["ChannelStub"]]:
+                ports: ty.Union["AbstractPort", ty.List["AbstractPort"]],
+                connection_configs: ty.Optional[ConnectionConfigs] = None):
         """Connects this virtual port to other port(s).
 
         Parameters
@@ -801,6 +831,8 @@ class AbstractVirtualPort(AbstractPort):
         ports: ty.Union["AbstractPort", ty.List["AbstractPort"]]
             The port(s) to connect to. Connections from an IOPort to a RVPort
             and vice versa are not allowed.
+        connection_configs: ConnectionConfigs
+            Configuration for this connection. See "ConnectionConfig" class.
         """
         # Determine allows port_type
         if isinstance(self._parent_port, OutPort):
@@ -818,7 +850,9 @@ class AbstractVirtualPort(AbstractPort):
         else:
             raise TypeError("Illegal parent port.")
         # Connect to ports
-        return self._connect_forward(to_list(ports), port_type)
+        self._connect_forward(to_list(ports),
+                              port_type,
+                              to_list(connection_configs))
 
     @abstractmethod
     def get_transform_func_fwd(self) -> ft.partial:
@@ -982,15 +1016,3 @@ class ReIndexPort(AbstractVirtualPort):
     """
 
     pass
-
-
-@dataclass
-class ChannelStub:
-    src_port: AbstractPort
-    dst_port: AbstractPort
-
-    def configure(self, value: ty.Dict[str, ty.Any]):
-        """Configuration for the channel stub is passed onto each port
-        instance"""
-        self.src_port.config[self.dst_port] = value
-        self.dst_port.config[self.src_port] = value
