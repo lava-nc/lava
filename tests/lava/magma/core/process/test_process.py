@@ -308,7 +308,7 @@ class TestProcess(unittest.TestCase):
         # HACK: Need to fix Issue #716 to avoid this.
         p.run(condition=RunSteps(1), run_cfg=run_cfg)
         p.stop()
-    
+
     def test_run_without_run_config_raises_error(self) -> None:
         """Tests whether an error is raised when run() is called on
         uncompiled Processes without specifying a RunConfig."""
