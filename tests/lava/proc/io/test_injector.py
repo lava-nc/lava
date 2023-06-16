@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
 import threading
@@ -8,27 +12,19 @@ import typing as ty
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import CPU
-
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort
-
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
-
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
-from lava.magma.compiler.channels.pypychannel import (PyPyChannel, CspRecvPort,
-                                                      CspSendPort)
-
+from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort
 from lava.proc.io.injector import Injector, PyLoihiInjectorModel
-from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
-    ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
+from lava.proc.io import utils
 
 
 class Recv(AbstractProcess):
@@ -76,36 +72,17 @@ class TestInjector(unittest.TestCase):
 
         self.assertIsInstance(injector, Injector)
 
-        self.assertIsInstance(injector._injector_channel_config,
-                              ChannelConfig)
-        self.assertEqual(
-            injector._injector_channel_config.send_buffer_full,
-            ChannelSendBufferFull.BLOCKING)
-        self.assertEqual(
-            injector._injector_channel_config.recv_buffer_empty,
-            ChannelRecvBufferEmpty.BLOCKING)
-        self.assertEqual(
-            injector._injector_channel_config.recv_buffer_not_empty,
-            ChannelRecvBufferNotEmpty.FIFO)
-
-        self.assertIsInstance(injector._multi_processing, MultiProcessing)
-        self.assertIsInstance(injector._injector_channel, PyPyChannel)
-        self.assertIsInstance(injector._injector_channel_src_port, CspSendPort)
-
         self.assertEqual(injector.proc_params["shape"], out_shape)
-        self.assertIsInstance(injector.proc_params["injector_channel_config"],
-                              ChannelConfig)
+        self.assertIsInstance(injector.proc_params["channel_config"],
+                              utils.ChannelConfig)
+        self.assertEqual(injector.proc_params["channel_config"].send_full,
+                         utils.SendFull.BLOCKING)
+        self.assertEqual(injector.proc_params["channel_config"].receive_empty,
+                         utils.ReceiveEmpty.BLOCKING)
         self.assertEqual(
-            injector.proc_params["injector_channel_config"].send_buffer_full,
-            ChannelSendBufferFull.BLOCKING)
-        self.assertEqual(
-            injector.proc_params["injector_channel_config"].recv_buffer_empty,
-            ChannelRecvBufferEmpty.BLOCKING)
-        self.assertEqual(
-            injector.proc_params[
-                "injector_channel_config"].recv_buffer_not_empty,
-            ChannelRecvBufferNotEmpty.FIFO)
-        self.assertIsInstance(injector.proc_params["injector_channel_dst_port"],
+            injector.proc_params["channel_config"].receive_not_empty,
+            utils.ReceiveNotEmpty.FIFO)
+        self.assertIsInstance(injector.proc_params["p_to_pm_dst_port"],
                               CspRecvPort)
 
         self.assertIsInstance(injector.out_port, OutPort)
@@ -141,33 +118,33 @@ class TestInjector(unittest.TestCase):
 
     def test_invalid_channel_config(self):
         """Test that instantiating the Injector Process with an invalid
-        injector_channel_config parameter raises errors."""
+        channel_config parameter raises errors."""
         out_shape = (1,)
 
         channel_config = "config"
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, injector_channel_config=channel_config)
+            Injector(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=1,
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            send_full=1,
+            receive_empty=utils.ReceiveEmpty.BLOCKING,
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, injector_channel_config=channel_config)
+            Injector(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING,
-            recv_buffer_empty=1,
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            send_full=utils.SendFull.BLOCKING,
+            receive_empty=1,
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, injector_channel_config=channel_config)
+            Injector(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING,
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
-            recv_buffer_not_empty=1)
+        channel_config = utils.ChannelConfig(
+            send_full=utils.SendFull.BLOCKING,
+            receive_empty=utils.ReceiveEmpty.BLOCKING,
+            receive_not_empty=1)
         with self.assertRaises(TypeError):
-            Injector(shape=out_shape, injector_channel_config=channel_config)
+            Injector(shape=out_shape, channel_config=channel_config)
 
 
 class TestPyLoihiInjectorModel(unittest.TestCase):
@@ -187,39 +164,24 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
                               size=buffer_size)
 
         proc_params = {"shape": shape,
-                       "injector_channel_config": ChannelConfig(),
-                       "injector_channel_dst_port": channel.dst_port}
+                       "channel_config": utils.ChannelConfig(),
+                       "p_to_pm_dst_port": channel.dst_port}
 
         pm = PyLoihiInjectorModel(proc_params)
 
         self.assertIsInstance(pm, PyLoihiInjectorModel)
-        self.assertEqual(pm._shape, shape)
-        self.assertIsInstance(pm._injector_channel_config,
-                              ChannelConfig)
-        self.assertEqual(
-            pm._injector_channel_config.send_buffer_full,
-            ChannelSendBufferFull.BLOCKING)
-        self.assertEqual(
-            pm._injector_channel_config.recv_buffer_empty,
-            ChannelRecvBufferEmpty.BLOCKING)
-        self.assertEqual(
-            pm._injector_channel_config.recv_buffer_not_empty,
-            ChannelRecvBufferNotEmpty.FIFO)
-        self.assertEqual(pm._injector_channel_dst_port, channel.dst_port)
-        self.assertIsNotNone(pm._injector_channel_dst_port.thread)
 
-    def test_send_data_send_buffer_full_blocking(self):
+    def test_send_data_send_full_blocking(self):
         """Test that calling send on an instance of the Injector Process
-        with ChannelSendBufferFull.BLOCKING blocks when the channel is full."""
+        with SendFull.BLOCKING blocks when the channel is full."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING)
+        channel_config = utils.ChannelConfig(send_full=utils.SendFull.BLOCKING)
 
         num_steps = 1
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
         injector.out_port.connect(recv.in_port)
@@ -258,19 +220,19 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertGreater(time_2, 1)
 
-    def test_send_data_send_buffer_full_non_blocking_drop(self):
+    def test_send_data_send_full_non_blocking_drop(self):
         """Test that calling send on an instance of the Injector Process
-        with ChannelSendBufferFull.NON_BLOCKING_DROP does not block when the
-        channel is full."""
+        with SendFull.NON_BLOCKING_DROP does not block when the channel is
+        full."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.NON_BLOCKING_DROP)
+        channel_config = \
+            utils.ChannelConfig(send_full=utils.SendFull.NON_BLOCKING_DROP)
 
         num_steps = 1
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
         injector.out_port.connect(recv.in_port)
@@ -284,8 +246,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
             checkpoint_1 = time.perf_counter()
             injector.send(np.ones(data_shape))
             checkpoint_2 = time.perf_counter()
-            with self.assertWarns(UserWarning):
-                injector.send(np.ones(data_shape))
+            injector.send(np.ones(data_shape))
             checkpoint_3 = time.perf_counter()
 
             queue.put(checkpoint_2 - checkpoint_1)
@@ -310,18 +271,18 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertLess(time_2, 1)
 
-    def test_send_data_recv_buffer_empty_blocking(self):
+    def test_send_data_receive_empty_blocking(self):
         """Test that running an instance of the Injector Process with
-        ChannelRecvBufferEmpty.BLOCKING without calling send_data blocks."""
+        ReceiveEmpty.BLOCKING without calling send blocks."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING)
+        channel_config = utils.ChannelConfig(
+            receive_empty=utils.ReceiveEmpty.BLOCKING)
 
         num_steps = 1
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape)
 
         injector.out_port.connect(recv.in_port)
@@ -368,19 +329,19 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertGreater(time_2, 1)
 
-    def test_send_data_recv_buffer_empty_non_blocking(self):
+    def test_send_data_receive_empty_non_blocking_zeros(self):
         """Test that running an instance of the Injector Process with
-        ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS without calling send_data
+        ReceiveEmpty.NON_BLOCKING_ZEROS without calling send
         does not block and that zeros are received instead."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_empty=ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS)
+        channel_config = utils.ChannelConfig(
+            receive_empty=utils.ReceiveEmpty.NON_BLOCKING_ZEROS)
 
         num_steps = 1
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
@@ -397,22 +358,22 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         np.testing.assert_equal(recv_var_data,
                                 np.zeros(data_shape)[np.newaxis, :])
 
-    def test_send_data_recv_buffer_not_empty_fifo(self):
+    def test_send_data_receive_not_empty_fifo(self):
         """Test that running an instance of the Injector Process with
-        ChannelRecvBufferNotEmpty.FIFO after calling send_data two times in a
-        row has the effect of making the ProcessModel receive the two
-        sent items one by one."""
+        ReceiveNotEmpty.FIFO after calling send two times in a row has the
+        effect of making the ProcessModel receive the two sent items one by
+        one."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
 
         num_steps = 2
 
         send_data = np.array([[10], [15]])
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
@@ -431,22 +392,22 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         np.testing.assert_equal(recv_var_data, send_data)
 
-    def test_send_data_recv_buffer_not_empty_accumulate(self):
+    def test_send_data_receive_not_empty_accumulate(self):
         """Test that running an instance of the Injector Process with
-        ChannelRecvBufferNotEmpty.ACCUMULATE after calling send_data two times
+        ReceiveNotEmpty.ACCUMULATE after calling send two times
         in a row has the effect of making the ProcessModel receive the two
         sent items, accumulated, in the first time step."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.ACCUMULATE)
+        channel_config = utils.ChannelConfig(
+            receive_not_empty=utils.ReceiveNotEmpty.ACCUMULATE)
 
         num_steps = 1
 
         send_data = np.array([[10], [15]])
 
         injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            injector_channel_config=channel_config)
+                            channel_config=channel_config)
         recv = Recv(shape=data_shape, buffer_size=num_steps)
 
         injector.out_port.connect(recv.in_port)
@@ -469,7 +430,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
     def test_run_steps_blocking(self):
         """Test that running the a Lava network involving the Injector
         Process, with RunSteps(blocking=True), for multiple time steps, with a
-        separate thread calling send_data, runs and terminates."""
+        separate thread calling send, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
@@ -506,8 +467,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
     def test_run_steps_non_blocking(self):
         """Test that running the a Lava network involving the Injector
-        Process, with RunSteps(blocking=False), for multiple time steps, runs
-        and terminates."""
+        Process, with RunSteps(blocking=False), for multiple time steps,
+        with the main thread calling send, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
@@ -541,8 +502,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
     def test_run_continuous(self):
         """Test that running the a Lava network involving the Injector
-        Process, with RunContinuous(), for multiple time steps, runs
-        and terminates."""
+        Process, with RunContinuous(), for multiple time steps, for multiple
+        time steps, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)

@@ -1,3 +1,7 @@
+# Copyright (C) 2021-22 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import unittest
 import threading
@@ -9,26 +13,17 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-
 from lava.magma.core.decorator import implements, requires
-
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyOutPort
-
-from lava.proc.io.extractor import Extractor, PyLoihiExtractorModel
-
-from lava.proc.io.utils import ChannelConfig, ChannelSendBufferFull, \
-    ChannelRecvBufferEmpty, ChannelRecvBufferNotEmpty
-
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
-
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
-from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspRecvPort, \
-    CspSendPort
+from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspSendPort
+from lava.proc.io.extractor import Extractor, PyLoihiExtractorModel
+from lava.proc.io import utils
 
 
 class Send(AbstractProcess):
@@ -37,7 +32,7 @@ class Send(AbstractProcess):
     Parameters
     ----------
     data: np.ndarray
-        Data to send. Has to be at least 2D, with first dimension is time.
+        Data to send. Has to be at least 2D, where first dimension is time.
     """
 
     def __init__(self,
@@ -68,14 +63,18 @@ class TestExtractor(unittest.TestCase):
         extractor = Extractor(shape=in_shape)
 
         self.assertIsInstance(extractor, Extractor)
-        self.assertIsInstance(extractor._multi_processing, MultiProcessing)
-        self.assertIsInstance(extractor._extractor_channel, PyPyChannel)
-        self.assertIsInstance(extractor._extractor_channel_dst_port,
-                              CspRecvPort)
-        self.assertEqual(extractor.proc_params["shape"], in_shape)
-        self.assertIsInstance(
-            extractor.proc_params["extractor_channel_src_port"],
-            CspSendPort)
+
+        self.assertIsInstance(extractor.proc_params["channel_config"],
+                              utils.ChannelConfig)
+        self.assertEqual(extractor.proc_params["channel_config"].send_full,
+                         utils.SendFull.BLOCKING)
+        self.assertEqual(extractor.proc_params["channel_config"].receive_empty,
+                         utils.ReceiveEmpty.BLOCKING)
+        self.assertEqual(
+            extractor.proc_params["channel_config"].receive_not_empty,
+            utils.ReceiveNotEmpty.FIFO)
+        self.assertIsInstance(extractor.proc_params["pm_to_p_src_port"],
+                              CspSendPort)
 
         self.assertIsInstance(extractor.in_port, InPort)
         self.assertEqual(extractor.in_port.shape, in_shape)
@@ -110,38 +109,38 @@ class TestExtractor(unittest.TestCase):
 
     def test_invalid_channel_config(self):
         """Test that instantiating the Extractor Process with an invalid
-        extractor_channel_config parameter raises errors."""
+        channel_config parameter raises errors."""
         out_shape = (1,)
 
         channel_config = "config"
         with self.assertRaises(TypeError):
-            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+            Extractor(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=1,
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            send_full=1,
+            receive_empty=utils.ReceiveEmpty.BLOCKING,
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+            Extractor(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING,
-            recv_buffer_empty=1,
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            send_full=utils.SendFull.BLOCKING,
+            receive_empty=1,
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
         with self.assertRaises(TypeError):
-            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+            Extractor(shape=out_shape, channel_config=channel_config)
 
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING,
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING,
-            recv_buffer_not_empty=1)
+        channel_config = utils.ChannelConfig(
+            send_full=utils.SendFull.BLOCKING,
+            receive_empty=utils.ReceiveEmpty.BLOCKING,
+            receive_not_empty=1)
         with self.assertRaises(TypeError):
-            Extractor(shape=out_shape, extractor_channel_config=channel_config)
+            Extractor(shape=out_shape, channel_config=channel_config)
 
 
 class TestPyLoihiExtractorModel(unittest.TestCase):
     def test_init(self):
-        """Test that the PyLoihiExtractorrModel ProcessModel is instantiated
+        """Test that the PyLoihiExtractorModel ProcessModel is instantiated
         correctly."""
         shape = (1, )
         buffer_size = 10
@@ -155,35 +154,19 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
                               dtype=float,
                               size=buffer_size)
 
-        proc_params = {"shape": shape,
-                       "extractor_channel_config": ChannelConfig(),
-                       "extractor_channel_src_port": channel.src_port}
+        proc_params = {"channel_config": utils.ChannelConfig(),
+                       "pm_to_p_src_port": channel.src_port}
 
         pm = PyLoihiExtractorModel(proc_params)
 
         self.assertIsInstance(pm, PyLoihiExtractorModel)
-        self.assertEqual(pm._shape, shape)
-        self.assertIsInstance(pm._extractor_channel_config,
-                              ChannelConfig)
-        self.assertEqual(
-            pm._extractor_channel_config.send_buffer_full,
-            ChannelSendBufferFull.BLOCKING)
-        self.assertEqual(
-            pm._extractor_channel_config.recv_buffer_empty,
-            ChannelRecvBufferEmpty.BLOCKING)
-        self.assertEqual(
-            pm._extractor_channel_config.recv_buffer_not_empty,
-            ChannelRecvBufferNotEmpty.FIFO)
-        self.assertEqual(pm._extractor_channel_src_port, channel.src_port)
-        self.assertIsNotNone(pm._extractor_channel_src_port.thread)
 
-    def test_recv_data_send_buffer_full_blocking(self):
-        """Test that calling receive on an instance of the Extractor Process
-        with ChannelSendBufferFull.BLOCKING blocks when the channel is full."""
+    def test_receive_data_send_full_blocking(self):
+        """Test that running an instance of the Extractor Process with
+        SendFull.BLOCKING when the channel is full blocks."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.BLOCKING)
+        channel_config = utils.ChannelConfig(send_full=utils.SendFull.BLOCKING)
 
         num_steps = 1
 
@@ -191,7 +174,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         send = Send(data=data)
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         send.out_port.connect(extractor.in_port)
 
@@ -235,11 +218,13 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertGreater(time_2, 1)
 
-    def test_recv_data_send_buffer_full_non_blocking_drop(self):
+    def test_receive_data_send_full_non_blocking_drop(self):
+        """Test that running an instance of the Extractor Process with
+        SendFull.NON_BLOCKING_DROP when the channel is full does not block."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            send_buffer_full=ChannelSendBufferFull.NON_BLOCKING_DROP)
+        channel_config = utils.ChannelConfig(
+            send_full=utils.SendFull.NON_BLOCKING_DROP)
 
         num_steps = 1
 
@@ -247,7 +232,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         send = Send(data=data)
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         send.out_port.connect(extractor.in_port)
 
@@ -291,11 +276,13 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertLess(time_2, 1)
 
-    def test_recv_data_recv_buffer_empty_blocking(self):
+    def test_receive_data_receive_empty_blocking(self):
+        """Test that calling receive on an instance of the Extractor Process
+        with ReceiveEmpty.BLOCKING blocks when the channel is empty."""
         data_shape = (1,)
         buffer_size = 1
-        channel_config = ChannelConfig(
-            recv_buffer_empty=ChannelRecvBufferEmpty.BLOCKING)
+        channel_config = utils.ChannelConfig(
+            receive_empty=utils.ReceiveEmpty.BLOCKING)
 
         num_steps = 1
 
@@ -303,7 +290,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         send = Send(data=data)
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         send.out_port.connect(extractor.in_port)
 
@@ -346,25 +333,31 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         self.assertLess(time_1, 1)
         self.assertGreater(time_2, 1)
 
-    def test_recv_data_recv_buffer_empty_non_blocking(self):
+    def test_receive_data_receive_empty_non_blocking_zeros(self):
+        """Test that calling receive on an instance of the Extractor Process
+        with ReceiveEmpty.NON_BLOCKING_ZEROS does not block when the channel is
+        empty and that zeros are returned instead."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_empty=ChannelRecvBufferEmpty.NON_BLOCKING_ZEROS)
+        channel_config = utils.ChannelConfig(
+            receive_empty=utils.ReceiveEmpty.NON_BLOCKING_ZEROS)
 
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         recv_data = extractor.receive()
 
         np.testing.assert_equal(recv_data,
                                 np.zeros(data_shape))
 
-    def test_recv_data_recv_buffer_not_empty_fifo(self):
+    def test_receive_data_receive_not_empty_fifo(self):
+        """Test that calling receive on an instance of the Extractor Process
+        with ReceiveNotEmpty.FIFO after having sent two items in a row
+        has the effect of returning the two sent items one by one."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.FIFO)
+        channel_config = utils.ChannelConfig(
+            receive_not_empty=utils.ReceiveNotEmpty.FIFO)
 
         num_steps = 2
 
@@ -372,7 +365,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         send = Send(data=send_data)
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         send.out_port.connect(extractor.in_port)
 
@@ -387,11 +380,14 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         np.testing.assert_equal(recv_data, send_data)
 
-    def test_recv_data_recv_buffer_not_empty_accumulate(self):
+    def test_receive_data_receive_not_empty_accumulate(self):
+        """Test that calling receive on an instance of the Extractor Process
+        with ReceiveNotEmpty.ACCUMULATE after having sent two items in a row
+        has the effect of returning the two sent items, accumulated."""
         data_shape = (1,)
         buffer_size = 10
-        channel_config = ChannelConfig(
-            recv_buffer_not_empty=ChannelRecvBufferNotEmpty.ACCUMULATE)
+        channel_config = utils.ChannelConfig(
+            receive_not_empty=utils.ReceiveNotEmpty.ACCUMULATE)
 
         num_steps = 2
 
@@ -399,7 +395,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         send = Send(data=send_data)
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
-                              extractor_channel_config=channel_config)
+                              channel_config=channel_config)
 
         send.out_port.connect(extractor.in_port)
 
@@ -416,6 +412,9 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
                                 np.sum(send_data, axis=0)[np.newaxis, :])
 
     def test_run_steps_blocking(self):
+        """Test that running the a Lava network involving the Extractor
+        Process, with RunSteps(blocking=True), for multiple time steps, with a
+        separate thread calling receive, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
@@ -452,6 +451,9 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         np.testing.assert_equal(list(shared_queue.queue), send_data)
 
     def test_run_steps_non_blocking(self):
+        """Test that running the a Lava network involving the Extractor
+        Process, with RunSteps(blocking=False), for multiple time steps, with
+        the main thread calling receive, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
@@ -484,6 +486,9 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         np.testing.assert_equal(recv_data, send_data)
 
     def test_run_continuous(self):
+        """Test that running the a Lava network involving the Extractor
+        Process, with RunContinuous(), for multiple time steps, with
+        the main thread calling receive, runs and terminates."""
         np.random.seed(0)
 
         data_shape = (1,)
