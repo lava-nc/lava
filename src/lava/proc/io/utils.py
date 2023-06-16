@@ -270,18 +270,3 @@ def validate_channel_config(channel_config: ChannelConfig) -> None:
             "to be of type ReceiveNotEmpty. Got "
             "<channel_config>.receive_not_empty = "
             f"{channel_config.receive_not_empty}.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
