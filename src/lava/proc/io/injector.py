@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -20,7 +20,7 @@ from lava.proc.io import utils
 
 
 class Injector(AbstractProcess):
-    """Injector allows non-Lava code, such as a third-party Python library or
+    """Injector allows non-Lava code, such as a third-party Python library
     to inject data to a Lava Process while the Lava Runtime is running,
     by calling send.
 
@@ -42,7 +42,7 @@ class Injector(AbstractProcess):
     buffer_size : int, optional
         Buffer size (in terms of number of np.ndarrays) of the channel between
         the Process and ProcessModel.
-    channel_config : optional, ChannelConfig
+    channel_config : ChannelConfig, optional
         Configuration object specifying how the src_port behaves when the
         buffer is full and how the dst_port behaves when the buffer is empty
         and not empty.
@@ -78,7 +78,7 @@ class Injector(AbstractProcess):
         self.proc_params["channel_config"] = channel_config
         self.proc_params["p_to_pm_dst_port"] = p_to_pm.dst_port
 
-        self._send = utils.SEND_FULL_MAPPING[channel_config.send_full]
+        self._send = utils.SEND_FULL_FUNCTIONS[channel_config.send_full]
 
         self.out_port = OutPort(shape=shape)
 
@@ -118,9 +118,9 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
         self._zeros = np.zeros(shape)
 
         self._receive_when_empty = \
-            utils.RECEIVE_EMPTY_MAPPING[channel_config.receive_empty]
+            utils.RECEIVE_EMPTY_FUNCTIONS[channel_config.receive_empty]
         self._receive_when_not_empty = \
-            utils.RECEIVE_NOT_EMPTY_MAPPING[channel_config.receive_not_empty]
+            utils.RECEIVE_NOT_EMPTY_FUNCTIONS[channel_config.receive_not_empty]
 
     def run_spk(self) -> None:
         self._zeros.fill(0)

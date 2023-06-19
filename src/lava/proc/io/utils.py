@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -56,7 +56,7 @@ def send_full_non_blocking_drop(src_port: CspSendPort, data: np.ndarray) -> \
         warnings.warn("Send buffer is full. Dropping items ...")
 
 
-SEND_FULL_MAPPING = {
+SEND_FULL_FUNCTIONS = {
     SendFull.BLOCKING: send_full_blocking,
     SendFull.NON_BLOCKING_DROP: send_full_non_blocking_drop
 }
@@ -115,7 +115,7 @@ def receive_empty_non_blocking_zeros(_: CspRecvPort, zeros: np.ndarray) \
     return zeros
 
 
-RECEIVE_EMPTY_MAPPING = {
+RECEIVE_EMPTY_FUNCTIONS = {
     ReceiveEmpty.BLOCKING: receive_empty_blocking,
     ReceiveEmpty.NON_BLOCKING_ZEROS: receive_empty_non_blocking_zeros
 }
@@ -185,7 +185,7 @@ def receive_not_empty_accumulate(dst_port: CspRecvPort, zeros: np.ndarray,
     return data
 
 
-RECEIVE_NOT_EMPTY_MAPPING = {
+RECEIVE_NOT_EMPTY_FUNCTIONS = {
     ReceiveNotEmpty.FIFO: receive_not_empty_fifo,
     ReceiveNotEmpty.ACCUMULATE: receive_not_empty_accumulate
 }

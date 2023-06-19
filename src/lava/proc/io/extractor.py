@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -60,7 +60,7 @@ class Extractor(AbstractProcess):
         utils.validate_buffer_size(buffer_size)
         utils.validate_channel_config(channel_config)
 
-        self._zeros = np.zeros(shape)
+        self._shape = shape
 
         self._multi_processing = MultiProcessing()
         self._multi_processing.start()
@@ -69,7 +69,7 @@ class Extractor(AbstractProcess):
         pm_to_p = PyPyChannel(message_infrastructure=self._multi_processing,
                               src_name="src",
                               dst_name="dst",
-                              shape=shape,
+                              shape=self._shape,
                               dtype=float,
                               size=buffer_size)
         self._pm_to_p_dst_port = pm_to_p.dst_port
@@ -79,11 +79,11 @@ class Extractor(AbstractProcess):
         self.proc_params["pm_to_p_src_port"] = pm_to_p.src_port
 
         self._receive_when_empty = \
-            utils.RECEIVE_EMPTY_MAPPING[channel_config.receive_empty]
+            utils.RECEIVE_EMPTY_FUNCTIONS[channel_config.receive_empty]
         self._receive_when_not_empty = \
-            utils.RECEIVE_NOT_EMPTY_MAPPING[channel_config.receive_not_empty]
+            utils.RECEIVE_NOT_EMPTY_FUNCTIONS[channel_config.receive_not_empty]
 
-        self.in_port = InPort(shape=shape)
+        self.in_port = InPort(shape=self._shape)
 
     def receive(self) -> np.ndarray:
         """Receive data from the ProcessModel.
@@ -95,17 +95,16 @@ class Extractor(AbstractProcess):
         data : np.ndarray
             Data received.
         """
-        self._zeros.fill(0)
         elements_in_buffer = self._pm_to_p_dst_port._queue.qsize()
 
         if elements_in_buffer == 0:
             data = self._receive_when_empty(
                 self._pm_to_p_dst_port,
-                self._zeros)
+                np.zeros(self._shape))
         else:
             data = self._receive_when_not_empty(
                 self._pm_to_p_dst_port,
-                self._zeros,
+                np.zeros(self._shape),
                 elements_in_buffer)
 
         return data
@@ -129,7 +128,7 @@ class PyLoihiExtractorModel(PyLoihiProcessModel):
         self._pm_to_p_src_port = self.proc_params["pm_to_p_src_port"]
         self._pm_to_p_src_port.start()
 
-        self._send = utils.SEND_FULL_MAPPING[channel_config.send_full]
+        self._send = utils.SEND_FULL_FUNCTIONS[channel_config.send_full]
 
     def run_spk(self) -> None:
         self._send(self._pm_to_p_src_port, self.in_port.recv())
