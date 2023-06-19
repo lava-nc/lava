@@ -2,13 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from enum import Enum
 import logging
 import typing as ty
 import unittest
 from unittest.mock import Mock
 
-import numpy as np
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
 from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
@@ -16,7 +14,6 @@ from lava.magma.compiler.compiler_graphs import ProcGroupDiGraphs
 from lava.magma.compiler.subcompilers.channel_builders_factory import \
     ChannelBuildersFactory
 from lava.magma.compiler.utils import LoihiPortInitializer, PortInitializer
-from lava.magma.compiler.var_model import LoihiAddress, LoihiVarModel
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -30,7 +27,7 @@ from lava.magma.core.process.ports.ports import (AbstractPort, InPort, OutPort,
 from lava.magma.core.process.ports.reduce_ops import ReduceSum
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
-from lava.magma.core.resources import CPU, LMT, NeuroCore
+from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
@@ -67,7 +64,6 @@ class ProcC(AbstractProcess):
 
 class MockRuntimeService:
     __name__ = "MockRuntimeService"
-    pass
 
 
 # Define minimal Protocol to be implemented
@@ -153,7 +149,7 @@ class RunCfg(RunConfig):
     def select(self, proc, proc_models):
         py_proc_model = None
         sub_proc_model = None
-        c_proc_model = None
+
         # Find PyProcModel or SubProcModel
         for pm in proc_models:
             if issubclass(pm, AbstractSubProcessModel):
@@ -161,7 +157,6 @@ class RunCfg(RunConfig):
             if issubclass(pm, AbstractPyProcessModel):
                 py_proc_model = pm
         # Make selection
-
         if self.select_sub_proc_model and sub_proc_model:
             return sub_proc_model
         if py_proc_model and not self.select_lmt:
@@ -357,9 +352,6 @@ class TestChannelBuildersMp(unittest.TestCase):
         channel_builders = self.factory.from_channel_map(channel_map, self.cfg)
 
         # This should result in 5 channel builders (one for each arrow above)
-        from lava.magma.compiler.builders.channel_builder import \
-            ChannelBuilderMp
-
         self.assertEqual(len(channel_builders), 5)
         for cb in channel_builders:
             self.assertIsInstance(cb, ChannelBuilderMp)

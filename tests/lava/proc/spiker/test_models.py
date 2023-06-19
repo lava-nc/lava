@@ -17,7 +17,7 @@ class TestSpikerModels(unittest.TestCase):
         "Tests a single spiker for multiple time steps."
         spiker = Spiker(shape=(1,), period=5)
         counter = []
-        for timestep in range(20):
+        for _ in range(20):
             spiker.run(condition=RunSteps(num_steps=1),
                        run_cfg=Loihi2SimCfg())
             counter.append(spiker.counter.get()[0])
@@ -31,7 +31,7 @@ class TestSpikerModels(unittest.TestCase):
         spiker = Spiker(shape=(2,), period=5)
         counter1 = []
         counter2 = []
-        for timestep in range(20):
+        for _ in range(20):
             spiker.run(condition=RunSteps(num_steps=1),
                        run_cfg=Loihi2SimCfg())
             counter1.append(spiker.counter.get()[0])

@@ -79,11 +79,9 @@ class RunConfig(ABC):
 
     def exclude_nodes(self, nodes: ty.List[AbstractNode]):
         """Excludes given nodes from consideration by compiler."""
-        pass
 
     def require_nodes(self, nodes: ty.List[AbstractNode]):
         """Requires that compiler maps processes to given nodes."""
-        pass
 
     def select(self,
                process: AbstractProcess,
@@ -168,7 +166,7 @@ class AbstractLoihiRunCfg(RunConfig):
             self.exception_proc_model_map = {}
 
     def select(self,
-               proc: AbstractProcess,
+               process: AbstractProcess,
                proc_models: ty.List[ty.Type[AbstractProcessModel]]) \
             -> ty.Type[AbstractProcessModel]:
         """
@@ -177,7 +175,7 @@ class AbstractLoihiRunCfg(RunConfig):
 
         Parameters
         ----------
-        proc: AbstractProcess
+        process: AbstractProcess
             Process for which ProcessModel is selected
         proc_models: List[AbstractProcessModel]
             List of ProcessModels to select from
@@ -191,9 +189,10 @@ class AbstractLoihiRunCfg(RunConfig):
         # ------------------------------
         # Raise error
         if num_pm == 0:
-            raise AssertionError(f"[{self.__class__.__qualname__}]: No "
-                                 f"ProcessModels exist for Process "
-                                 f"{proc.name}::{proc.__class__.__qualname__}.")
+            raise AssertionError(
+                f"[{self.__class__.__qualname__}]: No ProcessModels exist for "
+                f"Process {process.name}::{process.__class__.__qualname__}."
+            )
 
         # Required modules and helper functions
         from lava.magma.core.model.sub.model import AbstractSubProcessModel
@@ -206,8 +205,8 @@ class AbstractLoihiRunCfg(RunConfig):
         # ----------------------------
         # We will simply return the ProcessModel class associated with a
         # Process class in the exceptions dictionary
-        if proc.__class__ in self.exception_proc_model_map:
-            return self.exception_proc_model_map[proc.__class__]
+        if process.__class__ in self.exception_proc_model_map:
+            return self.exception_proc_model_map[process.__class__]
 
         # Case 2: Only 1 PM found:
         # -----------------------
@@ -247,8 +246,8 @@ class AbstractLoihiRunCfg(RunConfig):
                             f"[{self.__class__.__qualname__}]: No "
                             f"ProcessModels found with tag "
                             f"'{self.select_tag}' for Process "
-                            f"{proc.name}::"
-                            f"{proc.__class__.__qualname__}.")
+                            f"{process.name}::"
+                            f"{process.__class__.__qualname__}.")
 
         # Case 3: Multiple PMs exist:
         # --------------------------
@@ -269,11 +268,13 @@ class AbstractLoihiRunCfg(RunConfig):
             # Assumption: User doesn't care about tags. We return the first
             # SubProcessModel found
             if self.select_tag is None:
-                self.log.info(f"[{self.__class__.__qualname__}]: Using the"
-                              f" first SubProcessModel "
-                              f"{proc_models[sub_pm_idxs[0]].__qualname__} "
-                              f"available for Process "
-                              f"{proc.name}::{proc.__class__.__qualname__}.")
+                self.log.info(
+                    f"[{self.__class__.__qualname__}]: Using the first "
+                    f"SubProcessModel "
+                    f"{proc_models[sub_pm_idxs[0]].__qualname__} "
+                    f"available for Process "
+                    f"{process.name}::{process.__class__.__qualname__}."
+                )
                 return proc_models[sub_pm_idxs[0]]
             # Case 3a(iii): User asked for a specific tag:
             # -------------------------------------------
@@ -286,8 +287,8 @@ class AbstractLoihiRunCfg(RunConfig):
                     raise AssertionError(f"[{self.__class__.__qualname__}]: No "
                                          f"ProcessModels found with tag "
                                          f"{self.select_tag} for Process "
-                                         f"{proc.name}::"
-                                         f"{proc.__class__.__qualname__}.")
+                                         f"{process.name}::"
+                                         f"{process.__class__.__qualname__}.")
                 return proc_models[valid_sub_pm_idxs[0]]
         # Case 3b: User didn't ask for SubProcessModel:
         # --------------------------------------------
@@ -295,8 +296,8 @@ class AbstractLoihiRunCfg(RunConfig):
         if len(leaf_pm_idxs) == 0:
             raise AssertionError(f"[{self.__class__.__qualname__}]: "
                                  f"No hardware-specific ProcessModels were "
-                                 f"found for Process {proc.name}::"
-                                 f"{proc.__class__.__qualname__}. "
+                                 f"found for Process {process.name}::"
+                                 f"{process.__class__.__qualname__}. "
                                  f"Try setting select_sub_proc_model=True.")
         # Case 3b(i): User didn't provide select_tag:
         # ------------------------------------------
@@ -307,7 +308,7 @@ class AbstractLoihiRunCfg(RunConfig):
                           f"Hardware-specific ProcessModel "
                           f"{proc_models[leaf_pm_idxs[0]].__qualname__} "
                           f"available for Process "
-                          f"{proc.name}::{proc.__class__.__qualname__}.")
+                          f"{process.name}::{process.__class__.__qualname__}.")
             return proc_models[leaf_pm_idxs[0]]
         # Case 3b(ii): User asked for a specific tag:
         # ------------------------------------------
@@ -320,8 +321,8 @@ class AbstractLoihiRunCfg(RunConfig):
                 raise AssertionError(f"[{self.__class__.__qualname__}]: No "
                                      f"ProcessModels found with tag "
                                      f"'{self.select_tag}' for Process "
-                                     f"{proc.name}::"
-                                     f"{proc.__class__.__qualname__}.")
+                                     f"{process.name}::"
+                                     f"{process.__class__.__qualname__}.")
             return proc_models[valid_leaf_pm_idxs[0]]
 
     def _is_hw_supported(self, pm: ty.Type[AbstractProcessModel]) -> bool:

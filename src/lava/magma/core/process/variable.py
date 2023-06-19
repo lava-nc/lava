@@ -4,7 +4,8 @@
 
 import typing as ty
 import numpy as np
-
+from scipy.sparse import csr_matrix, spmatrix
+from lava.utils.sparse import find
 from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
@@ -127,7 +128,9 @@ class Var(AbstractProcessMember):
                     f"."
                 )
 
-    def set(self, value: ty.Union[np.ndarray, str], idx: np.ndarray = None):
+    def set(self,
+            value: ty.Union[np.ndarray, str, spmatrix],
+            idx: np.ndarray = None):
         """Sets value of Var. If this Var aliases another Var, then set(..) is
         delegated to aliased Var."""
         if self.aliased_var is not None:
@@ -155,7 +158,7 @@ class Var(AbstractProcessMember):
         if self.aliased_var is not None:
             return self.aliased_var.get(idx)
         else:
-            if self.process.runtime:
+            if self.process and self.process.runtime:
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
                     if SupportTempChannel:

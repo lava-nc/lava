@@ -36,7 +36,7 @@ class TestConv(unittest.TestCase):
                            kernel_size[0], kernel_size[1],
                            in_channels // groups]
             weights = np.random.randint(256, size=weight_dims) - 128
-            input = np.random.random(
+            input_ = np.random.random(
                 (
                     # input needs to be a certain size
                     # to make sure the output dimension is never negative
@@ -45,13 +45,13 @@ class TestConv(unittest.TestCase):
                 + [in_channels]
             )
 
-            out = utils.conv_scipy(input, weights, kernel_size,
+            out = utils.conv_scipy(input_, weights, kernel_size,
                                    stride, padding, dilation, groups)
 
             if compare:  # if torch is available, compare against it.
                 out_gt = F.conv2d(
                     torch.unsqueeze(  # torch expects a batch dimension NCHW
-                        torch.FloatTensor(input.transpose([2, 1, 0])),
+                        torch.FloatTensor(input_.transpose([2, 1, 0])),
                         dim=0,
                     ),
                     torch.FloatTensor(
@@ -70,7 +70,7 @@ class TestConv(unittest.TestCase):
                 error = np.abs(out - out_gt).mean()
                 if error >= 1e-3:  # small eps to account for float/double calc
                     # Setting failed! Print out the dimensions for debugging.
-                    print(f'{input.shape=}')
+                    print(f'{input_.shape=}')
                     print(f'{weights.shape=}')
                     print(f'{kernel_size=}')
                     print(f'{stride=}')

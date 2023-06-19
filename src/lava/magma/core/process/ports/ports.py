@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from __future__ import annotations
 import typing as ty
 from abc import ABC, abstractmethod
 import math
@@ -383,16 +384,12 @@ class AbstractIOPort(AbstractPort):
     type hierarchy needed for validating connections.
     """
 
-    pass
-
 
 class AbstractRVPort(AbstractPort):
     """Abstract base class for RefPorts and VarPorts.
     This class needs no implementation and only serves to establish a clear
     type hierarchy needed for validating connections.
     """
-
-    pass
 
 
 class AbstractSrcPort(ABC):
@@ -402,8 +399,6 @@ class AbstractSrcPort(ABC):
     type hierarchy needed for validating connections.
     """
 
-    pass
-
 
 class AbstractDstPort(ABC):
     """Interface for destination ports such as InPorts and VarPorts in which
@@ -411,8 +406,6 @@ class AbstractDstPort(ABC):
     This class needs no implementation and only serves to establish a clear
     type hierarchy needed for validating connections.
     """
-
-    pass
 
 
 class OutPort(AbstractIOPort, AbstractSrcPort):
@@ -635,7 +628,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
         return [ty.cast(VarPort, p).var for p in self.get_dst_ports()]
 
     @staticmethod
-    def create_implicit_var_port(var: Var) -> "ImplicitVarPort":
+    def create_implicit_var_port(var: Var) -> ImplicitVarPort:
         """Creates and returns an ImplicitVarPort for the given Var."""
         # Create a VarPort to wrap Var
         vp = ImplicitVarPort(var)
@@ -646,9 +639,11 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
             vp.process = var.process
             # VarPort name could shadow existing attribute
             if hasattr(var.process, vp.name):
-                raise AssertionError(
-                    "Name of implicit VarPort might conflict"
-                    " with existing attribute.")
+                name = str(vp.name)
+                name_suffix = 1
+                while hasattr(var.process, vp.name):
+                    vp.name = name + "_" + str(name_suffix)
+                    name_suffix += 1
             setattr(var.process, vp.name, vp)
             var.process.var_ports.add_members({vp.name: vp})
 
@@ -749,7 +744,9 @@ class VarPort(AbstractRVPort, AbstractDstPort):
 class ImplicitVarPort(VarPort):
     """Sub class for VarPort to identify implicitly created VarPorts when
     a RefPort connects directly to a Var."""
-    pass
+
+    def __init__(self, var: Var) -> None:
+        super().__init__(var)
 
 
 class AbstractVirtualPort(AbstractPort):
@@ -826,7 +823,7 @@ class ReshapePort(AbstractVirtualPort):
     def __init__(self,
                  new_shape: ty.Tuple[int, ...],
                  old_shape: ty.Tuple[int, ...]):
-        AbstractPort.__init__(self, new_shape)
+        super().__init__(new_shape)
         self.old_shape = old_shape
 
     def get_transform_func_fwd(self) -> ft.partial:
@@ -861,7 +858,7 @@ class ConcatPort(AbstractVirtualPort):
     tensor-valued data array from the derived to the new shape."""
 
     def __init__(self, ports: ty.List[AbstractPort], axis: int):
-        AbstractPort.__init__(self, self._get_new_shape(ports, axis))
+        super().__init__(self._get_new_shape(ports, axis))
         self._connect_backward(
             ports, AbstractPort, assert_same_shape=False, assert_same_type=True
         )
@@ -916,7 +913,7 @@ class TransposePort(AbstractVirtualPort):
                  new_shape: ty.Tuple[int, ...],
                  axes: ty.Tuple[int, ...]):
         self.axes = axes
-        AbstractPort.__init__(self, new_shape)
+        super().__init__(new_shape)
 
     def get_transform_func_fwd(self) -> ft.partial:
         """Returns a function pointer that implements the forward (fwd)
@@ -941,18 +938,3 @@ class TransposePort(AbstractVirtualPort):
         function_pointer : functools.partial
             a function pointer that can be applied to incoming data"""
         return ft.partial(np.transpose, axes=np.argsort(self.axes))
-
-
-class ReIndexPort(AbstractVirtualPort):
-    """A ReIndexPort is a virtual port that allows to re-index the elements
-    of a port before connecting to another port.
-    It is used by the compiler to map the indices of the underlying
-    tensor-valued data array from the derived to the new shape.
-
-    Example:
-        out_port = OutPort((2, 2))
-        in_port = InPort((2, 2))
-        out_port.reindex([3, 1, 0, 2]).connect(in_port)
-    """
-
-    pass

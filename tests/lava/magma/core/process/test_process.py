@@ -6,6 +6,9 @@ import logging
 import unittest
 from unittest.mock import Mock, seal
 import typing as ty
+from lava.magma.compiler.executable import Executable
+from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import AbstractPyProcessModel
 
 from lava.magma.core.process.ports.ports import (
     InPort,
@@ -20,7 +23,11 @@ from lava.magma.core.process.process import (
 )
 from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.process.variable import Var
+from lava.magma.core.resources import CPU
 from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.sync.protocol import AbstractSyncProtocol
+from lava.magma.runtime.runtime import Runtime
 
 
 class MinimalProcess(AbstractProcess):
@@ -28,6 +35,34 @@ class MinimalProcess(AbstractProcess):
 
     def __init__(self, name: ty.Optional[str] = None):
         super().__init__(name=name)
+
+
+class MinimalRuntimeService:
+    __name__ = 'MinimalRuntimeService'
+
+    def __init__(self):
+        pass
+
+
+class MinimalProtocol(AbstractSyncProtocol):
+    @property
+    def runtime_service(self):
+        return {CPU: MinimalRuntimeService()}
+
+
+@implements(proc=MinimalProcess, protocol=MinimalProtocol)
+@requires(CPU)
+class MinimalPyProcessModel(AbstractPyProcessModel):
+    def run(self):
+        raise NotImplementedError('This model doesnt run')
+
+
+class MinimalRunConfig(RunConfig):
+    def __init__(self):
+        super().__init__(custom_sync_domains=None, loglevel=logging.WARNING)
+
+    def select(self, proc, proc_models):
+        return proc_models[0]
 
 
 class TestCollection(unittest.TestCase):
@@ -259,12 +294,31 @@ class TestProcess(unittest.TestCase):
     def test_model_property(self) -> None:
         """Tests whether the ProcessModel of a Process can be obtained
         through a property method."""
-
         p = MinimalProcess()
         p._model_class = Mock(spec_set=AbstractProcessModel)
         seal(p._model_class)
-
         self.assertIsInstance(p.model_class, AbstractProcessModel)
+
+    def test_compile(self) -> None:
+        """Test whether compile creates an executable which is ready
+        to build the process model for a simple process."""
+        p = MinimalProcess()
+        run_cfg = MinimalRunConfig()
+        e = p.compile(run_cfg)
+        self.assertIsInstance(e, Executable)
+        self.assertEqual(len(e.proc_builders), 1)
+
+    def test_create_runtime(self) -> None:
+        """Tests the create_runtime method."""
+        p = MinimalProcess()
+        self.assertIsNone(p.runtime)
+        run_cfg = MinimalRunConfig()
+        p.create_runtime(run_cfg)
+        r = p.runtime
+        self.assertIsInstance(r, Runtime)
+        self.assertTrue(r._is_initialized)
+        self.assertFalse(r._is_started)
+        self.assertFalse(r._is_running)
 
     def test_run_without_run_config_raises_error(self) -> None:
         """Tests whether an error is raised when run() is called on

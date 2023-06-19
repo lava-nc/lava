@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from enum import IntEnum, auto
+from enum import IntEnum
 import lava.magma.core.learning.string_symbols as str_symbols
 
 # ---------------------------------------------------------------------------
@@ -89,7 +89,8 @@ TRACE_TO_IDX_DICT = {
 
 
 class GradedSpikeCfg(IntEnum):
-    USE_REGULAR_IMPULSE = auto()
-    OVERWRITE = auto()
-    ADD_WITH_SATURATION = auto()
-    ADD_WITHOUT_SATURATION = auto()
+    # Do not change the values below as they determine hardware behavior
+    USE_REGULAR_IMPULSE = 0
+    OVERWRITE = 1
+    ADD_WITH_SATURATION = 2
+    ADD_WITHOUT_SATURATION = 3

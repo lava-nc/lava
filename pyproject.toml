@@ -9,19 +9,17 @@ packages = [
     {include = "lava", from = "src"},
     {include = "tests"}
 ]
-
 include = ["tutorials",
            "src/lava/magma/runtime/message_infrastructure/*.so",
            "src/lava/magma/runtime/message_infrastructure/install/lib/lib*"]
-version = "0.6.0"
-
+version = "0.7.0"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
 authors = [ 
     "Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"
 ]
-license = "Lava uses multiple licenses and is licensed under BSD-3-Clause or LGPL-2.1-or-later"
+license = "(BSD-3-Clause), (LGPL-2.1-or-later)"
 keywords = [
     "neuromorphic",
     "ai",
@@ -37,8 +35,8 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
-    "License :: OSI Approved :: The 3-Clause BSD License (BSD-3-Clause)",
-    "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPL-2.1-or-later)",
+    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
     "Operating System :: OS Independent"
 ]
 
@@ -86,7 +84,7 @@ sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
 autopep8 = "^1.6.0"
 ipykernel = "^6.15.0"
 nbformat = "^5.3.0"
-nbconvert = "^7.2.0"
+nbconvert = ">=7.2.10, <7.3"
 cpplint = "^1.6.0"
 psutil = "^5.9.4"
 
@@ -181,11 +179,11 @@ pep8-naming = ["-*"]
 # mccabe = ["+*"]
 # pep8-naming = ["+*"]
 # pyflakes = ["+*"]
-# pylint = ["+*"]
+pylint = ["+*"]
 
 pycodestyle = ["+*", "-W503", "-E203"]
-pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
-pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
+# pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
+# pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
 
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check

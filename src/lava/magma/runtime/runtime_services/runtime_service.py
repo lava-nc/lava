@@ -2,6 +2,28 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
+"""The RuntimeService interface is responsible for
+coordinating the execution of a group of process models belonging to a common
+synchronization domain. The domain will follow a SyncProtocol or will be
+asynchronous. The processes and their corresponding process models are
+selected by the Runtime dependent on the RunConfiguration assigned at the
+start of execution. For each group of processes which follow the same
+protocol and execute on the same node, the Runtime creates a RuntimeService.
+Each RuntimeService coordinates all actions and commands from the Runtime,
+transmitting them to the processes under its management and
+returning action and command responses back to Runtime.
+
+RuntimeService Types:
+
+PyRuntimeService: (Abstract Class) Coordinates process models executing on
+   the CPU and written in Python.
+   Concrete Implementations:
+    a. LoihiPyRuntimeService: Coordinates process models executing on
+       the CPU and written in Python and following the LoihiProtocol.
+    b. AsyncPyRuntimeService: Coordinates process models executing on
+       the CPU and written in Python and following the AsyncProtocol.
+"""
+
 import logging
 import typing as ty
 from abc import abstractmethod
@@ -26,28 +48,6 @@ from lava.magma.runtime.mgmt_token_enums import (
 from lava.magma.runtime.runtime_services.enums import LoihiPhase
 from lava.magma.runtime.runtime_services.interfaces import \
     AbstractRuntimeService
-
-"""The RuntimeService interface is responsible for
-coordinating the execution of a group of process models belonging to a common
-synchronization domain. The domain will follow a SyncProtocol or will be
-asynchronous. The processes and their corresponding process models are
-selected by the Runtime dependent on the RunConfiguration assigned at the
-start of execution. For each group of processes which follow the same
-protocol and execute on the same node, the Runtime creates a RuntimeService.
-Each RuntimeService coordinates all actions and commands from the Runtime,
- transmitting them to the the processes under it's managment and
-returning action and command responses back to Runtime.
-
-RuntimeService Types:
-
-PyRuntimeService: (Abstract Class) Coordinates process models executing on
-   the CPU and written in Python.
-   Concrete Implementations:
-    a. LoihiPyRuntimeService: Coordinates process models executing on
-       the CPU and written in Python and following the LoihiProtocol.
-    b. AsyncPyRuntimeService: Coordinates process models executing on
-       the CPU and written in Python and following the AsyncProtocol.
-"""
 
 
 class PyRuntimeService(AbstractRuntimeService):
@@ -80,7 +80,6 @@ class PyRuntimeService(AbstractRuntimeService):
         """Override this method to implement the runtime service. The run
         method is invoked upon start which called when the execution is
         started by the runtime."""
-        pass
 
     def join(self):
         """Stop the necessary channels to coordinate with runtime and group
@@ -212,12 +211,12 @@ class LoihiPyRuntimeService(PyRuntimeService):
         if self.req_pre_lrn_mgmt:
             self.req_pre_lrn_mgmt = False
             return LoihiPyRuntimeService.Phase.PRE_MGMT
-        if self.req_post_lrn_mgmt:
-            self.req_post_lrn_mgmt = False
-            return LoihiPyRuntimeService.Phase.POST_MGMT
         if self.req_lrn:
             self.req_lrn = False
             return LoihiPyRuntimeService.Phase.LRN
+        if self.req_post_lrn_mgmt:
+            self.req_post_lrn_mgmt = False
+            return LoihiPyRuntimeService.Phase.POST_MGMT
         if self.req_pause:
             self.req_pause = False
             return MGMT_COMMAND.PAUSE

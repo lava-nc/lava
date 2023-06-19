@@ -7,11 +7,6 @@ from abc import ABC, abstractmethod
 from lava.magma.runtime.message_infrastructure import Channel
 from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
-"""A Message Infrastructure Interface which can create actors which would
-participate in message passing/exchange, start and stop them as well as
-declare the underlying Channel Infrastructure Class to be used for message
-passing implementation."""
-
 
 class MessageInfrastructureInterface(ABC):
     """Interface to provide the ability to create actors which can
@@ -25,7 +20,6 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def start(self):
         """Starts the messaging infrastructure"""
-        pass
 
     def pre_stop(self):
         """Stop MessageInfrastructure before join ports"""
@@ -38,7 +32,6 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def build_actor(self, target_fn: ty.Callable, builder):
         """Given a target_fn starts a system process"""
-        pass
 
     def cleanup(self, block=False):
         """Close all resources"""
@@ -52,11 +45,9 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def actors(self) -> ty.List[ty.Any]:
         """Returns a list of actors"""
-        pass
 
     @abstractmethod
     def channel(self, channel_type: ChannelType, src_name, dst_name,
                 shape, dtype, size, sync=False) -> Channel:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""
-        pass

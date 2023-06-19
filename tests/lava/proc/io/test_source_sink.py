@@ -38,11 +38,11 @@ class TestSendReceive(unittest.TestCase):
         """Test whatever is being sent form source is received at sink."""
         num_steps = 10
         shape = (64, 64, 16)
-        input = np.random.randint(256, size=shape + (num_steps,))
-        input -= 128
+        input_ = np.random.randint(256, size=shape + (num_steps,))
+        input_ -= 128
         # input = 0.5 * input
 
-        source = SendProcess(data=input)
+        source = SendProcess(data=input_)
         sink = ReceiveProcess(shape=shape, buffer=num_steps)
         source.out_ports.s_out.connect(sink.in_ports.a_in)
 
@@ -53,8 +53,8 @@ class TestSendReceive(unittest.TestCase):
         sink.stop()
 
         self.assertTrue(
-            np.all(output == input),
+            np.all(output == input_),
             f'Input and Ouptut do not match.\n'
-            f'{output[output!=input]=}\n'
-            f'{input[output!=input] =}\n'
+            f'{output[output!=input_]=}\n'
+            f'{input_[output!=input_] =}\n'
         )

@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 import sys
 import traceback
-import typing
 import typing as ty
 import numpy as np
 from lava.magma.runtime.message_infrastructure import (RecvPort,
@@ -19,6 +18,7 @@ from lava.magma.runtime.message_infrastructure import (RecvPort,
                                                        getTempRecvPort,
                                                        AbstractTransferPort)
 
+from scipy.sparse import csr_matrix
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.runtime.message_infrastructure.message_interface_enum import \
     ActorType
@@ -119,7 +119,7 @@ class Runtime:
                  loglevel: int = logging.WARNING):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(loglevel)
-        self._run_cond: typing.Optional[AbstractRunCondition] = None
+        self._run_cond: ty.Optional[AbstractRunCondition] = None
         self._executable: Executable = exe
 
         self._messaging_infrastructure_type: ActorType = \

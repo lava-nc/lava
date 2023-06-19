@@ -6,7 +6,9 @@ import typing as ty
 from abc import ABC, abstractmethod
 # from functools import partial
 import logging
+from lava.utils.sparse import find
 import numpy as np
+from scipy.sparse import csr_matrix
 import platform
 
 from lava.magma.runtime.message_infrastructure import (SendPort,
@@ -77,10 +79,9 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
 
         """
         self.__dict__[key] = value
-        if isinstance(value, AbstractPyPort):
+        if isinstance(value, AbstractPyPort) and value not in self.py_ports:
             self.py_ports.append(value)
-            # Store all VarPorts for efficient RefPort -> VarPort handling
-            if isinstance(value, PyVarPort):
+            if isinstance(value, PyVarPort) and value not in self.var_ports:
                 self.var_ports.append(value)
 
     def start(self):
@@ -264,7 +265,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """
         Add various ports to poll for communication on ports
         """
-        pass
 
     def join(self):
         """
@@ -279,7 +279,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         """This method is called if a Var is updated. It
         can be used as callback function to calculate dependent
         changes."""
-        pass
 
 
 class PyLoihiProcessModel(AbstractPyProcessModel):
