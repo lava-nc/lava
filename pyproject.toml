@@ -9,10 +9,12 @@ packages = [
     {include = "lava", from = "src"},
     {include = "tests"}
 ]
+
 include = ["tutorials",
            "src/lava/magma/runtime/message_infrastructure/*.so",
            "src/lava/magma/runtime/message_infrastructure/install/lib/lib*"]
 version = "0.7.0"
+
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"

@@ -28,8 +28,7 @@ class TestRuntime(unittest.TestCase):
 
     def test_executable_node_config_assertion(self):
         """Tests runtime constructions with expected constraints"""
-        exe: Executable = Executable(process_list=[],
-                                     proc_builders={},
+        exe: Executable = Executable(proc_builders={},
                                      channel_builders=[],
                                      node_configs=[],
                                      sync_domains=[])
@@ -47,8 +46,7 @@ class TestRuntime(unittest.TestCase):
             f"Expected type {expected_type} doesn't match {(type(runtime2))}")
         runtime2.stop()
 
-        exe1: Executable = Executable(process_list=[],
-                                      proc_builders={},
+        exe1: Executable = Executable(proc_builders={},
                                       channel_builders=[],
                                       node_configs=[],
                                       sync_domains=[])

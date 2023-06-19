@@ -121,11 +121,14 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             addr_path = self.service_to_process.recv()
             data_port = getTempSendPort(str(addr_path[0]))
             data_port.start()
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 data_port.send(enum_to_np(var))
             elif isinstance(var, np.ndarray):
                 # FIXME: send a whole vector (also runtime_service.py)
                 data_port.send(var)
+            elif isinstance(var, csr_matrix):
+                _, _, data = find(var, explicit_zeros=True)
+                data_port.send(data)
             elif isinstance(var, str):
                 data_port.send(np.array(var, dtype=str))
             data_port.join()
@@ -133,7 +136,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             data_port = self.process_to_service
             # Header corresponds to number of values
             # Data is either send once (for int) or one by one (array)
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 data_port.send(enum_to_np(1))
                 data_port.send(enum_to_np(var))
             elif isinstance(var, np.ndarray):
@@ -142,6 +145,12 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 num_items: np.integer = np.prod(var.shape)
                 data_port.send(enum_to_np(num_items))
                 for value in var_iter:
+                    data_port.send(enum_to_np(value, np.float64))
+            elif isinstance(var, csr_matrix):
+                _, _, values = find(var, explicit_zeros=True)
+                num_items = var.data.size
+                data_port.send(enum_to_np(num_items))
+                for value in values:
                     data_port.send(enum_to_np(value, np.float64))
             elif isinstance(var, str):
                 encoded_str = list(var.encode("ascii"))
@@ -163,7 +172,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             self.process_to_service.send(np.array([addr_path]))
             buffer = data_port.recv()
             data_port.join()
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 buffer = buffer[0]
                 if isinstance(var, int):
                     setattr(self, var_name, buffer.item())
@@ -174,6 +183,11 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 var_iter = np.nditer(var, op_flags=['readwrite'])
                 setattr(self, var_name, buffer.astype(var.dtype))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, csr_matrix):
+                dst, src, _ = find(var)
+                var = csr_matrix((buffer, (dst, src)), var.shape)
+                setattr(self, var_name, var)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
                 setattr(self, var_name, np.array_str(buffer))
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
@@ -182,7 +196,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                 raise RuntimeError("Unsupported type")
         else:
             data_port = self.service_to_process
-            if isinstance(var, int) or isinstance(var, np.integer):
+            if isinstance(var, int) or isinstance(var, np.int32):
                 # First item is number of items (1) - not needed
                 data_port.recv()
                 # Data to set
@@ -203,6 +217,18 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     num_items -= 1
                     i[...] = data_port.recv()[0]
                 self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, csr_matrix):
+                # First item is number of items
+                num_items = int(data_port.recv()[0])
+
+                buffer = np.empty(num_items)
+                # Set data one by one
+                for i in range(num_items):
+                    buffer[i] = data_port.recv()[0]
+                dst, src, _ = find(var)
+                var = csr_matrix((buffer, (dst, src)), var.shape)
+                setattr(self, var_name, var)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
             elif isinstance(var, str):
                 # First item is number of items
                 num_items = int(data_port.recv()[0])
@@ -218,9 +244,6 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
             else:
                 self.process_to_service.send(MGMT_RESPONSE.ERROR)
                 raise RuntimeError("Unsupported type")
-
-        # notify PM that Vars have been changed
-        self.on_var_update()
 
         # notify PM that Vars have been changed
         self.on_var_update()
@@ -242,7 +265,7 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                     if cmd in self._cmd_handlers:
                         self._cmd_handlers[cmd]()
                         if cmd == MGMT_COMMAND.STOP[0] or self._stopped:
-                            break
+                            return
                     else:
                         raise ValueError(
                             f"Illegal RuntimeService command! ProcessModels of "

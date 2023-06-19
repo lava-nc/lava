@@ -134,6 +134,7 @@ class Runtime:
         self.runtime_to_service: ty.Iterable[SendPort] = []
         self.service_to_runtime: ty.Iterable[RecvPort] = []
         self._open_ports: ty.List[AbstractTransferPort] = []
+        self.num_steps: int = 0
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -523,6 +524,8 @@ class Runtime:
                 req_port.send(np.array([addr_path]))
                 buffer = recv_port.recv()
                 recv_port.join()
+                if ev.dtype == csr_matrix:
+                    return buffer[idx] if idx else buffer
                 if buffer.dtype.type != np.str_:
                     reshape_order = 'F' \
                         if isinstance(ev, LoihiSynapseVarModel) else 'C'
@@ -531,6 +534,11 @@ class Runtime:
                 # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
                 data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
                 num_items: int = int(data_port.recv()[0].item())
+                if ev.dtype == csr_matrix:
+                    buffer = np.zeros(num_items)
+                    for i in range(num_items):
+                        buffer[i] = data_port.recv()[0]
+                    return buffer[idx] if idx else buffer
                 buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):
                     buffer[0, i] = data_port.recv()[0]

@@ -145,6 +145,19 @@ class Var(AbstractProcessMember):
                         value = np.array(
                             list(value.encode("ascii")), dtype=np.int32
                         )
+                elif isinstance(value, spmatrix):
+                    value = value.tocsr()
+                    init_dst, init_src, init_val = find(self.init,
+                                                        explicit_zeros=True)
+                    dst, src, val = find(value, explicit_zeros=True)
+                    if value.shape != self.init.shape or \
+                            np.any(init_dst != dst) or \
+                            np.any(init_src != src) or \
+                            len(val) != len(init_val):
+                        raise ValueError("Indices and number of non-zero "
+                                         "elements must stay equal when using"
+                                         "set on a sparse matrix.")
+                    value = val
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -167,6 +180,10 @@ class Var(AbstractProcessMember):
                         # decode if var is string
                         return bytes(buffer.astype(int).tolist()).  \
                             decode("ascii")
+                if isinstance(self.init, csr_matrix):
+                    dst, src, _ = find(self.init)
+                    ret = csr_matrix((buffer, (dst, src)), self.init.shape)
+                    return ret
                 else:
                     return buffer
             else:

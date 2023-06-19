@@ -319,7 +319,7 @@ class CspSelector:
 
     def select(
             self,
-            *args: ty.Tuple[
+            *channel_actions: ty.Tuple[
                 ty.Union[SendPort, RecvPort], ty.Callable[[], ty.Any]
             ],
     ) -> None:

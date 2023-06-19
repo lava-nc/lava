@@ -9,8 +9,10 @@ from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 
 class MessageInfrastructureInterface(ABC):
-    """Interface to provide the ability to create actors which can
-    communicate via message passing"""
+    """A Message Infrastructure Interface which can create actors which would
+    participate in message passing/exchange, start and stop them as well as
+    declare the underlying Channel Infrastructure Class to be used for message
+    passing implementation."""
 
     @abstractmethod
     def init(self):

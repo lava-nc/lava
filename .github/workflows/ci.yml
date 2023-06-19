@@ -81,8 +81,19 @@ jobs:
       run: |
         poetry run git lfs fetch
         poetry run git lfs pull
-        # poetry run pytest
-        poetry run python -m unittest discover -s tests/ -t . -vv
+        poetry run coverage run -m unittest discover -s tests/ -t . -vv
+        
+    - name: Generate coverage report
+      if: runner.os == 'Linux'
+      run: poetry run coverage xml
+
+    - name: Archive coverage report
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage
+        path: coverage.xml
+        retention-days: 30
 
   msg-infr-unit-tests:
     name: Message Infrastructure Unit Test

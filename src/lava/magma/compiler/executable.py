@@ -33,7 +33,6 @@ class Executable:
     # py_builders: ty.Dict[AbstractProcess, NcProcessBuilder]
     # c_builders: ty.Dict[AbstractProcess, CProcessBuilder]
     # nc_builders: ty.Dict[AbstractProcess, PyProcessBuilder]
-    process_list: ty.List[AbstractProcess]  # All leaf processes, flat list.
     proc_builders: ty.Dict[AbstractProcess, 'AbstractProcessBuilder']
     channel_builders: ty.List[ChannelBuilderMp]
     node_configs: ty.List[NodeConfig]
@@ -44,5 +43,5 @@ class Executable:
         ty.Iterable[AbstractChannelBuilder]] = None
 
     def assign_runtime_to_all_processes(self, runtime):
-        for p in self.process_list:
+        for p in self.proc_builders.keys():
             p.runtime = runtime

@@ -301,7 +301,6 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
         conn = Sparse(weights=weights_sparse)
-        sparse_net = create_network(inp, conn, weights_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         weights_got = conn.weights.get()
@@ -328,7 +327,6 @@ class TestSparseProcessModelFixed(unittest.TestCase):
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
 
         conn = Sparse(weights=weights_init_sparse)
-        sparse_net = create_network(inp, conn, weights_init_sparse)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         new_weights_sparse = conn.weights.init.copy()
@@ -451,7 +449,6 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
                              tag_1=weights.copy(),
                              tag_2=weights.copy(),
                              learning_rule=learning_rule)
-        dense_net = create_learning_network(pre, conn, post)
 
         run_cond = RunSteps(num_steps=simtime)
         run_cfg = Loihi2SimCfg(select_tag='floating_pt')
@@ -469,7 +466,6 @@ class TestLearningSparseProcessModelFloat(unittest.TestCase):
                               tag_1=weights_sparse.copy(),
                               tag_2=weights_sparse.copy(),
                               learning_rule=learning_rule)
-        sparse_net = create_learning_network(pre, conn, post)
         conn.run(condition=run_cond, run_cfg=run_cfg)
 
         tags_got_sparse = conn.tag_1.get()
@@ -1447,3 +1443,7 @@ class TestDelaySparseProcessModel(unittest.TestCase):
         rcfg = Loihi2SimCfg(select_tag='floating_pt')
         sparse.run(condition=rcnd, run_cfg=rcfg)
         sparse.stop()
+
+
+if __name__ == "__main__":
+    unittest.main()
