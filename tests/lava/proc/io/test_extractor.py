@@ -512,7 +512,4 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         extractor.wait()
         extractor.stop()
 
-        # Given that we are using RunContinuous(), we canno know how many
-        # Loihi time steps have been run by the network, and thus, how many
-        # items
         np.testing.assert_equal(recv_data, send_data)
