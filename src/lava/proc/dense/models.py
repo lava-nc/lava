@@ -198,6 +198,10 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     delays into the Conn Process.
     """
 
+    weights: np.ndarray = None
+    delays: np.ndarray = None
+    a_buff: np.ndarray = None
+
     @staticmethod
     def get_del_wgts(weights, delays) -> np.ndarray:
         """
