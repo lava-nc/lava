@@ -30,7 +30,8 @@ if ty.TYPE_CHECKING:
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
     CspSelector
 from lava.magma.compiler.builders.channel_builder import (
-    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
+    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
+    ChannelBuilderPyNc)
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
@@ -210,7 +211,7 @@ class Runtime:
                         channel_builder.src_process.id,
                         channel_builder.src_port_initializer.name)
                     dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
-                else:
+                elif isinstance(channel_builder, ChannelBuilderPyNc):
                     channel = channel_builder.build(
                         self._messaging_infrastructure
                     )
