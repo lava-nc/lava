@@ -87,15 +87,15 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         # factor input
         s_out_bap_buff = a_3rd_factor_in != 0
 
+        # Generate the output spikes
+        self.s_out_buff = self.spiking_activation()
+
         # if there was any 3rd factor input to the population, then update y1
         # trace of those neurons to those 3rd factor values. The y1 trace is
         # used in learning rule as the learning rate
         if s_out_bap_buff.any():
             self.y1 = a_3rd_factor_in
-            print('a_3rd_factor_in: ', a_3rd_factor_in)
-
-        # Generate the output spikes
-        self.s_out_buff = self.spiking_activation()
+            self.s_out_buff = s_out_bap_buff.copy()
 
         # Send out the output & bAP spikes and update y1 trace
         self.s_out.send(self.s_out_buff)
