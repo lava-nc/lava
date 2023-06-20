@@ -108,7 +108,7 @@ class SendPort(AbstractSendPort):
                 not_full = self.probe()
                 self._semaphore.release()
                 if self.observer and not not_full:
-                    self.observer()
+                    self.observer()  # pylint: disable=E1102
         except EOFError:
             pass
 
