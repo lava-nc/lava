@@ -348,6 +348,7 @@ class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
         self.recv_traces(s_in)
 
 
+# pylint: disable=E0102
 class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Dense synaptic connections which incorporates
     delays into the Conn Process.
@@ -412,6 +413,7 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
 @implements(proc=DelayDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
+# pylint: disable=E0102
 class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
@@ -445,6 +447,7 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
 @implements(proc=DelayDense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
+# pylint: disable=E0102
 class PyDelayDenseModelBitAcc(AbstractPyDelayDenseModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,

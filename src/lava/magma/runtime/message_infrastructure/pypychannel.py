@@ -258,7 +258,7 @@ class RecvPort(AbstractRecvPort):
                 not_empty = self.probe()
                 self._queue.put_nowait(0)
                 if self.observer and not not_empty:
-                    self.observer()
+                    self.observer()  # pylint: disable=E1102
         except EOFError:
             pass
 
