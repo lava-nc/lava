@@ -72,16 +72,13 @@ class TestInjector(unittest.TestCase):
 
         self.assertIsInstance(injector, Injector)
 
+        config = injector.proc_params["channel_config"]
         self.assertEqual(injector.proc_params["shape"], out_shape)
-        self.assertIsInstance(injector.proc_params["channel_config"],
-                              utils.ChannelConfig)
-        self.assertEqual(injector.proc_params["channel_config"].send_full,
-                         utils.SendFull.BLOCKING)
-        self.assertEqual(injector.proc_params["channel_config"].receive_empty,
-                         utils.ReceiveEmpty.BLOCKING)
-        self.assertEqual(
-            injector.proc_params["channel_config"].receive_not_empty,
-            utils.ReceiveNotEmpty.FIFO)
+        self.assertIsInstance(config, utils.ChannelConfig)
+        self.assertEqual(config.send_full, utils.SendFull.BLOCKING)
+        self.assertEqual(config.receive_empty, utils.ReceiveEmpty.BLOCKING)
+        self.assertEqual(config.receive_not_empty, utils.ReceiveNotEmpty.FIFO)
+
         self.assertIsInstance(injector.proc_params["p_to_pm_dst_port"],
                               CspRecvPort)
 
@@ -242,56 +239,6 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         return time_send_1, time_send_2, thread_2.is_alive()
 
-    @staticmethod
-    def _test_receive_not_empty_policy(receive_not_empty: utils.ReceiveNotEmpty,
-                                       send_data: np.ndarray) -> np.ndarray:
-        """Sets up a simple network involving an Injector with buffer_size=10
-        and a Recv Process.
-
-        Sends 2 different data items in a row.
-        Then, runs the network for 2 time steps.
-
-        Depending on the ReceiveNotEmpty policy passed as argument (either
-        FIFO or ACCUMULATE), the data stored in the Recv Process will either be
-        the two sent items one after the other or the sum of the two items
-        followed by a 0.
-
-        Parameters
-        ----------
-        receive_not_empty : ReceiveNotEmpty
-            Enum instance specifying the ReceiveNotEmpty policy of the channel.
-
-        Returns
-        ----------
-        recv_var_data : np.ndarray
-            Data stored in Recv after the run.
-        """
-        data_shape = (1,)
-        buffer_size = 10
-        # ReceiveEmpty policy is set to NON_BLOCKING_ZEROS so that the second
-        # time step  does not block when ReceiveNotEmpty policy is set to
-        # ACCUMULATE
-        channel_config = utils.ChannelConfig(
-            receive_empty=utils.ReceiveEmpty.NON_BLOCKING_ZEROS,
-            receive_not_empty=receive_not_empty)
-        num_steps = 2
-
-        injector = Injector(shape=data_shape, buffer_size=buffer_size,
-                            channel_config=channel_config)
-        recv = Recv(shape=data_shape, buffer_size=num_steps)
-        injector.out_port.connect(recv.in_port)
-
-        run_condition = RunSteps(num_steps=num_steps)
-        run_cfg = Loihi2SimCfg()
-
-        injector.send(send_data[0])
-        injector.send(send_data[1])
-        injector.run(condition=run_condition, run_cfg=run_cfg)
-        recv_var_data = recv.var.get()
-        injector.stop()
-
-        return recv_var_data
-
     def test_send_data_send_full_blocking(self):
         """Test that calling send on an instance of the Injector Process
         with SendFull.BLOCKING blocks when the channel is full."""
@@ -416,6 +363,56 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         injector.stop()
 
         np.testing.assert_equal(recv_var_data[0], np.zeros(data_shape))
+
+    @staticmethod
+    def _test_receive_not_empty_policy(receive_not_empty: utils.ReceiveNotEmpty,
+                                       send_data: np.ndarray) -> np.ndarray:
+        """Sets up a simple network involving an Injector with buffer_size=10
+        and a Recv Process.
+
+        Sends 2 different data items in a row.
+        Then, runs the network for 2 time steps.
+
+        Depending on the ReceiveNotEmpty policy passed as argument (either
+        FIFO or ACCUMULATE), the data stored in the Recv Process will either be
+        the two sent items one after the other or the sum of the two items
+        followed by a 0.
+
+        Parameters
+        ----------
+        receive_not_empty : ReceiveNotEmpty
+            Enum instance specifying the ReceiveNotEmpty policy of the channel.
+
+        Returns
+        ----------
+        recv_var_data : np.ndarray
+            Data stored in Recv after the run.
+        """
+        data_shape = (1,)
+        buffer_size = 10
+        # ReceiveEmpty policy is set to NON_BLOCKING_ZEROS so that the second
+        # time step  does not block when ReceiveNotEmpty policy is set to
+        # ACCUMULATE
+        channel_config = utils.ChannelConfig(
+            receive_empty=utils.ReceiveEmpty.NON_BLOCKING_ZEROS,
+            receive_not_empty=receive_not_empty)
+        num_steps = 2
+
+        injector = Injector(shape=data_shape, buffer_size=buffer_size,
+                            channel_config=channel_config)
+        recv = Recv(shape=data_shape, buffer_size=num_steps)
+        injector.out_port.connect(recv.in_port)
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+
+        injector.send(send_data[0])
+        injector.send(send_data[1])
+        injector.run(condition=run_condition, run_cfg=run_cfg)
+        recv_var_data = recv.var.get()
+        injector.stop()
+
+        return recv_var_data
 
     def test_send_data_receive_not_empty_fifo(self):
         """Test that running an instance of the Injector Process with

@@ -4,6 +4,7 @@
 
 from enum import IntEnum, auto
 from dataclasses import dataclass
+import typing as ty
 import numpy as np
 import warnings
 
@@ -197,6 +198,15 @@ class ChannelConfig:
     send_full: SendFull = SendFull.BLOCKING
     receive_empty: ReceiveEmpty = ReceiveEmpty.BLOCKING
     receive_not_empty: ReceiveNotEmpty = ReceiveNotEmpty.FIFO
+
+    def get_send_full_function(self) -> ty.Callable:
+        return SEND_FULL_FUNCTIONS[self.send_full]
+
+    def get_receive_empty_function(self) -> ty.Callable:
+        return RECEIVE_EMPTY_FUNCTIONS[self.receive_empty]
+
+    def get_receive_not_empty_function(self) -> ty.Callable:
+        return RECEIVE_NOT_EMPTY_FUNCTIONS[self.receive_not_empty]
 
 
 def validate_shape(shape: tuple[int, ...]):

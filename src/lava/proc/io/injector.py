@@ -78,7 +78,7 @@ class Injector(AbstractProcess):
         self.proc_params["channel_config"] = channel_config
         self.proc_params["p_to_pm_dst_port"] = p_to_pm.dst_port
 
-        self._send = utils.SEND_FULL_FUNCTIONS[channel_config.send_full]
+        self._send = channel_config.get_send_full_function()
 
         self.out_port = OutPort(shape=shape)
 
@@ -117,10 +117,9 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
 
         self._zeros = np.zeros(shape)
 
-        self._receive_when_empty = \
-            utils.RECEIVE_EMPTY_FUNCTIONS[channel_config.receive_empty]
+        self._receive_when_empty = channel_config.get_receive_empty_function()
         self._receive_when_not_empty = \
-            utils.RECEIVE_NOT_EMPTY_FUNCTIONS[channel_config.receive_not_empty]
+            channel_config.get_receive_not_empty_function()
 
     def run_spk(self) -> None:
         self._zeros.fill(0)

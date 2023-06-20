@@ -78,10 +78,9 @@ class Extractor(AbstractProcess):
         self.proc_params["channel_config"] = channel_config
         self.proc_params["pm_to_p_src_port"] = pm_to_p.src_port
 
-        self._receive_when_empty = \
-            utils.RECEIVE_EMPTY_FUNCTIONS[channel_config.receive_empty]
+        self._receive_when_empty = channel_config.get_receive_empty_function()
         self._receive_when_not_empty = \
-            utils.RECEIVE_NOT_EMPTY_FUNCTIONS[channel_config.receive_not_empty]
+            channel_config.get_receive_not_empty_function()
 
         self.in_port = InPort(shape=self._shape)
 
@@ -128,7 +127,7 @@ class PyLoihiExtractorModel(PyLoihiProcessModel):
         self._pm_to_p_src_port = self.proc_params["pm_to_p_src_port"]
         self._pm_to_p_src_port.start()
 
-        self._send = utils.SEND_FULL_FUNCTIONS[channel_config.send_full]
+        self._send = channel_config.get_send_full_function()
 
     def run_spk(self) -> None:
         self._send(self._pm_to_p_src_port, self.in_port.recv())

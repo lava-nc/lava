@@ -64,15 +64,12 @@ class TestExtractor(unittest.TestCase):
 
         self.assertIsInstance(extractor, Extractor)
 
-        self.assertIsInstance(extractor.proc_params["channel_config"],
-                              utils.ChannelConfig)
-        self.assertEqual(extractor.proc_params["channel_config"].send_full,
-                         utils.SendFull.BLOCKING)
-        self.assertEqual(extractor.proc_params["channel_config"].receive_empty,
-                         utils.ReceiveEmpty.BLOCKING)
-        self.assertEqual(
-            extractor.proc_params["channel_config"].receive_not_empty,
-            utils.ReceiveNotEmpty.FIFO)
+        config = extractor.proc_params["channel_config"]
+        self.assertIsInstance(config, utils.ChannelConfig)
+        self.assertEqual(config.send_full, utils.SendFull.BLOCKING)
+        self.assertEqual(config.receive_empty, utils.ReceiveEmpty.BLOCKING)
+        self.assertEqual(config.receive_not_empty, utils.ReceiveNotEmpty.FIFO)
+
         self.assertIsInstance(extractor.proc_params["pm_to_p_src_port"],
                               CspSendPort)
 
