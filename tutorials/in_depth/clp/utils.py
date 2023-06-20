@@ -67,17 +67,16 @@ def plot_multiple_time_series(time, time_series_list, ylabel,
 
 def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
                             colors, title, num_steps):
-
     offsets = list(range(1, len(spikes) + 1))
-    num_x_ticks = np.arange(0, num_steps+1, 25)
-    
+    num_x_ticks = np.arange(0, num_steps + 1, 25)
+
     plt.figure(figsize=figsize)
-    
+
     plt.subplot(211)
-    plt.eventplot(positions=spikes, 
+    plt.eventplot(positions=spikes,
                   lineoffsets=offsets,
                   linelength=0.9,
-                  colors=colors)
+                  colors=colors[:-1])
 
     plt.title("Spike Arrival")
     plt.xlabel("Time steps")
@@ -87,13 +86,13 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
     plt.grid(which='major', color='lightgray', linewidth=0.8)
     plt.minorticks_on()
-    
+
     plt.yticks(ticks=offsets, labels=legend)
     plt.tight_layout(pad=3.0)
 
     plt.subplot(212)
-    plt.step(time, time_series, color=color[-1])
-   
+    plt.step(time, time_series, color=colors[-1])
+
     plt.title(title[0])
     plt.xlabel("Time steps")
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
@@ -102,5 +101,5 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
     plt.margins(x=0)
 
     plt.ylabel("Trace Value")
-    
+
     plt.show()
