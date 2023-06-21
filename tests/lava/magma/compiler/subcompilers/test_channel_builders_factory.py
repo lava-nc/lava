@@ -15,7 +15,6 @@ from lava.magma.compiler.subcompilers.channel_builders_factory import \
     ChannelBuildersFactory
 from lava.magma.compiler.utils import LoihiPortInitializer, PortInitializer
 from lava.magma.core.decorator import implements, requires
-from lava.magma.core.model.model import AbstractProcessModel
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import (PyInPort, PyOutPort, PyRefPort,

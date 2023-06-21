@@ -50,6 +50,7 @@ Status GrpcChannelServerImpl::RecvArrayData(ServerContext* context,
   while (recv_queue_->AvailableCount() <=0) {
     helper::Sleep();
     if (done_) {
+      // cppcheck-suppress unreadVariable
       rep = false;
       return Status::OK;
     }

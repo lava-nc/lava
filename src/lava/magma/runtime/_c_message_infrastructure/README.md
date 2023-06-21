@@ -22,7 +22,7 @@ $ export CMAKE_ARGS="-DGRPC_CHANNEL=ON"
 
 Note :
 - If your env is using http/https proxy, please unable the proxy to use grpc channel.<br>
-You could use the commands in your ternimal,
+  You could use the commands in your ternimal,
   ```bash
   $ unset http_proxy
   $ unset https_proxy
@@ -46,15 +46,15 @@ $ export CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug"
 
 ### 2. Compile library code
 - Run the command to build message infrastructure library.
-```bash
-$ python3 prebuild.py
-```
+  ```bash
+  $ python3 prebuild.py
+  ```
 - If you have select to use PythonWrapper, GRPC channel, DDS channel or CPP unit tests, the source code will be compiled together with the message infrastructure library code.
 ### 3. Add PYTHONPATH
 - Add PYTHONPATH into terminal environment.
-```bash
+  ```bash
 $  export PYTHONPATH=src/:$PYTHONPATH
-```
+  ```
 ## Run Python test
 - For example, run the python test for channel usage
   ```bash

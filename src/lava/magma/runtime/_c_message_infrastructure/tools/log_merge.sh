@@ -8,4 +8,4 @@ fi
 if [ "$LOG_FILE_SCATTERED_PATH" = "" ];then
   LOG_FILE_SCATTERED_PATH=$MSG_LOG_PATH
 fi
-grep -E $LOG_LEVEL "$LOG_FILE_SCATTERED_PATH/lava_message_infrastructure_pid_*.log" | sort -n > $LOG_FILE_SCATTERED_PATH/$LOG_FILE_FULL_NAME
+grep -E $LOG_LEVEL $LOG_FILE_SCATTERED_PATH/lava_message_infrastructure_pid_*.log | sort -n > $LOG_FILE_SCATTERED_PATH/$LOG_FILE_FULL_NAME

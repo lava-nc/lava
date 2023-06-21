@@ -83,7 +83,7 @@ else:
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper import (  # noqa  # nosec
             RecvPort,  # noqa  # nosec
-            AbstractTransferPort,  # noqa  # nosec
+            AbstractTransferPort,  # noqa: F401  # nosec
             support_grpc_channel,
             support_fastdds_channel,
             support_cyclonedds_channel)

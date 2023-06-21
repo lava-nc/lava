@@ -89,7 +89,7 @@ class PyProcModel3(PyLoihiProcessModel):
 class TestExceptionHandling(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        global _shm_ack
+        global _shm_ack  # pylint: disable=W0601
         _shm_ack = Semaphore(1)
 
     @classmethod

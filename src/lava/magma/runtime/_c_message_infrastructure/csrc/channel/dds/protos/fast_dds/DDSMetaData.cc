@@ -72,8 +72,11 @@ ddsmetadata::msg::DDSMetaData::DDSMetaData(
     m_type = x.m_type;
     m_elsize = x.m_elsize;
     m_total_size = x.m_total_size;
+    // cppcheck-suppress variableScope
     m_dims = x.m_dims;
+    // cppcheck-suppress variableScope
     m_strides = x.m_strides;
+    // cppcheck-suppress variableScope
     m_mdata = x.m_mdata;
 }
 
@@ -84,6 +87,7 @@ ddsmetadata::msg::DDSMetaData::DDSMetaData(
     m_type = x.m_type;
     m_elsize = x.m_elsize;
     m_total_size = x.m_total_size;
+    // cppcheck-suppress variableScope
     m_dims = std::move(x.m_dims);
     m_strides = std::move(x.m_strides);
     m_mdata = std::move(x.m_mdata);

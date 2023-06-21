@@ -23,6 +23,7 @@ bool SocketWrite(int fd, void* data, size_t size) {
   size_t length = write(fd, reinterpret_cast<char *>(data), size);
 
   if (length != size) {
+    // cppcheck-suppress variableScope
     if (length == -1) {
       LAVA_LOG_ERR("Write socket failed.\n");
       return false;
@@ -37,7 +38,7 @@ bool SocketWrite(int fd, void* data, size_t size) {
 bool SocketRead(int fd, void* data, size_t size) {
   char *ptr = reinterpret_cast<char *>(data);
   while (size > 0) {
-    size_t length = read(fd, ptr, size);
+    size_t length = read(fd, ptr, size);  // Flawfinder: ignore
     size -= length;
     ptr += length;
     if (length == 0)

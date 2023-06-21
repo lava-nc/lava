@@ -50,7 +50,7 @@ def nparray_to_metadata(np_array):
         shape_list.append(0)
     metadata.dims = shape_list
     strides_list = list(np_array.strides)
-    for i in range(5 - len(strides_list)):
+    for _ in range(5 - len(strides_list)):
         strides_list.append(0)
     metadata.strides = strides_list
     np_bytes = np_array.tobytes()

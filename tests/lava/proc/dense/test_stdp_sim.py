@@ -175,7 +175,7 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         s_out_y1: sends the post-synaptic spike times.
         s_out_y2: sends the graded third-factor reward signal.
         """
-
+        # pylint: disable=W0201
         self.y1 = \
             self.compute_post_synaptic_trace(self.s_out_buff).astype(np.int32)
 
