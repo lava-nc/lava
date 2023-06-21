@@ -17,7 +17,7 @@ class MessageInfrastructureInterface(ABC):
     @abstractmethod
     def init(self):
         """Init the messaging infrastructure"""
-        pass
+        pass  # pylint: disable=W0107
 
     @abstractmethod
     def start(self):
@@ -25,11 +25,11 @@ class MessageInfrastructureInterface(ABC):
 
     def pre_stop(self):
         """Stop MessageInfrastructure before join ports"""
-        pass
+        pass  # pylint: disable=W0107
 
     def stop(self):
         """Stops the messaging infrastructure after join ports"""
-        pass
+        pass  # pylint: disable=W0107
 
     @abstractmethod
     def build_actor(self, target_fn: ty.Callable, builder):
@@ -37,7 +37,7 @@ class MessageInfrastructureInterface(ABC):
 
     def cleanup(self, block=False):
         """Close all resources"""
-        pass
+        pass  # pylint: disable=W0107
 
     def trace(self, logger) -> int:
         """Trace actors' exceptions"""

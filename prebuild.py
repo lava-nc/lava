@@ -39,6 +39,7 @@ class CMake:
         return event_name == 'workflow_dispatch'
 
     def _set_cmake_path(self):
+        # pylint: disable=W0201
         self.temp_path = os.path.join(os.path.abspath(""), "build")
         if not os.path.exists(self.temp_path):
             os.makedirs(self.temp_path)
@@ -47,6 +48,7 @@ class CMake:
         debug = int(os.environ.get("DEBUG", 0))
         cfg = "Debug" if debug else "Release"
         if self.from_cd_action and self.from_poetry:
+            # noqa: B603
             python_env = subprocess.check_output(["poetry", "env", "info", "-p"]) \
                              .decode().strip() + "/bin/python3"  # nosec # noqa
             numpy_include_dir = subprocess.check_output(["poetry", "run",  # nosec # noqa

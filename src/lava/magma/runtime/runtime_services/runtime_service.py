@@ -283,7 +283,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             data_relay_port = self.service_to_runtime
             num_items = data_recv_port.recv()
             data_relay_port.send(num_items)
-            for i in range(int(num_items[0])):
+            for _ in range(int(num_items[0])):
                 value = data_recv_port.recv()
                 data_relay_port.send(value)
 
@@ -305,7 +305,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
             num_items = data_recv_port.recv()
             data_relay_port.send(num_items)
             # Receive and relay data1, data2, ...
-            for i in range(int(num_items[0].item())):
+            for _ in range(int(num_items[0].item())):
                 data_relay_port.send(data_recv_port.recv())
         rsp = resp_port.recv()
         return rsp

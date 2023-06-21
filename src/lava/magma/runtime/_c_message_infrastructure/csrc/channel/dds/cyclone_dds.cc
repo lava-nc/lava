@@ -219,7 +219,7 @@ MetaDataPtr CycloneDDSSubscriber::Recv(bool keep) {
 }
 
 bool CycloneDDSSubscriber::Probe() {
-  return (selector_->read()).length() > 0;
+  return (selector_->read()).length() > 0;  // Flawfinder: ignore
 }
 void CycloneDDSSubscriber::Stop() {
   if (stop_)

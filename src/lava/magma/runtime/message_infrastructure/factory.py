@@ -15,7 +15,7 @@ class MessageInfrastructureFactory:
         of actor framework being chosen."""
         if PURE_PYTHON_VERSION:
             factory_type = ActorType.PyMultiProcessing
-        """type of actor framework being chosen"""
+        """type of actor framework being chosen"""  # pylint: disable=W0105
         if factory_type == ActorType.MultiProcessing:
             from lava.magma.runtime.message_infrastructure.multiprocessing \
                 import MultiProcessing

@@ -19,6 +19,7 @@ class MinimalSubscriber(Node):
             'dds_topic',
             self.listener_callback,
             qos_profile_system_default)
+        # pylint: disable=W0104
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):

@@ -60,16 +60,16 @@ The DDS example binary will be built in <lava>/build/test. (`test_fastdds_from_r
 ## Running the Example withs FASTDDS
 Please open 2 terminals. One is for running ROS2 code and the other is for running DDS port.
 ### 1st Terminal to Run ROS2 Node
-1. Navigate to your ROS2 workspace folder.
+1.  Navigate to your ROS2 workspace folder.
     ```
     $ cd <lava>/src/lava/magma/runtime/_c_message_infrastructure/examples/ros2
     ```
-2. Intialize ROS2 environment.
+2.  Intialize ROS2 environment.
     ```
     $ source /opt/ros/foxy/setup.bash
     $ . install/local_setup.bash
     ```
-3. Enable Qos configuration in `profile.xml`. [Configuring Fast DDS in ROS 2](https://fast-dds.docs.eprosima.com/en/latest/fastdds/ros2/ros2_configure.html) could be a reference for understanding the QOS configuration for ROS2.
+3.  Enable Qos configuration in `profile.xml`. [Configuring Fast DDS in ROS 2](https://fast-dds.docs.eprosima.com/en/latest/fastdds/ros2/ros2_configure.html) could be a reference for understanding the QOS configuration for ROS2.
 
     Run the commands,
     ```
@@ -78,7 +78,7 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
     $ export RMW_FASTRTPS_USE_QOS_FROM_XML=1
     ```
 
-4. Users could choose to run CPP or Python ROS2 package.
+4.  Users could choose to run CPP or Python ROS2 package.
 
     (1) Run the `publisher`/`subscriber` node of `ros_talk_with_dds_cpp` ROS2 package.
     ```
@@ -99,11 +99,11 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
 ### 2nd Terminal to Run FASTDDS Port
 #### Python Example
 Users could use Python test files to valid the function of this example.
-1. `test_fastdds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
+1.  `test_fastdds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
     ```
     $ python test_fastdds_to_ros.py
     ```
-2. `test_fastdds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
+2.  `test_fastdds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
     ```
     $ python test_fastdds_from_ros.py
     ```
@@ -115,15 +115,15 @@ $ cmake .. -DDDS_CHANNEL=ON -DFASTDDS_ENABLE=ON -DCMAKE_BUILD_TYPE=Debug
 Then the CPP example test binaries will be generated in the folder,
 `<lava>/build/test/`
 and the names for the tests are `test_fastdds_to_ros` and `test_fastdds_from_ros`.
-1. Navigate to the msg_lib build folder,
+1.  Navigate to the msg_lib build folder,
     ```
     $ cd <lava>/build/test/
     ```
-2. `test_fastdds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+2.  `test_fastdds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_fastdds_to_ros
     ```
-3. `test_fastdds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+3.  `test_fastdds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_fastdds_from_ros
     ```
@@ -131,21 +131,21 @@ and the names for the tests are `test_fastdds_to_ros` and `test_fastdds_from_ros
 ## Running the Example withs CycloneDDS
 Please open 2 terminals. One is for running ROS2 code and the other is for running DDS port.
 ### 1st Terminal to Run ROS2 Node
-1. Navigate to your ROS2 workspace folder.
+1.  Navigate to your ROS2 workspace folder.
     ```
     $ cd <lava>/src/lava/magma/runtime/_c_message_infrastructure/examples/ros2
     ```
-2. Intialize ROS2 environment.
+2.  Intialize ROS2 environment.
     ```
     $ source /opt/ros/foxy/setup.bash
     $ . install/local_setup.bash
     ```
-3. Enable Cyclone middleware of ROS2 to make ROS2 communication through CycloneDDS. Make sure you have successfully install Cyclone middleware for ROS2. Then run the command in the terminal,
+3.  Enable Cyclone middleware of ROS2 to make ROS2 communication through CycloneDDS. Make sure you have successfully install Cyclone middleware for ROS2. Then run the command in the terminal,
     ```
     $ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     ```
 
-4. Users could choose to run CPP or Python ROS2 package.
+4.  Users could choose to run CPP or Python ROS2 package.
 
     (1) Run the `publisher`/`subscriber` node of `ros_talk_with_dds_cpp` ROS2 package.
     ```
@@ -166,11 +166,11 @@ Please open 2 terminals. One is for running ROS2 code and the other is for runni
 ### 2nd Terminal to Run CycloneDDS Port
 #### Python Example
 Users could use Python test files to valid the function of this example.
-1. `test_cyclonedds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
+1.  `test_cyclonedds_to_ros.py` is corresponding to `subscriber` nodes of `ros_talk_with_dds_cpp` and `ros_talk_with_dds_py` ROS2 package. Please run the command:
     ```
     $ python test_cyclonedds_to_ros.py
     ```
-2. `test_cyclonedds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
+2.  `test_cyclonedds_from_ros.py` is corresponding to `publisher` ROS2 node. Please run the command:
     ```
     $ python test_cyclonedds_from_ros.py
     ```
@@ -182,15 +182,16 @@ $ cmake .. -DDDS_CHANNEL=ON -DCycloneDDS=ON -DCMAKE_BUILD_TYPE=Debug
 Then the CPP example test binaries will be generated in the folder,
 `<lava>/build/test/`
 and the names for the tests are `test_cyclonedds_to_ros` and `test_cyclonedds_from_ros`.
-1. Navigate to the msg_lib build folder,
+1.  Navigate to the msg_lib build folder,
     ```
     $ cd <lava>/build/test/
     ```
-2. `test_cyclonedds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+2.  `test_cyclonedds_to_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_cyclonedds_to_ros
     ```
-3. `test_cyclonedds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
+3.  `test_cyclonedds_from_ros` is corresponding to `subscriber` node of ROS2 package. Please run the command:
     ```
     $ ./test_cyclonedds_from_ros
     ```
+    
