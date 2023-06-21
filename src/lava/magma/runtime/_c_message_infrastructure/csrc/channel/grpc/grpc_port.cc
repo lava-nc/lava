@@ -90,6 +90,7 @@ Status GrpcChannelBlockServerImpl::RecvArrayData(ServerContext* context,
   while (usable_ != true) {
     helper::Sleep();
     if (done_) {
+      // cppcheck-suppress unreadVariable
       rep = false;
       return Status::OK;
     }
