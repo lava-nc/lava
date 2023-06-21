@@ -21,5 +21,5 @@ The Recv port will bind the socket file in initialization, listen in `start()` a
 The Send port will connect to the recv port in initialization and write to the socket in send().
 
 Therefore,
- 1. The send port can only be initialized after corresponding Recv port called `start()`
- 2. In each round, the send port is used one-off. One needs to create a new `TempChannel()` and get the send port from it each time. (The send port will be initialized when accessing the .dst_port property at the first time)
+1. The send port can only be initialized after corresponding Recv port called `start()`
+2. In each round, the send port is used one-off. One needs to create a new `TempChannel()` and get the send port from it each time. (The send port will be initialized when accessing the .dst_port property at the first time)

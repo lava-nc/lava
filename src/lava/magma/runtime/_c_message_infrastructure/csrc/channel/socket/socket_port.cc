@@ -23,7 +23,8 @@ bool SocketWrite(int fd, void* data, size_t size) {
   size_t length = write(fd, reinterpret_cast<char *>(data), size);
 
   if (length != size) {
-    if (length == -1) {  // cppcheck-suppress variableScope
+    // cppcheck-suppress variableScope
+    if (length == -1) {
       LAVA_LOG_ERR("Write socket failed.\n");
       return false;
     }
