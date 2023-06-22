@@ -13,7 +13,7 @@
 # no express or implied warranties, other than those that are 
 # expressly stated in the License.
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 
 class SpikeIOInterface(IntEnum):
@@ -24,6 +24,16 @@ class SpikeIOInterface(IntEnum):
     """FPGA/PIO"""
 
 
+class SpikeIOPort(Enum):
+    PIO_NORTH = 'n'
+    PIO_SOUTH = 's'
+    PIO_EAST = 'e'
+    PIO_WEST = 'w'
+    PIO_UP = 'u'
+    PIO_DOWN = 'd'
+    ETHERNET = 'p'
+
+
 @dataclass
 class ConnectionConfig:
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
@@ -32,3 +42,4 @@ class ConnectionConfig:
     ethernet_interface: str = "enp2s0"
     max_messages: int = 1024
     max_message_size: int = 4096
+    spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
