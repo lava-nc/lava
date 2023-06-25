@@ -79,11 +79,11 @@ else:
         CDLL(lib_path, mode=RTLD_GLOBAL)
 
     load_library()
-
+    # noinspection PyUnresolvedReferences
     from lava.magma.runtime.message_infrastructure. \
         MessageInfrastructurePywrapper import (  # noqa  # nosec
-            RecvPort,  # noqa: F401  # nosec
-            AbstractTransferPort,  # noqa: F401  # nosec
+            RecvPort,  # noqa  # nosec
+            AbstractTransferPort,  # noqa  # nosec
             support_grpc_channel,
             support_fastdds_channel,
             support_cyclonedds_channel)
