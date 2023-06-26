@@ -65,7 +65,7 @@ class Loihi2:
 
 class InterfaceType(IntEnum):
     """Interface type for spike io communication"""
-    SUPER_SPEED = 0
+    ETHERNET = 0
     """Ethernet"""
-    HIGH_SPEED = 1
+    PIO = 1
     """FPGA/PIO"""

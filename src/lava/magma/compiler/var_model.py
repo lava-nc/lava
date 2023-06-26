@@ -265,7 +265,8 @@ class SpikeEncoder:
 class NcSpikeIOVarModel(NcVarModel):
     msg_queue_id: int = 0
     num_message_bits: int = 8
-    interface: InterfaceType = InterfaceType.SUPER_SPEED
+    #interface: InterfaceType = InterfaceType.ETHERNET
+    interface: InterfaceType = InterfaceType.PIO
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
