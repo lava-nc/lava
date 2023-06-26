@@ -61,3 +61,9 @@ class Loihi2:
             return os.environ['PARTITION']
         return 'Unspecified'
 
+class InterfaceType(IntEnum):
+"""Interface type for spike io communication"""
+    ETHERNET = 0
+    """Ethernet"""
+    PIO = 1
+    """FPGA/PIO"""
