@@ -4,6 +4,7 @@
 
 import numpy as np
 from abc import ABC, abstractmethod
+from typing import Iterable
 try:
     from nxcore.arch.base.nxboard import NxBoard
 except ImportError:
@@ -53,3 +54,23 @@ class NxSdkCallbackFx(CallbackFx):
                           board: NxBoard = None,
                           var_id_to_var_model_map: dict = None):
         pass
+
+
+class IterableCallBack(NxSdkCallbackFx):
+    """NxSDK callback function to execute iterable of function pointers
+    as pre and post run."""
+
+    def __init__(self,
+                 pre_run_fxs: Iterable = [],
+                 post_run_fxs: Iterable = []) -> None:
+        super().__init__()
+        self.pre_run_fxs = pre_run_fxs
+        self.post_run_fxs = post_run_fxs
+
+    def pre_run_callback(self, board: NxBoard, **_) -> None:
+        for fx in self.pre_run_fxs:
+            fx(board)
+
+    def post_run_callback(self, board: NxBoard, **_) -> None:
+        for fx in self.post_run_fxs:
+            fx(board)
