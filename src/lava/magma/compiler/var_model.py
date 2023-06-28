@@ -12,7 +12,7 @@ from lava.magma.compiler.mappable_interface import Mappable
 from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
 from lava.magma.core.process.ports.connection_config import SpikeIOInterface, \
-    SpikeIOPort
+    SpikeIOPort, SpikeIOMode
 
 if ty.TYPE_CHECKING:
     pass
@@ -267,7 +267,8 @@ class NcSpikeIOVarModel(NcVarModel):
     msg_queue_id: int = 0
     num_message_bits: int = 8
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
-    port: SpikeIOPort = SpikeIOPort.ETHERNET
+    spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
+    spike_io_mode: SpikeIOMode = SpikeIOMode.FREE_RUNNING
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
