@@ -91,7 +91,7 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
     plt.tight_layout(pad=3.0)
 
     plt.subplot(212)
-    plt.step(time, time_series, color=colors[-1])
+    plt.step(time, time_series)
 
     plt.title(title[0])
     plt.xlabel("Time steps")
