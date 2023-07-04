@@ -48,7 +48,7 @@ class Extractor(AbstractProcess):
         and not empty.
     """
     def __init__(self,
-                 shape: tuple[int, ...],
+                 shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 50,
                  channel_config: ty.Optional[utils.ChannelConfig] = None) -> \
             None:

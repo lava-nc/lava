@@ -49,7 +49,7 @@ class Injector(AbstractProcess):
     """
 
     def __init__(self,
-                 shape: tuple[int, ...],
+                 shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 50,
                  channel_config: ty.Optional[utils.ChannelConfig] = None) -> \
             None:
@@ -136,3 +136,6 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
                 elements_in_buffer)
 
         self.out_port.send(data)
+
+    def __del__(self) -> None:
+        self._p_to_pm_dst_port.join()

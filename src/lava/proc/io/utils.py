@@ -209,7 +209,7 @@ class ChannelConfig:
         return RECEIVE_NOT_EMPTY_FUNCTIONS[self.receive_not_empty]
 
 
-def validate_shape(shape: tuple[int, ...]):
+def validate_shape(shape: ty.Tuple[int, ...]):
     """Validate the shape parameter.
 
     Parameters
