@@ -8,6 +8,7 @@ import numpy as np
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.clp.nsm.process import Readout
+from lava.proc.clp.nsm.process import Allocator
 from lava.proc.io.source import RingBuffer as Source
 from lava.proc.monitor.process import Monitor
 
@@ -41,7 +42,7 @@ class TestReadoutPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         infer_in.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -84,7 +85,7 @@ class TestReadoutPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         infer_in.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -125,7 +126,7 @@ class TestReadoutPyModel(unittest.TestCase):
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         infer_in.run(condition=run_cond, run_cfg=run_cfg)
 
@@ -144,7 +145,7 @@ class TestReadoutPyModel(unittest.TestCase):
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
-    def test_feedback_output(self):
+    def test_feedback_and_allocation_output(self):
         # Params
         n_protos = 2
         t_run = 20
@@ -162,26 +163,78 @@ class TestReadoutPyModel(unittest.TestCase):
 
         readout_layer = Readout(n_protos=n_protos,
                                 proto_labels=np.array([2, 0]))
-        monitor = Monitor()
+        monitor_fb = Monitor()
+        monitor_alloc = Monitor()
 
         # Connections
         infer_in.s_out.connect(readout_layer.inference_in)
         label_in.s_out.connect(readout_layer.label_in)
-        monitor.probe(target=readout_layer.feedback, num_steps=t_run)
+
+        monitor_fb.probe(target=readout_layer.feedback, num_steps=t_run)
+        monitor_alloc.probe(target=readout_layer.trigger_alloc, num_steps=t_run)
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="floating_pt")
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
 
         infer_in.run(condition=run_cond, run_cfg=run_cfg)
 
-        result = monitor.get_data()
-        result = result[readout_layer.name][readout_layer.feedback.name].T
+        result_fb = monitor_fb.get_data()
+        result_fb = result_fb[readout_layer.name][readout_layer.feedback.name].T
+
+        result_alloc = monitor_alloc.get_data()
+        result_alloc = result_alloc[readout_layer.name][
+            readout_layer.trigger_alloc.name].T
 
         infer_in.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros(shape=(1, t_run))
-        expected_result[0, 6] = 1  # We expect a match for the first input
-        expected_result[0, 17] = -1  # We expect mismatch for the second input
-        print(result)
-        np.testing.assert_array_equal(result, expected_result)
+        expected_fb = np.zeros(shape=(1, t_run))
+        expected_fb[0, 6] = 1  # We expect a match for the first input
+        expected_fb[0, 17] = -1  # We expect mismatch for the second input
+        print(result_fb)
+        np.testing.assert_array_equal(result_fb, expected_fb)
+
+        expected_alloc = np.zeros(shape=(1, t_run))
+        # We expect allocation trigger output when there is a mismatch
+        expected_alloc[0, 17] = 1
+        np.testing.assert_array_equal(result_alloc, expected_alloc)
+
+
+class TestAllocatorPyModel(unittest.TestCase):
+    def test_allocator_output(self):
+        # Params
+        n_protos = 4
+        t_run = 10
+
+        # Input spikes
+        s_trigger_in = np.zeros((1, t_run))
+
+        s_trigger_in[0, [3, 7]] = [1, 1]  # trigger input
+        # Processes
+        alloc_trigger_in = Source(data=s_trigger_in)
+
+        allocator = Allocator(n_protos=n_protos)
+        monitor_alloc = Monitor()
+
+        # Connections
+        alloc_trigger_in.s_out.connect(allocator.trigger_in)
+
+        monitor_alloc.probe(target=allocator.allocate_out, num_steps=t_run)
+
+        # Run
+        run_cond = RunSteps(num_steps=t_run)
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt")
+
+        allocator.run(condition=run_cond, run_cfg=run_cfg)
+
+        result_alloc = monitor_alloc.get_data()
+        result_alloc = result_alloc[allocator.name][
+            allocator.allocate_out.name].T
+
+        allocator.stop()
+        # Validate the allocation output
+
+        expected_alloc = np.zeros(shape=(n_protos, t_run))
+        expected_alloc[0, 3] = 1
+        expected_alloc[1, 7] = 1
+        np.testing.assert_array_equal(result_alloc, expected_alloc)

@@ -42,13 +42,13 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
     # s_out is 24-bit graded value
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     vth: int = LavaPyType(int, np.int32, precision=17)
+    lr: int = LavaPyType(int, np.int32, precision=7)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.effective_vth = 0
         self.s_out_buff = np.zeros(proc_params["shape"])
         self.isthrscaled = False
-        self.y1 = 0
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In
@@ -94,7 +94,7 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         # trace of those neurons to those 3rd factor values. The y1 trace is
         # used in learning rule as the learning rate
         if s_out_bap_buff.any():
-            self.y1 = a_3rd_factor_in
+            self.y1 = a_3rd_factor_in * self.lr
             self.s_out_buff = s_out_bap_buff.copy()
 
         # Send out the output & bAP spikes and update y1 trace

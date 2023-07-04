@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 import typing as ty
 from lava.magma.core.learning.constants import GradedSpikeCfg
+from lava.proc.dense.models import PyLearningDenseModelBitApproximate
 
 from lava.utils.weightutils import SignMode
 
@@ -15,7 +16,9 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.clp.prototype_lif.process import PrototypeLIF
 from lava.proc.clp.novelty_detector.process import NoveltyDetector
-from lava.proc.io.source import RingBuffer, PySendModelFixed
+from lava.proc.clp.nsm.process import Readout
+from lava.proc.clp.nsm.process import Allocator
+from lava.proc.io.source import RingBuffer
 from lava.proc.monitor.process import Monitor
 from lava.proc.dense.process import Dense, LearningDense
 
@@ -63,9 +66,9 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         data_input = RingBuffer(data=s_pattern_inp)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait,
-                                  n_protos=n_protos)
+        nvl_det = NoveltyDetector(t_wait=t_wait)
 
+        allocator = Allocator(n_protos=n_protos)
         # Prototype Lif Process
         prototypes = PrototypeLIF(du=4095,
                                   dv=4095,
@@ -91,15 +94,15 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         prototypes.s_out.connect(dense_out_aval.s_in)
         dense_out_aval.a_out.connect(nvl_det.output_aval_in)
 
-        nvl_det.novelty_detected_out.connect(prototypes.a_third_factor_in)
+        nvl_det.novelty_detected_out.connect(allocator.trigger_in)
+        allocator.allocate_out.connect(prototypes.a_third_factor_in)
 
         exception_map = {
-            RingBuffer: PySendModelFixed
+            LearningDense: PyLearningDenseModelBitApproximate
         }
-        run_cfg = \
-            Loihi2SimCfg(select_tag="bit_accurate_loihi",
-                         exception_proc_model_map=exception_map)
         run_cond = RunSteps(num_steps=t_run)
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt",
+                               exception_proc_model_map=exception_map)
 
         return data_input, nvl_det, prototypes, dense_proto, run_cfg, run_cond
 
@@ -129,8 +132,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         prototypes.stop()
 
         # Validate the bAP signal and y1 trace
-        expected_result = np.zeros((n_protos, t_run))
-        expected_result[0, 9] = 127
+        expected_result = np.zeros((1, t_run))
+        expected_result[0, 9] = 1
         print(result)
         np.testing.assert_array_equal(result, expected_result)
 
@@ -161,9 +164,9 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         prototypes.stop()
 
         # Validate the bAP signal and y1 trace
-        expected_result = np.zeros((n_protos, t_run))
-        expected_result[0, 9] = 127
-        expected_result[1, 19] = 127
+        expected_result = np.zeros((1, t_run))
+        expected_result[0, 9] = 1
+        expected_result[0, 19] = 1
         print(result)
         np.testing.assert_array_equal(result, expected_result)
 
@@ -249,14 +252,13 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         # Validate the novelty detection output. In this case no novelty
         # should be detected as the tested patterns are already stored in the
         # prototype weights
-        expected_nvl = np.zeros((n_protos, t_run))
+        expected_nvl = np.zeros((1, t_run))
         np.testing.assert_array_equal(result_nvl, expected_nvl)
 
 
 class TestOneShotLearning(unittest.TestCase):
 
     def test_nvl_detection_triggers_one_shot_learning(self):
-
         # General params
         t_wait = 4
         n_protos = 3
@@ -267,10 +269,10 @@ class TestOneShotLearning(unittest.TestCase):
         # LIF parameters
         du = 4095
         dv = 4095
-        vth = 62000
+        vth = 63000
 
         # Trace decay constants
-        x1_tau = 0
+        x1_tau = 65535
 
         # Epoch length
         t_epoch = 1
@@ -301,7 +303,7 @@ class TestOneShotLearning(unittest.TestCase):
         s_pattern_inp[:, 13] = inp_pattern[1, :]
 
         # Create custom LearningRule. Define dw as string
-        dw = "2^-2*y1*x1*y0"
+        dw = "2^-3*y1*x1*y0"
 
         learning_rule = Loihi3FLearningRule(dw=dw,
                                             x1_tau=x1_tau,
@@ -310,8 +312,9 @@ class TestOneShotLearning(unittest.TestCase):
         # Processes
         data_input = RingBuffer(data=s_pattern_inp)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait,
-                                  n_protos=n_protos)
+        nvl_det = NoveltyDetector(t_wait=t_wait)
+
+        allocator = Allocator(n_protos=n_protos)
 
         # Prototype Lif Process
         prototypes = PrototypeLIF(du=du,
@@ -349,8 +352,9 @@ class TestOneShotLearning(unittest.TestCase):
         prototypes.s_out.connect(dense_out_aval.s_in)
         dense_out_aval.a_out.connect(nvl_det.output_aval_in)
 
-        # Novelty detector to prototypes connection
-        nvl_det.novelty_detected_out.connect(prototypes.a_third_factor_in)
+        # Novelty detector -> Allocator -> PrototypeLIF connection
+        nvl_det.novelty_detected_out.connect(allocator.trigger_in)
+        allocator.allocate_out.connect(prototypes.a_third_factor_in)
 
         # lif_prototypes.s_out.connect(proto_weights_dense.s_in_bap)
         prototypes.s_out_bap.connect(dense_proto.s_in_bap)
@@ -366,10 +370,10 @@ class TestOneShotLearning(unittest.TestCase):
 
         # Run
         exception_map = {
-            RingBuffer: PySendModelFixed
+            LearningDense: PyLearningDenseModelBitApproximate
         }
         run_cond = RunSteps(num_steps=t_run)
-        run_cfg = Loihi2SimCfg(select_tag="bit_accurate_loihi",
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt",
                                exception_proc_model_map=exception_map)
 
         prototypes.run(condition=run_cond, run_cfg=run_cfg)
@@ -392,9 +396,9 @@ class TestOneShotLearning(unittest.TestCase):
         prototypes.stop()
 
         # Do the tests
-        expected_nvl = np.zeros((n_protos, t_run))
-        expected_nvl[0, 9] = 127
-        expected_nvl[1, 19] = 127
+        expected_nvl = np.zeros((1, t_run))
+        expected_nvl[0, 9] = 1
+        expected_nvl[0, 19] = 1
         print(result_nvl)
         np.testing.assert_array_equal(result_nvl, expected_nvl)
 
@@ -418,6 +422,184 @@ class TestOneShotLearning(unittest.TestCase):
         expected_weights[:, 0, 9:] = np.tile(exp_w_0[:, None], t_run - 9)
         expected_weights[:, 1, 19:] = exp_w_1[:, None]
 
-        np.testing.assert_array_equal(expected_weights, result_weights)
-
         print(expected_weights)
+
+        np.testing.assert_array_almost_equal(expected_weights, result_weights,
+                                             decimal=0)
+
+    def test_allocation_triggered_by_erroneous_classification(self):
+        # General params
+        t_wait = 4
+        n_protos = 3
+        n_features = 2
+        b_fraction = 8
+        t_run = 33
+
+        # LIF parameters
+        du = 4095
+        dv = 4095
+        vth = 63000
+
+        # Trace decay constants
+        x1_tau = 65535
+
+        # Epoch length
+        t_epoch = 1
+
+        # No pattern is stored yet. None of the prototypes are allocated
+        weights_proto = np.array([[0, 0], [0, 0], [0, 0]])
+        weights_proto = weights_proto * 2 ** b_fraction
+
+        # Config for Writing graded payload to x1-trace
+        graded_spike_cfg = GradedSpikeCfg.OVERWRITE
+
+        # Novelty detection input connection weights  (all-to-one
+        # connections)
+        weights_in_aval = np.ones(shape=(1, n_features))
+        weights_out_aval = np.ones(shape=(1, n_protos))
+
+        # The graded spike array for input
+        s_pattern_inp = np.zeros((n_features, t_run))
+        # Original input pattern
+        inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82], [0.87, 0.50]])
+        # Normalize the input pattern
+        inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
+            inp_pattern, axis=1), axis=1)
+        # Convert this to 8-bit fixed-point pattern
+        inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
+        # and inject it at the t=3
+        s_pattern_inp[:, 3] = inp_pattern[0, :]
+        s_pattern_inp[:, 13] = inp_pattern[1, :]
+        s_pattern_inp[:, 23] = inp_pattern[2, :]
+
+        # The graded spike array for the user-provided label
+        s_user_label = np.zeros((1, t_run))
+        s_user_label[0, 9] = 1
+        s_user_label[0, 19] = 2
+        s_user_label[0, 29] = 3
+
+        # Create custom LearningRule. Define dw as string
+        dw = "2^-3*y1*x1*y0"
+
+        learning_rule = Loihi3FLearningRule(dw=dw,
+                                            x1_tau=x1_tau,
+                                            t_epoch=t_epoch)
+
+        # Processes
+        data_input = RingBuffer(data=s_pattern_inp)
+
+        nvl_det = NoveltyDetector(t_wait=t_wait)
+
+        allocator = Allocator(n_protos=n_protos)
+
+        readout = Readout(n_protos=n_protos)
+
+        label_in = RingBuffer(data=s_user_label)
+
+        # Prototype Lif Process
+        prototypes = PrototypeLIF(du=du,
+                                  dv=dv,
+                                  bias_mant=0,
+                                  bias_exp=0,
+                                  vth=vth,
+                                  shape=(n_protos,),
+                                  name='lif_prototypes',
+                                  sign_mode=SignMode.EXCITATORY,
+                                  learning_rule=learning_rule)
+
+        dense_proto = LearningDense(weights=weights_proto,
+                                    learning_rule=learning_rule,
+                                    name="proto_weights",
+                                    num_message_bits=8,
+                                    graded_spike_cfg=graded_spike_cfg)
+
+        dense_in_aval = Dense(weights=weights_in_aval)
+        dense_out_aval = Dense(weights=weights_out_aval)
+        dense_alloc_weight = Dense(weights=np.ones(shape=(1, 1)))
+
+        monitor_nvl = Monitor()
+        monitor_protos = Monitor()
+        monitor_alloc = Monitor()
+
+        # Connections
+
+        data_input.s_out.connect(dense_proto.s_in)
+        dense_proto.a_out.connect(prototypes.a_in)
+
+        data_input.s_out.connect(dense_in_aval.s_in)
+        dense_in_aval.a_out.connect(nvl_det.input_aval_in)
+
+        prototypes.s_out.connect(dense_out_aval.s_in)
+        dense_out_aval.a_out.connect(nvl_det.output_aval_in)
+
+        # Novelty detector -> Allocator -> PrototypeLIF connection
+        nvl_det.novelty_detected_out.connect(allocator.trigger_in)
+        allocator.allocate_out.connect(prototypes.a_third_factor_in)
+
+        # lif_prototypes.s_out.connect(proto_weights_dense.s_in_bap)
+        prototypes.s_out_bap.connect(dense_proto.s_in_bap)
+
+        # Sending y1 spike
+        prototypes.s_out_y1.connect(dense_proto.s_in_y1)
+
+        # Prototype Neurons' outputs connect to the inference input of the
+        # Readout process
+        prototypes.s_out.connect(readout.inference_in)
+
+        # Label input to the Readout proces
+        label_in.s_out.connect(readout.label_in)
+
+        # Readout trigger to the Allocator
+        readout.trigger_alloc.connect(dense_alloc_weight.s_in)
+        dense_alloc_weight.a_out.connect(allocator.trigger_in)
+
+        # Probe novelty detector and prototypes
+        monitor_nvl.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
+        monitor_protos.probe(target=prototypes.s_out, num_steps=t_run)
+        monitor_alloc.probe(target=allocator.allocate_out, num_steps=t_run)
+
+        # Run
+        exception_map = {
+            LearningDense: PyLearningDenseModelBitApproximate
+        }
+        run_cond = RunSteps(num_steps=t_run)
+        run_cfg = Loihi2SimCfg(select_tag="fixed_pt",
+                               exception_proc_model_map=exception_map)
+
+        prototypes.run(condition=run_cond, run_cfg=run_cfg)
+
+        # Get results
+        result_nvl = monitor_nvl.get_data()
+        result_nvl = result_nvl[nvl_det.name][
+            nvl_det.novelty_detected_out.name].T
+
+        result_protos = monitor_protos.get_data()
+        result_protos = result_protos[prototypes.name][prototypes.s_out.name].T
+
+        result_alloc = monitor_alloc.get_data()
+        result_alloc = result_alloc[allocator.name][
+            allocator.allocate_out.name].T
+
+        print("Readout layer allocation trigger:", result_alloc)
+
+        # Stop the run
+        prototypes.stop()
+
+        # Do the tests
+        expected_nvl = np.zeros((1, t_run))
+        expected_nvl[0, [9, 19]] = [1, 1]
+
+        expected_alloc = np.zeros((n_protos, t_run))
+        expected_alloc[0, 9] = 1
+        expected_alloc[1, 19] = 1
+        expected_alloc[2, 30] = 1
+
+        expected_proto_out = np.zeros((n_protos, t_run))
+        # 1) novelty-based allocation triggered, 2) erroneous prediction
+        expected_proto_out[0, [9, 24]] = 1
+        expected_proto_out[1, 19] = 1  # novelty-based allocation triggered
+        expected_proto_out[2, 30] = 1  # error-based allocation triggerd
+
+        np.testing.assert_array_equal(result_nvl, expected_nvl)
+        np.testing.assert_array_equal(result_alloc, expected_alloc)
+        np.testing.assert_array_equal(result_protos, expected_proto_out)
