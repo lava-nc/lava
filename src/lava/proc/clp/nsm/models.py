@@ -8,14 +8,16 @@ from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires
+from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 from lava.proc.clp.nsm.process import Readout
+from lava.proc.clp.nsm.process import Allocator
 
 
 @implements(proc=Readout, protocol=LoihiProtocol)
 @requires(CPU)
+@tag("fixed_pt")
 class PyReadoutModel(PyLoihiProcessModel):
     """Python implementation of the Readout process.
     This process will run in super host and will be the main interface
@@ -25,18 +27,17 @@ class PyReadoutModel(PyLoihiProcessModel):
                                         precision=24)
     label_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
 
-    user_output: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
-    proto_labels: np.ndarray = LavaPyType(np.ndarray, int)
-    last_winner_id: int = LavaPyType(np.ndarray, int)
-    feedback: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+    user_output: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    trigger_alloc: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    feedback: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    proto_labels: np.ndarray = LavaPyType(np.ndarray, np.int32)
+    last_winner_id: np.int32 = LavaPyType(np.ndarray, np.int32)
 
-    def run_spk(self):
+    def run_spk(self) -> None:
         # Read the output of the prototype neurons
         output_vec = self.inference_in.recv()
-
         # Read the user-provided label
         user_label = self.label_in.recv()[0]
-
         # Feedback about the correctness of prediction. +1 if correct,
         # -1 if incorrect, 0 if no label is provided by the user at this point.
         infer_check = 0
@@ -44,6 +45,9 @@ class PyReadoutModel(PyLoihiProcessModel):
         # If there is an active prototype neuron, this will temporarily store
         # the label of that neuron
         inferred_label = 0
+
+        # Flag for allocation trigger
+        allocation_trigger = False
 
         # If any prototype neuron is active, then we go here. We assume there
         # is only one neuron active in the prototype population
@@ -89,8 +93,10 @@ class PyReadoutModel(PyLoihiProcessModel):
                     print("Correct")
                     infer_check = 1
                 else:
+                    # If the error occurs, trigger allocation by sending an allocation signal
                     print("False")
                     infer_check = -1
+                    allocation_trigger = True
 
             # If this prototpye has a pseudo-label, then we label it with
             # the user-provided label and do not send any feedback (because
@@ -105,3 +111,41 @@ class PyReadoutModel(PyLoihiProcessModel):
         # actual label
         self.user_output.send(np.array([inferred_label]))
         self.feedback.send(np.array([infer_check]))
+        if allocation_trigger:
+            self.trigger_alloc.send(np.array([1]))
+        else:
+            self.trigger_alloc.send(np.array([0]))
+
+
+@implements(proc=Allocator, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("fixed_pt")
+class PyAllocatorModel(PyLoihiProcessModel):
+    """Python implementation of the Allocator process.
+    """
+
+    trigger_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
+    allocate_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    next_alloc_id: np.int32 = LavaPyType(np.ndarray, np.int32)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        self.n_protos = proc_params['n_protos']
+        self.next_alloc_id = 0  # The id of the next neuron to be allocated
+
+    def run_spk(self) -> None:
+        # Allocation signal, initialized to a vector of zeros
+        alloc_signal = np.zeros(shape=self.allocate_out.shape)
+
+        # Check the input, if a trigger for allocation is received then we  send allocation signal to the next neuron
+        allocating = self.trigger_in.recv()[0]
+        if allocating:
+            # Choose the specific element of the OutPort to send allocate
+            # signal. This is a one-hot-encoded signal
+            alloc_signal[self.next_alloc_id] = 1  # one-hot-encoded vector
+
+            # Increment this counter to point to the next neuron
+            self.next_alloc_id += 1
+
+        # Otherwise, just send zeros (i.e. no signal)
+        self.allocate_out.send(alloc_signal)
