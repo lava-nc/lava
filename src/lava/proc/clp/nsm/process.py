@@ -58,18 +58,19 @@ class Readout(AbstractProcess):
 
 
 class Allocator(AbstractProcess):
-    """ Allocator process of CLP system. When triggered by other processes it will send a one-hot-encoded allocation
-    signal to the prototype population, specifically targeting next neuron to be allocated. It holds the reference to
-    the id of the next neuron to be allocated.
+    """ Allocator process of CLP system. When triggered by other processes
+    it will send a one-hot-encoded allocation signal to the prototype
+    population, specifically targeting next neuron to be allocated. It holds
+    the reference to the id of the next neuron to be allocated.
 
     Parameters
         ----------
         n_protos : int
             n_protos: int
             The number of prototypes that this Allocator process can
-            target. Each time a allocation trigger input is received the next unallocated
-            prototype will be targeted by the output of the Allocator
-            process.
+            target. Each time a allocation trigger input is received the
+            next unallocated prototype will be targeted by the output of the
+            Allocator process.
     """
 
     def __init__(self, *,
@@ -77,8 +78,10 @@ class Allocator(AbstractProcess):
 
         super().__init__(n_protos=n_protos)
 
-        self.trigger_in = InPort(shape=(1,))  # input for triggering allocation
-        self.allocate_out = OutPort(shape=(n_protos,))  # one-hot-encoded output for allocating specific prototype
+        # input for triggering allocation
+        self.trigger_in = InPort(shape=(1,))
+        # one-hot-encoded output for allocating specific prototype
+        self.allocate_out = OutPort(shape=(n_protos,))
 
         # The id of the next prototype to be allocated
         self.next_alloc_id = Var(shape=(1,), init=0)

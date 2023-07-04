@@ -7,7 +7,8 @@ import typing as ty
 
 from lava.magma.core.process.variable import Var
 from lava.proc.lif.process import LearningLIF
-from lava.magma.core.learning.learning_rule import Loihi2FLearningRule, Loihi3FLearningRule
+from lava.magma.core.learning.learning_rule import Loihi2FLearningRule, \
+    Loihi3FLearningRule
 from lava.magma.core.process.process import LogConfig
 
 
@@ -17,35 +18,36 @@ class PrototypeLIF(LearningLIF):
     Prototypes (CLP) algorithm. """
 
     def __init__(
-        self,
-        *,
-        shape: ty.Tuple[int, ...],
-        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        du: ty.Optional[float] = 0,
-        dv: ty.Optional[float] = 0,
-        bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        vth: ty.Optional[float] = 10,
-        name: ty.Optional[str] = None,
-        log_config: ty.Optional[LogConfig] = None,
-        learning_rule: ty.Union[Loihi2FLearningRule, Loihi3FLearningRule] = None,
-        lr_init: ty.Optional[float] = 127,
-        **kwargs,
+            self,
+            *,
+            shape: ty.Tuple[int, ...],
+            u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            du: ty.Optional[float] = 0,
+            dv: ty.Optional[float] = 0,
+            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            vth: ty.Optional[float] = 10,
+            name: ty.Optional[str] = None,
+            log_config: ty.Optional[LogConfig] = None,
+            learning_rule: ty.Union[
+                Loihi2FLearningRule, Loihi3FLearningRule] = None,
+            lr_init: ty.Optional[float] = 127,
+            **kwargs,
     ) -> None:
         super().__init__(
-            shape=shape,
-            u=u,
-            v=v,
-            du=du,
-            dv=dv,
-            vth=vth,
-            bias_mant=bias_mant,
-            bias_exp=bias_exp,
-            name=name,
-            log_config=log_config,
-            learning_rule=learning_rule,
-            **kwargs,
+                shape=shape,
+                u=u,
+                v=v,
+                du=du,
+                dv=dv,
+                vth=vth,
+                bias_mant=bias_mant,
+                bias_exp=bias_exp,
+                name=name,
+                log_config=log_config,
+                learning_rule=learning_rule,
+                **kwargs,
         )
 
         self.lr = Var(shape=(1,), init=lr_init)

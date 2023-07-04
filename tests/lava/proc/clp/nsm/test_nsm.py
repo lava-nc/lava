@@ -183,7 +183,8 @@ class TestReadoutPyModel(unittest.TestCase):
         result_fb = result_fb[readout_layer.name][readout_layer.feedback.name].T
 
         result_alloc = monitor_alloc.get_data()
-        result_alloc = result_alloc[readout_layer.name][readout_layer.trigger_alloc.name].T
+        result_alloc = result_alloc[readout_layer.name][
+            readout_layer.trigger_alloc.name].T
 
         infer_in.stop()
         # Validate the novelty detection output
@@ -194,7 +195,8 @@ class TestReadoutPyModel(unittest.TestCase):
         np.testing.assert_array_equal(result_fb, expected_fb)
 
         expected_alloc = np.zeros(shape=(1, t_run))
-        expected_alloc[0, 17] = 1  # We expect allocation trigger output when there is a mismatch
+        # We expect allocation trigger output when there is a mismatch
+        expected_alloc[0, 17] = 1
         np.testing.assert_array_equal(result_alloc, expected_alloc)
 
 
@@ -226,7 +228,8 @@ class TestAllocatorPyModel(unittest.TestCase):
         allocator.run(condition=run_cond, run_cfg=run_cfg)
 
         result_alloc = monitor_alloc.get_data()
-        result_alloc = result_alloc[allocator.name][allocator.allocate_out.name].T
+        result_alloc = result_alloc[allocator.name][
+            allocator.allocate_out.name].T
 
         allocator.stop()
         # Validate the allocation output

@@ -424,7 +424,8 @@ class TestOneShotLearning(unittest.TestCase):
 
         print(expected_weights)
 
-        np.testing.assert_array_almost_equal(expected_weights, result_weights, decimal=0)
+        np.testing.assert_array_almost_equal(expected_weights, result_weights,
+                                             decimal=0)
 
     def test_allocation_triggered_by_erroneous_classification(self):
         # General params
@@ -541,7 +542,8 @@ class TestOneShotLearning(unittest.TestCase):
         # Sending y1 spike
         prototypes.s_out_y1.connect(dense_proto.s_in_y1)
 
-        # Prototype Neurons' outputs connect to the inference input of the Readout process
+        # Prototype Neurons' outputs connect to the inference input of the
+        # Readout process
         prototypes.s_out.connect(readout.inference_in)
 
         # Label input to the Readout proces
@@ -575,7 +577,8 @@ class TestOneShotLearning(unittest.TestCase):
         result_protos = result_protos[prototypes.name][prototypes.s_out.name].T
 
         result_alloc = monitor_alloc.get_data()
-        result_alloc = result_alloc[allocator.name][allocator.allocate_out.name].T
+        result_alloc = result_alloc[allocator.name][
+            allocator.allocate_out.name].T
 
         print("Readout layer allocation trigger:", result_alloc)
 
@@ -592,7 +595,8 @@ class TestOneShotLearning(unittest.TestCase):
         expected_alloc[2, 30] = 1
 
         expected_proto_out = np.zeros((n_protos, t_run))
-        expected_proto_out[0, [9, 24]] = 1  # 1) novelty-based allocation triggered, 2) erroneous prediction
+        # 1) novelty-based allocation triggered, 2) erroneous prediction
+        expected_proto_out[0, [9, 24]] = 1
         expected_proto_out[1, 19] = 1  # novelty-based allocation triggered
         expected_proto_out[2, 30] = 1  # error-based allocation triggerd
 

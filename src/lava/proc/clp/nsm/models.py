@@ -93,12 +93,13 @@ class PyReadoutModel(PyLoihiProcessModel):
                     print("Correct")
                     infer_check = 1
                 else:
-                    # If the error occurs, trigger allocation by sending an allocation signal
+                    # If the error occurs, trigger allocation by sending an
+                    # allocation signal
                     print("False")
                     infer_check = -1
                     allocation_trigger = True
 
-            # If this prototpye has a pseudo-label, then we label it with
+            # If this prototype has a pseudo-label, then we label it with
             # the user-provided label and do not send any feedback (because
             # we did not have an actual prediction)
 
@@ -131,13 +132,13 @@ class PyAllocatorModel(PyLoihiProcessModel):
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.n_protos = proc_params['n_protos']
-        self.next_alloc_id = 0  # The id of the next neuron to be allocated
 
     def run_spk(self) -> None:
         # Allocation signal, initialized to a vector of zeros
         alloc_signal = np.zeros(shape=self.allocate_out.shape)
 
-        # Check the input, if a trigger for allocation is received then we  send allocation signal to the next neuron
+        # Check the input, if a trigger for allocation is received then we
+        # send allocation signal to the next neuron
         allocating = self.trigger_in.recv()[0]
         if allocating:
             # Choose the specific element of the OutPort to send allocate
