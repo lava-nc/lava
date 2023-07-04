@@ -62,7 +62,7 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         expected_result[0, 3] = 1
         np.testing.assert_array_almost_equal(result, expected_result)
 
-    def test_y1_is_equal_to_third_factor_in(self):
+    def test_y1_is_equal_to_third_factor_in_times_learning_rate(self):
         # Params
         n_protos = 2
         t_run = 20
@@ -71,7 +71,7 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         s_third_factor_in = np.zeros((n_protos, t_run))
 
         # Inject a 3rd factor signal at the t=3
-        s_third_factor_in[0, 3] = 127
+        s_third_factor_in[0, 3] = 1
 
         # Processes
         # 3rd factor source input process (RingBuffer)
