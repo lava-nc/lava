@@ -29,10 +29,8 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.t_wait = proc_params['t_wait']
-        self.n_protos = proc_params['n_protos']
         self.waiting = False  # A variable to know if we are waiting for output
         self.t_passed = 0  # The time passed since the injection of the input
-        self.next_alloc_id = 0  # The id of the next neuron to be allocated
         self.novelty_detected = False
 
     def run_spk(self) -> None:
@@ -67,19 +65,9 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
         # If we have detected novelty, send this signal downstream, and set
         # the flag back to the False
         if self.novelty_detected:
-            # Choose the specific element of the OutPort to send novelty
-            # signal to allocate the next neuron. We use 7-bit fixed-point
-            # numbers as this value would be written into post-synaptic trace
-            # in the Loihi which is also 7-bit
-            alloc_signal = np.zeros(shape=self.novelty_detected_out.shape)
-            alloc_signal[self.next_alloc_id] = 127  # ~1 as 7-bit number
-            self.novelty_detected_out.send(alloc_signal)
-
-            # Increment this counter to point to the next neuron
-            self.next_alloc_id += 1
+            self.novelty_detected_out.send(np.array([1]))
             self.novelty_detected = False
 
         else:
             # Otherwise, just send zeros (i.e. no signal)
-            self.novelty_detected_out.send(
-                np.zeros(shape=self.novelty_detected_out.shape))
+            self.novelty_detected_out.send(np.array([0]))

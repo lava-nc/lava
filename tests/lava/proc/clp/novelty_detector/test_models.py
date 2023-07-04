@@ -17,7 +17,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
-        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -29,7 +28,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
+        nvl_det = NoveltyDetector(t_wait=t_wait)
         monitor = Monitor()
 
         # Connections
@@ -49,8 +48,8 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((n_protos, t_run))
-        expected_result[0, 14] = 127
+        expected_result = np.zeros((1, t_run))
+        expected_result[0, 14] = 1
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
@@ -58,7 +57,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
-        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -70,7 +68,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
+        nvl_det = NoveltyDetector(t_wait=t_wait)
         monitor = Monitor()
 
         # Connections
@@ -90,7 +88,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((n_protos, t_run))
+        expected_result = np.zeros((1, t_run))
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
@@ -98,7 +96,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Params
         t_wait = 10
         t_run = 20
-        n_protos = 2
 
         # Input spikes
         spike_inp_in_aval = np.zeros((1, t_run))
@@ -110,7 +107,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval = Source(data=spike_inp_in_aval)
         out_aval = Source(data=spike_inp_out_aval)
 
-        nvl_det = NoveltyDetector(t_wait=t_wait, n_protos=n_protos)
+        nvl_det = NoveltyDetector(t_wait=t_wait)
         monitor = Monitor()
 
         # Connections
@@ -130,7 +127,7 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
 
         in_aval.stop()
         # Validate the novelty detection output
-        expected_result = np.zeros((n_protos, t_run))
-        expected_result[0, 14] = 127
+        expected_result = np.zeros((1, t_run))
+        expected_result[0, 14] = 1
         print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
