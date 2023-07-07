@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
+"""Defines message tokens for Actions (Commands) and Responses. Also defines
+helper functions to convert scalar values to these message tokens."""
+
 import typing as ty
 import numpy as np
-
-"""Defines message tokens for Actions (Commands) and Responses. Also defines
-helper functions to convert scalar values to these message tokens"""
 
 
 def enum_to_np(value: ty.Union[int, float],

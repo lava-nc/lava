@@ -18,7 +18,6 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
-from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.model.model import AbstractProcessModel
@@ -223,7 +222,6 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def __enter__(self):
         """Executed when Process enters a "with" block of a context manager."""
-        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop the runtime when exiting "with" block of a context manager."""
@@ -283,7 +281,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def register_sub_procs(self, procs: ty.Dict[str, AbstractProcess]):
         """Registers other processes as sub processes of this process."""
-        for name, p in procs.items():
+        for p in procs.values():
             if not isinstance(p, AbstractProcess):
                 raise AssertionError
             p.parent_proc = self

@@ -1,9 +1,10 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import unittest
 import numpy as np
+from numpy.testing import assert_almost_equal
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -13,10 +14,10 @@ from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.run_configs import Loihi1SimCfg, Loihi2SimCfg, RunConfig
+from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LIFRefractory
 from lava.proc import io
 
 
@@ -244,7 +245,7 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         rcfg = LifRunConfig(select_tag='floating_pt')
         lif_v = []
         # Run 1 timestep at a time and collect state variable u
-        for j in range(num_steps):
+        for _ in range(num_steps):
             lif.run(condition=rcnd, run_cfg=rcfg)
             lif_v.append(lif.v.get()[0])
         lif.stop()
@@ -393,7 +394,6 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
         """
         Tests fixed point LIF ProcessModel's scaling of threshold.
         """
-        num_steps = 1
         bias_mant = 2 ** 12 - 1
         bias_exp = 5
         # Set up high threshold and high bias current to check for potential
@@ -825,3 +825,37 @@ class TestTLIFReset(unittest.TestCase):
         self.assertTrue(np.array_equal(u[:, reset_offset - 1:], u_gt_post))
         self.assertTrue(np.array_equal(v[:, :reset_offset - 1], v_gt_pre))
         self.assertTrue(np.array_equal(v[:, reset_offset - 1:], v_gt_post))
+
+
+class TestLIFRefractory(unittest.TestCase):
+    """Test LIF Refractory process model"""
+
+    def test_float_model(self):
+        """Test float model"""
+        num_neurons = 2
+        num_steps = 8
+        refractory_period = 1
+
+        # Two neurons with different biases
+        lif_refractory = LIFRefractory(shape=(num_neurons,),
+                                       u=np.arange(num_neurons),
+                                       bias_mant=np.arange(num_neurons) + 1,
+                                       bias_exp=np.ones(
+                                           (num_neurons,), dtype=float),
+                                       vth=4.,
+                                       refractory_period=refractory_period)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(lif_refractory.v)
+
+        lif_refractory.run(condition=RunSteps(num_steps),
+                           run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        lif_refractory.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2, 3, 4, 0, 0, 1, 2],
+                               [2, 0, 0, 2, 0, 0, 2, 0]], dtype=float)
+
+        assert_almost_equal(v, v_expected)

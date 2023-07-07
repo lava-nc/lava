@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import typing
 import typing as ty
 from collections import UserList, OrderedDict
 
@@ -27,7 +26,7 @@ class Node:
         processes: ty.List[AbstractProcess],
     ):
         self.id: int = -1
-        self.node_type: typing.Type[AbstractNode] = node_type
+        self.node_type: ty.Type[AbstractNode] = node_type
         self.processes = processes
 
     def add_process(self, process: AbstractProcess):
@@ -57,7 +56,7 @@ class NodeConfig(UserList):
         result.append(str(self.node_map))
         return "\n".join(result)
 
-    def append(self, node: Node):
+    def append(self, node: Node):  # pylint: disable=arguments-renamed
         """Appends a new node to the NodeConfig."""
         node.id = self._node_ctr
         self._node_ctr += 1
