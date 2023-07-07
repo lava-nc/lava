@@ -162,6 +162,21 @@ def find_processes(proc: AbstractProcess,
 
     return seen_procs
 
+def annotate_folded_view(proc_list: ty.List[AbstractProcess],
+                         folded_procs: ty.List[str] = None):
+    """Annotate folded views and propagate them recursively
+    """
+    annotated : ty.Set(AbstractProcess) = set()
+    fv_inst_id : int = 0
+    for p in proc_list:
+        if p.__class__.__name__ in folded_procs:
+            p.folded_view = p.__class__
+            p.folded_view_inst_id = fv_inst_id
+            fv_inst_id += 1
+            annotated.add(p)
+
+    for p in annotated:
+        p.propagate_folded_views()
 
 class DiGraphBase(ntx.DiGraph):
     """Base class for directed graphs in the compiler.
@@ -600,17 +615,24 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     sorted order of nodes.
     """
 
-    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig):
+    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig,
+        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
 
         self._base_proc = proc  # Process on which compile/run was called
         self._run_cfg = run_cfg
+        self._compile_config = compile_config
         # 1. Find all Processes
         proc_list = find_processes(proc)
+        folded_view_proc_list = self._compile_config["folded_view"]
+        if folded_view_proc_list:
+            annotate_folded_view(proc_list, folded_view_proc_list)
+
         # Check if any Process in proc_list is already compiled
         for p in proc_list:
             if p.is_compiled:
                 raise ex.ProcessAlreadyCompiled(p)
             p._is_compiled = True
+
         # Number of Processes before resolving HierarchicalProcesses
         self._num_procs_pre_pm_discovery = len(proc_list)
         # 2. Generate a ProcessGraph: This does not resolve
@@ -965,7 +987,6 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         ProcGroupDiGraphs._propagate_var_ports(proc)
         # Discover sub processes and register with parent process
         sub_procs = model.find_sub_procs()
-        proc.register_sub_procs(sub_procs)
         proc.validate_var_aliases()
         # Recursively map sub processes to their ProcModel
         return ProcGroupDiGraphs._map_proc_to_model(list(sub_procs.values()),
@@ -997,6 +1018,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
         proc_map = OrderedDict()
         for proc in procs:
+            if proc.folded_view == proc.__class__:
+                continue
             # Select a specific ProcessModel
             if hasattr(run_cfg, "exception_proc_model_map") and \
                     proc in run_cfg.exception_proc_model_map:
