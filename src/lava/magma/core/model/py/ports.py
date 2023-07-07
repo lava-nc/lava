@@ -518,7 +518,7 @@ class PyOutPortVectorSparse(PyOutPort):
             else:
                 csp_port.send(np.concatenate([data_length,
                                              data_clone,
-                                             indices_clone]))
+                                             indices_clone], dtype=np.int32))
 
 
 class PyOutPortScalarDense(PyOutPort):
