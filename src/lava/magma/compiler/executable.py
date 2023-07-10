@@ -44,7 +44,7 @@ class Executable:
         ty.Iterable[AbstractChannelBuilder]] = None
 
     @property
-    def process_list(self):
+    def processes(self):
         return list(self.proc_builders.keys())
 
     def assign_runtime_to_all_processes(self, runtime):
