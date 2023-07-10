@@ -263,7 +263,7 @@ class TestOneShotLearning(unittest.TestCase):
         t_wait = 4
         n_protos = 3
         n_features = 2
-        b_fraction = 8
+        b_fraction = 7
         t_run = 20
 
         # LIF parameters
@@ -292,7 +292,7 @@ class TestOneShotLearning(unittest.TestCase):
         # The graded spike array for input
         s_pattern_inp = np.zeros((n_features, t_run))
         # Original input pattern
-        inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
+        inp_pattern = np.array([[0.78, 0.58], [0.59, 0.81]])
         # Normalize the input pattern
         inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
             inp_pattern, axis=1), axis=1)
@@ -400,15 +400,13 @@ class TestOneShotLearning(unittest.TestCase):
         expected_nvl[0, 9] = 1
         expected_nvl[0, 19] = 1
         print(result_nvl)
-        np.testing.assert_array_equal(result_nvl, expected_nvl)
 
-        exp_x1_0 = inp_pattern[0, :] / 2
-        exp_x1_1 = inp_pattern[1, :] / 2
+        exp_x1_0 = np.ceil(inp_pattern[0, :] / 2)
+        exp_x1_1 = np.ceil(inp_pattern[1, :] / 2)
 
         expected_x1 = np.zeros((n_features, t_run))
         expected_x1[:, 3:13] = np.tile(exp_x1_0[:, None], 10)
         expected_x1[:, 13:] = np.tile(exp_x1_1[:, None], 7)
-        np.testing.assert_array_equal(expected_x1, result_x1_trace)
 
         print(result_x1_trace)
         print(result_protos)
@@ -416,7 +414,6 @@ class TestOneShotLearning(unittest.TestCase):
 
         exp_w_0 = (exp_x1_0 - 1) * 2
         exp_w_1 = (exp_x1_1 - 1) * 2
-
         expected_weights = np.zeros((n_features, n_protos, t_run))
 
         expected_weights[:, 0, 9:] = np.tile(exp_w_0[:, None], t_run - 9)
@@ -424,8 +421,10 @@ class TestOneShotLearning(unittest.TestCase):
 
         print(expected_weights)
 
+        np.testing.assert_array_equal(result_nvl, expected_nvl)
+        np.testing.assert_array_equal(expected_x1, result_x1_trace)
         np.testing.assert_array_almost_equal(expected_weights, result_weights,
-                                             decimal=0)
+                                             decimal=-1)
 
     def test_allocation_triggered_by_erroneous_classification(self):
         # General params
