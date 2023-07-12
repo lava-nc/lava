@@ -49,6 +49,7 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         self.effective_vth = 0
         self.s_out_buff = np.zeros(proc_params["shape"])
         self.isthrscaled = False
+        self.y1 = np.zeros(proc_params["shape"], dtype=np.int32)
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In
