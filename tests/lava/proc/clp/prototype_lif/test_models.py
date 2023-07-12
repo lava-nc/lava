@@ -22,8 +22,9 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         # The array for 3rd factor input spike times
         s_third_factor_in = np.zeros((n_protos, t_run))
 
-        # Inject a 3rd factor signal at the t=3
-        s_third_factor_in[0, 3] = 127
+        # Inject a 3rd factor signal at the t=3, with id=1, hence targeting
+        # the first prototype
+        s_third_factor_in[:, 3] = [1, 1]
 
         # Processes
         # 3rd factor source input process (RingBuffer)
@@ -71,8 +72,9 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         # The array for 3rd factor input spike times
         s_third_factor_in = np.zeros((n_protos, t_run))
 
-        # Inject a 3rd factor signal at the t=3
-        s_third_factor_in[0, 3] = 1
+        # Inject a 3rd factor signal at the t=3, with id=1, hence targeting
+        # the first prototype
+        s_third_factor_in[:, 3] = [1, 1]
 
         # Processes
         # 3rd factor source input process (RingBuffer)
@@ -120,8 +122,9 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         # The array for 3rd factor input spike times
         s_third_factor_in = np.zeros((n_protos, t_run))
 
-        # Inject a 3rd factor signal at the t=3
-        s_third_factor_in[0, 3] = 127
+        # Inject a 3rd factor signal at the t=3, with id=1, hence targeting
+        # the first prototype
+        s_third_factor_in[:, 3] = [1, 1]
 
         # Processes
         # 3rd factor source input process (RingBuffer)
@@ -209,7 +212,6 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         dense_wta = Dense(weights=np.ones(shape=(n_protos, n_protos)))
 
         monitor = Monitor()
-        monitor_v = Monitor()
 
         # Connections
         data_input.s_out.connect(dense_proto.s_in)
@@ -221,7 +223,6 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
 
         # Probe the y1 (post-synaptic trace)
         monitor.probe(target=prototypes.s_out, num_steps=t_run)
-        monitor_v.probe(target=prototypes.v, num_steps=t_run)
 
         # Run
         run_cond = RunSteps(num_steps=t_run)
@@ -233,17 +234,11 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         result = monitor.get_data()
         result = result[prototypes.name][prototypes.s_out.name].T
 
-        voltages = monitor_v.get_data()[prototypes.name][prototypes.v.name]
-
         monitor.stop()
         # Validate the post-synaptic trace: it gets updated to the value of
         # the 3rd factor signal and then stays same
         expected_result = np.zeros((n_protos, t_run))
         expected_result[0, 7] = 1
         expected_result[1, 17] = 1
-
-        expected_voltage = np.zeros((n_protos, t_run))
-
-        print(voltages/64)
 
         np.testing.assert_array_equal(result, expected_result)

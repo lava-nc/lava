@@ -25,10 +25,10 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
     output_aval_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
 
     novelty_detected_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    t_wait: np.int32 = LavaPyType(np.ndarray, np.int32, precision=32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.t_wait = proc_params['t_wait']
         self.waiting = False  # A variable to know if we are waiting for output
         self.t_passed = 0  # The time passed since the injection of the input
         self.novelty_detected = False
@@ -40,7 +40,6 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
         if a_in != 0:
             self.waiting = True
             self.t_passed = 0
-            print("in_aval")
 
         # If output available, that means the input is a known pattern,
         # so we turn off waiting and reset
@@ -48,12 +47,10 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
         if a_in != 0:
             self.waiting = False
             self.t_passed = 0
-            print("out_aval")
 
         # If not, then we check whether the time limit has been passed for
         # waiting. If so, we assume this is a novel pattern
         elif self.t_passed > self.t_wait:
-            print("Novelty detected")
             self.novelty_detected = True
             self.waiting = False
             self.t_passed = 0
@@ -67,6 +64,7 @@ class PyNoveltyDetectorModel(PyLoihiProcessModel):
         if self.novelty_detected:
             self.novelty_detected_out.send(np.array([1]))
             self.novelty_detected = False
+            self.waiting = False
 
         else:
             # Otherwise, just send zeros (i.e. no signal)

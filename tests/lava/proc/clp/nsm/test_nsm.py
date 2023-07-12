@@ -234,7 +234,7 @@ class TestAllocatorPyModel(unittest.TestCase):
         allocator.stop()
         # Validate the allocation output
 
-        expected_alloc = np.zeros(shape=(n_protos, t_run))
+        expected_alloc = np.zeros(shape=(1, t_run))
         expected_alloc[0, 3] = 1
-        expected_alloc[1, 7] = 1
+        expected_alloc[0, 7] = 2
         np.testing.assert_array_equal(result_alloc, expected_alloc)

@@ -5,7 +5,6 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.process.variable import Var
 from lava.proc.lif.process import LearningLIF
 from lava.magma.core.learning.learning_rule import Loihi2FLearningRule, \
     Loihi3FLearningRule
@@ -33,7 +32,6 @@ class PrototypeLIF(LearningLIF):
             log_config: ty.Optional[LogConfig] = None,
             learning_rule: ty.Union[
                 Loihi2FLearningRule, Loihi3FLearningRule] = None,
-            lr_init: ty.Optional[float] = 127,
             **kwargs,
     ) -> None:
         super().__init__(
@@ -51,5 +49,4 @@ class PrototypeLIF(LearningLIF):
             **kwargs,
         )
 
-        self.lr = Var(shape=(1,), init=lr_init)
         self.reset_in = InPort(shape=shape)

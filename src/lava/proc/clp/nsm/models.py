@@ -53,8 +53,6 @@ class PyReadoutModel(PyLoihiProcessModel):
         # is only one neuron active in the prototype population
         if output_vec.any():
 
-            print("Output available:", output_vec)
-
             # Find the id of the winner neuron and store it
             winner_proto_id = np.nonzero(output_vec)[0][0]
             self.last_winner_id = winner_proto_id
@@ -72,8 +70,6 @@ class PyReadoutModel(PyLoihiProcessModel):
                 # So now this pseudo-label is our inferred label.
                 inferred_label = self.proto_labels[winner_proto_id]
 
-            print("Inferred label:", inferred_label)
-
         # Next we check if a user-provided label is available.
         if user_label != 0:
 
@@ -81,7 +77,6 @@ class PyReadoutModel(PyLoihiProcessModel):
             # assuming the temporal causality between the prediction by the
             # system and the providence of the label;l by the user
             last_inferred_label = self.proto_labels[self.last_winner_id]
-            print("Last Inferred label:", last_inferred_label)
 
             # If the most recently predicted label (i.e. the one for the
             # current input which is also the user-provided label refer to)
@@ -128,22 +123,26 @@ class PyAllocatorModel(PyLoihiProcessModel):
     trigger_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32)
     allocate_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
     next_alloc_id: np.int32 = LavaPyType(np.ndarray, np.int32)
+    n_protos: np.int32 = LavaPyType(np.ndarray, np.int32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.n_protos = proc_params['n_protos']
 
     def run_spk(self) -> None:
         # Allocation signal, initialized to a vector of zeros
-        alloc_signal = np.zeros(shape=self.allocate_out.shape)
+        alloc_signal = np.zeros(shape=self.allocate_out.shape, dtype=np.int32)
 
         # Check the input, if a trigger for allocation is received then we
         # send allocation signal to the next neuron
         allocating = self.trigger_in.recv()[0]
         if allocating:
             # Choose the specific element of the OutPort to send allocate
-            # signal. This is a one-hot-encoded signal
-            alloc_signal[self.next_alloc_id] = 1  # one-hot-encoded vector
+            # signal. This is a single graded spike that has the payload of
+            # the id of the next neuron to be allocated. Note that these id's
+            # are starting from id=1, as the graded value of zero means no
+            # signal. Hence, the initial value of next_alloc_id is one and
+            # after each allocation it is incremented by one
+            alloc_signal[0] = self.next_alloc_id
 
             # Increment this counter to point to the next neuron
             self.next_alloc_id += 1

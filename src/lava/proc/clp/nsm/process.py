@@ -76,12 +76,13 @@ class Allocator(AbstractProcess):
     def __init__(self, *,
                  n_protos: int) -> None:
 
-        super().__init__(n_protos=n_protos)
+        super().__init__()
 
         # input for triggering allocation
         self.trigger_in = InPort(shape=(1,))
         # one-hot-encoded output for allocating specific prototype
-        self.allocate_out = OutPort(shape=(n_protos,))
+        self.allocate_out = OutPort(shape=(1,))
 
         # The id of the next prototype to be allocated
-        self.next_alloc_id = Var(shape=(1,), init=0)
+        self.next_alloc_id = Var(shape=(1,), init=1)
+        self.n_protos = Var(shape=(1,), init=n_protos)
