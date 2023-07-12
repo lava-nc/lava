@@ -186,7 +186,7 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
         inp_pattern = np.array([[0.6, 0.8], [0.8, 0.6]])
         # Normalize the input pattern
         inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
-                inp_pattern, axis=1), axis=1)
+            inp_pattern, axis=1), axis=1)
         # Convert this to 8-bit fixed-point pattern
         inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
         # and inject it at the t=3
