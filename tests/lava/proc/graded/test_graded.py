@@ -1,25 +1,13 @@
-# INTEL CORPORATION CONFIDENTIAL AND PROPRIETARY
-#
-# Copyright © 2021-2023 Intel Corporation.
-#
-# This software and the related documents are Intel copyrighted
-# materials, and your use of them is governed by the express
-# license under which they were provided to you (License). Unless
-# the License provides otherwise, you may not use, modify, copy,
-# publish, distribute, disclose or transmit  this software or the
-# related documents without Intel's prior written permission.
-#
-# This software and the related documents are provided as is, with
-# no express or implied warranties, other than those that are
-# expressly stated in the License.
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-
 
 import unittest
 import numpy as np
 from scipy.sparse import csr_matrix, find
 
-from lava.proc.graded.gradedvec import GradedVec
+from lava.proc.graded.process import GradedVec, NormVecDelay, InvSqrt
+from lava.proc.graded.models import inv_sqrt
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse
 from lava.proc import io
@@ -32,6 +20,7 @@ class TestGradedVecProc(unittest.TestCase):
     #@unittest.skipUnless(run_loihi2_tests, "Loihi2 unavailable.")
     #@unittest.skip("Skipping for merge.")
     def test_gradedvec_dot_dense(self):
+        print('graded dense')
         num_steps = 10
         v_thresh = 1
 
@@ -69,7 +58,8 @@ class TestGradedVecProc(unittest.TestCase):
 
         self.assertTrue(np.all(out_data[:, (3,7)] == expected_out[:,(2,6)]))
         
-    def test_thvec_dot_sparse(self):
+    def test_gradedvec_dot_sparse(self):
+        print('graded sparse')
         num_steps = 10
         v_thresh = 1
 
@@ -107,6 +97,203 @@ class TestGradedVecProc(unittest.TestCase):
         expected_out = np.floor((ww @ inp_data) /  2**weight_exp)
 
         self.assertTrue(np.all(out_data[:, (3,7)] == expected_out[:,(2,6)]))
+
+        
+class TestInvSqrtProc(unittest.TestCase):
+    def test_invsqrt_calc(self):
+        print('test_invsqrt')
+        fp_base = 12# base of the decimal point
+
+        num_steps = 25
+        weights1 = np.zeros((1,1)) 
+        weights1[0,0] = 1
+        weight_exp = 7
+
+        weights1 *= 2**weight_exp
+        weights1 = weights1.astype('int')
+        
+        in_vals = [2**(i%24) for i in range(num_steps)]
+
+        inp_data = np.zeros((weights1.shape[1], num_steps))
+
+        for i in range(num_steps):
+            inp_data[:,i] = in_vals[i]
+            
+        
+        dense1 = Dense(weights=weights1, 
+               num_message_bits=24,
+               weight_exp=-weight_exp)
+        vec1 = InvSqrt(shape=(weights1.shape[0],),
+                      fp_base=fp_base)
+
+
+        generator = io.source.RingBuffer(data=inp_data)
+        logger = io.sink.RingBuffer(shape=(weights1.shape[0],), 
+                                    buffer=num_steps)
+        
+        
+        generator.s_out.connect(dense1.s_in)
+        dense1.a_out.connect(vec1.a_in)
+        vec1.s_out.connect(logger.a_in)
+
+        vec1.run(condition=RunSteps(num_steps=num_steps),
+                 run_cfg=Loihi2SimCfg(select_tag='fixed_pt'))
+        out_data = logger.data.get().astype('int')
+        vec1.stop()
+        
+        expected_out = np.array([inv_sqrt(inp_data[0, i], 5) 
+                                 for i in range(num_steps)])
+        
+        self.assertTrue(np.all(expected_out[:-1] == out_data[:,1:]))
+        
+
+        
+# class TestNormVecDelayProc(unittest.TestCase):
+    
+#     def test_norm_vec_delay_out1(self):
+#         print('test_norm_vec_delay_out1')
+#         fp_base = 12# base of the decimal point
+#         weight_exp = 7
+#         num_steps = 10
+
+#         weights1 = np.zeros((1,1)) 
+#         weights1[0,0] = 1
+
+#         weights1 *= 2**weight_exp
+#         weights1 = weights1.astype('int')
+
+#         weights2 = np.zeros((1,1)) 
+#         weights2[0,0] = 0.5
+
+#         weights2 *= 2**weight_exp
+#         weights2 = weights2.astype('int')
+        
+#         inp_data1 = np.zeros((weights1.shape[1], num_steps))
+#         inp_data2 = np.zeros((weights2.shape[1], num_steps))
+
+#         inp_data1[:, 2] = 10
+#         inp_data1[:, 6] = 30
+#         inp_data2[:, :] = 20
+        
+#         dense1 = Dense(weights=weights1, 
+#                num_message_bits=24,
+#                weight_exp=-weight_exp)
+#         dense2 = Dense(weights=weights2, 
+#                        num_message_bits=24,
+#                        weight_exp=-weight_exp)
+
+#         vec1 = NormVecDelay(shape=(weights1.shape[0],))
+
+#         generator1 = io.source.RingBuffer(data=inp_data1)
+#         inp_adapter1 = eio.spike.PyToNxAdapter(shape=(weights1.shape[1],),
+#                                               num_message_bits=24)
+
+#         generator2 = io.source.RingBuffer(data=inp_data2)
+#         inp_adapter2 = eio.spike.PyToNxAdapter(shape=(weights2.shape[1],),
+#                                               num_message_bits=24)
+
+#         out_adapter = eio.spike.NxToPyAdapter(shape=(weights1.shape[0],),
+#                                               num_message_bits=24)
+#         logger = io.sink.RingBuffer(shape=(weights1.shape[0],), 
+#                                     buffer=num_steps)
+
+        
+#         generator1.s_out.connect(inp_adapter1.inp)
+#         inp_adapter1.out.connect(dense1.s_in)
+#         dense1.a_out.connect(vec1.a_in1)
+
+#         generator2.s_out.connect(inp_adapter2.inp)
+#         inp_adapter2.out.connect(dense2.s_in)
+#         dense2.a_out.connect(vec1.a_in2)
+
+#         vec1.s_out.connect(out_adapter.inp)
+#         out_adapter.out.connect(logger.a_in)
+        
+#         vec1.run(condition=RunSteps(num_steps=num_steps), 
+#                  run_cfg=Loihi2HwCfg())
+#         out_data = logger.data.get().astype('int')
+#         vec1.stop()
+        
+#         ch1 = (weights1 @ inp_data1) / 2**weight_exp
+#         ch2 = (weights2 @ inp_data2) / 2**weight_exp
+
+#         # i'm using roll to account for the two step delay but hacky
+#         # be careful if inputs change
+#         expected_out = np.roll(ch1,2) * ch2
+#         # then there is one extra timestep from hardware
+#         self.assertTrue(np.all(expected_out[:,:-1] == out_data[:,1:]))
+        
+        
+#     def test_norm_vec_delay_out2(self):
+#         print('test_norm_vec_delay_out2')
+#         fp_base = 12# base of the decimal point
+#         weight_exp = 7
+#         num_steps = 10
+
+#         weights1 = np.zeros((1,1)) 
+#         weights1[0,0] = 1
+
+#         weights1 *= 2**weight_exp
+#         weights1 = weights1.astype('int')
+
+#         weights2 = np.zeros((1,1)) 
+#         weights2[0,0] = 0.5
+
+#         weights2 *= 2**weight_exp
+#         weights2 = weights2.astype('int')
+        
+#         inp_data1 = np.zeros((weights1.shape[1], num_steps))
+#         inp_data2 = np.zeros((weights2.shape[1], num_steps))
+
+#         inp_data1[:, 2] = 10
+#         inp_data1[:, 6] = 30
+#         inp_data2[:, :] = 20
+        
+#         dense1 = Dense(weights=weights1, 
+#                num_message_bits=24,
+#                weight_exp=-weight_exp)
+#         dense2 = Dense(weights=weights2, 
+#                        num_message_bits=24,
+#                        weight_exp=-weight_exp)
+
+#         vec1 = NormVecDelay(shape=(weights1.shape[0],))
+
+#         generator1 = io.source.RingBuffer(data=inp_data1)
+#         inp_adapter1 = eio.spike.PyToNxAdapter(shape=(weights1.shape[1],),
+#                                               num_message_bits=24)
+
+#         generator2 = io.source.RingBuffer(data=inp_data2)
+#         inp_adapter2 = eio.spike.PyToNxAdapter(shape=(weights2.shape[1],),
+#                                               num_message_bits=24)
+
+#         out_adapter = eio.spike.NxToPyAdapter(shape=(weights1.shape[0],),
+#                                               num_message_bits=24)
+#         logger = io.sink.RingBuffer(shape=(weights1.shape[0],), 
+#                                     buffer=num_steps)
+
+        
+#         generator1.s_out.connect(inp_adapter1.inp)
+#         inp_adapter1.out.connect(dense1.s_in)
+#         dense1.a_out.connect(vec1.a_in1)
+
+#         generator2.s_out.connect(inp_adapter2.inp)
+#         inp_adapter2.out.connect(dense2.s_in)
+#         dense2.a_out.connect(vec1.a_in2)
+
+#         vec1.s2_out.connect(out_adapter.inp)
+#         out_adapter.out.connect(logger.a_in)
+        
+#         vec1.run(condition=RunSteps(num_steps=num_steps), 
+#                  run_cfg=Loihi2HwCfg())
+#         out_data = logger.data.get().astype('int')
+#         vec1.stop()
+        
+#         ch1 = (weights1 @ inp_data1) / 2**weight_exp
+#         expected_out = ch1 ** 2
+#         # then there is one extra timestep from hardware
+#         self.assertTrue(np.all(expected_out[:,:-1] == out_data[:,1:]))
+        
+
         
         
 if __name__ == '__main__':
