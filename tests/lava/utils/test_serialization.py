@@ -116,11 +116,11 @@ class TestSerialization(unittest.TestCase):
             save([], tmpdirname + "test", executable=ex)
 
             # Load the executable from test.pickle
-            p, exec = load(tmpdirname + "test.pickle")
+            p, executable = load(tmpdirname + "test.pickle")
 
         # Check if the executable reflects the inital process
         self.assertTrue(p == [])
-        loaded_lif = exec.process_list[0]
+        loaded_lif = executable.process_list[0]
         self.assertTrue(lif.name == loaded_lif.name)
 
     def test_save_load_hierarchical_proc(self):
