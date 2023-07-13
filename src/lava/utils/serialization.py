@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import pickle  # noqa: S403
+import pickle  # noqa: S403 # nosec
 import typing as ty
 import os
 
@@ -103,7 +103,7 @@ def load(filename: str) -> ty.Tuple[ty.Union[AbstractProcess,
 
     # Load serialized object from <filename>
     with open(filename, 'rb') as f:
-        obj = pickle.load(f)  # noqa: S301
+        obj = pickle.load(f)  # noqa: S301 # nosec
 
     # Check loaded object
     if not isinstance(obj, SerializationObject):
