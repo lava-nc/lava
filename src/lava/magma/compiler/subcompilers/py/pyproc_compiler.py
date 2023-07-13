@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
+import numpy as np
 
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
@@ -19,8 +20,9 @@ from lava.magma.compiler.utils import (
     VarInitializer,
     VarPortInitializer,
     PortInitializer,
-)
-from lava.magma.compiler.var_model import PyVarModel
+    LoihiPortInitializer)
+from lava.magma.compiler.var_model import PyVarModel, LoihiAddress, \
+    LoihiVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping, PyVarPort
 from lava.magma.core.process.ports.ports import (
@@ -29,6 +31,15 @@ from lava.magma.core.process.ports.ports import (
     VarPort,
 )
 from lava.magma.core.process.process import AbstractProcess
+
+COUNTERS_PER_SPIKE_IO = 65535
+SPIKE_IO_COUNTER_START_INDEX = 1
+
+try:
+    from lava.magma.core.model.nc.model import AbstractNcProcessModel
+except ImportError as e:
+    class AbstractNcProcessModel:
+        pass
 
 
 class PyProcCompiler(SubCompiler):
@@ -40,6 +51,7 @@ class PyProcCompiler(SubCompiler):
         """Compiles a group of Processes with ProcessModels that are
         implemented in Python."""
         super().__init__(proc_group, compile_config)
+        self._spike_io_counter_offset = SPIKE_IO_COUNTER_START_INDEX
 
     def compile(self, channel_map: ChannelMap) -> ChannelMap:
         return self._update_channel_map(channel_map)
@@ -103,16 +115,50 @@ class PyProcCompiler(SubCompiler):
     ) -> ty.List[PortInitializer]:
         port_initializers = []
         for port in list(process.in_ports):
-            pi = PortInitializer(
-                port.name,
-                port.shape,
-                ChannelBuildersFactory.get_port_dtype(port),
-                port.__class__.__name__,
-                self._compile_config["pypy_channel_size"],
-                port.get_incoming_transform_funcs(),
-            )
-            port_initializers.append(pi)
-            self._tmp_channel_map.set_port_initializer(port, pi)
+            src_ports: ty.List[AbstractPort] = port.get_src_ports()
+            is_spike_io_receiver = False
+            for src_port in src_ports:
+                cls = src_port.process.model_class
+                if isinstance(cls, AbstractNcProcessModel):
+                    is_spike_io_receiver = True
+                elif is_spike_io_receiver:
+                    raise Exception("Joining Mixed Processes not Supported")
+
+            if is_spike_io_receiver:
+                loihi_addresses = []
+                for src_port in src_ports:
+                    num_counters = np.prod(src_port.shape)
+                    counter_start_idx = self._spike_io_counter_offset
+
+                    loihi_address = LoihiAddress(-1, -1, -1, -1,
+                                                 counter_start_idx,
+                                                 num_counters,
+                                                 1)
+                    self._spike_io_counter_offset += num_counters
+                    loihi_addresses.append(loihi_address)
+                loihi_vm = LoihiVarModel(loihi_addresses)
+                pi = LoihiPortInitializer(
+                    port.name,
+                    port.shape,
+                    ChannelBuildersFactory.get_port_dtype(port),
+                    port.__class__.__name__,
+                    self._compile_config["pypy_channel_size"],
+                    port.get_incoming_transform_funcs(),
+                    var_model=loihi_vm
+                )
+                port_initializers.append(pi)
+                self._tmp_channel_map.set_port_initializer(port, pi)
+            else:
+                pi = PortInitializer(
+                    port.name,
+                    port.shape,
+                    ChannelBuildersFactory.get_port_dtype(port),
+                    port.__class__.__name__,
+                    self._compile_config["pypy_channel_size"],
+                    port.get_incoming_transform_funcs(),
+                )
+                port_initializers.append(pi)
+                self._tmp_channel_map.set_port_initializer(port, pi)
         return port_initializers
 
     def _create_outport_initializers(

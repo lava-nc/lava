@@ -277,6 +277,10 @@ class ChannelBuildersFactory:
                 dst, AbstractNcProcessModel
         ):
             return ChannelType.PyNc
+        elif issubclass(src, AbstractNcProcessModel) and issubclass(
+                dst, AbstractPyProcessModel
+        ):
+            return ChannelType.NcPy
         else:
             raise NotImplementedError(
                 f"No support for (source, destination) pairs of type "
