@@ -189,7 +189,7 @@ class TestPrototypeLIFBitAccModel(unittest.TestCase):
             inp_pattern, axis=1), axis=1)
         # Convert this to 8-bit fixed-point pattern
         inp_pattern = (inp_pattern * 2 ** b_fraction).astype(np.int32)
-        # and inject it at the t=3
+        # And inject it at the t=3
         s_pattern_inp[:, 3] = inp_pattern[0, :]
         s_pattern_inp[:, 13] = inp_pattern[1, :]
 

@@ -34,7 +34,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Connections
         in_aval.s_out.connect(nvl_det.input_aval_in)
         out_aval.s_out.connect(nvl_det.output_aval_in)
-        # nvl_det.novelty_detected_out.connect(novelty_readout.a_in)
         monitor.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
 
         # Run
@@ -50,7 +49,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Validate the novelty detection output
         expected_result = np.zeros((1, t_run))
         expected_result[0, 14] = 1
-        print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_non_activity_if_output_available(self):
@@ -74,7 +72,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Connections
         in_aval.s_out.connect(nvl_det.input_aval_in)
         out_aval.s_out.connect(nvl_det.output_aval_in)
-        # nvl_det.novelty_detected_out.connect(novelty_readout.a_in)
         monitor.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
 
         # Run
@@ -89,7 +86,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         in_aval.stop()
         # Validate the novelty detection output
         expected_result = np.zeros((1, t_run))
-        print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_novelty_detection_if_output_comes_too_late(self):
@@ -113,7 +109,6 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Connections
         in_aval.s_out.connect(nvl_det.input_aval_in)
         out_aval.s_out.connect(nvl_det.output_aval_in)
-        # nvl_det.novelty_detected_out.connect(novelty_readout.a_in)
         monitor.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
 
         # Run
@@ -129,5 +124,4 @@ class TestNoveltyDetectorPyModel(unittest.TestCase):
         # Validate the novelty detection output
         expected_result = np.zeros((1, t_run))
         expected_result[0, 14] = 1
-        print(result)
         np.testing.assert_array_almost_equal(result, expected_result)

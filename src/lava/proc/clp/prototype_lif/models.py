@@ -100,7 +100,7 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         # Generate the output spikes
         self.s_out_buff = self.spiking_activation()
 
-        # if there was any 3rd factor input to the population, then update y1
+        # If there was any 3rd factor input to the population, then update y1
         # trace of those neurons to 127, the maximum value, because we are
         # doing one-shot learning. The y1 trace is used in learning rule as
         # the learning rate

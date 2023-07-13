@@ -85,12 +85,10 @@ class PyReadoutModel(PyLoihiProcessModel):
 
             if last_inferred_label > 0:  # "Known Known class"
                 if last_inferred_label == user_label:
-                    print("Correct")
                     infer_check = 1
                 else:
                     # If the error occurs, trigger allocation by sending an
                     # allocation signal
-                    print("False")
                     infer_check = -1
                     allocation_trigger = True
 
