@@ -72,7 +72,7 @@ class TestProdNeuronProc(unittest.TestCase):
         vec1.s_out.connect(logger.a_in)
 
         vec1.run(condition=RunSteps(num_steps=num_steps),
-                 run_cfg=Loihi2SimCfg())
+                 run_cfg=Loihi2SimCfg(select_tag='fixed_pt'))
         out_data = logger.data.get().astype('int')
         vec1.stop()
 
