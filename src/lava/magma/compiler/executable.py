@@ -43,10 +43,6 @@ class Executable:
     sync_channel_builders: ty.Optional[
         ty.Iterable[AbstractChannelBuilder]] = None
 
-    @property
-    def processes(self):
-        return list(self.proc_builders.keys())
-
     def assign_runtime_to_all_processes(self, runtime):
         for p in self.process_list:
             p.runtime = runtime
