@@ -16,7 +16,7 @@ from lava.magma.core.decorator import implements
 from lava.magma.core.process.variable import Var
 
 
-# A minimal hierarchical process 
+# A minimal hierarchical process
 class HP(AbstractProcess):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -30,7 +30,7 @@ class PyProcModelHP(AbstractSubProcessModel):
 
     def __init__(self, proc):
         """Builds sub Process structure of the Process."""
-        
+
         pre_size = 2
         post_size = 3
 
@@ -38,7 +38,7 @@ class PyProcModelHP(AbstractSubProcessModel):
 
         self.lif_in = LIF(shape=(pre_size,), bias_mant=100, vth=120,
                           name="LIF_neuron input")
-        self.dense = Dense(weights = weights * 10, name="Dense")
+        self.dense = Dense(weights=weights * 10, name="Dense")
         self.lif_out = LIF(shape=(post_size,), bias_mant=0, vth=50000,
                            name="LIF_neuron output")
 
@@ -83,7 +83,7 @@ class TestSerialization(unittest.TestCase):
         lif_procs = []
         for i in range(5):
             lif_procs.append(LIF(shape=(1,), name="LIF" + str(i)))
-        
+
         # Store the processes in file test.pickle
         with tempfile.TemporaryDirectory() as tmpdirname:
             save(lif_procs + [dense], tmpdirname + "test")
@@ -101,7 +101,7 @@ class TestSerialization(unittest.TestCase):
         for i in range(5):
             self.assertTrue(isinstance(procs[i], LIF))
             self.assertTrue(procs[i].name == "LIF" + str(i))
-    
+
     def test_save_load_executable(self):
         """Checks storing and loading of executable."""
 
@@ -122,7 +122,6 @@ class TestSerialization(unittest.TestCase):
         self.assertTrue(p == [])
         loaded_lif = exec.process_list[0]
         self.assertTrue(lif.name == loaded_lif.name)
-
 
     def test_save_load_hierarchical_proc(self):
         """Checks saving, loading and execution of a workload using a
@@ -161,11 +160,11 @@ class TestSerialization(unittest.TestCase):
         # Run the loaded executable
         proc_loaded.create_runtime(executable=ex_loaded)
         try:
-                for i in range(num_steps):
-                    proc_loaded.run(condition=RunSteps(num_steps=1))
+            for i in range(num_steps):
+                proc_loaded.run(condition=RunSteps(num_steps=1))
 
-                    output_lif_in_v_loaded[:, i] = proc_loaded.lif_in_v.get()
-                    output_lif_out_u_loaded[:, i] = proc_loaded.lif_out_u.get()
+                output_lif_in_v_loaded[:, i] = proc_loaded.lif_in_v.get()
+                output_lif_out_u_loaded[:, i] = proc_loaded.lif_out_u.get()
         finally:
             proc_loaded.stop()
 

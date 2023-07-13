@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import pickle
+import pickle  # noqa: S403
 import typing as ty
 import os
 
@@ -13,7 +13,7 @@ from lava.magma.compiler.executable import Executable
 class SerializationObject:
     """This class is used to serialize a process or a list of processes
     together with a corresponding executable.
-    
+
     Parameters
     ----------
     processes: AbstractProcess, ty.List[AbstractProcess]
@@ -36,7 +36,7 @@ def save(processes: ty.Union[AbstractProcess, ty.List[AbstractProcess]],
          executable: ty.Optional[Executable] = None) -> None:
     """Saves a given process or list of processes with an (optional)
     corresponding executable to file <filename>.
-    
+
     Parameters
     ----------
     processes: AbstractProcess, ty.List[AbstractProcess]
@@ -47,7 +47,6 @@ def save(processes: ty.Union[AbstractProcess, ty.List[AbstractProcess]],
     executable: Executable, optional
         The corresponding executable of the compiled processes which should be
         stored in a file.
-
     """
     # Check parameter types
     if not isinstance(processes, list) and not isinstance(processes,
@@ -58,15 +57,15 @@ def save(processes: ty.Union[AbstractProcess, ty.List[AbstractProcess]],
     if not isinstance(filename, str):
         raise AssertionError(f"Parameter <filename> must be string"
                              f" but got {filename}.")
-    if not executable is None and not isinstance(executable, Executable):
+    if executable is not None and not isinstance(executable, Executable):
         raise AssertionError(f"Parameter <executable> must be Executable"
                              f" but got {executable}.")
 
     # Create object which is stored
     obj = SerializationObject(processes, executable)
 
-    # Add default file extension if no extension is present 
-    if not "." in filename:
+    # Add default file extension if no extension is present
+    if "." not in filename:
         filename = filename + ".pickle"
 
     # Store object at <filename>
@@ -79,30 +78,32 @@ def load(filename: str) -> ty.Tuple[ty.Union[AbstractProcess,
                                     ty.Union[None, Executable]]:
     """Loads a process or list of processes with an (optional)
     corresponding executable from file <filename>.
-    
+
     Parameters
     ----------
     filename: str
         The path + name of the file. If no file extension is given,
         '.pickle' will be added automatically.
-    
+
     Returns
     -------
     tuple
-        Returns a tuple of a process or list of processes and a executable or None.
+        Returns a tuple of a process or list of processes and a executable or
+        None.
     """
 
     # Check parameter types
     if not isinstance(filename, str):
         raise AssertionError(f"Parameter <filename> must be string"
                              f" but got {filename}.")
+
     # Check if filename exists
     if not os.path.isfile(filename):
         raise AssertionError(f"File {filename} could not be found.")
 
     # Load serialized object from <filename>
     with open(filename, 'rb') as f:
-        obj = pickle.load(f)
+        obj = pickle.load(f)  # noqa: S301
 
     # Check loaded object
     if not isinstance(obj, SerializationObject):
