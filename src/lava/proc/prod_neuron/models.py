@@ -38,6 +38,7 @@ class AbstractProdNeuronModel(PyLoihiProcessModel):
     v = None
 
     def run_spk(self) -> None:
+        print('prod neuron')
         a_in_data1 = self.a_in1.recv()
         a_in_data2 = self.a_in2.recv()
 

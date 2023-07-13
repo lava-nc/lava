@@ -24,7 +24,6 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 class ProdNeuron(AbstractProcess):
     def __init__(
             self,
-            *,
             shape: ty.Tuple[int, ...],
             vth=1,
             exp=0) -> None:

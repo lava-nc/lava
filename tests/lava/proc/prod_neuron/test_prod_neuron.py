@@ -21,6 +21,9 @@ from lava.proc.prod_neuron.process import ProdNeuron
 from lava.proc.dense.process import Dense
 from lava.proc import io
 
+from lava.magma.core.run_conditions import RunSteps
+from lava.magma.core.run_configs import Loihi2SimCfg
+
 
 class TestProdNeuronProc(unittest.TestCase):
     def test_prod_neuron_out(self):
@@ -69,7 +72,7 @@ class TestProdNeuronProc(unittest.TestCase):
         vec1.s_out.connect(logger.a_in)
 
         vec1.run(condition=RunSteps(num_steps=num_steps),
-                 run_cfg=Loihi2HwCfg())
+                 run_cfg=Loihi2SimCfg())
         out_data = logger.data.get().astype('int')
         vec1.stop()
 
