@@ -54,7 +54,9 @@ class NormVecDelayModel(PyLoihiProcessModel):
     a_in1 = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_in2 = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    s2_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
 
+    
     vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
