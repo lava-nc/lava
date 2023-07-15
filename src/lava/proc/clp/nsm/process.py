@@ -36,17 +36,17 @@ class Readout(AbstractProcess):
     def __init__(self, *,
                  n_protos: int,
                  proto_labels: ty.Optional[np.ndarray] = None) -> None:
-        # if not provided by the user initialize it to the zeros
+        # If not provided by the user initialize it to the zeros
         if proto_labels is None:
             proto_labels = np.zeros(shape=(n_protos,), dtype=int)
 
         super().__init__(proto_labels=proto_labels, n_protos=n_protos)
 
-        self.inference_in = InPort(shape=(n_protos,))  # to read output spikes
-        self.label_in = InPort(shape=(1,))  # user-provided labels goes in here
-        self.user_output = OutPort(shape=(1,))  # output for predicted labels
+        self.inference_in = InPort(shape=(n_protos,))  # To read output spikes
+        self.label_in = InPort(shape=(1,))  # User-provided labels goes in here
+        self.user_output = OutPort(shape=(1,))  # Output for predicted labels
 
-        # feedback to user about correctness of the prediction
+        # Feedback to user about correctness of the prediction
         self.feedback = OutPort(shape=(1,))
         self.trigger_alloc = OutPort(shape=(1,))
 
@@ -66,7 +66,6 @@ class Allocator(AbstractProcess):
     Parameters
         ----------
         n_protos : int
-            n_protos: int
             The number of prototypes that this Allocator process can
             target. Each time a allocation trigger input is received the
             next unallocated prototype will be targeted by the output of the
@@ -76,12 +75,13 @@ class Allocator(AbstractProcess):
     def __init__(self, *,
                  n_protos: int) -> None:
 
-        super().__init__(n_protos=n_protos)
+        super().__init__()
 
-        # input for triggering allocation
+        # Input for triggering allocation
         self.trigger_in = InPort(shape=(1,))
-        # one-hot-encoded output for allocating specific prototype
-        self.allocate_out = OutPort(shape=(n_protos,))
+        # One-hot-encoded output for allocating specific prototype
+        self.allocate_out = OutPort(shape=(1,))
 
         # The id of the next prototype to be allocated
-        self.next_alloc_id = Var(shape=(1,), init=0)
+        self.next_alloc_id = Var(shape=(1,), init=1)
+        self.n_protos = Var(shape=(1,), init=n_protos)

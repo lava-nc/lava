@@ -53,7 +53,6 @@ class TestReadoutPyModel(unittest.TestCase):
         # Validate the user outputs
         expected_result = np.zeros((1, t_run))
         expected_result[0, 3] = -1  # we expect a pseudo-label
-        print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_readout_from_labelled_winner(self):
@@ -95,8 +94,7 @@ class TestReadoutPyModel(unittest.TestCase):
         infer_in.stop()
         # Validate the user outputs
         expected_result = np.zeros((1, t_run))
-        expected_result[0, 3] = 1  # we expect the label "1"
-        print(result)
+        expected_result[0, 3] = 1  # We expect the label "1"
         np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_labelling_a_pseudo_labelled_winner(self):
@@ -108,8 +106,8 @@ class TestReadoutPyModel(unittest.TestCase):
         s_infer_in = np.zeros((n_protos, t_run))
         s_label_in = np.zeros((1, t_run))
 
-        s_infer_in[0, 3] = 1  # winner is the 0'th prototype
-        s_label_in[0, 6] = 2  # label provided by the user
+        s_infer_in[0, 3] = 1  # Winner is the 0'th prototype
+        s_label_in[0, 6] = 2  # Label provided by the user
 
         # Processes
         infer_in = Source(data=s_infer_in)
@@ -142,7 +140,6 @@ class TestReadoutPyModel(unittest.TestCase):
         expected_result[0, 3] = -1
         expected_result[0, 6] = 2
 
-        print(result)
         np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_feedback_and_allocation_output(self):
@@ -155,8 +152,8 @@ class TestReadoutPyModel(unittest.TestCase):
         s_label_in = np.zeros((1, t_run))
 
         s_infer_in[0, [3, 12]] = 1
-        s_label_in[0, 6] = 2  # label that match the inference
-        s_label_in[0, 17] = 1  # label that does not match the inference
+        s_label_in[0, 6] = 2  # Label that match the inference
+        s_label_in[0, 17] = 1  # Label that does not match the inference
         # Processes
         infer_in = Source(data=s_infer_in)
         label_in = Source(data=s_label_in)
@@ -191,7 +188,6 @@ class TestReadoutPyModel(unittest.TestCase):
         expected_fb = np.zeros(shape=(1, t_run))
         expected_fb[0, 6] = 1  # We expect a match for the first input
         expected_fb[0, 17] = -1  # We expect mismatch for the second input
-        print(result_fb)
         np.testing.assert_array_equal(result_fb, expected_fb)
 
         expected_alloc = np.zeros(shape=(1, t_run))
@@ -209,7 +205,7 @@ class TestAllocatorPyModel(unittest.TestCase):
         # Input spikes
         s_trigger_in = np.zeros((1, t_run))
 
-        s_trigger_in[0, [3, 7]] = [1, 1]  # trigger input
+        s_trigger_in[0, [3, 7]] = [1, 1]  # Trigger input
         # Processes
         alloc_trigger_in = Source(data=s_trigger_in)
 
@@ -232,9 +228,9 @@ class TestAllocatorPyModel(unittest.TestCase):
             allocator.allocate_out.name].T
 
         allocator.stop()
-        # Validate the allocation output
 
-        expected_alloc = np.zeros(shape=(n_protos, t_run))
+        # Validate the allocation output
+        expected_alloc = np.zeros(shape=(1, t_run))
         expected_alloc[0, 3] = 1
-        expected_alloc[1, 7] = 1
+        expected_alloc[0, 7] = 2
         np.testing.assert_array_equal(result_alloc, expected_alloc)

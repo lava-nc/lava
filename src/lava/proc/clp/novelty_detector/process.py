@@ -4,6 +4,7 @@
 
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.variable import Var
 
 
 class NoveltyDetector(AbstractProcess):
@@ -29,7 +30,7 @@ class NoveltyDetector(AbstractProcess):
     def __init__(self, *,
                  t_wait: int
                  ) -> None:
-        super().__init__(t_wait=t_wait)
+        super().__init__()
 
         # An input is being processed by the system
         self.input_aval_in = InPort(shape=(1,))
@@ -39,3 +40,5 @@ class NoveltyDetector(AbstractProcess):
 
         # OutPort for sending out the novelty detection signal
         self.novelty_detected_out = OutPort(shape=(1,))
+
+        self.t_wait = Var(shape=(1,), init=t_wait)

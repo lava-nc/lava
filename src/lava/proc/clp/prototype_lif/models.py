@@ -9,7 +9,7 @@ from lava.proc.clp.prototype_lif.process import PrototypeLIF
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.model.py.ports import PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.proc.lif.models import AbstractPyLifModelFixed
@@ -41,14 +41,15 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
     """
     # s_out is 24-bit graded value
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    reset_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=1)
     vth: int = LavaPyType(int, np.int32, precision=17)
-    lr: int = LavaPyType(int, np.int32, precision=7)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.effective_vth = 0
         self.s_out_buff = np.zeros(proc_params["shape"])
         self.isthrscaled = False
+        self.y1 = np.zeros(proc_params["shape"], dtype=np.int32)
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In
@@ -72,6 +73,7 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         # Receive synaptic input and the 3rd factor input
         a_in_data = self.a_in.recv()
         a_3rd_factor_in = self.a_third_factor_in.recv().astype(np.int32)
+        reset = self.reset_in.recv()
 
         # Scale the bias
         self.scale_bias()
@@ -83,18 +85,27 @@ class PrototypeLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         # Run sub-threshold dynamics
         self.subthr_dynamics(activation_in=a_in_data)
 
-        # Generate bAP signals for all neurons for those that received a 3rd
-        # factor input
-        s_out_bap_buff = a_3rd_factor_in != 0
+        # If a reset spike is received, reset both voltage and current
+        if np.any(reset > 0):
+            self.v[reset > 0] *= 0
+            self.u[reset > 0] *= 0
 
+        # Generate bAP signals the neurons that received its own id in the
+        # 3rd factor channel. As all values of "a_3rd_factor_in" will be
+        # same, we will check just the first one. Note that the id's sent in
+        # channel start from one, not zero.
+        s_out_bap_buff = np.zeros(shape=self.s_out_bap.shape, dtype=bool)
+        if a_3rd_factor_in[0] != 0:
+            s_out_bap_buff[a_3rd_factor_in[0] - 1] = True
         # Generate the output spikes
         self.s_out_buff = self.spiking_activation()
 
-        # if there was any 3rd factor input to the population, then update y1
-        # trace of those neurons to those 3rd factor values. The y1 trace is
-        # used in learning rule as the learning rate
+        # If there was any 3rd factor input to the population, then update y1
+        # trace of those neurons to 127, the maximum value, because we are
+        # doing one-shot learning. The y1 trace is used in learning rule as
+        # the learning rate
         if s_out_bap_buff.any():
-            self.y1 = a_3rd_factor_in * self.lr
+            self.y1 = s_out_bap_buff * 127
             self.s_out_buff = s_out_bap_buff.copy()
 
         # Send out the output & bAP spikes and update y1 trace

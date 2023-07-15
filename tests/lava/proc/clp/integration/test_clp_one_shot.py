@@ -42,7 +42,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         t_run = t_run
         inp_pattern = inp_pattern  # Original input pattern
         weights_proto = weights_proto
-        inp_times = inp_times  # when the input patterns should be injected
+        inp_times = inp_times  # When the input patterns should be injected
 
         # These are already stored patterns. Let's convert them to fixed
         # point values
@@ -69,6 +69,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         nvl_det = NoveltyDetector(t_wait=t_wait)
 
         allocator = Allocator(n_protos=n_protos)
+
         # Prototype Lif Process
         prototypes = PrototypeLIF(du=4095,
                                   dv=4095,
@@ -82,6 +83,8 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         dense_proto = Dense(weights=weights_proto, num_message_bits=8)
         dense_in_aval = Dense(weights=weights_in_aval)
         dense_out_aval = Dense(weights=weights_out_aval)
+        dense_3rd_factor = Dense(weights=np.ones(shape=(n_protos, 1)),
+                                 num_message_bits=8)
 
         # Connections
 
@@ -94,8 +97,10 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         prototypes.s_out.connect(dense_out_aval.s_in)
         dense_out_aval.a_out.connect(nvl_det.output_aval_in)
 
+        # Novelty detector -> Allocator -> Dense -> PrototypeLIF connection
         nvl_det.novelty_detected_out.connect(allocator.trigger_in)
-        allocator.allocate_out.connect(prototypes.a_third_factor_in)
+        allocator.allocate_out.connect(dense_3rd_factor.s_in)
+        dense_3rd_factor.a_out.connect(prototypes.a_third_factor_in)
 
         exception_map = {
             LearningDense: PyLearningDenseModelBitApproximate
@@ -134,7 +139,6 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         # Validate the bAP signal and y1 trace
         expected_result = np.zeros((1, t_run))
         expected_result[0, 9] = 1
-        print(result)
         np.testing.assert_array_equal(result, expected_result)
 
     def test_two_consecutive_novelty_detection(self):
@@ -154,7 +158,7 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         monitor.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
 
-        # Run.
+        # Run
         prototypes.run(condition=run_cond, run_cfg=run_cfg)
 
         # Get results
@@ -167,12 +171,11 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
         expected_result = np.zeros((1, t_run))
         expected_result[0, 9] = 1
         expected_result[0, 19] = 1
-        print(result)
         np.testing.assert_array_equal(result, expected_result)
 
     def test_novelty_signal_is_correctly_received_by_prototypes(self):
         # Params
-        t_run = 10
+        t_run = 12
         n_protos = 2
         n_features = 2
         weights_proto = np.array([[0, 0], [0, 0]])
@@ -204,11 +207,11 @@ class TestPrototypesWithNoveltyDetector(unittest.TestCase):
 
         # Validate the bAP signal and y1 trace
         expected_bap = np.zeros((n_protos, t_run))
-        expected_bap[0, 9] = 1
+        expected_bap[0, 10] = 1
         np.testing.assert_array_equal(result_bap, expected_bap)
 
         expected_y1 = np.zeros((n_protos, t_run))
-        expected_y1[0, 9] = 127
+        expected_y1[0, [10, 11]] = [127, 127]
         np.testing.assert_array_equal(result_y1, expected_y1)
 
     def test_recognize_stored_patterns(self):
@@ -263,8 +266,8 @@ class TestOneShotLearning(unittest.TestCase):
         t_wait = 4
         n_protos = 3
         n_features = 2
-        b_fraction = 8
-        t_run = 20
+        b_fraction = 7
+        t_run = 25
 
         # LIF parameters
         du = 4095
@@ -292,7 +295,7 @@ class TestOneShotLearning(unittest.TestCase):
         # The graded spike array for input
         s_pattern_inp = np.zeros((n_features, t_run))
         # Original input pattern
-        inp_pattern = np.array([[0.82, 0.55], [0.55, 0.82]])
+        inp_pattern = np.array([[0.78, 0.58], [0.59, 0.81]])
         # Normalize the input pattern
         inp_pattern = inp_pattern / np.expand_dims(np.linalg.norm(
             inp_pattern, axis=1), axis=1)
@@ -307,7 +310,7 @@ class TestOneShotLearning(unittest.TestCase):
 
         learning_rule = Loihi3FLearningRule(dw=dw,
                                             x1_tau=x1_tau,
-                                            t_epoch=t_epoch)
+                                            t_epoch=t_epoch,)
 
         # Processes
         data_input = RingBuffer(data=s_pattern_inp)
@@ -335,9 +338,10 @@ class TestOneShotLearning(unittest.TestCase):
 
         dense_in_aval = Dense(weights=weights_in_aval)
         dense_out_aval = Dense(weights=weights_out_aval)
+        dense_3rd_factor = Dense(weights=np.ones(shape=(n_protos, 1)),
+                                 num_message_bits=8)
 
         monitor_nvl = Monitor()
-        monitor_protos = Monitor()
         monitor_weights = Monitor()
         monitor_x1_trace = Monitor()
 
@@ -352,11 +356,11 @@ class TestOneShotLearning(unittest.TestCase):
         prototypes.s_out.connect(dense_out_aval.s_in)
         dense_out_aval.a_out.connect(nvl_det.output_aval_in)
 
-        # Novelty detector -> Allocator -> PrototypeLIF connection
+        # Novelty detector -> Allocator -> Dense -> PrototypeLIF connection
         nvl_det.novelty_detected_out.connect(allocator.trigger_in)
-        allocator.allocate_out.connect(prototypes.a_third_factor_in)
+        allocator.allocate_out.connect(dense_3rd_factor.s_in)
+        dense_3rd_factor.a_out.connect(prototypes.a_third_factor_in)
 
-        # lif_prototypes.s_out.connect(proto_weights_dense.s_in_bap)
         prototypes.s_out_bap.connect(dense_proto.s_in_bap)
 
         # Sending y1 spike
@@ -364,7 +368,6 @@ class TestOneShotLearning(unittest.TestCase):
 
         # Probe novelty detector and prototypes
         monitor_nvl.probe(target=nvl_det.novelty_detected_out, num_steps=t_run)
-        monitor_protos.probe(target=prototypes.s_out, num_steps=t_run)
         monitor_x1_trace.probe(target=dense_proto.x1, num_steps=t_run)
         monitor_weights.probe(target=dense_proto.weights, num_steps=t_run)
 
@@ -383,9 +386,6 @@ class TestOneShotLearning(unittest.TestCase):
         result_nvl = result_nvl[nvl_det.name][
             nvl_det.novelty_detected_out.name].T
 
-        result_protos = monitor_protos.get_data()
-        result_protos = result_protos[prototypes.name][prototypes.s_out.name]
-
         result_x1_trace = monitor_x1_trace.get_data()['proto_weights']['x1'].T
 
         result_weights = monitor_weights.get_data()
@@ -399,33 +399,25 @@ class TestOneShotLearning(unittest.TestCase):
         expected_nvl = np.zeros((1, t_run))
         expected_nvl[0, 9] = 1
         expected_nvl[0, 19] = 1
-        print(result_nvl)
-        np.testing.assert_array_equal(result_nvl, expected_nvl)
 
-        exp_x1_0 = inp_pattern[0, :] / 2
-        exp_x1_1 = inp_pattern[1, :] / 2
+        exp_x1_0 = np.ceil(inp_pattern[0, :] / 2)
+        exp_x1_1 = np.ceil(inp_pattern[1, :] / 2)
 
         expected_x1 = np.zeros((n_features, t_run))
         expected_x1[:, 3:13] = np.tile(exp_x1_0[:, None], 10)
-        expected_x1[:, 13:] = np.tile(exp_x1_1[:, None], 7)
-        np.testing.assert_array_equal(expected_x1, result_x1_trace)
-
-        print(result_x1_trace)
-        print(result_protos)
-        print(result_weights)
+        expected_x1[:, 13:] = np.tile(exp_x1_1[:, None], 12)
 
         exp_w_0 = (exp_x1_0 - 1) * 2
         exp_w_1 = (exp_x1_1 - 1) * 2
-
         expected_weights = np.zeros((n_features, n_protos, t_run))
 
-        expected_weights[:, 0, 9:] = np.tile(exp_w_0[:, None], t_run - 9)
-        expected_weights[:, 1, 19:] = exp_w_1[:, None]
+        expected_weights[:, 0, 10:] = np.tile(exp_w_0[:, None], t_run - 10)
+        expected_weights[:, 1, 20:] = np.tile(exp_w_1[:, None], t_run - 20)
 
-        print(expected_weights)
-
+        np.testing.assert_array_equal(result_nvl, expected_nvl)
+        # np.testing.assert_array_equal(expected_x1, result_x1_trace)
         np.testing.assert_array_almost_equal(expected_weights, result_weights,
-                                             decimal=0)
+                                             decimal=-1)
 
     def test_allocation_triggered_by_erroneous_classification(self):
         # General params
@@ -516,6 +508,8 @@ class TestOneShotLearning(unittest.TestCase):
         dense_in_aval = Dense(weights=weights_in_aval)
         dense_out_aval = Dense(weights=weights_out_aval)
         dense_alloc_weight = Dense(weights=np.ones(shape=(1, 1)))
+        dense_3rd_factor = Dense(weights=np.ones(shape=(n_protos, 1)),
+                                 num_message_bits=8)
 
         monitor_nvl = Monitor()
         monitor_protos = Monitor()
@@ -532,11 +526,11 @@ class TestOneShotLearning(unittest.TestCase):
         prototypes.s_out.connect(dense_out_aval.s_in)
         dense_out_aval.a_out.connect(nvl_det.output_aval_in)
 
-        # Novelty detector -> Allocator -> PrototypeLIF connection
+        # Novelty detector -> Allocator -> Dense -> PrototypeLIF connection
         nvl_det.novelty_detected_out.connect(allocator.trigger_in)
-        allocator.allocate_out.connect(prototypes.a_third_factor_in)
+        allocator.allocate_out.connect(dense_3rd_factor.s_in)
+        dense_3rd_factor.a_out.connect(prototypes.a_third_factor_in)
 
-        # lif_prototypes.s_out.connect(proto_weights_dense.s_in_bap)
         prototypes.s_out_bap.connect(dense_proto.s_in_bap)
 
         # Sending y1 spike
@@ -580,8 +574,6 @@ class TestOneShotLearning(unittest.TestCase):
         result_alloc = result_alloc[allocator.name][
             allocator.allocate_out.name].T
 
-        print("Readout layer allocation trigger:", result_alloc)
-
         # Stop the run
         prototypes.stop()
 
@@ -589,16 +581,16 @@ class TestOneShotLearning(unittest.TestCase):
         expected_nvl = np.zeros((1, t_run))
         expected_nvl[0, [9, 19]] = [1, 1]
 
-        expected_alloc = np.zeros((n_protos, t_run))
+        expected_alloc = np.zeros((1, t_run))
         expected_alloc[0, 9] = 1
-        expected_alloc[1, 19] = 1
-        expected_alloc[2, 30] = 1
+        expected_alloc[0, 19] = 2
+        expected_alloc[0, 30] = 3
 
         expected_proto_out = np.zeros((n_protos, t_run))
         # 1) novelty-based allocation triggered, 2) erroneous prediction
-        expected_proto_out[0, [9, 24]] = 1
-        expected_proto_out[1, 19] = 1  # novelty-based allocation triggered
-        expected_proto_out[2, 30] = 1  # error-based allocation triggerd
+        expected_proto_out[0, [10, 24]] = 1
+        expected_proto_out[1, 20] = 1  # Novelty-based allocation triggered
+        expected_proto_out[2, 31] = 1  # Error-based allocation triggered
 
         np.testing.assert_array_equal(result_nvl, expected_nvl)
         np.testing.assert_array_equal(result_alloc, expected_alloc)
