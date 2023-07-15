@@ -475,10 +475,10 @@ class PyOutPort(AbstractPyIOPort):
         """TBD"""
         pass
 
-    def advance_time(self, ts):
+    def advance_to_time_step(self, ts: int):
         for csp_port in self.csp_ports:
-            if hasattr(csp_port, "advance_time"):
-                csp_port.advance_time(ts)
+            if hasattr(csp_port, "advance_to_time_step"):
+                csp_port.advance_to_time_step(ts)
 
 
 class PyOutPortVectorDense(PyOutPort):
