@@ -268,7 +268,7 @@ class NcSpikeIOVarModel(NcVarModel):
     num_message_bits: int = 8
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
-    spike_io_mode: SpikeIOMode = SpikeIOMode.FREE_RUNNING
+    spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None

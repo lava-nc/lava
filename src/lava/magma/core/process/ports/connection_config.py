@@ -48,4 +48,4 @@ class ConnectionConfig:
     max_messages: int = 1024
     max_message_size: int = 4096
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
-    spike_io_mode: SpikeIOMode = SpikeIOMode.FREE_RUNNING
+    spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
