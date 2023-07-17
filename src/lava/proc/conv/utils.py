@@ -482,7 +482,9 @@ def conv_to_sparse(input_shape: Tuple[int, int, int],
                     dsts.append(dd.flatten())
                     wgts.append(weight.flatten())
 
-    srcs = np.concatenate(srcs).astype(int)
+    #print(srcs)
+    if len(srcs) >= 1
+        srcs = np.concatenate(srcs).astype(int)
     dsts = np.concatenate(dsts).astype(int)
     wgts = np.concatenate(wgts)
     return dsts, srcs, wgts
