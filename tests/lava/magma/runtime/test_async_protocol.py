@@ -69,7 +69,7 @@ class TestProcess(unittest.TestCase):
         Verifies the working of Asynchronous Process
         """
         process = AsyncProcess1(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
+        _ = SyncDomain("simple", AsyncProtocol(), [process])
         process.run(condition=RunContinuous(), run_cfg=Loihi2SimCfg())
         process.stop()
 
@@ -79,7 +79,7 @@ class TestProcess(unittest.TestCase):
         effect
         """
         process = AsyncProcess1(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
+        _ = SyncDomain("simple", AsyncProtocol(), [process])
         process.run(condition=RunContinuous(), run_cfg=Loihi2SimCfg())
         process.pause()
         process.stop()
@@ -90,7 +90,7 @@ class TestProcess(unittest.TestCase):
         implicitly passed as num_steps for the process.
         """
         process = AsyncProcess2(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
+        _ = SyncDomain("simple", AsyncProtocol(), [process])
         process.run(condition=RunSteps(num_steps=10), run_cfg=Loihi2SimCfg())
         process.stop()
 
@@ -100,7 +100,7 @@ class TestProcess(unittest.TestCase):
         of the variable after run finishes.
         """
         process = AsyncProcess2(shape=(2, 2))
-        simple_sync_domain = SyncDomain("simple", AsyncProtocol(), [process])
+        _ = SyncDomain("simple", AsyncProtocol(), [process])
         process.run(condition=RunSteps(num_steps=10), run_cfg=Loihi2SimCfg())
         print(process.u.get())
         process.stop()

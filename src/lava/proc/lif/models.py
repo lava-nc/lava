@@ -1,7 +1,11 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+from lava.magma.core.model.py.neuron import (
+    LearningNeuronModelFloat,
+    LearningNeuronModelFixed,
+)
 import numpy as np
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -10,12 +14,8 @@ from lava.magma.core.model.precision import Precision
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LearningLIF
-
-from lava.magma.core.model.py.neuron import (
-    LearningNeuronModelFloat,
-    LearningNeuronModelFixed,
-)
+from lava.proc.lif.process import (LIF, LIFReset, TernaryLIF, LearningLIF,
+                                   LIFRefractory)
 
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
@@ -475,6 +475,60 @@ class PyLifResetModelBitAcc(AbstractPyLifModelFixed):
 
         # Reset voltage of spiked neurons to 0
         self.reset_voltage(spike_vector=s_out)
+        self.s_out.send(s_out)
+
+
+@implements(proc=LIFRefractory, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyLifRefractoryModelFloat(AbstractPyLifModelFloat):
+    """Implementation of Leaky-Integrate-and-Fire neural process with
+    refractory period in floating point precision.
+    """
+
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    vth: float = LavaPyType(float, float)
+    refractory_period_end: np.ndarray = LavaPyType(np.ndarray, int)
+
+    def __init__(self, proc_params):
+        super(PyLifRefractoryModelFloat, self).__init__(proc_params)
+        self.refractory_period = proc_params["refractory_period"]
+
+    def spiking_activation(self):
+        """Spiking activation function for LIF Refractory."""
+        return self.v > self.vth
+
+    def subthr_dynamics(self, activation_in: np.ndarray):
+        """Sub-threshold dynamics of current and voltage variables for
+        all refractory LIF models. This is where the 'leaky integration'
+        happens.
+        """
+        self.u[:] = self.u * (1 - self.du)
+        self.u[:] += activation_in
+        non_refractory = self.refractory_period_end < self.time_step
+        self.v[non_refractory] = (self.v[non_refractory] * (
+            (1 - self.dv) + self.u[non_refractory])
+            + self.bias_mant[non_refractory])
+
+    def process_spikes(self, spike_vector: np.ndarray):
+        self.refractory_period_end[spike_vector] = (self.time_step
+                                                    + self.refractory_period)
+        super().reset_voltage(spike_vector)
+
+    def run_spk(self):
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
+        # Receive synaptic input
+        a_in_data = self.a_in.recv()
+
+        self.subthr_dynamics(activation_in=a_in_data)
+
+        s_out = self.spiking_activation()
+
+        # Reset voltage of spiked neurons to 0
+        self.process_spikes(spike_vector=s_out)
         self.s_out.send(s_out)
 
 

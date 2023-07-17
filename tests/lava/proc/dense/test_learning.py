@@ -697,8 +697,9 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
         learning_rule_cnd = "y0"
         graded_spike_cfg = GradedSpikeCfg.USE_REGULAR_IMPULSE
 
-        pre_ring_buffer, learning_dense, _ = \
-            self.create_network(num_steps, learning_rule_cnd, graded_spike_cfg)
+        pre_ring_buffer, dense, _ = self.create_network(num_steps,
+                                                        learning_rule_cnd,
+                                                        graded_spike_cfg)
 
         # x1 updates with decayed regular impulse, at the end of the epoch
         expected_x1_data = [0.0, 0.0, 0.0, 14.0, 14.0]
@@ -714,9 +715,9 @@ class TestLearningSimGradedSpikeBitApprox(unittest.TestCase):
             pre_ring_buffer.run(condition=self._run_cnd,
                                 run_cfg=self._run_cfg)
 
-            x1_data.append(learning_dense.x1.get()[0])
-            x2_data.append(learning_dense.x2.get()[0])
-            wgt_data.append(learning_dense.weights.get()[0, 0])
+            x1_data.append(dense.x1.get()[0])
+            x2_data.append(dense.x2.get()[0])
+            wgt_data.append(dense.weights.get()[0, 0])
 
         pre_ring_buffer.stop()
 

@@ -30,7 +30,7 @@ class TestInputValidation(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             raster_plot(spikes)
 
-        self.assertEquals(
+        self.assertEqual(
             str(cm.exception),
             "Parameter <spikes> must have exactly two dimensions and "
             "they must be non-empty.",
@@ -43,19 +43,19 @@ class TestInputValidation(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             raster_plot(spikes)
 
-        self.assertEquals(str(cm.exception), error_msg)
+        self.assertEqual(str(cm.exception), error_msg)
 
         spikes = np.array([[0, -1], [0, 0]])
         with self.assertRaises(ValueError) as cm:
             raster_plot(spikes)
 
-        self.assertEquals(str(cm.exception), error_msg)
+        self.assertEqual(str(cm.exception), error_msg)
 
     def test_bad_stride(self) -> None:
         with self.assertRaises(ValueError) as cm:
             raster_plot(self.spikes, stride=11)
 
-        self.assertEquals(
+        self.assertEqual(
             str(cm.exception),
             "Stride must not be greater than the number of neurons.",
         )
@@ -64,7 +64,7 @@ class TestInputValidation(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             raster_plot(self.spikes, fig=plt.figure(), figsize=(10, 10))
 
-        self.assertEquals(
+        self.assertEqual(
             str(cm.exception),
             "Must use at most one of the following: fig, figsize.",
         )

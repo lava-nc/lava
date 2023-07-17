@@ -51,7 +51,6 @@ class AbstractPyPort(AbstractPortImplementation):
         -------
         A list of all CSP Ports connected to the PyPort.
         """
-        pass
 
 
 class AbstractPyIOPort(AbstractPyPort):
@@ -699,13 +698,16 @@ class PyRefPortVectorDense(PyRefPort):
             The value of the referenced Var.
         """
         if self._csp_send_port and self._csp_recv_port:
-            header = np.ones(self._csp_send_port.shape) * VarPortCmd.GET
-            self._csp_send_port.send(header)
-
+            if not hasattr(self, 'get_header'):
+                self.get_header = (np.ones(self._csp_send_port.shape)
+                                   * VarPortCmd.GET)
+            self._csp_send_port.send(self.get_header)
             return self._transformer.transform(self._csp_recv_port.recv(),
                                                self._csp_recv_port)
-
-        return np.zeros(self._shape, self._d_type)
+        else:
+            if not hasattr(self, 'get_zeros'):
+                self.get_zeros = np.zeros(self._shape, self._d_type)
+            return self.get_zeros
 
     def write(self, data: np.ndarray):
         """Abstract method to write data to a VarPort to set the value of the
@@ -717,8 +719,10 @@ class PyRefPortVectorDense(PyRefPort):
             The data to send via _csp_send_port.
         """
         if self._csp_send_port:
-            header = np.ones(self._csp_send_port.shape) * VarPortCmd.SET
-            self._csp_send_port.send(header)
+            if not hasattr(self, 'set_header'):
+                self.set_header = (np.ones(self._csp_send_port.shape)
+                                   * VarPortCmd.SET)
+            self._csp_send_port.send(self.set_header)
             self._csp_send_port.send(data)
 
 

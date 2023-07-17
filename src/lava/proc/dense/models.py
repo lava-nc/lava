@@ -92,9 +92,10 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
     def run_spk(self):
-        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+        self.weight_exp = self.proc_params.get("weight_exp", 0)
 
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
@@ -167,9 +168,9 @@ class PyLearningDenseModelFloat(
 @tag("bit_approximate_loihi", "fixed_pt")
 class PyLearningDenseModelBitApproximate(
         LearningConnectionModelBitApproximate, AbstractPyDenseModelBitAcc):
-    """Implementation of Conn Process with Dense synaptic connections that is
-    bit-accurate with Loihi's hardware implementation of Dense, which means,
-    it mimics Loihi behaviour bit-by-bit.
+    """Implementation of Conn Process with Dense synaptic connections that
+    uses similar constraints as Loihi's hardware implementation of dense
+    connectivity but does not reproduce Loihi bit-by-bit.
     """
 
     def __init__(self, proc_params):
@@ -214,14 +215,38 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Dense synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: np.ndarray = None
+    delays: np.ndarray = None
+    a_buff: np.ndarray = None
+
+    def calc_act(self, s_in) -> np.ndarray:
+        """
+        Calculate the activation matrix based on s_in by performing
+        delay_wgts * s_in.
+        """
+        # First calculating the activations through delay_wgts * s_in
+        # This matrix is then summed across each row to get the
+        # activations to the output neurons for different delays.
+        # This activation vector is reshaped to a matrix of the form
+        # (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
+        #  which is then transposed to get the activation matrix.
+        return np.reshape(
+            np.sum(self.get_delay_wgts_mat(self.weights,
+                                           self.delays) * s_in, axis=1),
+            (np.max(self.delays) + 1, self.weights.shape[0])).T
 
     @staticmethod
-    def get_del_wgts(weights, delays) -> np.ndarray:
+    def get_delay_wgts_mat(weights, delays) -> np.ndarray:
         """
-        Use self.weights and self.delays to create a matrix where the
-        weights are separated by delay. Returns 2D matrix of form
+        Create a matrix where the synaptic weights are separated
+        by their corresponding delays. The first matrix contains all the
+        weights, where the delay is equal to zero. The second matrix
+        contains all the weights, where the delay is equal to one and so on.
+        These matrices are then stacked together vertically.
+
+        Returns 2D matrix of form
         (num_flat_output_neurons * max_delay + 1, num_flat_input_neurons) where
-        del_wgts[
+        delay_wgts[
             k * num_flat_output_neurons : (k + 1) * num_flat_output_neurons, :
         ]
         contains the weights for all connections with a delay equal to k.
@@ -232,20 +257,6 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
             np.where(delays == k, weights, 0)
             for k in range(np.max(delays) + 1)
         ])
-
-    def calc_act(self, s_in) -> np.ndarray:
-        """
-        Calculate the activations by performing del_wgts * s_in. This matrix
-        is then summed across each row to get the activations to the output
-        neurons for different delays. This activation vector is reshaped to a
-        matrix of the form
-        (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
-        which is then transposed to get the activation matrix.
-        """
-        return np.reshape(
-            np.sum(self.get_del_wgts(self.weights,
-                                     self.delays) * s_in, axis=1),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
 
     def update_act(self, s_in):
         """
@@ -283,7 +294,7 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
-        # The a_out sent on a each timestep is a buffered value from dendritic
+        # The a_out sent on each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff[:, 0])

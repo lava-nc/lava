@@ -29,11 +29,11 @@ class SimpleRunConfig(RunConfig):
 
 class TestLifDenseLif(unittest.TestCase):
     def test_lif_dense_lif(self):
-        self.lif1 = LIF(shape=(1,))
-        self.dense = Dense(weights=np.eye(1))
-        self.lif2 = LIF(shape=(1,))
-        self.lif1.out_ports.s_out.connect(self.dense.in_ports.s_in)
-        self.dense.out_ports.a_out.connect(self.lif2.in_ports.a_in)
-        self.lif1.run(condition=RunSteps(num_steps=10),
-                      run_cfg=SimpleRunConfig(sync_domains=[]))
-        self.lif1.stop()
+        lif1 = LIF(shape=(1,))
+        dense = Dense(weights=np.eye(1))
+        lif2 = LIF(shape=(1,))
+        lif1.out_ports.s_out.connect(dense.in_ports.s_in)
+        dense.out_ports.a_out.connect(lif2.in_ports.a_in)
+        lif1.run(condition=RunSteps(num_steps=10),
+                 run_cfg=SimpleRunConfig(sync_domains=[]))
+        lif1.stop()
