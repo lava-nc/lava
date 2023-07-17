@@ -39,7 +39,7 @@ class Recv(AbstractProcess):
     """
 
     def __init__(self,
-                 shape: tuple[int, ...],
+                 shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 1):
         super().__init__(shape=shape, buffer_size=buffer_size)
 
@@ -170,7 +170,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
     @staticmethod
     def _test_send_full_policy(send_full: utils.SendFull) \
-            -> tuple[int, int, bool]:
+            -> ty.Tuple[int, int, bool]:
         """Sets up a simple network involving an Injector with buffer_size=1
         and a Recv Process.
 
