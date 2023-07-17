@@ -212,7 +212,7 @@ def plot_multiple_time_series(time, time_series_list, ylabel,
 
 
 def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
-                            colors, title, num_steps):
+                            colors, y_label_time_series, title, num_steps):
     offsets = list(range(1, len(spikes) + 1))
     num_x_ticks = np.arange(0, num_steps + 1, 25)
 
@@ -246,6 +246,6 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
     plt.minorticks_on()
     plt.margins(x=0)
 
-    plt.ylabel("Trace Value")
+    plt.ylabel(y_label_time_series)
 
     plt.show()
