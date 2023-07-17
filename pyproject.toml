@@ -11,6 +11,7 @@ packages = [
 ]
 include = ["tutorials"]
 version = "0.8.0.dev0"
+readme = "README.md"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
