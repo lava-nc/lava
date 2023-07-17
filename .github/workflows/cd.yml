@@ -44,10 +44,10 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
       - name: Test artifact tar.gz
         run: |
@@ -85,10 +85,10 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
       - name: Test artifact tar.gz
         run: |
@@ -129,3 +129,41 @@ jobs:
           deactivate
           cd ../
           rm -rf tmp
+
+  upload-release-artifact:
+    name: Upload release artifact
+    runs-on: ubuntu-latest
+    needs: [build-artifacts, test-artifact-install, test-artifact-use]
+   
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: setup CI
+        uses: lava-nc/ci-setup-composite-action@v1.2
+        with:
+          repository: 'Lava'
+
+      - name: Download lava artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lava
+
+      - name: Check Version
+        id: check-version
+        run: |
+          [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: steps.check-version.outputs.prerelease == 'true'
+
+      - name: Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: poetry publish
