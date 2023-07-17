@@ -47,19 +47,25 @@ def save(processes: ty.Union[AbstractProcess, ty.List[AbstractProcess]],
     executable: Executable, optional
         The corresponding executable of the compiled processes which should be
         stored in a file.
+
+    Raises
+    ------
+    TypeError
+        If argument <process> is not AbstractProcess, argument <filename> is
+        not string or argument <executable> is not Executable.
     """
     # Check parameter types
     if not isinstance(processes, list) and not isinstance(processes,
                                                           AbstractProcess):
-        raise AssertionError(f"Parameter <processes> must be AbstractProcess"
-                             f" or list of AbstractProcess, but got"
-                             f" {processes}.")
+        raise TypeError(f"Argument <processes> must be AbstractProcess"
+                        f" or list of AbstractProcess, but got"
+                        f" {processes}.")
     if not isinstance(filename, str):
-        raise AssertionError(f"Parameter <filename> must be string"
-                             f" but got {filename}.")
+        raise TypeError(f"Argument <filename> must be string"
+                        f" but got {filename}.")
     if executable is not None and not isinstance(executable, Executable):
-        raise AssertionError(f"Parameter <executable> must be Executable"
-                             f" but got {executable}.")
+        raise TypeError(f"Argument <executable> must be Executable"
+                        f" but got {executable}.")
 
     # Create object which is stored
     obj = SerializationObject(processes, executable)
@@ -90,16 +96,25 @@ def load(filename: str) -> ty.Tuple[ty.Union[AbstractProcess,
     tuple
         Returns a tuple of a process or list of processes and a executable or
         None.
+
+    Raises
+    ------
+    OSError
+        If the input file does not exist or cannot be read.
+    TypeError
+        If argument <filename> is not a string.
+    AssertionError
+        If provided file is not compatible/contains unexpected data.
     """
 
     # Check parameter types
     if not isinstance(filename, str):
-        raise AssertionError(f"Parameter <filename> must be string"
-                             f" but got {filename}.")
+        raise TypeError(f"Argument <filename> must be string"
+                        f" but got {filename}.")
 
     # Check if filename exists
     if not os.path.isfile(filename):
-        raise AssertionError(f"File {filename} could not be found.")
+        raise OSError(f"File {filename} could not be found.")
 
     # Load serialized object from <filename>
     with open(filename, 'rb') as f:

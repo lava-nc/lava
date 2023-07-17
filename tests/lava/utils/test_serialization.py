@@ -55,22 +55,22 @@ class TestSerialization(unittest.TestCase):
 
         # Parameter processes needs to be AbstractProcess or list of
         # AbstractProcess
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             save(processes=None, filename="test")
 
         # Parameter filename needs to be string
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             save(processes=[], filename=1)
 
         # Parameter executable needs to be Executable
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             save(processes=[], filename="test", executable=1)
 
     def test_load_input_validation(self):
         """Checks the input validation of load()."""
 
         # Parameter filename needs to be string
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             load(filename=1)
 
     def test_save_load_processes(self):
