@@ -156,8 +156,8 @@ jobs:
         id: check-version
         run: |
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
-          release-version=$(pipx run poetry version --short) >> $GITHUB_OUTPUT
-          release-commit=$(git log -n 1 --pretty=format:"%H") >> $GITHUB_OUTPUT
+          echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
+          echo "release-commit=$(git log -n 1 --pretty=format:"%H")" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: ncipollo/release-action@v1
