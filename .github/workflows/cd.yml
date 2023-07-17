@@ -133,6 +133,8 @@ jobs:
   upload-release-artifact:
     name: Upload release artifact
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
     steps:
@@ -154,16 +156,25 @@ jobs:
         id: check-version
         run: |
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
+          release-version=$(pipx run poetry version --short) >> $GITHUB_OUTPUT
+          release-commit=$(git log -n 1 --pretty=format:"%H") >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*"
+          artifacts: "lava*"
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
+          draft: true
           prerelease: steps.check-version.outputs.prerelease == 'true'
+          name: "Lava ${{ steps.check-version.outputs.release-version }}"
+          commit: "${{ steps.check-version.outputs.release-commit }}"
+          tag: "v${{ steps.check-version.outputs.release-version }}"
+          discussionCategory: "Announcements"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          makeLatest: true
 
       - name: Publish to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish
+        run: poetry publish --dry-run
