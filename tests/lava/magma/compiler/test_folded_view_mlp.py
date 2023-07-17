@@ -19,33 +19,41 @@ class PerceptronLayer(AbstractProcess):
         self.iport = InPort(shape=(size,))
         self.oport = OutPort(shape=(size,))
 
-        self.lif = LIF(shape=(size,), du=du, dv=dv,
+        self.lif1 = LIF(shape=(size,), du=du, dv=dv,
                        bias_mant=bias_mant, bias_exp=bias_exp, vth=vth)
 
         weights_ = np.ones(size * size).reshape(size, size) * size
         dense_params_ = {'weights': weights_}
-        self.dense = Dense(**dense_params_)
+        self.dense1 = Dense(**dense_params_)
 
-        self.iport.connect(self.dense.s_in)
-        self.dense.a_out.connect(self.lif.a_in)
-        self.lif.s_out.connect(self.oport)
+        self.lif2 = LIF(shape=(size,), du=du+1, dv=dv+1,
+                       bias_mant=bias_mant+1, bias_exp=bias_exp+1, vth=vth+1)
+
+        dense_params_ = {'weights': weights_+1}
+        self.dense2 = Dense(**dense_params_)
+
+        self.iport.connect(self.dense1.s_in)
+        self.dense1.a_out.connect(self.lif1.a_in)
+        self.lif1.s_out.connect(self.dense2.s_in)
+        self.dense2.a_out.connect(self.lif2.a_in)
+        self.lif2.s_out.connect(self.oport)
 
 class TestfoldedView(unittest.TestCase):
     def test_folded_view_mlp(self):
-        size = 10
+        size = 6
         layer1 = PerceptronLayer(size=size,
                                  du=4095,
                                  dv=1024,
-                                 bias_mant=10 + np.arange(10),
+                                 bias_mant=10,
                                  bias_exp=6,
                                  vth=10)
 
         layer2 = PerceptronLayer(size=size,
                                  du=4095,
                                  dv=1024,
-                                 bias_mant=10 + np.arange(10),
+                                 bias_mant=13,
                                  bias_exp=3,
-                                 vth=10)
+                                 vth=3)
 
         layer1.oport.connect(layer2.iport)
 
@@ -57,15 +65,23 @@ class TestfoldedView(unittest.TestCase):
         self.assertEqual(layer1.folded_view, layer2.folded_view)
         self.assertEqual(layer1.folded_view.__name__, compile_config['folded_view'][0])
 
-        self.assertEqual(layer1.procs.lif.folded_view, layer1.folded_view)
-        self.assertEqual(layer1.procs.dense.folded_view, layer1.folded_view)
-        self.assertEqual(layer1.procs.lif.folded_view_inst_id, layer1.folded_view_inst_id)
-        self.assertEqual(layer1.procs.dense.folded_view_inst_id, layer1.folded_view_inst_id)
+        self.assertEqual(layer1.procs.lif1.folded_view, layer1.folded_view)
+        self.assertEqual(layer1.procs.lif1.folded_view_inst_id, layer1.folded_view_inst_id)
+        self.assertEqual(layer1.procs.dense1.folded_view, layer1.folded_view)
+        self.assertEqual(layer1.procs.dense1.folded_view_inst_id, layer1.folded_view_inst_id)
+        self.assertEqual(layer1.procs.lif2.folded_view, layer1.folded_view)
+        self.assertEqual(layer1.procs.lif2.folded_view_inst_id, layer1.folded_view_inst_id)
+        self.assertEqual(layer1.procs.dense2.folded_view, layer1.folded_view)
+        self.assertEqual(layer1.procs.dense2.folded_view_inst_id, layer1.folded_view_inst_id)
 
-        self.assertEqual(layer2.procs.lif.folded_view, layer2.folded_view)
-        self.assertEqual(layer2.procs.dense.folded_view, layer2.folded_view)
-        self.assertEqual(layer2.procs.lif.folded_view_inst_id, layer2.folded_view_inst_id)
-        self.assertEqual(layer2.procs.dense.folded_view_inst_id, layer2.folded_view_inst_id)
+        self.assertEqual(layer2.procs.lif1.folded_view, layer2.folded_view)
+        self.assertEqual(layer2.procs.lif1.folded_view_inst_id, layer2.folded_view_inst_id)
+        self.assertEqual(layer2.procs.dense1.folded_view, layer2.folded_view)
+        self.assertEqual(layer2.procs.dense1.folded_view_inst_id, layer2.folded_view_inst_id)
+        self.assertEqual(layer2.procs.lif2.folded_view, layer2.folded_view)
+        self.assertEqual(layer2.procs.dense2.folded_view, layer2.folded_view)
+        self.assertEqual(layer2.procs.lif2.folded_view_inst_id, layer2.folded_view_inst_id)
+        self.assertEqual(layer2.procs.dense2.folded_view_inst_id, layer2.folded_view_inst_id)
 
         self.assertNotEqual(layer1.folded_view_inst_id, layer2.folded_view_inst_id)
 
