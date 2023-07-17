@@ -177,4 +177,8 @@ jobs:
       - name: Publish to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish --dry-run
+        run: |
+          mkdir dist
+          cp lava* dist/.
+          # poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry publish --dry-run
