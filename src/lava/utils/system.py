@@ -9,6 +9,8 @@ from typing import Optional, Callable, TypeVar
 # NOTE: Awkward, but the std lib deprecated decorator is not available yet,
 # so I'm adding it here to deprecate this module :/
 _T = TypeVar("_T")
+
+
 def deprecated(__msg: str) -> Callable[[_T], _T]:
     def decorator(__arg: _T) -> _T:
         __arg.__deprecated__ = __msg
