@@ -13,7 +13,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.3
+      uses: lava-nc/ci-setup-composite-action@v1
       with:
         repository: 'Lava'
 
@@ -133,6 +133,7 @@ jobs:
   upload-release-artifact:
     name: Upload release artifact
     runs-on: ubuntu-latest
+    if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
     permissions:
       contents: write
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
@@ -143,7 +144,7 @@ jobs:
           lfs: true
 
       - name: setup CI
-        uses: lava-nc/ci-setup-composite-action@v1.2
+        uses: lava-nc/ci-setup-composite-action@v1
         with:
           repository: 'Lava'
 
@@ -154,6 +155,12 @@ jobs:
 
       - name: Check Version
         id: check-version
+        run: |
+          [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
+          echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
+          echo "release-commit=$(git log -n 1 --pretty=format:"%H")" >> $GITHUB_OUTPUT
+      
+      - name: Print Versions
         run: |
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
           echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
