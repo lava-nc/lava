@@ -10,12 +10,13 @@ from typing import Optional, Callable, TypeVar
 # so I'm adding it here to deprecate this module :/
 _T = TypeVar("_T")
 def deprecated(__msg: str) -> Callable[[_T], _T]:
-        def decorator(__arg: _T) -> _T:
-            __arg.__deprecated__ = __msg
-            return __arg
-        return decorator
+    def decorator(__arg: _T) -> _T:
+        __arg.__deprecated__ = __msg
+        return __arg
+    return decorator
 
 # NOTE: This module is deprecated as of v0.8.0 in favor of lava.utils.loihi
+
 
 class staticproperty(property):
     """Wraps static member function of a class as a static property of that
@@ -24,6 +25,7 @@ class staticproperty(property):
 
     def __get__(self, cls, owner):
         return staticmethod(self.fget).__get__(None, owner)()
+
 
 @deprecated('This class is deprecated. Use lava.utils.loihi instead.')
 class Loihi2:
