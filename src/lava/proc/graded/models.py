@@ -89,12 +89,7 @@ class InvSqrtModelFloat(PyLoihiProcessModel):
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def run_spk(self) -> None:
-        print('invsqrt')
         a_in_data = self.a_in.recv()
-
-#         if a_in_data == 0:
-#             return
-
         sp_out = 1 / (a_in_data ** 0.5)
 
         self.s_out.send(sp_out)
