@@ -5,7 +5,7 @@
 import unittest
 import numpy as np
 
-from lava.proc.prod_neuron.process import ProdNeuron
+from lava.proc.prodneuron.process import ProdNeuron
 from lava.proc.dense.process import Dense
 from lava.proc import io
 

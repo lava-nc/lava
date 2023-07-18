@@ -19,6 +19,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
+
 def loihi2round(vv):
     """round values in numpy array the way loihi 2 performs rounding/truncation."""
     return np.fix(vv + (vv > 0) - 0.5).astype('int')
@@ -37,6 +38,7 @@ class GradedVec(AbstractProcess):
     exp: int
         fixed point base
     """
+
     def __init__(
             self,
             *,
@@ -62,7 +64,7 @@ class GradedVec(AbstractProcess):
 class NormVecDelay(AbstractProcess):
     """NormVec
     Normalizable graded spike vector
-    
+
     Parameters
     ----------
     shape: tuple(int)
@@ -72,6 +74,7 @@ class NormVecDelay(AbstractProcess):
     exp: int
         fixed point base
     """
+
     def __init__(
             self,
             *,
@@ -83,16 +86,15 @@ class NormVecDelay(AbstractProcess):
 
         self.a_in1 = InPort(shape=shape)
         self.a_in2 = InPort(shape=shape)
-        
+
         self.s_out = OutPort(shape=shape)
         self.s2_out = OutPort(shape=shape)
 
         self.vth = Var(shape=(1,), init=vth)
         self.exp = Var(shape=(1,), init=exp)
-        
+
         self.v = Var(shape=shape, init=np.zeros(shape, 'int32'))
         self.v2 = Var(shape=shape, init=np.zeros(shape, 'int32'))
-
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
@@ -100,21 +102,21 @@ class NormVecDelay(AbstractProcess):
         return self.proc_params['shape']
 
 
-
 class InvSqrt(AbstractProcess):
     """InvSqrt
-    Neuron model for computing inverse square root with 24-bit 
+    Neuron model for computing inverse square root with 24-bit
     fixed point values.
-    
+
     Parameters
     ----------
     fp_base : int
         Base of the fixed-point representation
     """
+
     def __init__(
             self,
             *,
-            shape: ty.Tuple[int, ...], 
+            shape: ty.Tuple[int, ...],
             fp_base=12) -> None:
         super().__init__(shape=shape)
 
@@ -127,6 +129,3 @@ class InvSqrt(AbstractProcess):
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
         return self.proc_params['shape']
-
-    
-    
