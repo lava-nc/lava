@@ -56,7 +56,8 @@ class MnistDataset:
                             f.write(res.read())
                         break
                     else:
-                        raise "Url does not start with http"
+                        raise ValueError(f"Specified URL ({url}) does not "
+                                         "start with 'http'.")
                 except urllib.error.URLError as exception:
                     err = exception
                     continue

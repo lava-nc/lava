@@ -27,7 +27,6 @@ class AbstractPortImplementation(ABC):
     @abstractmethod
     def csp_ports(self) -> ty.List[AbstractCspPort]:
         """Returns all csp ports of the port."""
-        pass
 
     def start(self):
         """Start all csp ports."""

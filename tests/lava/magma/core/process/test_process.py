@@ -8,8 +8,8 @@ from unittest.mock import Mock, seal
 import typing as ty
 from lava.magma.compiler.executable import Executable
 from lava.magma.core.decorator import implements, requires
-from lava.magma.core.model.py.model import AbstractPyProcessModel
-from lava.magma.core.model.sub.model import AbstractSubProcessModel
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 from lava.magma.core.process.ports.ports import (
     InPort,
@@ -27,7 +27,6 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import RunConfig
-from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.runtime import Runtime
 
 
@@ -38,24 +37,10 @@ class MinimalProcess(AbstractProcess):
         super().__init__(name=name)
 
 
-class MinimalRuntimeService:
-    __name__ = 'MinimalRuntimeService'
-
-    def __init__(self):
-        pass
-
-
-class MinimalProtocol(AbstractSyncProtocol):
-    @property
-    def runtime_service(self):
-        return {CPU: MinimalRuntimeService()}
-
-
-@implements(proc=MinimalProcess, protocol=MinimalProtocol)
+@implements(proc=MinimalProcess, protocol=LoihiProtocol)
 @requires(CPU)
-class MinimalPyProcessModel(AbstractPyProcessModel):
-    def run(self):
-        raise NotImplementedError('This model doesnt run')
+class MinimalPyProcessModel(PyLoihiProcessModel):
+    pass
 
 
 class MinimalRunConfig(RunConfig):
@@ -320,6 +305,9 @@ class TestProcess(unittest.TestCase):
         self.assertTrue(r._is_initialized)
         self.assertFalse(r._is_started)
         self.assertFalse(r._is_running)
+        # HACK: Need to fix Issue #716 to avoid this.
+        p.run(condition=RunSteps(1), run_cfg=run_cfg)
+        p.stop()
 
     def test_run_without_run_config_raises_error(self) -> None:
         """Tests whether an error is raised when run() is called on

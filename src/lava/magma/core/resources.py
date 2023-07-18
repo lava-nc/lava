@@ -13,89 +13,73 @@ class AbstractResource(ABC):
     Each ProcessModel lists its required hardware resources with the
     @requires decorator.
     """
-    pass
 
 
 # Compute resources ------------------------------------------------------------
 class AbstractComputeResource(AbstractResource):
     """A compute resource, for example a particular type of neuromorphic
     processor or CPU."""
-    pass
 
 
 class CPU(AbstractComputeResource):
     """A central processing unit on a regular computer or laptop."""
-    pass
 
 
 class HostCPU(AbstractComputeResource):
     """A central processing unit on a special host system that holds
     neuromorphic devices."""
-    pass
 
 
 class GPU(AbstractComputeResource):
     """A graphical processing unit."""
-    pass
 
 
 class ECPU(AbstractComputeResource):
     """An embedded central processing unit that is part of a neuromorphic
     chip."""
-    pass
 
 
 class LMT(ECPU):
     """A Lakemont embedded central processing unit."""
-    pass
 
 
 class PB(ECPU):
     """A Powell Bute embedded central processing unit."""
-    pass
 
 
 class NeuroCore(AbstractComputeResource):
     """A neuromorphic core."""
-    pass
 
 
 class Loihi1NeuroCore(NeuroCore):
     """A neuromorphic core on a Loihi 1 chip."""
-    pass
 
 
 class Loihi2NeuroCore(NeuroCore):
     """A neuromorphic core on a Loihi 2 chip."""
-    pass
 
 
 # Peripheral resources ---------------------------------------------------------
 class AbstractPeripheralResource(AbstractResource):
     """A hardware resource that is a peripheral device."""
-    pass
 
 
 class DVS(AbstractPeripheralResource):
     """An event-based dynamic vision sensor (DVS)."""
-    pass
 
 
 class HardDrive(AbstractPeripheralResource):
     """A hard drive in a computer."""
-    pass
 
 
 class HeadNodeHardDrive(AbstractPeripheralResource):
     """A hard drive attached to a HeadNode (the node on which a user executes
     code)."""
-    pass
 
 
 # Nodes ------------------------------------------------------------------------
 class AbstractNode(ABC):
     """A node is a resource that has other compute or peripheral resources."""
-    pass
 
 
 class GenericNode(AbstractNode):
@@ -112,7 +96,6 @@ class HeadNode(GenericNode):
 
 class Loihi1System(AbstractNode):
     """A neuromorphic system that carries Loihi 1 chips."""
-    pass
 
 
 class KapohoBay(Loihi1System):
@@ -133,7 +116,6 @@ class Pohoiki(Loihi1System):
 
 class Loihi2System(AbstractNode):
     """A neuromorphic system that carries Loihi 2 chips."""
-    pass
 
 
 class OheoGulch(Loihi2System):

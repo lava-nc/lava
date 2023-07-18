@@ -307,7 +307,7 @@ class PyLearningConnection(AbstractLearningConnection):
         pass
 
     @abstractmethod
-    def _init_randoms(self):
+    def _init_randoms(self) -> None:
         pass
 
     @property
@@ -1561,3 +1561,6 @@ class LearningConnectionModelFloat(PyLearningConnection):
                 f"'tag_1', or 'tag_2'."
                 f"Got {synaptic_variable_name=}."
             )
+
+    def _init_randoms(self) -> None:
+        pass

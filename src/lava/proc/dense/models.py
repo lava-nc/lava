@@ -72,9 +72,10 @@ class AbstractPyDenseModelBitAcc(PyLoihiProcessModel):
         super().__init__(proc_params)
         # Flag to determine whether weights have already been scaled.
         self.weights_set = False
+        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
 
     def run_spk(self):
-        self.weight_exp: int = self.proc_params.get("weight_exp", 0)
+        self.weight_exp = self.proc_params.get("weight_exp", 0)
 
         # Since this Process has no learning, weights are assumed to be static
         # and only require scaling on the first timestep of run_spk().
@@ -194,6 +195,9 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Dense synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: np.ndarray = None
+    delays: np.ndarray = None
+    a_buff: np.ndarray = None
 
     def calc_act(self, s_in) -> np.ndarray:
         """
@@ -270,7 +274,7 @@ class PyDelayDenseModelFloat(AbstractPyDelayDenseModel):
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
     def run_spk(self):
-        # The a_out sent on a each timestep is a buffered value from dendritic
+        # The a_out sent on each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
         self.a_out.send(self.a_buff[:, 0])

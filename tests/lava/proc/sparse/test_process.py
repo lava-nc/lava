@@ -20,7 +20,7 @@ class TestFunctions(unittest.TestCase):
         spmat = csr_matrix(mat)
         spmat.data[0] = 0
 
-        dst, src, vals = find(spmat, explicit_zeros=True)
+        _, _, vals = find(spmat, explicit_zeros=True)
 
         self.assertTrue(np.all(spmat.data in vals))
 
