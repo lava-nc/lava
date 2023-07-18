@@ -14,9 +14,12 @@ host: ty.Optional[str] = None
 
 
 class ChipGeneration(enum.Enum):
+    """ ChipGeneration enumerates the valid Loihi chip generations. """
+    N2A2 = "N2A2"
     N3B2 = "N3B2"
-    N3B3 = "N3B3"
-    N3C1 = "N3C1"
+    N3B3 = "N3B3"  # Most Loihi 2 systems available to the INRC are N3B3.
+    N3C1 = "N3C1"  # Some Loihi 2 systems provided to INRC members are N3C1.
+    N3D1 = "N3D1"
 
 
 def use_slurm_host(
@@ -24,6 +27,24 @@ def use_slurm_host(
         board: ty.Optional[str] = None,
         loihi_gen: ty.Optional[ChipGeneration] = ChipGeneration.N3B3
 ) -> None:
+    """ Use SLURM to run Lava models on Loihi 2. This function should be
+    called prior to running models on the Intel neuromorphic research cloud,
+    or if you have setup a SLURM scheduler on your local infrastructure.
+
+    This function checks whether Lava-Loihi is installed and raises an
+    ImportError if it is not found.
+
+    Parameters
+    ----------
+    partition : Optional[str], default = None
+        The SLURM partition from which a suitable node should be selected. If
+        partition is specified, board should be None.
+    board : Optional[str], default = None
+        The SLURM board (node name) on which any Lava process should run. If
+        board is specified, partition should be None.
+    loihi_gen : Optional[str], default = ChipGeneration.N3B3
+        The Loihi chip generation needed for the Lava processes.
+    """
     if not is_installed():
         raise ImportError("Attempting to use SLURM for Loihi2 but "
                           "Lava-Loihi is not installed.")
@@ -32,15 +53,8 @@ def use_slurm_host(
 
     os.environ["LOIHI_GEN"] = loihi_gen.value
 
-    if board:
-        slurm.set_board(board, partition)
-    else:
-        os.environ.pop("BOARD", None)
-
-    if partition:
-        slurm.set_partition(partition)
-    else:
-        os.environ.pop("PARTITION", None)
+    slurm.set_board(board, partition)
+    slurm.set_partition(partition)
 
     global host
     host = "SLURM"
@@ -53,14 +67,20 @@ def use_ethernet_host(
 ) -> None:
     """Set environment to connect directly to an Oheo Gulch host on the network.
     This should be used to run on Kapoho Point and Kapoho Point SC systems when
-    SLURM is not available.
+    not using SLURM.
+
+    This function checks whether Lava-Loihi is installed and raises an
+    ImportError if it is not found.
+
+    This function attempts to ping the host address to ensure that the
+    host is running and accessible. If ping fails, it raises a ValueError.
 
     Call slurm.is_available() to determine whether SLURM is available.
 
     Parameters
     ----------
     host_address : str
-        The IP address for the host system to connect to.
+        The IP address of the host system to use.
     host_binary_path : str
         The path to the nxcore binary on the host.
     loihi_gen : ChipGeneration
@@ -85,7 +105,7 @@ def use_ethernet_host(
     host = "ETHERNET"
 
 
-def is_installed(module_name: ty.Optional[str] = None) -> bool:
+def is_installed(module_name: str = "lava.utils.loihi2_profiler") -> bool:
     """Returns whether the Lava extension for Loihi is installed.
 
     Parameters
@@ -98,7 +118,6 @@ def is_installed(module_name: ty.Optional[str] = None) -> bool:
     bool
         True iff lava-loihi can be imported in this Python environment.
     """
-    lava_loihi_module = module_name or "lava.magma.compiler.subcompilers.nc"
-    spec = importlib.util.find_spec(lava_loihi_module)
+    spec = importlib.util.find_spec(module_name)
 
     return False if spec is None else True

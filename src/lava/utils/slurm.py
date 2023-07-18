@@ -10,15 +10,16 @@ from dataclasses import dataclass
 
 
 def is_available() -> bool:
-    """Returns true iff the current system has a SLURM controller enabled."""
+    """ Returns true iff the current system has a SLURM controller enabled."""
     if not try_run_command(["sinfo"]):
         return False
     return True
 
 
 def enable() -> None:
+    """ Enable the use of SLURM for Loihi. """
     if not is_available():
-        raise ValueError("Attempting to use SLURM for Loihi2 but "
+        raise ValueError("Attempting to use SLURM for Loihi but "
                          "SLURM controller is not available.")
 
     os.environ["SLURM"] = "1"
@@ -26,37 +27,68 @@ def enable() -> None:
 
 
 def disable() -> None:
+    """ Disable the use of SLURM for Loihi. """
     os.environ.pop("SLURM", None)
     os.environ["NOSLURM"] = "1"
 
 
-def set_board(board: str,
+def set_board(board: ty.Optional[str],
               partition: ty.Optional[str] = None) -> None:
+    """ Set the Loihi board in SLURM to run on, or clear
+    any board set if board is None.
+
+    Use `get_boards` to see all available boards.
+
+    Parameters
+    ----------
+    board : Optional[str]
+        The Loihi board to use. If None, no board will be specified.
+    partition : Optional[str], default = None
+        The partition that is being used for SLURM jobs. If not None,
+        it will be compared against the partition of the specified
+        board, and a ValueError will be raised if they are not equal.
+    """
+    if board is None:
+        os.environ.pop("BOARD", None)
+        return
+
     board_info = get_board_info(board)
 
     if board_info is None or "down" in board_info.state:
         raise ValueError(
-            f"Attempting to use SLURM for Loihi2 but board {board} "
+            f"Attempting to use SLURM for Loihi but board {board} "
             f"is not found or board is down. Run sinfo to check "
             f"available boards.")
 
     if partition and partition != board_info.partition:
         raise ValueError(
-            f"Attempting to use SLURM for Loihi2 with board {board} "
+            f"Attempting to use SLURM for Loihi with board {board} "
             f"and partition {partition} but board is not in partition. "
             f"Specify only board or partition.")
 
     os.environ["BOARD"] = board
 
 
-def set_partition(partition: str) -> None:
+def set_partition(partition: ty.Optional[str]) -> None:
+    """ Set the partition in SLURM to run on, or clear any partition
+    set if partition is None.
+
+    Parameters
+    ----------
+    partition : Optional[str]
+        The partition to use. If None, no partition will be specified.
+    """
+    if partition is None:
+        os.environ.pop("PARTITION", None)
+        return
+
     partition_info = get_partition_info(partition)
 
     if partition_info is None or "down" in partition_info.state:
         raise ValueError(
-            f"Attempting to use SLURM for Loihi2 but partition {partition} "
-            f"is not found or board is down. Run sinfo to check available "
-            f"boards.")
+            f"Attempting to use SLURM for Loihi but partition {partition} "
+            f"is not found or is down. Run sinfo to check available "
+            f"partitions.")
 
     os.environ["PARTITION"] = partition
 
