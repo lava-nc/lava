@@ -56,12 +56,11 @@ class NormVecDelayModel(PyLoihiProcessModel):
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     s2_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
 
-    
     vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v2: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    
+
     def run_spk(self) -> None:
         a_in_data1 = self.a_in1.recv()
         a_in_data2 = self.a_in2.recv()
@@ -75,11 +74,11 @@ class NormVecDelayModel(PyLoihiProcessModel):
         output = self.v2 * a_in_data2
 
         is_spike = np.abs(output) > self.vth
-        sp_out = output*is_spike
+        sp_out = output * is_spike
 
         self.s_out.send(sp_out)
 
-        
+
 @implements(proc=InvSqrt, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('float')
@@ -88,17 +87,18 @@ class InvSqrtModelFloat(PyLoihiProcessModel):
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    
+
     def run_spk(self) -> None:
         print('invsqrt')
         a_in_data = self.a_in.recv()
-        
+
 #         if a_in_data == 0:
 #             return
 
         sp_out = 1 / (a_in_data ** 0.5)
-        
+
         self.s_out.send(sp_out)
+
 
 def make_fpinv_table(fp_base):
     n_bits = 24
@@ -107,13 +107,15 @@ def make_fpinv_table(fp_base):
     Y_est = np.zeros((n_bits), dtype='int')
     n_adj = 1.238982962
 
-    for m in range(n_bits): # span the 24 bits, negate the decimal base
-        Y_est[n_bits-m-1] = 2*int(B / (2**((m-fp_base)/2) * n_adj))
-        
+    for m in range(n_bits):  # span the 24 bits, negate the decimal base
+        Y_est[n_bits - m - 1] = 2 * int(B / (2**((m - fp_base) / 2) * n_adj))
+
     return Y_est
 
+
 def clz(val):
-    return (24-(int(np.log2(val))+1))
+    return (24 - (int(np.log2(val)) + 1))
+
 
 def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
     Y_est = make_fpinv_table(b_fraction)
@@ -121,15 +123,16 @@ def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
     b_i = int(s_fp)
     Y_i = Y_est[m]
     y_i = Y_i // 2
-    
+
     for i in range(n_iters):
-        b_i = np.right_shift(np.right_shift(b_i * Y_i, 
-                                            b_fraction+1) * Y_i, 
-                             b_fraction+1)
+        b_i = np.right_shift(np.right_shift(b_i * Y_i,
+                                            b_fraction + 1) * Y_i,
+                             b_fraction + 1)
         Y_i = np.left_shift(3, b_fraction) - b_i
-        y_i = np.right_shift(y_i * Y_i, b_fraction+1)
-        
+        y_i = np.right_shift(y_i * Y_i, b_fraction + 1)
+
     return y_i
+
 
 @implements(proc=InvSqrt, protocol=LoihiProtocol)
 @requires(CPU)
@@ -138,13 +141,13 @@ class InvSqrtModelFP(PyLoihiProcessModel):
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    
+
     def run_spk(self) -> None:
         a_in_data = self.a_in.recv()
-        
+
         if np.any(a_in_data) == 0:
             sp_out = 0 * a_in_data
         else:
             sp_out = np.array([inv_sqrt(a_in_data, 5)])
-        
+
         self.s_out.send(sp_out)

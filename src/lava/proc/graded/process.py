@@ -21,7 +21,10 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
 def loihi2round(vv):
-    """round values in numpy array the way loihi 2 performs rounding/truncation."""
+    """
+    Round values in numpy array the way loihi 2
+    performs rounding/truncation.
+    """
     return np.fix(vv + (vv > 0) - 0.5).astype('int')
 
 
