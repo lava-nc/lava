@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-import typing as ty
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -16,6 +15,8 @@ from lava.proc.graded.process import GradedVec, NormVecDelay, InvSqrt
 
 
 class AbstractGradedVecModel(PyLoihiProcessModel):
+    """Implementation of GradedVec"""
+
     a_in = None
     s_out = None
 
@@ -83,6 +84,7 @@ class NormVecDelayModel(PyLoihiProcessModel):
 @requires(CPU)
 @tag('float')
 class InvSqrtModelFloat(PyLoihiProcessModel):
+    """Implementation of InvSqrt in floating point"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
@@ -133,6 +135,8 @@ def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
 @requires(CPU)
 @tag('fixed_pt')
 class InvSqrtModelFP(PyLoihiProcessModel):
+    """Implementation of InvSqrt in fixed point"""
+
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
