@@ -10,25 +10,26 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
 class ProdNeuron(AbstractProcess):
+    """ProdNeuron
+
+    Multiplies two graded inputs.
+
+    Parameters
+    ----------
+
+    shape : tuple(int)
+        Number and topology of ProdNeuron neurons.
+    vth : int
+        Threshold
+    exp : int
+        Fixed-point base
+    """
     def __init__(
             self,
             shape: ty.Tuple[int, ...],
             vth=1,
             exp=0) -> None:
-        """ProdNeuron
 
-        Multiplies two graded inputs.
-
-        Parameters
-        ----------
-
-        shape : tuple(int)
-            Number and topology of ProdNeuron neurons.
-        vth : int
-            Threshold
-        exp : int
-            Fixed-point base
-        """
         super().__init__(shape=shape)
 
         self.a_in1 = InPort(shape=shape)

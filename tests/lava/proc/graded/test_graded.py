@@ -4,14 +4,13 @@
 
 import unittest
 import numpy as np
-from scipy.sparse import csr_matrix, find
+from scipy.sparse import csr_matrix
 
 from lava.proc.graded.process import GradedVec, NormVecDelay, InvSqrt
 from lava.proc.graded.models import inv_sqrt
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse
 from lava.proc import io
-from lava.proc import embedded_io as eio
 
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi2SimCfg
@@ -145,7 +144,6 @@ class TestInvSqrtProc(unittest.TestCase):
 class TestNormVecDelayProc(unittest.TestCase):
 
     def test_norm_vec_delay_out1(self):
-        fp_base = 12  # base of the decimal point
         weight_exp = 7
         num_steps = 10
 
@@ -208,7 +206,6 @@ class TestNormVecDelayProc(unittest.TestCase):
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
     def test_norm_vec_delay_out2(self):
-        fp_base = 12  # base of the decimal point
         weight_exp = 7
         num_steps = 10
 
