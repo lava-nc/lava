@@ -3,7 +3,21 @@
 # See: https://spdx.org/licenses/
 
 import os
-from typing import Optional
+
+from typing import Optional, Callable, TypeVar
+
+# NOTE: Awkward, but the std lib deprecated decorator is not available yet,
+# so I'm adding it here to deprecate this module :/
+_T = TypeVar("_T")
+
+
+def deprecated(__msg: str) -> Callable[[_T], _T]:
+    def decorator(__arg: _T) -> _T:
+        __arg.__deprecated__ = __msg
+        return __arg
+    return decorator
+
+# NOTE: This module is deprecated as of v0.8.0 in favor of lava.utils.loihi
 
 
 class staticproperty(property):
@@ -15,13 +29,14 @@ class staticproperty(property):
         return staticmethod(self.fget).__get__(None, owner)()
 
 
+@deprecated('This class is deprecated. Use lava.utils.loihi instead.')
 class Loihi2:
     preferred_partition: str = None
 
+    @deprecated('This method is deprecated. Use lava.utils.loihi instead.')
     @staticmethod
     def set_environ_settings(partititon: Optional[str] = None) -> None:
         """Sets the os environment for execution on Loihi.
-
         Parameters
         ----------
         partititon : str, optional
@@ -34,11 +49,11 @@ class Loihi2:
         if 'PARTITION' not in os.environ and partititon is not None:
             os.environ['PARTITION'] = partititon
 
+    @deprecated('This method is deprecated. Use lava.utils.loihi instead.')
     @staticproperty
     def is_loihi2_available() -> bool:
         """Checks if Loihi2 compiler is available and sets the environment
         vairables.
-
         Returns
         -------
         bool
@@ -54,6 +69,7 @@ class Loihi2:
         Loihi2.set_environ_settings(Loihi2.preferred_partition)
         return True
 
+    @deprecated('This method is deprecated. Use lava.utils.loihi instead.')
     @staticproperty
     def partition():
         """Get the partition information."""
