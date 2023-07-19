@@ -350,7 +350,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
             self.create_runtime(run_cfg, compile_config)
         self._runtime.start(condition)
 
-    def create_runtime(self, run_cfg: RunConfig,
+    def create_runtime(self, run_cfg: ty.Optional[RunConfig] = None,
+                       executable: ty.Optional[Executable] = None,
                        compile_config:
                        ty.Optional[ty.Dict[str, ty.Any]] = None):
         """Creates a runtime for this process and all connected processes by
@@ -369,7 +370,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         compile_config: Dict[str, Any], optional
             Configuration options for the Compiler and SubCompilers.
         """
-        executable = self.compile(run_cfg, compile_config)
+        if executable is None:
+            executable = self.compile(run_cfg, compile_config)
         self._runtime = Runtime(executable,
                                 ActorType.MultiProcessing,
                                 loglevel=self._log_config.level)
@@ -612,3 +614,9 @@ class Collection:
             return getattr(self, self.member_names[self._iterator])
         self._iterator = -1
         raise StopIteration
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
