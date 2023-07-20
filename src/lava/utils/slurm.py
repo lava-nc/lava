@@ -118,14 +118,18 @@ def get_partitions() -> ty.List[PartitionInfo]:
 
     def parse_partition(line: str) -> PartitionInfo:
         fields = line.split()
-
-        return PartitionInfo(name=fields[0],
-                             available=fields[1],
-                             timelimit=fields[2],
-                             nodes=fields[3],
-                             state=fields[4],
-                             nodelist=fields[5])
-
+        name = fields[0]
+        avail = fields[1] if len(fields) > 1 else ''
+        limit = fields[2] if len(fields) > 2 else ''
+        nodes = fields[3] if len(fields) > 3 else ''
+        state = fields[4] if len(fields) > 4 else ''
+        nodel = fields[5] if len(fields) > 5 else ''
+        return PartitionInfo(name=name,
+                             available=avail,
+                             timelimit=limit,
+                             nodes=nodes,
+                             state=state,
+                             nodelist=nodel)
     return [parse_partition(line) for line in lines]
 
 
