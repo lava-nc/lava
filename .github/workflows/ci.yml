@@ -25,7 +25,9 @@ jobs:
         repository: 'Lava'    
 
     - name: Run flakeheaven (flake8)
-      run: poetry run flakeheaven lint src/lava tests/
+      run: |
+        poetry run flakeheaven lint src/lava tests/
+        poetry run find tutorials/ -name '*.py' -exec flakeheaven lint {} \+
 
   security-lint:
     name: Security Lint Code
