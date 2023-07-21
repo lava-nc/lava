@@ -232,7 +232,7 @@ def convert_rate_to_lif_params(
     gamma = float(num_neurons_exc) / float(num_neurons_inh)
 
     # Assert that network is balanced.
-    if gamma * g_factor > 1:
+    if gamma * g_factor <= 1:
         raise AssertionError("Network not balanced, increase g_factor")
 
     # Set timescales of neurons.
