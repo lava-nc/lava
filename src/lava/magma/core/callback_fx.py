@@ -61,16 +61,26 @@ class IterableCallBack(NxSdkCallbackFx):
     as pre and post run."""
 
     def __init__(self,
-                 pre_run_fxs: Iterable = [],
-                 post_run_fxs: Iterable = []) -> None:
+                 pre_run_fxs: Iterable = None,
+                 post_run_fxs: Iterable = None) -> None:
         super().__init__()
+        if pre_run_fxs is None:
+            pre_run_fxs = []
+        if post_run_fxs is None:
+            post_run_fxs = []
         self.pre_run_fxs = pre_run_fxs
         self.post_run_fxs = post_run_fxs
 
-    def pre_run_callback(self, board: NxBoard, **_) -> None:
+    def pre_run_callback(self,
+                         board: NxBoard = None,
+                         var_id_to_var_model_map: dict = None
+                         ) -> None:
         for fx in self.pre_run_fxs:
             fx(board)
 
-    def post_run_callback(self, board: NxBoard, **_) -> None:
+    def post_run_callback(self,
+                          board: NxBoard = None,
+                          var_id_to_var_model_map: dict = None
+                          ) -> None:
         for fx in self.post_run_fxs:
             fx(board)
