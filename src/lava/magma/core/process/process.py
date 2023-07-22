@@ -347,7 +347,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
                 raise ValueError("run_cfg must not be None when calling"
                                  " Process.run() unless the process has already"
                                  " been compiled.")
-            self.create_runtime(run_cfg, compile_config)
+            self.create_runtime(run_cfg=run_cfg, compile_config=compile_config)
         self._runtime.start(condition)
 
     def create_runtime(self, run_cfg: ty.Optional[RunConfig] = None,
