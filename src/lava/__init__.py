@@ -15,7 +15,7 @@ __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
 # PROCESSES
 from lava.proc.clp.novelty_detector.process import NoveltyDetector
-from lava.proc.clp.nsm.process import ReadOut, Allocator
+from lava.proc.clp.nsm.process import Readout, Allocator
 from lava.proc.clp.prototype_lif.process import PrototypeLIF
 from lava.proc.conv.process import Conv
 from lava.proc.dense.process import Dense, DelayDense, LearningDense
