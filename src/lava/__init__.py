@@ -41,3 +41,8 @@ from lava.proc.spiker.process import Spiker
 # RUN CONFIGURATIONS & CONDITIONS
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunContinuous, RunSteps
+
+# UTILS
+from lava.utils import loihi
+from lava.utils import plots
+from lava.utils.serialization import save, load
