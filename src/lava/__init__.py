@@ -20,7 +20,8 @@ from lava.proc.clp.prototype_lif.process import PrototypeLIF
 from lava.proc.conv.process import Conv
 from lava.proc.dense.process import Dense, DelayDense, LearningDense
 from lava.proc.io.dataloader import SpikeDataloader, StateDataloader
-from lava.proc.io import source, sink
+from lava.proc.io.source import RingBuffer as SourceRingBuffer
+from lava.proc.io.sink import RingBuffer as SinkRingBuffer
 from lava.proc.io.encoder import DeltaEncoder
 from lava.proc.io.injector import Injector
 from lava.proc.io.extractor import Extractor
