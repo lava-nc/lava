@@ -39,7 +39,7 @@ from lava.proc.sparse.process import Sparse, LearningSparse, DelaySparse
 from lava.proc.spiker.process import Spiker
 
 # RUN CONFIGURATIONS & CONDITIONS
-from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.run_configs import Loihi2SimCfg, Loihi2HwCfg
 from lava.magma.core.run_conditions import RunContinuous, RunSteps
 
 # UTILS
