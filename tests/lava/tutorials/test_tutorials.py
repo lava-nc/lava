@@ -285,6 +285,18 @@ class TestTutorials(unittest.TestCase):
         """Test tutorial serialization."""
         self._run_notebook("tutorial11_serialization.ipynb")
 
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_clp_01(self):
+        """Test tutorial CLP 01."""
+        self._run_notebook(
+            "clp/tutorial01_one-shot_learning_with_novelty_detection.ipynb")
+
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_clp_02(self):
+        """Test tutorial CLP 02."""
+        self._run_notebook(
+            "clp/tutorial02_clp_on_coil100.ipynb")
+
 
 if __name__ == "__main__":
     support.run_unittest(TestTutorials)

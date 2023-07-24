@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 from abc import ABC
 
 import numpy as np
@@ -14,6 +18,39 @@ from lava.utils.weightutils import SignMode
 
 
 class CLP (ABC):
+    """
+    CLP class that encapsulates current Lava implementation of the CLP
+    algorithm.
+
+    Parameters
+        ----------
+        supervised : boolean
+            If True, CLP is configured to learn in supervised manner, i.e. the 
+            mismatch between its prediction and the true label provided by user
+            will trigger allocation of a new prototype neuron
+        n_protos : int
+            Number of Prototype LIF neurons that this process need to read from.
+        n_features: int
+            The length of the feature vector which is the input to CLP.
+        n_steps_per_sample : int
+            How many time steps we allocate for each input pattern processing
+             before injecting the next pattern.
+        b_fraction : int
+            Number of bits for fractional part in the fixed point representation
+        du : int
+            This is the du parameter of the PrototypeLIF neurons of the CLP
+        dv : int
+            This is the dv parameter of the PrototypeLIF neurons of the CLP
+        vth: int
+            This is the vth parameter of the PrototypeLIF neurons of the CLP
+        t_wait : int
+            The amount of time the process will wait after receiving
+            signal about input injection to the system before sending out
+            novelty detection signal. If in this time window the system (the
+            Prototype neurons) generates an output, then the process will be
+            reset and NO novelty detection signal will be sent out.
+
+    """
     def __init__(self,
                  supervised=True,
                  n_protos=2,
@@ -65,7 +102,7 @@ class CLP (ABC):
         n_test_samples = x_test.shape[0]
         n_total_samples = n_train_samples + n_test_samples
 
-        # number of time steps that the processes will run
+        # Number of time steps that the processes will run
         self.num_steps = n_total_samples * self.n_steps_per_sample
 
         inp_pattern_fixed = np.vstack((x_train, x_test))
