@@ -73,14 +73,14 @@ class IterableCallBack(NxSdkCallbackFx):
 
     def pre_run_callback(self,
                          board: NxBoard = None,
-                         _var_id_to_var_model_map: dict = None
+                         var_id_to_var_model_map: dict = None
                          ) -> None:
         for fx in self.pre_run_fxs:
             fx(board)
 
     def post_run_callback(self,
                           board: NxBoard = None,
-                          _var_id_to_var_model_map: dict = None
+                          var_id_to_var_model_map: dict = None
                           ) -> None:
         for fx in self.post_run_fxs:
             fx(board)
