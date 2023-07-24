@@ -25,7 +25,7 @@ class CLP (ABC):
     Parameters
         ----------
         supervised : boolean
-            If True, CLP is configured to learn in supervised manner, i.e. the 
+            If True, CLP is configured to learn in supervised manner, i.e. the
             mismatch between its prediction and the true label provided by user
             will trigger allocation of a new prototype neuron
         n_protos : int
