@@ -201,7 +201,7 @@ jobs:
           echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
 
       - name: Publish to PyPI
-        if: steps.check-version.outputs.prerelease != 'true'
+        # if: steps.check-version.outputs.prerelease != 'true'
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ steps.mint-token.outputs.api-token }}
         run: |
