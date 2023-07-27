@@ -111,6 +111,35 @@ class PyProcModel2(PyLoihiProcessModel):
         self.var = data
 
 
+class RecursiveProcess(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.out_port = OutPort(shape=(1,))
+        self.in_port = InPort(shape=(1,))
+
+
+@implements(proc=RecursiveProcess, protocol=LoihiProtocol)
+@requires(CPU)
+class RecursiveProcessModel(PyLoihiProcessModel):
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+
+    def run_spk(self):
+        # !!!! Receiving First Before Sending Will Cause Hung Behaviour !!!!
+        # Receive data
+        data = self.in_port.recv()
+        # Send data
+        self.out_port.send(data)
+
+    # def run_spk(self):
+    #     # This is valid implementation as we do send some data to unblock
+    #     data = np.ones(shape=(1,))
+    #     # Send data
+    #     self.out_port.send(data)
+    #     # Receive data
+    #     data = self.in_port.recv()
+
+
 class TestIOPorts(unittest.TestCase):
     def test_send_recv(self):
         """Checks if sending data via an OutPort in P1 to an InPort in P2
@@ -276,6 +305,16 @@ class TestIOPorts(unittest.TestCase):
         self.assertTrue(np.all(sender.h_var.get() == np.array([3, 4])))
         sender.stop()
 
+    @unittest.skip("Only for Testing Blocked Receivers")
+    def test_recursive_blocking(self):
+        sender = RecursiveProcess()
+        receiver = RecursiveProcess()
+
+        sender.out_port.connect(receiver.in_port)
+        receiver.out_port.connect(sender.in_port)
+
+        sender.run(condition=RunSteps(2), run_cfg=Loihi1SimCfg())
+        sender.stop()
 
 if __name__ == '__main__':
     unittest.main()

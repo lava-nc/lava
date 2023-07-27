@@ -10,6 +10,7 @@ from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from scipy.sparse import csr_matrix
 from lava.utils.sparse import find
+from lava.magma.compiler.channels.port_monitor import PortMonitor
 
 
 import numpy as np
@@ -126,24 +127,26 @@ class CspSendPort(AbstractCspSendPort):
         """
         Send data on the channel. May block if the channel is already full.
         """
-        if data.shape != self._shape:
-            raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
+        with PortMonitor(self.send.__func__, self._name) as t:
+            if data.shape != self._shape:
+                raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
 
-        if isinstance(data, csr_matrix):
-            data = find(data, explicit_zeros=True)[2]
+            if isinstance(data, csr_matrix):
+                data = find(data, explicit_zeros=True)[2]
 
-        self._semaphore.acquire()
-        self._array[self._idx][:] = data[:]
-        self._idx = (self._idx + 1) % self._size
-        self._req.release()
+            self._semaphore.acquire()
+            self._array[self._idx][:] = data[:]
+            self._idx = (self._idx + 1) % self._size
+            self._req.release()
 
     def join(self):
-        if not self._done:
-            self._done = True
-            if self.thread is not None:
-                self._ack.release()
-            self._ack = None
-            self._req = None
+        with PortMonitor(self.join.__func__, self._name) as t:
+            if not self._done:
+                self._done = True
+                if self.thread is not None:
+                    self._ack.release()
+                self._ack = None
+                self._req = None
 
 
 class CspRecvQueue(Queue):
@@ -283,19 +286,21 @@ class CspRecvPort(AbstractCspRecvPort):
         """
         Receive from the channel. Blocks if there is no data on the channel.
         """
-        self._queue.get()
-        result = self._array[self._idx].copy()
-        self._idx = (self._idx + 1) % self._size
-        self._ack.release()
-        return result
+        with PortMonitor(self.recv.__func__, self._name) as t:
+            self._queue.get()
+            result = self._array[self._idx].copy()
+            self._idx = (self._idx + 1) % self._size
+            self._ack.release()
+            return result
 
     def join(self):
-        if not self._done:
-            self._done = True
-            if self.thread is not None:
-                self._req.release()
-            self._ack = None
-            self._req = None
+        with PortMonitor(self.join.__func__, self._name) as t:
+            if not self._done:
+                self._done = True
+                if self.thread is not None:
+                    self._req.release()
+                self._ack = None
+                self._req = None
 
 
 class CspSelector:
