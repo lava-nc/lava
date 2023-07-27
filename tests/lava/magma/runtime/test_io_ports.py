@@ -316,5 +316,6 @@ class TestIOPorts(unittest.TestCase):
         sender.run(condition=RunSteps(2), run_cfg=Loihi1SimCfg())
         sender.stop()
 
+
 if __name__ == '__main__':
     unittest.main()

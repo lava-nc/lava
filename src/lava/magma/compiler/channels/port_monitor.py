@@ -20,9 +20,9 @@ class PortMonitor(ContextDecorator):
         # Choosing large enough timeouts. These can be made
         # configurable via configs in future
         if 'runtime_to_service' in self._channel_name or \
-            'service_to_process' in self._channel_name or \
-            'process_to_service' in self._channel_name or \
-            'service_to_runtime' in self._channel_name:
+                'service_to_process' in self._channel_name or \
+                'process_to_service' in self._channel_name or \
+                'service_to_runtime' in self._channel_name:
             self._monitor_timeout: float = 600.0  # seconds
         else:
             self._monitor_timeout: float = 60.0  # seconds
