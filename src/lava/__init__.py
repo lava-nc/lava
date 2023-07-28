@@ -34,13 +34,16 @@ from lava.proc.monitor.process import Monitor
 from lava.proc.receiver.process import Receiver
 from lava.proc.rf.process import RF
 from lava.proc.rf_iz.process import RF_IZ
-from lava.proc.sdn.process import Sigma, Delta, SigmaDelta
+from lava.proc.sdn.process import Sigma, Delta, SigmaDelta, ActivationMode
 from lava.proc.sparse.process import Sparse, LearningSparse, DelaySparse
 from lava.proc.spiker.process import Spiker
 
 # RUN CONFIGURATIONS & CONDITIONS
 from lava.magma.core.run_configs import Loihi2SimCfg, Loihi2HwCfg
 from lava.magma.core.run_conditions import RunContinuous, RunSteps
+
+# MAGMA
+from lava.magma.core.process.process import LogConfig
 
 # UTILS
 from lava.utils import loihi
