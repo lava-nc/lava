@@ -30,6 +30,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager,
 )
+from lava.magma.compiler.channels.watchdog import NoOPWatchdogManager
 
 
 class MockMessageInterface:
@@ -58,7 +59,8 @@ class TestChannelBuilder(unittest.TestCase):
 
             smm.start()
             mock = MockMessageInterface(smm)
-            channel: Channel = channel_builder.build(mock)
+            channel: Channel = channel_builder.build(mock,
+                                                     NoOPWatchdogManager())
             assert isinstance(channel, PyPyChannel)
             assert isinstance(channel.src_port, CspSendPort)
             assert isinstance(channel.dst_port, CspRecvPort)
