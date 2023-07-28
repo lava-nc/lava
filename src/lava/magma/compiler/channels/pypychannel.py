@@ -40,7 +40,7 @@ class CspSendPort(AbstractCspSendPort):
     """
 
     def __init__(self, name, shm, proto, size, req, ack,
-                 io_watchdog, join_watchdog):
+                 io_watchdog: Watchdog, join_watchdog: Watchdog):
         """Instantiates CspSendPort object and class attributes
 
         Parameters
@@ -67,8 +67,8 @@ class CspSendPort(AbstractCspSendPort):
         self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
 
-        self._io_watchdog = io_watchdog
-        self._join_watchdog = join_watchdog
+        self._io_watchdog: Watchdog = io_watchdog
+        self._join_watchdog: Watchdog = join_watchdog
 
     @property
     def name(self) -> str:

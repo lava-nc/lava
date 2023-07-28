@@ -8,6 +8,7 @@ import typing as ty
 from dataclasses import dataclass
 
 from lava.magma.compiler.builders.interfaces import AbstractChannelBuilder
+from lava.magma.compiler.channels.watchdog import WatchdogManagerBuilder
 from lava.magma.core.sync.domain import SyncDomain
 
 if ty.TYPE_CHECKING:

@@ -105,7 +105,7 @@ class ChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         )
 
         # Watchdogs
-        lq, sq = watchdog_manager.lq, watchdog_manager.sq
+        sq = watchdog_manager.sq
         queues = (sq, sq, sq, sq)
         port_initializers = (self.src_port_initializer,
                              self.dst_port_initializer)
@@ -272,4 +272,3 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        pass

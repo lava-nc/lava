@@ -8,7 +8,6 @@ import logging
 import sys
 import traceback
 import typing as ty
-import multiprocessing
 
 import numpy as np
 from scipy.sparse import csr_matrix
