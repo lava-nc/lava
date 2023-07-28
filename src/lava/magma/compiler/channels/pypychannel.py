@@ -364,10 +364,10 @@ class PyPyChannel(Channel):
             shape,
             dtype,
             size,
-            src_send_watchdog = NoOPWatchdog(None),
-            src_join_watchdog = NoOPWatchdog(None),
-            dst_recv_watchdog = NoOPWatchdog(None),
-            dst_join_watchdog = NoOPWatchdog(None)
+            src_send_watchdog=NoOPWatchdog(None),
+            src_join_watchdog=NoOPWatchdog(None),
+            dst_recv_watchdog=NoOPWatchdog(None),
+            dst_join_watchdog=NoOPWatchdog(None)
     ):
         """Instantiates PyPyChannel object and class attributes
 

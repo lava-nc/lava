@@ -90,21 +90,26 @@ class Watchdog(ContextDecorator):
 class WatchdogManagerInterface:
     """Generic Interface for Watchdogs"""
     @abstractmethod
-    def lq(self) -> ty.Optional[Queue]: pass
+    def lq(self) -> ty.Optional[Queue]:
+        pass
 
     @abstractmethod
-    def sq(self) -> ty.Optional[Queue]: pass
+    def sq(self) -> ty.Optional[Queue]:
+        pass
 
     @abstractmethod
     def create_watchdog(self,
                         queue: Queue,
                         channel_name: str,
                         method_type: str
-                        ) -> Watchdog: pass
+                        ) -> Watchdog:
+        pass
 
-    def start(self): pass
+    def start(self):
+        pass
 
-    def stop(self): pass
+    def stop(self):
+        pass
 
 
 class WatchdogManager(WatchdogManagerInterface):
