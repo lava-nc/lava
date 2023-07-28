@@ -42,6 +42,7 @@ class Executable:
                                                   RuntimeServiceBuilder]] = None
     sync_channel_builders: ty.Optional[
         ty.Iterable[AbstractChannelBuilder]] = None
+    watchdog_manager_builder: WatchdogManagerBuilder = None
 
     def assign_runtime_to_all_processes(self, runtime):
         for p in self.process_list:

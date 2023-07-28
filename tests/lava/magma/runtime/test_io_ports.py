@@ -11,7 +11,7 @@ from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import OutPort, InPort
-from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg
@@ -154,7 +154,8 @@ class TestIOPorts(unittest.TestCase):
         sender.out.connect(recv.inp)
 
         # Run the network for 2 time steps
-        sender.run(condition=RunSteps(num_steps=2), run_cfg=Loihi1SimCfg())
+        sender.run(condition=RunSteps(num_steps=2),
+                   run_cfg=Loihi1SimCfg())
 
         # The expected value of var in the recv is [1, 2]
         self.assertTrue(np.all(recv.var.get() == np.array([1, 2])))
@@ -307,13 +308,18 @@ class TestIOPorts(unittest.TestCase):
 
     @unittest.skip("Only for Testing Blocked Receivers")
     def test_recursive_blocking(self):
-        sender = RecursiveProcess()
+        sender = RecursiveProcess(log_config=LogConfig(level=20))
         receiver = RecursiveProcess()
 
         sender.out_port.connect(receiver.in_port)
         receiver.out_port.connect(sender.in_port)
 
-        sender.run(condition=RunSteps(2), run_cfg=Loihi1SimCfg())
+        # Output Long Timeouts within 10s and Short Timeouts within 2s
+        # Defaults are higher
+        sender.run(condition=RunSteps(2),
+                   run_cfg=Loihi1SimCfg(),
+                   compile_config={"long_event_timeout": 2.0,
+                                   "short_event_timeout": 1.0})
         sender.stop()
 
 

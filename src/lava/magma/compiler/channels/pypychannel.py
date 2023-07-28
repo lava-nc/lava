@@ -10,7 +10,7 @@ from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from scipy.sparse import csr_matrix
 from lava.utils.sparse import find
-from lava.magma.compiler.channels.port_monitor import PortMonitor
+from lava.magma.compiler.channels.watchdog import Watchdog, NoOPWatchdog
 
 
 import numpy as np
@@ -39,7 +39,8 @@ class CspSendPort(AbstractCspSendPort):
     semantics. It can be understood as the input port of a CSP channel.
     """
 
-    def __init__(self, name, shm, proto, size, req, ack):
+    def __init__(self, name, shm, proto, size, req, ack,
+                 io_watchdog, join_watchdog):
         """Instantiates CspSendPort object and class attributes
 
         Parameters
@@ -65,6 +66,9 @@ class CspSendPort(AbstractCspSendPort):
         self._semaphore = None
         self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
+
+        self._io_watchdog = io_watchdog
+        self._join_watchdog = join_watchdog
 
     @property
     def name(self) -> str:
@@ -127,7 +131,7 @@ class CspSendPort(AbstractCspSendPort):
         """
         Send data on the channel. May block if the channel is already full.
         """
-        with PortMonitor(self.send.__func__, self._name) as t:
+        with self._io_watchdog:
             if data.shape != self._shape:
                 raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
 
@@ -140,7 +144,7 @@ class CspSendPort(AbstractCspSendPort):
             self._req.release()
 
     def join(self):
-        with PortMonitor(self.join.__func__, self._name) as t:
+        with self._join_watchdog:
             if not self._done:
                 self._done = True
                 if self.thread is not None:
@@ -189,7 +193,8 @@ class CspRecvPort(AbstractCspRecvPort):
     semantics. It can be understood as the output port of a CSP channel.
     """
 
-    def __init__(self, name, shm, proto, size, req, ack):
+    def __init__(self, name, shm, proto, size, req, ack,
+                 io_watchdog, join_watchdog):
         """Instantiates CspRecvPort object and class attributes
 
         Parameters
@@ -215,6 +220,9 @@ class CspRecvPort(AbstractCspRecvPort):
         self._queue = None
         self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
+
+        self._io_watchdog = io_watchdog
+        self._join_watchdog = join_watchdog
 
     @property
     def name(self) -> str:
@@ -286,7 +294,7 @@ class CspRecvPort(AbstractCspRecvPort):
         """
         Receive from the channel. Blocks if there is no data on the channel.
         """
-        with PortMonitor(self.recv.__func__, self._name) as t:
+        with self._io_watchdog:
             self._queue.get()
             result = self._array[self._idx].copy()
             self._idx = (self._idx + 1) % self._size
@@ -294,7 +302,7 @@ class CspRecvPort(AbstractCspRecvPort):
             return result
 
     def join(self):
-        with PortMonitor(self.join.__func__, self._name) as t:
+        with self._join_watchdog:
             if not self._done:
                 self._done = True
                 if self.thread is not None:
@@ -356,6 +364,10 @@ class PyPyChannel(Channel):
             shape,
             dtype,
             size,
+            src_send_watchdog = NoOPWatchdog(None),
+            src_join_watchdog = NoOPWatchdog(None),
+            dst_recv_watchdog = NoOPWatchdog(None),
+            dst_join_watchdog = NoOPWatchdog(None)
     ):
         """Instantiates PyPyChannel object and class attributes
 
@@ -374,8 +386,12 @@ class PyPyChannel(Channel):
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
-        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack)
-        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack)
+        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack,
+                                     src_send_watchdog,
+                                     src_join_watchdog)
+        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack,
+                                     dst_recv_watchdog,
+                                     dst_join_watchdog)
 
     def nbytes(self, shape, dtype):
         return np.prod(shape) * np.dtype(dtype).itemsize

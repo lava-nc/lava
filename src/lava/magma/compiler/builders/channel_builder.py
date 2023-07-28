@@ -4,6 +4,7 @@
 
 import typing as ty
 from dataclasses import dataclass
+from multiprocessing import Queue
 
 from lava.magma.compiler.builders.interfaces import \
     AbstractChannelBuilder, \
@@ -17,14 +18,58 @@ from lava.magma.compiler.channels.interfaces import (
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
+from lava.magma.compiler.channels.watchdog import WatchdogManager, Watchdog
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.runtime.runtime import Runtime
 
+Queues = ty.Tuple[Queue, Queue, Queue, Queue]
+Watchdogs = ty.Tuple[Watchdog, Watchdog, Watchdog, Watchdog]
+PortInitializers = ty.Tuple[PortInitializer, PortInitializer]
+
+
+class WatchdogEnabledMixin:
+    @staticmethod
+    def watch(watchdog_manager: WatchdogManager,
+              queue: Queue,
+              process: "AbstractProcess",
+              pi: PortInitializer,
+              method_type: str) -> Watchdog:
+        process_cls: str = process.__class__.__name__
+        port_name: str = pi.name
+        name: str = f"{process_cls}.{port_name}"
+        w: Watchdog = watchdog_manager.create_watchdog(queue=queue,
+                                                       channel_name=name,
+                                                       method_type=method_type)
+        return w
+
+    def create_Watchdogs(self,
+                         watchdog_manager: WatchdogManager,
+                         queues: Queues,
+                         port_initializers: PortInitializers) -> Watchdogs:
+        src_send_watchdog: Watchdog = self.watch(watchdog_manager,
+                                                 queues[0], self.src_process,
+                                                 port_initializers[0],
+                                                 "send")
+        src_join_watchdog: Watchdog = self.watch(watchdog_manager,
+                                                 queues[1], self.src_process,
+                                                 port_initializers[0],
+                                                 "join")
+        dst_recv_watchdog: Watchdog = self.watch(watchdog_manager,
+                                                 queues[2], self.dst_process,
+                                                 port_initializers[1],
+                                                 "recv")
+        dst_join_watchdog: Watchdog = self.watch(watchdog_manager,
+                                                 queues[3], self.dst_process,
+                                                 port_initializers[1],
+                                                 "join")
+        return (src_send_watchdog, src_join_watchdog,
+                dst_recv_watchdog, dst_join_watchdog)
+
 
 @dataclass
-class ChannelBuilderMp(AbstractChannelBuilder):
+class ChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
     """A ChannelBuilder assuming Python multi-processing is used as messaging
     and multi processing backbone.
     """
@@ -36,7 +81,8 @@ class ChannelBuilderMp(AbstractChannelBuilder):
     dst_port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+            self, messaging_infrastructure: MessageInfrastructureInterface,
+            watchdog_manager: WatchdogManager
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -57,6 +103,16 @@ class ChannelBuilderMp(AbstractChannelBuilder):
         channel_class = messaging_infrastructure.channel_class(
             channel_type=self.channel_type
         )
+
+        # Watchdogs
+        lq, sq = watchdog_manager.lq, watchdog_manager.sq
+        queues = (sq, sq, sq, sq)
+        port_initializers = (self.src_port_initializer,
+                             self.dst_port_initializer)
+        (src_send_watchdog, src_join_watchdog,
+         dst_recv_watchdog, dst_join_watchdog) = \
+            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+
         return channel_class(
             messaging_infrastructure,
             self.src_port_initializer.name,
@@ -64,11 +120,13 @@ class ChannelBuilderMp(AbstractChannelBuilder):
             self.src_port_initializer.shape,
             self.src_port_initializer.d_type,
             self.src_port_initializer.size,
+            src_send_watchdog, src_join_watchdog,
+            dst_recv_watchdog, dst_join_watchdog
         )
 
 
 @dataclass
-class ServiceChannelBuilderMp(AbstractChannelBuilder):
+class ServiceChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
     """A RuntimeServiceChannelBuilder assuming Python multi-processing is used
     as messaging and multi processing backbone.
     """
@@ -81,7 +139,8 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
     port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+            self, messaging_infrastructure: MessageInfrastructureInterface,
+            watchdog_manager: WatchdogManager
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -103,6 +162,15 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
             channel_type=self.channel_type
         )
 
+        # Watchdogs
+        lq, sq = watchdog_manager.lq, watchdog_manager.sq
+        queues = (sq, sq, lq, sq)
+        port_initializers = (self.port_initializer,
+                             self.port_initializer)
+        (src_send_watchdog, src_join_watchdog,
+         dst_recv_watchdog, dst_join_watchdog) = \
+            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+
         channel_name: str = self.port_initializer.name
         return channel_class(
             messaging_infrastructure,
@@ -111,11 +179,13 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder):
             self.port_initializer.shape,
             self.port_initializer.d_type,
             self.port_initializer.size,
+            src_send_watchdog, src_join_watchdog,
+            dst_recv_watchdog, dst_join_watchdog
         )
 
 
 @dataclass
-class RuntimeChannelBuilderMp(AbstractChannelBuilder):
+class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
     """A RuntimeChannelBuilder assuming Python multi-processing is
     used as messaging and multi processing backbone.
     """
@@ -126,7 +196,8 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
     port_initializer: PortInitializer
 
     def build(
-            self, messaging_infrastructure: MessageInfrastructureInterface
+            self, messaging_infrastructure: MessageInfrastructureInterface,
+            watchdog_manager: WatchdogManager
     ) -> Channel:
         """Given the message passing framework builds a channel
 
@@ -148,6 +219,15 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
             channel_type=self.channel_type
         )
 
+        # Watchdogs
+        lq, sq = watchdog_manager.lq, watchdog_manager.sq
+        queues = (sq, sq, lq, sq)
+        port_initializers = (self.port_initializer,
+                             self.port_initializer)
+        (src_send_watchdog, src_join_watchdog,
+         dst_recv_watchdog, dst_join_watchdog) = \
+            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+
         channel_name: str = self.port_initializer.name
         return channel_class(
             messaging_infrastructure,
@@ -156,6 +236,8 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder):
             self.port_initializer.shape,
             self.port_initializer.d_type,
             self.port_initializer.size,
+            src_send_watchdog, src_join_watchdog,
+            dst_recv_watchdog, dst_join_watchdog
         )
 
 
@@ -190,3 +272,4 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
+        pass
