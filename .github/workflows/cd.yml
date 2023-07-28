@@ -13,7 +13,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.3
       with:
         repository: 'Lava'
 
@@ -44,14 +44,14 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
       - name: Test artifact tar.gz
         run: |
-          python3.9 -m venv artifact-test
+          python3 -m venv artifact-test
           source artifact-test/bin/activate
           artifact=$(ls | grep lava | grep tar)
           pip install --no-input $artifact
@@ -64,7 +64,7 @@ jobs:
 
       - name: Test artifact .whl
         run: |
-          python3.9 -m venv artifact-test
+          python3 -m venv artifact-test
           source artifact-test/bin/activate
           artifact=$(ls | grep lava | grep whl)
           pip install --no-input $artifact
@@ -86,17 +86,17 @@ jobs:
         with:
           name: lava
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
       - name: Test artifact tar.gz
         run: |
           mkdir tmp
           cd tmp
           cp ../lava* .
-          python3.9 -m venv artifact-unittest
+          python3 -m venv artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
           pip install "nbconvert>=7.2.10,<7.3" pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0
@@ -115,7 +115,7 @@ jobs:
           mkdir tmp
           cd tmp
           cp ../lava* .
-          python3.9 -m venv artifact-unittest
+          python3 -m venv artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
           pip install "nbconvert>=7.2.10,<7.3" pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0
@@ -130,3 +130,83 @@ jobs:
           deactivate
           cd ../
           rm -rf tmp
+
+  upload-release-artifact:
+    name: Upload release artifact
+    runs-on: ubuntu-latest
+    if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
+    permissions:
+      contents: write
+      id-token: write
+    needs: [build-artifacts, test-artifact-install, test-artifact-use]
+   
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: setup CI
+        uses: lava-nc/ci-setup-composite-action@v1.3
+        with:
+          repository: 'Lava'
+
+      - name: Download lava artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lava
+
+      - name: Check Version
+        id: check-version
+        run: |
+          [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
+          echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
+          echo "release-commit=$(git log -n 1 --pretty=format:"%H")" >> $GITHUB_OUTPUT
+      
+      - name: Print Versions
+        run: |
+          [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true
+          echo "release-version=$(pipx run poetry version --short)"
+          echo "release-commit=$(git log -n 1 --pretty=format:"%H")"
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "lava*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          prerelease: steps.check-version.outputs.prerelease == 'true'
+          name: "Lava ${{ steps.check-version.outputs.release-version }}"
+          commit: "${{ steps.check-version.outputs.release-commit }}"
+          tag: "v${{ steps.check-version.outputs.release-version }}"
+          discussionCategory: "Announcements"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          makeLatest: true
+
+      - name: Mint Github API token
+        id: mint-token
+        run: |
+          # retrieve the ambient OIDC token
+          resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
+          oidc_token=$(jq '.value' <<< "${resp}")
+
+          # exchange the OIDC token for an API token
+          resp=$(curl -X POST https://pypi.org/_/oidc/github/mint-token -d "{\"token\": \"${oidc_token}\"}")
+          api_token=$(jq '.token' <<< "${resp}")
+
+          # mask the newly minted API token, so that we don't accidentally leak it
+          echo "::add-mask::${api_token}"
+
+          # see the next step in the workflow for an example of using this step output
+          echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish to PyPI
+        if: steps.check-version.outputs.prerelease != 'true'
+        env:
+          POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
+          POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ steps.mint-token.outputs.api-token }}
+        run: |
+          mkdir dist
+          cp lava* dist/.
+          poetry publish

@@ -202,9 +202,9 @@ def conv(input_: np.ndarray,
                 # torch cannot handle negative stride
                 weight[:, ::-1, ::-1].transpose([0, 3, 2, 1]).copy()
             ),
-            stride=stride[::-1].tolist(),
-            padding=padding[::-1].tolist(),
-            dilation=dilation[::-1].tolist(),
+            stride=list(stride[::-1]),
+            padding=list(padding[::-1]),
+            dilation=list(dilation[::-1]),
             groups=groups
         )[0].cpu().data.numpy().transpose([2, 1, 0])
     else:

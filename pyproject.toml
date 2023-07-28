@@ -13,8 +13,8 @@ packages = [
 include = ["tutorials",
            "src/lava/magma/runtime/message_infrastructure/*.so",
            "src/lava/magma/runtime/message_infrastructure/install/lib/lib*"]
-version = "0.7.0"
-
+version = "0.8.0"
+readme = "README.md"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
@@ -51,10 +51,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
 
-numpy = "^1.22.2"
-scipy = "^1.8.0"
+numpy = "^1.24.4"
+scipy = "^1.10.1"
 networkx = "<=2.8.7"
-asteval = "^0.9.27"
+asteval = "^0.9.31"
 pybind11 = {extras = ["global"], version = "^2.10.1"}
 
 [tool.poetry.dev-dependencies]
