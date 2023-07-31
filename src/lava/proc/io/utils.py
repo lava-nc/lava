@@ -8,7 +8,8 @@ import typing as ty
 import numpy as np
 import warnings
 
-from lava.magma.compiler.channels.pypychannel import CspSendPort, CspRecvPort
+from lava.magma.runtime.message_infrastructure \
+    import SendPort as CspSendPort, RecvPort as CspRecvPort
 
 
 class SendFull(IntEnum):

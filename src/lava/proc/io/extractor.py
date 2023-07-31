@@ -13,9 +13,21 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.magma.runtime.message_infrastructure.multiprocessing import \
-    MultiProcessing
+from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
+if PURE_PYTHON_VERSION:
+    from lava.magma.runtime.message_infrastructure.py_multiprocessing \
+        import MultiProcessing
+    from lava.magma.runtime.message_infrastructure.pypychannel \
+        import PyPyChannel as Channel
+else:
+    from lava.magma.runtime.message_infrastructure.multiprocessing \
+        import MultiProcessing
+    from lava.magma.runtime.message_infrastructure import Channel as Channel
+    from lava.magma.runtime.message_infrastructure \
+        .MessageInfrastructurePywrapper import ChannelType
+    from lava.magma.runtime.message_infrastructure \
+        import ChannelQueueSize
+
 from lava.proc.io import utils
 
 
@@ -63,15 +75,15 @@ class Extractor(AbstractProcess):
         self._shape = shape
 
         self._multi_processing = MultiProcessing()
-        self._multi_processing.start()
+        self._multi_processing.init()
 
         # Stands for ProcessModel to Process
-        pm_to_p = PyPyChannel(message_infrastructure=self._multi_processing,
-                              src_name="src",
-                              dst_name="dst",
-                              shape=self._shape,
-                              dtype=float,
-                              size=buffer_size)
+        pm_to_p = Channel(message_infrastructure=self._multi_processing,
+                          src_name="src",
+                          dst_name="dst",
+                          shape=self._shape,
+                          dtype=float,
+                          size=buffer_size)
         self._pm_to_p_dst_port = pm_to_p.dst_port
         self._pm_to_p_dst_port.start()
 

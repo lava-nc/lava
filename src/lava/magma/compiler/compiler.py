@@ -128,6 +128,8 @@ class Compiler:
         # ProcGroups.
         proc_group_digraph = ProcGroupDiGraphs(process, run_cfg)
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
+        # Get a flattened list of all AbstractProcesses
+        process_list = list(itertools.chain.from_iterable(proc_groups))
         channel_map = ChannelMap.from_proc_groups(proc_groups)
         proc_builders, channel_map = self._compile_proc_groups(
             proc_groups, channel_map
@@ -161,6 +163,7 @@ class Compiler:
 
         # Package all Builders and NodeConfigs into an Executable.
         executable = Executable(
+            process_list,
             proc_builders,
             channel_builders,
             node_configs,

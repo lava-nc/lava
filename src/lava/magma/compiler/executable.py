@@ -33,6 +33,7 @@ class Executable:
     # py_builders: ty.Dict[AbstractProcess, NcProcessBuilder]
     # c_builders: ty.Dict[AbstractProcess, CProcessBuilder]
     # nc_builders: ty.Dict[AbstractProcess, PyProcessBuilder]
+    process_list: ty.List[AbstractProcess]
     proc_builders: ty.Dict[AbstractProcess, 'AbstractProcessBuilder']
     channel_builders: ty.List[ChannelBuilderMp]
     node_configs: ty.List[NodeConfig]
