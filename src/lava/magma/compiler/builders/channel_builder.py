@@ -44,7 +44,7 @@ class WatchdogEnabledMixin:
                                                        method_type=method_type)
         return w
 
-    def create_Watchdogs(self,
+    def create_watchdogs(self,
                          watchdog_manager: WatchdogManager,
                          queues: Queues,
                          port_initializers: PortInitializers) -> Watchdogs:
@@ -89,6 +89,7 @@ class ChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Parameters
         ----------
         messaging_infrastructure : MessageInfrastructureInterface
+        watchdog_manager: WatchdogManager
 
         Returns
         -------
@@ -111,7 +112,7 @@ class ChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
                              self.dst_port_initializer)
         (src_send_watchdog, src_join_watchdog,
          dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+            self.create_watchdogs(watchdog_manager, queues, port_initializers)
 
         return channel_class(
             messaging_infrastructure,
@@ -147,6 +148,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Parameters
         ----------
         messaging_infrastructure : MessageInfrastructureInterface
+        watchdog_manager: WatchdogManager
 
         Returns
         -------
@@ -169,7 +171,7 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
                              self.port_initializer)
         (src_send_watchdog, src_join_watchdog,
          dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+            self.create_watchdogs(watchdog_manager, queues, port_initializers)
 
         channel_name: str = self.port_initializer.name
         return channel_class(
@@ -204,6 +206,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Parameters
         ----------
         messaging_infrastructure : MessageInfrastructureInterface
+        watchdog_manager: WatchdogManager
 
         Returns
         -------
@@ -226,7 +229,7 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
                              self.port_initializer)
         (src_send_watchdog, src_join_watchdog,
          dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_Watchdogs(watchdog_manager, queues, port_initializers)
+            self.create_watchdogs(watchdog_manager, queues, port_initializers)
 
         channel_name: str = self.port_initializer.name
         return channel_class(
