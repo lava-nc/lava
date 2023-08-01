@@ -282,8 +282,9 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
 
     """
 
-    def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
-        super().__init__(proc_params=proc_params)
+    def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None,
+                 loglevel: ty.Optional[int] = logging.WARNING):
+        super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.time_step = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
         self._cmd_handlers.update(
