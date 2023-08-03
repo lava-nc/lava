@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -8,8 +8,8 @@ import numpy as np
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
-from lava.proc.lif.process import LIF
 from lava.proc.dense.process import Dense
+from lava.proc.lif.process import LIF
 from lava.magma.core.run_configs import Loihi2HwCfg
 
 class PerceptronLayer(AbstractProcess):
@@ -19,18 +19,18 @@ class PerceptronLayer(AbstractProcess):
         self.iport = InPort(shape=(size,))
         self.oport = OutPort(shape=(size,))
 
-        self.lif1 = LIF(shape=(size,), du=du, dv=dv,
-                       bias_mant=bias_mant, bias_exp=bias_exp, vth=vth)
-
         weights_ = np.ones(size * size).reshape(size, size) * size
         dense_params_ = {'weights': weights_}
         self.dense1 = Dense(**dense_params_)
 
-        self.lif2 = LIF(shape=(size,), du=du+1, dv=dv+1,
-                       bias_mant=bias_mant+1, bias_exp=bias_exp+1, vth=vth+1)
+        self.lif1 = LIF(shape=(size,), du=du, dv=dv,
+                       bias_mant=bias_mant, bias_exp=bias_exp, vth=vth)
 
         dense_params_ = {'weights': weights_+1}
         self.dense2 = Dense(**dense_params_)
+
+        self.lif2 = LIF(shape=(size,), du=du+1, dv=dv+1,
+                       bias_mant=bias_mant+1, bias_exp=bias_exp+1, vth=vth+1)
 
         self.iport.connect(self.dense1.s_in)
         self.dense1.a_out.connect(self.lif1.a_in)
@@ -38,7 +38,7 @@ class PerceptronLayer(AbstractProcess):
         self.dense2.a_out.connect(self.lif2.a_in)
         self.lif2.s_out.connect(self.oport)
 
-class TestfoldedView(unittest.TestCase):
+class TestFoldedView(unittest.TestCase):
     def test_folded_view_mlp(self):
         size = 6
         layer1 = PerceptronLayer(size=size,
