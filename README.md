@@ -90,7 +90,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.6.0
+git checkout v0.8.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
