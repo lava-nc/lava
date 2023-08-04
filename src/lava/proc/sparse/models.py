@@ -224,9 +224,10 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         # (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
         #  which is then transposed to get the activation matrix.
         return np.reshape(self.get_delay_wgts_mat(self.weights,
-                                                  self.delays).dot(s_in),
-                          (np.max(self.delays) + 1,
-                          self.weights.shape[0])).T
+                                                  self.delays,
+                                                  self.a_buff.shape[-1] - 1
+                                                  ).dot(s_in),
+                          (self.a_buff.shape[-1], self.weights.shape[0])).T
 
     @staticmethod
     def get_delay_wgts_mat(weights, delays, max_delay) -> spmatrix:
