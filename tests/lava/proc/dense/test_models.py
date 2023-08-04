@@ -567,8 +567,10 @@ class TestDelayDenseProcessModel(unittest.TestCase):
         weights[2, 2] = 1
         delays = np.zeros(shape, dtype=int)
         delays[2, 2] = 2
-        max_delay = np.max(delays)
-        wgt_dly = AbstractPyDelayDenseModel.get_delay_wgts_mat(weights, delays)
+        max_delay = np.max(delays) + 1  # setting it more than maximum delay
+        wgt_dly = AbstractPyDelayDenseModel.get_delay_wgts_mat(weights,
+                                                               delays,
+                                                               max_delay)
         # Expected shape is maximum delay=2 + 1 = 3 times first dimension of
         # original shape (3, 4) => (9, 4)
         expected_shape = ((max_delay + 1) * 3, 4)
