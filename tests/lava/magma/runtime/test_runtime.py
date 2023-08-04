@@ -10,6 +10,7 @@ from lava.magma.compiler.executable import Executable
 from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.core.resources import HeadNode, Loihi2System
 from lava.magma.compiler.node import Node, NodeConfig
+from lava.magma.compiler.channels.watchdog import WatchdogManagerBuilder
 from lava.magma.runtime.runtime import Runtime
 
 
@@ -27,11 +28,15 @@ class TestRuntime(unittest.TestCase):
 
     def test_executable_node_config_assertion(self):
         """Tests runtime constructions with expected constraints"""
+        compile_config = {"long_event_timeout": 10, "short_event_timeout": 10}
+        w = WatchdogManagerBuilder(compile_config, 30)
         exe: Executable = Executable(process_list=[],
                                      proc_builders={},
                                      channel_builders=[],
                                      node_configs=[],
-                                     sync_domains=[])
+                                     sync_domains=[],
+                                     watchdog_manager_builder=w
+                                     )
 
         runtime1: Runtime = Runtime(exe, ActorType.MultiProcessing)
         runtime1.initialize()
@@ -50,7 +55,8 @@ class TestRuntime(unittest.TestCase):
                                       proc_builders={},
                                       channel_builders=[],
                                       node_configs=[],
-                                      sync_domains=[])
+                                      sync_domains=[],
+                                      watchdog_manager_builder=w)
         node1: Node = Node(Loihi2System, [])
         exe1.node_configs.append(NodeConfig([node1]))
         runtime3: Runtime = Runtime(exe1, ActorType.MultiProcessing)

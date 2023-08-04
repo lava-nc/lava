@@ -11,7 +11,7 @@ from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import OutPort, InPort
-from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg
@@ -111,6 +111,35 @@ class PyProcModel2(PyLoihiProcessModel):
         self.var = data
 
 
+class RecursiveProcess(AbstractProcess):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.out_port = OutPort(shape=(1,))
+        self.in_port = InPort(shape=(1,))
+
+
+@implements(proc=RecursiveProcess, protocol=LoihiProtocol)
+@requires(CPU)
+class RecursiveProcessModel(PyLoihiProcessModel):
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, int)
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
+
+    def run_spk(self):
+        # !!!! Receiving First Before Sending Will Cause Hung Behaviour !!!!
+        # Receive data
+        data = self.in_port.recv()
+        # Send data
+        self.out_port.send(data)
+
+    # def run_spk(self):
+    #     # This is valid implementation as we do send some data to unblock
+    #     data = np.ones(shape=(1,))
+    #     # Send data
+    #     self.out_port.send(data)
+    #     # Receive data
+    #     data = self.in_port.recv()
+
+
 class TestIOPorts(unittest.TestCase):
     def test_send_recv(self):
         """Checks if sending data via an OutPort in P1 to an InPort in P2
@@ -125,7 +154,8 @@ class TestIOPorts(unittest.TestCase):
         sender.out.connect(recv.inp)
 
         # Run the network for 2 time steps
-        sender.run(condition=RunSteps(num_steps=2), run_cfg=Loihi1SimCfg())
+        sender.run(condition=RunSteps(num_steps=2),
+                   run_cfg=Loihi1SimCfg())
 
         # The expected value of var in the recv is [1, 2]
         self.assertTrue(np.all(recv.var.get() == np.array([1, 2])))
@@ -274,6 +304,22 @@ class TestIOPorts(unittest.TestCase):
         sender.run(condition=RunSteps(num_steps=2),
                    run_cfg=Loihi1SimCfg(select_sub_proc_model=True))
         self.assertTrue(np.all(sender.h_var.get() == np.array([3, 4])))
+        sender.stop()
+
+    @unittest.skip("Only for Testing Blocked Receivers")
+    def test_recursive_blocking(self):
+        sender = RecursiveProcess(log_config=LogConfig(level=20))
+        receiver = RecursiveProcess()
+
+        sender.out_port.connect(receiver.in_port)
+        receiver.out_port.connect(sender.in_port)
+
+        # Output Long Timeouts within 10s and Short Timeouts within 2s
+        # Defaults are higher
+        sender.run(condition=RunSteps(2),
+                   run_cfg=Loihi1SimCfg(),
+                   compile_config={"long_event_timeout": 2.0,
+                                   "short_event_timeout": 1.0})
         sender.stop()
 
 
