@@ -21,7 +21,7 @@ from lava.proc.io.sink import RingBuffer as SinkBuffer
 
 
 def setup_condition_test():
-    source = SourceBuffer(data=np.array(range(1000)).reshape((1,-1)))
+    source = SourceBuffer(data=np.array(range(1000)).reshape((1, -1)))
     sink = SinkBuffer(shape=(1,), buffer=10)
     source.s_out.connect(sink.a_in)
     source.create_runtime(run_cfg=Loihi2SimCfg())
