@@ -327,16 +327,27 @@ class Runtime:
                     self._is_running = False
                     return
 
-    def start(self, run_condition: AbstractRunCondition):
+    def start(self, run_condition:
+              ty.Optional[ty.Union[AbstractRunCondition, int]] = None):
         """
-        Given a run condition, starts the runtime
-
-        :param run_condition: AbstractRunCondition
-        :return: None
+        Start the runtime and run as long as the run_condition dictates.
+        Parameters
+        ----------
+        run_condition : Optional[Union[AbstractRunCondition, int]],
+            default = None
+            The condition specifying how long to run the runtime. If
+            run_condition is an int, the runtime will create a RunSteps
+            condition and run for the number of timesteps. If
+            run_condition is None (default), runtime will create a
+            RunContinuous condition and run until interrupted.
         """
         if self._is_initialized:
             # Start running
             self._is_started = True
+            if run_condition is None:
+                run_condition = RunContinuous()
+            elif isinstance(run_condition, int):
+                run_condition = RunSteps(run_condition)
             self._run(run_condition)
         else:
             self.log.info("Runtime not initialized yet.")
