@@ -67,6 +67,7 @@ from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.runtime.runtime import Runtime
 from lava.magma.runtime.runtime_services.enums import LoihiVersion
+from lava.magma.compiler.channels.watchdog import WatchdogManagerBuilder
 
 
 class Compiler:
@@ -97,6 +98,8 @@ class Compiler:
         self._compile_config = compile_config or {}
         self._compile_config.setdefault("loihi_gen", "oheogulch")
         self._compile_config.setdefault("pypy_channel_size", 64)
+        self._compile_config.setdefault("long_event_timeout", 600.0)
+        self._compile_config.setdefault("short_event_timeout", 60.0)
         self.log = logging.getLogger(__name__)
         self.log.addHandler(logging.StreamHandler())
         self.log.setLevel(loglevel)
@@ -160,6 +163,9 @@ class Compiler:
         sync_channel_builders = self._create_sync_channel_builders(
             runtime_service_builders
         )
+        watchdog_manager_builder = \
+            WatchdogManagerBuilder(self._compile_config,
+                                   self.log.getEffectiveLevel())
 
         # Package all Builders and NodeConfigs into an Executable.
         executable = Executable(
@@ -170,6 +176,7 @@ class Compiler:
             sync_domains,
             runtime_service_builders,
             sync_channel_builders,
+            watchdog_manager_builder
         )
 
         # Create VarModels.
