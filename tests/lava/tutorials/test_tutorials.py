@@ -286,10 +286,10 @@ def get_module_path(module_name: str) -> str:
     spec = importlib.util.find_spec(module_name)
 
     # Treat packages with init-files separately.
-    if spec.origin.endswith("__init__.py"):
+    if spec.origin is None:
         return spec.submodule_search_locations[0]
 
-    return spec.origin
+    return os.path.dirname(spec.origin)
 
 
 if __name__ == "__main__":
