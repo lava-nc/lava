@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://
 
-import inspect
+import importlib.util
 import glob
 import os
 import platform
@@ -13,10 +13,7 @@ import typing as ty
 import unittest
 from test import support
 
-import lava
 import nbformat
-
-import tutorials
 
 
 class TestTutorials(unittest.TestCase):
@@ -79,7 +76,7 @@ class TestTutorials(unittest.TestCase):
 
         sys_path = ":".join(map(str, sys.path))
         env_path = env.get("PYTHONPATH", "")
-        mod_path = ":".join(map(str, [get_module_path(lava), env_path]))
+        mod_path = ":".join(map(str, [get_module_path("lava"), env_path]))
 
         env["PYTHONPATH"] = env_path + ":" + mod_path + ":" + sys_path
 
@@ -153,7 +150,7 @@ class TestTutorials(unittest.TestCase):
             end to end tutorial, by default False
         """
         cwd = os.getcwd()
-        tutorials_module_path = get_module_path(tutorials)
+        tutorials_module_path = get_module_path("tutorials")
 
         if not e2e_tutorial:
             tutorials_module_path = tutorials_module_path + "/in_depth"
@@ -285,8 +282,14 @@ class TestTutorials(unittest.TestCase):
             "clp/tutorial01_one-shot_learning_with_novelty_detection.ipynb")
 
 
-def get_module_path(module) -> str:
-    return os.path.dirname(inspect.getfile(module))
+def get_module_path(module_name: str) -> str:
+    spec = importlib.util.find_spec(module_name)
+
+    # Treat packages with init-files separately.
+    if spec.origin.endswith("__init__.py"):
+        return spec.submodule_search_locations[0]
+
+    return spec.origin
 
 
 if __name__ == "__main__":
