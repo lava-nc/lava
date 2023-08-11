@@ -1,6 +1,9 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
-# See: https://spdx.org/licenses/
+# See: https://
+
+import inspect
+import pathlib
 
 import glob
 import os
@@ -75,15 +78,10 @@ class TestTutorials(unittest.TestCase):
         os.chdir(base_dir + "/" + dir_name)
 
         env = os.environ.copy()
-        module_path = [lava.__path__.__dict__["_path"][0]]
-
-        module_path.extend(
-            [os.path.dirname(module_path[0]), env.get("PYTHONPATH", "")]
-        )
 
         sys_path = ":".join(map(str, sys.path))
         env_path = env.get("PYTHONPATH", "")
-        mod_path = ":".join(map(str, module_path))
+        mod_path = ":".join(map(str, [get_module_path(lava), env_path]))
 
         env["PYTHONPATH"] = env_path + ":" + mod_path + ":" + sys_path
 
@@ -157,15 +155,14 @@ class TestTutorials(unittest.TestCase):
             end to end tutorial, by default False
         """
         cwd = os.getcwd()
-        tutorials_temp_directory = tutorials.__path__.__dict__["_path"][0]
-        tutorials_directory = ""
+        tutorials_module_path = get_module_path(tutorials)
 
         if not e2e_tutorial:
-            tutorials_temp_directory = tutorials_temp_directory + "/in_depth"
+            tutorials_module_path = tutorials_module_path + "/in_depth"
         else:
-            tutorials_temp_directory = tutorials_temp_directory + "/end_to_end"
+            tutorials_module_path = tutorials_module_path + "/end_to_end"
 
-        tutorials_directory = os.path.realpath(tutorials_temp_directory)
+        tutorials_directory = os.path.realpath(tutorials_module_path)
         os.chdir(tutorials_directory)
 
         errors_record = {}
@@ -178,7 +175,7 @@ class TestTutorials(unittest.TestCase):
 
             self.assertTrue(
                 len(discovered_notebooks) != 0,
-                "Notebook not found. Input to function {}".format(notebook),
+                f"Notebook not found. Input to function {notebook}",
             )
 
             # If the notebook is found execute it and store any errors
@@ -194,10 +191,8 @@ class TestTutorials(unittest.TestCase):
 
             self.assertFalse(
                 errors_record,
-                "Failed to execute Jupyter Notebooks \
-                                 with errors: \n {}".format(
-                    errors_record
-                ),
+                f"Failed to execute Jupyter Notebooks "
+                f"with errors: \n {errors_record}",
             )
         finally:
             os.chdir(cwd)
@@ -290,6 +285,10 @@ class TestTutorials(unittest.TestCase):
         """Test tutorial CLP 01."""
         self._run_notebook(
             "clp/tutorial01_one-shot_learning_with_novelty_detection.ipynb")
+
+
+def get_module_path(module) -> str:
+    return os.path.dirname(inspect.getfile(module))
 
 
 if __name__ == "__main__":
