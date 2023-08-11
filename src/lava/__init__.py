@@ -1,5 +1,3 @@
-# pylint: disable=unused-import
-
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
@@ -27,8 +25,7 @@ from lava.proc.io.extractor import Extractor
 from lava.proc.io.reset import Reset
 from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
-from lava.proc.lif.process import LIF, LIFReset, LearningLIF, TernaryLIF, \
-    LIFRefractory
+from lava.proc.lif.process import LIF, LearningLIF, LIFRefractory
 from lava.proc.monitor.process import Monitor
 from lava.proc.receiver.process import Receiver
 from lava.proc.rf.process import RF
@@ -47,3 +44,11 @@ from lava.magma.core.process.process import LogConfig
 from lava.utils import loihi
 from lava.utils import plots
 from lava.utils.serialization import save, load
+
+__all__ = [Conv, Dense, DelayDense, LearningDense, SpikeDataloader,
+           StateDataloader, SourceRingBuffer, SinkRingBuffer, DeltaEncoder,
+           Injector, Extractor, Reset, RewardModulatedSTDP, STDPLoihi,
+           LIF, LearningLIF, LIFRefractory, Monitor, Receiver, RF, RF_IZ,
+           Sigma, Delta, SigmaDelta, ActivationMode, Sparse, LearningSparse,
+           DelaySparse, Loihi2HwCfg, Loihi2SimCfg, RunContinuous, RunSteps,
+           LogConfig, loihi, plots, save, load]
