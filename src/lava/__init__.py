@@ -45,10 +45,12 @@ from lava.utils import loihi
 from lava.utils import plots
 from lava.utils.serialization import save, load
 
-__all__ = [Conv, Dense, DelayDense, LearningDense, SpikeDataloader,
-           StateDataloader, SourceRingBuffer, SinkRingBuffer, DeltaEncoder,
-           Injector, Extractor, Reset, RewardModulatedSTDP, STDPLoihi,
-           LIF, LearningLIF, LIFRefractory, Monitor, Receiver, RF, RF_IZ,
-           Sigma, Delta, SigmaDelta, ActivationMode, Sparse, LearningSparse,
-           DelaySparse, Loihi2HwCfg, Loihi2SimCfg, RunContinuous, RunSteps,
-           LogConfig, loihi, plots, save, load]
+__all__ = ['Conv', 'Dense', 'DelayDense', 'LearningDense', 'SpikeDataloader',
+           'StateDataloader', 'SourceRingBuffer', 'SinkRingBuffer',
+           'DeltaEncoder', 'Injector', 'Extractor', 'Reset',
+           'RewardModulatedSTDP', 'STDPLoihi', 'LIF', 'LearningLIF',
+           'LIFRefractory', 'Monitor', 'Receiver', 'RF', 'RF_IZ',
+           'Sigma', 'Delta', 'SigmaDelta', 'ActivationMode', 'Sparse',
+           'LearningSparse', 'DelaySparse', 'Loihi2HwCfg', 'Loihi2SimCfg',
+           'RunContinuous', 'RunSteps', 'LogConfig', 'loihi', 'plots',
+           'save', 'load']
