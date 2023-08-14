@@ -32,6 +32,11 @@ class AbstractPyConvModel(PyLoihiProcessModel):
     num_weight_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
     def run_spk(self) -> None:
+        if self.a_buf is None:
+            self.a_buf = np.zeros_like(self.a_out.shape)
+
+        self.a_out.send(self.a_buf)
+
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
         else:
@@ -43,10 +48,6 @@ class AbstractPyConvModel(PyLoihiProcessModel):
             self.groups[0]
         )
 
-        if self.a_buf is None:
-            self.a_buf = np.zeros_like(a_out)
-
-        self.a_out.send(self.a_buf)
         self.a_buf = self.clamp_precision(a_out)
 
     def clamp_precision(self, x: np.ndarray) -> np.ndarray:
