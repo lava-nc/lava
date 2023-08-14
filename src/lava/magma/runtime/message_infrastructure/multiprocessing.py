@@ -23,6 +23,7 @@ try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
     from lava.magma.compiler.channels.pyncchannel import PyNcChannel
+    from lava.magma.compiler.channels.ncpychannel import NcPyChannel
 except ImportError:
     class CPyChannel:
         pass
@@ -31,6 +32,9 @@ except ImportError:
         pass
 
     class PyNcChannel:
+        pass
+
+    class NcPyChannel:
         pass
 
 from lava.magma.core.sync.domain import SyncDomain
@@ -136,5 +140,7 @@ class MultiProcessing(MessageInfrastructureInterface):
             return CPyChannel
         elif channel_type == ChannelType.PyNc:
             return PyNcChannel
+        elif channel_type == ChannelType.NcPy:
+            return NcPyChannel
         else:
             raise Exception(f"Unsupported channel type {channel_type}")

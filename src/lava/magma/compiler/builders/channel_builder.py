@@ -15,6 +15,7 @@ from lava.magma.compiler.channels.interfaces import (
     ChannelType,
 )
 from lava.magma.compiler.utils import PortInitializer
+from lava.magma.compiler.var_model import NcSpikeIOVarModel
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
 
@@ -204,12 +205,14 @@ class ChannelBuilderPyNc(ChannelBuilderNx):
         channel_class = messaging_infrastructure.channel_class(
             channel_type=self.channel_type
         )
+
         return channel_class(
             self.src_port_initializer.name,
             self.dst_port_initializer.name,
             self.src_port_initializer.shape,
             self.src_port_initializer.d_type,
             self.src_port_initializer.size,
+            self.src_port_initializer.var_model,
             self.dst_port_initializer.var_model,
             self.src_port_initializer.connected_port_encoding_type
         )

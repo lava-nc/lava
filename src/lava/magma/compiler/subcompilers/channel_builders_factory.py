@@ -147,24 +147,31 @@ class ChannelBuildersFactory:
                     )
                     channel_builders.append(rv_chb)
 
-            if ch_type == ChannelType.PyNc:
+            if ch_type in [ChannelType.PyNc, ChannelType.NcPy]:
                 src_pt_init.connected_port_type = LoihiConnectedPortType.PY_NC
                 dst_pt_init.connected_port_type = LoihiConnectedPortType.PY_NC
-                lt = getattr(src_port.process.model_class, src_port.name).cls
+
+                if ch_type is ChannelType.PyNc:
+                    py_port = src_port
+                    py_port_init = src_pt_init
+                else:
+                    py_port = dst_port
+                    py_port_init = dst_pt_init
+
+                lt = getattr(py_port.process.model_class, py_port.name).cls
                 if lt in [PyInPort.VEC_DENSE, PyOutPort.VEC_DENSE]:
-                    src_pt_init.connected_port_encoding_type = \
+                    py_port_init.connected_port_encoding_type = \
                         LoihiConnectedPortEncodingType.VEC_DENSE
-                elif lt in [PyInPort.SCALAR_DENSE, PyOutPort.SCALAR_DENSE]:
-                    src_pt_init.connected_port_encoding_type = \
-                        LoihiConnectedPortEncodingType.SEQ_DENSE
                 elif lt in [PyInPort.VEC_SPARSE, PyOutPort.VEC_SPARSE]:
-                    src_pt_init.connected_port_encoding_type = \
+                    py_port_init.connected_port_encoding_type = \
                         LoihiConnectedPortEncodingType.VEC_SPARSE
                 else:
                     raise NotImplementedError
+
                 payload = channel_map[port_pair]
                 payload.src_port_initializer = src_pt_init
                 payload.dst_port_initializer = dst_pt_init
+
                 py_nc_cb = ChannelBuilderPyNc(
                     ch_type,
                     src_port.process,
