@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from scipy.sparse import spmatrix
+from scipy.sparse import spmatrix, csr_matrix
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -21,7 +21,8 @@ class Sparse(AbstractProcess):
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix
+    weights : scipy.sparse.spmatrix or np.ndarray
+        both get directly converted to a csr_matrix
         2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
@@ -57,7 +58,7 @@ class Sparse(AbstractProcess):
         """
     def __init__(self,
                  *,
-                 weights: spmatrix,
+                 weights: ty.Union[spmatrix, np.ndarray],
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -69,7 +70,10 @@ class Sparse(AbstractProcess):
                          **kwargs)
 
         # Transform weights to csr matrix
-        weights = weights.tocsr()
+        if type(weights) == np.ndarray:
+            weights = csr_matrix(weights)
+        else:
+            weights = weights.tocsr()
 
         shape = weights.shape
 
@@ -90,7 +94,8 @@ class LearningSparse(LearningConnectionProcess, Sparse):
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix
+    weights : scipy.sparse.spmatrix or np.ndarray
+        both get directly converted to a csr_matrix
         2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
@@ -150,7 +155,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         """
     def __init__(self,
                  *,
-                 weights: spmatrix,
+                 weights: ty.Union[spmatrix, np.ndarray],
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -172,7 +177,10 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          **kwargs)
 
         # Transform weights to csr matrix
-        weights = weights.tocsr()
+        if type(weights) == np.ndarray:
+            weights = csr_matrix(weights)
+        else:
+            weights = weights.tocsr()
 
         shape = weights.shape
 
@@ -189,7 +197,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
 class DelaySparse(Sparse):
     def __init__(self,
                  *,
-                 weights: spmatrix,
+                 weights: ty.Union[spmatrix, np.ndarray],
                  delays: ty.Union[spmatrix, int],
                  max_delay: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
@@ -201,7 +209,8 @@ class DelaySparse(Sparse):
 
         Parameters
         ----------
-        weights : spmatrix
+        weights : scipy.sparse.spmatrix or np.ndarray
+            both get directly converted to a csr_matrix
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
 

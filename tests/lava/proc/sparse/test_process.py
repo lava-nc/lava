@@ -15,7 +15,6 @@ class TestFunctions(unittest.TestCase):
     """Test helper function for Sparse"""
 
     def test_find_with_explicit_zeros(self):
-
         mat = np.random.randint(-10, 10, (3, 5))
         spmat = csr_matrix(mat)
         spmat.data[0] = 0
@@ -132,3 +131,52 @@ class TestDelaySparseProcess(unittest.TestCase):
                                  DelaySparse,
                                  weights=weights_sparse,
                                  delays=delays_sparse)
+
+    def test_ndarray_gets_converted_into_sparse(self):
+        """Tests if ndarray weights get converted to a spmatrix"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+
+        conn = Sparse(weights=weights)
+
+        self.assertIsInstance(conn.weights.get(), spmatrix)
+        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
+
+    def test_ndarray_gets_converted_into_sparse_for_learning(self):
+        """Tests if ndarray weights get converted to a spmatrix for
+        LearingSparse"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+        )
+
+        conn = LearningSparse(weights=weights, learning_rule=learning_rule)
+
+        self.assertIsInstance(conn.weights.get(), spmatrix)
+        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
+
+    def test_ndarray_gets_converted_into_sparse_for_delay(self):
+        """Tests if ndarray weights get converted to a spmatrix for
+        DelaySparse"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+        delays = np.random.randint(0, 3, shape)
+
+        conn = DelaySparse(weights=weights, delays=delays)
+
+        self.assertIsInstance(conn.weights.get(), spmatrix)
+        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
+
+
+if __name__ == '__main__':
+    unittest.main()
