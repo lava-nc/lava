@@ -23,7 +23,7 @@ class Sparse(AbstractProcess):
     ----------
     weights : scipy.sparse.spmatrix or np.ndarray
         both get directly converted to a csr_matrix
-        2D connection weight matrix as sparse matrix of form
+        2D connection weight matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
@@ -96,7 +96,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
     ----------
     weights : scipy.sparse.spmatrix or np.ndarray
         both get directly converted to a csr_matrix
-        2D connection weight matrix as sparse matrix of form
+        2D connection weight matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
