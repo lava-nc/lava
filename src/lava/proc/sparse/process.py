@@ -70,7 +70,7 @@ class Sparse(AbstractProcess):
                          **kwargs)
 
         # Transform weights to csr matrix
-        if type(weights) == np.ndarray:
+        if isinstance(weights, np.ndarray):
             weights = csr_matrix(weights)
         else:
             weights = weights.tocsr()
@@ -177,7 +177,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          **kwargs)
 
         # Transform weights to csr matrix
-        if type(weights) == np.ndarray:
+        if isinstance(weights, np.ndarray):
             weights = csr_matrix(weights)
         else:
             weights = weights.tocsr()
