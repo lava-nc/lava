@@ -15,8 +15,12 @@ from lava.magma.core.run_configs import Loihi2HwCfg
 
 class PerceptronLayer(AbstractProcess):
     def __init__(self, size, du, dv, bias_mant, bias_exp, vth) -> None:
-        super().__init__(shape=(size,), du=du, dv=dv,
-            bias_mant=bias_mant, bias_exp=bias_exp, vth=vth)
+        super().__init__(shape=(size,),
+                         du=du,
+                         dv=dv,
+                         bias_mant=bias_mant,
+                         bias_exp=bias_exp,
+                         vth=vth)
         self.iport = InPort(shape=(size,))
         self.oport = OutPort(shape=(size,))
 
@@ -24,14 +28,22 @@ class PerceptronLayer(AbstractProcess):
         dense_params_ = {'weights': weights_}
         self.dense1 = Dense(**dense_params_)
 
-        self.lif1 = LIF(shape=(size,), du=du, dv=dv,
-            bias_mant=bias_mant, bias_exp=bias_exp, vth=vth)
+        self.lif1 = LIF(shape=(size,),
+                        du=du,
+                        dv=dv,
+                        bias_mant=bias_mant,
+                        bias_exp=bias_exp,
+                        vth=vth)
 
         dense_params_ = {'weights': weights_ + 1}
         self.dense2 = Dense(**dense_params_)
 
-        self.lif2 = LIF(shape=(size,), du=du + 1, dv=dv + 1,
-            bias_mant=bias_mant + 1, bias_exp=bias_exp + 1, vth=vth + 1)
+        self.lif2 = LIF(shape=(size,),
+                        du=du + 1,
+                        dv=dv + 1,
+                        bias_mant=bias_mant + 1,
+                        bias_exp=bias_exp + 1,
+                        vth=vth + 1)
 
         self.iport.connect(self.dense1.s_in)
         self.dense1.a_out.connect(self.lif1.a_in)
@@ -66,36 +78,37 @@ class TestFoldedView(unittest.TestCase):
 
         self.assertEqual(layer1.folded_view, layer2.folded_view)
         self.assertEqual(layer1.folded_view.__name__,
-            compile_config['folded_view'][0])
+                         compile_config['folded_view'][0])
 
         self.assertEqual(layer1.procs.lif1.folded_view, layer1.folded_view)
         self.assertEqual(layer1.procs.lif1.folded_view_inst_id,
-            layer1.folded_view_inst_id)
+                         layer1.folded_view_inst_id)
         self.assertEqual(layer1.procs.dense1.folded_view, layer1.folded_view)
         self.assertEqual(layer1.procs.dense1.folded_view_inst_id,
-            layer1.folded_view_inst_id)
+                         layer1.folded_view_inst_id)
         self.assertEqual(layer1.procs.lif2.folded_view, layer1.folded_view)
         self.assertEqual(layer1.procs.lif2.folded_view_inst_id,
-            layer1.folded_view_inst_id)
+                         layer1.folded_view_inst_id)
         self.assertEqual(layer1.procs.dense2.folded_view, layer1.folded_view)
         self.assertEqual(layer1.procs.dense2.folded_view_inst_id,
-            layer1.folded_view_inst_id)
+                         layer1.folded_view_inst_id)
 
         self.assertEqual(layer2.procs.lif1.folded_view, layer2.folded_view)
         self.assertEqual(layer2.procs.lif1.folded_view_inst_id,
-            layer2.folded_view_inst_id)
+                         layer2.folded_view_inst_id)
         self.assertEqual(layer2.procs.dense1.folded_view, layer2.folded_view)
         self.assertEqual(layer2.procs.dense1.folded_view_inst_id,
-            layer2.folded_view_inst_id)
+                         layer2.folded_view_inst_id)
         self.assertEqual(layer2.procs.lif2.folded_view, layer2.folded_view)
         self.assertEqual(layer2.procs.dense2.folded_view, layer2.folded_view)
         self.assertEqual(layer2.procs.lif2.folded_view_inst_id,
-            layer2.folded_view_inst_id)
+                         layer2.folded_view_inst_id)
         self.assertEqual(layer2.procs.dense2.folded_view_inst_id,
-            layer2.folded_view_inst_id)
+                         layer2.folded_view_inst_id)
 
         self.assertNotEqual(layer1.folded_view_inst_id,
-            layer2.folded_view_inst_id)
+                            layer2.folded_view_inst_id)
+
 
 if __name__ == '__main__':
     unittest.main()
