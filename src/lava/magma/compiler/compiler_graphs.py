@@ -625,8 +625,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         self._compile_config = compile_config
         # 1. Find all Processes
         proc_list = find_processes(proc)
-        folded_view_proc_list = self._compile_config["folded_view"]
-        if folded_view_proc_list:
+        if self._compile_config and 'folded_view' in self._compile_config:
+            folded_view_proc_list = self._compile_config["folded_view"]
             annotate_folded_view(proc_list, folded_view_proc_list)
 
         # Check if any Process in proc_list is already compiled
@@ -989,6 +989,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         ProcGroupDiGraphs._propagate_var_ports(proc)
         # Discover sub processes and register with parent process
         sub_procs = model.find_sub_procs()
+        proc.register_sub_procs(sub_procs)
         proc.validate_var_aliases()
         # Recursively map sub processes to their ProcModel
         return ProcGroupDiGraphs._map_proc_to_model(list(sub_procs.values()),
