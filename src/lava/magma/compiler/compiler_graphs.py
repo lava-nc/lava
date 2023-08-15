@@ -162,6 +162,7 @@ def find_processes(proc: AbstractProcess,
 
     return seen_procs
 
+
 def annotate_folded_view(proc_list: ty.List[AbstractProcess],
                          folded_procs: ty.List[str] = None):
     """Annotate folded views and propagate them recursively
@@ -177,6 +178,7 @@ def annotate_folded_view(proc_list: ty.List[AbstractProcess],
 
     for p in annotated:
         p.propagate_folded_views()
+
 
 class DiGraphBase(ntx.DiGraph):
     """Base class for directed graphs in the compiler.
@@ -616,7 +618,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     """
 
     def __init__(self, proc: AbstractProcess, run_cfg: RunConfig,
-        compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
+                 compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
 
         self._base_proc = proc  # Process on which compile/run was called
         self._run_cfg = run_cfg

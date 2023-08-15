@@ -475,6 +475,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     def folded_view_inst_id(self, inst_id : int = -1):
         self._folded_view_inst_id = inst_id
 
+
 class ProcessParameters:
     """Wrapper around a dictionary that is used to pass parameters from a
     Process to its ProcessModels. The dictionary can be filled with an
