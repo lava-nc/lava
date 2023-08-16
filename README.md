@@ -73,7 +73,7 @@ cd $HOME
 curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.6.0
+git checkout v0.8.0
 ./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
@@ -90,7 +90,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.6.0
+git checkout v0.8.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
