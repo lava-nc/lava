@@ -222,9 +222,11 @@ def validate_shape(shape: ty.Tuple[int, ...]):
                         f"<shape> = {shape}.")
 
     for s in shape:
-        if not isinstance(s, int):
-            raise TypeError("Expected all elements of <shape> to be of "
-                            f"type int. Got <shape> = {shape}.")
+        try:
+            int(s) == s
+        except TypeError:
+            raise TypeError("Expected all elements of <shape> to be integers."
+                            f"Got <shape> = {shape}.")
         if s <= 0:
             raise ValueError("Expected all elements of <shape> to be "
                              f"strictly positive. Got <shape> = {shape}.")
