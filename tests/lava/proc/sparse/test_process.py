@@ -40,7 +40,6 @@ class TestSparseProcess(unittest.TestCase):
 
         conn = Sparse(weights=weights_sparse)
 
-        self.assertIsInstance(conn.weights.init, spmatrix)
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
 
 
@@ -71,7 +70,6 @@ class TestLearningSparseProcess(unittest.TestCase):
         conn = LearningSparse(weights=weights_sparse,
                               learning_rule=learning_rule)
 
-        self.assertIsInstance(conn.weights.init, spmatrix)
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
 
 
@@ -94,7 +92,6 @@ class TestDelaySparseProcess(unittest.TestCase):
 
         conn = DelaySparse(weights=weights_sparse, delays=delays_sparse)
 
-        self.assertIsInstance(conn.weights.init, spmatrix)
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
 
     def test_validate_shapes(self):
@@ -132,20 +129,20 @@ class TestDelaySparseProcess(unittest.TestCase):
                                  weights=weights_sparse,
                                  delays=delays_sparse)
 
-    def test_ndarray_gets_converted_into_sparse(self):
-        """Tests if ndarray weights get converted to a spmatrix"""
+    def test_init_of_sparse_with_ndarray(self):
+        """Tests instantiation of Sparse with ndarray as
+         weights"""
 
         shape = (3, 2)
         weights = np.random.random(shape)
 
         conn = Sparse(weights=weights)
 
-        self.assertIsInstance(conn.weights.get(), spmatrix)
         np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
 
-    def test_ndarray_gets_converted_into_sparse_for_learning(self):
-        """Tests if ndarray weights get converted to a spmatrix for
-        LearingSparse"""
+    def test_init_of_learningsparse_with_ndarray(self):
+        """Tests instantiation of LearningSparse with
+        ndarray as weights"""
 
         shape = (3, 2)
         weights = np.random.random(shape)
@@ -161,12 +158,10 @@ class TestDelaySparseProcess(unittest.TestCase):
 
         conn = LearningSparse(weights=weights, learning_rule=learning_rule)
 
-        self.assertIsInstance(conn.weights.get(), spmatrix)
         np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
 
-    def test_ndarray_gets_converted_into_sparse_for_delay(self):
-        """Tests if ndarray weights get converted to a spmatrix for
-        DelaySparse"""
+    def test_init_of_delaysparse_with_ndarray(self):
+        """Tests instantiation of DelaySparse with ndarray as weights"""
 
         shape = (3, 2)
         weights = np.random.random(shape)
@@ -174,7 +169,6 @@ class TestDelaySparseProcess(unittest.TestCase):
 
         conn = DelaySparse(weights=weights, delays=delays)
 
-        self.assertIsInstance(conn.weights.get(), spmatrix)
         np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
 
 

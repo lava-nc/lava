@@ -22,7 +22,6 @@ class Sparse(AbstractProcess):
     Parameters
     ----------
     weights : scipy.sparse.spmatrix or np.ndarray
-        both get directly converted to a csr_matrix
         2D connection weight matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
@@ -95,7 +94,6 @@ class LearningSparse(LearningConnectionProcess, Sparse):
     Parameters
     ----------
     weights : scipy.sparse.spmatrix or np.ndarray
-        both get directly converted to a csr_matrix
         2D connection weight matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
@@ -210,7 +208,6 @@ class DelaySparse(Sparse):
         Parameters
         ----------
         weights : scipy.sparse.spmatrix or np.ndarray
-            both get directly converted to a csr_matrix
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
 
