@@ -42,6 +42,17 @@ class TestSparseProcess(unittest.TestCase):
 
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
 
+    def test_init_of_sparse_with_ndarray(self):
+        """Tests instantiation of Sparse with ndarray as
+         weights"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+
+        conn = Sparse(weights=weights)
+
+        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
+
 
 class TestLearningSparseProcess(unittest.TestCase):
     """Tests for LearningSparse class"""
@@ -71,6 +82,26 @@ class TestLearningSparseProcess(unittest.TestCase):
                               learning_rule=learning_rule)
 
         np.testing.assert_array_equal(conn.weights.init.toarray(), weights)
+
+    def test_init_of_learningsparse_with_ndarray(self):
+        """Tests instantiation of LearningSparse with
+        ndarray as weights"""
+
+        shape = (3, 2)
+        weights = np.random.random(shape)
+
+        learning_rule = STDPLoihi(
+            learning_rate=1,
+            A_plus=1,
+            A_minus=-2,
+            tau_plus=10,
+            tau_minus=10,
+            t_epoch=2,
+        )
+
+        conn = LearningSparse(weights=weights, learning_rule=learning_rule)
+
+        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
 
 
 class TestDelaySparseProcess(unittest.TestCase):
@@ -128,37 +159,6 @@ class TestDelaySparseProcess(unittest.TestCase):
                                  DelaySparse,
                                  weights=weights_sparse,
                                  delays=delays_sparse)
-
-    def test_init_of_sparse_with_ndarray(self):
-        """Tests instantiation of Sparse with ndarray as
-         weights"""
-
-        shape = (3, 2)
-        weights = np.random.random(shape)
-
-        conn = Sparse(weights=weights)
-
-        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
-
-    def test_init_of_learningsparse_with_ndarray(self):
-        """Tests instantiation of LearningSparse with
-        ndarray as weights"""
-
-        shape = (3, 2)
-        weights = np.random.random(shape)
-
-        learning_rule = STDPLoihi(
-            learning_rate=1,
-            A_plus=1,
-            A_minus=-2,
-            tau_plus=10,
-            tau_minus=10,
-            t_epoch=2,
-        )
-
-        conn = LearningSparse(weights=weights, learning_rule=learning_rule)
-
-        np.testing.assert_array_equal(conn.weights.get().toarray(), weights)
 
     def test_init_of_delaysparse_with_ndarray(self):
         """Tests instantiation of DelaySparse with ndarray as weights"""
