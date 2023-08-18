@@ -1,6 +1,7 @@
 # Copyright (C) 2021-23 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+from abc import abstractmethod
 
 import numpy as np
 from scipy.sparse import spmatrix, csr_matrix
@@ -55,6 +56,7 @@ class Sparse(AbstractProcess):
         spikes as binary spikes (num_message_bits = 0) or as graded
         spikes (num_message_bits > 0). Default is 0.
         """
+
     def __init__(self,
                  *,
                  weights: ty.Union[spmatrix, np.ndarray],
@@ -68,12 +70,7 @@ class Sparse(AbstractProcess):
                          log_config=log_config,
                          **kwargs)
 
-        # Transform weights to csr matrix
-        if isinstance(weights, np.ndarray):
-            weights = csr_matrix(weights)
-        else:
-            weights = weights.tocsr()
-
+        weights = self._create_csr_matrix_from_weights(weights)
         shape = weights.shape
 
         # Ports
@@ -84,6 +81,15 @@ class Sparse(AbstractProcess):
         self.weights = Var(shape=shape, init=weights)
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
+
+    @staticmethod
+    def _create_csr_matrix_from_weights(weights):
+        # Transform weights to csr matrix
+        if isinstance(weights, np.ndarray):
+            weights = csr_matrix(weights)
+        else:
+            weights = weights.tocsr()
+        return weights
 
 
 class LearningSparse(LearningConnectionProcess, Sparse):
@@ -151,6 +157,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         x1 and regular impulse addition to x2 will be considered by the
         learning rule Products conditioned on x0.
         """
+
     def __init__(self,
                  *,
                  weights: ty.Union[spmatrix, np.ndarray],
@@ -174,12 +181,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
-        # Transform weights to csr matrix
-        if isinstance(weights, np.ndarray):
-            weights = csr_matrix(weights)
-        else:
-            weights = weights.tocsr()
-
+        weights = self._create_csr_matrix_from_weights(weights)
         shape = weights.shape
 
         # Ports
