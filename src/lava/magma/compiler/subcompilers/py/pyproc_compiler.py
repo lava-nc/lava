@@ -34,7 +34,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.subcompilers.constants import SPIKE_BLOCK_CORE
 
 COUNTERS_PER_SPIKE_IO = 65535
-SPIKE_IO_COUNTER_START_INDEX = 1
+SPIKE_IO_COUNTER_START_INDEX = 2
 
 try:
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
