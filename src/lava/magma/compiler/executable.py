@@ -8,6 +8,7 @@ import typing as ty
 from dataclasses import dataclass
 
 from lava.magma.compiler.builders.interfaces import AbstractChannelBuilder
+from lava.magma.compiler.channels.watchdog import WatchdogManagerBuilder
 from lava.magma.core.sync.domain import SyncDomain
 
 if ty.TYPE_CHECKING:
@@ -33,6 +34,7 @@ class Executable:
     # py_builders: ty.Dict[AbstractProcess, NcProcessBuilder]
     # c_builders: ty.Dict[AbstractProcess, CProcessBuilder]
     # nc_builders: ty.Dict[AbstractProcess, PyProcessBuilder]
+    process_list: ty.List[AbstractProcess]  # All leaf processes, flat list.
     proc_builders: ty.Dict[AbstractProcess, 'AbstractProcessBuilder']
     channel_builders: ty.List[ChannelBuilderMp]
     node_configs: ty.List[NodeConfig]
@@ -41,7 +43,8 @@ class Executable:
                                                   RuntimeServiceBuilder]] = None
     sync_channel_builders: ty.Optional[
         ty.Iterable[AbstractChannelBuilder]] = None
+    watchdog_manager_builder: WatchdogManagerBuilder = None
 
     def assign_runtime_to_all_processes(self, runtime):
-        for p in self.proc_builders.keys():
+        for p in self.process_list:
             p.runtime = runtime

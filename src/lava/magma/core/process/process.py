@@ -18,7 +18,6 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.run_conditions import AbstractRunCondition
 from lava.magma.core.run_configs import RunConfig
 from lava.magma.runtime.runtime import Runtime
-from lava.magma.runtime.runtime_services.enums import LoihiVersion
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.model.model import AbstractProcessModel
@@ -223,7 +222,6 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def __enter__(self):
         """Executed when Process enters a "with" block of a context manager."""
-        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop the runtime when exiting "with" block of a context manager."""
@@ -283,7 +281,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
 
     def register_sub_procs(self, procs: ty.Dict[str, AbstractProcess]):
         """Registers other processes as sub processes of this process."""
-        for name, p in procs.items():
+        for p in procs.values():
             if not isinstance(p, AbstractProcess):
                 raise AssertionError
             p.parent_proc = self
@@ -349,10 +347,11 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
                 raise ValueError("run_cfg must not be None when calling"
                                  " Process.run() unless the process has already"
                                  " been compiled.")
-            self.create_runtime(run_cfg, compile_config)
+            self.create_runtime(run_cfg=run_cfg, compile_config=compile_config)
         self._runtime.start(condition)
 
-    def create_runtime(self, run_cfg: RunConfig,
+    def create_runtime(self, run_cfg: ty.Optional[RunConfig] = None,
+                       executable: ty.Optional[Executable] = None,
                        compile_config:
                        ty.Optional[ty.Dict[str, ty.Any]] = None):
         """Creates a runtime for this process and all connected processes by
@@ -371,7 +370,8 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         compile_config: Dict[str, Any], optional
             Configuration options for the Compiler and SubCompilers.
         """
-        executable = self.compile(run_cfg, compile_config)
+        if executable is None:
+            executable = self.compile(run_cfg, compile_config)
         self._runtime = Runtime(executable,
                                 ActorType.MultiProcessing,
                                 loglevel=self._log_config.level)
@@ -614,3 +614,9 @@ class Collection:
             return getattr(self, self.member_names[self._iterator])
         self._iterator = -1
         raise StopIteration
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d

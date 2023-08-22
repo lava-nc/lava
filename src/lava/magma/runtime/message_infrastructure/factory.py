@@ -6,14 +6,14 @@ from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.runtime.message_infrastructure.multiprocessing import \
     MultiProcessing
 
-"""Factory class to create the messaging infrastructure"""
-
 
 class MessageInfrastructureFactory:
-    """Creates the message infrastructure instance based on type"""
+    """Factory class to create the messaging infrastructure"""
+
     @staticmethod
     def create(factory_type: ActorType):
-        """type of actor framework being chosen"""
+        """Creates the message infrastructure instance based on type
+        of actor framework being chosen."""
         if factory_type == ActorType.MultiProcessing:
             return MultiProcessing()
         else:

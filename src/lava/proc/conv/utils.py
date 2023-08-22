@@ -157,7 +157,7 @@ def output_shape(input_shape: Tuple[int, int, int],
     return x_out, y_out, out_channels
 
 
-def conv(input: np.ndarray,
+def conv(input_: np.ndarray,
          weight: np.ndarray,
          kernel_size: Tuple[int, int],
          stride: Tuple[int, int],
@@ -168,7 +168,7 @@ def conv(input: np.ndarray,
 
     Parameters
     ----------
-    input : 3 dimensional np array
+    input_ : 3 dimensional np array
         convolution input.
     weight : 4 dimensional np array
         convolution kernel weight.
@@ -192,7 +192,7 @@ def conv(input: np.ndarray,
         # with torch.no_grad():  # this seems to cause problems
         output = F.conv2d(
             torch.unsqueeze(  # torch expects a batch dimension NCHW
-                torch.FloatTensor(input.transpose([2, 1, 0])),
+                torch.FloatTensor(input_.transpose([2, 1, 0])),
                 dim=0,
             ),
             torch.FloatTensor(
@@ -202,20 +202,20 @@ def conv(input: np.ndarray,
                 # torch cannot handle negative stride
                 weight[:, ::-1, ::-1].transpose([0, 3, 2, 1]).copy()
             ),
-            stride=stride[::-1].tolist(),
-            padding=padding[::-1].tolist(),
-            dilation=dilation[::-1].tolist(),
+            stride=list(stride[::-1]),
+            padding=list(padding[::-1]),
+            dilation=list(dilation[::-1]),
             groups=groups
         )[0].cpu().data.numpy().transpose([2, 1, 0])
     else:
         output = conv_scipy(
-            input, weight, kernel_size, stride, padding, dilation, groups
+            input_, weight, kernel_size, stride, padding, dilation, groups
         )
 
     return output.astype(weight.dtype)
 
 
-def conv_scipy(input: np.ndarray,
+def conv_scipy(input_: np.ndarray,
                weight: np.ndarray,
                kernel_size: Tuple[int, int],
                stride: Tuple[int, int],
@@ -226,7 +226,7 @@ def conv_scipy(input: np.ndarray,
 
     Parameters
     ----------
-    input : 3 dimensional np array
+    input_ : 3 dimensional np array
         convolution input.
     weight : 4 dimensional np array
         convolution kernel weight.
@@ -246,7 +246,7 @@ def conv_scipy(input: np.ndarray,
     3 dimensional np array
         convolution output
     """
-    input_shape = input.shape
+    input_shape = input_.shape
     output = np.zeros(
         output_shape(
             input_shape, weight.shape[0],
@@ -263,12 +263,12 @@ def conv_scipy(input: np.ndarray,
     dilated_weight[:, ::dilation[0], ::dilation[1], :] = weight
 
     input_padded = np.pad(
-        input,
+        input_,
         ((padding[0], padding[0]), (padding[1], padding[1]), (0, 0)),
         mode='constant',
     )
 
-    if input.shape[-1] % groups != 0:
+    if input_.shape[-1] % groups != 0:
         raise Exception(
             f'Expected number of in_channels to be divisible by group.'
             f'Found {weight.shape[3] = } and {groups = }.'
@@ -280,7 +280,7 @@ def conv_scipy(input: np.ndarray,
         )
 
     k_grp = output.shape[2] // groups
-    c_grp = input.shape[2] // groups
+    c_grp = input_.shape[2] // groups
     for g in range(groups):
         for k in range(k_grp):
             for c in range(c_grp):

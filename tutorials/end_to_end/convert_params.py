@@ -38,6 +38,7 @@ def _mean_input(num_neurons_exc, gamma, g_factor, weight, rate, bias):
 
     return mean_inp
 
+
 def _std_input(num_neurons_exc, gamma, g_factor, weight, rate):
     '''
     Calculate mean input to single neuron given mean excitatory weight.
@@ -61,6 +62,7 @@ def _std_input(num_neurons_exc, gamma, g_factor, weight, rate):
         Mean input received by each neuron
     '''
     return num_neurons_exc * (1 + gamma * g_factor**2) * weight ** 2 * rate
+
 
 def _y_th(vth, mean, std, dv_exc, du_exc):
     '''
@@ -89,6 +91,7 @@ def _y_th(vth, mean, std, dv_exc, du_exc):
 
     return y_th
 
+
 def _y_r(mean, std, dv_exc, du_exc):
     '''
     Effective reset, see Grytskyy et al. 2013.
@@ -116,11 +119,13 @@ def _y_r(mean, std, dv_exc, du_exc):
 
     return y_r
 
+
 def f(y):
     '''
     Derivative of transfer function of LIF neuron at given argument.
     '''
     return np.exp(y ** 2) * (1 + erf(y))
+
 
 def _alpha(vth, mean, std, dv_exc, du_exc):
     '''
@@ -152,6 +157,7 @@ def _alpha(vth, mean, std, dv_exc, du_exc):
 
     return val
 
+
 def _beta(vth, mean, std, dv_exc, du_exc):
     '''
     Auxiliary variable describing contribution of square of weights for
@@ -176,14 +182,16 @@ def _beta(vth, mean, std, dv_exc, du_exc):
         Contribution of square of weights
     '''
     val = np.sqrt(np.pi) * (mean * dv_exc * 0.01) ** 2
-    val *= 1/(2 * std ** 2)
+    val *= 1 / (2 * std ** 2)
     val *= (f(_y_th(vth, mean, std, dv_exc, du_exc)) * (vth - mean) / std
             - f(_y_r(mean, std, dv_exc, du_exc)) * (-1 * mean) / std)
 
     return val
 
-def convert_rate_to_lif_params(shape_exc, dr_exc, bias_exc, shape_inh, dr_inh,
-                              bias_inh, g_factor, q_factor, weights, **kwargs):
+
+def convert_rate_to_lif_params(
+        shape_exc, dr_exc, bias_exc, shape_inh, dr_inh, bias_inh, g_factor,
+        q_factor, weights, **kwargs):
     '''Convert rate parameters to LIF parameters.
     The mapping is based on A unified view on weakly correlated recurrent
     network, Grytskyy et al. 2013.
@@ -224,7 +232,8 @@ def convert_rate_to_lif_params(shape_exc, dr_exc, bias_exc, shape_inh, dr_inh,
     gamma = float(num_neurons_exc) / float(num_neurons_inh)
 
     # Assert that network is balanced.
-    assert gamma * g_factor > 1, "Network not balanced, increase g_factor"
+    if gamma * g_factor <= 1:
+        raise AssertionError("Network not balanced, increase g_factor")
 
     # Set timescales of neurons.
     dv_exc = 1 * dr_exc  # Dynamics of membrane potential as fast as rate.
@@ -275,7 +284,7 @@ def convert_rate_to_lif_params(shape_exc, dr_exc, bias_exc, shape_inh, dr_inh,
         mean_inp = _mean_input(num_neurons_exc, gamma,
                                g_factor, weight, rate, bias)
         std_inp = _std_input(num_neurons_exc, gamma,
-                            g_factor, weight, rate)
+                             g_factor, weight, rate)
         alpha = _alpha(vth_exc, mean_inp, std_inp, dv_exc, du_inh)
         beta = _beta(vth_exc, mean_inp, std_inp, dv_exc, du_inh)
 

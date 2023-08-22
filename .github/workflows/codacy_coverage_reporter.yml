@@ -1,0 +1,29 @@
+name: Codacy Coverage Reporter
+
+on:
+  workflow_run:
+     workflows: ["Run CI"]
+     types: [completed]
+     branches: [main]
+  workflow_dispatch:
+
+jobs:
+  codacy-coverage-reporter:
+     runs-on: ubuntu-latest
+     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+     name: codacy-coverage-reporter
+     steps:
+       - name: Download artifact
+         uses: dawidd6/action-download-artifact@v2
+         with:
+           workflow: ci.yml
+           workflow_conclusion: "success"
+           branch: main
+           event: push
+           name: coverage
+
+       - name: Run codacy-coverage-reporter
+         uses: codacy/codacy-coverage-reporter-action@v1
+         with:
+           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+           coverage-reports: coverage.xml

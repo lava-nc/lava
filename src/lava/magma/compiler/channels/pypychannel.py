@@ -10,6 +10,7 @@ from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from scipy.sparse import csr_matrix
 from lava.utils.sparse import find
+from lava.magma.compiler.channels.watchdog import Watchdog, NoOPWatchdog
 
 
 import numpy as np
@@ -38,7 +39,8 @@ class CspSendPort(AbstractCspSendPort):
     semantics. It can be understood as the input port of a CSP channel.
     """
 
-    def __init__(self, name, shm, proto, size, req, ack):
+    def __init__(self, name, shm, proto, size, req, ack,
+                 io_watchdog: Watchdog, join_watchdog: Watchdog):
         """Instantiates CspSendPort object and class attributes
 
         Parameters
@@ -62,8 +64,11 @@ class CspSendPort(AbstractCspSendPort):
         self._done = False
         self._array = []
         self._semaphore = None
-        self.observer = None
+        self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
+
+        self._io_watchdog: Watchdog = io_watchdog
+        self._join_watchdog: Watchdog = join_watchdog
 
     @property
     def name(self) -> str:
@@ -126,24 +131,26 @@ class CspSendPort(AbstractCspSendPort):
         """
         Send data on the channel. May block if the channel is already full.
         """
-        if data.shape != self._shape:
-            raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
+        with self._io_watchdog:
+            if data.shape != self._shape:
+                raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
 
-        if isinstance(data, csr_matrix):
-            data = find(data, explicit_zeros=True)[2]
+            if isinstance(data, csr_matrix):
+                data = find(data, explicit_zeros=True)[2]
 
-        self._semaphore.acquire()
-        self._array[self._idx][:] = data[:]
-        self._idx = (self._idx + 1) % self._size
-        self._req.release()
+            self._semaphore.acquire()
+            self._array[self._idx][:] = data[:]
+            self._idx = (self._idx + 1) % self._size
+            self._req.release()
 
     def join(self):
-        if not self._done:
-            self._done = True
-            if self.thread is not None:
-                self._ack.release()
-            self._ack = None
-            self._req = None
+        with self._join_watchdog:
+            if not self._done:
+                self._done = True
+                if self.thread is not None:
+                    self._ack.release()
+                self._ack = None
+                self._req = None
 
 
 class CspRecvQueue(Queue):
@@ -186,7 +193,8 @@ class CspRecvPort(AbstractCspRecvPort):
     semantics. It can be understood as the output port of a CSP channel.
     """
 
-    def __init__(self, name, shm, proto, size, req, ack):
+    def __init__(self, name, shm, proto, size, req, ack,
+                 io_watchdog, join_watchdog):
         """Instantiates CspRecvPort object and class attributes
 
         Parameters
@@ -210,8 +218,11 @@ class CspRecvPort(AbstractCspRecvPort):
         self._done = False
         self._array = []
         self._queue = None
-        self.observer = None
+        self.observer: ty.Optional[ty.Callable[[], ty.Any]] = None
         self.thread = None
+
+        self._io_watchdog = io_watchdog
+        self._join_watchdog = join_watchdog
 
     @property
     def name(self) -> str:
@@ -283,19 +294,21 @@ class CspRecvPort(AbstractCspRecvPort):
         """
         Receive from the channel. Blocks if there is no data on the channel.
         """
-        self._queue.get()
-        result = self._array[self._idx].copy()
-        self._idx = (self._idx + 1) % self._size
-        self._ack.release()
-        return result
+        with self._io_watchdog:
+            self._queue.get()
+            result = self._array[self._idx].copy()
+            self._idx = (self._idx + 1) % self._size
+            self._ack.release()
+            return result
 
     def join(self):
-        if not self._done:
-            self._done = True
-            if self.thread is not None:
-                self._req.release()
-            self._ack = None
-            self._req = None
+        with self._join_watchdog:
+            if not self._done:
+                self._done = True
+                if self.thread is not None:
+                    self._req.release()
+                self._ack = None
+                self._req = None
 
 
 class CspSelector:
@@ -311,26 +324,30 @@ class CspSelector:
         with self._cv:
             self._cv.notify_all()
 
-    def _set_observer(self, channel_actions, observer):
+    @staticmethod
+    def _set_observer(
+            channel_actions: ty.Tuple,
+            observer: ty.Union[ty.Callable[[], ty.Any], None]) -> None:
         for channel, _ in channel_actions:
             channel.observer = observer
 
     def select(
             self,
-            *args: ty.Tuple[
-                ty.Union[CspSendPort, CspRecvPort], ty.Callable[[], ty.Any]
+            *channel_actions: ty.Tuple[
+                ty.Union[CspSendPort, CspRecvPort],
+                ty.Callable[[], ty.Any]
             ],
-    ):
+    ) -> None:
         """
         Wait for any channel to become ready, then execute the corresponding
         callable and return the result.
         """
         with self._cv:
-            self._set_observer(args, self._changed)
+            self._set_observer(channel_actions, self._changed)
             while True:
-                for channel, action in args:
+                for channel, action in channel_actions:
                     if channel.probe():
-                        self._set_observer(args, None)
+                        self._set_observer(channel_actions, None)
                         return action()
                 self._cv.wait()
 
@@ -347,6 +364,10 @@ class PyPyChannel(Channel):
             shape,
             dtype,
             size,
+            src_send_watchdog=NoOPWatchdog(None),
+            src_join_watchdog=NoOPWatchdog(None),
+            dst_recv_watchdog=NoOPWatchdog(None),
+            dst_join_watchdog=NoOPWatchdog(None)
     ):
         """Instantiates PyPyChannel object and class attributes
 
@@ -365,8 +386,12 @@ class PyPyChannel(Channel):
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
-        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack)
-        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack)
+        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack,
+                                     src_send_watchdog,
+                                     src_join_watchdog)
+        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack,
+                                     dst_recv_watchdog,
+                                     dst_join_watchdog)
 
     def nbytes(self, shape, dtype):
         return np.prod(shape) * np.dtype(dtype).itemsize

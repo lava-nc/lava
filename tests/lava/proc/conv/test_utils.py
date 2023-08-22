@@ -18,40 +18,39 @@ else:
     # in this case, the test only checks for error during
     # utils.conv calculation
 
-np.random.seed(8534)
-
 
 class TestConv(unittest.TestCase):
     def test_conv(self) -> None:
         """Test convolution implementation"""
+        prng = np.random.RandomState(8534)
         for _ in range(10):  # testing with 10 random combinations
-            groups = np.random.randint(4) + 1
-            in_channels = (np.random.randint(8) + 1) * groups
-            out_channels = (np.random.randint(8) + 1) * groups
-            kernel_size = np.random.randint([9, 9]) + 1
-            stride = np.random.randint([5, 5]) + 1
-            padding = np.random.randint([5, 5])
-            dilation = np.random.randint([4, 4]) + 1
+            groups = prng.randint(4) + 1
+            in_channels = (prng.randint(8) + 1) * groups
+            out_channels = (prng.randint(8) + 1) * groups
+            kernel_size = prng.randint([9, 9]) + 1
+            stride = prng.randint([5, 5]) + 1
+            padding = prng.randint([5, 5])
+            dilation = prng.randint([4, 4]) + 1
             weight_dims = [out_channels,
                            kernel_size[0], kernel_size[1],
                            in_channels // groups]
-            weights = np.random.randint(256, size=weight_dims) - 128
-            input = np.random.random(
+            weights = prng.randint(256, size=weight_dims) - 128
+            input_ = prng.random(
                 (
                     # input needs to be a certain size
                     # to make sure the output dimension is never negative
-                    np.random.randint([128, 128]) + kernel_size * dilation
+                    prng.randint([128, 128]) + kernel_size * dilation
                 ).tolist()
                 + [in_channels]
             )
 
-            out = utils.conv_scipy(input, weights, kernel_size,
+            out = utils.conv_scipy(input_, weights, kernel_size,
                                    stride, padding, dilation, groups)
 
             if compare:  # if torch is available, compare against it.
                 out_gt = F.conv2d(
                     torch.unsqueeze(  # torch expects a batch dimension NCHW
-                        torch.FloatTensor(input.transpose([2, 1, 0])),
+                        torch.FloatTensor(input_.transpose([2, 1, 0])),
                         dim=0,
                     ),
                     torch.FloatTensor(
@@ -70,7 +69,7 @@ class TestConv(unittest.TestCase):
                 error = np.abs(out - out_gt).mean()
                 if error >= 1e-3:  # small eps to account for float/double calc
                     # Setting failed! Print out the dimensions for debugging.
-                    print(f'{input.shape=}')
+                    print(f'{input_.shape=}')
                     print(f'{weights.shape=}')
                     print(f'{kernel_size=}')
                     print(f'{stride=}')
@@ -89,6 +88,7 @@ class TestConv(unittest.TestCase):
 
     def test_conv_saved_data(self) -> None:
         """Test convolution implementation against saved data."""
+        prng = np.random.RandomState(8534)
         for i in range(10):  # testing with 10 random combinations
             gt_data = np.load(os.path.dirname(os.path.abspath(__file__))
                               + f'/ground_truth/gt_conv_paris_{i}.npz')
@@ -111,23 +111,24 @@ class TestConv(unittest.TestCase):
 
     def test_conv_to_sparse(self) -> None:
         """Tests translation of a conv to a sparse layer"""
+        prng = np.random.RandomState(8534)
         for _ in range(10):
-            groups = np.random.randint(4) + 1
-            in_channels = (np.random.randint(4) + 1) * groups
-            out_channels = (np.random.randint(8) + 1) * groups
-            kernel_size = np.random.randint([5, 5]) + 1
-            stride = np.random.randint([2, 2]) + 1
-            padding = np.random.randint([2, 2])
-            dilation = np.random.randint([2, 2]) + 1
+            groups = prng.randint(4) + 1
+            in_channels = (prng.randint(4) + 1) * groups
+            out_channels = (prng.randint(8) + 1) * groups
+            kernel_size = prng.randint([5, 5]) + 1
+            stride = prng.randint([2, 2]) + 1
+            padding = prng.randint([2, 2])
+            dilation = prng.randint([2, 2]) + 1
             weight_dims = [out_channels,
                            kernel_size[0], kernel_size[1],
                            in_channels // groups]
-            weights = np.random.randint(256, size=weight_dims) - 128
-            input = np.random.random(
+            weights = prng.randint(256, size=weight_dims) - 128
+            input = prng.random(
                 (
                     # input needs to be a certain size
                     # to make sure the output dimension is never negative
-                    np.random.randint([16, 16]) + kernel_size * dilation
+                    prng.randint([16, 16]) + kernel_size * dilation
                 ).tolist()
                 + [in_channels]
             )

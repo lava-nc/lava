@@ -10,7 +10,8 @@ packages = [
     {include = "tests"}
 ]
 include = ["tutorials"]
-version = "0.7.0"
+version = "0.8.0.dev0"
+readme = "README.md"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
 repository = "https://github.com/lava-nc/lava"
@@ -47,10 +48,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
 
-numpy = "^1.22.2"
-scipy = "^1.8.0"
+numpy = "^1.24.4"
+scipy = "^1.10.1"
 networkx = "<=2.8.7"
-asteval = "^0.9.27"
+asteval = "^0.9.31"
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.4"
@@ -170,11 +171,11 @@ pep8-naming = ["-*"]
 # mccabe = ["+*"]
 # pep8-naming = ["+*"]
 # pyflakes = ["+*"]
-# pylint = ["+*"]
+pylint = ["+*"]
 
 pycodestyle = ["+*", "-W503", "-E203"]
-pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
-pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
+# pyflakes = ["-*"]                           # Disable temporarily until lint fix is pushed
+# pylint = ["-*"]                             # Disable temporarily until lint fix is pushed
 
 [tool.flakeheaven.exceptions."tests/"]
 pycodestyle = ["-F401"]                     # Disable a check

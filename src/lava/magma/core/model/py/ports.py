@@ -51,7 +51,6 @@ class AbstractPyPort(AbstractPortImplementation):
         -------
         A list of all CSP Ports connected to the PyPort.
         """
-        pass
 
 
 class AbstractPyIOPort(AbstractPyPort):

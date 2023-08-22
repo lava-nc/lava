@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy.sparse import csr_matrix, spmatrix, vstack, find
-import warnings
 from lava.magma.core.model.py.connection import (
     LearningConnectionModelFloat,
     LearningConnectionModelBitApproximate,
@@ -209,6 +208,9 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
     """Abstract Conn Process with Sparse synaptic connections which incorporates
     delays into the Conn Process.
     """
+    weights: csr_matrix = None
+    delays: csr_matrix = None
+    a_buff: np.ndarray = None
 
     def calc_act(self, s_in) -> np.ndarray:
         """
@@ -222,12 +224,13 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         # (n_flat_output_neurons * (max_delay + 1), n_flat_output_neurons)
         #  which is then transposed to get the activation matrix.
         return np.reshape(self.get_delay_wgts_mat(self.weights,
-                                                  self.delays).dot(s_in),
-                          (np.max(self.delays) + 1,
-                          self.weights.shape[0])).T
+                                                  self.delays,
+                                                  self.a_buff.shape[-1] - 1
+                                                  ).dot(s_in),
+                          (self.a_buff.shape[-1], self.weights.shape[0])).T
 
     @staticmethod
-    def get_delay_wgts_mat(weights, delays) -> spmatrix:
+    def get_delay_wgts_mat(weights, delays, max_delay) -> spmatrix:
         """
         Create a matrix where the synaptic weights are separated
         by their corresponding delays. The first matrix contains all the
@@ -245,8 +248,11 @@ class AbstractPyDelaySparseModel(PyLoihiProcessModel):
         weights.
         """
         # Can only start at 1, as delays==0 raises inefficiency warning
+        if max_delay == 0:
+            return weights
+
         weight_delay_from_1 = vstack([weights.multiply(delays == k)
-                                      for k in range(1, np.max(delays) + 1)])
+                                      for k in range(1, max_delay + 1)])
         # Create weight matrix at delays == 0
         r, c, _ = find(delays)
         weight_delay_zeros = weights.copy()

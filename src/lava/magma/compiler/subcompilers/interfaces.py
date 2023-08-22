@@ -20,14 +20,12 @@ class AbstractSubCompiler(ABC):
     def compile(self, channel_map: ChannelMap) -> ChannelMap:
         """Partitions all Processes in the SubCompiler's ProcGroup onto the
         available resources."""
-        pass
 
     @abstractmethod
     def get_builders(
         self, channel_map: ChannelMap
     ) -> ty.Tuple[ty.Dict[AbstractProcess, AbstractProcessBuilder], ChannelMap]:
         """After compilation, creates and returns builders for all Processes."""
-        pass
 
 
 class SubCompiler(AbstractSubCompiler):

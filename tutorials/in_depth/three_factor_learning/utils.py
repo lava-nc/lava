@@ -3,21 +3,14 @@
 # See: https://spdx.org/licenses/
 
 import matplotlib.pyplot as plt
-import typing as ty
 import numpy as np
 
-from lava.proc.lif.process import LIF, AbstractLIF, LogConfig, LearningLIF
-from lava.proc.io.source import RingBuffer
-from lava.proc.dense.process import LearningDense, Dense
-from lava.magma.core.process.neuron import LearningNeuronProcess
-from lava.proc.learning_rules.r_stdp_learning_rule import RewardModulatedSTDP
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.proc.lif.process import LearningLIF
 from lava.magma.core.model.py.neuron import (
     LearningNeuronModelFloat, LearningNeuronModelFixed
 )
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyInPort, PyOutPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
@@ -188,39 +181,39 @@ class RSTDPLIFBitAcc(LearningNeuronModelFixed, AbstractPyLifModelFixed):
         self.s_out_y3.send(self.y3)
 
 
-def generate_post_spikes(pre_spike_times, 
-        num_steps, spike_prob_post):
+def generate_post_spikes(pre_spike_times, num_steps, spike_prob_post):
     """generates specific post synaptic spikes to
     demonstrate potentiation and depression.
     """
-    pre_synaptic_spikes = np.where(pre_spike_times==1)[1]
+    pre_synaptic_spikes = np.where(pre_spike_times == 1)[1]
 
     spike_raster_post = np.zeros((len(spike_prob_post), num_steps))
 
     for ts in range(num_steps):
         for pre_ts in pre_synaptic_spikes:
-            if ts in range(pre_ts, pre_ts+20):
+            if ts in range(pre_ts, pre_ts + 20):
                 if np.random.rand(1) < spike_prob_post[0]:
                     spike_raster_post[0][ts] = 1
 
     for ts in range(num_steps):
         for pre_ts in pre_synaptic_spikes:
-            if ts in range(pre_ts-12, pre_ts-2):
+            if ts in range(pre_ts - 12, pre_ts - 2):
                 if np.random.rand(1) < spike_prob_post[1]:
                     spike_raster_post[1][ts] = 1
-    
+
     return spike_raster_post
+
 
 def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     offsets = list(range(1, len(spikes) + 1))
-    num_x_ticks = np.arange(0, num_steps+1, 25)
-    
+    num_x_ticks = np.arange(0, num_steps + 1, 25)
+
     plt.figure(figsize=figsize)
 
-    spikes_plot = plt.eventplot(positions=spikes, 
-                                lineoffsets=offsets,
-                                linelength=0.9,
-                                colors=colors)
+    plt.eventplot(positions=spikes,
+                  lineoffsets=offsets,
+                  linelength=0.9,
+                  colors=colors)
 
     plt.title(title)
     plt.xlabel("Time steps")
@@ -230,16 +223,16 @@ def plot_spikes(spikes, figsize, legend, colors, title, num_steps):
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
     plt.grid(which='major', color='lightgray', linewidth=0.8)
     plt.minorticks_on()
-    
+
     plt.yticks(ticks=offsets, labels=legend)
 
-    
     plt.show()
+
 
 def plot_time_series(time, time_series, ylabel, title, figsize, color):
     plt.figure(figsize=figsize)
     plt.step(time, time_series, color=color)
-   
+
     plt.title(title)
     plt.xlabel("Time steps")
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
@@ -247,15 +240,18 @@ def plot_time_series(time, time_series, ylabel, title, figsize, color):
     plt.minorticks_on()
 
     plt.ylabel(ylabel)
-    
+
     plt.show()
 
-def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, title, figsize, color, legend, leg_loc="upper left"):    
+
+def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel,
+                              title, figsize, color, legend,
+                              leg_loc="upper left"):
     plt.figure(figsize=figsize)
-    
+
     plt.step(time, time_series_y1, label=legend[0], color=color[0])
     plt.step(time, time_series_y2, label=legend[1], color=color[1])
-        
+
     plt.title(title)
     plt.xlabel("Time steps")
     plt.ylabel(ylabel)
@@ -265,18 +261,20 @@ def plot_time_series_subplots(time, time_series_y1, time_series_y2, ylabel, titl
     plt.xlim(0, len(time_series_y1))
 
     plt.legend(loc=leg_loc)
-    
+
     plt.show()
 
-def plot_spikes_time_series(time, time_series, spikes, figsize, legend, colors, title, num_steps):
+
+def plot_spikes_time_series(time, time_series, spikes, figsize, legend,
+                            colors, title, num_steps):
 
     offsets = list(range(1, len(spikes) + 1))
-    num_x_ticks = np.arange(0, num_steps+1, 25)
-    
+    num_x_ticks = np.arange(0, num_steps + 1, 25)
+
     plt.figure(figsize=figsize)
-    
+
     plt.subplot(211)
-    plt.eventplot(positions=spikes, 
+    plt.eventplot(positions=spikes,
                   lineoffsets=offsets,
                   linelength=0.9,
                   colors=colors)
@@ -289,13 +287,13 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend, colors, 
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
     plt.grid(which='major', color='lightgray', linewidth=0.8)
     plt.minorticks_on()
-    
+
     plt.yticks(ticks=offsets, labels=legend)
     plt.tight_layout(pad=3.0)
 
     plt.subplot(212)
     plt.step(time, time_series, color=colors)
-   
+
     plt.title(title[0])
     plt.xlabel("Time steps")
     plt.grid(which='minor', color='lightgrey', linestyle=':', linewidth=0.5)
@@ -304,5 +302,5 @@ def plot_spikes_time_series(time, time_series, spikes, figsize, legend, colors, 
     plt.margins(x=0)
 
     plt.ylabel("Trace Value")
-    
+
     plt.show()

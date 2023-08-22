@@ -13,7 +13,6 @@ from lava.magma.core.model.py.model import (
     PyLoihiProcessModel, PyLoihiModelToPyAsyncModel
 )
 
-from lava.proc import io
 from lava.proc.lif.process import LIF
 from lava.proc.sdn.process import SigmaDelta
 from lava.proc.dense.process import Dense
@@ -127,10 +126,10 @@ class TestPyLoihiToPyAsync(unittest.TestCase):
                          'state_exp': 6}
         dense_params = {'weights': weights, 'num_message_bits': 16}
 
-        input = SigmaDelta(**input_params)
+        input_ = SigmaDelta(**input_params)
         output = SigmaDelta(**output_params)
         dense = Dense(**dense_params)
-        input.s_out.connect(dense.s_in)
+        input_.s_out.connect(dense.s_in)
         dense.a_out.connect(output.a_in)
 
         run_cnd = RunSteps(num_steps=2)
@@ -141,12 +140,12 @@ class TestPyLoihiToPyAsync(unittest.TestCase):
         output.stop()
 
         # Run the same network in async mode.
-        # Currently we don't allow the same process to run twice
+        # Currently, we don't allow the same process to run twice
         # Copy the model used for pyproc model
-        input = SigmaDelta(**input_params)
+        input_ = SigmaDelta(**input_params)
         output = SigmaDelta(**output_params)
         dense = Dense(**dense_params)
-        input.s_out.connect(dense.s_in)
+        input_.s_out.connect(dense.s_in)
         dense.a_out.connect(output.a_in)
 
         output.run(condition=run_cnd,
