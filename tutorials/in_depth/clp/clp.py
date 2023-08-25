@@ -53,6 +53,9 @@ class CLP (ABC):
     """
     def __init__(self,
                  supervised=True,
+                 learn_novels=True,
+                 weights_proto=None,
+                 proto_labels=None,
                  n_protos=2,
                  n_features=2,
                  n_steps_per_sample=10,
@@ -63,6 +66,7 @@ class CLP (ABC):
                  t_wait=10):
 
         self.supervised = supervised
+        self.learn_novels = learn_novels
         self.n_protos = n_protos
         self.n_features = n_features
         self.n_steps_per_sample = n_steps_per_sample
@@ -70,6 +74,7 @@ class CLP (ABC):
         self.dv = dv
         self.vth = vth
         self.t_wait = t_wait
+        self.weights_proto = weights_proto
 
         self.num_steps = 0
 
@@ -77,13 +82,19 @@ class CLP (ABC):
         self.monitors = None
         self.nvl_det = None
         self.readout_layer = None
+        self.dense_proto = None
+        self.data_input = None
+        self.n_alloc_protos = 0
+        self.s_pattern_inp = None
+        self.s_user_label = None
 
-        # No pattern is stored yet. None of the prototypes are allocated
-        weights_proto = np.zeros(shape=(n_protos, n_features))
+        if self.weights_proto is None:
+            # No pattern is stored yet. None of the prototypes are allocated
+            self.weights_proto = np.zeros(shape=(n_protos, n_features), dtype=np.int32)
 
-        # Weights also should be in the fixed point representation if
-        # starting with some non-zero weights.
-        self.weights_proto = weights_proto * 2 ** b_fraction
+        self.n_alloc_protos = np.count_nonzero(np.count_nonzero(self.weights_proto, axis=1))
+
+        self.proto_labels = proto_labels
 
         # Create a custom LearningRule. Define dw as a string
         dw = "2^-3*y1*x1*y0"
@@ -97,33 +108,34 @@ class CLP (ABC):
                                                  x1_tau=x1_tau,
                                                  t_epoch=t_epoch)
 
-    def generate_input_spikes(self, x_train, x_test, y_train):
-        n_train_samples = x_train.shape[0]
-        n_test_samples = x_test.shape[0]
-        n_total_samples = n_train_samples + n_test_samples
+    def generate_input_spikes(self, x, y=None):
 
+        n_total_samples = x.shape[0]
         # Number of time steps that the processes will run
         self.num_steps = n_total_samples * self.n_steps_per_sample
 
-        inp_pattern_fixed = np.vstack((x_train, x_test))
-
         # The graded spike array for input
-        s_pattern_inp = np.zeros((self.n_features, self.num_steps))
+        self.s_pattern_inp = np.zeros((self.n_features, self.num_steps))
 
-        # Create input spike pattter that inject these inputs every
+        # Create input spike pattern that inject these inputs every
         # n_steps_per_sample time step
-        s_pattern_inp[:, 1:-1:self.n_steps_per_sample] = inp_pattern_fixed.T
+        self.s_pattern_inp[:, 1:-1:self.n_steps_per_sample] = x.T
 
         # The graded spike array for the user-provided label
-        s_user_label = np.zeros((1, self.num_steps))
-        train_time = n_train_samples * self.n_steps_per_sample
-        s_user_label[0, 17:train_time:self.n_steps_per_sample] = y_train.T
-        s_user_label[0, 18:train_time:self.n_steps_per_sample] = y_train.T
+        self.s_user_label = np.zeros((1, self.num_steps))
+        if y is not None:
+            n_train_samples = y.shape[0]
+            train_time = n_train_samples * self.n_steps_per_sample
+            self.s_user_label[0, self.t_wait+5:train_time:self.n_steps_per_sample] = y.T
+            self.s_user_label[0, self.t_wait+7:train_time:self.n_steps_per_sample] = y.T
 
-        return s_pattern_inp, s_user_label
+        return self.s_pattern_inp, self.s_user_label
 
-    def setup_procs_and_conns(self, s_pattern_inp, s_user_label):
-
+    def setup_procs_and_conns(self):
+        if self.prototypes is not None:
+            self.proto_labels = self.readout_layer.proto_labels.get()
+            self.weights_proto = self.dense_proto.weights.get()
+            self.n_alloc_protos = np.count_nonzero(np.count_nonzero(self.weights_proto, axis=1))
         # Config for writing graded payload of the input spike to x1-trace
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
@@ -132,15 +144,17 @@ class CLP (ABC):
         weights_out_aval = np.ones(shape=(1, self.n_protos))
 
         # Processes
-        data_input = RingBuffer(data=s_pattern_inp)
+        data_input = RingBuffer(data=self.s_pattern_inp)
 
-        user_label_input = RingBuffer(data=s_user_label)
+        user_label_input = RingBuffer(data=self.s_user_label)
 
         nvl_det = NoveltyDetector(t_wait=self.t_wait)
 
-        allocator = Allocator(n_protos=self.n_protos)
+        allocator = Allocator(n_protos=self.n_protos,
+                              next_alloc_id=self.n_alloc_protos+1)
 
-        readout_layer = Readout(n_protos=self.n_protos)
+        readout_layer = Readout(n_protos=self.n_protos,
+                                proto_labels=self.proto_labels)
 
         # Prototype Lif Process
         prototypes = PrototypeLIF(du=self.du,
@@ -201,9 +215,11 @@ class CLP (ABC):
         prototypes.s_out.connect(dense_wta.s_in)
         dense_wta.a_out.connect(prototypes.reset_in)
 
-        # Novelty detector -> Dense -> Allocator connection
-        nvl_det.novelty_detected_out.connect(dense_nvl_alloc.s_in)
-        dense_nvl_alloc.a_out.connect(allocator.trigger_in)
+        # If we want novelty detection to trigger allocation
+        if self.learn_novels:
+            # Novelty detector -> Dense -> Allocator connection
+            nvl_det.novelty_detected_out.connect(dense_nvl_alloc.s_in)
+            dense_nvl_alloc.a_out.connect(allocator.trigger_in)
 
         # Allocator  -> Dense -> PrototypeLIF connection
         allocator.allocate_out.connect(dense_alloc_3rd_factor.s_in)
@@ -240,12 +256,15 @@ class CLP (ABC):
                          monitor_preds]
         self.nvl_det = nvl_det
         self.readout_layer = readout_layer
+        self.dense_proto = dense_proto
+        self.data_input = data_input
 
         return self
 
     def get_results(self):
         monitor_nvl, monitor_error, monitor_protos, monitor_preds = \
             self.monitors
+        novelty_spikes, proto_spikes, error_spikes, preds = [None]*len(self.monitors)
         # Get results
         novelty_spikes = monitor_nvl.get_data()
         novelty_spikes = novelty_spikes[self.nvl_det.name][

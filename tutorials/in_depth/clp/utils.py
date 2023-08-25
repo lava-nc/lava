@@ -6,6 +6,168 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import product
 
+try:
+    import torch
+    from torch.utils.data import Dataset, DataLoader
+
+    import torchvision
+    import torchvision.transforms as transforms
+    import torchvision.models as models
+
+    import glob
+    from tqdm import tqdm
+    from PIL import Image
+    from sklearn.model_selection import train_test_split
+
+    LIBS_ARE_AVAILABLE = True
+
+except ModuleNotFoundError:
+    LIBS_ARE_AVAILABLE = False
+
+
+class Coil100Dataset(Dataset):
+    def __init__(self, root_dir, obj_list=np.arange(100), transform=None,
+                 size=64, train=True, test_size=None, seed=1234):
+        """
+        this function builds a data frame which contains the path to image
+        and the tag/object name using the prefix of the image name
+        """
+        self.targets = []
+        self.paths = []
+        self.size = size
+        self.root_dir = root_dir
+        self.transform = transform
+
+        path = root_dir + '/coil-100/*.png'
+
+        # list files
+        files = glob.glob(path)
+
+        for file in tqdm(files):
+            self.targets.append(
+                int(file.split("/")[-1].split("__")[0].split("j")[1]) - 1)
+            self.paths.append(file)
+
+        self.targets = np.array(self.targets)
+        self.paths = np.array(self.paths)
+
+        sorted_inds = np.argsort(self.targets)
+        self.targets = self.targets[sorted_inds]
+        self.paths = self.paths[sorted_inds]
+
+        obj_slices = np.concatenate(
+            [np.arange(ind * 72, (ind + 1) * 72) for ind in obj_list])
+        n_classes = len(obj_list)
+        # self.targets = self.targets[obj_slices]
+        self.targets = self.targets[:72 * n_classes]
+        self.paths = self.paths[obj_slices]
+
+        if test_size is not None:
+            train_indices, test_indices, _, _ = train_test_split(
+                range(len(self.targets)),
+                self.targets,
+                stratify=self.targets,
+                test_size=test_size,
+                random_state=seed,
+                shuffle=True)
+            if train:
+                self.targets = self.targets[train_indices]
+                self.paths = self.paths[train_indices]
+            else:
+                self.targets = self.targets[test_indices]
+                self.paths = self.paths[test_indices]
+
+    def __len__(self):
+        return len(self.targets)
+
+    def __getitem__(self, idx):
+
+        img_path, img_label = self.paths[idx], self.targets[idx]
+        img = Image.open(img_path)
+        if self.transform:
+            img = transforms.Resize(size=[self.size, self.size])(img)
+            img = self.transform(img)
+        return img, img_label
+
+
+def extract_and_load_features(extract=False):
+    if LIBS_ARE_AVAILABLE and extract:
+        dataset_dir = 'datasets/coil-100'
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        obj_list = np.array(
+            [1, 2, 4, 10, 15, 17, 21, 22, 23, 24, 25, 28, 29, 35, 36, 38, 39,
+             41, 46, 47, 48, 49, 50, 51, 52, 54, 58, 62, 65, 69, 71, 72, 73,
+             76, 77, 85, 87, 88, 89, 91, 95, 98])
+
+        test_size = None
+
+        coil100 = Coil100Dataset(root_dir=dataset_dir, obj_list=obj_list,
+                                 transform=transforms.ToTensor(), size=64,
+                                 train=False, test_size=test_size)
+
+        feat_ext_dl = DataLoader(coil100, batch_size=1, shuffle=False,
+                                 num_workers=8)
+
+        feat_ext = models.efficientnet_b0(
+            weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1)
+
+        feat_ext = torch.nn.Sequential(*list(feat_ext.children())[:-1])
+        feat_ext = feat_ext.to(device)
+        feat_ext.eval()
+
+        embeddings = []
+        with torch.no_grad():
+            for batch in feat_ext_dl:
+                image, label = batch
+                image, label = image.to(device), label.to(device)
+                emb = feat_ext(image).flatten(start_dim=1)
+                embeddings.append(emb)
+
+        embeddings = torch.cat(embeddings, 0)
+        X = np.array(torch.Tensor.cpu(embeddings))
+        y = coil100.targets
+
+    else:
+        with open('datasets/coil_100_features/42_sprt_objs_effnet.npy',
+                  'rb') as f:
+            X = np.load(f)
+            y = np.load(f)
+
+    return X, y
+
+
+def train_test_split_np(x, y, test_size=None, random_state=None, stratify=None):
+    train_size = 1 - test_size
+    prng = np.random.RandomState(random_state)
+    rand_inds = prng.randint(0, x.shape[0], x.shape[0])
+    x = x[rand_inds, :]
+    y = y[rand_inds]
+    class_set = np.unique(y)
+    X_train = []
+    X_test = []
+    y_train = []
+    y_test = []
+    for class_i in class_set:
+        inds = np.where(y == class_i)[0]
+
+        X_i = x[inds, :]
+        y_i = y[inds]
+        N_i = len(inds)
+        N_i_train = int(np.round(N_i * train_size))
+        X_train.append(X_i[:N_i_train, :])
+        X_test.append(X_i[N_i_train:, :])
+        y_train.append(y_i[:N_i_train])
+        y_test.append(y_i[N_i_train:])
+
+    X_train = np.concatenate(X_train)
+    X_test = np.concatenate(X_test)
+    y_train = np.concatenate(y_train)
+    y_test = np.concatenate(y_test)
+
+    return X_train, X_test, y_train, y_test
+
 
 def wta_hyperparam_search(a_in,
                           n_steps,
