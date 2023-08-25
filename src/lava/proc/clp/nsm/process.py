@@ -73,7 +73,8 @@ class Allocator(AbstractProcess):
     """
 
     def __init__(self, *,
-                 n_protos: int) -> None:
+                 n_protos: int,
+                 next_alloc_id: int) -> None:
 
         super().__init__()
 
@@ -83,5 +84,5 @@ class Allocator(AbstractProcess):
         self.allocate_out = OutPort(shape=(1,))
 
         # The id of the next prototype to be allocated
-        self.next_alloc_id = Var(shape=(1,), init=1)
+        self.next_alloc_id = Var(shape=(1,), init=next_alloc_id)
         self.n_protos = Var(shape=(1,), init=n_protos)
