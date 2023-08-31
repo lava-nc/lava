@@ -72,8 +72,8 @@ class NormVecDelay(AbstractProcess):
             self,
             *,
             shape: ty.Tuple[int, ...],
-            vth=1,
-            exp=0) -> None:
+            vth: ty.Optional[int] = 1,
+            exp: ty.Optional[int] = 0) -> None:
 
         super().__init__(shape=shape)
 
@@ -110,7 +110,7 @@ class InvSqrt(AbstractProcess):
             self,
             *,
             shape: ty.Tuple[int, ...],
-            fp_base=12) -> None:
+            fp_base: ty.Optional[int] = 12) -> None:
         super().__init__(shape=shape)
 
         # base of the decimal point
