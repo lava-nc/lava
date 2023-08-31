@@ -17,9 +17,10 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 
 
 class TestGradedVecProc(unittest.TestCase):
-    # @unittest.skipUnless(run_loihi2_tests, "Loihi2 unavailable.")
-    # @unittest.skip("Skipping for merge.")
+    """Tests for GradedVec"""
+
     def test_gradedvec_dot_dense(self):
+        """Tests that GradedVec and Dense computes dot product"""
         num_steps = 10
         v_thresh = 1
 
@@ -58,6 +59,7 @@ class TestGradedVecProc(unittest.TestCase):
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 
     def test_gradedvec_dot_sparse(self):
+        """Tests that GradedVec and Dense computes dot product"""
         num_steps = 10
         v_thresh = 1
 
@@ -98,7 +100,10 @@ class TestGradedVecProc(unittest.TestCase):
 
 
 class TestInvSqrtProc(unittest.TestCase):
+    """Tests for inverse square process."""
+
     def test_invsqrt_calc(self):
+        """Checks the InvSqrt calculation"""
         fp_base = 12  # base of the decimal point
 
         num_steps = 25
@@ -142,8 +147,10 @@ class TestInvSqrtProc(unittest.TestCase):
 
 
 class TestNormVecDelayProc(unittest.TestCase):
+    """Tests for NormVecDelay"""
 
     def test_norm_vec_delay_out1(self):
+        """Checks the first channel output of NormVecDelay"""
         weight_exp = 7
         num_steps = 10
 
@@ -206,6 +213,7 @@ class TestNormVecDelayProc(unittest.TestCase):
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
     def test_norm_vec_delay_out2(self):
+        """Checks the second channel output of NormVecDelay"""
         weight_exp = 7
         num_steps = 10
 

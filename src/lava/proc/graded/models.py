@@ -25,6 +25,10 @@ class AbstractGradedVecModel(PyLoihiProcessModel):
     exp = None
 
     def run_spk(self) -> None:
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
         a_in_data = self.a_in.recv()
         self.v += a_in_data
 
@@ -52,6 +56,9 @@ class PyGradedVecModelFixed(AbstractGradedVecModel):
 @requires(CPU)
 @tag('fixed_pt')
 class NormVecDelayModel(PyLoihiProcessModel):
+    """Implementation of NormVecDelay. This process is typically part of
+    a network for normalization.
+    """
     a_in1 = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     a_in2 = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
@@ -63,6 +70,10 @@ class NormVecDelayModel(PyLoihiProcessModel):
     v2: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def run_spk(self) -> None:
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
         a_in_data1 = self.a_in1.recv()
         a_in_data2 = self.a_in2.recv()
 
@@ -91,6 +102,10 @@ class InvSqrtModelFloat(PyLoihiProcessModel):
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def run_spk(self) -> None:
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
         a_in_data = self.a_in.recv()
         sp_out = 1 / (a_in_data ** 0.5)
 
@@ -98,6 +113,9 @@ class InvSqrtModelFloat(PyLoihiProcessModel):
 
 
 def make_fpinv_table(fp_base):
+    """
+    Creates the table for fp inverse algorithm.
+    """
     n_bits = 24
     B = 2**fp_base
 
@@ -111,10 +129,16 @@ def make_fpinv_table(fp_base):
 
 
 def clz(val):
+    """
+    Count lead zeros.
+    """
     return (24 - (int(np.log2(val)) + 1))
 
 
 def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
+    """
+    Runs the fixed point inverse square root algorithm
+    """
     Y_est = make_fpinv_table(b_fraction)
     m = clz(s_fp)
     b_i = int(s_fp)
@@ -142,6 +166,10 @@ class InvSqrtModelFP(PyLoihiProcessModel):
     fp_base: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def run_spk(self) -> None:
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
         a_in_data = self.a_in.recv()
 
         if np.any(a_in_data) == 0:
