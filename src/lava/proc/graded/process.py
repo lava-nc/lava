@@ -20,7 +20,11 @@ def loihi2round(vv):
 
 class GradedVec(AbstractProcess):
     """GradedVec
-    Thresholded graded spike vector
+    Graded spike vector layer. Transmits accumulated input as
+    graded spike with no dynamics.
+
+    v[t] = a_in
+    s_out = v[t] * (v[t] > vth)
 
     Parameters
     ----------
@@ -55,7 +59,22 @@ class GradedVec(AbstractProcess):
 
 class NormVecDelay(AbstractProcess):
     """NormVec
-    Normalizable graded spike vector
+    Normalizable graded spike vector. Used in conjunction with
+    InvSqrt process to create normalization layer.
+
+    When configured with InvSqrt, the process will output a normalized
+    vector with graded spike values. The output is delayed by 2 timesteps.
+
+    NormVecDelay has two input and two output channels. The process
+    outputs the square input values on the second channel to the InvSqrt
+    neuron. The process waits two timesteps to receive the inverse
+    square root value returned by the InvSqrt process. The value received
+    on the second input channel is multiplied by the primary input
+    value, and the result is output on the primary output channel.
+
+    v[t] = a_in1
+    s2_out = v[t] ** 2
+    s_out = v[t-2] * a_in2
 
     Parameters
     ----------
@@ -96,7 +115,11 @@ class NormVecDelay(AbstractProcess):
 class InvSqrt(AbstractProcess):
     """InvSqrt
     Neuron model for computing inverse square root with 24-bit
-    fixed point values.
+    fixed point values. Designed to be used in conjunction with
+    NormVecDelay.
+
+    v[t] = a_in
+    s_out = 1 / sqrt(v[t])
 
     Parameters
     ----------
