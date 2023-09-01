@@ -19,7 +19,6 @@ class AbstractGradedVecModel(PyLoihiProcessModel):
 
     a_in = None
     s_out = None
-
     v = None
     vth = None
     exp = None
@@ -145,7 +144,7 @@ def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
     Y_i = Y_est[m]
     y_i = Y_i // 2
 
-    for i in range(n_iters):
+    for _ in range(n_iters):
         b_i = np.right_shift(np.right_shift(b_i * Y_i,
                                             b_fraction + 1) * Y_i,
                              b_fraction + 1)
