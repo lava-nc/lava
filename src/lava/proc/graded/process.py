@@ -34,10 +34,9 @@ class GradedVec(AbstractProcess):
 
     def __init__(
             self,
-            *,
             shape: ty.Tuple[int, ...],
-            vth=1,
-            exp=0) -> None:
+            vth: ty.Optional[int] = 1,
+            exp: ty.Optional[int] = 0) -> None:
 
         super().__init__(shape=shape)
 
@@ -70,7 +69,6 @@ class NormVecDelay(AbstractProcess):
 
     def __init__(
             self,
-            *,
             shape: ty.Tuple[int, ...],
             vth: ty.Optional[int] = 1,
             exp: ty.Optional[int] = 0) -> None:
@@ -108,7 +106,6 @@ class InvSqrt(AbstractProcess):
 
     def __init__(
             self,
-            *,
             shape: ty.Tuple[int, ...],
             fp_base: ty.Optional[int] = 12) -> None:
         super().__init__(shape=shape)

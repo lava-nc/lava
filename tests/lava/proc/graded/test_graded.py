@@ -203,13 +203,13 @@ class TestNormVecDelayProc(unittest.TestCase):
         ch1 = (weights1 @ inp_data1) / 2**weight_exp
         ch2 = (weights2 @ inp_data2) / 2**weight_exp
 
-        # i'm using roll to account for the two step delay but hacky
+        # I'm using roll to account for the two step delay but hacky
         # be careful if inputs change
         # hmm.. there seems to be a delay step missing compared to
         # ncmodel, not sure where the delay should go...
         expected_out = np.roll(ch1, 1) * ch2
 
-        # then there is one extra timestep from hardware
+        # Then there is one extra timestep from hardware
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
     def test_norm_vec_delay_out2(self):
