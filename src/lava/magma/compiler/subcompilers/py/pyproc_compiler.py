@@ -91,6 +91,9 @@ class PyProcCompiler(SubCompiler):
     def compile(self, channel_map: ChannelMap) -> ChannelMap:
         return self._update_channel_map(channel_map)
 
+    def __del__(self):
+        Offset.obj = None
+
     def _update_channel_map(self, channel_map: ChannelMap) -> ChannelMap:
         cm_updater = ChannelMapUpdater(channel_map)
         for process in self._proc_group:
