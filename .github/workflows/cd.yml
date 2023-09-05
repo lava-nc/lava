@@ -134,6 +134,8 @@ jobs:
     name: Upload release artifact
     runs-on: ubuntu-latest
     if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
+    outputs:
+          api-token: ${{ steps.mint-token.outputs.api-token}}
     permissions:
       contents: write
       id-token: write
@@ -183,7 +185,7 @@ jobs:
           makeLatest: true
 
       - name: Mint Github API token
-        id: mint-token
+        id: mint-token        
         run: |
           # retrieve the ambient OIDC token
           resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
@@ -202,10 +204,11 @@ jobs:
 
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
-        env:
-          POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
-          POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ steps.mint-token.outputs.api-token }}
+        #env:
+        #  POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
+        #  POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ steps.mint-token.outputs.api-token }}
         run: |
+          poetry config pypi-token.pypi ${{ steps.mint-token.outputs.api-token }}
           mkdir dist
           cp lava* dist/.
-          poetry publish
+          poetry publish --dry-run
