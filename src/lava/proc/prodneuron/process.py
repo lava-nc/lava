@@ -13,11 +13,14 @@ class ProdNeuron(AbstractProcess):
     def __init__(
             self,
             shape: ty.Tuple[int, ...],
-            vth=1,
-            exp=0) -> None:
+            vth: ty.Optional[int] = 1,
+            exp: ty.Optional[int] = 0) -> None:
         """ProdNeuron
 
-        Multiplies two graded inputs.
+        Multiplies two graded inputs and outputs result as graded spike.
+
+        v[t] = (a_in1 * a_in2) >> exp
+        s_out = v[t] * (v[t] > vth)
 
         Parameters
         ----------

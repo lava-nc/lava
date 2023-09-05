@@ -10,7 +10,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
-from lava.proc.prod_neuron.process import ProdNeuron
+from lava.proc.prodneuron.process import ProdNeuron
 
 
 @implements(proc=ProdNeuron, protocol=LoihiProtocol)
