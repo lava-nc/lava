@@ -6,6 +6,7 @@ import numpy as np
 import unittest
 import threading
 import time
+import typing as ty
 from queue import Queue
 
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -160,7 +161,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
     @staticmethod
     def _test_send_full_policy(send_full: utils.SendFull) \
-            -> tuple[int, int, bool]:
+            -> ty.Tuple[int, int, bool]:
         """Sets up a simple network involving a Send Process and an Extractor
         with buffer_size=1.
 
