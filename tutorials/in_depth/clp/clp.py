@@ -11,7 +11,7 @@ from lava.magma.core.learning.learning_rule import Loihi3FLearningRule
 from lava.proc.clp.novelty_detector.process import NoveltyDetector
 from lava.proc.clp.nsm.process import Allocator, Readout
 from lava.proc.clp.prototype_lif.process import PrototypeLIF
-from lava.proc.dense.process import LearningDense, Dense
+from lava.proc.dense.process import LearningDense, Dense, DelayDense
 from lava.proc.io.source import RingBuffer
 from lava.proc.monitor.process import Monitor
 from lava.utils.weightutils import SignMode
@@ -63,7 +63,8 @@ class CLP (ABC):
                  du=4095,
                  dv=4095,
                  vth=1,
-                 t_wait=10):
+                 t_wait=10,
+                 debug=False):
 
         self.supervised = supervised
         self.learn_novels = learn_novels
@@ -75,6 +76,7 @@ class CLP (ABC):
         self.vth = vth
         self.t_wait = t_wait
         self.weights_proto = weights_proto
+        self.debug = debug
 
         self.num_steps = 0
 
@@ -191,11 +193,16 @@ class CLP (ABC):
         # WTA weights and Dense proc to be put on Prototype population
         dense_wta = Dense(weights=np.ones(shape=(self.n_protos, self.n_protos)))
 
+        # Default reset for PrototypeLIF population some time after input
+        dense_reset = DelayDense(weights=np.ones(shape=(self.n_protos, self.n_features)),
+                                 delays=self.n_steps_per_sample-2)
+
         # Monitor processes
         monitor_nvl = Monitor()
         monitor_protos = Monitor()
         monitor_preds = Monitor()
         monitor_error = Monitor()
+
 
         # Connections
 
@@ -214,6 +221,10 @@ class CLP (ABC):
         # WTA of prototypes
         prototypes.s_out.connect(dense_wta.s_in)
         dense_wta.a_out.connect(prototypes.reset_in)
+
+        # Default delayed reset of PrototypeLIF after input
+        data_input.s_out.connect(dense_reset.s_in)
+        dense_reset.a_out.connect(prototypes.reset_in)
 
         # If we want novelty detection to trigger allocation
         if self.learn_novels:
@@ -251,6 +262,8 @@ class CLP (ABC):
         monitor_preds.probe(target=readout_layer.user_output,
                             num_steps=self.num_steps)
 
+
+
         self.prototypes = prototypes
         self.monitors = [monitor_nvl, monitor_error, monitor_protos,
                          monitor_preds]
@@ -259,12 +272,20 @@ class CLP (ABC):
         self.dense_proto = dense_proto
         self.data_input = data_input
 
+        if self.debug:
+            monitor_u = Monitor()
+            monitor_u.probe(target=prototypes.u,
+                            num_steps=self.num_steps)
+            self.monitors.append(monitor_u)
+
         return self
 
     def get_results(self):
         monitor_nvl, monitor_error, monitor_protos, monitor_preds = \
-            self.monitors
-        novelty_spikes, proto_spikes, error_spikes, preds = [None]*len(self.monitors)
+            self.monitors[:4]
+
+
+        novelty_spikes, proto_spikes, error_spikes, preds, currs = [None]*5
         # Get results
         novelty_spikes = monitor_nvl.get_data()
         novelty_spikes = novelty_spikes[self.nvl_det.name][
@@ -280,4 +301,9 @@ class CLP (ABC):
         error_spikes = monitor_error.get_data()[self.readout_layer.name][
             self.readout_layer.trigger_alloc.name]
 
-        return novelty_spikes, proto_spikes, error_spikes, preds
+        if self.debug:
+            monitor_u = self.monitors[4]
+            currs = monitor_u.get_data()[self.prototypes.name][
+                    self.prototypes.u.name]
+
+        return novelty_spikes, proto_spikes, error_spikes, preds, currs

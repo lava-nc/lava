@@ -5,19 +5,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import product
+import glob
+from PIL import Image
 
 try:
     import torch
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import DataLoader
 
     import torchvision
     import torchvision.transforms as transforms
     import torchvision.models as models
-
-    import glob
-    from tqdm import tqdm
-    from PIL import Image
-    from sklearn.model_selection import train_test_split
 
     LIBS_ARE_AVAILABLE = True
 
@@ -25,7 +22,7 @@ except ModuleNotFoundError:
     LIBS_ARE_AVAILABLE = False
 
 
-class Coil100Dataset(Dataset):
+class Coil100Dataset():
     def __init__(self, root_dir, obj_list=np.arange(100), transform=None,
                  size=64, train=True, test_size=None, seed=1234):
         """
@@ -43,7 +40,7 @@ class Coil100Dataset(Dataset):
         # list files
         files = glob.glob(path)
 
-        for file in tqdm(files):
+        for file in files:
             self.targets.append(
                 int(file.split("/")[-1].split("__")[0].split("j")[1]) - 1)
             self.paths.append(file)
@@ -85,25 +82,21 @@ class Coil100Dataset(Dataset):
         img_path, img_label = self.paths[idx], self.targets[idx]
         img = Image.open(img_path)
         if self.transform:
-            img = transforms.Resize(size=[self.size, self.size])(img)
+            img = img.resize(size=(self.size, self.size))
             img = self.transform(img)
         return img, img_label
 
 
 def extract_and_load_features(extract=False):
+    print("LIBS_ARE_AVAILABLE: ", LIBS_ARE_AVAILABLE)
     if LIBS_ARE_AVAILABLE and extract:
-        dataset_dir = 'datasets/coil-100'
+        dataset_dir = 'datasets/'
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        obj_list = np.array(
-            [1, 2, 4, 10, 15, 17, 21, 22, 23, 24, 25, 28, 29, 35, 36, 38, 39,
-             41, 46, 47, 48, 49, 50, 51, 52, 54, 58, 62, 65, 69, 71, 72, 73,
-             76, 77, 85, 87, 88, 89, 91, 95, 98])
-
         test_size = None
 
-        coil100 = Coil100Dataset(root_dir=dataset_dir, obj_list=obj_list,
+        coil100 = Coil100Dataset(root_dir=dataset_dir,
                                  transform=transforms.ToTensor(), size=64,
                                  train=False, test_size=test_size)
 
@@ -130,43 +123,12 @@ def extract_and_load_features(extract=False):
         y = coil100.targets
 
     else:
-        with open('datasets/coil_100_features/42_sprt_objs_effnet.npy',
+        with open('datasets/coil_100_features/coil_100_features_effnet.npy',
                   'rb') as f:
             X = np.load(f)
             y = np.load(f)
 
     return X, y
-
-
-def train_test_split_np(x, y, test_size=None, random_state=None, stratify=None):
-    train_size = 1 - test_size
-    prng = np.random.RandomState(random_state)
-    rand_inds = prng.randint(0, x.shape[0], x.shape[0])
-    x = x[rand_inds, :]
-    y = y[rand_inds]
-    class_set = np.unique(y)
-    X_train = []
-    X_test = []
-    y_train = []
-    y_test = []
-    for class_i in class_set:
-        inds = np.where(y == class_i)[0]
-
-        X_i = x[inds, :]
-        y_i = y[inds]
-        N_i = len(inds)
-        N_i_train = int(np.round(N_i * train_size))
-        X_train.append(X_i[:N_i_train, :])
-        X_test.append(X_i[N_i_train:, :])
-        y_train.append(y_i[:N_i_train])
-        y_test.append(y_i[N_i_train:])
-
-    X_train = np.concatenate(X_train)
-    X_test = np.concatenate(X_test)
-    y_train = np.concatenate(y_train)
-    y_test = np.concatenate(y_test)
-
-    return X_train, X_test, y_train, y_test
 
 
 def wta_hyperparam_search(a_in,
@@ -183,66 +145,16 @@ def wta_hyperparam_search(a_in,
     du_values = du_values
     dv_values = dv_values
     v_th_values = v_th_values
-    # Loihi neuron hardware params
-    ds_offset = 1
-    dm_offset = 0
-    effective_bias = 0
-    # Let's define some bit-widths from Loihi
-    # State variables u and v are 24-bits wide
-    uv_bitwidth = 24
-    max_uv_val = 2 ** (uv_bitwidth - 1)
-    # Decays need an MSB alignment with 12-bits
-    decay_shift = 12
-    decay_unity = 2 ** decay_shift
-    # Threshold and incoming activation are MSB-aligned using 6-bits
-    act_shift = 6
+
     num_neurons = len(a_in)
-    activation_in_list = np.zeros(shape=(n_steps, num_neurons), dtype=np.int32)
-    activation_in_list[0, :] = a_in
 
     # Perform grid search
     best_params = np.zeros(shape=(3,), dtype=np.int32)
     best_spike_times = 50 * np.ones(shape=(num_neurons,), dtype=np.int32)
 
     for du, dv, vth in product(du_values, dv_values, v_th_values):
-        # Reset neuron variables for each parameter combination
-        v_hist = np.zeros(shape=(n_steps, num_neurons), dtype=np.int32)
-        v = np.zeros(shape=(1, num_neurons), dtype=np.int32)
-        u = np.zeros(shape=(1, num_neurons), dtype=np.int32)
-        for t in range(n_steps):
-            decay_const_u = du + ds_offset
-            decayed_curr = np.int64(u) * (decay_unity - decay_const_u)
-            decayed_curr = np.sign(decayed_curr) * np.right_shift(
-                np.abs(decayed_curr), decay_shift
-            )
-            decayed_curr = np.int32(decayed_curr)
-            activation_in = np.left_shift(activation_in_list[t, :], act_shift)
-            decayed_curr += activation_in
-            wrapped_curr = np.where(
-                decayed_curr > max_uv_val,
-                decayed_curr - 2 * max_uv_val,
-                decayed_curr,
-            )
-            wrapped_curr = np.where(
-                wrapped_curr <= -max_uv_val,
-                decayed_curr + 2 * max_uv_val,
-                wrapped_curr,
-            )
-            u[:] = wrapped_curr
-            decay_const_v = dv + dm_offset
 
-            neg_voltage_limit = -np.int32(max_uv_val) + 1
-            pos_voltage_limit = np.int32(max_uv_val) - 1
-
-            decayed_volt = np.int64(v) * (decay_unity - decay_const_v)
-            decayed_volt = np.sign(decayed_volt) * np.right_shift(
-                np.abs(decayed_volt), decay_shift
-            )
-            decayed_volt = np.int32(decayed_volt)
-            updated_volt = decayed_volt + u + effective_bias
-            v[:] = np.clip(updated_volt, neg_voltage_limit, pos_voltage_limit)
-            v_hist[t, :] = (v / 64)
-
+        v_hist = loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps)
         crossing_times = np.argmax(v_hist > vth, axis=0)
         unique_check = len(set(crossing_times)) == len(crossing_times)
         # Check if current parameter combination is the best so far
@@ -271,14 +183,78 @@ def wta_hyperparam_search(a_in,
 
     return best_params
 
+def loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps):
+    # Loihi neuron hardware params
+    ds_offset = 1
+    dm_offset = 0
+    effective_bias = 0
+    # Let's define some bit-widths from Loihi
+    # State variables u and v are 24-bits wide
+    uv_bitwidth = 24
+    max_uv_val = 2 ** (uv_bitwidth - 1)
+    # Decays need an MSB alignment with 12-bits
+    decay_shift = 12
+    decay_unity = 2 ** decay_shift
+    # Threshold and incoming activation are MSB-aligned using 6-bits
+    act_shift = 6
 
-def plot_wta_voltage_dynamics(v_hist, vth):
+    num_neurons = len(a_in)
+    a_in_list = np.zeros(shape=(n_steps, num_neurons), dtype=np.int32)
+    a_in_list[0, :] = a_in
+
+    # Reset neuron variables for each parameter combination
+    v_hist = np.zeros(shape=(n_steps, num_neurons), dtype=np.int32)
+    v = np.zeros(shape=(1, num_neurons), dtype=np.int32)
+    u = np.zeros(shape=(1, num_neurons), dtype=np.int32)
+
+    for t in range(n_steps):
+
+        decay_const_u = du + ds_offset
+        decayed_curr = np.int64(u) * (decay_unity - decay_const_u)
+        decayed_curr = np.sign(decayed_curr) * np.right_shift(
+            np.abs(decayed_curr), decay_shift
+        )
+        decayed_curr = np.int32(decayed_curr)
+        activation_in = np.left_shift(a_in_list[t, :], act_shift)
+        decayed_curr += activation_in
+        wrapped_curr = np.where(
+            decayed_curr > max_uv_val,
+            decayed_curr - 2 * max_uv_val,
+            decayed_curr,
+        )
+        wrapped_curr = np.where(
+            wrapped_curr <= -max_uv_val,
+            decayed_curr + 2 * max_uv_val,
+            wrapped_curr,
+        )
+        u[:] = wrapped_curr
+        decay_const_v = dv + dm_offset
+
+        neg_voltage_limit = -np.int32(max_uv_val) + 1
+        pos_voltage_limit = np.int32(max_uv_val) - 1
+
+        decayed_volt = np.int64(v) * (decay_unity - decay_const_v)
+        decayed_volt = np.sign(decayed_volt) * np.right_shift(
+            np.abs(decayed_volt), decay_shift
+        )
+        decayed_volt = np.int32(decayed_volt)
+        updated_volt = decayed_volt + u + effective_bias
+        v[:] = np.clip(updated_volt, neg_voltage_limit, pos_voltage_limit)
+
+        v_hist[t, :] = (v / 64)
+
+    return v_hist
+
+def plot_wta_voltage_dynamics(du, dv, vth, a_in, n_steps):
+
+    v_hist = loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps)
+
     spike_times = np.argmax(v_hist > vth, axis=0)
     n_steps = v_hist.shape[0]
     n_input = len(spike_times)
     v_min, v_max = np.min(v_hist), np.max(v_hist)
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(6, 6))
     plt.step(np.arange(n_steps + 1),
              np.vstack((np.zeros((1, n_input)), v_hist)))
     ax = plt.gca()
@@ -287,9 +263,9 @@ def plot_wta_voltage_dynamics(v_hist, vth):
     for t in spike_times:
         ax.vlines(x=t, ymin=v_min, ymax=vth, linewidth=2, color='lightgrey',
                   linestyle='--')
-    plt.xticks(np.arange(n_steps), size=15)
+    plt.xticks(np.arange(n_steps), size=10)
     plt.yticks(np.arange(np.round(v_min, -3), np.round(1.05 * v_max, -3),
-                         np.round((1.05 * v_max - v_min) / 10, -3)), size=15)
+                         np.round((1.05 * v_max - v_min) / 10, -3)), size=10)
     plt.ylim([v_min, 1.05 * v_max])
     plt.xlim([0, n_steps])
     plt.xlabel("Time", size=15)
@@ -298,9 +274,9 @@ def plot_wta_voltage_dynamics(v_hist, vth):
     for i in range(v_hist.shape[1]):
         legend.append(f"a_in={v_hist[0, i]}")
     legend.append("v_th")
-    plt.legend(legend, loc='lower right', fontsize=15)
+    plt.legend(legend, loc='lower right', fontsize=8)
     plt.title("Voltage dynamics of LIF neuron tuned for temporal WTA",
-              fontsize=20)
+              fontsize=15)
     plt.show()
 
 

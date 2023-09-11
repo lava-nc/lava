@@ -74,7 +74,7 @@ class Allocator(AbstractProcess):
 
     def __init__(self, *,
                  n_protos: int,
-                 next_alloc_id: int) -> None:
+                 next_alloc_id: ty.Optional[int] = 1) -> None:
 
         super().__init__()
 
