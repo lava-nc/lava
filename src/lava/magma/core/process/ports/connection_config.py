@@ -49,3 +49,5 @@ class ConnectionConfig:
     max_message_size: int = 4096
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
     spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
+    num_time_buckets: int = 1 << 16
+    ethernet_mac_address: str = "0x90e2ba01214c"

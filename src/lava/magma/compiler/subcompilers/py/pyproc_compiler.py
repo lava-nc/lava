@@ -20,7 +20,7 @@ from lava.magma.compiler.utils import (
     VarInitializer,
     VarPortInitializer,
     PortInitializer,
-    LoihiCInPortInitializer)
+    LoihiPyInPortInitializer)
 from lava.magma.compiler.var_model import PyVarModel, LoihiAddress, \
     LoihiVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
@@ -176,7 +176,7 @@ class PyProcCompiler(SubCompiler):
                         counter_start_idx + num_counters)
                     loihi_addresses.append(loihi_address)
                 loihi_vm = LoihiVarModel(address=loihi_addresses)
-                pi = LoihiCInPortInitializer(
+                pi = LoihiPyInPortInitializer(
                     port.name,
                     port.shape,
                     ChannelBuildersFactory.get_port_dtype(port),
@@ -189,6 +189,7 @@ class PyProcCompiler(SubCompiler):
                 pi.embedded_counters = \
                     np.arange(counter_start_idx,
                               counter_start_idx + num_counters, dtype=np.int32)
+                pi.connection_config = list(port.connection_configs.values())[0]
                 port_initializers.append(pi)
                 self._tmp_channel_map.set_port_initializer(port, pi)
             else:

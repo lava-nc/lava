@@ -12,6 +12,7 @@ from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
 from lava.magma.compiler.var_model import LoihiVarModel, ConvInVarModel
 from lava.magma.core.model.spike_type import SpikeType
+from lava.magma.core.process.ports.connection_config import ConnectionConfig
 
 
 @dataclass
@@ -137,6 +138,11 @@ class LoihiInPortInitializer(LoihiIOPortInitializer):
 class LoihiCInPortInitializer(LoihiIOPortInitializer):
     embedded_core = 0
     embedded_counters = None
+
+
+@dataclass
+class LoihiPyInPortInitializer(LoihiCInPortInitializer):
+    connection_config: ty.Optional[ConnectionConfig] = None
 
 
 @dataclass

@@ -297,7 +297,6 @@ class ChannelBuilderPyNc(ChannelBuilderNx):
             self.src_port_initializer.shape,
             self.src_port_initializer.d_type,
             self.src_port_initializer.size,
-            self.src_port_initializer.var_model,
-            self.dst_port_initializer.var_model,
-            self.src_port_initializer.connected_port_encoding_type
+            self.src_port_initializer,
+            self.dst_port_initializer
         )
