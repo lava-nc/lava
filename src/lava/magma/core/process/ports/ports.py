@@ -136,6 +136,8 @@ class AbstractPort(AbstractProcessMember):
         # Add other ports to this port's output connections
         self._add_outputs(ports)
         # Add this port to input connections of other ports
+        if len(connection_configs) == 1 and len(ports) > 1:
+            connection_configs = connection_configs * len(ports)
         for p, connection_config in zip(ports, connection_configs):
             p._add_inputs([self])
             if connection_config:
@@ -160,6 +162,8 @@ class AbstractPort(AbstractProcessMember):
         # Add other ports to this port's input connections
         self._add_inputs(ports)
         # Add this port to output connections of other ports
+        if len(connection_configs) == 1 and len(ports) > 1:
+            connection_configs = connection_configs * len(ports)
         for p, connection_config in zip(ports, connection_configs):
             p._add_outputs([self])
             if connection_config:
