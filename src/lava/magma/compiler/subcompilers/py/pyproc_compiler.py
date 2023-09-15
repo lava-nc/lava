@@ -38,7 +38,7 @@ SPIKE_IO_COUNTER_START_INDEX = 2
 
 try:
     from lava.magma.core.model.nc.model import AbstractNcProcessModel
-except ImportError as e:
+except ImportError:
     class AbstractNcProcessModel:
         pass
 

@@ -16,7 +16,6 @@ from lava.magma.compiler.channels.interfaces import (
     ChannelType,
 )
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.compiler.var_model import NcSpikeIOVarModel
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
 from lava.magma.compiler.channels.watchdog import WatchdogManager, Watchdog
@@ -277,7 +276,6 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
-        pass
 
 
 class ChannelBuilderPyNc(ChannelBuilderNx):

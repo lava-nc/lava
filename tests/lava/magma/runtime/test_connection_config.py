@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import typing as ty
 import numpy as np
 
 from lava.magma.core.decorator import implements
