@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
+import numpy as np
 
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
@@ -19,8 +20,9 @@ from lava.magma.compiler.utils import (
     VarInitializer,
     VarPortInitializer,
     PortInitializer,
-)
-from lava.magma.compiler.var_model import PyVarModel
+    LoihiPyInPortInitializer)
+from lava.magma.compiler.var_model import PyVarModel, LoihiAddress, \
+    LoihiVarModel
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import RefVarTypeMapping, PyVarPort
 from lava.magma.core.process.ports.ports import (
@@ -29,6 +31,50 @@ from lava.magma.core.process.ports.ports import (
     VarPort,
 )
 from lava.magma.core.process.process import AbstractProcess
+from lava.magma.compiler.subcompilers.constants import SPIKE_BLOCK_CORE
+
+COUNTERS_PER_SPIKE_IO = 65535
+SPIKE_IO_COUNTER_START_INDEX = 2
+
+try:
+    from lava.magma.core.model.nc.model import AbstractNcProcessModel
+except ImportError:
+    class AbstractNcProcessModel:
+        pass
+
+
+class _Offset:
+    def __init__(self):
+        self._offset: int = SPIKE_IO_COUNTER_START_INDEX
+
+    @property
+    def offset(self) -> int:
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: int):
+        self._offset = value
+
+
+class Offset:
+    obj: ty.Optional[_Offset] = None
+
+    @staticmethod
+    def create() -> _Offset:
+        if not Offset.obj:
+            Offset.obj = _Offset()
+        return Offset.obj
+
+    def get(self) -> int:
+        if not Offset.obj:
+            return self.create().offset
+        else:
+            return Offset.obj.offset
+
+    def update(self, value: int):
+        if not Offset.obj:
+            self.create()
+        self.obj.offset = value
 
 
 class PyProcCompiler(SubCompiler):
@@ -40,9 +86,13 @@ class PyProcCompiler(SubCompiler):
         """Compiles a group of Processes with ProcessModels that are
         implemented in Python."""
         super().__init__(proc_group, compile_config)
+        self._spike_io_counter_offset: Offset = Offset()
 
     def compile(self, channel_map: ChannelMap) -> ChannelMap:
         return self._update_channel_map(channel_map)
+
+    def __del__(self):
+        Offset.obj = None
 
     def _update_channel_map(self, channel_map: ChannelMap) -> ChannelMap:
         cm_updater = ChannelMapUpdater(channel_map)
@@ -103,16 +153,56 @@ class PyProcCompiler(SubCompiler):
     ) -> ty.List[PortInitializer]:
         port_initializers = []
         for port in list(process.in_ports):
-            pi = PortInitializer(
-                port.name,
-                port.shape,
-                ChannelBuildersFactory.get_port_dtype(port),
-                port.__class__.__name__,
-                self._compile_config["pypy_channel_size"],
-                port.get_incoming_transform_funcs(),
-            )
-            port_initializers.append(pi)
-            self._tmp_channel_map.set_port_initializer(port, pi)
+            src_ports: ty.List[AbstractPort] = port.get_src_ports()
+            is_spike_io_receiver = False
+            for src_port in src_ports:
+                cls = src_port.process.model_class
+                if issubclass(cls, AbstractNcProcessModel):
+                    is_spike_io_receiver = True
+                elif is_spike_io_receiver:
+                    raise Exception("Joining Mixed Processes not Supported")
+
+            if is_spike_io_receiver:
+                loihi_addresses = []
+                for src_port in src_ports:
+                    num_counters = np.prod(src_port.shape)
+                    counter_start_idx = self._spike_io_counter_offset.get()
+
+                    loihi_address = LoihiAddress(-1, -1, -1, -1,
+                                                 counter_start_idx,
+                                                 num_counters,
+                                                 1)
+                    self._spike_io_counter_offset.update(
+                        counter_start_idx + num_counters)
+                    loihi_addresses.append(loihi_address)
+                loihi_vm = LoihiVarModel(address=loihi_addresses)
+                pi = LoihiPyInPortInitializer(
+                    port.name,
+                    port.shape,
+                    ChannelBuildersFactory.get_port_dtype(port),
+                    port.__class__.__name__,
+                    self._compile_config["pypy_channel_size"],
+                    port.get_incoming_transform_funcs(),
+                )
+                pi.var_model = loihi_vm
+                pi.embedded_core = SPIKE_BLOCK_CORE
+                pi.embedded_counters = \
+                    np.arange(counter_start_idx,
+                              counter_start_idx + num_counters, dtype=np.int32)
+                pi.connection_config = list(port.connection_configs.values())[0]
+                port_initializers.append(pi)
+                self._tmp_channel_map.set_port_initializer(port, pi)
+            else:
+                pi = PortInitializer(
+                    port.name,
+                    port.shape,
+                    ChannelBuildersFactory.get_port_dtype(port),
+                    port.__class__.__name__,
+                    self._compile_config["pypy_channel_size"],
+                    port.get_incoming_transform_funcs(),
+                )
+                port_initializers.append(pi)
+                self._tmp_channel_map.set_port_initializer(port, pi)
         return port_initializers
 
     def _create_outport_initializers(
