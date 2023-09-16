@@ -317,7 +317,7 @@ class AbstractPort(AbstractProcessMember):
 
         reshape_port = ReshapePort(new_shape, old_shape=self.shape)
         self._connect_forward(
-            [reshape_port], AbstractPort, assert_same_shape=False
+            [reshape_port], AbstractPort, [None], assert_same_shape=False
         )
         return reshape_port
 
@@ -387,7 +387,7 @@ class AbstractPort(AbstractProcessMember):
         new_shape = tuple([self.shape[i] for i in axes])
         transpose_port = TransposePort(new_shape, axes)
         self._connect_forward(
-            [transpose_port], AbstractPort, assert_same_shape=False
+            [transpose_port], AbstractPort, [None], assert_same_shape=False
         )
         return transpose_port
 
@@ -922,7 +922,8 @@ class ConcatPort(AbstractVirtualPort):
     def __init__(self, ports: ty.List[AbstractPort], axis: int):
         super().__init__(self._get_new_shape(ports, axis))
         self._connect_backward(
-            ports, AbstractPort, assert_same_shape=False, assert_same_type=True
+            ports, AbstractPort, [None], assert_same_shape=False,
+            assert_same_type=True
         )
         self.concat_axis = axis
 
