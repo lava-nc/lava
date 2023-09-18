@@ -28,7 +28,9 @@ class TestRuntime(unittest.TestCase):
 
     def test_executable_node_config_assertion(self):
         """Tests runtime constructions with expected constraints"""
-        compile_config = {"long_event_timeout": 10, "short_event_timeout": 10}
+        compile_config = {"long_event_timeout": 10,
+                          "short_event_timeout": 10,
+                          "use_watchdog": False}
         w = WatchdogManagerBuilder(compile_config, 30)
         exe: Executable = Executable(process_list=[],
                                      proc_builders={},

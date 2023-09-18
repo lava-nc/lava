@@ -209,7 +209,10 @@ class WatchdogManagerBuilder(AbstractBuilder):
                  log_level: int):
         self._long_event_timeout = compile_config["long_event_timeout"]
         self._short_event_timeout = compile_config["short_event_timeout"]
-        self._debug = log_level < 30
+        self._debug = compile_config["use_watchdog"]
+        if self._debug:
+            print("!!!!!!! Using Watchdog to Monitor Ports !!!!!!!")
+            print("!!!!!!! Impacts Latency Sensitive Applications !!!!!!!")
 
     def build(self):
         if self._debug:
