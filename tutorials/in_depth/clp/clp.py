@@ -17,7 +17,7 @@ from lava.proc.monitor.process import Monitor
 from lava.utils.weightutils import SignMode
 
 
-class CLP (ABC):
+class CLP(ABC):
     """
     CLP class that encapsulates current Lava implementation of the CLP
     algorithm.
@@ -51,6 +51,7 @@ class CLP (ABC):
             reset and NO novelty detection signal will be sent out.
 
     """
+
     def __init__(self,
                  supervised=True,
                  learn_novels=True,
@@ -92,9 +93,11 @@ class CLP (ABC):
 
         if self.weights_proto is None:
             # No pattern is stored yet. None of the prototypes are allocated
-            self.weights_proto = np.zeros(shape=(n_protos, n_features), dtype=np.int32)
+            self.weights_proto = np.zeros(shape=(n_protos, n_features),
+                                          dtype=np.int32)
 
-        self.n_alloc_protos = np.count_nonzero(np.count_nonzero(self.weights_proto, axis=1))
+        self.n_alloc_protos = np.count_nonzero(
+            np.count_nonzero(self.weights_proto, axis=1))
 
         self.proto_labels = proto_labels
 
@@ -128,8 +131,12 @@ class CLP (ABC):
         if y is not None:
             n_train_samples = y.shape[0]
             train_time = n_train_samples * self.n_steps_per_sample
-            self.s_user_label[0, self.t_wait+5:train_time:self.n_steps_per_sample] = y.T
-            self.s_user_label[0, self.t_wait+7:train_time:self.n_steps_per_sample] = y.T
+            self.s_user_label[
+                0,
+                self.t_wait + 5:train_time:self.n_steps_per_sample] = y.T
+            self.s_user_label[
+                0,
+                self.t_wait + 7:train_time:self.n_steps_per_sample] = y.T
 
         return self.s_pattern_inp, self.s_user_label
 
@@ -137,7 +144,8 @@ class CLP (ABC):
         if self.prototypes is not None:
             self.proto_labels = self.readout_layer.proto_labels.get()
             self.weights_proto = self.dense_proto.weights.get()
-            self.n_alloc_protos = np.count_nonzero(np.count_nonzero(self.weights_proto, axis=1))
+            self.n_alloc_protos = np.count_nonzero(
+                np.count_nonzero(self.weights_proto, axis=1))
         # Config for writing graded payload of the input spike to x1-trace
         graded_spike_cfg = GradedSpikeCfg.OVERWRITE
 
@@ -153,7 +161,7 @@ class CLP (ABC):
         nvl_det = NoveltyDetector(t_wait=self.t_wait)
 
         allocator = Allocator(n_protos=self.n_protos,
-                              next_alloc_id=self.n_alloc_protos+1)
+                              next_alloc_id=self.n_alloc_protos + 1)
 
         readout_layer = Readout(n_protos=self.n_protos,
                                 proto_labels=self.proto_labels)
@@ -194,15 +202,15 @@ class CLP (ABC):
         dense_wta = Dense(weights=np.ones(shape=(self.n_protos, self.n_protos)))
 
         # Default reset for PrototypeLIF population some time after input
-        dense_reset = DelayDense(weights=np.ones(shape=(self.n_protos, self.n_features)),
-                                 delays=self.n_steps_per_sample-2)
+        dense_reset = DelayDense(
+            weights=np.ones(shape=(self.n_protos, self.n_features)),
+            delays=self.n_steps_per_sample - 2)
 
         # Monitor processes
         monitor_nvl = Monitor()
         monitor_protos = Monitor()
         monitor_preds = Monitor()
         monitor_error = Monitor()
-
 
         # Connections
 
@@ -262,8 +270,6 @@ class CLP (ABC):
         monitor_preds.probe(target=readout_layer.user_output,
                             num_steps=self.num_steps)
 
-
-
         self.prototypes = prototypes
         self.monitors = [monitor_nvl, monitor_error, monitor_protos,
                          monitor_preds]
@@ -284,8 +290,7 @@ class CLP (ABC):
         monitor_nvl, monitor_error, monitor_protos, monitor_preds = \
             self.monitors[:4]
 
-
-        novelty_spikes, proto_spikes, error_spikes, preds, currs = [None]*5
+        novelty_spikes, proto_spikes, error_spikes, preds, currs = [None] * 5
         # Get results
         novelty_spikes = monitor_nvl.get_data()
         novelty_spikes = novelty_spikes[self.nvl_det.name][
@@ -304,6 +309,6 @@ class CLP (ABC):
         if self.debug:
             monitor_u = self.monitors[4]
             currs = monitor_u.get_data()[self.prototypes.name][
-                    self.prototypes.u.name]
+                self.prototypes.u.name]
 
         return novelty_spikes, proto_spikes, error_spikes, preds, currs

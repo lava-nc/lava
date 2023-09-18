@@ -7,12 +7,12 @@ import numpy as np
 from itertools import product
 import glob
 from PIL import Image
+from sklearn.model_selection import train_test_split
 
 try:
     import torch
     from torch.utils.data import DataLoader
 
-    import torchvision
     import torchvision.transforms as transforms
     import torchvision.models as models
 
@@ -22,7 +22,7 @@ except ModuleNotFoundError:
     LIBS_ARE_AVAILABLE = False
 
 
-class Coil100Dataset():
+class Coil100Dataset:
     def __init__(self, root_dir, obj_list=np.arange(100), transform=None,
                  size=64, train=True, test_size=None, seed=1234):
         """
@@ -154,7 +154,7 @@ def wta_hyperparam_search(a_in,
 
     for du, dv, vth in product(du_values, dv_values, v_th_values):
 
-        v_hist = loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps)
+        v_hist = loihi_lif_bit_acc_sim(du, dv, a_in, n_steps)
         crossing_times = np.argmax(v_hist > vth, axis=0)
         unique_check = len(set(crossing_times)) == len(crossing_times)
         # Check if current parameter combination is the best so far
@@ -183,7 +183,8 @@ def wta_hyperparam_search(a_in,
 
     return best_params
 
-def loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps):
+
+def loihi_lif_bit_acc_sim(du, dv, a_in, n_steps):
     # Loihi neuron hardware params
     ds_offset = 1
     dm_offset = 0
@@ -208,7 +209,6 @@ def loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps):
     u = np.zeros(shape=(1, num_neurons), dtype=np.int32)
 
     for t in range(n_steps):
-
         decay_const_u = du + ds_offset
         decayed_curr = np.int64(u) * (decay_unity - decay_const_u)
         decayed_curr = np.sign(decayed_curr) * np.right_shift(
@@ -245,9 +245,9 @@ def loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps):
 
     return v_hist
 
-def plot_wta_voltage_dynamics(du, dv, vth, a_in, n_steps):
 
-    v_hist = loihi_lif_bit_acc_sim(du, dv, vth, a_in, n_steps)
+def plot_wta_voltage_dynamics(du, dv, vth, a_in, n_steps):
+    v_hist = loihi_lif_bit_acc_sim(du, dv, a_in, n_steps)
 
     spike_times = np.argmax(v_hist > vth, axis=0)
     n_steps = v_hist.shape[0]
