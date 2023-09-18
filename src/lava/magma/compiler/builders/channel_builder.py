@@ -246,7 +246,8 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
 
 @dataclass
 class ChannelBuilderNx(AbstractChannelBuilder):
-    """A ChannelBuilder for CNc and NcC Channels with NxBoard as the messaging
+    """A ChannelBuilder for CNc and NcC Channels with NxBoard as
+    the messaging
     infrastructure.
     """
 
@@ -275,3 +276,25 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
+
+
+class ChannelBuilderPyNc(ChannelBuilderNx):
+    """A ChannelBuilder for PyNc and NcPy Channels with NxBoard as the messaging
+    infrastructure.
+    """
+    def build(
+            self, messaging_infrastructure: MessageInfrastructureInterface
+    ) -> Channel:
+        channel_class = messaging_infrastructure.channel_class(
+            channel_type=self.channel_type
+        )
+
+        return channel_class(
+            self.src_port_initializer.name,
+            self.dst_port_initializer.name,
+            self.src_port_initializer.shape,
+            self.src_port_initializer.d_type,
+            self.src_port_initializer.size,
+            self.src_port_initializer,
+            self.dst_port_initializer
+        )

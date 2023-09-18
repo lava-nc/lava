@@ -474,6 +474,11 @@ class PyOutPort(AbstractPyIOPort):
         """TBD"""
         pass
 
+    def advance_to_time_step(self, ts: int):
+        for csp_port in self.csp_ports:
+            if hasattr(csp_port, "advance_to_time_step"):
+                csp_port.advance_to_time_step(ts)
+
 
 class PyOutPortVectorDense(PyOutPort):
     """Python implementation of PyOutPort for dense vector data."""
@@ -502,12 +507,19 @@ class PyOutPortVectorSparse(PyOutPort):
         data_length: np.ndarray = np.array([len(data.flatten())],
                                            dtype=np.int32)
         for csp_port in self.csp_ports:
-            data_length.resize(csp_port.shape)
-            data_clone.resize(csp_port.shape)
-            indices_clone.resize(csp_port.shape)
-            csp_port.send(data_length)
-            csp_port.send(data_clone)
-            csp_port.send(indices_clone)
+            if csp_port.is_msg_size_static():
+                data_length.resize(csp_port.shape)
+                data_clone.resize(csp_port.shape)
+                indices_clone.resize(csp_port.shape)
+                csp_port.send(data_length)
+                csp_port.send(data_clone)
+                csp_port.send(indices_clone)
+            else:
+                csp_port.send(
+                    np.concatenate(arrays=[data_length,
+                                           data_clone,
+                                           indices_clone],
+                                   dtype=np.int32))
 
 
 class PyOutPortScalarDense(PyOutPort):

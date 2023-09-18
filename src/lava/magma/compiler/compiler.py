@@ -100,6 +100,7 @@ class Compiler:
         self._compile_config.setdefault("pypy_channel_size", 64)
         self._compile_config.setdefault("long_event_timeout", 600.0)
         self._compile_config.setdefault("short_event_timeout", 60.0)
+        self._compile_config.setdefault("use_watchdog", False)
         self.log = logging.getLogger(__name__)
         self.log.addHandler(logging.StreamHandler())
         self.log.setLevel(loglevel)
