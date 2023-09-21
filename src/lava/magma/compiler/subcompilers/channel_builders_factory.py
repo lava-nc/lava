@@ -6,7 +6,7 @@ import typing as ty
 
 from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp,
-    ChannelBuilderNx,
+    ChannelBuilderNx, ChannelBuilderPyNc,
 )
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
 from lava.magma.compiler.channels.interfaces import ChannelType
@@ -52,9 +52,9 @@ class ChannelBuildersFactory:
     """
 
     def from_channel_map(
-        self,
-        channel_map: ChannelMap,
-        compile_config: ty.Optional[ty.Dict[str, ty.Any]],
+            self,
+            channel_map: ChannelMap,
+            compile_config: ty.Optional[ty.Dict[str, ty.Any]],
     ) -> ty.List[ChannelBuilderMp]:
         """Create builders for multiprocessing channels between ports in
         connected processes.
@@ -85,7 +85,8 @@ class ChannelBuildersFactory:
                 address = self._get_address_for_varport(dst_port)
                 src_pt_init.var_model = address
                 dst_pt_init.var_model = address
-            if ch_type is ChannelType.CNc and isinstance(dst_port, InPort):
+            if ch_type in [ChannelType.CNc, ChannelType.PyNc] and isinstance(
+                    dst_port, InPort):
                 src_pt_init.var_model = dst_pt_init.var_model
             if ch_type is ChannelType.CNc or ch_type is ChannelType.NcC:
                 src_pt_init.connected_port_type = LoihiConnectedPortType.C_NC
@@ -123,7 +124,8 @@ class ChannelBuildersFactory:
                         LoihiConnectedPortEncodingType.VEC_SPARSE
                 else:
                     raise NotImplementedError
-            if ch_type in [ChannelType.PyPy, ChannelType.PyC, ChannelType.CPy]:
+            if ch_type in [ChannelType.PyPy, ChannelType.PyC,
+                           ChannelType.CPy]:
                 channel_builder = ChannelBuilderMp(
                     ch_type,
                     src_port.process,
@@ -144,11 +146,46 @@ class ChannelBuildersFactory:
                         src_pt_init,
                     )
                     channel_builders.append(rv_chb)
+
+            if ch_type in [ChannelType.PyNc, ChannelType.NcPy]:
+                src_pt_init.connected_port_type = LoihiConnectedPortType.PY_NC
+                dst_pt_init.connected_port_type = LoihiConnectedPortType.PY_NC
+
+                if ch_type is ChannelType.PyNc:
+                    py_port = src_port
+                    py_port_init = src_pt_init
+                else:
+                    py_port = dst_port
+                    py_port_init = dst_pt_init
+
+                lt = getattr(py_port.process.model_class, py_port.name).cls
+                if lt in [PyInPort.VEC_DENSE, PyOutPort.VEC_DENSE]:
+                    py_port_init.connected_port_encoding_type = \
+                        LoihiConnectedPortEncodingType.VEC_DENSE
+                elif lt in [PyInPort.VEC_SPARSE, PyOutPort.VEC_SPARSE]:
+                    py_port_init.connected_port_encoding_type = \
+                        LoihiConnectedPortEncodingType.VEC_SPARSE
+                else:
+                    raise NotImplementedError
+
+                payload = channel_map[port_pair]
+                payload.src_port_initializer = src_pt_init
+                payload.dst_port_initializer = dst_pt_init
+
+                py_nc_cb = ChannelBuilderPyNc(
+                    ch_type,
+                    src_port.process,
+                    dst_port.process,
+                    src_pt_init,
+                    dst_pt_init,
+                )
+                channel_builders.append(py_nc_cb)
+
         return channel_builders
 
     @staticmethod
     def _get_port_process_model_class(
-        port: AbstractPort,
+            port: AbstractPort,
     ) -> ty.Type[AbstractProcessModel]:
         process = port.process
         return process.model_class
@@ -161,7 +198,7 @@ class ChannelBuildersFactory:
         return None
 
     def _get_port_pair_dtypes(
-        self, port_pair: PortPair
+            self, port_pair: PortPair
     ) -> ty.Tuple[ty.Any, ty.Any]:
         for src_port, dst_port in port_pair.src, port_pair.dst:
             src_port_dtype = self.get_port_dtype(src_port)
@@ -191,7 +228,7 @@ class ChannelBuildersFactory:
             )
 
     def _get_channel_type_from_ports(
-        self, src_port: AbstractSrcPort, dst_port: AbstractDstPort
+            self, src_port: AbstractSrcPort, dst_port: AbstractDstPort
     ) -> ChannelType:
         src_pm_class = self._get_port_process_model_class(src_port)
         dst_pm_class = self._get_port_process_model_class(dst_port)
@@ -201,7 +238,7 @@ class ChannelBuildersFactory:
         return channel_type
 
     def _get_port_initializers(
-        self, ports: ty.List[AbstractPort], channel_map: ChannelMap
+            self, ports: ty.List[AbstractPort], channel_map: ChannelMap
     ) -> ty.List[PortInitializer]:
         initializers = []
         for port in ports:
@@ -210,38 +247,47 @@ class ChannelBuildersFactory:
 
     @staticmethod
     def _get_channel_type_from_processes(
-        src: ty.Type[AbstractProcessModel], dst: ty.Type[AbstractProcessModel]
+            src: ty.Type[AbstractProcessModel],
+            dst: ty.Type[AbstractProcessModel]
     ) -> ChannelType:
         """Returns appropriate ChannelType for a given (source, destination)
         pair of ProcessModels."""
         if issubclass(src, AbstractPyProcessModel) and issubclass(
-            dst, AbstractPyProcessModel
+                dst, AbstractPyProcessModel
         ):
             return ChannelType.PyPy
         elif issubclass(src, AbstractPyProcessModel) and issubclass(
-            dst, AbstractCProcessModel
+                dst, AbstractCProcessModel
         ):
             return ChannelType.PyC
         elif issubclass(src, AbstractCProcessModel) and issubclass(
-            dst, AbstractPyProcessModel
+                dst, AbstractPyProcessModel
         ):
             return ChannelType.CPy
         elif issubclass(src, AbstractCProcessModel) and issubclass(
-            dst, AbstractNcProcessModel
+                dst, AbstractNcProcessModel
         ):
             return ChannelType.CNc
         elif issubclass(src, AbstractNcProcessModel) and issubclass(
-            dst, AbstractCProcessModel
+                dst, AbstractCProcessModel
         ):
             return ChannelType.NcC
         elif issubclass(src, AbstractNcProcessModel) and issubclass(
-            dst, AbstractNcProcessModel
+                dst, AbstractNcProcessModel
         ):
             return ChannelType.NcNc
         elif issubclass(src, AbstractCProcessModel) and issubclass(
-            dst, AbstractCProcessModel
+                dst, AbstractCProcessModel
         ):
             return ChannelType.CC
+        elif issubclass(src, AbstractPyProcessModel) and issubclass(
+                dst, AbstractNcProcessModel
+        ):
+            return ChannelType.PyNc
+        elif issubclass(src, AbstractNcProcessModel) and issubclass(
+                dst, AbstractPyProcessModel
+        ):
+            return ChannelType.NcPy
         else:
             raise NotImplementedError(
                 f"No support for (source, destination) pairs of type "
