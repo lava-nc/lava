@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from . import reset, source, sink, dataloader, encoder
+from lava.proc.io import reset, source, sink, dataloader, encoder
 
 __all__ = ['reset', 'source', 'sink', 'dataloader', 'encoder']
