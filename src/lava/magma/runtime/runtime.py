@@ -28,12 +28,14 @@ if ty.TYPE_CHECKING:
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
     CspSelector
 from lava.magma.compiler.builders.channel_builder import (
-    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
+    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
+    ChannelBuilderPyNc)
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel
+from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
+    ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
@@ -219,6 +221,24 @@ class Runtime:
                         channel_builder.src_process.id,
                         channel_builder.src_port_initializer.name)
                     dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
+                elif isinstance(channel_builder, ChannelBuilderPyNc):
+                    channel = channel_builder.build(
+                        self._messaging_infrastructure
+                    )
+                    if channel_builder.channel_type is ChannelType.PyNc:
+                        self._open_ports.append(channel.src_port)
+
+                        self._get_process_builder_for_process(
+                            channel_builder.src_process).set_csp_ports(
+                            [channel.src_port])
+                    elif channel_builder.channel_type is ChannelType.NcPy:
+                        self._open_ports.append(channel.dst_port)
+
+                        self._get_process_builder_for_process(
+                            channel_builder.dst_process).set_csp_ports(
+                            [channel.dst_port])
+                    else:
+                        raise NotImplementedError
 
     def _build_sync_channels(self):
         """Builds the channels needed for synchronization between runtime
