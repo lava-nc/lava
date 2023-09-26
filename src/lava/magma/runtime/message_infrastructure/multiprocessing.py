@@ -22,11 +22,19 @@ from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
 try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
+    from lava.magma.compiler.channels.pyncchannel import PyNcChannel
+    from lava.magma.compiler.channels.ncpychannel import NcPyChannel
 except ImportError:
     class CPyChannel:
         pass
 
     class PyCChannel:
+        pass
+
+    class PyNcChannel:
+        pass
+
+    class NcPyChannel:
         pass
 
 from lava.magma.core.sync.domain import SyncDomain
@@ -130,5 +138,9 @@ class MultiProcessing(MessageInfrastructureInterface):
             return PyCChannel
         elif channel_type == ChannelType.CPy:
             return CPyChannel
+        elif channel_type == ChannelType.PyNc:
+            return PyNcChannel
+        elif channel_type == ChannelType.NcPy:
+            return NcPyChannel
         else:
             raise Exception(f"Unsupported channel type {channel_type}")
