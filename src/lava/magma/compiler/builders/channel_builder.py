@@ -17,6 +17,8 @@ from lava.magma.runtime.message_infrastructure import (
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    Watchdog, WatchdogManager
 from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
