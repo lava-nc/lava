@@ -42,7 +42,7 @@ from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
 from lava.magma.runtime.message_infrastructure.interfaces import \
-    Channel, ChannelType
+    ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
