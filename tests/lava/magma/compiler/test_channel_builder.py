@@ -20,7 +20,8 @@ from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager
 )
-from lava.magma.runtime.message_infrastructure.watchdog import NoOPWatchdogManager
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    NoOPWatchdogManager
 
 
 class MockMessageInterface:
