@@ -223,7 +223,7 @@ def validate_shape(shape: ty.Tuple[int, ...]):
                         f"<shape> = {shape}.")
 
     for s in shape:
-        if not isinstance(s, int):
+        if not np.issubdtype(type(s), int):
             raise TypeError("Expected all elements of <shape> to be of "
                             f"type int. Got <shape> = {shape}.")
         if s <= 0:
@@ -239,7 +239,7 @@ def validate_buffer_size(buffer_size: int):
     buffer_size : int
         Buffer size to validate.
     """
-    if not isinstance(buffer_size, int):
+    if not np.issubdtype(type(buffer_size), int):
         raise TypeError("Expected <buffer_size> to be of type int. Got "
                         f"<buffer_size> = {buffer_size}.")
     if buffer_size <= 0:
