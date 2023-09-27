@@ -384,17 +384,8 @@ class PyPyChannel(Channel):
         req = Semaphore(0)
         ack = Semaphore(0)
         proto = Proto(shape=shape, dtype=dtype, nbytes=nbytes)
-<<<<<<< HEAD:src/lava/magma/runtime/message_infrastructure/pypychannel.py
         self._src_port = SendPort(src_name, shm, proto, size, req, ack)
         self._dst_port = RecvPort(dst_name, shm, proto, size, req, ack)
-=======
-        self._src_port = CspSendPort(src_name, shm, proto, size, req, ack,
-                                     src_send_watchdog,
-                                     src_join_watchdog)
-        self._dst_port = CspRecvPort(dst_name, shm, proto, size, req, ack,
-                                     dst_recv_watchdog,
-                                     dst_join_watchdog)
->>>>>>> main:src/lava/magma/compiler/channels/pypychannel.py
 
     def nbytes(self, shape, dtype):
         return np.prod(shape) * np.dtype(dtype).itemsize

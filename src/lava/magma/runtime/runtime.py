@@ -41,11 +41,8 @@ from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-<<<<<<< HEAD
-=======
 from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
->>>>>>> main
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
