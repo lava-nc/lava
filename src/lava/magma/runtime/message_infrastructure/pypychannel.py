@@ -10,7 +10,8 @@ from threading import BoundedSemaphore, Condition, Thread
 from time import time
 from scipy.sparse import csr_matrix
 from lava.utils.sparse import find
-from lava.magma.compiler.channels.watchdog import Watchdog, NoOPWatchdog
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    Watchdog, NoOPWatchdog
 
 
 import numpy as np

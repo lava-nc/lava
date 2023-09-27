@@ -4,15 +4,16 @@
 
 import typing as ty
 
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import \
+    ChannelType
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import \
     MessageInfrastructureInterface
 from lava.magma.runtime.message_infrastructure import Channel
 try:
-    from lava.magma.compiler.channels.nccchannel import NcCChannel
-    from lava.magma.compiler.channels.cncchannel import CNcChannel
+    from lava.magma.runtime.message_infrastructure.nccchannel import NcCChannel
+    from lava.magma.runtime.message_infrastructure.cncchannel import CNcChannel
 except ImportError:
     class CNcChannel:
         pass

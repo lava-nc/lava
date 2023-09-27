@@ -41,14 +41,15 @@ from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
-    ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import \
+    Channel, ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
 from lava.magma.core.run_conditions import (AbstractRunCondition,
                                             RunContinuous, RunSteps)
-from lava.magma.compiler.channels.watchdog import WatchdogManagerInterface
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    WatchdogManagerInterface
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in

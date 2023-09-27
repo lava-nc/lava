@@ -20,7 +20,7 @@ from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
 )
 
 try:
-    from lava.magma.compiler.channels.cpychannel import \
+    from lava.magma.runtime.message_infrastructure.cpychannel import \
         CPyChannel, PyCChannel
 except ImportError:
     class CPyChannel:
