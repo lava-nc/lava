@@ -25,6 +25,15 @@ except ImportError:
     class LavaTypeTransfer:
         pass
 
+from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
+    import MessageInfrastructureInterface
+
+
+import platform
+if platform.system() != 'Windows':
+    mp.set_start_method('fork')
+
+
 """Implements the Message Infrastructure Interface using Python
 MultiProcessing Library. The MultiProcessing API is used to create actors
 which will participate in exchanging messages. The Channel Infrastructure

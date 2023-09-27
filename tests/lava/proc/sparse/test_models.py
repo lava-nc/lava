@@ -936,13 +936,16 @@ class TestDelaySparseProcessModel(unittest.TestCase):
         delays[3, 3] = 1
         delays[1, 2] = 3
         delays[3, 1] = 2
+        max_delay = 10
 
         weights_sparse = csr_matrix(weights)
         delays_sparse = csr_matrix(delays)
         wgt_dly_dense = AbstractPyDelayDenseModel.get_delay_wgts_mat(weights,
-                                                                     delays)
+                                                                     delays,
+                                                                     max_delay)
         wgt_dly_sparse = APDSM.get_delay_wgts_mat(weights_sparse,
-                                                  delays_sparse)
+                                                  delays_sparse,
+                                                  max_delay)
         self.assertTrue(np.all(wgt_dly_sparse == wgt_dly_dense))
 
     def test_float_pm_buffer_delay(self):

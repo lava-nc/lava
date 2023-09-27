@@ -370,11 +370,13 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         #  which is then transposed to get the activation matrix.
         return np.reshape(
             np.sum(self.get_delay_wgts_mat(self.weights,
-                                           self.delays) * s_in, axis=1),
-            (np.max(self.delays) + 1, self.weights.shape[0])).T
+                                           self.delays,
+                                           self.a_buff.shape[-1] - 1) * s_in,
+                   axis=1),
+            (self.a_buff.shape[-1], self.weights.shape[0])).T
 
     @staticmethod
-    def get_delay_wgts_mat(weights, delays) -> np.ndarray:
+    def get_delay_wgts_mat(weights, delays, max_delay) -> np.ndarray:
         """
         Create a matrix where the synaptic weights are separated
         by their corresponding delays. The first matrix contains all the
@@ -393,7 +395,7 @@ class AbstractPyDelayDenseModel(PyLoihiProcessModel):
         """
         return np.vstack([
             np.where(delays == k, weights, 0)
-            for k in range(np.max(delays) + 1)
+            for k in range(max_delay + 1)
         ])
 
     def update_act(self, s_in):

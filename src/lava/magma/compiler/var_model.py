@@ -11,6 +11,8 @@ from dataclasses import dataclass, InitVar
 from lava.magma.compiler.mappable_interface import Mappable
 from lava.magma.compiler.subcompilers.address import NcLogicalAddress, \
     NcVirtualAddress
+from lava.magma.core.process.ports.connection_config import SpikeIOInterface, \
+    SpikeIOPort, SpikeIOMode
 
 if ty.TYPE_CHECKING:
     pass
@@ -203,3 +205,70 @@ class ConvNeuronVarModel(LoihiNeuronVarModel):
     alloc_dims: ty.List[ty.Tuple[int, int, int]] = None
     valid_dims: ty.List[ty.Tuple[int, int, int]] = None
     var_shape: ty.Tuple[int, int, int] = None
+
+
+@dataclass
+class ByteEncoder:
+    """Encodes ptr, len, base"""
+    base: int = 0
+    len: int = 0
+    ptr: int = 0
+
+
+@dataclass
+class CoreEncoder:
+    """ Encodes a core xyp """
+    x: ByteEncoder = ByteEncoder()
+    y: ByteEncoder = ByteEncoder()
+    p: ByteEncoder = ByteEncoder()
+
+
+@dataclass
+class ChipEncoder:
+    """ Encoding for chip field """
+    x: ByteEncoder = ByteEncoder()
+    y: ByteEncoder = ByteEncoder()
+    z: ByteEncoder = ByteEncoder()
+
+
+@dataclass
+class AxonEncoder:
+    """ Encoding for axon field """
+    hi: ByteEncoder = ByteEncoder()
+    lo: ByteEncoder = ByteEncoder()
+
+
+@dataclass
+class TimeCompare:
+    """Used by SpikeBlock to determine when to inject spikes"""
+    time_mode: int
+    num_time_bits: int
+    time_len: int
+    time_ptr: int
+
+
+@dataclass
+class DecodeConfig:
+    receive_mode: int
+    decode_mode: int
+
+
+@dataclass
+class SpikeEncoder:
+    islong: int
+    core: CoreEncoder
+    axon: AxonEncoder
+    chip: ChipEncoder
+    payload: ty.List[ByteEncoder]
+
+
+@dataclass
+class NcSpikeIOVarModel(NcVarModel):
+    msg_queue_id: int = 0
+    num_message_bits: int = 8
+    interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
+    spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
+    spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
+    decode_config: ty.Optional[DecodeConfig] = None
+    time_compare: ty.Optional[TimeCompare] = None
+    spike_encoder: ty.Optional[SpikeEncoder] = None

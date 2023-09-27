@@ -39,6 +39,9 @@ class AbstractTransferPort(ABC):
     def join(self):
         pass
 
+    def is_msg_size_static(self) -> bool:
+        return True
+
 
 class AbstractSendPort(AbstractTransferPort):
     @abstractmethod

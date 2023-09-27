@@ -35,16 +35,23 @@ from lava.magma.runtime.runtime_services.runtime_service import \
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.builders.channel_builder import (
-    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp)
+    ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
+    ChannelBuilderPyNc)
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
+<<<<<<< HEAD
+=======
+from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
+    ChannelType
+>>>>>>> main
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
 from lava.magma.core.run_conditions import (AbstractRunCondition,
                                             RunContinuous, RunSteps)
+from lava.magma.compiler.channels.watchdog import WatchdogManagerInterface
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in
@@ -136,6 +143,8 @@ class Runtime:
         self._open_ports: ty.List[AbstractTransferPort] = []
         self.num_steps: int = 0
 
+        self._watchdog_manager = None
+
     def __del__(self):
         """On destruction, terminate Runtime automatically to
         free compute resources.
@@ -154,6 +163,7 @@ class Runtime:
 
     def initialize(self, node_cfg_idx: int = 0):
         """Initializes the runtime"""
+        self._build_watchdog_manager()
         self._build_message_infrastructure()
         self._build_channels()
         self._build_sync_channels()
@@ -176,6 +186,11 @@ class Runtime:
         """Returns the selected NodeCfg."""
         return self._executable.node_configs
 
+    def _build_watchdog_manager(self):
+        self._watchdog_manager: WatchdogManagerInterface = \
+            self._executable.watchdog_manager_builder.build()
+        self._watchdog_manager.start()
+
     def _build_message_infrastructure(self):
         """Create the Messaging Infrastructure Backend given the
         _messaging_infrastructure_type and Start it"""
@@ -195,7 +210,8 @@ class Runtime:
             for channel_builder in self._executable.channel_builders:
                 if isinstance(channel_builder, ChannelBuilderMp):
                     channel = channel_builder.build(
-                        self._messaging_infrastructure
+                        self._messaging_infrastructure,
+                        self._watchdog_manager
                     )
 
                     self._open_ports.append(channel.src_port)
@@ -215,6 +231,24 @@ class Runtime:
                         channel_builder.src_process.id,
                         channel_builder.src_port_initializer.name)
                     dst_pb.add_csp_port_mapping(src_port_id, channel.dst_port)
+                elif isinstance(channel_builder, ChannelBuilderPyNc):
+                    channel = channel_builder.build(
+                        self._messaging_infrastructure
+                    )
+                    if channel_builder.channel_type is ChannelType.PyNc:
+                        self._open_ports.append(channel.src_port)
+
+                        self._get_process_builder_for_process(
+                            channel_builder.src_process).set_csp_ports(
+                            [channel.src_port])
+                    elif channel_builder.channel_type is ChannelType.NcPy:
+                        self._open_ports.append(channel.dst_port)
+
+                        self._get_process_builder_for_process(
+                            channel_builder.dst_process).set_csp_ports(
+                            [channel.dst_port])
+                    else:
+                        raise NotImplementedError
 
     def _build_sync_channels(self):
         """Builds the channels needed for synchronization between runtime
@@ -222,7 +256,8 @@ class Runtime:
         if self._executable.sync_channel_builders:
             for sync_channel_builder in self._executable.sync_channel_builders:
                 channel: Channel = sync_channel_builder.build(
-                    self._messaging_infrastructure
+                    self._messaging_infrastructure,
+                    self._watchdog_manager
                 )
 
                 self._open_ports.append(channel.src_port)
@@ -416,6 +451,8 @@ class Runtime:
                 self.log.info("Runtime not started yet.")
         finally:
             self._messaging_infrastructure.stop()
+
+        self._watchdog_manager.stop()
 
     def join(self):
         """Join all ports and processes"""
