@@ -222,7 +222,7 @@ def validate_shape(shape: ty.Tuple[int, ...]):
                         f"<shape> = {shape}.")
 
     for s in shape:
-        if not np.issubdtype(type(s), int)::
+        if not np.issubdtype(type(s), int):
             raise TypeError("Expected all elements of <shape> to be of "
                             f"type int. Got <shape> = {shape}.")
         if s <= 0:
