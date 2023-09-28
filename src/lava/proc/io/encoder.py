@@ -237,6 +237,7 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         # Receive synaptic input
         a_in_data = np.left_shift(self.a_in.recv().astype(int),
                                   self.spike_exp)
+        print(f'{a_in_data[100, 100, 0] = }')
         s_out = self.encode_delta(a_in_data)
         if self.compression == Compression.SPARSE:
             self.data, self.idx = self.encode_sparse(s_out)
