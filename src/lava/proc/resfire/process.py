@@ -14,12 +14,11 @@
 # expressly stated in the License.
 # See: https://spdx.org/licenses/
 
-import os
 import numpy as np
 
 import typing as ty
-from typing import Any, Dict
-from enum import IntEnum, unique
+from typing import Dict
+from enum import unique
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
