@@ -74,7 +74,7 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
                                        axes=self.axes)
 
         source.out_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(sink.in_port)
 
@@ -312,10 +312,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
                                         axes=tuple(np.argsort(self.axes)))
 
         source.out_port._connect_forward(
-            [virtual_port1], AbstractPort, assert_same_shape=False
+            [virtual_port1], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port1._connect_forward(
-            [virtual_port2], AbstractPort, assert_same_shape=False
+            [virtual_port2], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port2.connect(sink.in_port)
 
@@ -348,10 +348,10 @@ class TestVirtualPortNetworkTopologies(unittest.TestCase):
                                         axes=(0, 2, 1))
 
         source1.out_port._connect_forward(
-            [virtual_port1], AbstractPort, assert_same_shape=False
+            [virtual_port1], AbstractPort, [None], assert_same_shape=False
         )
         source2.out_port._connect_forward(
-            [virtual_port2], AbstractPort, assert_same_shape=False
+            [virtual_port2], AbstractPort, [None], assert_same_shape=False
         )
 
         virtual_port1.connect(sink.in_port)
@@ -730,7 +730,7 @@ class SubHVPInPortProcModel(AbstractSubProcessModel):
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['s_shape'],
                                        axes=proc.proc_params['axes'])
         proc.in_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(self.in_proc.in_port)
 
@@ -761,7 +761,7 @@ class SubHVPOutPortProcModel(AbstractSubProcessModel):
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
         self.out_proc.out_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(proc.out_port)
 
@@ -858,7 +858,7 @@ class SubHVPRefPortWriteProcModel(AbstractSubProcessModel):
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
         self.ref_write_proc.ref_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(proc.ref_port)
 
@@ -889,7 +889,7 @@ class SubHVPRefPortReadProcModel(AbstractSubProcessModel):
         virtual_port = MockVirtualPort(new_shape=proc.proc_params['h_shape'],
                                        axes=proc.proc_params['axes'])
         self.ref_read_proc.ref_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(proc.ref_port)
 
@@ -925,7 +925,7 @@ class SubHVPVarPortProcModel(AbstractSubProcessModel):
         virtual_port = MockVirtualPort(new_shape=s_data.shape,
                                        axes=proc.proc_params['axes'])
         proc.var_port._connect_forward(
-            [virtual_port], AbstractPort, assert_same_shape=False
+            [virtual_port], AbstractPort, [None], assert_same_shape=False
         )
         virtual_port.connect(self.var_proc.var_port)
 
