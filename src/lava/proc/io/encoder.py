@@ -188,19 +188,27 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         if len(idx) == 0:
             idx = np.array([0])
             data = np.array([0])
+        max_idx = 0xFF
+        if idx[0] > max_idx:
+            idx = np.concatenate([np.zeros(1, dtype=idx.dtype), idx.flatten()])
+            data = np.concatenate([np.zeros(1, dtype=idx.dtype), data.flatten()])
 
         # 8 bit index encoding
         idx[1:] = idx[1:] - idx[:-1] - 1  # default increment of 1
         delta_idx = []
         delta_data = []
-        max_idx = 0xFF
         start = 0
         for i in np.argwhere(idx >= max_idx)[:, 0]:
             delta_idx.append((idx[start:i].flatten()) % max_idx)
             delta_data.append(data[start:i].flatten())
-            delta_idx.append(np.array([max_idx - 1] * (idx[i] // max_idx)))
-            delta_data.append(np.array([0] * (idx[i] // max_idx)))
-            start = i
+            repeat_data = idx[i] // max_idx
+            num_repeats = repeat_data // max_idx
+            delta_idx.append(np.array([max_idx] * (num_repeats + 1)))
+            delta_data.append(np.array([max_idx] * num_repeats
+                                       + [repeat_data % max_idx]))
+            delta_idx.append((idx[i:i + 1].flatten()) % max_idx)
+            delta_data.append(data[i:i + 1].flatten())
+            start = i + 1
         if len(delta_idx) > 0:
             delta_idx = np.concatenate(delta_idx)
             delta_data = np.concatenate(delta_data)
@@ -208,11 +216,6 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             delta_idx = idx.flatten()
             delta_data = data.flatten()
 
-        # Decoding
-        # idx = delta_idx
-        # idx[1:] += 1
-        # idx = np.cumsum(idx)
-        # data = delta_data
         padded_idx = np.zeros(int(np.ceil(len(delta_idx) / 4) * 4))
         padded_data = np.zeros(int(np.ceil(len(delta_data) / 4) * 4))
 
@@ -232,12 +235,36 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
                        + padded_data[0::4])
         return packed_data, packed_idx
 
+    def decode_encode_delta_sparse_8(self, packed_data, packed_idx):
+        data_list = []
+        idx_list = []
+        count = 0
+        data = 0
+        idx = 0
+        debug = False
+        for p_data, p_idx in zip(packed_data, packed_idx):
+            for _ in range(4):
+                data = p_data & 0xFF
+                idx_1 = p_idx & 0xFF
+                if idx_1 == 0xFF:
+                    idx += data * 0xFF
+                    data = 0
+                else:
+                    idx += idx_1 + int(count > 0)
+                if data != 0:
+                    data_list.append(data)
+                    idx_list.append(idx)
+                p_data >>= 8
+                p_idx >>= 8
+                count += 1
+            debug = False
+        return np.array(data_list), np.array(idx_list)
+
     def run_spk(self):
         self.s_out.send(self.data, self.idx)
         # Receive synaptic input
         a_in_data = np.left_shift(self.a_in.recv().astype(int),
                                   self.spike_exp)
-        print(f'{a_in_data[100, 100, 0] = }')
         s_out = self.encode_delta(a_in_data)
         if self.compression == Compression.SPARSE:
             self.data, self.idx = self.encode_sparse(s_out)
@@ -245,3 +272,15 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             self.data, self.idx = self.encode_packed_4(s_out)
         elif self.compression == Compression.DELTA_SPARSE_8:
             self.data, self.idx = self.encode_delta_sparse_8(s_out)
+            idx = np.argwhere(s_out.flatten() != 0).flatten()
+            data = s_out.flatten()[idx].flatten()
+            print(f'{np.argwhere(s_out != 0)=}')
+            print(f'{data=}')
+            print(f'{idx=}')
+            # print(f'{self.data=}')
+            # print(f'{self.idx=}')
+            dec_data, dec_idx = self.decode_encode_delta_sparse_8(self.data, self.idx)
+            print(f'{dec_data=}')
+            print(f'{dec_idx=}')
+
+
