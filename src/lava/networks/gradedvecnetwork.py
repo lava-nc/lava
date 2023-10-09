@@ -138,6 +138,24 @@ class ThreshVec(AlgebraicVector):
         self.main = GradedVec(shape=self.shape, vth=self.vth, exp=self.exp)
         self.in_port = self.main.a_in
         self.out_port = self.main.s_out
+        
+    def __mul__(self, other):
+        if isinstance(other, ThreshVec):
+            ## create the product network
+            print('prod', self.exp)
+            prod_layer = ProductVec(shape=self.shape, vth=1, exp=self.exp)
+        
+            weightsI = np.eye(self.shape[0])
+
+            weights_A = GradedSparse(weights=weightsI)
+            weights_B = GradedSparse(weights=weightsI)
+            weights_out = GradedSparse(weights=weightsI)
+
+            prod_layer << (weights_A @ self, weights_B @ other)
+            weights_out @ prod_layer
+            return weights_out
+        else:
+            return NotImplemented
 
 
 class ProductVec(AlgebraicVector):
