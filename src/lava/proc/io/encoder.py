@@ -203,9 +203,9 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             delta_data.append(data[start:i].flatten())
             repeat_data = idx[i] // max_idx
             num_repeats = repeat_data // max_idx
-            delta_idx.append(np.array([max_idx] * (num_repeats + 1)))
+            delta_idx.append(np.array([max_idx] * (num_repeats + 1)).flatten())
             delta_data.append(np.array([max_idx] * num_repeats
-                                       + [repeat_data % max_idx]))
+                                       + [repeat_data % max_idx]).flatten())
             delta_idx.append((idx[i:i + 1].flatten()) % max_idx)
             delta_data.append(data[i:i + 1].flatten())
             start = i + 1
@@ -272,15 +272,15 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             self.data, self.idx = self.encode_packed_4(s_out)
         elif self.compression == Compression.DELTA_SPARSE_8:
             self.data, self.idx = self.encode_delta_sparse_8(s_out)
-            idx = np.argwhere(s_out.flatten() != 0).flatten()
-            data = s_out.flatten()[idx].flatten()
-            print(f'{np.argwhere(s_out != 0)=}')
-            print(f'{data=}')
-            print(f'{idx=}')
-            # print(f'{self.data=}')
-            # print(f'{self.idx=}')
-            dec_data, dec_idx = self.decode_encode_delta_sparse_8(self.data, self.idx)
-            print(f'{dec_data=}')
-            print(f'{dec_idx=}')
+            # idx = np.argwhere(s_out.flatten() != 0).flatten()
+            # data = s_out.flatten()[idx].flatten()
+            # print(f'{np.argwhere(s_out != 0)=}')
+            # print(f'{data=}')
+            # print(f'{idx=}')
+            # # print(f'{self.data=}')
+            # # print(f'{self.idx=}')
+            # dec_data, dec_idx = self.decode_encode_delta_sparse_8(self.data, self.idx)
+            # print(f'{dec_data=}')
+            # print(f'{dec_idx=}')
 
 
