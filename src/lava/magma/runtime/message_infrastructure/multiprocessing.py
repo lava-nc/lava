@@ -22,8 +22,6 @@ from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
 try:
     from lava.magma.compiler.channels.cpychannel import \
         CPyChannel, PyCChannel
-    from lava.magma.compiler.channels.pyncchannel import PyNcChannel
-    from lava.magma.compiler.channels.ncpychannel import NcPyChannel
 except ImportError:
     class CPyChannel:
         pass
@@ -31,6 +29,10 @@ except ImportError:
     class PyCChannel:
         pass
 
+try:
+    from lava.magma.compiler.channels.pyncchannel import PyNcChannel
+    from lava.magma.compiler.channels.ncpychannel import NcPyChannel
+except ImportError:
     class PyNcChannel:
         pass
 
