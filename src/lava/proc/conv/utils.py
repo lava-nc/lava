@@ -13,7 +13,7 @@ try:
     TORCH_IS_AVAILABLE = True
 except ModuleNotFoundError:
     TORCH_IS_AVAILABLE = False
-
+TORCH_IS_AVAILABLE = False
 
 @unique
 class TensorOrder(IntEnum):
