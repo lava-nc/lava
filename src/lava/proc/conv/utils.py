@@ -13,6 +13,9 @@ try:
     TORCH_IS_AVAILABLE = True
 except ModuleNotFoundError:
     TORCH_IS_AVAILABLE = False
+# NOTE: It is known that torch calls inside Lava PyProcess hangs.
+# Disabling torch usage inside a Lava CPU process until a fix is found.
+TORCH_IS_AVAILABLE = False
 
 
 @unique
