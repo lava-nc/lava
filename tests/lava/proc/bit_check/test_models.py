@@ -18,17 +18,16 @@ verbose = True if (("-v" in sys.argv) or ("--verbose" in sys.argv)) else False
 
 class TestBitCheckModels(unittest.TestCase):
     """Tests for BitCheck Models"""
+    num_steps = 100
+    input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
+    input_ *= 1 << 12
+    input_ = input_.astype(int)
+    input_[:, 1:] -= input_[:, :-1]
 
     def run_test(
         self, num_steps: int, tag: str = "fixed_pt", bits: int = 24
     ) -> Tuple[np.ndarray, np.ndarray]:
-        input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        if tag == "fixed_pt":
-            input_ *= 1 << 12
-            input_ = input_.astype(int)
-        input_[:, 1:] -= input_[:, :-1]
-
-        source = io.source.RingBuffer(data=input_)
+        source = io.source.RingBuffer(data=self.input_)
         sigma = Sigma(shape=(1,))
         sink = io.sink.RingBuffer(shape=sigma.shape, buffer=num_steps)
 
@@ -54,16 +53,12 @@ class TestBitCheckModels(unittest.TestCase):
 
         sigma.stop()
 
-        return input_, output, bits_used, overflowed
+        return self.input_, output, bits_used, overflowed
 
     def test_bitcheck_sigma_decoding_fixed_overflow(self) -> None:
         """Test BitCheck with overflow sigma decode."""
-        num_steps = 100
-        bitcheck_bits = None
-        bitcheck_overflowed = None
-
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
-            num_steps=num_steps, tag="fixed_pt", bits=12
+            num_steps=self.num_steps, tag="fixed_pt", bits=12
         )
 
         if verbose:
@@ -74,10 +69,8 @@ class TestBitCheckModels(unittest.TestCase):
 
     def test_bitcheck_sigma_decoding_fixed(self) -> None:
         """Test BitCheck no overflow sigma decode."""
-        num_steps = 100
-
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
-            num_steps=num_steps, tag="fixed_pt", bits=24
+            num_steps=self.num_steps, tag="fixed_pt", bits=24
         )
 
         if verbose:
@@ -89,6 +82,14 @@ class TestBitCheckModels(unittest.TestCase):
 
 class TestBitcheckSigmaDelta(unittest.TestCase):
     """Test BitCheck with sigma delta neurons."""
+    num_steps = 100
+    spike_exp = 6
+    state_exp = 6
+    vth = 10 << (spike_exp + state_exp)
+    input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
+    input_ *= 1 << spike_exp + state_exp
+    input_ = input_.astype(int)
+    input_[:, 1:] -= input_[:, :-1]
 
     def run_test(
         self,
@@ -101,11 +102,7 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         tag: str = "fixed_pt",
         bits: int = 24,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        input_ *= 1 << spike_exp + state_exp
-        input_[:, 1:] -= input_[:, :-1]
-
-        source = io.source.RingBuffer(data=input_.astype(int) * (1 << 6))
+        source = io.source.RingBuffer(data=self.input_ * (1 << 6))
         sdn = SigmaDelta(
             shape=(1,),
             vth=vth,
@@ -134,23 +131,19 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         overflowed = bitcheck.overflowed
         sdn.stop()
 
-        input_ = np.cumsum(input_, axis=1)
+        input_ = np.cumsum(self.input_, axis=1)
         output = np.cumsum(output, axis=1)
 
         return input_, output, bits_used, overflowed
 
     def test_bitcheck_reconstruction_fixed(self) -> None:
         """Tests BitCheck with fixed point sigma delta reconstruction"""
-        num_steps = 100
-        spike_exp = 6
-        state_exp = 6
-        vth = 10 << (spike_exp + state_exp)
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
-            num_steps=num_steps,
-            vth=vth,
+            num_steps=self.num_steps,
+            vth=self.vth,
             act_mode=ActivationMode.UNIT,
-            spike_exp=spike_exp,
-            state_exp=state_exp,
+            spike_exp=self.spike_exp,
+            state_exp=self.state_exp,
             cum_error=False,
             bits=24,
         )
@@ -164,16 +157,12 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
     def test_bitcheck_reconstruction_fixed_overflow(self) -> None:
         """Tests BitCheck overflow with fixed point
         sigma delta reconstruction"""
-        num_steps = 100
-        spike_exp = 6
-        state_exp = 6
-        vth = 10 << (spike_exp + state_exp)
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
-            num_steps=num_steps,
-            vth=vth,
+            num_steps=self.num_steps,
+            vth=self.vth,
             act_mode=ActivationMode.UNIT,
-            spike_exp=spike_exp,
-            state_exp=state_exp,
+            spike_exp=self.spike_exp,
+            state_exp=self.state_exp,
             cum_error=False,
             bits=12,
         )
