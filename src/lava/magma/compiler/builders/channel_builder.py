@@ -30,15 +30,29 @@ PortInitializers = ty.Tuple[PortInitializer, PortInitializer]
 
 
 class WatchdogEnabledMixin:
+    SEND = "send"
+    RECV = "recv"
+    JOIN = "join"
+
     @staticmethod
     def watch(watchdog_manager: WatchdogManager,
               queue: Queue,
               process: "AbstractProcess",
+              other_process: "AbstractProcess",
               pi: PortInitializer,
+              other_pi: PortInitializer,
               method_type: str) -> Watchdog:
         process_cls: str = process.__class__.__name__
         port_name: str = pi.name
         name: str = f"{process_cls}.{port_name}"
+        if other_process and other_pi:
+            other_process_cls: str = other_process.__class__.__name__
+            other_port_name: str = other_pi.name
+            other_name: str = f"{other_process_cls}.{other_port_name}"
+            if method_type is WatchdogEnabledMixin.SEND:
+                name += f"->{other_name}"
+            elif method_type is WatchdogEnabledMixin.RECV:
+                name = f"{other_name}->{name}"
         w: Watchdog = watchdog_manager.create_watchdog(queue=queue,
                                                        channel_name=name,
                                                        method_type=method_type)
@@ -49,21 +63,33 @@ class WatchdogEnabledMixin:
                          queues: Queues,
                          port_initializers: PortInitializers) -> Watchdogs:
         src_send_watchdog: Watchdog = self.watch(watchdog_manager,
-                                                 queues[0], self.src_process,
+                                                 queues[0],
+                                                 self.src_process,
+                                                 self.dst_process,
                                                  port_initializers[0],
-                                                 "send")
+                                                 port_initializers[1],
+                                                 WatchdogEnabledMixin.SEND)
         src_join_watchdog: Watchdog = self.watch(watchdog_manager,
-                                                 queues[1], self.src_process,
+                                                 queues[1],
+                                                 self.src_process,
+                                                 self.dst_process,
                                                  port_initializers[0],
-                                                 "join")
+                                                 port_initializers[1],
+                                                 WatchdogEnabledMixin.JOIN)
         dst_recv_watchdog: Watchdog = self.watch(watchdog_manager,
-                                                 queues[2], self.dst_process,
+                                                 queues[2],
+                                                 self.dst_process,
+                                                 self.src_process,
                                                  port_initializers[1],
-                                                 "recv")
+                                                 port_initializers[0],
+                                                 WatchdogEnabledMixin.RECV)
         dst_join_watchdog: Watchdog = self.watch(watchdog_manager,
-                                                 queues[3], self.dst_process,
+                                                 queues[3],
+                                                 self.dst_process,
+                                                 self.src_process,
                                                  port_initializers[1],
-                                                 "join")
+                                                 port_initializers[0],
+                                                 WatchdogEnabledMixin.JOIN)
         return (src_send_watchdog, src_join_watchdog,
                 dst_recv_watchdog, dst_join_watchdog)
 
@@ -246,7 +272,8 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
 
 @dataclass
 class ChannelBuilderNx(AbstractChannelBuilder):
-    """A ChannelBuilder for CNc and NcC Channels with NxBoard as the messaging
+    """A ChannelBuilder for CNc and NcC Channels with NxBoard as
+    the messaging
     infrastructure.
     """
 
@@ -275,3 +302,25 @@ class ChannelBuilderNx(AbstractChannelBuilder):
         Exception
             Can't build channel of type specified
         """
+
+
+class ChannelBuilderPyNc(ChannelBuilderNx):
+    """A ChannelBuilder for PyNc and NcPy Channels with NxBoard as the messaging
+    infrastructure.
+    """
+    def build(
+            self, messaging_infrastructure: MessageInfrastructureInterface
+    ) -> Channel:
+        channel_class = messaging_infrastructure.channel_class(
+            channel_type=self.channel_type
+        )
+
+        return channel_class(
+            self.src_port_initializer.name,
+            self.dst_port_initializer.name,
+            self.src_port_initializer.shape,
+            self.src_port_initializer.d_type,
+            self.src_port_initializer.size,
+            self.src_port_initializer,
+            self.dst_port_initializer
+        )
