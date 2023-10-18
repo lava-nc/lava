@@ -132,14 +132,12 @@ class Raster(AbstractPlot):
 class ImageView(AbstractPlot):
     """ImageView visualizes streaming images."""
 
-    def __init__(
-        self,
-        shape: ty.Tuple[int, ...],
-        bias: float,
-        img_range: float,
-        transpose: ty.List = [0, 1, 2],
-        subplot: int = 111
-    ) -> None:
+    def __init__(self,
+                 shape: ty.Tuple[int, ...],
+                 bias: float,
+                 img_range: float,
+                 transpose: ty.List = [0, 1, 2],
+                 subplot: int = 111,):
         super().__init__(subplot=subplot)
         self.extractor = Extractor(shape)
         self.img_in = self.extractor.in_port

@@ -107,8 +107,7 @@ class Extractor(AbstractProcess):
         return data
 
     def can_receive(self) -> int:
-        if self.runtime is not None and \
-            self.runtime._is_running:
+        if self.runtime is not None and self.runtime._is_running:
             return self._pm_to_p_dst_port._queue.qsize()
         else:
             return 0
