@@ -57,11 +57,6 @@ class BitCheck(AbstractProcess):
         else:
             raise ValueError("bits value is \
                              {} but should be 1-31".format(bits))
-        """
-        overflowed: int
-            0 by default, changed to 1 if overflow occurs
-            Default is 0.
-        """
         self._overflowed: ty.Type(Var) = Var(shape=shape, init=0)
 
     @property

@@ -91,13 +91,13 @@ class AbstractBitCheckModel(AbstractPyBitCheckModel):
             ((value << shift_amt) >> shift_amt) == value
         )
 
-    def max_unsigned_int_per_bits(bits):
+    def max_unsigned_int_per_bits(self, bits: ty.Type[int]):
         return (1 << bits) - 1
 
-    def min_signed_int_per_bits(bits):
+    def min_signed_int_per_bits(self, bits: ty.Type[int]):
         return -1 << (bits - 1)
 
-    def max_signed_int_per_bits(bits):
+    def max_signed_int_per_bits(self, bits: ty.Type[int]):
         return (1 << (bits - 1)) - 1
 
 
