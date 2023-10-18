@@ -100,6 +100,7 @@ class Compiler:
         self._compile_config.setdefault("pypy_channel_size", 64)
         self._compile_config.setdefault("long_event_timeout", 600.0)
         self._compile_config.setdefault("short_event_timeout", 60.0)
+        self._compile_config.setdefault("use_watchdog", False)
         self.log = logging.getLogger(__name__)
         self.log.addHandler(logging.StreamHandler())
         self.log.setLevel(loglevel)
@@ -129,7 +130,9 @@ class Compiler:
         """
         # Group and sort all Processes connected to 'process' into a list of
         # ProcGroups.
-        proc_group_digraph = ProcGroupDiGraphs(process, run_cfg)
+        proc_group_digraph = ProcGroupDiGraphs(process,
+                                               run_cfg,
+                                               self._compile_config)
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
         # Get a flattened list of all AbstractProcesses
         process_list = list(itertools.chain.from_iterable(proc_groups))
