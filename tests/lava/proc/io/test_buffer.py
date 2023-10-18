@@ -55,7 +55,8 @@ class TestBuffer(unittest.TestCase):
         self.assertEqual(buffer.v.shape, buffer_shape)
         self.assertTrue(buffer.vInPort0 in buffer.in_ports)
 
-    def test_run_buffer(self):
+    def test_run_single_input_buffer(self):
+        """Test input Buffer."""
         num_steps = 10
         injector = Injector(shape=(1,))
         buffer = Buffer(length=10)
@@ -69,7 +70,7 @@ class TestBuffer(unittest.TestCase):
         buffer.stop()
         self.assertSequenceEqual(data, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    def test_buffer_with_2vars(self):
+    def test_run_single_input_buffer_2vars(self):
         """Test to ensure that a Buffer can connect to multiple Vars."""
         num_steps = 10
         injector = Injector(shape=(1,))
@@ -111,7 +112,8 @@ class TestBuffer(unittest.TestCase):
         self.assertSequenceEqual(udata, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.assertSequenceEqual(vdata, [0, 1, 3, 6, 10, 0, 6, 0, 8, 0])
 
-    def test_output_buffer(self):
+    def test_run_single_output_buffer(self):
+        """Test output Buffer."""
         num_steps = 10
         extractor = Extractor(shape=(1,))
         buffer = Buffer(length=10)
