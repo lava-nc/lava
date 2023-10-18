@@ -4,21 +4,23 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import typing as ty
 
 from IPython.display import display, clear_output
-from typing import List, Tuple
+from IPython import get_ipython
 
 from lava.proc.io.extractor import Extractor
 
 
 class Figure:
-    def __init__(self, plots: List) -> None:
+    def __init__(self, plots: ty.List) -> None:
         self.plots = plots
         self.exists = False
         self.closed = False
         self.use_ipython = False
+        self.fig: ty.Type[plt.Figure] = None
         try:
-            get_ipython().__class__.__name__
+            _ = get_ipython().__class__.__name__
             self.use_ipython = True
         except NameError:
             pass
@@ -75,10 +77,10 @@ class AbstractPlot:
             self.draw()
 
     def draw(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def receive_data(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class Raster(AbstractPlot):
@@ -91,7 +93,10 @@ class Raster(AbstractPlot):
     """
 
     def __init__(
-        self, shape: Tuple[int, ...], length: int = 1000, subplot: int = 111
+        self,
+        shape: ty.Tuple[int, ...],
+        length: int = 1000,
+        subplot: int = 111
     ):
         super().__init__(subplot=subplot)
         self.length = length
@@ -129,18 +134,18 @@ class ImageView(AbstractPlot):
 
     def __init__(
         self,
-        shape: Tuple,
+        shape: ty.Tuple,
         bias: float,
-        range: float,
+        img_range: float,
         transpose: List = [0, 1, 2],
-        subplot: int = 111,
+        subplot: int = 111
     ) -> None:
         super().__init__(subplot=subplot)
         self.extractor = Extractor(shape)
         self.img_in = self.extractor.in_port
         self.data = np.zeros(shape=shape)
         self.bias = bias
-        self.range = range
+        self.img_range = img_range
         self.transpose = transpose
         self.transform_data()
 
@@ -164,7 +169,7 @@ class ImageView(AbstractPlot):
     def transform_data(self):
         self.img = self.data.transpose(self.transpose)
         self.img -= self.bias
-        self.img /= 2 * self.range
+        self.img /= 2 * self.img_range
         self.img += 0.5
 
 
@@ -174,8 +179,8 @@ class LinePlot(AbstractPlot):
     def __init__(
         self,
         length: int,
-        min: float,
-        max: float,
+        min_val: float,
+        max_val: float,
         num_lines: int = 1,
         subplot: int = 111,
     ):
@@ -185,16 +190,15 @@ class LinePlot(AbstractPlot):
         )
         self.y_in = list([ext.in_port for ext in self.extractors])
         self.length = length
-        self.min = min
-        self.max = max
+        self.min_val = min_val
+        self.max_val = max_val
         self.x = np.zeros(shape=(1, length))
         self.y = np.zeros(shape=(num_lines, length))
 
     def draw(self):
         self.ax.clear()
         self.ax.plot(self.x.T, self.y.T)
-        # self.ax.set_xlim(0, self.length)
-        self.ax.set_ylim(self.min, self.max)
+        self.ax.set_ylim(self.min_val, self.max_val)
         self.ax.set_xlabel("Timestep")
         self.ax.set_ylabel("Value")
 

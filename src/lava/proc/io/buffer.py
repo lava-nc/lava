@@ -16,7 +16,7 @@ from lava.magma.core.process.ports.ports import (
 )
 
 from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires, tag
+from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.type import LavaPyType
@@ -95,18 +95,19 @@ class Buffer(AbstractProcess):
         The buffer Var.
         """
         if not shape and not init:
-            raise ValueError(f"shape and init cannot both be None.")
+            raise ValueError("shape and init cannot both be None. "
+                             f"{shape}, {init}")
         elif (
             shape is not None and init is not None and init.shape[:-1] != shape
         ):
             raise ValueError(
-                f"shape and init.shape are not compatible: "
-                + f"{shape} != {init.shape}"
+                "shape and init.shape are not compatible: "
+                f"{shape} != {init.shape}"
             )
         if init is not None and init.shape[-1] != self.length:
             raise ValueError(
-                f"init.shape is not compatible with length: "
-                + f"Last dim {init.shape[:-1]} != {self.length}"
+                "init.shape is not compatible with length: "
+                f"Last dim {init.shape[:-1]} != {self.length}"
             )
         if init is None:
             init = np.zeros(shape + (self.length,))
@@ -201,11 +202,12 @@ class Buffer(AbstractProcess):
             var = getattr(self, name)
             if var.shape[:-1] != other.shape:
                 raise ValueError(
-                    f"var.shape and other.shape are not "
-                    + f"compatible: {var.shape} != {other.shape}"
+                    "var.shape and other.shape are not "
+                    f"compatible: {var.shape} != {other.shape}"
                 )
             if init:
-                raise ValueError(f"var exists but init is not None.")
+                raise ValueError("var exists but init is not None. "
+                                 f"{init}")
         else:
             var = self.add_var(name, other.shape, init)
         if isinstance(other, InPort):
@@ -249,7 +251,7 @@ class Buffer(AbstractProcess):
             if var.shape[:-1] != other.shape:
                 raise ValueError(
                     f"var.shape and other.shape are not "
-                    + f"compatible: {var.shape} != {other.shape}"
+                    f"compatible: {var.shape} != {other.shape}"
                 )
             if init:
                 raise ValueError(f"var exists but init is not None.")
@@ -371,8 +373,8 @@ class PyBuffer(PyLoihiProcessModel, metaclass=MetaPyBuffer):
             return self.do_wrap_around
         else:
             raise NotImplementedError(
-                f"PyBuffer overflow: overflow "
-                "{self.overflow} is not implemented."
+                "PyBuffer overflow: overflow "
+                f"{self.overflow} is not implemented."
             )
 
     def do_raise_on_overflow(self, i):
