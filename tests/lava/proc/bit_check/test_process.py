@@ -8,6 +8,7 @@ from lava.proc.bit_check.process import BitCheck
 
 class TestBitCheck(unittest.TestCase):
     """Tests for BitCheck class"""
+
     def test_init(self) -> None:
         """Tests instantiation of BitCheck"""
         bc = BitCheck(shape=(2, 3, 4), layerid=10, debug=1, bits=12)
@@ -24,12 +25,12 @@ class TestBitCheck(unittest.TestCase):
         self.assertEqual(bc02.shape, (1,))
 
         bitcheckers = []
-        for i in range(1,31):
+        for i in range(1, 31):
             bitcheckers.append(BitCheck(bits=i))
             self.assertEqual(bitcheckers[i - 1].bits.init, i)
-        
+
     def test_init_bits_exception(self) -> None:
-        """Tests instantiation of BitCheck throws 
+        """Tests instantiation of BitCheck throws
         error on incorrect bits parameter"""
         with self.assertRaises(ValueError):
             BitCheck(bits=0)

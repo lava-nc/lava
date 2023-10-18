@@ -8,21 +8,22 @@ from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.ports.ports import RefPort
 from lava.magma.core.process.variable import Var
 
-class BitCheck (AbstractProcess):
+
+class BitCheck(AbstractProcess):
     def __init__(
-            self,
-            shape: ty.Tuple[int, ...] = (1,),
-            layerid: ty.Optional[int] = None,
-            debug: ty.Optional[int] = 0,
-            bits: ty.Optional[int] = 24,
-            name: ty.Optional[str] = None,
-            log_config: ty.Optional[LogConfig] = None,
-            **kwargs
-        ) -> None:
-        """BitCheck process. 
-        This process is used for quick checking of 
-        bit-accurate process run as to whether bits will overflow when 
-        running on bit sensitive hardware.
+        self,
+        shape: ty.Tuple[int, ...] = (1,),
+        layerid: ty.Optional[int] = None,
+        debug: ty.Optional[int] = 0,
+        bits: ty.Optional[int] = 24,
+        name: ty.Optional[str] = None,
+        log_config: ty.Optional[LogConfig] = None,
+        **kwargs,
+    ) -> None:
+        """BitCheck process.
+        This process is used for quick checking of
+        bit-accurate process run as to whether bits will
+        overflow when running on bit sensitive hardware.
 
         Parameters
         ----------
@@ -46,7 +47,7 @@ class BitCheck (AbstractProcess):
             **kwargs,
         )
         super().__init__(shape=shape, **kwargs)
-        
+
         self.ref = RefPort(shape=shape)
 
         self.layerid = Var(shape=shape, init=layerid)
@@ -54,7 +55,8 @@ class BitCheck (AbstractProcess):
         if bits <= 31 and bits >= 1:
             self.bits = Var(shape=shape, init=bits)
         else:
-            raise ValueError("bits value is {} but should be 1-31".format(bits))
+            raise ValueError("bits value is \
+                             {} but should be 1-31".format(bits))
         """
         overflowed: int
             0 by default, changed to 1 if overflow occurs
@@ -65,10 +67,10 @@ class BitCheck (AbstractProcess):
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
-        return self.proc_params['shape']
-    
+        return self.proc_params["shape"]
+
     @property
     def overflowed(self) -> ty.Type[int]:
-        """Return overflow Var of Process. 
+        """Return overflow Var of Process.
         1 is overflowed, 0 is not overflowed"""
         return self._overflowed.get()

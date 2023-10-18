@@ -13,21 +13,18 @@ from lava.proc.bit_check.process import BitCheck
 from lava.proc.sdn.process import Sigma, SigmaDelta, ActivationMode
 from lava.proc import io
 
-verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False
+verbose = True if (("-v" in sys.argv) or ("--verbose" in sys.argv)) else False
 
 
 class TestBitCheckModels(unittest.TestCase):
     """Tests for BitCheck Models"""
 
     def run_test(
-        self,
-        num_steps: int,
-        tag: str = 'fixed_pt',
-        bits: int = 24
+        self, num_steps: int, tag: str = "fixed_pt", bits: int = 24
     ) -> Tuple[np.ndarray, np.ndarray]:
         input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        if tag == 'fixed_pt':
-            input_ *= (1 << 12)
+        if tag == "fixed_pt":
+            input_ *= 1 << 12
             input_ = input_.astype(int)
         input_[:, 1:] -= input_[:, :-1]
 
@@ -41,7 +38,9 @@ class TestBitCheckModels(unittest.TestCase):
         debug = 0
         if verbose:
             debug = 1
-        bitcheck = BitCheck(shape=sigma.shape, layerid=1, bits=bits, debug=debug)
+        bitcheck = BitCheck(
+            shape=sigma.shape, layerid=1, bits=bits, debug=debug
+        )
         bitcheck.ref.connect_var(sigma.sigma)
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -64,9 +63,7 @@ class TestBitCheckModels(unittest.TestCase):
         bitcheck_overflowed = None
 
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
-            num_steps=num_steps,
-            tag='fixed_pt',
-            bits=12
+            num_steps=num_steps, tag="fixed_pt", bits=12
         )
 
         if verbose:
@@ -74,15 +71,13 @@ class TestBitCheckModels(unittest.TestCase):
             print("bitcheck_bits: ", bitcheck_bits)
         self.assertTrue(bitcheck_overflowed == 1)
         self.assertTrue(bitcheck_bits == 12)
-    
+
     def test_sigma_decoding_fixed(self) -> None:
         """Test BitCheck no overflow sigma decode."""
         num_steps = 100
 
-        _, _, bitcheck_bits, bitcheck_overflowed  = self.run_test(
-            num_steps=num_steps,
-            tag='fixed_pt',
-            bits=24
+        _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
+            num_steps=num_steps, tag="fixed_pt", bits=24
         )
 
         if verbose:
@@ -103,11 +98,11 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         spike_exp: int,
         state_exp: int,
         cum_error: bool,
-        tag: str = 'fixed_pt',
-        bits: int = 24
+        tag: str = "fixed_pt",
+        bits: int = 24,
     ) -> Tuple[np.ndarray, np.ndarray]:
         input_ = np.sin(0.1 * np.arange(num_steps).reshape(1, -1))
-        input_ *= (1 << spike_exp + state_exp)
+        input_ *= 1 << spike_exp + state_exp
         input_[:, 1:] -= input_[:, :-1]
 
         source = io.source.RingBuffer(data=input_.astype(int) * (1 << 6))
@@ -117,7 +112,7 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
             act_mode=act_mode,
             spike_exp=spike_exp,
             state_exp=state_exp,
-            cum_error=cum_error
+            cum_error=cum_error,
         )
         sink = io.sink.RingBuffer(shape=sdn.shape, buffer=num_steps)
 
@@ -145,8 +140,7 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         return input_, output, bits_used, overflowed
 
     def test_reconstruction_fixed(self) -> None:
-        """Tests BitCheck with fixed point sigma delta reconstruction
-        """
+        """Tests BitCheck with fixed point sigma delta reconstruction"""
         num_steps = 100
         spike_exp = 6
         state_exp = 6
@@ -158,7 +152,7 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
             spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
-            bits=24
+            bits=24,
         )
 
         if verbose:
@@ -168,20 +162,20 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         self.assertTrue(bitcheck_bits == 24)
 
     def test_reconstruction_fixed_overflow(self) -> None:
-        """Tests BitCheck overflow with fixed point sigma delta reconstruction
-        """
+        """Tests BitCheck overflow with fixed point
+        sigma delta reconstruction"""
         num_steps = 100
         spike_exp = 6
         state_exp = 6
         vth = 10 << (spike_exp + state_exp)
-        _, _, bitcheck_bits, bitcheck_overflowed  = self.run_test(
+        _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
             num_steps=num_steps,
             vth=vth,
             act_mode=ActivationMode.UNIT,
             spike_exp=spike_exp,
             state_exp=state_exp,
             cum_error=False,
-            bits=12
+            bits=12,
         )
 
         if verbose:
@@ -189,4 +183,3 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
             print("bitcheck_bits: ", bitcheck_bits)
         self.assertTrue(bitcheck_overflowed == 1)
         self.assertTrue(bitcheck_bits == 12)
-
