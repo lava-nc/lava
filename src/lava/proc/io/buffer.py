@@ -8,7 +8,12 @@ from typing import Optional, Tuple, Type, Union
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import AbstractPort, InPort, OutPort, RefPort
+from lava.magma.core.process.ports.ports import (
+    AbstractPort,
+    InPort,
+    OutPort,
+    RefPort,
+)
 
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
@@ -21,12 +26,12 @@ from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 class Buffer(AbstractProcess):
     """Buffer stores data in Vars that can be connected to Vars and
     ports in other processes.
-    
+
     Buffer Vars have a final dimension equal to the length of the Buffer.
     If a buffer Var is connected to an OutPort, it will store the vector
     sent by that OutPort on each timestep. If a buffer Var is connected to
-    an InPort, it will send 
-    
+    an InPort, it will send
+
 
     To add a connection, call `connect` with either an InPort
     or a Var from another process.
@@ -45,12 +50,18 @@ class Buffer(AbstractProcess):
         The desired behavior when the buffer overflows. Options are
         'raise_exception', 'wrap_around', and 'reallocate'.
     """
-    def __init__(self,
-                 *,
-                 length: int = 100,
-                 overflow: str = 'raise_error') -> None:
-        super().__init__(length=length, overflow=overflow,
-            map_out=[], map_in=[], map_read=[], map_write=[])
+
+    def __init__(
+        self, *, length: int = 100, overflow: str = "raise_error"
+    ) -> None:
+        super().__init__(
+            length=length,
+            overflow=overflow,
+            map_out=[],
+            map_in=[],
+            map_read=[],
+            map_write=[],
+        )
         self.length = length
         self.overflow = overflow
         self.map_out = []
@@ -59,8 +70,12 @@ class Buffer(AbstractProcess):
         self.map_write = []
         self.index = 0
 
-    def add_var(self, name : str, shape : Optional[Tuple] = None,
-                init : Optional[np.ndarray] = None) -> Var:
+    def add_var(
+        self,
+        name: str,
+        shape: Optional[Tuple] = None,
+        init: Optional[np.ndarray] = None,
+    ) -> Var:
         """Add a buffer Var.
         Parameters
         ----------
@@ -80,23 +95,28 @@ class Buffer(AbstractProcess):
         The buffer Var.
         """
         if not shape and not init:
-            raise ValueError(f'shape and init cannot both be None.')
-        elif (shape is not None and init is not None and
-              init.shape[:-1] != shape):
-                raise ValueError(f'shape and init.shape are not compatible: ' +
-                             f'{shape} != {init.shape}')
+            raise ValueError(f"shape and init cannot both be None.")
+        elif (
+            shape is not None and init is not None and init.shape[:-1] != shape
+        ):
+            raise ValueError(
+                f"shape and init.shape are not compatible: "
+                + f"{shape} != {init.shape}"
+            )
         if init is not None and init.shape[-1] != self.length:
-            raise ValueError(f'init.shape is not compatible with length: ' +
-                             f'Last dim {init.shape[:-1]} != {self.length}')
+            raise ValueError(
+                f"init.shape is not compatible with length: "
+                + f"Last dim {init.shape[:-1]} != {self.length}"
+            )
         if init is None:
             init = np.zeros(shape + (self.length,))
         var = Var(shape=init.shape, init=init)
-        setattr(self, f'{name}Var', var)
+        setattr(self, f"{name}Var", var)
         self._post_init()
         setattr(self, name, var)
         return var
 
-    def add_outport(self, buffer : Union[Var, str]) -> OutPort:
+    def add_outport(self, buffer: Union[Var, str]) -> OutPort:
         """Create an OutPort mapped to the buffer Var indicated by name or
         reference.
         Parameters
@@ -110,10 +130,10 @@ class Buffer(AbstractProcess):
         if isinstance(buffer, str):
             buffer = getattr(self, buffer)
         port = self._create_port(OutPort, buffer, buffer.shape[:-1])
-        self._map_buffer_to_port(buffer, port, 'map_out')
+        self._map_buffer_to_port(buffer, port, "map_out")
         return port
 
-    def add_inport(self, buffer : Union[Var, str]) -> InPort:
+    def add_inport(self, buffer: Union[Var, str]) -> InPort:
         """Create an InPort mapped to the buffer Var indicated by name or
         reference.
         Parameters
@@ -127,10 +147,10 @@ class Buffer(AbstractProcess):
         if isinstance(buffer, str):
             buffer = getattr(self, buffer)
         port = self._create_port(InPort, buffer, buffer.shape[:-1])
-        self._map_buffer_to_port(buffer, port, 'map_in')
+        self._map_buffer_to_port(buffer, port, "map_in")
         return port
 
-    def add_refport(self, buffer : Union[Var, str], mode : str) -> RefPort:
+    def add_refport(self, buffer: Union[Var, str], mode: str) -> RefPort:
         """Create a RefPort mapped to the buffer Var indicated by name or
         reference.
         Parameters
@@ -141,16 +161,20 @@ class Buffer(AbstractProcess):
         -------
         The newly mapped RefPort.
         """
-        if mode not in ['read', 'write']:
-            raise ValueError('mode not in [read, write]: {mode}')
+        if mode not in ["read", "write"]:
+            raise ValueError("mode not in [read, write]: {mode}")
         if isinstance(buffer, str):
             buffer = getattr(self, buffer)
         port = self._create_port(RefPort, buffer, buffer.shape[:-1])
-        self._map_buffer_to_port(buffer, port, f'map_{mode}')
+        self._map_buffer_to_port(buffer, port, f"map_{mode}")
         return port
 
-    def connect(self, name : str, other: Union[InPort, Var],
-                init: Optional[np.ndarray] = None) -> Var:
+    def connect(
+        self,
+        name: str,
+        other: Union[InPort, Var],
+        init: Optional[np.ndarray] = None,
+    ) -> Var:
         """Connect a buffer Var to an InPort or Var from another process.
 
         Calling this method will create a new buffer Var if it doesn't exist
@@ -158,7 +182,7 @@ class Buffer(AbstractProcess):
 
         Raises an error if the buffer Var exists and the shapes are
         incompatible.
-        
+
         Parameters
         ----------
         name: str
@@ -176,22 +200,28 @@ class Buffer(AbstractProcess):
         if hasattr(self, name):
             var = getattr(self, name)
             if var.shape[:-1] != other.shape:
-                raise ValueError(f'var.shape and other.shape are not ' +
-                                 f'compatible: {var.shape} != {other.shape}')
+                raise ValueError(
+                    f"var.shape and other.shape are not "
+                    + f"compatible: {var.shape} != {other.shape}"
+                )
             if init:
-                raise ValueError(f'var exists but init is not None.')
+                raise ValueError(f"var exists but init is not None.")
         else:
             var = self.add_var(name, other.shape, init)
         if isinstance(other, InPort):
             port = self.add_outport(var)
             port.connect(other)
         else:
-            port = self.add_refport(var, 'write')
+            port = self.add_refport(var, "write")
             port.connect_var(other)
         return var
 
-    def connect_from(self, name : str, other: Union[OutPort, Var],
-                init: Optional[np.ndarray] = None) -> Var:
+    def connect_from(
+        self,
+        name: str,
+        other: Union[OutPort, Var],
+        init: Optional[np.ndarray] = None,
+    ) -> Var:
         """Connect a buffer Var to an OutPort or Var from another process.
 
         Calling this method will create a new buffer Var if the named Var
@@ -199,7 +229,7 @@ class Buffer(AbstractProcess):
 
         Raises an error if the buffer Var exists and the shapes are
         incompatible.
-        
+
         Parameters
         ----------
         name: str
@@ -217,32 +247,36 @@ class Buffer(AbstractProcess):
         if hasattr(self, name):
             var = getattr(self, name)
             if var.shape[:-1] != other.shape:
-                raise ValueError(f'var.shape and other.shape are not ' +
-                                 f'compatible: {var.shape} != {other.shape}')
+                raise ValueError(
+                    f"var.shape and other.shape are not "
+                    + f"compatible: {var.shape} != {other.shape}"
+                )
             if init:
-                raise ValueError(f'var exists but init is not None.')
+                raise ValueError(f"var exists but init is not None.")
         else:
             var = self.add_var(name, other.shape, init)
         if isinstance(other, OutPort):
             port = self.add_inport(var)
             port.connect_from(other)
         else:
-            port = self.add_refport(var, 'read')
+            port = self.add_refport(var, "read")
             port.connect_var(other)
         return var
 
-    def _create_port(self, port_cls : Type[AbstractPort], buffer : Var,
-                     shape : Tuple):
+    def _create_port(
+        self, port_cls: Type[AbstractPort], buffer: Var, shape: Tuple
+    ):
         """Create a port to connect the buffer to another port or var."""
         port = port_cls(shape=shape)
-        port.name = f'{buffer.name[:-3]}{port_cls.__name__}{self.index}'
+        port.name = f"{buffer.name[:-3]}{port_cls.__name__}{self.index}"
         self.index += 1
         setattr(self, port.name, port)
         self._post_init()
         return port
 
-    def _map_buffer_to_port(self, buffer : Var, port : Type[AbstractPort],
-                            map_name : str):
+    def _map_buffer_to_port(
+        self, buffer: Var, port: Type[AbstractPort], map_name: str
+    ):
         """Map the buffer Var to a corresponding port."""
         getattr(self, map_name).append((buffer.name, port.name))
         self.proc_params.overwrite(map_name, getattr(self, map_name))
@@ -250,14 +284,15 @@ class Buffer(AbstractProcess):
 
 class MetaPyBuffer(type(PyLoihiProcessModel)):
     """This metaclass allows dynamic port and var generation."""
+
     def __getattr__(cls, name):
-        if 'InPort' in name:
+        if "InPort" in name:
             return LavaPyType(PyInPort.VEC_DENSE, float)
-        elif 'OutPort' in name:
+        elif "OutPort" in name:
             return LavaPyType(PyOutPort.VEC_DENSE, float)
-        elif 'RefPort' in name:
+        elif "RefPort" in name:
             return LavaPyType(PyRefPort.VEC_DENSE, float)
-        elif 'Var' in name:
+        elif "Var" in name:
             return LavaPyType(np.ndarray, float)
         else:
             print(name)
@@ -269,15 +304,16 @@ class MetaPyBuffer(type(PyLoihiProcessModel)):
 class PyBuffer(PyLoihiProcessModel, metaclass=MetaPyBuffer):
     """Python CPU model for Buffer. Uses dense floating point numpy
     arrays for buffer storage and operations."""
+
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.length = proc_params['length']
-        self.overflow = proc_params['overflow']
+        self.length = proc_params["length"]
+        self.overflow = proc_params["overflow"]
         self.do_overflow = self.get_overflow_func()
-        self.map_in = proc_params['map_in']
-        self.map_out = proc_params['map_out']
-        self.map_read = proc_params['map_read']
-        self.map_write = proc_params['map_write']
+        self.map_in = proc_params["map_in"]
+        self.map_out = proc_params["map_out"]
+        self.map_read = proc_params["map_read"]
+        self.map_write = proc_params["map_write"]
 
         for var, port in self.map_in:
             setattr(self, var, LavaPyType(np.ndarray, float))
@@ -329,18 +365,22 @@ class PyBuffer(PyLoihiProcessModel, metaclass=MetaPyBuffer):
 
     def get_overflow_func(self) -> None:
         """Return a function to apply overflow behavior."""
-        if self.overflow == 'raise_error':
+        if self.overflow == "raise_error":
             return self.do_raise_on_overflow
-        elif self.overflow == 'wrap_around':
+        elif self.overflow == "wrap_around":
             return self.do_wrap_around
         else:
-            raise NotImplementedError(f'PyBuffer overflow: overflow '
-                                       '{self.overflow} is not implemented.')
+            raise NotImplementedError(
+                f"PyBuffer overflow: overflow "
+                "{self.overflow} is not implemented."
+            )
 
     def do_raise_on_overflow(self, i):
         if i > self.length:
-            raise RuntimeError(f'PyBuffer overflow: timestep {self.time_step}'
-                               f' is greater than length {self.length}')
+            raise RuntimeError(
+                f"PyBuffer overflow: timestep {self.time_step}"
+                f" is greater than length {self.length}"
+            )
         return i
 
     def do_wrap_around(self, i):

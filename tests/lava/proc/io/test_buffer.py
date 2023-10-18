@@ -20,13 +20,13 @@ class TestBuffer(unittest.TestCase):
     def test_create_buffer(self):
         buffer = Buffer()
         self.assertEqual(buffer.length, 100)
-        self.assertEqual(buffer.overflow, 'raise_error')
+        self.assertEqual(buffer.overflow, "raise_error")
 
     def test_add_var(self):
         buffer = Buffer(length=50)
         shape = (10,)
         test_shape = (10, 50)
-        buffer.add_var(name='test', shape=shape)
+        buffer.add_var(name="test", shape=shape)
         self.assertIn(buffer.test, buffer.vars)
         self.assertEqual(buffer.test.shape, test_shape)
 
@@ -35,11 +35,11 @@ class TestBuffer(unittest.TestCase):
         var_shape = (3,)
         buffer_shape = (3, 10)
         test_var = Var(shape=var_shape)
-        self.assertFalse(hasattr(buffer, 'test'))
-        self.assertFalse(hasattr(buffer, 'testRefPort0'))
-        buffer.connect('test', test_var)
-        self.assertTrue(hasattr(buffer, 'test'))
-        self.assertTrue(hasattr(buffer, 'testRefPort0'))
+        self.assertFalse(hasattr(buffer, "test"))
+        self.assertFalse(hasattr(buffer, "testRefPort0"))
+        buffer.connect("test", test_var)
+        self.assertTrue(hasattr(buffer, "test"))
+        self.assertTrue(hasattr(buffer, "testRefPort0"))
         self.assertIn(buffer.test, buffer.vars)
         self.assertIn(buffer.testRefPort0, buffer.ref_ports)
         self.assertEqual(buffer.test.shape, buffer_shape)
@@ -50,8 +50,8 @@ class TestBuffer(unittest.TestCase):
         var_shape = (3,)
         buffer_shape = (3, 10)
         test_out_port = OutPort(shape=var_shape)
-        buffer.connect_from('v', test_out_port)
-        self.assertTrue(hasattr(buffer, 'v'))
+        buffer.connect_from("v", test_out_port)
+        self.assertTrue(hasattr(buffer, "v"))
         self.assertEqual(buffer.v.shape, buffer_shape)
         self.assertTrue(buffer.vInPort0 in buffer.in_ports)
 
@@ -59,7 +59,7 @@ class TestBuffer(unittest.TestCase):
         num_steps = 10
         injector = Injector(shape=(1,))
         buffer = Buffer(length=10)
-        buffer.connect_from('v0', injector.out_port)
+        buffer.connect_from("v0", injector.out_port)
         buffer.create_runtime(run_cfg=Loihi2SimCfg())
         buffer.run(condition=RunSteps(num_steps, blocking=False))
         for t in range(num_steps):
@@ -76,8 +76,8 @@ class TestBuffer(unittest.TestCase):
         lif = LIF(shape=(1,), du=1)
         buffer = Buffer(length=10)
         injector.out_port.connect(lif.a_in)
-        buffer.connect_from('u', lif.u)
-        buffer.connect_from('v', lif.v)
+        buffer.connect_from("u", lif.u)
+        buffer.connect_from("v", lif.v)
         buffer.create_runtime(run_cfg=Loihi2SimCfg())
         buffer.run(condition=RunSteps(num_steps, blocking=False))
         for t in range(num_steps):
@@ -98,8 +98,8 @@ class TestBuffer(unittest.TestCase):
         ubuffer = Buffer(length=10)
         vbuffer = Buffer(length=10)
         injector.out_port.connect(lif.a_in)
-        ubuffer.connect_from('u', lif.u)
-        vbuffer.connect_from('v', lif.v)
+        ubuffer.connect_from("u", lif.u)
+        vbuffer.connect_from("v", lif.v)
         ubuffer.create_runtime(run_cfg=Loihi2SimCfg())
         ubuffer.run(condition=RunSteps(num_steps, blocking=False))
         for t in range(num_steps):
@@ -116,14 +116,14 @@ class TestBuffer(unittest.TestCase):
         extractor = Extractor(shape=(1,))
         buffer = Buffer(length=10)
         vdata = np.array(range(10)).reshape((1, 10))
-        buffer.connect('v', extractor.in_port, init=vdata)
+        buffer.connect("v", extractor.in_port, init=vdata)
         buffer.create_runtime(run_cfg=Loihi2SimCfg())
         buffer.run(condition=RunSteps(num_steps, blocking=False))
         for t in range(num_steps):
-            self.assertEqual(extractor.receive(), vdata[0,t])
+            self.assertEqual(extractor.receive(), vdata[0, t])
         buffer.wait()
         buffer.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

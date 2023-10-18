@@ -12,8 +12,7 @@ from lava.proc.io.extractor import Extractor
 
 
 class Figure:
-    def __init__(self,
-                 plots: List) -> None:
+    def __init__(self, plots: List) -> None:
         self.plots = plots
         self.exists = False
         self.closed = False
@@ -24,14 +23,13 @@ class Figure:
         except NameError:
             pass
 
-
     def show(self):
         if not self.exists:
             self.create_figure()
         while not self.closed:
             self.update()
 
-    def close(self, evt = None):
+    def close(self, evt=None):
         if not self.closed and self.fig.get_visible():
             plt.close()
         self.closed = True
@@ -43,7 +41,7 @@ class Figure:
         for plot in self.plots:
             plot.create_subplot(self.fig)
         if not self.use_ipython:
-            self.fig.canvas.mpl_connect('close_event', self.close)
+            self.fig.canvas.mpl_connect("close_event", self.close)
         self.fig.tight_layout()
         plt.show(block=False)
         self.exists = True
@@ -85,16 +83,16 @@ class AbstractPlot:
 
 class Raster(AbstractPlot):
     """StreamingRasterPlot visualizes streaming spike data.
-    
+
     Parameters
     ----------
     length: int, default = 1000
         The number of timesteps that will be visualized.
     """
-    def __init__(self,
-                 shape: Tuple[int, ...],
-                 length: int = 1000,
-                 subplot: int = 111):
+
+    def __init__(
+        self, shape: Tuple[int, ...], length: int = 1000, subplot: int = 111
+    ):
         super().__init__(subplot=subplot)
         self.length = length
         self.extractor = Extractor(shape=shape)
@@ -109,9 +107,9 @@ class Raster(AbstractPlot):
         else:
             y, x = [], []
         self.ax.clear()
-        self.ax.scatter(x, y, c='k', marker='|')
-        self.ax.set_xlabel('Timestep')
-        self.ax.set_ylabel('Neuron Idx')
+        self.ax.scatter(x, y, c="k", marker="|")
+        self.ax.set_xlabel("Timestep")
+        self.ax.set_ylabel("Neuron Idx")
         self.ax.set_xlim(0, self.length)
         self.ax.set_ylim(-0.5, self.spk_in.shape[0] - 0.5)
 
@@ -129,12 +127,14 @@ class Raster(AbstractPlot):
 class ImageView(AbstractPlot):
     """ImageView visualizes streaming images."""
 
-    def __init__(self,
-                 shape: Tuple,
-                 bias: float,
-                 range: float,
-                 transpose: List = [0, 1, 2],
-                 subplot: int = 111) -> None:
+    def __init__(
+        self,
+        shape: Tuple,
+        bias: float,
+        range: float,
+        transpose: List = [0, 1, 2],
+        subplot: int = 111,
+    ) -> None:
         super().__init__(subplot=subplot)
         self.extractor = Extractor(shape)
         self.img_in = self.extractor.in_port
@@ -146,8 +146,9 @@ class ImageView(AbstractPlot):
 
     def draw(self):
         self.ax.clear()
-        self.ax.imshow(self.img, aspect='auto', interpolation='nearest',
-                       origin='upper')
+        self.ax.imshow(
+            self.img, aspect="auto", interpolation="nearest", origin="upper"
+        )
         self.ax.set_xticks([])
         self.ax.set_yticks([])
 
@@ -170,15 +171,18 @@ class ImageView(AbstractPlot):
 class LinePlot(AbstractPlot):
     """LinePlot visualizes streaming continuous data."""
 
-    def __init__(self,
-                 length: int,
-                 min: float,
-                 max: float,
-                 num_lines: int = 1,
-                 subplot: int = 111):
+    def __init__(
+        self,
+        length: int,
+        min: float,
+        max: float,
+        num_lines: int = 1,
+        subplot: int = 111,
+    ):
         super().__init__(subplot=subplot)
-        self.extractors = list([Extractor(shape=(1,))
-                                for _ in range(num_lines)])
+        self.extractors = list(
+            [Extractor(shape=(1,)) for _ in range(num_lines)]
+        )
         self.y_in = list([ext.in_port for ext in self.extractors])
         self.length = length
         self.min = min
@@ -189,18 +193,18 @@ class LinePlot(AbstractPlot):
     def draw(self):
         self.ax.clear()
         self.ax.plot(self.x.T, self.y.T)
-        #self.ax.set_xlim(0, self.length)
+        # self.ax.set_xlim(0, self.length)
         self.ax.set_ylim(self.min, self.max)
-        self.ax.set_xlabel('Timestep')
-        self.ax.set_ylabel('Value')
+        self.ax.set_xlabel("Timestep")
+        self.ax.set_ylabel("Value")
 
     def receive_data(self) -> int:
         received = 0
         while all([ext.can_receive() for ext in self.extractors]):
             self.x = np.roll(self.x, shift=-1, axis=1)
-            self.x[0,-1] = self.x[0,-2] + 1
+            self.x[0, -1] = self.x[0, -2] + 1
             self.y = np.roll(self.y, shift=-1, axis=1)
             vals = [ext.receive() for ext in self.extractors]
-            self.y[:,-1] = np.array(vals).flatten()
+            self.y[:, -1] = np.array(vals).flatten()
             received += 1
         return received
