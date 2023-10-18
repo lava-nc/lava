@@ -4,7 +4,6 @@
 
 
 import unittest
-import numpy as np
 from lava.proc.plateau.process import Plateau
 
 

@@ -49,6 +49,9 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
         self.vth_shift = 6
         self.act_shift = 6
         self.isthrscaled = False
+        self.effective_vth_dend = None
+        self.effective_vth_soma = None
+        self.s_out_buff = None
 
     def scale_threshold(self):
         self.effective_vth_dend = np.left_shift(self.vth_dend, self.vth_shift)

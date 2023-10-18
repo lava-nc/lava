@@ -5,22 +5,21 @@
 
 import unittest
 import numpy as np
-from numpy.testing import assert_almost_equal
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import OutPort, InPort
+from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.proc.plateau.process import Plateau
 from lava.proc.dense.process import Dense
-from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
+from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.tests.lava.proc.lif.test_models import VecSendProcess, VecRecvProcess
+from tests.lava.proc.lif.test_models import VecRecvProcess
 
 
 class SpikeGen(AbstractProcess):
@@ -125,7 +124,7 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         dense_dend.a_out.connect(plat.a_dend_in)
         # run model
         test_up_state = []
-        for t in range(num_steps):
+        for _ in range(num_steps):
             plat.run(RunSteps(1), Loihi2SimCfg(select_tag='fixed_pt'))
             test_up_state.append(plat.up_state.get().astype(int)[0])
         plat.stop()
