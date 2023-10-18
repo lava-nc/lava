@@ -163,6 +163,23 @@ def find_processes(proc: AbstractProcess,
     return seen_procs
 
 
+def annotate_folded_view(proc_list: ty.List[AbstractProcess],
+                         folded_procs: ty.List[str] = None):
+    """Annotate folded views and propagate them recursively
+    """
+    annotated : ty.Set(AbstractProcess) = set()
+    fv_inst_id : int = 0
+    for p in proc_list:
+        if p.__class__.__name__ in folded_procs:
+            p.folded_view = p.__class__
+            p.folded_view_inst_id = fv_inst_id
+            fv_inst_id += 1
+            annotated.add(p)
+
+    for p in annotated:
+        p.propagate_folded_views()
+
+
 class DiGraphBase(ntx.DiGraph):
     """Base class for directed graphs in the compiler.
 
@@ -600,17 +617,21 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     sorted order of nodes.
     """
 
-    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig):
+    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig,
+                 compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
 
         self._base_proc = proc  # Process on which compile/run was called
         self._run_cfg = run_cfg
+        self._compile_config = compile_config
         # 1. Find all Processes
         proc_list = find_processes(proc)
+
         # Check if any Process in proc_list is already compiled
         for p in proc_list:
             if p.is_compiled:
                 raise ex.ProcessAlreadyCompiled(p)
             p._is_compiled = True
+
         # Number of Processes before resolving HierarchicalProcesses
         self._num_procs_pre_pm_discovery = len(proc_list)
         # 2. Generate a ProcessGraph: This does not resolve
@@ -618,8 +639,14 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # ProcessModels
         self._raw_proc_digraph = ProcDiGraph(proc_list=proc_list)
         # 3. Find and select ProcessModels based on RunConfig:
+        elab_procs = []
         proc_procmodel_map = ProcGroupDiGraphs._map_proc_to_model(proc_list,
-                                                                  self._run_cfg)
+                                                                  self._run_cfg,
+                                                                  elab_procs)
+        if self._compile_config and 'folded_view' in self._compile_config:
+            folded_views = self._compile_config["folded_view"]
+            annotate_folded_view(elab_procs, folded_views)
+
         # Assign ProcessModels to Processes
         for p, pm in proc_procmodel_map.items():
             p._model_class = pm
@@ -939,7 +966,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
 
     @staticmethod
     def _expand_sub_proc_model(model_cls: ty.Type[AbstractSubProcessModel],
-                               proc: AbstractProcess, run_cfg: RunConfig):
+                               proc: AbstractProcess, run_cfg: RunConfig,
+                               elab_procs : ty.List[AbstractProcess]):
         """Expand a SubProcessModel by building it, extracting the
         sub-Processes contained within, and mapping the sub-Processes
         recursively to their ProcessModels.
@@ -969,11 +997,13 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         proc.validate_var_aliases()
         # Recursively map sub processes to their ProcModel
         return ProcGroupDiGraphs._map_proc_to_model(list(sub_procs.values()),
-                                                    run_cfg)
+                                                    run_cfg,
+                                                    elab_procs)
 
     @staticmethod
     def _map_proc_to_model(procs: ty.List[AbstractProcess],
-                           run_cfg: RunConfig) -> ProcMap:
+                           run_cfg: RunConfig,
+                           elab_procs : ty.List[AbstractProcess]) -> ProcMap:
         """Associate each Process in a list of Processes to the corresponding
         ProcessModel as selected by run_cfg.
 
@@ -1006,16 +1036,19 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                 model_cls = ProcGroupDiGraphs._select_proc_models(proc,
                                                                   models_cls,
                                                                   run_cfg)
-            if issubclass(model_cls, AbstractSubProcessModel):
+            if model_cls and issubclass(model_cls, AbstractSubProcessModel):
                 # Recursively substitute SubProcModel by sub processes
                 sub_map = ProcGroupDiGraphs._expand_sub_proc_model(model_cls,
                                                                    proc,
-                                                                   run_cfg)
+                                                                   run_cfg,
+                                                                   elab_procs)
                 proc_map.update(sub_map)
                 proc._model_class = model_cls
-            else:
+            elif model_cls:
                 # Just map current Process to selected ProcessModel
                 proc_map[proc] = model_cls
+
+            elab_procs.append(proc)
 
         return proc_map
 

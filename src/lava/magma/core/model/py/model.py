@@ -16,7 +16,7 @@ from lava.magma.compiler.channels.pypychannel import (
     CspSelector,
 )
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort
+from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort, PyOutPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,
@@ -284,7 +284,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
 
     def __init__(self, proc_params: ty.Optional["ProcessParameters"] = None):
         super().__init__(proc_params=proc_params)
-        self.time_step = 0
+        self.time_step: int = 0
         self.phase = PyLoihiProcessModel.Phase.SPK
         self._cmd_handlers.update(
             {
@@ -385,6 +385,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         self.time_step += 1
         self.phase = PyLoihiProcessModel.Phase.SPK
         self.run_spk()
+        self.advance_to_time_step(self.time_step + 1)
         if self._req_pause or self._req_stop:
             self._handle_pause_or_stop_req()
             return
@@ -509,6 +510,14 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
                         self._channel_actions.insert(
                             0, (csp_port, func(var_port))
                         )
+
+    def advance_to_time_step(self, ts: int):
+        """
+        Required for output ports which should send a signal to advance time
+        """
+        for port in self.py_ports:
+            if isinstance(port, PyOutPort):
+                port.advance_to_time_step(ts)
 
 
 class PyAsyncProcessModel(AbstractPyProcessModel):

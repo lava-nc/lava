@@ -222,11 +222,9 @@ def validate_shape(shape: ty.Tuple[int, ...]):
                         f"<shape> = {shape}.")
 
     for s in shape:
-        try:
-            int(s) == s
-        except TypeError:
-            raise TypeError("Expected all elements of <shape> to be integers."
-                            f"Got <shape> = {shape}.")
+        if not np.issubdtype(type(s), int):
+            raise TypeError("Expected all elements of <shape> to be of "
+                            f"type int. Got <shape> = {shape}.")
         if s <= 0:
             raise ValueError("Expected all elements of <shape> to be "
                              f"strictly positive. Got <shape> = {shape}.")
@@ -240,7 +238,7 @@ def validate_buffer_size(buffer_size: int):
     buffer_size : int
         Buffer size to validate.
     """
-    if not isinstance(buffer_size, int):
+    if not np.issubdtype(type(buffer_size), int):
         raise TypeError("Expected <buffer_size> to be of type int. Got "
                         f"<buffer_size> = {buffer_size}.")
     if buffer_size <= 0:
