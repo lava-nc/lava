@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
+import sys
 import numpy as np
 import unittest
 import threading
@@ -25,6 +26,8 @@ from lava.magma.runtime.message_infrastructure.multiprocessing import \
 from lava.magma.compiler.channels.pypychannel import PyPyChannel, CspSendPort
 from lava.proc.io.extractor import Extractor, PyLoihiExtractorModel
 from lava.proc.io import utils
+
+verbose = True if (('-v' in sys.argv) or ('--verbose' in sys.argv)) else False
 
 
 class Send(AbstractProcess):
@@ -207,6 +210,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         run_cfg = Loihi2SimCfg()
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
+        if verbose:
+            print(f'{extractor.runtime._is_running=}')
         extractor.receive()
 
         shared_queue = Queue(2)
@@ -226,6 +231,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
                                     args=[shared_queue])
         thread_2.start()
         time.sleep(2)
+        if verbose:
+            print(f'{extractor.runtime._is_running=}')
         extractor.receive()
         time.sleep(1)
         extractor.stop()
@@ -392,7 +399,11 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         run_cfg = Loihi2SimCfg()
 
         extractor.run(condition=run_condition, run_cfg=run_cfg)
+        if verbose:
+            print(f'{extractor.runtime._is_running=}')
         recv_data = [extractor.receive(), extractor.receive()]
+        if verbose:
+            print(f'{recv_data=}')
         extractor.stop()
 
         return np.array(recv_data)
@@ -422,7 +433,7 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         np.testing.assert_equal(recv_data[0], np.sum(send_data, axis=0))
 
     def test_run_steps_blocking(self):
-        """Test that running the a Lava network involving the Extractor
+        """Test that running a Lava network involving the Extractor
         Process, with RunSteps(blocking=True), for multiple time steps, with a
         separate thread calling receive, runs and terminates."""
         np.random.seed(0)

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from typing import List
 import unittest
 import numpy as np
 from lava.magma.core.process.ports.ports import OutPort

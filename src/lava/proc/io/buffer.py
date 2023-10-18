@@ -254,7 +254,7 @@ class Buffer(AbstractProcess):
                     f"compatible: {var.shape} != {other.shape}"
                 )
             if init:
-                raise ValueError(f"var exists but init is not None.")
+                raise ValueError("var exists but init is not None.")
         else:
             var = self.add_var(name, other.shape, init)
         if isinstance(other, OutPort):

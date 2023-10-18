@@ -134,10 +134,10 @@ class ImageView(AbstractPlot):
 
     def __init__(
         self,
-        shape: ty.Tuple,
+        shape: ty.Tuple[int, ...],
         bias: float,
         img_range: float,
-        transpose: List = [0, 1, 2],
+        transpose: ty.List = [0, 1, 2],
         subplot: int = 111
     ) -> None:
         super().__init__(subplot=subplot)
