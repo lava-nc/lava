@@ -109,7 +109,7 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
 
     def run_spk(self):
         """The run function that performs the actual computation during
-        execution orchestrated bgy a PyLoihiProcessModel using the
+        execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
         """
 
