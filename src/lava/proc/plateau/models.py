@@ -21,8 +21,8 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
 
     Precisions of state variables
 
-    - du_dend : unsigned 12-bit integer (0 to 4095)
-    - du_soma : unsigned 12-bit integer (0 to 4095)
+    - dv_dend : unsigned 12-bit integer (0 to 4095)
+    - dv_soma : unsigned 12-bit integer (0 to 4095)
     - vth_dend : unsigned 17-bit integer (0 to 131071)
     - vth_soma : unsigned 17-bit integer (0 to 131071)
     - up_dur : unsigned 8-bit integer (0 to 255)
