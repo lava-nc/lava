@@ -46,7 +46,7 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
         self.uv_bitwidth = 24
         self.max_uv_val = 2 ** (self.uv_bitwidth - 1)
         self.decay_shift = 12
-        self.decay_unity = 2 ** self.decay_shift
+        self.decay_unity = 2 ** self.decay_shift - 1
         self.vth_shift = 6
         self.act_shift = 6
         self.isthrscaled = False
