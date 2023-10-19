@@ -81,8 +81,8 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         dense_soma = Dense(weights=2 * np.diag(np.ones(shape=shape)))
         plat = Plateau(
             shape=shape,
-            dv_dend=4096,
-            dv_soma=4096,
+            dv_dend=4095,
+            dv_soma=4095,
             vth_soma=1,
             vth_dend=1,
             up_dur=10
@@ -115,8 +115,8 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         dense_dend = Dense(weights=2 * (np.diag(np.ones(shape=shape))))
         plat = Plateau(
             shape=shape,
-            dv_dend=4096,
-            dv_soma=4096,
+            dv_dend=4095,
+            dv_soma=4095,
             vth_soma=1,
             vth_dend=1,
             up_dur=5
@@ -169,10 +169,10 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         # Gold standard for the test
         # 100<<6 = 6400 -- initial value at time step 2
         expected_v_dend = [
-            0, 6400, 3200, 1600, 800, 400, 200, 100, 50, 25
+            0, 6400, 3198, 1598, 798, 398, 198, 98, 48, 23
         ]
         expected_v_soma = [
-            0, 6400, 4800, 3600, 2700, 2025, 1518, 1138, 853, 639
+            0, 6400, 4798, 3597, 2696, 2021, 1515, 1135, 850, 637
         ]
         self.assertListEqual(expected_v_dend, test_v_dend)
         self.assertListEqual(expected_v_soma, test_v_soma)
