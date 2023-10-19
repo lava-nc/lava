@@ -42,6 +42,7 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super(PyPlateauModelFixed, self).__init__(proc_params)
+        self._validate_inputs(proc_params)
         self.uv_bitwidth = 24
         self.max_uv_val = 2 ** (self.uv_bitwidth - 1)
         self.decay_shift = 12
@@ -49,6 +50,21 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
         self.vth_shift = 6
         self.act_shift = 6
         self.isthrscaled = False
+
+    def _validate_var(self, var, var_type, min_val, max_val, var_name):
+        if type(var) is not var_type:
+            raise ValueError(f"'{var_name}' must have type {var_type}")
+        if var < min_val or var > max_val:
+            raise ValueError(
+                f"'{var_name}' must be in range [{min_val}, {max_val}]"
+            )
+
+    def _validate_inputs(self, proc_params):
+        self._validate_var(proc_params['dv_dend'], int, 0, 4095, 'dv_dend')
+        self._validate_var(proc_params['dv_soma'], int, 0, 4095, 'dv_soma')
+        self._validate_var(proc_params['vth_dend'], int, 0, 131071, 'vth_dend')
+        self._validate_var(proc_params['vth_soma'], int, 0, 131071, 'vth_soma')
+        self._validate_var(proc_params['up_dur'], int, 0, 255, 'up_dur')
 
     def scale_threshold(self):
         self.effective_vth_dend = np.left_shift(self.vth_dend, self.vth_shift)
