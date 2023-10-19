@@ -50,6 +50,9 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
         self.vth_shift = 6
         self.act_shift = 6
         self.isthrscaled = False
+        self.effective_vth_dend = None
+        self.effective_vth_soma = None
+        self.s_out_buff = None
 
     def _validate_var(self, var, var_type, min_val, max_val, var_name):
         if type(var) is not var_type:

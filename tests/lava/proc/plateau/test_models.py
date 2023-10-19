@@ -5,7 +5,6 @@
 
 import unittest
 import numpy as np
-
 from lava.proc.plateau.process import Plateau
 from lava.proc.dense.process import Dense
 from lava.proc.io.source import RingBuffer as Source
@@ -85,7 +84,7 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         dense_dend.a_out.connect(plat.a_dend_in)
         # run model
         test_up_state = []
-        for t in range(num_steps):
+        for _ in range(num_steps):
             plat.run(RunSteps(1), Loihi2SimCfg(select_tag='fixed_pt'))
             test_up_state.append(plat.up_state.get().astype(int)[0])
         plat.stop()
