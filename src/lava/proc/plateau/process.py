@@ -12,7 +12,7 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 class Plateau(AbstractProcess):
     """Plateau Neuron Process.
 
-    Couples two modified LIF dynamics. The neuron posesses two potentials,
+    Couples two modified LIF dynamics. The neuron posesses two voltages,
     v_dend and v_soma. Both follow sub-threshold LIF dynamics. When v_dend
     crosses v_th_dend, it resets and sets the up_state to the value up_dur.
     The supra-threshold behavior of v_soma depends on up_state:
@@ -25,14 +25,14 @@ class Plateau(AbstractProcess):
     ----------
     shape : tuple(int)
         Number and topology of Plateau neurons.
-    dv_dend : float
-        Inverse of the decay time-constant for the dendrite potential.
-    dv_soma : float
-        Inverse of the decay time-constant for the soma potential.
-    vth_dend : float
+    dv_dend : int
+        Inverse of the decay time-constant for the dendrite voltage.
+    dv_soma : int
+        Inverse of the decay time-constant for the soma voltage.
+    vth_dend : int
         Dendrite threshold voltage, exceeding which, the neuron will enter the
         UP state.
-    vth_soma : float
+    vth_soma : int
         Soma threshold voltage, exceeding which, the neuron will spike if it is
         also in the UP state.
     up_dur : int
@@ -41,10 +41,10 @@ class Plateau(AbstractProcess):
     def __init__(
         self,
         shape: ty.Tuple[int, ...],
-        dv_dend: float,
-        dv_soma: float,
-        vth_dend: float,
-        vth_soma: float,
+        dv_dend: int,
+        dv_soma: int,
+        vth_dend: int,
+        vth_soma: int,
         up_dur: int,
         name: ty.Optional[str] = None,
     ):

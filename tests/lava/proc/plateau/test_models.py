@@ -5,55 +5,23 @@
 
 import unittest
 import numpy as np
-
-from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel
-from lava.magma.core.model.py.ports import PyOutPort
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import OutPort
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
-from lava.magma.core.resources import CPU
 from lava.proc.plateau.process import Plateau
 from lava.proc.dense.process import Dense
+from lava.proc.io.source import RingBuffer as Source
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from tests.lava.proc.lif.test_models import VecRecvProcess
+from lava.tests.lava.proc.lif.test_models import VecRecvProcess
 
 
-class SpikeGen(AbstractProcess):
-    """Process for sending spikes at user-supplied time steps.
-
-    Parameters
-    ----------
-    spikes_in: list[list], list of lists containing spike times
-    runtime: int, number of timesteps for the generator to store spikes
+def create_spike_source(spike_list, n_indices, n_timesteps):
+    """Use list of spikes [(idx, timestep), ...] to create a RingBuffer source
+    with data shape (n_indices, n_timesteps) and spikes at all specified points
+    in the spike_list.
     """
-    def __init__(self, spikes_in, runtime):
-        super().__init__()
-        n = len(spikes_in)
-        self.shape = (n,)
-        spike_data = np.zeros(shape=(n, runtime))
-        for i in range(n):
-            for t in range(1, runtime + 1):
-                if t in spikes_in[i]:
-                    spike_data[i, t - 1] = 1
-        self.s_out = OutPort(shape=self.shape)
-        self.spike_data = Var(shape=(n, runtime), init=spike_data)
-
-
-@implements(proc=SpikeGen, protocol=LoihiProtocol)
-@requires(CPU)
-@tag('fixed_pt')
-class PySpikeGenModel(PyLoihiProcessModel):
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    spike_data: np.ndarray = LavaPyType(np.ndarray, float)
-
-    def run_spk(self):
-        """Send the appropriate spikes for the given time step
-        """
-        self.s_out.send(self.spike_data[:, self.time_step - 1])
+    data = np.zeros(shape=(n_indices, n_timesteps))
+    for idx, timestep in spike_list:
+        data[idx, timestep - 1] = 1
+    return Source(data=data)
 
 
 class TestPlateauProcessModelsFixed(unittest.TestCase):
@@ -64,24 +32,16 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         """
         shape = (3,)
         num_steps = 20
-        spikes_in_dend = [
-            [5],
-            [5],
-            [5],
-        ]
-        spikes_in_soma = [
-            [3],
-            [10],
-            [17]
-        ]
-        sg_dend = SpikeGen(spikes_in=spikes_in_dend, runtime=num_steps)
-        sg_soma = SpikeGen(spikes_in=spikes_in_soma, runtime=num_steps)
+        spikes_in_dend = [(0, 5), (1, 5), (2, 5)]
+        spikes_in_soma = [(0, 3), (1, 10), (2, 17)]
+        sg_dend = create_spike_source(spikes_in_dend, shape[0], num_steps)
+        sg_soma = create_spike_source(spikes_in_soma, shape[0], num_steps)
         dense_dend = Dense(weights=2 * np.diag(np.ones(shape=shape)))
         dense_soma = Dense(weights=2 * np.diag(np.ones(shape=shape)))
         plat = Plateau(
             shape=shape,
-            dv_dend=4096,
-            dv_soma=4096,
+            dv_dend=4095,
+            dv_soma=4095,
             vth_soma=1,
             vth_dend=1,
             up_dur=10
@@ -109,13 +69,13 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         """
         shape = (1,)
         num_steps = 10
-        spikes_in_dend = [[3]]
-        sg_dend = SpikeGen(spikes_in=spikes_in_dend, runtime=num_steps)
+        spikes_in_dend = [(0, 3)]
+        sg_dend = create_spike_source(spikes_in_dend, shape[0], num_steps)
         dense_dend = Dense(weights=2 * (np.diag(np.ones(shape=shape))))
         plat = Plateau(
             shape=shape,
-            dv_dend=4096,
-            dv_soma=4096,
+            dv_dend=4095,
+            dv_soma=4095,
             vth_soma=1,
             vth_dend=1,
             up_dur=5
@@ -140,9 +100,9 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         """
         shape = (1,)
         num_steps = 10
-        spikes_in = [[1]]
-        sg_dend = SpikeGen(spikes_in=spikes_in, runtime=num_steps)
-        sg_soma = SpikeGen(spikes_in=spikes_in, runtime=num_steps)
+        spikes_in = [(0, 1)]
+        sg_dend = create_spike_source(spikes_in, shape[0], num_steps)
+        sg_soma = create_spike_source(spikes_in, shape[0], num_steps)
         dense_dend = Dense(weights=100 * np.diag(np.ones(shape=shape)))
         dense_soma = Dense(weights=100 * np.diag(np.ones(shape=shape)))
         plat = Plateau(
@@ -168,10 +128,10 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         # Gold standard for the test
         # 100<<6 = 6400 -- initial value at time step 2
         expected_v_dend = [
-            0, 6400, 3200, 1600, 800, 400, 200, 100, 50, 25
+            0, 6400, 3198, 1598, 798, 398, 198, 98, 48, 23
         ]
         expected_v_soma = [
-            0, 6400, 4800, 3600, 2700, 2025, 1518, 1138, 853, 639
+            0, 6400, 4798, 3597, 2696, 2021, 1515, 1135, 850, 637
         ]
         self.assertListEqual(expected_v_dend, test_v_dend)
         self.assertListEqual(expected_v_soma, test_v_soma)
