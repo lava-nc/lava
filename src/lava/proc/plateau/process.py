@@ -25,14 +25,14 @@ class Plateau(AbstractProcess):
     ----------
     shape : tuple(int)
         Number and topology of Plateau neurons.
-    dv_dend : float
+    dv_dend : int
         Inverse of the decay time-constant for the dendrite voltage.
-    dv_soma : float
+    dv_soma : int
         Inverse of the decay time-constant for the soma voltage.
-    vth_dend : float
+    vth_dend : int
         Dendrite threshold voltage, exceeding which, the neuron will enter the
         UP state.
-    vth_soma : float
+    vth_soma : int
         Soma threshold voltage, exceeding which, the neuron will spike if it is
         also in the UP state.
     up_dur : int
@@ -41,10 +41,10 @@ class Plateau(AbstractProcess):
     def __init__(
         self,
         shape: ty.Tuple[int, ...],
-        dv_dend: float,
-        dv_soma: float,
-        vth_dend: float,
-        vth_soma: float,
+        dv_dend: int,
+        dv_soma: int,
+        vth_dend: int,
+        vth_soma: int,
         up_dur: int,
         name: ty.Optional[str] = None,
     ):
