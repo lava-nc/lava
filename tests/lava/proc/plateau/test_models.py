@@ -121,7 +121,7 @@ class TestPlateauProcessModelsFixed(unittest.TestCase):
         # run model
         test_v_dend = []
         test_v_soma = []
-        for t in range(num_steps):
+        for _ in range(num_steps):
             plat.run(RunSteps(1), Loihi2SimCfg(select_tag='fixed_pt'))
             test_v_dend.append(plat.v_dend.get().astype(int)[0])
             test_v_soma.append(plat.v_soma.get().astype(int)[0])

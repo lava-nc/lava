@@ -52,7 +52,7 @@ class PyPlateauModelFixed(PyLoihiProcessModel):
         self.isthrscaled = False
 
     def _validate_var(self, var, var_type, min_val, max_val, var_name):
-        if type(var) is not var_type:
+        if not isinstance(var, var_type):
             raise ValueError(f"'{var_name}' must have type {var_type}")
         if var < min_val or var > max_val:
             raise ValueError(
