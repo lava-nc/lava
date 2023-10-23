@@ -21,7 +21,7 @@ class AbstractPyBitCheckModel(PyLoihiProcessModel):
     Specific implementations inherit from here.
     """
 
-    ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
+    state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
     bits: int = LavaPyType(int, int)
     layerid: int = LavaPyType(int, int)
@@ -35,7 +35,7 @@ class AbstractBitCheckModel(AbstractPyBitCheckModel):
     bits will overflow when running on hardware.
     """
 
-    ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
+    state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
     bits: int = LavaPyType(int, int)
     layerid: int = LavaPyType(int, int)
@@ -46,7 +46,7 @@ class AbstractBitCheckModel(AbstractPyBitCheckModel):
         return True
 
     def run_post_mgmt(self):
-        value = self.ref.read()
+        value = self.state.read()
 
         if self.debug == 1:
             print("Value is: {} at time step: {}"
@@ -110,7 +110,7 @@ class LoihiBitCheckModel(AbstractBitCheckModel):
     whether bits will overflow when running on Loihi Hardware.
     """
 
-    ref: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
+    state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
 
     bits: int = LavaPyType(int, int)
     layerid: int = LavaPyType(int, int)

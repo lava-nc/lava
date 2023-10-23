@@ -12,7 +12,7 @@ from lava.magma.core.process.variable import Var
 class BitCheck(AbstractProcess):
     def __init__(
         self,
-        shape: ty.Tuple[int, ...] = (1,),
+        *,
         layerid: ty.Optional[int] = None,
         debug: ty.Optional[int] = 0,
         bits: ty.Optional[int] = 24,
@@ -41,28 +41,50 @@ class BitCheck(AbstractProcess):
             Default is 24.
         """
         super().__init__(
-            shape=shape,
             name=name,
             log_config=log_config,
-            **kwargs,
+            **kwargs
         )
-        super().__init__(shape=shape, **kwargs)
 
-        self.ref = RefPort(shape=shape)
+        initial_shape = (1,)
+        self.state = RefPort(initial_shape)
 
-        self.layerid = Var(shape=shape, init=layerid)
-        self.debug = Var(shape=shape, init=debug)
+        self.layerid: ty.Type(Var) = Var(shape=initial_shape, init=layerid)
+        self.debug: ty.Type(Var) = Var(shape=initial_shape, init=debug)
         if bits <= 31 and bits >= 1:
-            self.bits = Var(shape=shape, init=bits)
+            self.bits: ty.Type(Var) = Var(shape=initial_shape, init=bits)
         else:
             raise ValueError("bits value is \
                              {} but should be 1-31".format(bits))
-        self._overflowed: ty.Type(Var) = Var(shape=shape, init=0)
+        self._overflowed: ty.Type(Var) = Var(shape=initial_shape, init=0)
+
+    def connect_var(self, var: Var) -> None:
+        self.state = RefPort(var.shape)
+        self.state.connect_var(var)
+
+        self.layerid = Var(name="layerid",
+                           shape=var.shape,
+                           init=self.layerid.init
+                           )
+        self.debug = Var(name="debug",
+                         shape=var.shape,
+                         init=self.debug.init
+                         )
+        self.bits = Var(name="bits",
+                        shape=var.shape,
+                        init=self.bits.init
+                        )
+        self._overflowed = Var(name="overflowed",
+                               shape=var.shape,
+                               init=self._overflowed.init
+                               )
+
+        self._post_init()
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
         """Return shape of the Process."""
-        return self.proc_params["shape"]
+        return self.state.shape
 
     @property
     def overflowed(self) -> ty.Type[int]:

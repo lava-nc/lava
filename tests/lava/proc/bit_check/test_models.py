@@ -38,9 +38,9 @@ class TestBitCheckModels(unittest.TestCase):
         if verbose:
             debug = 1
         bitcheck = BitCheck(
-            shape=sigma.shape, layerid=1, bits=bits, debug=debug
+            layerid=1, bits=bits, debug=debug
         )
-        bitcheck.ref.connect_var(sigma.sigma)
+        bitcheck.state.connect_var(sigma.sigma)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = Loihi1SimCfg(select_tag=tag)
@@ -119,8 +119,8 @@ class TestBitcheckSigmaDelta(unittest.TestCase):
         debug = 0
         if verbose:
             debug = 1
-        bitcheck = BitCheck(shape=sdn.shape, layerid=1, bits=bits, debug=debug)
-        bitcheck.ref.connect_var(sdn.sigma)
+        bitcheck = BitCheck(layerid=1, bits=bits, debug=debug)
+        bitcheck.state.connect_var(sdn.sigma)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_config = Loihi1SimCfg(select_tag=tag)
