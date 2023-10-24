@@ -23,21 +23,21 @@ class BitCheck(AbstractProcess):
         """BitCheck process.
         This process is used for quick checking of
         bit-accurate process run as to whether bits will
-        overflow when running on bit sensitive hardware.
+        overflow when running on bit limited hardware.
 
         Parameters
         ----------
         shape: Tuple
-            shape of the sigma process.
+            Shape of the sigma process.
             Default is (1,).
         layerid: int or float
-            layer number of network.
+            Layer number of network.
             Default is None.
         debug: 0 or 1
             Enable (1) or disable (0) debug print.
             Default is 0.
         bits: int
-            bits to use when checking overflow, 1-32
+            Bits to use when checking overflow, 1-32.
             Default is 24.
         """
         super().__init__(
@@ -89,5 +89,5 @@ class BitCheck(AbstractProcess):
     @property
     def overflowed(self) -> ty.Type[int]:
         """Return overflow Var of Process.
-        1 is overflowed, 0 is not overflowed"""
+        1 is overflowed, 0 is not overflowed."""
         return self._overflowed.get()
