@@ -56,7 +56,7 @@ class TestBitCheckModels(unittest.TestCase):
         return self.input_, output, bits_used, overflowed
 
     def test_bitcheck_sigma_decoding_fixed_overflow(self) -> None:
-        """Test BitCheck with overflow sigma decode."""
+        """Test BitCheck with overflow sigma decode"""
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
             num_steps=self.num_steps, tag="fixed_pt", bits=12
         )
@@ -68,7 +68,7 @@ class TestBitCheckModels(unittest.TestCase):
         self.assertTrue(bitcheck_bits == 12)
 
     def test_bitcheck_sigma_decoding_fixed(self) -> None:
-        """Test BitCheck no overflow sigma decode."""
+        """Test BitCheck no overflow sigma decode"""
         _, _, bitcheck_bits, bitcheck_overflowed = self.run_test(
             num_steps=self.num_steps, tag="fixed_pt", bits=24
         )
@@ -81,7 +81,7 @@ class TestBitCheckModels(unittest.TestCase):
 
 
 class TestBitcheckSigmaDelta(unittest.TestCase):
-    """Test BitCheck with sigma delta neurons."""
+    """Test BitCheck with sigma delta neurons"""
     num_steps = 100
     spike_exp = 6
     state_exp = 6
