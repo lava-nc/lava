@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from lava.networks.gradedvecnetwork import (InputVec, OutputVec, ThreshVec,
+from lava.networks.gradedvecnetwork import (InputVec, OutputVec, GradedVec,
                                             GradedDense, GradedSparse,
                                             ProductVec,
                                             LIFVec, 

@@ -10,7 +10,7 @@ from lava.proc.graded.process import NormVecDelay
 from lava.proc.sparse.process import Sparse
 from lava.proc.dense.process import Dense
 from lava.proc.prodneuron.process import ProdNeuron
-from lava.proc.graded.process import GradedVec
+from lava.proc.graded.process import GradedVec as GradedVecProc
 from lava.proc.lif.process import LIF
 from lava.proc.io import sink, source
 from lava.proc import embedded_io as eio
@@ -115,8 +115,8 @@ class LIFVec(AlgebraicVector):
         self.out_port = self.main.s_out
 
 
-class ThreshVec(AlgebraicVector):
-    """ThreshVec
+class GradedVec(AlgebraicVector):
+    """GradedVec
     Simple graded threshold vector with no dynamics.
 
     Parameters
@@ -135,12 +135,12 @@ class ThreshVec(AlgebraicVector):
         self.vth = kwargs.pop('vth', 10)
         self.exp = kwargs.pop('exp', 0)
 
-        self.main = GradedVec(shape=self.shape, vth=self.vth, exp=self.exp)
+        self.main = GradedVecProc(shape=self.shape, vth=self.vth, exp=self.exp)
         self.in_port = self.main.a_in
         self.out_port = self.main.s_out
         
     def __mul__(self, other):
-        if isinstance(other, ThreshVec):
+        if isinstance(other, GradedVec):
             ## create the product network
             print('prod', self.exp)
             prod_layer = ProductVec(shape=self.shape, vth=1, exp=self.exp)
