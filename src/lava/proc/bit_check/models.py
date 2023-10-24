@@ -16,7 +16,7 @@ from lava.proc.bit_check.process import BitCheck
 
 
 class AbstractPyBitCheckModel(PyLoihiProcessModel):
-    """Abstract implementation of BitCheckModel
+    """Abstract implementation of BitCheckModel.
 
     Specific implementations inherit from here.
     """
@@ -32,7 +32,7 @@ class AbstractBitCheckModel(AbstractPyBitCheckModel):
     """Abstract implementation of BitCheck process. This
     short and simple ProcessModel can be used for quick
     checking of bit-accurate process runs as to whether
-    bits will overflow when running on hardware.
+    bits will overflow when running on bit limited hardware.
     """
 
     state: PyRefPort = LavaPyType(PyRefPort.VEC_DENSE, int)
@@ -83,8 +83,8 @@ class AbstractBitCheckModel(AbstractPyBitCheckModel):
     def check_bit_overflow(self, value: ty.Type[np.ndarray]):
         value = value.astype(np.int32)
         shift_amt = 32 - self.bits
-        # shift value left by shift_amt and
-        # then shift value right by shift_amt
+        # Shift value left by shift_amt and
+        # then shift value right by shift_amt,
         # the result should equal unshifted value
         # if the value did not overflow bits in self.bits
         return not np.all(
