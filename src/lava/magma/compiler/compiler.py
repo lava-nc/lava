@@ -132,7 +132,9 @@ class Compiler:
         """
         # Group and sort all Processes connected to 'process' into a list of
         # ProcGroups.
-        proc_group_digraph = ProcGroupDiGraphs(process, run_cfg)
+        proc_group_digraph = ProcGroupDiGraphs(process,
+                                               run_cfg,
+                                               self._compile_config)
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
         # Get a flattened list of all AbstractProcesses
         process_list = list(itertools.chain.from_iterable(proc_groups))
