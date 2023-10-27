@@ -94,7 +94,7 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_post_mgmt(self):
         if self.time_step > 1:
-            ref_data = np.array([5, 5, 5]) + self.time_step
+            ref_data = np.array([5, 5, 5], np.int32) + self.time_step
             self.ref1.write(ref_data)
             self.ref3.write(ref_data[:2])
             # ensure write() has finished before moving on

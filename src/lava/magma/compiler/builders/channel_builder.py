@@ -11,15 +11,15 @@ from lava.magma.compiler.builders.interfaces import \
     AbstractProcessModel
 from lava.magma.compiler.builders. \
     runtimeservice_builder import RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import (
+from lava.magma.runtime.message_infrastructure import (
     Channel,
-    ChannelType,
 )
 from lava.magma.compiler.utils import PortInitializer
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import (MessageInfrastructureInterface)
-from lava.magma.compiler.channels.watchdog import WatchdogManager, Watchdog
-
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    Watchdog, WatchdogManager
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
     from lava.magma.runtime.runtime import Runtime
@@ -127,29 +127,12 @@ class ChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
-
-        # Watchdogs
-        sq = watchdog_manager.sq
-        queues = (sq, sq, sq, sq)
-        port_initializers = (self.src_port_initializer,
-                             self.dst_port_initializer)
-        (src_send_watchdog, src_join_watchdog,
-         dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_watchdogs(watchdog_manager, queues, port_initializers)
-
-        return channel_class(
-            messaging_infrastructure,
-            self.src_port_initializer.name,
-            self.dst_port_initializer.name,
-            self.src_port_initializer.shape,
-            self.src_port_initializer.d_type,
-            self.src_port_initializer.size,
-            src_send_watchdog, src_join_watchdog,
-            dst_recv_watchdog, dst_join_watchdog
-        )
+        return messaging_infrastructure.channel(self.channel_type,
+                                                self.src_port_initializer.name,
+                                                self.dst_port_initializer.name,
+                                                self.src_port_initializer.shape,
+                                                self.src_port_initializer.d_type,  # noqa: E501
+                                                self.src_port_initializer.size)
 
 
 @dataclass
@@ -186,30 +169,14 @@ class ServiceChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
-
-        # Watchdogs
-        lq, sq = watchdog_manager.lq, watchdog_manager.sq
-        queues = (sq, sq, lq, sq)
-        port_initializers = (self.port_initializer,
-                             self.port_initializer)
-        (src_send_watchdog, src_join_watchdog,
-         dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_watchdogs(watchdog_manager, queues, port_initializers)
-
         channel_name: str = self.port_initializer.name
-        return channel_class(
-            messaging_infrastructure,
-            channel_name + "_src",
-            channel_name + "_dst",
-            self.port_initializer.shape,
-            self.port_initializer.d_type,
-            self.port_initializer.size,
-            src_send_watchdog, src_join_watchdog,
-            dst_recv_watchdog, dst_join_watchdog
-        )
+        return messaging_infrastructure.channel(self.channel_type,
+                                                channel_name + "_src",
+                                                channel_name + "_dst",
+                                                self.port_initializer.shape,
+                                                self.port_initializer.d_type,
+                                                self.port_initializer.size,
+                                                sync=True)
 
 
 @dataclass
@@ -244,30 +211,14 @@ class RuntimeChannelBuilderMp(AbstractChannelBuilder, WatchdogEnabledMixin):
         Exception
             Can't build channel of type specified
         """
-        channel_class = messaging_infrastructure.channel_class(
-            channel_type=self.channel_type
-        )
-
-        # Watchdogs
-        lq, sq = watchdog_manager.lq, watchdog_manager.sq
-        queues = (sq, sq, lq, sq)
-        port_initializers = (self.port_initializer,
-                             self.port_initializer)
-        (src_send_watchdog, src_join_watchdog,
-         dst_recv_watchdog, dst_join_watchdog) = \
-            self.create_watchdogs(watchdog_manager, queues, port_initializers)
-
         channel_name: str = self.port_initializer.name
-        return channel_class(
-            messaging_infrastructure,
-            channel_name + "_src",
-            channel_name + "_dst",
-            self.port_initializer.shape,
-            self.port_initializer.d_type,
-            self.port_initializer.size,
-            src_send_watchdog, src_join_watchdog,
-            dst_recv_watchdog, dst_join_watchdog
-        )
+        return messaging_infrastructure.channel(self.channel_type,
+                                                channel_name + "_src",
+                                                channel_name + "_dst",
+                                                self.port_initializer.shape,
+                                                self.port_initializer.d_type,
+                                                self.port_initializer.size,
+                                                sync=True)
 
 
 @dataclass

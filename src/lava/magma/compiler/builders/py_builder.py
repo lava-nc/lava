@@ -8,13 +8,13 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort
-from lava.magma.compiler.utils import (
-    PortInitializer,
-    VarInitializer,
-    VarPortInitializer,
+from lava.magma.runtime.message_infrastructure import (
+    AbstractTransferPort,
+    RecvPort,
+    SendPort
 )
+from lava.magma.compiler.utils import (PortInitializer, VarInitializer,
+                                       VarPortInitializer)
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import (
     AbstractPyIOPort,
@@ -65,10 +65,11 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.py_ports: ty.Dict[str, PortInitializer] = {}
         self.ref_ports: ty.Dict[str, PortInitializer] = {}
         self.var_ports: ty.Dict[str, VarPortInitializer] = {}
-        self.csp_ports: ty.Dict[str, ty.List[AbstractCspPort]] = {}
-        self._csp_port_map: ty.Dict[str, ty.Dict[str, AbstractCspPort]] = {}
-        self.csp_rs_send_port: ty.Dict[str, CspSendPort] = {}
-        self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
+        self.csp_ports: ty.Dict[str, ty.List[AbstractTransferPort]] = {}
+        self._csp_port_map: ty.Dict[str,
+                                    ty.Dict[str, AbstractTransferPort]] = {}
+        self.csp_rs_send_port: ty.Dict[str, SendPort] = {}
+        self.csp_rs_recv_port: ty.Dict[str, RecvPort] = {}
         self.proc_params = proc_params
 
     def check_all_vars_and_ports_set(self):
@@ -170,13 +171,13 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self._check_not_assigned_yet(self.var_ports, new_ports.keys(), "ports")
         self.var_ports.update(new_ports)
 
-    def set_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
+    def set_csp_ports(self, csp_ports: ty.List[AbstractTransferPort]):
         """Appends the given list of CspPorts to the ProcessModel. Used by the
         runtime to configure csp ports during initialization (_build_channels).
 
         Parameters
         ----------
-        csp_ports : ty.List[AbstractCspPort]
+        csp_ports : ty.List[AbstractTransferPort]
 
 
         Raises
@@ -206,7 +207,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
             else:
                 self.csp_ports[port_name] = new_ports[port_name]
 
-    def add_csp_port_mapping(self, py_port_id: str, csp_port: AbstractCspPort):
+    def add_csp_port_mapping(self, py_port_id: str,
+                             csp_port: AbstractTransferPort):
         """Appends a mapping from a PyPort ID to a CSP port. This is used
         to associate a CSP port in a PyPort with transformation functions
         that implement the behavior of virtual ports.
@@ -224,7 +226,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             {py_port_id: csp_port}
         )
 
-    def set_rs_csp_ports(self, csp_ports: ty.List[AbstractCspPort]):
+    def set_rs_csp_ports(self, csp_ports: ty.List[AbstractTransferPort]):
         """Set RS CSP Ports
 
         Parameters
@@ -233,9 +235,9 @@ class PyProcessBuilder(AbstractProcessBuilder):
 
         """
         for port in csp_ports:
-            if isinstance(port, CspSendPort):
+            if isinstance(port, SendPort):
                 self.csp_rs_send_port.update({port.name: port})
-            if isinstance(port, CspRecvPort):
+            if isinstance(port, RecvPort):
                 self.csp_rs_recv_port.update({port.name: port})
 
     def _get_lava_type(self, name: str) -> LavaPyType:
@@ -315,16 +317,10 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = (
-                    csp_ports[0]
-                    if isinstance(csp_ports[0], CspRecvPort)
-                    else csp_ports[1]
-                )
-                csp_send = (
-                    csp_ports[0]
-                    if isinstance(csp_ports[0], CspSendPort)
-                    else csp_ports[1]
-                )
+                csp_recv = csp_ports[0] if isinstance(
+                    csp_ports[0], RecvPort) else csp_ports[1]
+                csp_send = csp_ports[0] if isinstance(
+                    csp_ports[0], SendPort) else csp_ports[1]
 
             transformer = (
                 VirtualPortTransformer(
@@ -352,16 +348,10 @@ class PyProcessBuilder(AbstractProcessBuilder):
             csp_send = None
             if name in self.csp_ports:
                 csp_ports = self.csp_ports[name]
-                csp_recv = (
-                    csp_ports[0]
-                    if isinstance(csp_ports[0], CspRecvPort)
-                    else csp_ports[1]
-                )
-                csp_send = (
-                    csp_ports[0]
-                    if isinstance(csp_ports[0], CspSendPort)
-                    else csp_ports[1]
-                )
+                csp_recv = csp_ports[0] if isinstance(
+                    csp_ports[0], RecvPort) else csp_ports[1]
+                csp_send = csp_ports[0] if isinstance(
+                    csp_ports[0], SendPort) else csp_ports[1]
 
             transformer = (
                 VirtualPortTransformer(

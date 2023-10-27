@@ -30,11 +30,13 @@ from abc import abstractmethod
 
 import numpy as np
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspSelector,
-    CspRecvPort,
-    CspSendPort
+from lava.magma.runtime.message_infrastructure import (
+    RecvPort,
+    SendPort,
+    SupportTempChannel,
 )
+from lava.magma.runtime.message_infrastructure import Selector
+
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
@@ -60,8 +62,8 @@ class PyRuntimeService(AbstractRuntimeService):
         self.log = logging.getLogger(__name__)
         self.log.setLevel(kwargs.get("loglevel", logging.WARNING))
         super(PyRuntimeService, self).__init__(protocol=protocol)
-        self.service_to_process: ty.Iterable[CspSendPort] = []
-        self.process_to_service: ty.Iterable[CspRecvPort] = []
+        self.service_to_process: ty.List[SendPort] = []
+        self.process_to_service: ty.List[RecvPort] = []
 
     def start(self):
         """Start the necessary channels to coordinate with runtime and group
@@ -93,27 +95,40 @@ class PyRuntimeService(AbstractRuntimeService):
         """Relays data received from ProcessModel given by model id  to the
         runtime"""
         process_idx = self.model_ids.index(model_id)
-        data_recv_port = self.process_to_service[process_idx]
-        data_relay_port = self.service_to_runtime
-        num_items = data_recv_port.recv()
-        data_relay_port.send(num_items)
-        for _ in range(int(num_items[0])):
-            value = data_recv_port.recv()
-            data_relay_port.send(value)
+        if SupportTempChannel:
+            addr_recv_port = self.runtime_to_service
+            addr_relay_port = self.service_to_process[process_idx]
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+        else:
+            data_recv_port = self.process_to_service[process_idx]
+            data_relay_port = self.service_to_runtime
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            for _ in range(int(num_items[0])):
+                value = data_recv_port.recv()
+                data_relay_port.send(value)
 
     def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
         """Relays data received from the runtime to the ProcessModel given by
         the model id."""
         process_idx = self.model_ids.index(model_id)
-        data_recv_port = self.runtime_to_service
-        data_relay_port = self.service_to_process[process_idx]
-        resp_port = self.process_to_service[process_idx]
-        # Receive and relay number of items
-        num_items = data_recv_port.recv()
-        data_relay_port.send(num_items)
-        # Receive and relay data1, data2, ...
-        for _ in range(int(num_items[0].item())):
-            data_relay_port.send(data_recv_port.recv())
+        if SupportTempChannel:
+            addr_recv_port = self.process_to_service[process_idx]
+            addr_relay_port = self.service_to_runtime
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+            resp_port = self.process_to_service[process_idx]
+        else:
+            data_recv_port = self.runtime_to_service
+            data_relay_port = self.service_to_process[process_idx]
+            resp_port = self.process_to_service[process_idx]
+            # Receive and relay number of items
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            # Receive and relay data1, data2, ...
+            for _ in range(int(num_items[0].item())):
+                data_relay_port.send(data_recv_port.recv())
         rsp = resp_port.recv()
         return rsp
 
@@ -254,6 +269,47 @@ class LoihiPyRuntimeService(PyRuntimeService):
                 self.req_stop = True
         return rcv_msgs
 
+    def _relay_to_runtime_data_given_model_id(self, model_id: int):
+        """Relays data received from ProcessModel given by model id  to the
+        runtime"""
+        process_idx = self.model_ids.index(model_id)
+        if SupportTempChannel:
+            addr_recv_port = self.runtime_to_service
+            addr_relay_port = self.service_to_process[process_idx]
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+        else:
+            data_recv_port = self.process_to_service[process_idx]
+            data_relay_port = self.service_to_runtime
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            for _ in range(int(num_items[0])):
+                value = data_recv_port.recv()
+                data_relay_port.send(value)
+
+    def _relay_to_pm_data_given_model_id(self, model_id: int) -> MGMT_RESPONSE:
+        """Relays data received from the runtime to the ProcessModel given by
+        the model id."""
+        process_idx = self.model_ids.index(model_id)
+        if SupportTempChannel:
+            addr_recv_port = self.process_to_service[process_idx]
+            addr_relay_port = self.service_to_runtime
+            addr_path = addr_recv_port.recv()
+            addr_relay_port.send(addr_path)
+            resp_port = self.process_to_service[process_idx]
+        else:
+            data_recv_port = self.runtime_to_service
+            data_relay_port = self.service_to_process[process_idx]
+            resp_port = self.process_to_service[process_idx]
+            # Receive and relay number of items
+            num_items = data_recv_port.recv()
+            data_relay_port.send(num_items)
+            # Receive and relay data1, data2, ...
+            for _ in range(int(num_items[0].item())):
+                data_relay_port.send(data_recv_port.recv())
+        rsp = resp_port.recv()
+        return rsp
+
     def _relay_pm_ack_given_model_id(self, model_id: int):
         """Relays ack received from ProcessModel given by model id to the
         runtime."""
@@ -295,7 +351,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
         In this case iterate through the phases of the Loihi protocol until the
         last time step is reached. The runtime is informed after the last time
         step. The loop ends when receiving the STOP command from the runtime."""
-        selector = CspSelector()
+        selector = Selector()
         phase = LoihiPhase.HOST
 
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
@@ -373,7 +429,6 @@ class LoihiPyRuntimeService(PyRuntimeService):
                             if enum_equal(cmd, MGMT_COMMAND.PAUSE):
                                 self.pausing = True
                                 self.req_pause = True
-
                         # If HOST phase (last time step ended) break the loop
                         if enum_equal(phase, LoihiPhase.HOST):
                             break
@@ -384,7 +439,7 @@ class LoihiPyRuntimeService(PyRuntimeService):
                     # Inform the runtime that last time step was reached
                     if is_last_ts:
                         self.service_to_runtime.send(MGMT_RESPONSE.DONE)
-            else:
+            elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
 
 
@@ -457,13 +512,12 @@ class AsyncPyRuntimeService(PyRuntimeService):
     def run(self):
         """Retrieves commands from the runtime and relays them to the process
         models. Also send the acknowledgement back to runtime."""
-        selector = CspSelector()
+        selector = Selector()
         channel_actions = [(self.runtime_to_service, lambda: "cmd")]
         while True:
-            # Probe if there is a new command from the runtime
             action = selector.select(*channel_actions)
-            channel_actions = []
             if action == "cmd":
+                channel_actions = []
                 command = self.runtime_to_service.recv()
                 if enum_equal(command, MGMT_COMMAND.STOP):
                     self._handle_stop()
@@ -491,6 +545,7 @@ class AsyncPyRuntimeService(PyRuntimeService):
                             (ptos_recv_port, lambda: "resp")
                         )
             elif action == "resp":
+                channel_actions = []
                 resps = self._get_pm_resp()
                 done: bool = True
                 for resp in resps:
@@ -518,8 +573,9 @@ class AsyncPyRuntimeService(PyRuntimeService):
                 if self._error:
                     self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
                 self.running = False
-            else:
+            elif action is not None:
                 self.service_to_runtime.send(MGMT_RESPONSE.ERROR)
+                self.join()
                 self.running = False
                 raise ValueError(f"Wrong type of channel action : {action}")
             channel_actions.append((self.runtime_to_service, lambda: "cmd"))

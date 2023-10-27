@@ -8,15 +8,24 @@ import logging
 import sys
 import traceback
 import typing as ty
-
 import numpy as np
+from lava.magma.runtime.message_infrastructure import (RecvPort,
+                                                       SendPort,
+                                                       Channel,
+                                                       SupportTempChannel,
+                                                       Selector,
+                                                       getTempSendPort,
+                                                       getTempRecvPort,
+                                                       AbstractTransferPort)
+
 from scipy.sparse import csr_matrix
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
-from lava.magma.core.process.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.message_interface_enum import \
+    ActorType
 from lava.magma.runtime.message_infrastructure.factory import \
     MessageInfrastructureFactory
-from lava.magma.runtime.message_infrastructure. \
-    message_infrastructure_interface import \
+from lava.magma.runtime. \
+    message_infrastructure.message_infrastructure_interface import \
     MessageInfrastructureInterface
 from lava.magma.runtime.mgmt_token_enums import (MGMT_COMMAND, MGMT_RESPONSE,
                                                  enum_equal, enum_to_np)
@@ -25,8 +34,6 @@ from lava.magma.runtime.runtime_services.runtime_service import \
 
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
-from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
-    CspSelector
 from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
     ChannelBuilderPyNc)
@@ -34,14 +41,15 @@ from lava.magma.compiler.builders.interfaces import AbstractProcessBuilder
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
 from lava.magma.compiler.builders.runtimeservice_builder import \
     RuntimeServiceBuilder
-from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
+from lava.magma.runtime.message_infrastructure.interfaces import \
     ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
 from lava.magma.core.process.ports.ports import create_port_id
 from lava.magma.core.run_conditions import (AbstractRunCondition,
                                             RunContinuous, RunSteps)
-from lava.magma.compiler.channels.watchdog import WatchdogManagerInterface
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    WatchdogManagerInterface
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in
@@ -128,9 +136,9 @@ class Runtime:
         self._is_started: bool = False
         self._req_paused: bool = False
         self._req_stop: bool = False
-        self.runtime_to_service: ty.Iterable[CspSendPort] = []
-        self.service_to_runtime: ty.Iterable[CspRecvPort] = []
-        self._open_ports: ty.List[AbstractCspPort] = []
+        self.runtime_to_service: ty.Iterable[SendPort] = []
+        self.service_to_runtime: ty.Iterable[RecvPort] = []
+        self._open_ports: ty.List[AbstractTransferPort] = []
         self.num_steps: int = 0
 
         self._watchdog_manager = None
@@ -186,7 +194,7 @@ class Runtime:
         _messaging_infrastructure_type and Start it"""
         self._messaging_infrastructure = MessageInfrastructureFactory.create(
             self._messaging_infrastructure_type)
-        self._messaging_infrastructure.start()
+        self._messaging_infrastructure.init()
 
     def _get_process_builder_for_process(self, process: AbstractProcess) -> \
             AbstractProcessBuilder:
@@ -310,15 +318,15 @@ class Runtime:
         Gets response from RuntimeServices
         """
         if self._is_running:
-            selector = CspSelector()
+            selector = Selector()
             # Poll on all responses
             channel_actions = [(recv_port, (lambda y: (lambda: y))(
-                recv_port)) for
-                recv_port in
-                self.service_to_runtime]
+                recv_port)) for recv_port in self.service_to_runtime]
             rsps = []
             while True:
                 recv_port = selector.select(*channel_actions)
+                if recv_port is None:
+                    continue
                 data = recv_port.recv()
                 rsps.append(data)
                 if enum_equal(data, MGMT_RESPONSE.REQ_PAUSE):
@@ -330,14 +338,8 @@ class Runtime:
                 elif not enum_equal(data, MGMT_RESPONSE.DONE):
                     if enum_equal(data, MGMT_RESPONSE.ERROR):
                         # Receive all errors from the ProcessModels
-                        error_cnt = 0
-                        for actors in \
-                                self._messaging_infrastructure.actors:
-                            actors.join()
-                            if actors.exception:
-                                _, traceback = actors.exception
-                                self.log.info(traceback)
-                                error_cnt += 1
+                        error_cnt = self._messaging_infrastructure.trace(
+                            self.log)
                         raise RuntimeError(
                             f"{error_cnt} Exception(s) occurred. See "
                             f"output above for details.")
@@ -370,6 +372,7 @@ class Runtime:
         """
         if self._is_started:
             self._is_running = True
+            self._messaging_infrastructure.start()
             if isinstance(run_condition, RunSteps):
                 self.num_steps = run_condition.num_steps
                 for send_port in self.runtime_to_service:
@@ -435,9 +438,12 @@ class Runtime:
                             data = recv_port.recv()
                         if not enum_equal(data, MGMT_RESPONSE.TERMINATED):
                             raise RuntimeError(f"Runtime Received {data}")
+
+                self._messaging_infrastructure.pre_stop()
                 self.join()
                 self._is_running = False
                 self._is_started = False
+                self._messaging_infrastructure.cleanup(True)
                 # Send messages to RuntimeServices to stop as soon as possible.
             else:
                 self.log.info("Runtime not started yet.")
@@ -481,28 +487,36 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send SET Command
-            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
+            req_port: SendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.SET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
-            rsp_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
+            rsp_port: RecvPort = self.service_to_runtime[runtime_srv_id]
 
             # 2. Reshape the data
             buffer: np.ndarray = value
             if idx:
                 buffer = buffer[idx]
-            buffer_shape: ty.Tuple[int, ...] = buffer.shape
-            num_items: int = np.prod(buffer_shape).item()
-            reshape_order = 'F' if isinstance(
-                ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape((1, num_items), order=reshape_order)
 
-            # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
-            data_port.send(enum_to_np(num_items))
-            for i in range(num_items):
-                data_port.send(enum_to_np(buffer[0, i], np.float64))
+            if SupportTempChannel:
+                addr_path = rsp_port.recv()
+                send_port = getTempSendPort(str(addr_path[0]))
+                send_port.start()
+                send_port.send(buffer)
+                send_port.join()
+            else:
+                # 3. Send [NUM_ITEMS, DATA1, DATA2, ...]
+                buffer_shape: ty.Tuple[int, ...] = buffer.shape
+                num_items: int = np.prod(buffer_shape).item()
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
+                buffer = buffer.reshape((1, num_items), order=reshape_order)
+                data_port: SendPort = self.runtime_to_service[runtime_srv_id]
+                data_port.send(enum_to_np(num_items))
+                for i in range(num_items):
+                    data_port.send(enum_to_np(buffer[0, i], np.float64))
+
             rsp = rsp_port.recv()
             if not enum_equal(rsp, MGMT_RESPONSE.SET_COMPLETE):
                 raise RuntimeError("Var Set couldn't get successfully "
@@ -534,31 +548,40 @@ class Runtime:
             # from a model with model_id and var with var_id
 
             # 1. Send GET Command
-            req_port: CspSendPort = self.runtime_to_service[runtime_srv_id]
+            req_port: SendPort = self.runtime_to_service[runtime_srv_id]
             req_port.send(MGMT_COMMAND.GET_DATA)
             req_port.send(enum_to_np(model_id))
             req_port.send(enum_to_np(var_id))
 
-            # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
-            data_port: CspRecvPort = self.service_to_runtime[runtime_srv_id]
-            num_items: int = int(data_port.recv()[0].item())
-
-            if ev.dtype == csr_matrix:
-                buffer = np.zeros(num_items)
-
+            if SupportTempChannel:
+                addr_path, recv_port = getTempRecvPort()
+                recv_port.start()
+                req_port.send(np.array([addr_path]))
+                buffer = recv_port.recv()
+                recv_port.join()
+                if ev.dtype == csr_matrix:
+                    return buffer[idx] if idx else buffer
+                if buffer.dtype.type != np.str_:
+                    reshape_order = 'F' \
+                        if isinstance(ev, LoihiSynapseVarModel) else 'C'
+                    buffer = buffer.ravel(order=reshape_order).reshape(ev.shape)
+            else:
+                # 2. Receive Data [NUM_ITEMS, DATA1, DATA2, ...]
+                data_port: RecvPort = self.service_to_runtime[runtime_srv_id]
+                num_items: int = int(data_port.recv()[0].item())
+                if ev.dtype == csr_matrix:
+                    buffer = np.zeros(num_items)
+                    for i in range(num_items):
+                        buffer[i] = data_port.recv()[0]
+                    return buffer[idx] if idx else buffer
+                buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
                 for i in range(num_items):
-                    buffer[i] = data_port.recv()[0]
+                    buffer[0, i] = data_port.recv()[0]
+                # 3. Reshape result and return
+                reshape_order = 'F' if isinstance(ev, LoihiSynapseVarModel) \
+                    else 'C'
+                buffer = buffer.reshape(ev.shape, order=reshape_order)
 
-                return buffer[idx] if idx else buffer
-
-            buffer: np.ndarray = np.zeros((1, np.prod(ev.shape)))
-            for i in range(num_items):
-                buffer[0, i] = data_port.recv()[0]
-
-            # 3. Reshape result and return
-            reshape_order = 'F' if isinstance(
-                ev, LoihiSynapseVarModel) else 'C'
-            buffer = buffer.reshape(ev.shape, order=reshape_order)
             if idx:
                 return buffer[idx]
             else:

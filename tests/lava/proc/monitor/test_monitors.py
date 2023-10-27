@@ -45,9 +45,9 @@ class PyProcModel1(PyLoihiProcessModel):
 
     def run_post_mgmt(self):
         if self.time_step > 1:
-            self.s = np.array([self.time_step])
-            self.u = 2 * np.array([self.time_step])
-            self.v = np.array([[1, 2], [3, 4]])
+            self.s = np.array([self.time_step], dtype=np.int32)
+            self.u = 2 * np.array([self.time_step], dtype=np.int32)
+            self.v = np.array([[1, 2], [3, 4]], dtype=np.int32)
 
 
 class Monitors(unittest.TestCase):
@@ -180,12 +180,12 @@ class Monitors(unittest.TestCase):
         # Access the collected data with the names of monitor proc and var
         probe_data = data[some_proc.name][some_proc.v.name]
 
+        # Stop running
+        some_proc.stop()
+
         # Check if the collected data match the expected data
         self.assertTrue(np.all(probe_data == np.tile(np.array([[1, 2], [3, 4]]),
                                                      (num_steps, 1, 1))))
-
-        # Stop running
-        some_proc.stop()
 
     def test_monitor_collects_voltage_and_spike_data_from_lif_neuron(self):
         """Check if two different Monitor process can monitor voltage (Var) and

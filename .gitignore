@@ -16,6 +16,7 @@ src/lava/utils/dataloader/mnist.npy
 # Distribution / packaging
 .Python
 build/
+log/
 develop-eggs/
 dist/
 downloads/

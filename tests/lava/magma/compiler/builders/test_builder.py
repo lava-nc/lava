@@ -8,13 +8,6 @@ import numpy as np
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-from lava.magma.compiler.channels.interfaces import Channel, ChannelType, \
-    AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import (
-    PyPyChannel,
-    CspSendPort,
-    CspRecvPort,
-)
 from lava.magma.compiler.utils import VarInitializer, PortInitializer, \
     VarPortInitializer
 from lava.magma.core.decorator import implements, requires
@@ -27,18 +20,26 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, \
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
+from lava.magma.runtime.message_infrastructure import (
+    create_channel,
+    Channel,
+    AbstractTransferPort,
+)
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager,
 )
-from lava.magma.compiler.channels.watchdog import NoOPWatchdogManager
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    NoOPWatchdogManager
 
 
 class MockMessageInterface:
     def __init__(self, smm):
         self.smm = smm
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return PyPyChannel
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size) -> Channel:
+        return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 
 class TestChannelBuilder(unittest.TestCase):
@@ -59,23 +60,21 @@ class TestChannelBuilder(unittest.TestCase):
 
             smm.start()
             mock = MockMessageInterface(smm)
-            channel: Channel = channel_builder.build(mock,
-                                                     NoOPWatchdogManager())
-            assert isinstance(channel, PyPyChannel)
-            assert isinstance(channel.src_port, CspSendPort)
-            assert isinstance(channel.dst_port, CspRecvPort)
+            channel: Channel = channel_builder.build(mock)
+            assert isinstance(channel, Channel)
+            assert isinstance(channel.src_port, AbstractTransferPort)
+            assert isinstance(channel.dst_port, AbstractTransferPort)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.start()
-            channel.dst_port.start()
-
-            expected_data = np.array([[1, 2]])
-            channel.src_port.send(data=expected_data)
-            data = channel.dst_port.recv()
-            assert np.array_equal(data, expected_data)
-
-            channel.src_port.join()
-            channel.dst_port.join()
-
+                expected_data = np.array([[1, 2]], dtype=np.int32)
+                channel.src_port.send(expected_data)
+                data = channel.dst_port.recv()
+                assert np.array_equal(data, expected_data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
             smm.shutdown()
 
@@ -119,7 +118,7 @@ class ProcModel(AbstractPyProcessModel):
 
 
 # A fake CspPort just to test ProcBuilder
-class FakeCspPort(AbstractCspPort):
+class FakeCspPort:
     def __init__(self, name="mock"):
         self._name = name
 

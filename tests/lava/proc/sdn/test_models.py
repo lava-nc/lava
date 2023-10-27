@@ -260,3 +260,7 @@ class TestSigmaDeltaModels(unittest.TestCase):
         if verbose:
             print(f'Max abs error = {error}')
         self.assertTrue(error < vth * (1 << spike_exp))
+
+
+if __name__ == '__main__':
+    unittest.main()

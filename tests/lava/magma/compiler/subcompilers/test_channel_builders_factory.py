@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
 from lava.magma.compiler.channel_map import ChannelMap, Payload, PortPair
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.compiler.compiler_graphs import ProcGroupDiGraphs
 from lava.magma.compiler.subcompilers.channel_builders_factory import \
     ChannelBuildersFactory
@@ -18,7 +18,8 @@ from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.interfaces import AbstractPortImplementation
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.model.py.ports import (PyInPort, PyOutPort, PyRefPort,
-                                            PyVarPort)
+                                            PyVarPort,
+                                            AbstractPortImplementation)
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.magma.core.process.ports.ports import (AbstractPort, InPort, OutPort,

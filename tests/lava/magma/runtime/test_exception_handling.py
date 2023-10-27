@@ -15,6 +15,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.run_conditions import RunSteps
+from lava.magma.runtime.message_infrastructure import PURE_PYTHON_VERSION
 
 
 # A minimal process with an OutPort
@@ -76,6 +77,8 @@ class PyProcModel3(PyLoihiProcessModel):
 
 
 class TestExceptionHandling(unittest.TestCase):
+
+    @unittest.skipIf(not PURE_PYTHON_VERSION, "support py version only")
     def test_one_pm(self):
         """Checks the forwarding of exceptions within a ProcessModel to the
         runtime."""
@@ -99,6 +102,7 @@ class TestExceptionHandling(unittest.TestCase):
         # 1 exception in the ProcessModel expected
         self.assertTrue('1 Exception(s) occurred' in str(exception))
 
+    @unittest.skipIf(not PURE_PYTHON_VERSION, "support py version only")
     def test_two_pm(self):
         """Checks the forwarding of exceptions within two ProcessModel to the
         runtime."""
@@ -126,6 +130,7 @@ class TestExceptionHandling(unittest.TestCase):
         # 2 Exceptions in the ProcessModels expected
         self.assertTrue('2 Exception(s) occurred' in str(exception))
 
+    @unittest.skipIf(not PURE_PYTHON_VERSION, "support py version only")
     def test_three_pm(self):
         """Checks the forwarding of exceptions within three ProcessModel to the
         runtime."""

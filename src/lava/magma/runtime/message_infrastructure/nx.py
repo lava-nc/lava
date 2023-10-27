@@ -4,11 +4,22 @@
 
 import typing as ty
 
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import \
+    ChannelType
 from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure \
     .message_infrastructure_interface import \
     MessageInfrastructureInterface
+from lava.magma.runtime.message_infrastructure import Channel
+try:
+    from lava.magma.runtime.message_infrastructure.nccchannel import NcCChannel
+    from lava.magma.runtime.message_infrastructure.cncchannel import CNcChannel
+except ImportError:
+    class CNcChannel:
+        pass
+
+    class NcCChannel:
+        pass
 
 
 class NxBoardMsgInterface(MessageInfrastructureInterface):
@@ -29,9 +40,9 @@ class NxBoardMsgInterface(MessageInfrastructureInterface):
     def stop(self):
         """Stops the shared memory manager"""
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[ChannelType]:
+    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
         """Given a channel type, returns the shared memory based class
-        implementation for the same."""
+        implementation for the same"""
         if channel_type == ChannelType.CNc:
             return CNcChannel
         elif channel_type == ChannelType.NcC:

@@ -7,3 +7,4 @@ from enum import IntEnum
 
 class ActorType(IntEnum):
     MultiProcessing = 0
+    PyMultiProcessing = 1

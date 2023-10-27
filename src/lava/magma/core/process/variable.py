@@ -10,6 +10,7 @@ from lava.magma.core.process.interfaces import (
     AbstractProcessMember,
     IdGeneratorSingleton,
 )
+from lava.magma.runtime.message_infrastructure import SupportTempChannel
 
 
 class Var(AbstractProcessMember):
@@ -139,9 +140,12 @@ class Var(AbstractProcessMember):
             if self.process.runtime:
                 # encode if var is str
                 if isinstance(value, str):
-                    value = np.array(
-                        list(value.encode("ascii")), dtype=np.int32
-                    )
+                    if SupportTempChannel:
+                        value = np.array(value, dtype=str)
+                    else:
+                        value = np.array(
+                            list(value.encode("ascii")), dtype=np.int32
+                        )
                 elif isinstance(value, spmatrix):
                     value = value.tocsr()
                     init_dst, init_src, init_val = find(self.init,
@@ -155,7 +159,6 @@ class Var(AbstractProcessMember):
                                          "elements must stay equal when using"
                                          "set on a sparse matrix.")
                     value = val
-
                 self.process.runtime.set_var(self.id, value, idx)
             else:
                 raise ValueError(
@@ -172,11 +175,14 @@ class Var(AbstractProcessMember):
             if self.process and self.process.runtime:
                 buffer = self.process.runtime.get_var(self.id, idx)
                 if isinstance(self.init, str):
-                    # decode if var is string
-                    return bytes(buffer.astype(int).tolist()).decode("ascii")
+                    if SupportTempChannel:
+                        return np.array_str(buffer)
+                    else:
+                        # decode if var is string
+                        return bytes(buffer.astype(int).tolist()).  \
+                            decode("ascii")
                 if isinstance(self.init, csr_matrix):
                     dst, src, _ = find(self.init)
-
                     ret = csr_matrix((buffer, (dst, src)), self.init.shape)
                     return ret
                 else:

@@ -1,15 +1,14 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: LGPL 2.1 or later
 # See: https://spdx.org/licenses/
 
 import typing as ty
 from abc import ABC, abstractmethod
-from enum import IntEnum
 
 import numpy as np
 
 
-class AbstractCspPort(ABC):
+class AbstractTransferPort(ABC):
     """Abstract base class for CSP channel."""
 
     @property
@@ -44,39 +43,13 @@ class AbstractCspPort(ABC):
         return True
 
 
-class AbstractCspSendPort(AbstractCspPort):
+class AbstractSendPort(AbstractTransferPort):
     @abstractmethod
     def send(self, data: np.ndarray):
         pass
 
 
-class AbstractCspRecvPort(AbstractCspPort):
+class AbstractRecvPort(AbstractTransferPort):
     @abstractmethod
     def recv(self) -> np.ndarray:
         pass
-
-
-class Channel(ABC):
-    @property
-    @abstractmethod
-    def src_port(self) -> AbstractCspSendPort:
-        pass
-
-    @property
-    @abstractmethod
-    def dst_port(self) -> AbstractCspRecvPort:
-        pass
-
-
-class ChannelType(IntEnum):
-    """Type of a channel given the two process models"""
-
-    PyPy = 0
-    CPy = 1
-    PyC = 2
-    CNc = 3
-    NcC = 4
-    CC = 3
-    NcNc = 5
-    NcPy = 6
-    PyNc = 7

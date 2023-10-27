@@ -9,7 +9,7 @@ from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderNx, ChannelBuilderPyNc,
 )
 from lava.magma.compiler.channel_map import PortPair, ChannelMap
-from lava.magma.compiler.channels.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.compiler.utils import PortInitializer, LoihiConnectedPortType, \
     LoihiConnectedPortEncodingType
 from lava.magma.compiler.var_model import LoihiAddress

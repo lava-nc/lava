@@ -4,6 +4,7 @@
 
 import functools as ft
 import typing as ty
+import numpy as np
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -32,6 +33,12 @@ class PortInitializer:
     size: int
     transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
 
+    @property
+    def bytes(self) -> int:
+        data_type = np.int32 if str(self.d_type) == "LavaCDataType.INT32" \
+            else self.d_type
+        return np.prod(self.shape) * np.dtype(data_type).itemsize
+
 
 # check if can be a subclass of PortInitializer
 @dataclass
@@ -44,6 +51,12 @@ class VarPortInitializer:
     size: int
     port_cls: type
     transform_funcs: ty.Dict[str, ty.List[ft.partial]] = None
+
+    @property
+    def bytes(self) -> int:
+        data_type = np.int32 if str(self.d_type) == "LavaCDataType.INT32" \
+            else self.d_type
+        return np.prod(self.shape) * np.dtype(data_type).itemsize
 
 
 @dataclass

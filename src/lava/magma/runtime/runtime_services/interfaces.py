@@ -5,9 +5,9 @@
 import typing as ty
 from abc import ABC, abstractmethod
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspRecvPort,
-    CspSendPort
+from lava.magma.runtime.message_infrastructure import (
+    RecvPort,
+    SendPort,
 )
 from lava.magma.core.sync.protocol import AbstractSyncProtocol
 
@@ -18,8 +18,8 @@ class AbstractRuntimeService(ABC):
 
         self.runtime_service_id: ty.Optional[int] = None
 
-        self.runtime_to_service: ty.Optional[CspRecvPort] = None
-        self.service_to_runtime: ty.Optional[CspSendPort] = None
+        self.runtime_to_service: ty.Optional[RecvPort] = None
+        self.service_to_runtime: ty.Optional[SendPort] = None
 
         self.model_ids: ty.List[int] = []
 

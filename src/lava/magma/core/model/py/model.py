@@ -4,19 +4,22 @@
 
 import typing as ty
 from abc import ABC, abstractmethod
+# from functools import partial
 import logging
 from lava.utils.sparse import find
 import numpy as np
 from scipy.sparse import csr_matrix
 import platform
 
-from lava.magma.compiler.channels.pypychannel import (
-    CspSendPort,
-    CspRecvPort,
-    CspSelector,
-)
+from lava.magma.runtime.message_infrastructure import (SendPort,
+                                                       RecvPort,
+                                                       SupportTempChannel,
+                                                       getTempSendPort,
+                                                       getTempRecvPort,
+                                                       Selector)
 from lava.magma.core.model.model import AbstractProcessModel
-from lava.magma.core.model.py.ports import AbstractPyPort, PyVarPort, PyOutPort
+from lava.magma.core.model.interfaces import AbstractPortImplementation
+from lava.magma.core.model.py.ports import PyVarPort, AbstractPyPort
 from lava.magma.runtime.mgmt_token_enums import (
     enum_to_np,
     enum_equal,
@@ -45,17 +48,17 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
     ) -> None:
         super().__init__(proc_params=proc_params, loglevel=loglevel)
         self.model_id: ty.Optional[int] = None
-        self.service_to_process: ty.Optional[CspRecvPort] = None
-        self.process_to_service: ty.Optional[CspSendPort] = None
-        self.py_ports: ty.List[AbstractPyPort] = []
+        self.service_to_process: ty.Optional[RecvPort] = None
+        self.process_to_service: ty.Optional[SendPort] = None
+        self.py_ports: ty.List[AbstractPortImplementation] = []
         self.var_ports: ty.List[PyVarPort] = []
         self.var_id_to_var_map: ty.Dict[int, ty.Any] = {}
-        self._selector: CspSelector = CspSelector()
-        self._action: str = "cmd"
+        self._selector: Selector = Selector()
+        self._action: str = 'cmd'
         self._stopped: bool = False
-        self._channel_actions: ty.List[
-            ty.Tuple[ty.Union[CspSendPort, CspRecvPort], ty.Callable]
-        ] = []
+        self._channel_actions: ty.List[ty.Tuple[ty.Union[SendPort,
+                                                         RecvPort],
+                                                ty.Callable]] = []
         self._cmd_handlers: ty.Dict[MGMT_COMMAND, ty.Callable] = {
             MGMT_COMMAND.STOP[0]: self._stop,
             MGMT_COMMAND.PAUSE[0]: self._pause,
@@ -114,30 +117,46 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         var = getattr(self, var_name)
 
         # 2. Send Var data
-        data_port = self.process_to_service
-        # Header corresponds to number of values
-        # Data is either send once (for int) or one by one (array)
-        if isinstance(var, int) or isinstance(var, np.int32):
-            data_port.send(enum_to_np(1))
-            data_port.send(enum_to_np(var))
-        elif isinstance(var, np.ndarray):
-            # FIXME: send a whole vector (also runtime_service.py)
-            var_iter = np.nditer(var, order="C")
-            num_items: np.int32 = np.prod(var.shape)
-            data_port.send(enum_to_np(num_items))
-            for value in var_iter:
-                data_port.send(enum_to_np(value, np.float64))
-        elif isinstance(var, csr_matrix):
-            _, _, values = find(var, explicit_zeros=True)
-            num_items = var.data.size
-            data_port.send(enum_to_np(num_items))
-            for value in values:
-                data_port.send(enum_to_np(value, np.float64))
-        elif isinstance(var, str):
-            encoded_str = list(var.encode("ascii"))
-            data_port.send(enum_to_np(len(encoded_str)))
-            for ch in encoded_str:
-                data_port.send(enum_to_np(ch, d_type=np.int32))
+        if SupportTempChannel:
+            addr_path = self.service_to_process.recv()
+            data_port = getTempSendPort(str(addr_path[0]))
+            data_port.start()
+            if isinstance(var, int) or isinstance(var, np.int32):
+                data_port.send(enum_to_np(var))
+            elif isinstance(var, np.ndarray):
+                # FIXME: send a whole vector (also runtime_service.py)
+                data_port.send(var)
+            elif isinstance(var, csr_matrix):
+                _, _, data = find(var, explicit_zeros=True)
+                data_port.send(data)
+            elif isinstance(var, str):
+                data_port.send(np.array(var, dtype=str))
+            data_port.join()
+        else:
+            data_port = self.process_to_service
+            # Header corresponds to number of values
+            # Data is either send once (for int) or one by one (array)
+            if isinstance(var, int) or isinstance(var, np.int32):
+                data_port.send(enum_to_np(1))
+                data_port.send(enum_to_np(var))
+            elif isinstance(var, np.ndarray):
+                # FIXME: send a whole vector (also runtime_service.py)
+                var_iter = np.nditer(var, order='C')
+                num_items: np.integer = np.prod(var.shape)
+                data_port.send(enum_to_np(num_items))
+                for value in var_iter:
+                    data_port.send(enum_to_np(value, np.float64))
+            elif isinstance(var, csr_matrix):
+                _, _, values = find(var, explicit_zeros=True)
+                num_items = var.data.size
+                data_port.send(enum_to_np(num_items))
+                for value in values:
+                    data_port.send(enum_to_np(value, np.float64))
+            elif isinstance(var, str):
+                encoded_str = list(var.encode("ascii"))
+                data_port.send(enum_to_np(len(encoded_str)))
+                for ch in encoded_str:
+                    data_port.send(enum_to_np(ch, d_type=np.int32))
 
     def _set_var(self):
         """Handles the set Var command from runtime service."""
@@ -147,55 +166,84 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
         var = getattr(self, var_name)
 
         # 2. Receive Var data
-        data_port = self.service_to_process
-        if isinstance(var, int) or isinstance(var, np.int32):
-            # First item is number of items (1) - not needed
-            data_port.recv()
-            # Data to set
-            buffer = data_port.recv()[0]
-            if isinstance(var, int):
-                setattr(self, var_name, buffer.item())
-            else:
+        if SupportTempChannel:
+            addr_path, data_port = getTempRecvPort()
+            data_port.start()
+            self.process_to_service.send(np.array([addr_path]))
+            buffer = data_port.recv()
+            data_port.join()
+            if isinstance(var, int) or isinstance(var, np.int32):
+                buffer = buffer[0]
+                if isinstance(var, int):
+                    setattr(self, var_name, buffer.item())
+                else:
+                    setattr(self, var_name, buffer.astype(var.dtype))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, np.ndarray):
+                var_iter = np.nditer(var, op_flags=['readwrite'])
                 setattr(self, var_name, buffer.astype(var.dtype))
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-        elif isinstance(var, np.ndarray):
-            # First item is number of items
-            num_items = data_port.recv()[0]
-            var_iter = np.nditer(var, op_flags=["readwrite"])
-            # Set data one by one
-            for i in var_iter:
-                if num_items == 0:
-                    break
-                num_items -= 1
-                i[...] = data_port.recv()[0]
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-        elif isinstance(var, csr_matrix):
-            # First item is number of items
-            num_items = int(data_port.recv()[0])
-
-            buffer = np.empty(num_items)
-            # Set data one by one
-            for i in range(num_items):
-                buffer[i] = data_port.recv()[0]
-            dst, src, _ = find(var)
-            var = csr_matrix((buffer, (dst, src)), var.shape)
-            setattr(self, var_name, var)
-
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
-        elif isinstance(var, str):
-            # First item is number of items
-            num_items = int(data_port.recv()[0])
-
-            s = []
-            for i in range(num_items):
-                s.append(int(data_port.recv()[0]))  # decode string from ascii
-
-            s = bytes(s).decode("ascii")
-            setattr(self, var_name, s)
-            self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, csr_matrix):
+                dst, src, _ = find(var)
+                var = csr_matrix((buffer, (dst, src)), var.shape)
+                setattr(self, var_name, var)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, str):
+                setattr(self, var_name, np.array_str(buffer))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            else:
+                self.process_to_service.send(MGMT_RESPONSE.ERROR)
+                raise RuntimeError("Unsupported type")
         else:
-            self.process_to_service.send(MGMT_RESPONSE.ERROR)
-            raise RuntimeError("Unsupported type")
+            data_port = self.service_to_process
+            if isinstance(var, int) or isinstance(var, np.int32):
+                # First item is number of items (1) - not needed
+                data_port.recv()
+                # Data to set
+                buffer = data_port.recv()[0]
+                if isinstance(var, int):
+                    setattr(self, var_name, buffer.item())
+                else:
+                    setattr(self, var_name, buffer.astype(var.dtype))
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, np.ndarray):
+                # First item is number of items
+                num_items = data_port.recv()[0]
+                var_iter = np.nditer(var, op_flags=['readwrite'])
+                # Set data one by one
+                for i in var_iter:
+                    if num_items == 0:
+                        break
+                    num_items -= 1
+                    i[...] = data_port.recv()[0]
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, csr_matrix):
+                # First item is number of items
+                num_items = int(data_port.recv()[0])
+
+                buffer = np.empty(num_items)
+                # Set data one by one
+                for i in range(num_items):
+                    buffer[i] = data_port.recv()[0]
+                dst, src, _ = find(var)
+                var = csr_matrix((buffer, (dst, src)), var.shape)
+                setattr(self, var_name, var)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            elif isinstance(var, str):
+                # First item is number of items
+                num_items = int(data_port.recv()[0])
+
+                s = []
+                for i in range(num_items):
+                    # decode string from ascii
+                    s.append(int(data_port.recv()[0]))
+
+                s = bytes(s).decode("ascii")
+                setattr(self, var_name, s)
+                self.process_to_service.send(MGMT_RESPONSE.SET_COMPLETE)
+            else:
+                self.process_to_service.send(MGMT_RESPONSE.ERROR)
+                raise RuntimeError("Unsupported type")
 
         # notify PM that Vars have been changed
         self.on_var_update()
@@ -226,12 +274,10 @@ class AbstractPyProcessModel(AbstractProcessModel, ABC):
                             f"command: {cmd} "
                         )
                 except Exception as inst:
-                    # Inform runtime service about termination
                     self.process_to_service.send(MGMT_RESPONSE.ERROR)
-                    self.join()
+                    self.join()  # join cause raise error
                     raise inst
-            else:
-                # Handle VarPort requests from RefPorts
+            elif self._action is not None:
                 self._handle_var_port(self._action)
             self._channel_actions = [(self.service_to_process, lambda: "cmd")]
             self.add_ports_for_polling()
@@ -503,7 +549,7 @@ class PyLoihiProcessModel(AbstractPyProcessModel):
         ):
             for var_port in self.var_ports:
                 for csp_port in var_port.csp_ports:
-                    if isinstance(csp_port, CspRecvPort):
+                    if isinstance(csp_port, RecvPort):
                         def func(fvar_port=var_port):
                             return lambda: fvar_port
 
@@ -591,7 +637,6 @@ class PyAsyncProcessModel(AbstractPyProcessModel):
             cmd = self.service_to_process.peek()
             if enum_equal(cmd, MGMT_COMMAND.PAUSE):
                 return True
-        return False
 
     def run_async(self):
         """

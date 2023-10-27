@@ -3,15 +3,9 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import \
-        RuntimeServiceBuilder
 from abc import ABC, abstractmethod
-
-from lava.magma.compiler.channels.interfaces import ChannelType, Channel
-from lava.magma.core.sync.domain import SyncDomain
+from lava.magma.runtime.message_infrastructure import Channel
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 
 
 class MessageInfrastructureInterface(ABC):
@@ -21,18 +15,33 @@ class MessageInfrastructureInterface(ABC):
     passing implementation."""
 
     @abstractmethod
+    def init(self):
+        """Init the messaging infrastructure"""
+        pass  # pylint: disable=W0107
+
+    @abstractmethod
     def start(self):
         """Starts the messaging infrastructure"""
 
-    @abstractmethod
+    def pre_stop(self):
+        """Stop MessageInfrastructure before join ports"""
+        pass  # pylint: disable=W0107
+
     def stop(self):
-        """Stops the messaging infrastructure"""
+        """Stops the messaging infrastructure after join ports"""
+        pass  # pylint: disable=W0107
 
     @abstractmethod
-    def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
-        ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'RuntimeServiceBuilder']]):
+    def build_actor(self, target_fn: ty.Callable, builder):
         """Given a target_fn starts a system process"""
+
+    def cleanup(self, block=False):
+        """Close all resources"""
+        pass  # pylint: disable=W0107
+
+    def trace(self, logger) -> int:
+        """Trace actors' exceptions"""
+        return 0
 
     @property
     @abstractmethod
@@ -40,6 +49,7 @@ class MessageInfrastructureInterface(ABC):
         """Returns a list of actors"""
 
     @abstractmethod
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size, sync=False) -> Channel:
         """Given the Channel Type, Return the Channel Implementation to
         be used during execution"""

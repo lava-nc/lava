@@ -9,8 +9,12 @@ import logging
 import numpy as np
 import typing as ty
 
-from lava.magma.compiler.channels.interfaces import AbstractCspPort
-from lava.magma.compiler.channels.pypychannel import CspSelector, PyPyChannel
+from lava.magma.runtime.message_infrastructure import (
+    AbstractTransferPort,
+    create_channel,
+    Selector
+)
+from lava.magma.runtime.message_infrastructure import Channel as MsgChannel
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager,
 )
@@ -58,7 +62,7 @@ class AbstractChannelBroker(ABC):
 
 def generate_channel_name(prefix: str,
                           port_idx: int,
-                          csp_port: AbstractCspPort,
+                          csp_port: AbstractTransferPort,
                           c_builder_idx: int) -> str:
     return f"{prefix}{str(port_idx)}_{str(csp_port.name)}_{str(c_builder_idx)}"
 
@@ -101,7 +105,7 @@ class ChannelBroker(AbstractChannelBroker):
         self.c_outports_to_poll: ty.Dict[Channel, COutPort] = {}
 
         self.smm: SharedMemoryManager = SharedMemoryManager()
-        self.mgmt_channel: ty.Optional[PyPyChannel] = None
+        self.mgmt_channel: ty.Optional[MsgChannel] = None
         self.grpc_stopping_event: ty.Optional[threading.Event] = None
         self.port_poller: ty.Optional[threading.Thread] = None
         self.grpc_poller: ty.Optional[threading.Thread] = None
@@ -110,13 +114,15 @@ class ChannelBroker(AbstractChannelBroker):
         """Start the polling threads"""
         if not self.has_started:
             self.smm.start()
-            self.mgmt_channel = PyPyChannel(
+
+            self.mgmt_channel = create_channel(
                 message_infrastructure=self,
                 src_name="mgmt_channel",
                 dst_name="mgmt_channel",
                 shape=(1,),
                 dtype=np.int32,
-                size=1)
+                size=1,
+            )
             self.mgmt_channel.src_port.start()
             self.mgmt_channel.dst_port.start()
             self.port_poller = threading.Thread(target=self.poll_c_inports)
@@ -143,7 +149,7 @@ class ChannelBroker(AbstractChannelBroker):
         After sending requests to the GRPC channel the process
         is informed about completion.
         """
-        selector = CspSelector()
+        selector = Selector()
 
         while True:
             # Need to poll both GRPC and CSP ports for messages
@@ -156,10 +162,17 @@ class ChannelBroker(AbstractChannelBroker):
 
             channel_actions.append((self.mgmt_channel.dst_port,
                                     lambda: ('stop', None)))
-            action, channel = selector.select(*channel_actions)
+
+            resp = selector.select(*channel_actions)
+            if resp is None:
+                continue
+
+            action, channel = resp
+
             if action == "stop":
+                self.mgmt_channel.dst_port.recv()
                 return
-            else:
+            elif action is not None:
                 action._recv(channel)
 
     def poll_c_outports(self):

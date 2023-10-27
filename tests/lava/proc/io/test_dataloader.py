@@ -43,8 +43,9 @@ class TestRunConfig(RunConfig):
 
 
 class DummyDataset:
-    def __init__(self, shape: tuple) -> None:
+    def __init__(self, shape: tuple, dtype: np.dtype) -> None:
         self.shape = shape
+        self.dtype = dtype
 
     def __len__(self) -> int:
         return 10
@@ -52,6 +53,7 @@ class DummyDataset:
     def __getitem__(self, id_: int) -> Tuple[np.ndarray, int]:
         data = np.arange(np.prod(self.shape)).reshape(self.shape) + id_
         data = data % np.prod(self.shape)
+        data = data.astype(self.dtype)
         label = id_
         return data, label
 
@@ -90,9 +92,10 @@ class TestStateDataloader(unittest.TestCase):
         shape = (5, 7)
         interval = 5
         offset = 2
+        dtype = np.int32
 
         proc = DummyProc(shape)
-        dataloader = StateDataloader(dataset=DummyDataset(shape),
+        dataloader = StateDataloader(dataset=DummyDataset(shape, dtype),
                                      interval=interval,
                                      offset=offset)
 
@@ -112,7 +115,7 @@ class TestStateDataloader(unittest.TestCase):
         out_data = out.data.get()
         proc.stop()
 
-        dataset = DummyDataset(shape)
+        dataset = DummyDataset(shape, np.int32)
         for i in range(offset + 1, num_steps):
             id = (i - offset - 1) // interval
             data, ground_truth = dataset[id]
@@ -136,7 +139,7 @@ class TestSpikeDataloader(unittest.TestCase):
         num_steps: int,
     ) -> None:
         dataloader = SpikeDataloader(
-            dataset=SpikeDataset(shape + (steps,)),
+            dataset=SpikeDataset(shape + (steps,), np.int32),
             interval=interval,
             offset=offset
         )
@@ -156,7 +159,7 @@ class TestSpikeDataloader(unittest.TestCase):
         out_data = out.data.get()
         dataloader.stop()
 
-        dataset = SpikeDataset(shape + (steps,))
+        dataset = SpikeDataset(shape + (steps,), np.int32)
         for i in range(offset + 1, num_steps, interval):
             id = (i - offset - 1) // interval
             data, ground_truth = dataset[id]
@@ -215,4 +218,4 @@ class TestSpikeDataloader(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    pass
+    unittest.main()

@@ -11,7 +11,8 @@ from lava.magma.compiler.compiler import Compiler
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.message_interface_enum \
+    import ActorType
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU

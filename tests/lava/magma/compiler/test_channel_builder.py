@@ -6,27 +6,31 @@ import typing as ty
 import unittest
 
 import numpy as np
-
+from multiprocessing.managers import SharedMemoryManager
 from lava.magma.compiler.builders.channel_builder import ChannelBuilderMp
-from lava.magma.compiler.channels.interfaces import Channel, ChannelType
 from lava.magma.compiler.utils import PortInitializer
-from lava.magma.compiler.channels.pypychannel import (
-    PyPyChannel,
-    CspSendPort,
-    CspRecvPort,
+
+from lava.magma.runtime.message_infrastructure import (
+    Channel,
+    SendPort,
+    RecvPort,
+    create_channel
 )
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager
 )
-from lava.magma.compiler.channels.watchdog import NoOPWatchdogManager
+from lava.magma.runtime.message_infrastructure.watchdog import \
+    NoOPWatchdogManager
 
 
 class MockMessageInterface:
     def __init__(self, smm):
         self.smm = smm
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type:
-        return PyPyChannel
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size) -> Channel:
+        return create_channel(self, src_name, dst_name, shape, dtype, size)
 
 
 class TestChannelBuilder(unittest.TestCase):
@@ -44,20 +48,17 @@ class TestChannelBuilder(unittest.TestCase):
                 src_process=None,
                 dst_process=None,
             )
-
             smm.start()
             mock = MockMessageInterface(smm)
-            channel: Channel = channel_builder.build(mock,
-                                                     NoOPWatchdogManager())
-            assert isinstance(channel, PyPyChannel)
-            assert isinstance(channel.src_port, CspSendPort)
-            assert isinstance(channel.dst_port, CspRecvPort)
+            channel: Channel = channel_builder.build(mock)
+            self.assertIsInstance(channel.src_port, SendPort)
+            self.assertIsInstance(channel.dst_port, RecvPort)
 
             channel.src_port.start()
             channel.dst_port.start()
 
-            expected_data = np.array([[1, 2]])
-            channel.src_port.send(data=expected_data)
+            expected_data = np.array([[1, 2]], dtype=np.int32)
+            channel.src_port.send(expected_data)
             data = channel.dst_port.recv()
             assert np.array_equal(data, expected_data)
 

@@ -258,8 +258,8 @@ def conv_scipy(input_: np.ndarray,
         weight.shape[0],
         dilation[0] * (kernel_size[0] - 1) + 1,
         dilation[1] * (kernel_size[1] - 1) + 1,
-        weight.shape[-1]
-    ])
+        weight.shape[-1]]
+    )
     dilated_weight[:, ::dilation[0], ::dilation[1], :] = weight
 
     input_padded = np.pad(

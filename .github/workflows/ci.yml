@@ -22,12 +22,26 @@ jobs:
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
-        repository: 'Lava'    
+        repository: 'Lava'
 
     - name: Run flakeheaven (flake8)
       run: |
         poetry run flakeheaven lint src/lava tests/
         poetry run find tutorials/ -name '*.py' -exec flakeheaven lint {} \+
+      
+    - name: Run cpplint (cpplint)
+      run: |
+        poetry run cpplint --recursive --quiet \
+        --repository=src/lava/magma/runtime/_c_message_infrastructure \
+        --root=csrc \
+        --exclude=src/lava/magma/runtime/_c_message_infrastructure/csrc/channel/dds/protos \
+        src/lava/magma/runtime/_c_message_infrastructure/ \
+        src/lava/magma/runtime/_c_message_infrastructure/test/
+
+        poetry run cpplint --recursive --quiet \
+        --repository=src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp \
+        --root=src \
+        src/lava/magma/runtime/_c_message_infrastructure/examples/ros2/ros_talk_with_dds_cpp/src
 
   security-lint:
     name: Security Lint Code
@@ -47,7 +61,7 @@ jobs:
       with:
         targets: |
           src/lava/.      
-        options: "-r  --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
+        options: "-r --exclude build --format custom --msg-template '{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}'"
 
   unit-tests:
     name: Unit Test Code + Coverage
@@ -82,3 +96,22 @@ jobs:
         name: coverage
         path: coverage.xml
         retention-days: 30
+
+  msg-infr-unit-tests:
+    name: Message Infrastructure Unit Test
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: 1
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: setup CI
+      uses: lava-nc/ci-setup-composite-action@v1.2
+      with:
+        repository: 'Lava'
+
+    - name: Run message infrastructure cpp unit tests
+      run: ./build/test/test_messaging_infrastructure

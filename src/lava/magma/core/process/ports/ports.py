@@ -689,6 +689,7 @@ class RefPort(AbstractRVPort, AbstractSrcPort):
                 name = str(vp.name)
                 name_suffix = 1
                 while hasattr(var.process, vp.name):
+                    # pylint: disable=W0201
                     vp.name = name + "_" + str(name_suffix)
                     name_suffix += 1
             setattr(var.process, vp.name, vp)

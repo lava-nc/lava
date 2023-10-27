@@ -3,41 +3,28 @@
 # See: https://spdx.org/licenses/
 
 import typing as ty
-if ty.TYPE_CHECKING:
-    from lava.magma.core.process.process import AbstractProcess
-    from lava.magma.compiler.builders.py_builder import PyProcessBuilder
-    from lava.magma.compiler.builders.runtimeservice_builder import \
-        RuntimeServiceBuilder
+import numpy as np
+from functools import partial
+
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import CppMultiProcessing
+from lava.magma.runtime.message_infrastructure.MessageInfrastructurePywrapper \
+    import ChannelType as ChannelBackend  # noqa: E402
+from lava.magma.runtime.message_infrastructure \
+    import Channel, ChannelQueueSize, SyncChannelBytes
+from lava.magma.runtime.message_infrastructure.interfaces import ChannelType
+from lava.magma.runtime.message_infrastructure. \
+    message_infrastructure_interface import MessageInfrastructureInterface
 
 import multiprocessing as mp
-import os
 import traceback
 
-from lava.magma.compiler.channels.interfaces import ChannelType, Channel
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
-from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
-    SharedMemoryManager,
-)
-
 try:
-    from lava.magma.compiler.channels.cpychannel import \
-        CPyChannel, PyCChannel
-    from lava.magma.compiler.channels.pyncchannel import PyNcChannel
-    from lava.magma.compiler.channels.ncpychannel import NcPyChannel
+    from lava.magma.core.model.c.type import LavaTypeTransfer
 except ImportError:
-    class CPyChannel:
+    class LavaTypeTransfer:
         pass
 
-    class PyCChannel:
-        pass
-
-    class PyNcChannel:
-        pass
-
-    class NcPyChannel:
-        pass
-
-from lava.magma.core.sync.domain import SyncDomain
 from lava.magma.runtime.message_infrastructure.message_infrastructure_interface\
     import MessageInfrastructureInterface
 
@@ -93,54 +80,57 @@ class MultiProcessing(MessageInfrastructureInterface):
     """Implements message passing using shared memory and multiprocessing"""
 
     def __init__(self):
-        self._smm: ty.Optional[SharedMemoryManager] = None
-        self._actors: ty.List[SystemProcess] = []
+        self._mp: ty.Optional[CppMultiProcessing] = CppMultiProcessing()
 
     @property
     def actors(self):
         """Returns a list of actors"""
-        return self._actors
+        return self._mp.get_actors()
 
-    @property
-    def smm(self):
-        """Returns the underlying shared memory manager"""
-        return self._smm
+    def init(self):
+        pass
 
     def start(self):
-        """Starts the shared memory manager"""
-        self._smm = SharedMemoryManager()
-        self._smm.start()
+        """Init the MultiProcessing"""
+        for actor in self._mp.get_actors():
+            actor.start()
 
-    def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
-        ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
-            SyncDomain, 'RuntimeServiceBuilder']]) -> ty.Any:
+    def build_actor(self, target_fn: ty.Callable, builder) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
-        system_process = SystemProcess(target=target_fn,
-                                       args=(),
-                                       kwargs={"builder": builder})
-        system_process.start()
-        self._actors.append(system_process)
-        return system_process
+        bound_target_fn = partial(target_fn, builder=builder)
+        self._mp.build_actor(bound_target_fn)
 
-    def stop(self):
+    def pre_stop(self):
         """Stops the shared memory manager"""
-        for actor in self._actors:
-            if actor._parent_pid == os.getpid():
-                actor.join()
-        self._smm.shutdown()
+        self._mp.stop()
 
-    def channel_class(self, channel_type: ChannelType) -> ty.Type[Channel]:
-        """Given a channel type, returns the shared memory based class
-        implementation for the same"""
+    def pause(self):
+        for actor in self._mp.get_actors():
+            actor.pause()
+
+    def cleanup(self, block=False):
+        """Close all resources"""
+        self._mp.cleanup(block)
+
+    def trace(self, logger) -> int:
+        """Trace actors' exceptions"""
+        # CppMessageInfrastructure cannot trace exceptions.
+        # It needs to stop all actors.
+        self.stop()
+        return 0
+
+    def channel(self, channel_type: ChannelType, src_name, dst_name,
+                shape, dtype, size, sync=False) -> Channel:
         if channel_type == ChannelType.PyPy:
-            return PyPyChannel
-        elif channel_type == ChannelType.PyC:
-            return PyCChannel
-        elif channel_type == ChannelType.CPy:
-            return CPyChannel
-        elif channel_type == ChannelType.PyNc:
-            return PyNcChannel
-        elif channel_type == ChannelType.NcPy:
-            return NcPyChannel
+            channel_bytes = np.prod(shape) * np.dtype(dtype).itemsize \
+                if not sync else SyncChannelBytes
+            return Channel(ChannelBackend.SHMEMCHANNEL, ChannelQueueSize,
+                           channel_bytes, src_name, dst_name, shape, dtype)
+        elif channel_type == ChannelType.PyC or channel_type == ChannelType.CPy:
+            temp_dtype = LavaTypeTransfer.cdtype2numpy(dtype)
+            channel_bytes = np.prod(shape) * np.dtype(temp_dtype).itemsize \
+                if not sync else SyncChannelBytes
+            return Channel(ChannelBackend.SHMEMCHANNEL, size,
+                           channel_bytes, src_name, dst_name, shape, dtype)
         else:
             raise Exception(f"Unsupported channel type {channel_type}")

@@ -4,9 +4,12 @@
 
 import numpy as np
 import unittest
+import time
 from multiprocessing import Process
-
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from lava.magma.runtime.message_infrastructure import (
+    create_channel,
+    Channel,
+)
 from lava.magma.runtime.message_infrastructure.shared_memory_manager import (
     SharedMemoryManager
 )
@@ -17,17 +20,15 @@ class MockInterface:
         self.smm = smm
 
 
-def get_channel(smm, data, size, name="test_channel") -> PyPyChannel:
+def get_channel(smm, data, name="test_channel") -> Channel:
     mock = MockInterface(smm)
-    channel = PyPyChannel(
+    return create_channel(
         message_infrastructure=mock,
-        src_name=name,
-        dst_name=name,
+        src_name=name + "src",
+        dst_name=name + "dst",
         shape=data.shape,
         dtype=data.dtype,
-        size=size
-    )
-    return channel
+        size=data.size)
 
 
 class TestPyPyChannelSingleProcess(unittest.TestCase):
@@ -35,16 +36,18 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         smm = SharedMemoryManager()
         try:
             smm.start()
-
             data = np.ones((2, 2, 2))
-            channel = get_channel(smm, data, size=2)
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.start()
-            channel.dst_port.start()
-
-            channel.src_port.send(data=data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
             smm.shutdown()
 
@@ -52,16 +55,18 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         smm = SharedMemoryManager()
         try:
             smm.start()
-
             data = np.random.randint(100, size=(100, 100), dtype=np.int32)
-            channel = get_channel(smm, data, size=100)
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.start()
-            channel.dst_port.start()
-
-            channel.src_port.send(data=data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
             smm.shutdown()
 
@@ -69,16 +74,18 @@ class TestPyPyChannelSingleProcess(unittest.TestCase):
         smm = SharedMemoryManager()
         try:
             smm.start()
-
             data = np.random.randint(1000, size=100, dtype=np.int16)
-            channel = get_channel(smm, data, size=10)
+            channel = get_channel(smm, data)
+            try:
+                channel.src_port.start()
+                channel.dst_port.start()
 
-            channel.src_port.start()
-            channel.dst_port.start()
-
-            channel.src_port.send(data=data)
-            result = channel.dst_port.recv()
-            assert np.array_equal(result, data)
+                channel.src_port.send(data)
+                result = channel.dst_port.recv()
+                assert np.array_equal(result, data)
+            finally:
+                channel.src_port.join()
+                channel.dst_port.join()
         finally:
             smm.shutdown()
 
@@ -93,7 +100,11 @@ class DummyProcess(Process):
     def run(self):
         for c in self._ports:
             c.start()
+        # need to wait all port started.
+        time.sleep(0.01)
         super().run()
+        for c in self._ports:
+            c.join()
 
 
 def source(shape, port):
@@ -128,18 +139,18 @@ def buffer(shape, dst_port, src_port):
 
 
 class TestPyPyChannelMultiProcess(unittest.TestCase):
+
     def test_send_recv_relay(self):
         smm = SharedMemoryManager()
         try:
             smm.start()
             data = np.ones((2, 2))
             channel_source_to_buffer = get_channel(
-                smm, data, size=2, name="channel_source_to_buffer"
+                smm, data, name="channel_source_to_buffer"
             )
             channel_buffer_to_sink = get_channel(
-                smm, data, size=2, name="channel_buffer_to_sink"
+                smm, data, name="channel_buffer_to_sink"
             )
-
             jobs = [
                 DummyProcess(
                     ports=(channel_source_to_buffer.src_port,),

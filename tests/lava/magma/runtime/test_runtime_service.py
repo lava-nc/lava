@@ -3,9 +3,10 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-
 import numpy as np
-from lava.magma.compiler.channels.pypychannel import PyPyChannel
+from multiprocessing.managers import SharedMemoryManager
+from lava.magma.runtime.message_infrastructure \
+    import create_channel as create_pychannel
 from lava.magma.core.decorator import implements
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.process.process import AbstractProcess
@@ -23,14 +24,7 @@ class MockInterface:
 
 def create_channel(smm: SharedMemoryManager, name: str):
     mock = MockInterface(smm=smm)
-    return PyPyChannel(
-        mock,
-        name,
-        name,
-        (1,),
-        np.int32,
-        8,
-    )
+    return create_pychannel(mock, name + "src", name + "dst", (1,), np.int32, 8)
 
 
 class SimpleSyncProtocol(AbstractSyncProtocol):
@@ -75,8 +69,6 @@ class TestRuntimeService(unittest.TestCase):
         service_to_runtime = create_channel(smm, name="service_to_runtime")
         service_to_process = [create_channel(smm, name="service_to_process")]
         process_to_service = [create_channel(smm, name="process_to_service")]
-        runtime_to_service.dst_port.start()
-        service_to_runtime.src_port.start()
 
         pm.service_to_process = service_to_process[0].dst_port
         pm.process_to_service = process_to_service[0].src_port
@@ -86,9 +78,9 @@ class TestRuntimeService(unittest.TestCase):
         rs.service_to_runtime = service_to_runtime.dst_port
         rs.service_to_process = [service_to_process[0].src_port]
         rs.process_to_service = [process_to_service[0].dst_port]
+        rs.start()
         rs.join()
         pm.join()
-        smm.shutdown()
 
 
 if __name__ == '__main__':

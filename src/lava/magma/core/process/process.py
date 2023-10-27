@@ -11,7 +11,8 @@ from lava.magma.compiler.executable import Executable
 
 from lava.magma.core.process.interfaces import \
     AbstractProcessMember, IdGeneratorSingleton
-from lava.magma.core.process.message_interface_enum import ActorType
+from lava.magma.runtime.message_infrastructure.message_interface_enum import \
+    ActorType
 from lava.magma.core.process.ports.ports import \
     InPort, OutPort, RefPort, VarPort
 from lava.magma.core.process.variable import Var
