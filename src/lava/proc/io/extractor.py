@@ -47,6 +47,7 @@ class Extractor(AbstractProcess):
         buffer is full and how the dst_port behaves when the buffer is empty
         and not empty.
     """
+
     def __init__(self,
                  shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 50,
@@ -137,6 +138,34 @@ class PyLoihiExtractorModel(PyLoihiProcessModel):
 
 
 class VarWire(AbstractProcess):
+    """VarWire allows non-Lava code, such as a third-party Python library
+    to tap data from a Lava Process Variable (Var) while the Lava Runtime is
+    running, by calling receive.
+
+    Internally, this Process builds a channel from the ProcessModel to the
+    Process (named pm_to_p, of type PyPyChannel).
+    The wire_tap (ref_port) of the channel lives in the ProcessModel.
+    The dst_port of the channel lives in the Process.
+
+    In the ProcessModel, data is received from this Process's RefPort, and
+    relayed to the pm_to_p.src_port.
+    When the receive method is called from the external Python script, data is
+    received from the pm_to_p.dst_port.
+
+    Parameters
+    ----------
+    shape : tuple
+        Shape of the InPort of the Process, and of the np.ndarrays passed
+        through the channel between the ProcessModel and the Process.
+    buffer_size : int, optional
+        Buffer size (in terms of number of np.ndarrays) of the channel between
+        the ProcessModel and Process.
+    channel_config : ChannelConfig, optional
+        Configuration object specifying how the src_port behaves when the
+        buffer is full and how the dst_port behaves when the buffer is empty
+        and not empty.
+    """
+
     def __init__(self,
                  buffer_size: ty.Optional[int] = 50,
                  channel_config: ty.Optional[utils.ChannelConfig] = None) -> \
@@ -179,7 +208,7 @@ class VarWire(AbstractProcess):
                               size=self.buffer_size)
         self._pm_to_p_dst_port = pm_to_p.dst_port
         self._pm_to_p_dst_port.start()
-        
+
         self.proc_params["pm_to_p_src_port"] = pm_to_p.src_port
         self._post_init()
 
@@ -230,7 +259,7 @@ class PyLoihiVarWireModel(PyLoihiProcessModel):
 
     def post_guard(self) -> None:
         return True
-    
+
     def run_post_mgmt(self) -> None:
         self._send(self._pm_to_p_src_port, self.wire_tap.read())
 

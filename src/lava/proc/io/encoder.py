@@ -58,10 +58,13 @@ class DeltaEncoder(AbstractProcess):
         Shape of the sigma process.
     vth: int or float
         Threshold of the delta encoder.
-    spike_exp: int
+    spike_exp: Optional[int]
         Scaling exponent with base 2 for the spike message.
         Note: This should only be used for fixed point models.
         Default is 0.
+    num_bits: Optional[int]
+        Precision for spike output. It is applied before spike_exp. If None,
+        precision is not enforced. Default is None.
     compression : Compression
         Data compression mode, by default DENSE compression.
     """
@@ -202,26 +205,10 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             data = np.array([0])
         max_idx = 0xFF
         if idx[0] > max_idx:
-            idx = np.concatenate([np.zeros(1, dtype=idx.dtype), idx.flatten()])
-            data = np.concatenate([np.zeros(1, dtype=idx.dtype), data.flatten()])
-
-        # if np.any(np.abs(data) > 0x7F):
-        #     print(f'{idx=}')
-        #     print(f'{data=}')
-        #     of_idx = np.argwhere(np.abs(data) > 0x7F).flatten()
-        #     iidx = []
-        #     ddata = []
-        #     for ii in of_idx:
-        #         value = data[ii]
-        #         data[ii] = np.clip(value, a_min=-128, a_max=127)
-        #         acc_value = data[ii]
-        #         while(acc_value != value):
-        #             residue = value - acc_value
-        #             temp = np.clip(residue, a_min=-128, a_max=127)
-        #             iidx.append(ii)
-        #             ddata.append(temp)
-        #             acc_value += temp
-        #     assert False
+            idx = np.concatenate([np.zeros(1, dtype=idx.dtype),
+                                  idx.flatten()])
+            data = np.concatenate([np.zeros(1, dtype=idx.dtype),
+                                   data.flatten()])
 
         # 8 bit index encoding
         idx[1:] = idx[1:] - idx[:-1] - 1  # default increment of 1
@@ -241,16 +228,13 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             start = i + 1
         delta_idx.append(idx[start:].flatten())
         delta_data.append(data[start:].flatten())
-        
+
         if len(delta_idx) > 0:
             delta_idx = np.concatenate(delta_idx)
             delta_data = np.concatenate(delta_data)
         else:
             delta_idx = idx.flatten()
             delta_data = data.flatten()
-
-        # print(f'{delta_idx=}')
-        # print(f'{delta_data=}')
 
         padded_idx = np.zeros(int(np.ceil(len(delta_idx) / 4) * 4))
         padded_data = np.zeros(int(np.ceil(len(delta_data) / 4) * 4))
@@ -272,6 +256,8 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         return packed_data, packed_idx
 
     def decode_encode_delta_sparse_8(self, packed_data, packed_idx):
+        """Python decoding script for delta_sparse_8 encoding. It is useful for
+        debug and verify the encoding."""
         data_list = []
         idx_list = []
         count = 0
@@ -308,15 +294,3 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             self.data, self.idx = self.encode_packed_4(s_out)
         elif self.compression == Compression.DELTA_SPARSE_8:
             self.data, self.idx = self.encode_delta_sparse_8(s_out)
-            # idx = np.argwhere(s_out.flatten() != 0).flatten()
-            # data = s_out.flatten()[idx].flatten()
-            # print(f'{np.argwhere(s_out != 0)=}')
-            # print(f'{data=}')
-            # print(f'{idx=}')
-            # print(f'{self.data=}')
-            # print(f'{self.idx=}')
-            # dec_data, dec_idx = self.decode_encode_delta_sparse_8(self.data, self.idx)
-            # print(f'{dec_data=}')
-            # print(f'{dec_idx=}')
-
-

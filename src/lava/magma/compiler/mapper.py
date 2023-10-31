@@ -34,6 +34,7 @@ class Mapper:
     Assigns virtual addresses to different processes, mappable by mapping
     logical addresses to virtual addresses.
     """
+
     def __init__(self):
         self.mapper_core_offset: LogicalCoreId = 0
         self.mapper_core_dict: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
@@ -134,7 +135,8 @@ class Mapper:
                             vm = channel_map[
                                 port_pair].dst_port_initializer.var_model
                             dst_addr: ty.List[LoihiAddress] = vm.address
-                            chips = [addr.physical_chip_id for addr in dst_addr]
+                            chips = [
+                                addr.physical_chip_id for addr in dst_addr]
                         else:
                             # Will be here for Conv Regions which will have
                             # ConvInVarModel
@@ -161,9 +163,9 @@ class Mapper:
                         chips = [addr.physical_chip_id for addr in src_addr]
                         address.update(chips)
                         break
-            # if len(address) > 1:
-            #     raise ValueError("Lava Compiler doesn't support port"
-            #                      "splitting currently. MultiChip "
-            #                      "Not Supported ")
+            if len(address) > 1 and hasattr(var_model, "address"):
+                raise ValueError("Lava Compiler doesn't support port"
+                                 "splitting currently. MultiChip "
+                                 "Not Supported ")
             if address:
                 cb.address_map.chip_id = address.pop()
