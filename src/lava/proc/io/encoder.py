@@ -71,6 +71,7 @@ class DeltaEncoder(AbstractProcess):
                  shape: Tuple[int, ...],
                  vth: Union[int, float],
                  spike_exp: Optional[int] = 0,
+                 num_bits: Optional[int] = None,
                  compression: Compression = Compression.DENSE) -> None:
         super().__init__(shape=shape, vth=vth, cum_error=False,
                          spike_exp=spike_exp, state_exp=0)
@@ -84,6 +85,13 @@ class DeltaEncoder(AbstractProcess):
         self.act = Var(shape=shape, init=0)
         self.residue = Var(shape=shape, init=0)
         self.spike_exp = Var(shape=(1,), init=spike_exp)
+        if num_bits is not None:
+            a_min = -(1 << (num_bits - 1)) << spike_exp
+            a_max = ((1 << (num_bits - 1)) - 1) << spike_exp
+        else:
+            a_min = a_max = -1
+        self.a_min = Var(shape=(1,), init=a_min)
+        self.a_max = Var(shape=(1,), init=a_max)
         self.proc_params['compression'] = compression
 
     @property
@@ -101,10 +109,14 @@ class AbstractPyDeltaEncoderModel(PyLoihiProcessModel):
     act: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     residue: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    a_min: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    a_max: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def encode_delta(self, act_new):
         delta = act_new - self.act + self.residue
         s_out = np.where(np.abs(delta) >= self.vth, delta, 0)
+        if self.a_max > 0:
+            s_out = np.clip(s_out, a_min=self.a_min, a_max=self.a_max)
         self.residue = delta - s_out
         self.act = act_new
         return s_out
@@ -193,6 +205,24 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             idx = np.concatenate([np.zeros(1, dtype=idx.dtype), idx.flatten()])
             data = np.concatenate([np.zeros(1, dtype=idx.dtype), data.flatten()])
 
+        # if np.any(np.abs(data) > 0x7F):
+        #     print(f'{idx=}')
+        #     print(f'{data=}')
+        #     of_idx = np.argwhere(np.abs(data) > 0x7F).flatten()
+        #     iidx = []
+        #     ddata = []
+        #     for ii in of_idx:
+        #         value = data[ii]
+        #         data[ii] = np.clip(value, a_min=-128, a_max=127)
+        #         acc_value = data[ii]
+        #         while(acc_value != value):
+        #             residue = value - acc_value
+        #             temp = np.clip(residue, a_min=-128, a_max=127)
+        #             iidx.append(ii)
+        #             ddata.append(temp)
+        #             acc_value += temp
+        #     assert False
+
         # 8 bit index encoding
         idx[1:] = idx[1:] - idx[:-1] - 1  # default increment of 1
         delta_idx = []
@@ -209,12 +239,18 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             delta_idx.append((idx[i:i + 1].flatten()) % max_idx)
             delta_data.append(data[i:i + 1].flatten())
             start = i + 1
+        delta_idx.append(idx[start:].flatten())
+        delta_data.append(data[start:].flatten())
+        
         if len(delta_idx) > 0:
             delta_idx = np.concatenate(delta_idx)
             delta_data = np.concatenate(delta_data)
         else:
             delta_idx = idx.flatten()
             delta_data = data.flatten()
+
+        # print(f'{delta_idx=}')
+        # print(f'{delta_data=}')
 
         padded_idx = np.zeros(int(np.ceil(len(delta_idx) / 4) * 4))
         padded_data = np.zeros(int(np.ceil(len(delta_data) / 4) * 4))
@@ -277,8 +313,8 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             # print(f'{np.argwhere(s_out != 0)=}')
             # print(f'{data=}')
             # print(f'{idx=}')
-            # # print(f'{self.data=}')
-            # # print(f'{self.idx=}')
+            # print(f'{self.data=}')
+            # print(f'{self.idx=}')
             # dec_data, dec_idx = self.decode_encode_delta_sparse_8(self.data, self.idx)
             # print(f'{dec_data=}')
             # print(f'{dec_idx=}')
