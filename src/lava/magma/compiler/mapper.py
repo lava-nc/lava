@@ -34,7 +34,6 @@ class Mapper:
     Assigns virtual addresses to different processes, mappable by mapping
     logical addresses to virtual addresses.
     """
-
     def __init__(self):
         self.mapper_core_offset: LogicalCoreId = 0
         self.mapper_core_dict: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
@@ -135,8 +134,7 @@ class Mapper:
                             vm = channel_map[
                                 port_pair].dst_port_initializer.var_model
                             dst_addr: ty.List[LoihiAddress] = vm.address
-                            chips = [
-                                addr.physical_chip_id for addr in dst_addr]
+                            chips = [addr.physical_chip_id for addr in dst_addr]
                         else:
                             # Will be here for Conv Regions which will have
                             # ConvInVarModel

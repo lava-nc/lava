@@ -792,7 +792,6 @@ class TestPyLoihiVarWireModel(unittest.TestCase):
             Data returned by the two consecutive calls to receive() on the
             VarWire.
         """
-        data_shape = (1,)
         buffer_size = 10
         # ReceiveEmpty policy is set to NON_BLOCKING_ZEROS so that the second
         # call to receive() does not block when ReceiveNotEmpty policy is set

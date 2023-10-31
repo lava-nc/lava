@@ -263,7 +263,6 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         count = 0
         data = 0
         idx = 0
-        debug = False
         for p_data, p_idx in zip(packed_data, packed_idx):
             for _ in range(4):
                 data = p_data & 0xFF
@@ -279,7 +278,6 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
                 p_data >>= 8
                 p_idx >>= 8
                 count += 1
-            debug = False
         return np.array(data_list), np.array(idx_list)
 
     def run_spk(self):
