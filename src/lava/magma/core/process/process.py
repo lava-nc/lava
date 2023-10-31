@@ -211,6 +211,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         # Flag indicating whether process has been compiled already.
         self._is_compiled: bool = False
 
+        # folded view
+        self._folded_view : ty.Optional[AbstractProcess] = None
+        self._folded_view_inst_id : int = -1
+
         # Current runtime environment
         self._runtime: ty.Optional[Runtime] = None
 
@@ -252,6 +256,10 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         attrs = self._find_attr_by_type(Var)
         self._init_proc_member_obj(attrs)
         self.vars.add_members(attrs)
+
+        attrs = self._find_attr_by_type(AbstractProcess)
+        self._init_proc_member_obj(attrs)
+        self.procs.add_members(attrs)
 
     def _find_attr_by_type(self, cls) -> ty.Dict:
         """Finds all class attributes of a certain class type."""
@@ -303,6 +311,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         else:
             return False
 
+    def propagate_folded_views(self):
+        for p in self.procs:
+            p._folded_view = self._folded_view
+            p._folded_view_inst_id = self._folded_view_inst_id
+            p.propagate_folded_views()
+
     def run(self,
             condition: AbstractRunCondition,
             run_cfg: ty.Optional[RunConfig] = None,
@@ -311,7 +325,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         network. If any Process has not been compiled, it is automatically
         compiled before execution.
 
-        When RunConfig.blocking is True, the Processes are executed for as long
+        When condition.blocking is True, the Processes are executed for as long
         as the RunCondition is satisfied. Otherwise, the method run() returns
         immediately while the Processes are executed. In this case,
         the methods wait(), pause(), and stop() can be used to
@@ -443,6 +457,23 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
     def is_compiled(self):
         """Returns True if process has been compiled."""
         return self._is_compiled
+
+    @property
+    def folded_view(self) -> ty.Type["AbstractProcess"]:
+        """ Return folded view process"""
+        return self._folded_view
+
+    @folded_view.setter
+    def folded_view(self, folded_view : ty.Optional[AbstractProcess] = None):
+        self._folded_view = folded_view
+
+    @property
+    def folded_view_inst_id(self) -> int:
+        return self._folded_view_inst_id
+
+    @folded_view_inst_id.setter
+    def folded_view_inst_id(self, inst_id : int = -1):
+        self._folded_view_inst_id = inst_id
 
 
 class ProcessParameters:
