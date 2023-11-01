@@ -7,14 +7,14 @@ import numpy as np
 from scipy import signal
 from enum import IntEnum, unique
 
-try:
-    import torch
-    import torch.nn.functional as F
-    TORCH_IS_AVAILABLE = True
-except ModuleNotFoundError:
-    TORCH_IS_AVAILABLE = False
 # NOTE: It is known that torch calls inside Lava PyProcess hangs.
 # Disabling torch usage inside a Lava CPU process until a fix is found.
+# try:
+#     import torch
+#     import torch.nn.functional as F
+#     TORCH_IS_AVAILABLE = True
+# except ModuleNotFoundError:
+#     TORCH_IS_AVAILABLE = False
 TORCH_IS_AVAILABLE = False
 
 

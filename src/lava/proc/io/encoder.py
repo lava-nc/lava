@@ -64,7 +64,8 @@ class DeltaEncoder(AbstractProcess):
         Default is 0.
     num_bits: Optional[int]
         Precision for spike output. It is applied before spike_exp. If None,
-        precision is not enforced. Default is None.
+        precision is not enforced, i.e. the spike output is unbounded.
+        Default is None.
     compression : Compression
         Data compression mode, by default DENSE compression.
     """
