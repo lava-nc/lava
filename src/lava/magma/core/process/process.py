@@ -325,7 +325,7 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         network. If any Process has not been compiled, it is automatically
         compiled before execution.
 
-        When RunConfig.blocking is True, the Processes are executed for as long
+        When condition.blocking is True, the Processes are executed for as long
         as the RunCondition is satisfied. Otherwise, the method run() returns
         immediately while the Processes are executed. In this case,
         the methods wait(), pause(), and stop() can be used to
