@@ -185,30 +185,26 @@ jobs:
           makeLatest: true
 
       - name: Mint Github API token
-        id: mint-token        
+        id: mint-token
         run: |
-          # retrieve the ambient OIDC token
+          # retrieve OIDC token
           resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
           oidc_token=$(jq '.value' <<< "${resp}")
 
-          # exchange the OIDC token for an API token
+          # exchange OIDC token for API token
           resp=$(curl -X POST https://pypi.org/_/oidc/github/mint-token -d "{\"token\": \"${oidc_token}\"}")
           api_token=$(jq '.token' <<< "${resp}")
 
-          # mask the newly minted API token, so that we don't accidentally leak it
+          # mask the API token, to prevent leaking it
           echo "::add-mask::${api_token}"
 
-          # see the next step in the workflow for an example of using this step output
           echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
 
       - name: Publish to PyPI
-        # if: steps.check-version.outputs.prerelease != 'true'
-        #env:
-        #  POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
-        #  POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ steps.mint-token.outputs.api-token }}
+        if: steps.check-version.outputs.prerelease != 'true'
         run: |
           poetry config pypi-token.pypi ${{ steps.mint-token.outputs.api-token }}
           mkdir dist
           cp lava* dist/.
-          poetry publish --dry-run
+          poetry publish
