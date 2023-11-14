@@ -138,7 +138,7 @@ jobs:
           api-token: ${{ steps.mint-token.outputs.api-token}}
     permissions:
       contents: write
-      id-token: write
+      id-token: write      
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
     steps:
@@ -204,7 +204,6 @@ jobs:
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
         run: |
-          poetry config pypi-token.pypi ${{ steps.mint-token.outputs.api-token }}
           mkdir dist
           cp lava* dist/.
-          poetry publish
+          poetry publish -u __token__ -p '${{ steps.mint-token.outputs.api-token }}'
