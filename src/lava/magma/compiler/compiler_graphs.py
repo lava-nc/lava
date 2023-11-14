@@ -406,6 +406,16 @@ class ProcDiGraph(DiGraphBase):
 
             self.annotate_digraph_by_degree()
 
+        if proc_list:
+
+            import networkx as nx
+            import matplotlib.pyplot as plt
+
+            plt.clf()
+            pos = nx.spring_layout(self, k=0.3, iterations=40)
+            nx.draw_networkx(self, pos, with_labels=True, labels=node_name_dict)
+            plt.savefig("process_diagram.png")
+
     @staticmethod
     def _get_port_direction(port: AbstractPort) -> str:
         """Determines the connectivity direction of a Port.
