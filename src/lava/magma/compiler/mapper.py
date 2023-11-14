@@ -161,7 +161,7 @@ class Mapper:
                         chips = [addr.physical_chip_id for addr in src_addr]
                         address.update(chips)
                         break
-            if len(address) > 1:
+            if len(address) > 1 and hasattr(var_model, "address"):
                 raise ValueError("Lava Compiler doesn't support port"
                                  "splitting currently. MultiChip "
                                  "Not Supported ")
