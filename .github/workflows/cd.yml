@@ -134,11 +134,12 @@ jobs:
     name: Upload release artifact
     runs-on: ubuntu-latest
     if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
-    outputs:
-          api-token: ${{ steps.mint-token.outputs.api-token}}
+    environment:
+      name: pypi
+      url: https://pypi.org/p/lava-nc/
     permissions:
-      contents: write
-      id-token: write      
+      id-token: write
+      contents: write   
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
     steps:
@@ -184,26 +185,12 @@ jobs:
           generateReleaseNotes: true
           makeLatest: true
 
-      - name: Mint Github API token
-        id: mint-token
-        run: |
-          # retrieve OIDC token
-          resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
-          oidc_token=$(jq '.value' <<< "${resp}")
-
-          # exchange OIDC token for API token
-          resp=$(curl -X POST https://pypi.org/_/oidc/github/mint-token -d "{\"token\": \"${oidc_token}\"}")
-          api_token=$(jq '.token' <<< "${resp}")
-
-          # mask the API token, to prevent leaking it
-          echo "::add-mask::${api_token}"
-
-          echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
-
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
         run: |
           mkdir dist
           cp lava* dist/.
-          poetry publish -u __token__ -p '${{ steps.mint-token.outputs.api-token }}'
+
+      - name: Publish package distributions to PyPI
+        if: steps.check-version.outputs.prerelease != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
