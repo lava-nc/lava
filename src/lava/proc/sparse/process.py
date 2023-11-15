@@ -58,7 +58,7 @@ class Sparse(AbstractProcess):
     def __init__(self,
                  *,
                  weights: spmatrix,
-                 name: ty.Optional[str] = None,
+                 name: ty.Optional[str] = "Sparse",
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:

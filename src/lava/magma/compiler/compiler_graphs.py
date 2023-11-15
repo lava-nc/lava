@@ -473,7 +473,7 @@ class ProcDiGraph(DiGraphBase):
 
     @staticmethod
     def _traverse_ports_of_proc(proc: AbstractProcess) -> ty.Tuple[
-            ty.List[AbstractProcess], ty.List[AbstractProcess]]:
+        ty.List[AbstractProcess], ty.List[AbstractProcess]]:
         """Traverse along port connectivity of all ports of the input Process.
 
         The SubProcessModels of hierarchical Processes are expected to be
@@ -546,6 +546,7 @@ class AbstractProcGroupDiGraphs(ABC):
     Downstream compiler iterates over the list of ProcGroups and invokes
     appropriate sub-compilers depending on the ProcessModel type.
     """
+
     @abstractmethod
     def get_proc_groups(self) -> ty.List[ProcGroup]:
         pass
@@ -600,17 +601,21 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     sorted order of nodes.
     """
 
-    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig):
+    def __init__(self, proc: AbstractProcess, run_cfg: RunConfig,
+                 compile_config: ty.Optional[ty.Dict[str, ty.Any]] = None):
 
         self._base_proc = proc  # Process on which compile/run was called
         self._run_cfg = run_cfg
+        self._compile_config = compile_config
         # 1. Find all Processes
         proc_list = find_processes(proc)
+
         # Check if any Process in proc_list is already compiled
         for p in proc_list:
             if p.is_compiled:
                 raise ex.ProcessAlreadyCompiled(p)
             p._is_compiled = True
+
         # Number of Processes before resolving HierarchicalProcesses
         self._num_procs_pre_pm_discovery = len(proc_list)
         # 2. Generate a ProcessGraph: This does not resolve
