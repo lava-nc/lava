@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from scipy.sparse import spmatrix, csr_matrix
+from scipy.sparse import spmatrix
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess, LogConfig
@@ -21,8 +21,8 @@ class Sparse(AbstractProcess):
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix or np.ndarray
-        2D connection weight matrix of form
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
@@ -55,11 +55,10 @@ class Sparse(AbstractProcess):
         spikes as binary spikes (num_message_bits = 0) or as graded
         spikes (num_message_bits > 0). Default is 0.
         """
-
     def __init__(self,
                  *,
-                 weights: ty.Union[spmatrix, np.ndarray],
-                 name: ty.Optional[str] = None,
+                 weights: spmatrix,
+                 name: ty.Optional[str] = "Sparse",
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
@@ -69,7 +68,9 @@ class Sparse(AbstractProcess):
                          log_config=log_config,
                          **kwargs)
 
-        weights = self._create_csr_matrix_from_weights(weights)
+        # Transform weights to csr matrix
+        weights = weights.tocsr()
+
         shape = weights.shape
 
         # Ports
@@ -81,15 +82,6 @@ class Sparse(AbstractProcess):
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
-    @staticmethod
-    def _create_csr_matrix_from_weights(weights):
-        # Transform weights to csr matrix
-        if isinstance(weights, np.ndarray):
-            weights = csr_matrix(weights)
-        else:
-            weights = weights.tocsr()
-        return weights
-
 
 class LearningSparse(LearningConnectionProcess, Sparse):
     """Sparse connections between neurons. Realizes the following abstract
@@ -98,8 +90,8 @@ class LearningSparse(LearningConnectionProcess, Sparse):
 
     Parameters
     ----------
-    weights : scipy.sparse.spmatrix or np.ndarray
-        2D connection weight matrix of form
+    weights : scipy.sparse.spmatrix
+        2D connection weight matrix as sparse matrix of form
         (num_flat_output_neurons, num_flat_input_neurons).
 
     weight_exp : int, optional
@@ -156,10 +148,9 @@ class LearningSparse(LearningConnectionProcess, Sparse):
         x1 and regular impulse addition to x2 will be considered by the
         learning rule Products conditioned on x0.
         """
-
     def __init__(self,
                  *,
-                 weights: ty.Union[spmatrix, np.ndarray],
+                 weights: spmatrix,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -180,7 +171,9 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
-        weights = self._create_csr_matrix_from_weights(weights)
+        # Transform weights to csr matrix
+        weights = weights.tocsr()
+
         shape = weights.shape
 
         # Ports
@@ -196,7 +189,7 @@ class LearningSparse(LearningConnectionProcess, Sparse):
 class DelaySparse(Sparse):
     def __init__(self,
                  *,
-                 weights: ty.Union[spmatrix, np.ndarray],
+                 weights: spmatrix,
                  delays: ty.Union[spmatrix, int],
                  max_delay: ty.Optional[int] = 0,
                  name: ty.Optional[str] = None,
@@ -208,7 +201,7 @@ class DelaySparse(Sparse):
 
         Parameters
         ----------
-        weights : scipy.sparse.spmatrix or np.ndarray
+        weights : spmatrix
             2D connection weight matrix of form (num_flat_output_neurons,
             num_flat_input_neurons) in C-order (row major).
 

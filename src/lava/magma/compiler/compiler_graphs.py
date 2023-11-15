@@ -29,6 +29,7 @@ except ImportError:
     class AbstractCProcessModel:
         pass
 
+
     class AbstractNcProcessModel:
         pass
 
@@ -167,8 +168,8 @@ def annotate_folded_view(proc_list: ty.List[AbstractProcess],
                          folded_procs: ty.List[str] = None):
     """Annotate folded views and propagate them recursively
     """
-    annotated : ty.Set(AbstractProcess) = set()
-    fv_inst_id : int = 0
+    annotated: ty.Set(AbstractProcess) = set()
+    fv_inst_id: int = 0
     for p in proc_list:
         if p.__class__.__name__ in folded_procs:
             p.folded_view = p.__class__
@@ -386,6 +387,7 @@ class ProcDiGraph(DiGraphBase):
         super(ProcDiGraph, self).__init__(*args, **kwargs)
 
         if proc_list:
+
             self.add_nodes_from(proc_list)
             node_name_dict = dict(
                 zip(proc_list, [proc.name for proc in proc_list]))
@@ -490,7 +492,7 @@ class ProcDiGraph(DiGraphBase):
 
     @staticmethod
     def _traverse_ports_of_proc(proc: AbstractProcess) -> ty.Tuple[
-            ty.List[AbstractProcess], ty.List[AbstractProcess]]:
+        ty.List[AbstractProcess], ty.List[AbstractProcess]]:
         """Traverse along port connectivity of all ports of the input Process.
 
         The SubProcessModels of hierarchical Processes are expected to be
@@ -563,6 +565,7 @@ class AbstractProcGroupDiGraphs(ABC):
     Downstream compiler iterates over the list of ProcGroups and invokes
     appropriate sub-compilers depending on the ProcessModel type.
     """
+
     @abstractmethod
     def get_proc_groups(self) -> ty.List[ProcGroup]:
         pass
@@ -967,7 +970,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     @staticmethod
     def _expand_sub_proc_model(model_cls: ty.Type[AbstractSubProcessModel],
                                proc: AbstractProcess, run_cfg: RunConfig,
-                               elab_procs : ty.List[AbstractProcess]):
+                               elab_procs: ty.List[AbstractProcess]):
         """Expand a SubProcessModel by building it, extracting the
         sub-Processes contained within, and mapping the sub-Processes
         recursively to their ProcessModels.
@@ -1003,7 +1006,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     @staticmethod
     def _map_proc_to_model(procs: ty.List[AbstractProcess],
                            run_cfg: RunConfig,
-                           elab_procs : ty.List[AbstractProcess]) -> ProcMap:
+                           elab_procs: ty.List[AbstractProcess]) -> ProcMap:
         """Associate each Process in a list of Processes to the corresponding
         ProcessModel as selected by run_cfg.
 

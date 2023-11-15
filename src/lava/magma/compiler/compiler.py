@@ -133,6 +133,19 @@ class Compiler:
         proc_group_digraph = ProcGroupDiGraphs(process,
                                                run_cfg,
                                                self._compile_config)
+        def _plot_proc_graph(graph):
+            import networkx as nx
+            import matplotlib.pyplot as plt
+
+            node_name_dict = {node: node.name for node in
+                              list(graph.nodes)}
+            pos = nx.spring_layout(graph, k=0.3, iterations=40)
+            nx.draw_networkx(graph, pos, with_labels=True,
+                             labels=node_name_dict)
+            plt.savefig("figures/process_graph.png")
+
+        _plot_proc_graph(proc_group_digraph.resolved_proc_digraph)
+
         proc_groups: ty.List[ProcGroup] = proc_group_digraph.get_proc_groups()
         # Get a flattened list of all AbstractProcesses
         process_list = list(itertools.chain.from_iterable(proc_groups))
