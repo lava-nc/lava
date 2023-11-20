@@ -48,6 +48,7 @@ class Var(AbstractProcessMember):
         shape: ty.Tuple[int, ...],
         init: ty.Union[bool, float, list, tuple, np.ndarray] = 0,
         shareable: bool = True,
+        name: str = "Unnamed variable",
     ):
         """Initializes a new Lava variable.
 
@@ -61,8 +62,8 @@ class Var(AbstractProcessMember):
         super().__init__(shape)
         self.init = init
         self.shareable = shareable
+        self.name = name
         self.id: int = VarServer().register(self)
-        self.name: str = "Unnamed variable"
         self.aliased_var: ty.Optional[Var] = None
         # VarModel generated during compilation
         self._model: ty.Optional["AbstractVarModel"] = None
