@@ -272,3 +272,17 @@ class NcSpikeIOVarModel(NcVarModel):
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
+
+
+@dataclass
+class NcConvSpikeInVarModel(NcSpikeIOVarModel):
+    region_map: ty.List[ty.List[ty.Tuple[int, int, int, int]]] = None
+    # Tuple will be in the order of [atom_paylod, atom_axon, chip, core]
+
+    # for idx in range(port.size):
+    #     rm = region_map[idx]
+    #     activation = data[idx]
+    #     for atom_paylod, atom_axon, chip, core in rm:
+    #         payload = activation << 16 & (atom_paylod & 0xFFFF)
+    #         axon = atom_axon
+    #         nx_send(chip, core, axon, payload, time)

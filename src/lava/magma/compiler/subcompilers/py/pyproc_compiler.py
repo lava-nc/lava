@@ -30,6 +30,7 @@ from lava.magma.core.process.ports.ports import (
     ImplicitVarPort,
     VarPort,
 )
+from lava.magma.core.process.ports.connection_config import ConnectionConfig
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.subcompilers.constants import SPIKE_BLOCK_CORE
 
@@ -189,7 +190,11 @@ class PyProcCompiler(SubCompiler):
                 pi.embedded_counters = \
                     np.arange(counter_start_idx,
                               counter_start_idx + num_counters, dtype=np.int32)
-                pi.connection_config = list(port.connection_configs.values())[0]
+                if port.connection_configs.values():
+                    conn_config = list(port.connection_configs.values())[0]
+                else:
+                    conn_config = ConnectionConfig()
+                pi.connection_config = conn_config
                 port_initializers.append(pi)
                 self._tmp_channel_map.set_port_initializer(port, pi)
             else:
