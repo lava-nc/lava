@@ -58,10 +58,14 @@ class DeltaEncoder(AbstractProcess):
         Shape of the sigma process.
     vth: int or float
         Threshold of the delta encoder.
-    spike_exp: int
+    spike_exp: Optional[int]
         Scaling exponent with base 2 for the spike message.
         Note: This should only be used for fixed point models.
         Default is 0.
+    num_bits: Optional[int]
+        Precision for spike output. It is applied before spike_exp. If None,
+        precision is not enforced, i.e. the spike output is unbounded.
+        Default is None.
     compression : Compression
         Data compression mode, by default DENSE compression.
     """
@@ -71,6 +75,7 @@ class DeltaEncoder(AbstractProcess):
                  shape: Tuple[int, ...],
                  vth: Union[int, float],
                  spike_exp: Optional[int] = 0,
+                 num_bits: Optional[int] = None,
                  compression: Compression = Compression.DENSE) -> None:
         super().__init__(shape=shape, vth=vth, cum_error=False,
                          spike_exp=spike_exp, state_exp=0)
@@ -84,6 +89,13 @@ class DeltaEncoder(AbstractProcess):
         self.act = Var(shape=shape, init=0)
         self.residue = Var(shape=shape, init=0)
         self.spike_exp = Var(shape=(1,), init=spike_exp)
+        if num_bits is not None:
+            a_min = -(1 << (num_bits - 1)) << spike_exp
+            a_max = ((1 << (num_bits - 1)) - 1) << spike_exp
+        else:
+            a_min = a_max = -1
+        self.a_min = Var(shape=(1,), init=a_min)
+        self.a_max = Var(shape=(1,), init=a_max)
         self.proc_params['compression'] = compression
 
     @property
@@ -101,10 +113,14 @@ class AbstractPyDeltaEncoderModel(PyLoihiProcessModel):
     act: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     residue: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    a_min: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    a_max: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
 
     def encode_delta(self, act_new):
         delta = act_new - self.act + self.residue
         s_out = np.where(np.abs(delta) >= self.vth, delta, 0)
+        if self.a_max > 0:
+            s_out = np.clip(s_out, a_min=self.a_min, a_max=self.a_max)
         self.residue = delta - s_out
         self.act = act_new
         return s_out
@@ -188,19 +204,32 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
         if len(idx) == 0:
             idx = np.array([0])
             data = np.array([0])
+        max_idx = 0xFF
+        if idx[0] > max_idx:
+            idx = np.concatenate([np.zeros(1, dtype=idx.dtype),
+                                  idx.flatten()])
+            data = np.concatenate([np.zeros(1, dtype=idx.dtype),
+                                   data.flatten()])
 
         # 8 bit index encoding
         idx[1:] = idx[1:] - idx[:-1] - 1  # default increment of 1
         delta_idx = []
         delta_data = []
-        max_idx = 0xFF
         start = 0
         for i in np.argwhere(idx >= max_idx)[:, 0]:
             delta_idx.append((idx[start:i].flatten()) % max_idx)
             delta_data.append(data[start:i].flatten())
-            delta_idx.append(np.array([max_idx - 1] * (idx[i] // max_idx)))
-            delta_data.append(np.array([0] * (idx[i] // max_idx)))
-            start = i
+            repeat_data = idx[i] // max_idx
+            num_repeats = repeat_data // max_idx
+            delta_idx.append(np.array([max_idx] * (num_repeats + 1)).flatten())
+            delta_data.append(np.array([max_idx] * num_repeats
+                                       + [repeat_data % max_idx]).flatten())
+            delta_idx.append((idx[i:i + 1].flatten()) % max_idx)
+            delta_data.append(data[i:i + 1].flatten())
+            start = i + 1
+        delta_idx.append(idx[start:].flatten())
+        delta_data.append(data[start:].flatten())
+
         if len(delta_idx) > 0:
             delta_idx = np.concatenate(delta_idx)
             delta_data = np.concatenate(delta_data)
@@ -208,11 +237,6 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
             delta_idx = idx.flatten()
             delta_data = data.flatten()
 
-        # Decoding
-        # idx = delta_idx
-        # idx[1:] += 1
-        # idx = np.cumsum(idx)
-        # data = delta_data
         padded_idx = np.zeros(int(np.ceil(len(delta_idx) / 4) * 4))
         padded_data = np.zeros(int(np.ceil(len(delta_data) / 4) * 4))
 
@@ -231,6 +255,31 @@ class PyDeltaEncoderModelSparse(AbstractPyDeltaEncoderModel):
                        + np.left_shift(padded_data[1::4], 8)
                        + padded_data[0::4])
         return packed_data, packed_idx
+
+    def decode_encode_delta_sparse_8(self, packed_data, packed_idx):
+        """Python decoding script for delta_sparse_8 encoding. It is useful for
+        debug and verify the encoding."""
+        data_list = []
+        idx_list = []
+        count = 0
+        data = 0
+        idx = 0
+        for p_data, p_idx in zip(packed_data, packed_idx):
+            for _ in range(4):
+                data = p_data & 0xFF
+                idx_1 = p_idx & 0xFF
+                if idx_1 == 0xFF:
+                    idx += data * 0xFF
+                    data = 0
+                else:
+                    idx += idx_1 + int(count > 0)
+                if data != 0:
+                    data_list.append(data)
+                    idx_list.append(idx)
+                p_data >>= 8
+                p_idx >>= 8
+                count += 1
+        return np.array(data_list), np.array(idx_list)
 
     def run_spk(self):
         self.s_out.send(self.data, self.idx)
