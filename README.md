@@ -73,7 +73,7 @@ cd $HOME
 curl -sSL https://install.python-poetry.org | python3 -
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.8.0
+git checkout v0.9.0
 ./utils/githook/install-hook.sh
 poetry config virtualenvs.in-project true
 poetry install
@@ -90,7 +90,7 @@ pytest
 cd $HOME
 git clone git@github.com:lava-nc/lava.git
 cd lava
-git checkout v0.8.0
+git checkout v0.9.0
 python3 -m venv .venv
 .venv\Scripts\activate
 pip install -U pip
@@ -154,12 +154,10 @@ conda install -n lava -c intel numpy scipy
 conda install -n lava -c conda-forge lava --freeze-installed
 ```
 
-## Alternative: Installing Lava from binaries
+## Alternative: Installing Lava from pypi
 
-If you only need to install Lava as a user in your python environment, we will
-publish Lava releases via
-[GitHub Releases](https://github.com/lava-nc/lava/releases). Please download
-the package and install it.
+If you would like to install Lava as a user you can install via pypi binaries.
+Installing in this way does not give you access to run tests.
 
 Open a Python terminal and run:
 
@@ -169,7 +167,26 @@ Open a Python terminal and run:
 python -m venv .venv
 source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
 pip install -U pip
-pip install lava-nc-0.6.0.tar.gz
+pip install lava-nc
+```
+
+## Alternative: Installing Lava from binaries
+
+You can also install Lava as a user with published Lava releases via
+[GitHub Releases](https://github.com/lava-nc/lava/releases). Please download
+the package and install it with the following commands. Installing in this way does not
+give you access to run tests.
+
+Open a Python terminal and run:
+
+### Windows/MacOS/Linux
+
+```bash
+python -m venv .venv
+source .venv/bin/activate ## Or Windows: .venv\Scripts\activate
+pip install -U pip
+# Substitute lava version needed for lava-nc-<version here>.tar.gz below
+pip install lava-nc-0.9.0.tar.gz
 ```
 
 ## Linting, testing, documentation and packaging
