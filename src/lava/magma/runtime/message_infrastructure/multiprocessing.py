@@ -117,7 +117,8 @@ class MultiProcessing(MessageInfrastructureInterface):
         """Given a target_fn starts a system (os) process"""
         system_process = SystemProcess(target=target_fn,
                                        args=(),
-                                       kwargs={"builder": builder, "exception_q": exception_q})
+                                       kwargs={"builder": builder,
+                                               "exception_q": exception_q})
         system_process.start()
         self._actors.append(system_process)
         return system_process
