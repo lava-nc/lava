@@ -114,7 +114,7 @@ class MultiProcessing(MessageInfrastructureInterface):
     def build_actor(self, target_fn: ty.Callable, builder: ty.Union[
         ty.Dict['AbstractProcess', 'PyProcessBuilder'], ty.Dict[
             SyncDomain, 'RuntimeServiceBuilder']],
-        exception_q: mp.Queue = None) -> ty.Any:
+            exception_q: mp.Queue = None) -> ty.Any:
         """Given a target_fn starts a system (os) process"""
         system_process = SystemProcess(target=target_fn,
                                        args=(),
