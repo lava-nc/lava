@@ -29,7 +29,7 @@ def stochastic_round(values: np.ndarray,
     return (values + (random_numbers < probabilities).astype(int)).astype(int)
 
 
-def apply_mask(int_number: int, nb_bits: int) -> int:
+def apply_mask(int_number: ty.Union[np.ndarray, int], nb_bits: int) -> int:
     """Get nb_bits least-significant bits.
 
     Parameters
