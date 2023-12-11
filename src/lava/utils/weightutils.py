@@ -276,7 +276,7 @@ def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
         weights = -weights
 
     min_wgt = (-2 ** num_bits) * mixed_flag
-    max_wgt = 2 ** num_bits - 1
+    max_wgt = 2 ** num_bits - 1 - mixed_flag
 
     if isinstance(weights, np.ndarray):
         weights = np.clip(weights, min_wgt, max_wgt)
