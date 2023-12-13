@@ -235,16 +235,12 @@ class GradedSparse(AlgebraicMatrix):
     def __init__(self, **kwargs):
         weights = kwargs.pop("weights", 0)
         self.exp = kwargs.pop("exp", 7)
-        # @todo: maybe allow for both csr matrix and nump matrix
-        # just do type check
 
-        # adjust the weights to the fixed point
+        # Adjust the weights to the fixed point
         w = weights * 2 ** self.exp
-
-        self.main = Sparse(weights=csr_matrix(w),
+        self.main = Sparse(weights=w,
                            num_message_bits=24,
                            num_weight_bits=8,
-                           # this one is negative...
                            weight_exp=-self.exp)
 
         self.in_port = self.main.s_in
