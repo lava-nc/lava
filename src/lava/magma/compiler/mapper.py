@@ -13,6 +13,7 @@ from lava.magma.compiler.subcompilers.address import (NcLogicalAddress,
                                                       NcVirtualAddress)
 from lava.magma.compiler.subcompilers.constants import (NUM_VIRTUAL_CORES_L2,
                                                         NUM_VIRTUAL_CORES_L3)
+from lava.magma.compiler.subcompilers.nc.neurocore.regview import LogicalCoreId
 
 try:
     from lava.magma.compiler.subcompilers.nc.neurocore. \
@@ -78,6 +79,7 @@ class Mapper:
         """
         _, c_builders, nc_builders = split_proc_builders_by_type(
             executable.proc_builders)
+        core_mapping: ty.Dict[LogicalCoreId, LogicalCoreId] = {}
         # Iterate over all the ncbuilder and map them
         for ncb in nc_builders.values():
             if isinstance(ncb.compiled_resources[0],
@@ -100,7 +102,7 @@ class Mapper:
                 core_idx = l_addr.core_id % num_cores
                 p_addrs.append(
                     NcVirtualAddress(chip_id=chip_idx, core_id=core_idx))
-            ncb.map_to_virtual(p_addrs)
+            ncb.map_to_virtual(p_addrs, core_mapping)
 
             for port_initializer in ncb.io_ports.values():
                 if port_initializer.var_model is None:
@@ -110,6 +112,7 @@ class Mapper:
             for var_model in ncb.var_id_to_var_model_map.values():
                 self._set_virtual_address_nc(var_model, num_cores)
 
+            core_mapping.update(self.mapper_core_dict)
             for var_port_initializer in ncb.var_ports.values():
                 self._set_virtual_address_nc(var_port_initializer, num_cores)
             self.mapper_core_dict.clear()
