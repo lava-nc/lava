@@ -269,6 +269,8 @@ class NcSpikeIOVarModel(NcVarModel):
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
     spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
+    ethernet_chip_id: ty.Optional[ty.Tuple[int, int, int]] = None
+    ethernet_chip_idx: ty.Optional[int] = None
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
@@ -276,15 +278,5 @@ class NcSpikeIOVarModel(NcVarModel):
 
 @dataclass
 class NcConvSpikeInVarModel(NcSpikeIOVarModel):
-    region_map: ty.List[ty.List[ty.Tuple[int, int, int]]] = None
     # Tuple will be in the order of [atom_paylod, atom_axon, addr_idx]
-
-    # for idx in range(port.size):
-    #     rm = region_map[idx]
-    #     activation = data[idx]
-    #     for atom_paylod, atom_axon, addr_idx in rm:
-    #         chip = address[addr_idx].physical_chip_id
-    #         core = address[addr_idx].physical_core_id
-    #         payload = activation << 16 & (atom_paylod & 0xFFFF)
-    #         axon = atom_axon
-    #         nx_send(chip, core, axon, payload, time)
+    region_map: ty.List[ty.List[ty.Tuple[int, int, int]]] = None
