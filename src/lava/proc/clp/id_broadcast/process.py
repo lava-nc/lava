@@ -33,4 +33,3 @@ class IdBroadcast(AbstractProcess):
         self.s_out = OutPort(shape=shape)
 
         self.val = Var(shape=shape, init=0)
-

@@ -24,7 +24,6 @@ class IdBroadcastModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
     val: np.ndarray = LavaPyType(np.ndarray, np.int32)
 
-
     def run_spk(self):
         """Execute spiking phase, send value of a_in."""
 
