@@ -249,7 +249,9 @@ def truncate_weights(weights: ty.Union[np.ndarray, spmatrix],
 
 def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
                  sign_mode: SignMode,
-                 num_bits: int) -> ty.Union[np.ndarray, spmatrix]:
+                 num_bits: int,
+                 learning_simulation: ty.Optional[bool] = False) \
+        -> ty.Union[np.ndarray, spmatrix]:
     """Truncate the least significant bits of the weight matrix given the
     sign mode and number of weight bits.
 
@@ -261,6 +263,9 @@ def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
         Sign mode to use for truncation.
     num_bits : int
         Number of bits to use to clip the weights to.
+    learning_simulation : bool, optional
+        Boolean flag, specifying if this method is used in context of learning
+        (in simulation).
 
     Returns
     -------
@@ -276,7 +281,7 @@ def clip_weights(weights: ty.Union[np.ndarray, spmatrix],
         weights = -weights
 
     min_wgt = (-2 ** num_bits) * mixed_flag
-    max_wgt = 2 ** num_bits - 1 - mixed_flag
+    max_wgt = 2 ** num_bits - 1 - learning_simulation * mixed_flag
 
     if isinstance(weights, np.ndarray):
         weights = np.clip(weights, min_wgt, max_wgt)
