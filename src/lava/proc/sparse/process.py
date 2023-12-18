@@ -77,7 +77,7 @@ class Sparse(AbstractProcess):
         self.a_out = OutPort(shape=(shape[0],))
 
         # Variables
-        self.weights = Var(shape=shape, init=weights)
+        self.weights = Var(shape=shape, init=weights.copy())
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
