@@ -29,23 +29,24 @@ def stochastic_round(values: np.ndarray,
     return (values + (random_numbers < probabilities).astype(int)).astype(int)
 
 
-def apply_mask(int_number: ty.Union[np.ndarray, int], nb_bits: int) -> int:
+def apply_mask(item: ty.Union[np.ndarray, int], nb_bits: int) \
+        -> ty.Union[np.ndarray, int]:
     """Get nb_bits least-significant bits.
 
     Parameters
     ----------
-    int_number : int
-        Integer number.
+    item : np.ndarray or int
+        Item to apply mask to.
     nb_bits : int
         Number of LSBs to keep.
 
     Returns
     ----------
-    result : int
+    result : np.ndarray or int
         Least-significant bits.
     """
     mask = ~(~0 << nb_bits)
-    return int_number & mask
+    return item & mask
 
 
 def float_to_literal(learning_parameter: float) -> str:
