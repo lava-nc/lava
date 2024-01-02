@@ -151,6 +151,7 @@ class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params=proc_params)
+
         shape = self.proc_params["shape"]
         channel_config = self.proc_params["channel_config"]
         self._p_to_pm_dst_port = self.proc_params["p_to_pm_dst_port"]
@@ -179,7 +180,6 @@ class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
                     elements_in_buffer)
             self.out_port.send(data)
             self.time_step += 1
-        self.out_port.send(data)
 
     def __del__(self) -> None:
         self._p_to_pm_dst_port.join()
