@@ -152,6 +152,8 @@ class LearningDense(LearningConnectionProcess, Dense):
     def __init__(self,
                  *,
                  weights: np.ndarray,
+                 tag_2: ty.Optional[np.ndarray] = None,
+                 tag_1: ty.Optional[np.ndarray] = None,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -164,6 +166,8 @@ class LearningDense(LearningConnectionProcess, Dense):
             learning_rule.x1_impulse = 0
 
         super().__init__(weights=weights,
+                         tag_2=tag_2,
+                         tag_1=tag_1,
                          shape=weights.shape,
                          name=name,
                          num_message_bits=num_message_bits,
@@ -171,6 +175,15 @@ class LearningDense(LearningConnectionProcess, Dense):
                          learning_rule=learning_rule,
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
+
+        if tag_2 is None:
+            tag_2 = np.zeros(weights.shape)
+
+        if tag_1 is None:
+            tag_1 = np.zeros(weights.shape)
+
+        self.tag_2.init = tag_2.copy()
+        self.tag_1.init = tag_1.copy()
 
 
 class DelayDense(Dense):
