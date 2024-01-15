@@ -441,8 +441,8 @@ class PyLearningConnection(AbstractLearningConnection):
         pass
 
     def _update_dependencies(self) -> None:
-        self.x0[self.tx > 0] = True
-        self.y0[self.ty > 0] = True
+        self.x0 = self.tx > 0
+        self.y0 = self.ty > 0
 
     @abstractmethod
     def _compute_trace_histories(self) -> typing.Tuple[np.ndarray, np.ndarray]:
