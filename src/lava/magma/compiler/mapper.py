@@ -162,6 +162,10 @@ class Mapper:
                         address.update(chips)
                         break
             if len(address) > 1 and hasattr(var_model, "address"):
+                print('=' * 50)
+                print('Note to JOYESH from the future:')
+                print('Add logic to make multichip conv input work for YOLO.')
+                print('=' * 50)
                 raise ValueError("Lava Compiler doesn't support port"
                                  "splitting currently. MultiChip "
                                  "Not Supported ")
