@@ -126,7 +126,8 @@ class SigmaDelta(AbstractProcess):
             act_mode: ty.Optional[ActivationMode] = ActivationMode.RELU,
             cum_error: ty.Optional[bool] = False,
             spike_exp: ty.Optional[int] = 0,
-            state_exp: ty.Optional[int] = 0) -> None:
+            state_exp: ty.Optional[int] = 0,
+            **kwargs) -> None:
         """Sigma delta neuron process. At the moment only ReLu activation is
         supported. Spike mechanism based on accumulated error is also supported.
 
@@ -173,7 +174,7 @@ class SigmaDelta(AbstractProcess):
         """
         super().__init__(shape=shape, vth=vth, bias=bias,
                          act_mode=act_mode, cum_error=cum_error,
-                         spike_exp=spike_exp, state_exp=state_exp)
+                         spike_exp=spike_exp, state_exp=state_exp, **kwargs)
         # scaling factor for fixed precision scaling
         vth = vth * (1 << (spike_exp + state_exp))
         bias = bias * (1 << (spike_exp + state_exp))
