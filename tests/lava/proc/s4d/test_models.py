@@ -11,7 +11,7 @@ from lava.proc.sparse.process import Sparse
 import lava.proc.io as io
 from typing import Tuple
 from lava.magma.core.run_configs import Loihi2SimCfg
-from lava.tests.lava.proc.s4d.utils import get_coefficients, run_original_model
+from tests.lava.proc.s4d.utils import get_coefficients, run_original_model
 
 
 class TestSigmaS4DDeltaModels(unittest.TestCase):
