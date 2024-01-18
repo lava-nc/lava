@@ -20,7 +20,7 @@ class SigmaS4Delta(SigmaDelta, AbstractProcess):
             C: float,
             state_exp: ty.Optional[int] = 0,
             S4_exp: ty.Optional[int] = 0) -> None:
-        """ 
+        """
         Sigma delta neuron process that implements S4D dynamics as its
         activation function.
 
@@ -47,7 +47,8 @@ class SigmaS4Delta(SigmaDelta, AbstractProcess):
 
         Notes
         -----
-        This process simulates the behavior of a linear time-invariant system with state-space representation.
+        This process simulates the behavior of a linear time-invariant system
+        with diagonal state-space representation.
         The state-space equations are given by:
         x_{k+1} = A * x_k + B * u_k
         y_k = C * x_k
@@ -90,7 +91,7 @@ class SigmaS4DeltaLayer(AbstractProcess):
             S4_exp: ty.Optional[int] = 0,
             num_message_bits: ty.Optional[int] = 24,
             state_exp: ty.Optional[int] = 0) -> None:
-        """ 
+        """
         Combines S4D neuron with Sparse Processes that allow for multiple
         d_states.
 
@@ -107,7 +108,7 @@ class SigmaS4DeltaLayer(AbstractProcess):
         C: np.ndarray
             Diagonal elements of the output matrix of the S4D model.
         d_states: int
-            Number of hidden states of the S4D model. 
+            Number of hidden states of the S4D model.
             Default is 1.
         state_exp: int
             Scaling exponent with base 2 for the reconstructed sigma variables.
@@ -120,15 +121,15 @@ class SigmaS4DeltaLayer(AbstractProcess):
             Scaling exponent with base 2 for the S4 state variables.
             Note: Only relevant for nc model.
             Default is 0.
-  
+
         Notes
         -----
-        Connectivity: Sparse -> SigmaS4Delta -> Sparse. 
+        Connectivity: Sparse -> SigmaS4Delta -> Sparse.
         Relieves user from computing required connection weights for multiple
         d_states.
 
-        This process simulates the behavior of a linear time-invariant system with 
-        diagonalized state-space representation. (S4D)
+        This process simulates the behavior of a linear time-invariant system
+        with diagonalized state-space representation. (S4D)
         The state-space equations are given by:
         x_{k+1} = A * x_k + B * u_k
         y_k = C * x_k

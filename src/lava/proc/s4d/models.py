@@ -57,7 +57,7 @@ class AbstractSigmaS4DeltaModel(AbstractSigmaDeltaModel):
 
         Notes
         -----
-        This function simulates the behavior of a linear time-invariant system 
+        This function simulates the behavior of a linear time-invariant system
         with diagonalized state-space representation. (S4D)
         The state-space equations are given by:
         x_{k+1} = A * x_k + B * u_k
@@ -71,7 +71,8 @@ class AbstractSigmaS4DeltaModel(AbstractSigmaDeltaModel):
         - B is the diagonal input matrix,
         - C is the diagonal output matrix.
 
-        The function computes the next output step of the system for the given input signal.
+        The function computes the next output step of the
+        system for the given input signal.
         """
 
         self.S4state = self.S4state * self.A + sigma_data * self.B
@@ -129,7 +130,7 @@ class SubDenseLayerModel(AbstractSubProcessModel):
 
         # Instantiate processes
         self.sparse1 = Sparse(weights=conn_weights.T, weight_exp=state_exp,
-                             num_message_bits=num_message_bits)
+                              num_message_bits=num_message_bits)
         self.sigmaS4delta = SigmaS4Delta(shape=(shape[0] * d_states,),
                                          vth=vth,
                                          state_exp=state_exp,
@@ -138,7 +139,7 @@ class SubDenseLayerModel(AbstractSubProcessModel):
                                          B=B,
                                          C=C)
         self.sparse2 = Sparse(weights=conn_weights, weight_exp=state_exp,
-                             num_message_bits=num_message_bits)
+                              num_message_bits=num_message_bits)
 
         # Make connections Sparse -> SigmaS4Delta -> Sparse
         proc.in_ports.s_in.connect(self.sparse1.in_ports.s_in)
