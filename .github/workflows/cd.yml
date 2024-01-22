@@ -190,6 +190,7 @@ jobs:
         run: |
           mkdir dist
           cp lava* dist/.
+          gpg --detach-sign -a dist/*
 
       - name: Publish package distributions to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
