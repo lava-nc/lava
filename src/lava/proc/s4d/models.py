@@ -40,26 +40,16 @@ class AbstractSigmaS4dDeltaModel(AbstractSigmaDeltaModel):
         Sigma delta neuron model that implements S4D
         (as described by Gu et al., 2022) dynamics as its activation function.
 
-        Parameters
-        ----------
-        shape: Tuple
-            Shape of the sigma process.
-        vth: int or float
-            Threshold of the delta encoder.
+        Relevant parameters in proc_params
+        --------------------------
         a: np.ndarray
             Diagonal elements of the state matrix of the S4D model.
         b: np.ndarray
             Diagonal elements of the input matrix of the S4D model.
         c: np.ndarray
             Diagonal elements of the output matrix of the S4D model.
-        state_exp: int
-            Scaling exponent with base 2 for the reconstructed sigma variables.
-            Note: This should only be used for nc models.
-            Default is 0.
-        s4_exp: int
-            Scaling exponent with base 2 for the S4 state variables.
-            Note: This should only be used for nc models.
-            Default is 0.
+        s4_state: np.ndarray
+            State vector of the S4D model.
         """
         super().__init__(proc_params)
         self.a = self.proc_params['a']
