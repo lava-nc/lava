@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -9,7 +9,8 @@ from typing import Tuple
 
 def get_coefficients() -> [np.ndarray, np.ndarray, np.ndarray]:
     curr_dir = os.path.dirname(os.path.realpath(__file__))
-    "Initialize A, B and C with values trained on efficientnet features."
+
+    # Initialize A, B and C with values trained on efficientnet features.
     s4d_A = np.load(curr_dir + "/s4d_A.dat.npy").flatten()
     s4d_B = np.load(curr_dir + "/s4d_B.dat.npy").flatten()
     s4d_C = np.load(curr_dir + "/s4d_C.dat.npy").flatten().flatten()
@@ -17,15 +18,35 @@ def get_coefficients() -> [np.ndarray, np.ndarray, np.ndarray]:
 
 
 def run_original_model(
-        input: np.ndarray,
+        inp: np.ndarray,
         num_steps: int,
         model_dim: int,
         d_states: int,
-        A: np.ndarray,
-        B: np.ndarray,
-        C: np.ndarray) -> Tuple[np.ndarray]:
+        a: np.ndarray,
+        b: np.ndarray,
+        c: np.ndarray) -> Tuple[np.ndarray]:
     """
     Run original S4d model.
+
+    This function simulates the behavior of a linear time-invariant system
+    with diagonalized state-space representation. (S4D)
+    The state-space equations are given by:
+    s4_state_{k+1} = A * s4_state_k + B * input_k
+    out_k = C * s4_state_k
+
+    where:
+    - s4_state_k is the state vector at time step k,
+    - input_k is the input vector at time step k,
+    - out_k is the output vector at time step k,
+    - A is the diagonal state matrix,
+    - B is the diagonal input matrix,
+    - C is the diagonal output matrix.
+
+    The function computes the next output step of the
+    system for the given input signal.
+
+    The function computes the output of the system for the given input signal
+    over num_steps time steps.
 
     Parameters
     ----------
@@ -37,49 +58,30 @@ def run_original_model(
         Dimensionality of the model.
     d_states: int
         Number of model states.
-    A: np.ndarray
+    a: np.ndarray
         Diagonal elements of the state matrix of the S4D model.
-    B: np.ndarray
+    b: np.ndarray
         Diagonal elements of the input matrix of the S4D model.
-    C: np.ndarray
+    c: np.ndarray
         Diagonal elements of the output matrix of the S4D model.
 
     Returns
     -------
     Tuple[np.ndarray]
         Tuple containing the output of the model simulation.
-
-    Notes
-    -----
-    This function simulates the behavior of a linear time-invariant system
-    with diagonalized state-space representation.
-    The state-space equations are given by:
-    x_{k+1} = A * x_k + B * u_k
-    y_k = C * x_k
-
-    where:
-    - x_k is the state vector at time step k,
-    - u_k is the input vector at time step k,
-    - y_k is the output vector at time step k,
-    - A is the diagonal state matrix,
-    - B is the diagonal input matrix,
-    - C is the diagonal output matrix.
-
-    The function computes the output of the system for the given input signal
-    over num_steps time steps.
     """
 
-    A = A[:model_dim * d_states]
-    B = B[:model_dim * d_states]
-    C = C[:model_dim * d_states]
+    a = a[:model_dim * d_states]
+    b = b[:model_dim * d_states]
+    c = c[:model_dim * d_states]
     expansion_weights = np.kron(np.eye(model_dim), np.ones(d_states))
-    expanded_inp = np.matmul(expansion_weights.T, input)
+    expanded_inp = np.matmul(expansion_weights.T, inp)
     out = np.zeros((model_dim * d_states, num_steps))
-    S4state = np.zeros((model_dim * d_states,)).flatten()
+    s4_state = np.zeros((model_dim * d_states,)).flatten()
 
     for idx, inp in enumerate(expanded_inp.T):
-        S4state = np.multiply(S4state, A) + np.multiply(inp, B)
-        out[:, idx] = np.multiply(C, S4state) * 2
+        s4_state = np.multiply(s4_state, a) + np.multiply(inp, b)
+        out[:, idx] = np.multiply(c, s4_state) * 2
 
     out = np.matmul(expansion_weights, out)
     return out

@@ -1,15 +1,15 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
 import unittest
 import numpy as np
+from typing import Tuple
+import lava.proc.io as io
 from lava.magma.core.run_conditions import RunSteps
 from lava.proc.sdn.process import ActivationMode, SigmaDelta
-from lava.proc.s4d.process import SigmaS4Delta, SigmaS4DeltaLayer
+from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer
 from lava.proc.sparse.process import Sparse
-import lava.proc.io as io
-from typing import Tuple
 from lava.magma.core.run_configs import Loihi2SimCfg
 from tests.lava.proc.s4d.utils import get_coefficients, run_original_model
 
@@ -18,7 +18,10 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
     """Tests for SigmaS4Delta neuron"""
     def run_in_lava(
             self,
-            input,
+            inp,
+            a: np.ndarray,
+            b: np.ndarray,
+            c: np.ndarray,
             num_steps: int,
             model_dim: int,
             d_states: int,
@@ -28,7 +31,7 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
 
         Parameters
         ----------
-        input : np.ndarray
+        inp : np.ndarray
             Input signal to the model.
         num_steps : int
             Number of time steps to simulate the model.
@@ -47,24 +50,24 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
             Tuple containing the output of the model simulation.
         """
 
-        A = self.A[:model_dim * d_states]
-        B = self.B[:model_dim * d_states]
-        C = self.C[:model_dim * d_states]
+        a = a[:model_dim * d_states]
+        b = b[:model_dim * d_states]
+        c = c[:model_dim * d_states]
 
-        diff = input[:, 1:] - input[:, :-1]
-        diff = np.concatenate((input[:, :1], diff), axis=1)
+        diff = inp[:, 1:] - inp[:, :-1]
+        diff = np.concatenate((inp[:, :1], diff), axis=1)
 
         spiker = io.source.RingBuffer(data=diff)
         receiver = io.sink.RingBuffer(shape=(model_dim,), buffer=num_steps)
 
         if use_layer:
-            s4d_layer = SigmaS4DeltaLayer(shape=(model_dim,),
-                                          d_states=d_states,
-                                          num_message_bits=24,
-                                          vth=0,
-                                          A=A,
-                                          B=B,
-                                          C=C)
+            s4d_layer = SigmaS4dDeltaLayer(shape=(model_dim,),
+                                           d_states=d_states,
+                                           num_message_bits=24,
+                                           vth=0,
+                                           a=a,
+                                           b=b,
+                                           c=c)
             buffer_neuron = SigmaDelta(shape=(model_dim,),
                                        vth=0,
                                        cum_error=True,
@@ -75,11 +78,11 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
 
         else:
             sparse = Sparse(weights=np.eye(model_dim), num_message_bits=24)
-            s4d_neuron = SigmaS4Delta(shape=((model_dim,)),
-                                      vth=0,
-                                      A=A,
-                                      B=B,
-                                      C=C)
+            s4d_neuron = SigmaS4dDelta(shape=((model_dim,)),
+                                       vth=0,
+                                       a=a,
+                                       b=b,
+                                       c=c)
             spiker.s_out.connect(sparse.s_in)
             sparse.a_out.connect(s4d_neuron.a_in)
             s4d_neuron.s_out.connect(receiver.a_in)
@@ -96,29 +99,32 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
         return output
 
     def test_py_model_vs_original_equations(self) -> None:
-        """Tests that the pymodel for SigmaS4Delta outputs approximately
+        """Tests that the pymodel for SigmaS4dDelta outputs approximately
            the same values as the original S4D equations.
         """
-        self.A, self.B, self.C = get_coefficients()
+        a, b, c = get_coefficients()
         model_dim = 3
         d_states = 1
         n_steps = 5
         np.random.seed(0)
         inp = np.random.random((model_dim, n_steps)) * 2**6
 
-        out_chip = self.run_in_lava(input=inp,
+        out_chip = self.run_in_lava(inp=inp,
+                                    a=a,
+                                    b=b,
+                                    c=c,
                                     num_steps=n_steps,
                                     model_dim=model_dim,
                                     d_states=d_states,
                                     use_layer=False
                                     )
-        out_original_model = run_original_model(input=inp,
+        out_original_model = run_original_model(inp=inp,
                                                 model_dim=model_dim,
                                                 d_states=d_states,
                                                 num_steps=n_steps,
-                                                A=self.A,
-                                                B=self.B,
-                                                C=self.C)
+                                                a=a,
+                                                b=b,
+                                                c=c)
 
         np.testing.assert_array_equal(out_original_model[:, :-1],
                                       out_chip[:, 1:])
@@ -127,26 +133,29 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
         """ Tests that the pymodel for SigmaS4DeltaLayer outputs approximately
            the same values as the original S4D equations for multiple d_states.
         """
-        self.A, self.B, self.C = get_coefficients()
+        a, b, c = get_coefficients()
         model_dim = 3
         d_states = 3
         n_steps = 5
         np.random.seed(1)
         inp = np.random.random((model_dim, n_steps)) * 2**6
 
-        out_chip = self.run_in_lava(input=inp,
+        out_chip = self.run_in_lava(inp=inp,
+                                    a=a,
+                                    b=b,
+                                    c=c,
                                     num_steps=n_steps,
                                     model_dim=model_dim,
                                     d_states=d_states,
                                     use_layer=True,
                                     )
-        out_original_model = run_original_model(input=inp,
+        out_original_model = run_original_model(inp=inp,
                                                 model_dim=model_dim,
                                                 d_states=d_states,
                                                 num_steps=n_steps,
-                                                A=self.A,
-                                                B=self.B,
-                                                C=self.C)
+                                                a=a,
+                                                b=b,
+                                                c=c)
 
         np.testing.assert_allclose(out_original_model[:, :-2], out_chip[:, 2:])
 
@@ -154,20 +163,26 @@ class TestSigmaS4DDeltaModels(unittest.TestCase):
         """Tests that the  pymodel for SigmaS4DeltaLayer outputs approximately
            the same values as just the SigmaS4DDelta Model with one hidden dim.
         """
-        self.A, self.B, self.C = get_coefficients()
+        a, b, c = get_coefficients()
         model_dim = 3
         d_states = 1
         n_steps = 5
         np.random.seed(2)
         inp = np.random.random((model_dim, n_steps)) * 2**6
 
-        out_just_model = self.run_in_lava(input=inp,
+        out_just_model = self.run_in_lava(inp=inp,
+                                          a=a,
+                                          b=b,
+                                          c=c,
                                           num_steps=n_steps,
                                           model_dim=model_dim,
                                           d_states=d_states,
                                           use_layer=False)
 
-        out_layer = self.run_in_lava(input=inp,
+        out_layer = self.run_in_lava(inp=inp,
+                                     a=a,
+                                     b=b,
+                                     c=c,
                                      num_steps=n_steps,
                                      model_dim=model_dim,
                                      d_states=d_states,
