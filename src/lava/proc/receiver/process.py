@@ -31,6 +31,7 @@ class Receiver(AbstractProcess):
         self.a_in = InPort(shape=shape)
         self.payload = Var(shape=shape, init=0)
 
+
 class Receiver32Bit(AbstractProcess):
     """Process saving input messages as a payload variable. For up to 32bit
     payload.
