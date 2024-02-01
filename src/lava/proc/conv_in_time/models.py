@@ -11,8 +11,6 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.conv_in_time.process import ConvInTime
-from lava.utils.weightutils import SignMode, determine_sign_mode,\
-    truncate_weights, clip_weights
 
 # self.weights: [num_flat_output_neurons, num_flat_input_neurons]
 # self.delays:  [num_flat_output_neurons, num_flat_input_neurons]

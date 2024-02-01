@@ -5,9 +5,6 @@
 import numpy as np
 import typing as ty
 
-from lava.magma.core.learning.constants import GradedSpikeCfg
-from lava.magma.core.learning.learning_rule import LoihiLearningRule
-from lava.magma.core.process.connection import LearningConnectionProcess
 from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
