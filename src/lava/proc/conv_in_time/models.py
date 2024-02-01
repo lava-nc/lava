@@ -23,7 +23,7 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
     weights: np.ndarray = None
     # delays: np.ndarray = None
     a_buff: np.ndarray = None
-    kernel_size: int = None 
+    kernel_size: int = None
 
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
