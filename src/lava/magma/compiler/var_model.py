@@ -269,6 +269,8 @@ class NcSpikeIOVarModel(NcVarModel):
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
     spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
+    ethernet_chip_id: ty.Optional[ty.Tuple[int, int, int]] = None
+    ethernet_chip_idx: ty.Optional[int] = None
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
