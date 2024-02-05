@@ -11,6 +11,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.conv_in_time.process import ConvInTime
+from lava.proc.conv import utils
 
 # self.weights: [num_flat_output_neurons, num_flat_input_neurons]
 # self.delays:  [num_flat_output_neurons, num_flat_input_neurons]
@@ -18,7 +19,7 @@ from lava.proc.conv_in_time.process import ConvInTime
 
 class AbstractPyConvInTimeModel(PyLoihiProcessModel):
     """Abstract Conn In Time Process with Dense synaptic connections which incorporates
-    delays into the Conn Process.
+    delays into the Conv Process.
     """
     weights: np.ndarray = None
     # delays: np.ndarray = None
@@ -57,7 +58,7 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
         # The a_out sent on a each timestep is a buffered value from dendritic
         # accumulation at timestep t-1. This prevents deadlocking in
         # networks with recurrent connectivity structures.
-        self.a_out.send(self.a_buff[:,0])
+        self.a_out.send(self.a_buff[:, 0])
         if self.num_message_bits.item() > 0:
             s_in = self.s_in.recv()
         else:
@@ -83,13 +84,18 @@ class PyConvInTimeFloat(AbstractPyConvInTimeModel):
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
-    def run_spk(self):
-        # The a_out sent on each timestep is a buffered value from dendritic
-        # accumulation at timestep t-1. This prevents deadlocking in
-        # networks with recurrent connectivity structures.
-        self.a_out.send(self.a_buff[:, 0])
-        if self.num_message_bits.item() > 0:
-            s_in = self.s_in.recv()
-        else:
-            s_in = self.s_in.recv().astype(bool)
-        self.update_act(s_in)
+@implements(proc=ConvInTime, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("fixed_pt")
+class PyConvInTimeFixed(AbstractPyConvInTimeModel):
+    """Conv In Time with fixed point synapse implementation."""
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
+    a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+    a_buff: np.ndarray = LavaPyType(np.ndarray, float)
+    # weights is a 3D matrix of form (kernel_size, num_flat_output_neurons,
+    # num_flat_input_neurons) in C-order (row major).
+    weights: np.ndarray = LavaPyType(np.ndarray, float)
+    num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+
+    def clamp_precision(self, x: np.ndarray) -> np.ndarray:
+        return utils.signed_clamp(x, bits=24)
