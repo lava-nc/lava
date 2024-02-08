@@ -10,6 +10,7 @@ import traceback
 import typing as ty
 
 import numpy as np
+from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from scipy.sparse import csr_matrix
 from lava.magma.compiler.var_model import AbstractVarModel, LoihiSynapseVarModel
 from lava.magma.core.process.message_interface_enum import ActorType
@@ -26,7 +27,7 @@ from lava.magma.runtime.runtime_services.runtime_service import \
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
-    CspSelector
+    CspSelector, PyPyChannel
 from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
     ChannelBuilderPyNc)
@@ -38,7 +39,7 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
-from lava.magma.core.process.ports.ports import create_port_id
+from lava.magma.core.process.ports.ports import create_port_id, InPort, OutPort
 from lava.magma.core.run_conditions import (AbstractRunCondition,
                                             RunContinuous, RunSteps)
 from lava.magma.compiler.channels.watchdog import WatchdogManagerInterface
@@ -308,6 +309,39 @@ class Runtime:
                     proc._runtime = self
                     exception_q = Queue()
                     self.exception_q.append(exception_q)
+
+                    for name, py_port in proc_builder.py_ports.items():
+                        port = getattr(proc, name)
+
+                        if port.external_pipe_flag:
+                            if isinstance(port, InPort):
+                                pypychannel = PyPyChannel(
+                                    message_infrastructure=self._messaging_infrastructure,
+                                    src_name="src",
+                                    dst_name=name,
+                                    shape=py_port.shape,
+                                    dtype=py_port.d_type,
+                                    size=64)
+
+                                proc_builder.set_csp_ports([pypychannel.dst_port])
+
+                                port.external_pipe_csp_send_port = pypychannel.src_port
+                                port.external_pipe_csp_send_port.start()
+
+                            if isinstance(port, OutPort):
+                                pypychannel = PyPyChannel(
+                                    message_infrastructure=self._messaging_infrastructure,
+                                    src_name=name,
+                                    dst_name="dst",
+                                    shape=py_port.shape,
+                                    dtype=py_port.d_type,
+                                    size=64)
+
+                                proc_builder.set_csp_ports([pypychannel.src_port])
+
+                                port.external_pipe_csp_recv_port = pypychannel.dst_port
+                                port.external_pipe_csp_recv_port.start()
+
                     self._messaging_infrastructure.build_actor(target_fn,
                                                                proc_builder,
                                                                exception_q)
