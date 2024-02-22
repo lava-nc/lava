@@ -13,10 +13,6 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.conv_in_time.process import ConvInTime
 from lava.proc.conv import utils
 
-# self.weights: [num_flat_output_neurons, num_flat_input_neurons]
-# self.delays:  [num_flat_output_neurons, num_flat_input_neurons]
-# self.a_buff:  [num_flat_output_neurons, max_delay + 1]
-
 class AbstractPyConvInTimeModel(PyLoihiProcessModel):
     """Abstract Conn In Time Process with Dense synaptic connections which incorporates
     delays into the Conv Process.
@@ -64,7 +60,6 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
         else:
             s_in = self.s_in.recv().astype(bool)
         self.update_act(s_in)
-
 
 @implements(proc=ConvInTime, protocol=LoihiProtocol)
 @requires(CPU)

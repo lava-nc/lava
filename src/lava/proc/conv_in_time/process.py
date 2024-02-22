@@ -9,7 +9,6 @@ from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
-
 class ConvInTime(AbstractProcess):
     """Connection Process that mimics a convolution of the incoming
     events/spikes with a kernel in the time dimension. Realizes the following abstract
@@ -81,44 +80,3 @@ class ConvInTime(AbstractProcess):
         if len(np.shape(weights)) != 3:
             raise ValueError("Dense Process 'weights' expects a 3D matrix, "
                              f"got {weights}.")
-
-
-########## validation code ##########
-# from lava.proc.conv_in_time.process import ConvInTime
-# from lava.proc import io
-# import numpy as np
-# import torch
-# import torch.nn as nn
-# np.set_printoptions(linewidth=np.inf)
-
-# num_steps = 10
-# n_flat_input_neurons = 2
-# n_flat_output_neurons = 3
-# kernel_size = 3
-# input = np.random.choice([0, 1], size=(n_flat_input_neurons, num_steps))
-# sender = io.source.RingBuffer(data=input)
-# weights = np.random.rand(kernel_size, n_flat_output_neurons, n_flat_input_neurons)
-# conv_in_time = ConvInTime(weights=weights, name='conv_in_time')
-# receiver = io.sink.RingBuffer(shape=(n_flat_output_neurons,), buffer=num_steps)
-
-# sender.s_out.connect(conv_in_time.s_in)
-# conv_in_time.a_out.connect(receiver.a_in)
-
-# from lava.magma.core.run_conditions import RunSteps
-# from lava.magma.core.run_configs import Loihi1SimCfg
-
-# run_condition = RunSteps(num_steps=num_steps)
-# run_cfg = Loihi1SimCfg(select_tag="floating_pt")
-
-# conv_in_time.run(condition=run_condition, run_cfg=run_cfg)
-# output = receiver.data.get()
-# conv_in_time.stop()
-
-# tensor_input = torch.tensor(input, dtype=torch.float32)
-# tensor_weights = torch.tensor(weights, dtype=torch.float32)
-# conv_layer = nn.Conv1d(in_channels=2, out_channels=3, kernel_size=3, bias=False)
-# conv_layer.weight = nn.Parameter(tensor_weights.permute(1, 2, 0))
-# torch_output = conv_layer(tensor_input.unsqueeze(0)).squeeze(0).detach().numpy()
-
-# print(' lava output: ', output)
-# print('torch output: ', torch_output)
