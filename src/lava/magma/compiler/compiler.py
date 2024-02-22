@@ -239,8 +239,11 @@ class Compiler:
                 for proc_name, pb in proc_builders_values.items():
                     proc = procname_to_proc_map[proc_name]
                     proc_builders[proc] = pb
+                    pb.proc_params = proc.proc_params
 
                 channel_map.read_from_cache(cache_object, procname_to_proc_map)
+                print(f"\nBuilders and Channel Map loaded from " \
+                      f"Cache {cache_dir}\n")
                 return proc_builders, channel_map
 
         # Create the global ChannelMap that is passed between
@@ -286,10 +289,14 @@ class Compiler:
                           f"Violation Name: {p.name=}"
                     raise Exception(msg)
                 procname_to_proc_builder[p.name] = pb
+                pb.proc_params = None
             cache_object["procname_to_proc_builder"] = procname_to_proc_builder
             channel_map.write_to_cache(cache_object, proc_to_procname_map)
             with open(os.path.join(cache_dir, "cache"), "wb") as cache_file:
                 pickle.dump(cache_object, cache_file)
+            for p, pb in proc_builders.items():
+                pb.proc_params = p.proc_params
+            print(f"\nBuilders and Channel Map stored to Cache {cache_dir}\n")
         return proc_builders, channel_map
 
     @staticmethod
