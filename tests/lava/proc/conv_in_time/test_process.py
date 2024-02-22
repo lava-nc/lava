@@ -10,6 +10,7 @@ from lava.proc import io
 
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
+from lava.proc.conv import utils
 
 if utils.TORCH_IS_AVAILABLE:
     import torch
@@ -19,7 +20,6 @@ if utils.TORCH_IS_AVAILABLE:
 else:
     compare = False
     # in this case, the test compares against saved torch ground truth
-
 
 class TestConvInTimeProcess(unittest.TestCase):
     """Tests for Conv class"""
@@ -42,7 +42,6 @@ class TestConvInTimeProcess(unittest.TestCase):
 
         sender.s_out.connect(conv_in_time.s_in)
         conv_in_time.a_out.connect(receiver.a_in)
-
 
         run_condition = RunSteps(num_steps=num_steps+1)
         run_cfg = Loihi1SimCfg(select_tag="floating_pt")
