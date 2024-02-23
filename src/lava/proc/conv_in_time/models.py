@@ -1,4 +1,4 @@
-# Copyright (C) 2021-22 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -15,11 +15,10 @@ from lava.proc.conv import utils
 
 
 class AbstractPyConvInTimeModel(PyLoihiProcessModel):
-    """Abstract Conn In Time Process with Dense synaptic connections 
+    """Abstract Conn In Time Process with Dense synaptic connections
     which incorporates delays into the Conv Process.
     """
     weights: np.ndarray = None
-    # delays: np.ndarray = None
     a_buff: np.ndarray = None
     kernel_size: int = None
 
@@ -32,6 +31,7 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
         weights[2] * s_in, weights[1] * s_in, weights[0] * s_in
         """
 
+        # The change of the shape is shown below:
         # sum([K, n_out, n_in] * [n_in,], axis=-1) = [K, n_out] -> [n_out, K]
         kernel_size = self.weights.shape[0]
         for i in range(kernel_size):
@@ -76,8 +76,8 @@ class PyConvInTimeFloat(AbstractPyConvInTimeModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
-    # weights is a 3D matrix of form (kernel_size, num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
+    # The weights is a 3D matrix of form (kernel_size,
+    # num_flat_output_neurons, num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
@@ -90,8 +90,8 @@ class PyConvInTimeFixed(AbstractPyConvInTimeModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
-    # weights is a 3D matrix of form (kernel_size, num_flat_output_neurons,
-    # num_flat_input_neurons) in C-order (row major).
+    # The weights is a 3D matrix of form (kernel_size, 
+    # num_flat_output_neurons, num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
 
