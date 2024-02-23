@@ -13,9 +13,10 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.proc.conv_in_time.process import ConvInTime
 from lava.proc.conv import utils
 
+
 class AbstractPyConvInTimeModel(PyLoihiProcessModel):
-    """Abstract Conn In Time Process with Dense synaptic connections which incorporates
-    delays into the Conv Process.
+    """Abstract Conn In Time Process with Dense synaptic connections 
+    which incorporates delays into the Conv Process.
     """
     weights: np.ndarray = None
     # delays: np.ndarray = None
@@ -24,10 +25,9 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
 
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, np.int8, precision=5)
 
-
     def calc_act(self, s_in) -> np.ndarray:
         """
-        Calculate the activation buff by inverse the order in 
+        Calculate the activation buff by inverse the order in
         the kernel. Taking k=3 as an example, the a_buff will be
         weights[2] * s_in, weights[1] * s_in, weights[0] * s_in
         """
@@ -35,7 +35,8 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
         # sum([K, n_out, n_in] * [n_in,], axis=-1) = [K, n_out] -> [n_out, K]
         kernel_size = self.weights.shape[0]
         for i in range(kernel_size):
-            self.a_buff[:,i] += np.sum(self.weights[kernel_size-i-1] * s_in, axis=-1).T
+            self.a_buff[:, i] += np.sum(
+                self.weights[kernel_size - i - 1] * s_in, axis=-1).T
 
     def update_act(self, s_in):
         """
@@ -61,6 +62,7 @@ class AbstractPyConvInTimeModel(PyLoihiProcessModel):
             s_in = self.s_in.recv().astype(bool)
         self.update_act(s_in)
 
+
 @implements(proc=ConvInTime, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
@@ -78,6 +80,7 @@ class PyConvInTimeFloat(AbstractPyConvInTimeModel):
     # num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
+
 
 @implements(proc=ConvInTime, protocol=LoihiProtocol)
 @requires(CPU)

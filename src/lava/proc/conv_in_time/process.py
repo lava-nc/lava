@@ -9,16 +9,19 @@ from lava.magma.core.process.process import AbstractProcess, LogConfig
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
+
 class ConvInTime(AbstractProcess):
     """Connection Process that mimics a convolution of the incoming
-    events/spikes with a kernel in the time dimension. Realizes the following abstract
-    behavior: a_out[t] = weights[t-1] * s_in[t-1] + weights[t] * s_in[t] + weights[t+1] * s_in[t+1]
+    events/spikes with a kernel in the time dimension. Realizes the
+    following abstract behavior: a_out[t] = weights[t-1] * s_in[t-1]
+    + weights[t] * s_in[t] + weights[t+1] * s_in[t+1]
 
     Parameters
     ----------
     weights : numpy.ndarray
-        3D connection weight matrix of form (kernel_size, num_flat_output_neurons,
-        num_flat_input_neurons) in C-order (row major).
+        3D connection weight matrix of form (kernel_size,
+        num_flat_output_neurons, num_flat_input_neurons)
+        in C-order (row major).
 
     weight_exp : int, optional
         Shared weight exponent of base 2 used to scale magnitude of
@@ -65,7 +68,8 @@ class ConvInTime(AbstractProcess):
                          **kwargs)
 
         self._validate_weights(weights)
-        shape = weights.shape # [kernel_size, n_flat_output_neurons, n_flat_input_neurons]
+        # [kernel_size, n_flat_output_neurons, n_flat_input_neurons]
+        shape = weights.shape
         # Ports
         self.s_in = InPort(shape=(shape[2],))
         self.a_out = OutPort(shape=(shape[1],))

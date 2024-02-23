@@ -21,6 +21,7 @@ else:
     compare = False
     # in this case, the test compares against saved torch ground truth
 
+
 class TestConvInTimeProcess(unittest.TestCase):
     """Tests for Conv class"""
     def test_init(self) -> None:
@@ -30,20 +31,27 @@ class TestConvInTimeProcess(unittest.TestCase):
         n_flat_input_neurons = 2
         n_flat_output_neurons = 5
         if compare:
-            spike_input = np.random.choice([0, 1], size=(n_flat_input_neurons, num_steps))
-            weights = np.random.randint(256, size=[kernel_size, n_flat_output_neurons, n_flat_input_neurons]) - 128
+            spike_input = np.random.choice(
+                [0, 1],
+                size=(n_flat_input_neurons, num_steps))
+            weights = np.random.randint(256, size=[kernel_size,
+                n_flat_output_neurons, n_flat_input_neurons]) - 128
         else:
-            spike_input = np.load(os.path.join(os.path.dirname(__file__), "ground_truth/spike_input.npy"))
-            weights = np.load(os.path.join(os.path.dirname(__file__), "ground_truth/quantized_weights_k_out_in.npy"))
+            spike_input = np.load(os.path.join(os.path.dirname(__file__),
+                "ground_truth/spike_input.npy"))
+            weights = np.load(os.path.join(os.path.dirname(__file__),
+                "ground_truth/quantized_weights_k_out_in.npy"))
         sender = io.source.RingBuffer(data=spike_input)
         conv_in_time = ConvInTime(weights=weights, name='conv_in_time')
 
-        receiver = io.sink.RingBuffer(shape=(n_flat_output_neurons,), buffer=num_steps+1)
+        receiver = io.sink.RingBuffer(
+            shape=(n_flat_output_neurons,),
+            buffer=num_steps + 1)
 
         sender.s_out.connect(conv_in_time.s_in)
         conv_in_time.a_out.connect(receiver.a_in)
 
-        run_condition = RunSteps(num_steps=num_steps+1)
+        run_condition = RunSteps(num_steps=num_steps + 1)
         run_cfg = Loihi1SimCfg(select_tag="floating_pt")
 
         conv_in_time.run(condition=run_condition, run_cfg=run_cfg)
@@ -53,14 +61,19 @@ class TestConvInTimeProcess(unittest.TestCase):
         if compare:
             tensor_input = torch.tensor(spike_input, dtype=torch.float32)
             tensor_weights = torch.tensor(weights, dtype=torch.float32)
-            conv_layer = nn.Conv1d(in_channels=n_flat_input_neurons, out_channels=n_flat_output_neurons, kernel_size=kernel_size, bias=False)
+            conv_layer = nn.Conv1d(
+                in_channels=n_flat_input_neurons,
+                out_channels=n_flat_output_neurons,
+                kernel_size=kernel_size, bias=False)
             # permute the weights to match the torch format
             conv_layer.weight = nn.Parameter(tensor_weights.permute(1, 2, 0))
-            torch_output = conv_layer(tensor_input.unsqueeze(0)).squeeze(0).detach().numpy()
+            torch_output = conv_layer(
+                tensor_input.unsqueeze(0)).squeeze(0).detach().numpy()
         else:
-            torch_output = np.load(os.path.join(os.path.dirname(__file__), "ground_truth/torch_output.npy"))
+            torch_output = np.load(os.path.join(os.path.dirname(__file__),
+                "ground_truth/torch_output.npy"))
 
-        self.assertEqual(output.shape, (n_flat_output_neurons, num_steps+1))
-        # after kernel_size timesteps, the output should be the same as the torch output
-        assert np.allclose(output[:,kernel_size:], torch_output)
-
+        self.assertEqual(output.shape, (n_flat_output_neurons, num_steps + 1))
+        # after kernel_size timesteps,
+        # the output should be the same as the torch output
+        assert np.allclose(output[:, kernel_size:], torch_output)
