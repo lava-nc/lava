@@ -90,7 +90,7 @@ class PyConvInTimeFixed(AbstractPyConvInTimeModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
     a_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     a_buff: np.ndarray = LavaPyType(np.ndarray, float)
-    # The weights is a 3D matrix of form (kernel_size, 
+    # The weights is a 3D matrix of form (kernel_size,
     # num_flat_output_neurons, num_flat_input_neurons) in C-order (row major).
     weights: np.ndarray = LavaPyType(np.ndarray, float)
     num_message_bits: np.ndarray = LavaPyType(np.ndarray, int, precision=5)
