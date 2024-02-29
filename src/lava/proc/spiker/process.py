@@ -103,7 +103,7 @@ class Spiker32bit(AbstractProcess):
             raise ValueError(
                 f"The payload must be >= -2**31, but the smallest value is "
                 f"{payload_min}.")
-            
+
         payload_max_allowed = 2 ** 31 - 1 if signed else 2 ** 32 - 1
 
         if payload_max > payload_max_allowed:
