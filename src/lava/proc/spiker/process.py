@@ -99,13 +99,16 @@ class Spiker32bit(AbstractProcess):
         payload_max = np.max(payload)
         signed = payload_min < 0
 
-        assert payload_min >= -2 ** 31, \
-            f"The payload must be >= -2**31, but the smallest value is" \
-            f" {payload_min}."
+        if payload_min < -2 ** 31:
+            raise ValueError(
+                f"The payload must be >= -2**31, but the smallest value is "
+                f"{payload_min}.")
+            
         payload_max_allowed = 2 ** 31 - 1 if signed else 2 ** 32 - 1
 
-        assert payload_max <= payload_max_allowed, \
-            f"The payload must be <= {payload_max_allowed}, but the largest " \
-            f"value is  {payload_max}."
+        if payload_max > payload_max_allowed:
+            raise ValueError(
+                f"The payload must be <= {payload_max_allowed}, but the "
+                f"largest value is  {payload_max}.")
 
         return signed
