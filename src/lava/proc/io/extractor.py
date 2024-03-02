@@ -95,9 +95,8 @@ class Extractor(AbstractProcess):
         data : np.ndarray
             Data received.
         """
-        elements_in_buffer = self._pm_to_p_dst_port._queue.qsize()
-
-        if elements_in_buffer == 0:
+        qsize = self.can_receive()
+        if qsize == 0:
             data = self._receive_when_empty(
                 self._pm_to_p_dst_port,
                 np.zeros(self._shape))
@@ -105,9 +104,14 @@ class Extractor(AbstractProcess):
             data = self._receive_when_not_empty(
                 self._pm_to_p_dst_port,
                 np.zeros(self._shape),
-                elements_in_buffer)
-
+                qsize)
         return data
+
+    def can_receive(self) -> int:
+        if self.runtime is not None and self.runtime._is_running:
+            return self._pm_to_p_dst_port._queue.qsize()
+        else:
+            return 0
 
     def __del__(self) -> None:
         super().__del__()
