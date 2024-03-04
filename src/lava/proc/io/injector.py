@@ -48,7 +48,7 @@ class Injector(AbstractProcess):
                  shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 50,
                  channel_config: ty.Optional[utils.ChannelConfig] = None,
-                 **kwargs) ->  None:
+                 **kwargs) -> None:
         super().__init__(shape_1=shape, **kwargs)
 
         channel_config = channel_config or utils.ChannelConfig()
@@ -65,7 +65,7 @@ class Injector(AbstractProcess):
         self.proc_params["channel_config"] = channel_config
 
         self._send = channel_config.get_send_full_function()
-    
+
     def send(self, data: np.ndarray) -> None:
         """Send data to connected process.
 
@@ -73,7 +73,7 @@ class Injector(AbstractProcess):
         ----------
         data : np.ndarray
             Data to be sent.
-        
+
         Raises
         ------
         AssertionError

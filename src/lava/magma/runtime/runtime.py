@@ -311,7 +311,7 @@ class Runtime:
 
                     # Create any external pypychannels
                     self._create_external_channels(proc, proc_builder)
-                    
+
                     self._messaging_infrastructure.build_actor(target_fn,
                                                                proc_builder,
                                                                exception_q)

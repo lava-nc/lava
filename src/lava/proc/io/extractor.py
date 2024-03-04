@@ -89,7 +89,8 @@ class Extractor(AbstractProcess):
                                  "<create_runtime> or <run> on your Lava"
                                  " network before using <send>.")
 
-        elements_in_buffer = self.out_port.external_pipe_csp_recv_port._queue.qsize()
+        elements_in_buffer = \
+            self.out_port.external_pipe_csp_recv_port._queue.qsize()
 
         if elements_in_buffer == 0:
             data = self._receive_when_empty(
