@@ -34,12 +34,12 @@ class TestConvInTimeProcess(unittest.TestCase):
             spike_input = np.random.choice(
                 [0, 1],
                 size=(n_flat_input_neurons, num_steps))
-            weights = np.random.randint(256, size=[kernel_size, 
+            weights = np.random.randint(256, size=[kernel_size,
                                                    n_flat_output_neurons, n_flat_input_neurons]) - 128
         else:
-            spike_input = np.load(os.path.join(os.path.dirname(__file__), 
+            spike_input = np.load(os.path.join(os.path.dirname(__file__),
                                                "ground_truth/spike_input.npy"))
-            weights = np.load(os.path.join(os.path.dirname(__file__), 
+            weights = np.load(os.path.join(os.path.dirname(__file__),
                                            "ground_truth/quantized_weights_k_out_in.npy"))
         sender = io.source.RingBuffer(data=spike_input)
         conv_in_time = ConvInTime(weights=weights, name='conv_in_time')
@@ -70,7 +70,7 @@ class TestConvInTimeProcess(unittest.TestCase):
             torch_output = conv_layer(
                 tensor_input.unsqueeze(0)).squeeze(0).detach().numpy()
         else:
-            torch_output = np.load(os.path.join(os.path.dirname(__file__), 
+            torch_output = np.load(os.path.join(os.path.dirname(__file__),
                                                 "ground_truth/torch_output.npy"))
 
         self.assertEqual(output.shape, (n_flat_output_neurons, num_steps + 1))
