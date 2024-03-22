@@ -25,6 +25,7 @@ class PyExpFilterModelFloat(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     value: np.ndarray = LavaPyType(np.ndarray, float)
     tau: float = LavaPyType(float, float)
+    state_exp: int = LavaPyType(int, int)
 
     def run_spk(self):
         """The run function that performs the actual computation during

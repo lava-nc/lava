@@ -38,6 +38,8 @@ class ExpFilter(AbstractProcess):
         shape: ty.Tuple[int, ...],
         value: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         tau: ty.Optional[float] = 0,
+        state_exp: int = 0,
+        num_message_bits: int = 16,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
         **kwargs,
@@ -46,6 +48,7 @@ class ExpFilter(AbstractProcess):
             shape=shape,
             value=value,
             tau=tau,
+            num_message_bits=num_message_bits,
             name=name,
             log_config=log_config,
             **kwargs,
@@ -56,5 +59,9 @@ class ExpFilter(AbstractProcess):
 
         self.value = Var(shape=shape, init=value)
         self.tau = Var(shape=(1,), init=tau)
+        self.state_exp = Var(shape=(1,), init=state_exp)
+
+
+
 
 
