@@ -1,5 +1,5 @@
 name: Add new issues to the NCL planning project and label them
-
+permissions: {}
 on:
   issues:
     types:
@@ -10,6 +10,7 @@ on:
 jobs:
   add-to-project:
     name: Add issue to project
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.4.0
