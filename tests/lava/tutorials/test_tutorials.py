@@ -286,6 +286,11 @@ class TestTutorials(unittest.TestCase):
         self._run_notebook("tutorial11_serialization.ipynb")
 
     @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_12_adaptive_neurons(self):
+        """Test tutorial adaptive_neurons."""
+        self._run_notebook("tutorial12_adaptive_neurons.ipynb")
+
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_clp_01(self):
         """Test tutorial CLP 01."""
         self._run_notebook(
