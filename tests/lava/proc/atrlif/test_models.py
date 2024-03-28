@@ -5,7 +5,6 @@
 
 import unittest
 import numpy as np
-from numpy.testing import assert_almost_equal
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -15,11 +14,10 @@ from lava.magma.core.process.ports.ports import OutPort, InPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
-from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
+from lava.magma.core.run_configs import RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.proc.atrlif.process import ATRLIF
-from lava.proc import io
 
 
 class AtrlifRunConfig(RunConfig):
@@ -143,8 +141,10 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
 
 
 class TestATRLIFProcessModelsFloat(unittest.TestCase):
-    """Tests for floating point ProcessModels of ATRLIF, resembling the"""
-    """existing tests for the LIF process."""
+    """
+    Tests for floating point ProcessModels of ATRLIF, resembling the
+    existing tests for the LIF process.
+    """
     def test_float_pm_no_decay(self):
         """
         Tests floating point ATRLIF ProcessModel with no current or voltage
@@ -230,7 +230,7 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         rcfg = AtrlifRunConfig(select_tag='floating_pt')
         neur_i = []
         # Run 1 timestep at a time and collect state variable i
-        for j in range(num_steps):
+        for _ in range(num_steps):
             neur.run(condition=rcnd, run_cfg=rcfg)
             neur_i.append(neur.i.get()[0])
         neur.stop()
@@ -389,8 +389,10 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
 
 
 class TestATRLIFProcessModelsFixed(unittest.TestCase):
-    """Tests for fixed point ProcessModels of ATRLIF (which are bit-accurate
-    with Loihi hardware), resembling the existing tests for the LIF process."""
+    """
+    Tests for fixed point ProcessModels of ATRLIF (which are bit-accurate
+    with Loihi hardware), resembling the existing tests for the LIF process.
+    """
     def test_bitacc_pm_no_decay(self):
         """
         Tests fixed point ATRLIF ProcessModel (bit-accurate
@@ -484,7 +486,7 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         rcfg = AtrlifRunConfig(select_tag='fixed_pt')
         neur_i = []
         # Run 1 timestep at a time and collect state variable i
-        for j in range(num_steps):
+        for _ in range(num_steps):
             neur.run(condition=rcnd, run_cfg=rcfg)
             neur_i.append(neur.i.get().astype(np.int32)[0])
         neur.stop()
@@ -532,7 +534,7 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         rcfg = AtrlifRunConfig(select_tag='fixed_pt')
         neur_v = []
         # Run 1 timestep at a time and collect state variable u
-        for j in range(num_steps):
+        for _ in range(num_steps):
             neur.run(condition=rcnd, run_cfg=rcfg)
             neur_v.append(neur.v.get().astype(np.int32)[0])
         neur.stop()
