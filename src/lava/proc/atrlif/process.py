@@ -1,3 +1,8 @@
+# Copyright (C) 2022-23 Intel Corporation
+# Copyright (C) 2023-24 Jannik Luboeinski
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import typing as ty
 

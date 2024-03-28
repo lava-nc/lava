@@ -1,3 +1,8 @@
+# Copyright (C) 2021-23 Intel Corporation
+# Copyright (C) 2023-24 Jannik Luboeinski
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
@@ -38,7 +43,6 @@ class PyATRLIFModelFloat(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super(PyATRLIFModelFloat, self).__init__(proc_params)
-        print("PyATRLIFModelFloat initialized")
 
     def subthr_dynamics(self, activation_in: np.ndarray):
         """
@@ -78,9 +82,8 @@ class PyATRLIFModelFloat(PyLoihiProcessModel):
         # Perform the sub-threshold and spike computations
         self.subthr_dynamics(activation_in=a_in_data)
         self.s[:] = (self.v - self.r) >= self.theta
-        self.s_out_buff = self.s
-        self.post_spike(spike_vector=self.s_out_buff)
-        self.s_out.send(self.s_out_buff)
+        self.post_spike(spike_vector=self.s)
+        self.s_out.send(self.s)
 
 
 @implements(proc=ATRLIF, protocol=LoihiProtocol)
@@ -110,7 +113,6 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super(PyATRLIFModelFixed, self).__init__(proc_params)
-        print("PyATRLIFModelFixed initialized")
 
         # The `ds_offset` constant enables setting decay constant values to
         # exact 4096 = 2**12. Without it, the range of 12-bit unsigned
@@ -261,6 +263,5 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
         # Perform the sub-threshold and spike computations
         self.subthr_dynamics(activation_in=a_in_data)
         self.s[:] = (self.v - self.r) >= self.theta
-        self.s_out_buff = self.s
-        self.post_spike(spike_vector=self.s_out_buff)
-        self.s_out.send(self.s_out_buff)
+        self.post_spike(spike_vector=self.s)
+        self.s_out.send(self.s)
