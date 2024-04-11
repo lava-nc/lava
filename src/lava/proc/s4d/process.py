@@ -19,7 +19,8 @@ class SigmaS4dDelta(SigmaDelta, AbstractProcess):
             b: float,
             c: float,
             state_exp: ty.Optional[int] = 0,
-            s4_exp: ty.Optional[int] = 0) -> None:
+            s4_exp: ty.Optional[int] = 12,
+            **kwargs) -> None:
         """
         Sigma delta neuron process that implements S4D (described by
         Gu et al., 2022) dynamics as its activation function.
@@ -67,7 +68,8 @@ class SigmaS4dDelta(SigmaDelta, AbstractProcess):
                          c=c,
                          s4_state=0,
                          state_exp=state_exp,
-                         s4_exp=s4_exp)
+                         s4_exp=s4_exp,
+                         **kwargs)
 
         # Variables for S4
         self.a = Var(shape=shape, init=a)

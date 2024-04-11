@@ -24,7 +24,8 @@ class Sigma(AbstractProcess):
     def __init__(
             self,
             *,
-            shape: ty.Tuple[int, ...]) -> None:
+            shape: ty.Tuple[int, ...],
+            **kwargs) -> None:
         """Sigma integration unit process definition. A sigma process is simply
         a cumulative accumulator over time.
 
@@ -37,7 +38,7 @@ class Sigma(AbstractProcess):
         shape: Tuple
             shape of the sigma process. Default is (1,).
         """
-        super().__init__(shape=shape)
+        super().__init__(shape=shape, **kwargs)
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
@@ -57,7 +58,8 @@ class Delta(AbstractProcess):
                  vth: ty.Union[int, float],
                  cum_error: ty.Optional[bool] = False,
                  spike_exp: ty.Optional[int] = 0,
-                 state_exp: ty.Optional[int] = 0) -> None:
+                 state_exp: ty.Optional[int] = 0,
+                 **kwargs) -> None:
         """Delta process definition. Spike mechanism based on accumulated error
         is also supported.
 
@@ -94,7 +96,7 @@ class Delta(AbstractProcess):
             Default is 0.
         """
         super().__init__(shape=shape, vth=vth, cum_error=cum_error,
-                         spike_exp=spike_exp, state_exp=state_exp)
+                         spike_exp=spike_exp, state_exp=state_exp, **kwargs)
 
         vth = vth * (1 << (spike_exp + state_exp))
 

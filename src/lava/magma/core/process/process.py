@@ -512,6 +512,9 @@ class ProcessParameters:
             return default
         else:
             return self._parameters[key]
+    
+    def __repr__(self) -> str:
+        return str(self._parameters)
 
 
 @dataclass
