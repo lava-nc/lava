@@ -19,7 +19,6 @@ except ImportError:
     class NxSdkRuntimeService:
         pass
 
-
 class RuntimeServiceBuilder:
     """RuntimeService builders instantiate and initialize a RuntimeService.
 
@@ -107,6 +106,7 @@ class RuntimeServiceBuilder:
                 loihi_version=self.loihi_version,
                 loglevel=self.log.level,
                 compile_config=self._compile_config,
+                func_q = self.func_q,
                 **self.rs_kwargs
             )
             nxsdk_rts = True

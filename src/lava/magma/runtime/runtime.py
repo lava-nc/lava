@@ -138,6 +138,7 @@ class Runtime:
 
         self._watchdog_manager = None
         self.exception_q = []
+        self.func_q = Queue()
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -321,6 +322,7 @@ class Runtime:
         runtime_service_builders = self._executable.runtime_service_builders
         if self._executable.runtime_service_builders:
             for _, rs_builder in runtime_service_builders.items():
+                rs_builder.func_q = self.func_q
                 self.exception_q.append(Queue())
                 self._messaging_infrastructure. \
                     build_actor(target_fn,
@@ -445,6 +447,12 @@ class Runtime:
                                  f"{run_condition.__class__}")
         else:
             self.log.info("Runtime not started yet.")
+
+    def exec_func(self, func: Callable):
+        """
+        """
+        for send_port in self.runtime_to_service:
+            print(send_port.dst)
 
     def wait(self):
         """Waits for existing run to end. This is helpful if the execution
