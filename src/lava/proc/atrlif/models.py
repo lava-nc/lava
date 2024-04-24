@@ -1,5 +1,5 @@
-# Copyright (C) 2021-23 Intel Corporation
-# Copyright (C) 2023-24 Jannik Luboeinski
+# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024 Jannik Luboeinski
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 

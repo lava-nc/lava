@@ -1,4 +1,4 @@
-# Copyright (C) 2021-23 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # Copyright (C) 2024 Jannik Luboeinski
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
@@ -76,7 +76,7 @@ class VecRecvProcess(AbstractProcess):
 
 @implements(proc=VecSendProcess, protocol=LoihiProtocol)
 @requires(CPU)
-# need the following tag to discover the ProcessModel using AtrlifRunConfig
+# Following tag is needed to discover the ProcessModel using AtrlifRunConfig
 @tag('floating_pt')
 class PyVecSendModelFloat(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
@@ -95,7 +95,7 @@ class PyVecSendModelFloat(PyLoihiProcessModel):
 
 @implements(proc=VecSendProcess, protocol=LoihiProtocol)
 @requires(CPU)
-# need the following tag to discover the ProcessModel using AtrlifRunConfig
+# Following tag is needed to discover the ProcessModel using AtrlifRunConfig
 @tag('fixed_pt')
 class PyVecSendModelFixed(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int16, precision=16)
@@ -114,7 +114,7 @@ class PyVecSendModelFixed(PyLoihiProcessModel):
 
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
-# need the following tag to discover the ProcessModel using AtrlifRunConfig
+# Following tag is needed to discover the ProcessModel using AtrlifRunConfig
 @tag('floating_pt')
 class PySpkRecvModelFloat(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -128,7 +128,7 @@ class PySpkRecvModelFloat(PyLoihiProcessModel):
 
 @implements(proc=VecRecvProcess, protocol=LoihiProtocol)
 @requires(CPU)
-# need the following tag to discover the ProcessModel using AtrlifRunConfig
+# Following tag is needed to discover the ProcessModel using AtrlifRunConfig
 @tag('fixed_pt')
 class PySpkRecvModelFixed(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, bool, precision=1)
@@ -156,7 +156,7 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=float),
                              send_at_times=np.ones((num_steps,), dtype=bool))
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps, then less often due to the refractor-
         # iness. For the test implementation below, `theta_0` has to be a
         # multiple of `bias`.
@@ -202,9 +202,10 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         Tests floating point ATRLIF ProcessModel's impulse response with no
         voltage decay and input activation at the very first time-step.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 8
-        # send activation of 128. at timestep = 1
+        # Send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=(2 ** 7) * np.ones(shape,
                                                             dtype=float),
@@ -244,9 +245,10 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         Tests floating point ATRLIF ProcessModel's impulse response with no
         current decay and input activation at the very first time-step.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 8
-        # send activation of 128. at timestep = 1
+        # Send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=(2 ** 7) * np.ones(shape,
                                                             dtype=float),
@@ -287,13 +289,14 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         Tests floating point ATRLIF ProcessModel's behavior for instant decay
         of the threshold variable in the presence of constant bias.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 20
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=float),
                              send_at_times=np.ones((num_steps,), dtype=bool))
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps, then less often due to the refractor-
         # iness. For the test implementation below, `theta_0` has to be a
         # multiple of `bias`. Following a spike, the threshold `theta` is
@@ -341,13 +344,14 @@ class TestATRLIFProcessModelsFloat(unittest.TestCase):
         Tests floating point ATRLIF ProcessModel's behavior for instant decay
         of the refractory variable in the presence of constant bias.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 20
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=float),
                              send_at_times=np.ones((num_steps,), dtype=bool))
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps. Following a spike, the threshold `theta`
         # is automatically increased by `2 * theta`, but this remains without
         # effect due to the instant decay (`delta_r=1.`).
@@ -406,7 +410,7 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
                              vec_to_send=np.zeros(shape, dtype=np.int16),
                              send_at_times=np.ones((num_steps,), dtype=bool))
         # Set up bias = 2 * 2**6 = 128 and threshold = 8<<6
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps, then less often due to the refractor-
         # iness. For the test implementation below, `theta_0` has to be a
         # multiple of `bias`.
@@ -453,9 +457,10 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         Tests fixed point ATRLIF ProcessModel's impulse response with no
         voltage decay and input activation at the very first time-step.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 8
-        # send activation of 128. at timestep = 1
+        # Send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=128 * np.ones(shape, dtype=np.int32),
                              send_at_times=np.array([True, False, False,
@@ -465,7 +470,7 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         # unsigned variable in Loihi hardware. Therefore, 2**-12 is the
         # equivalent of 1. The subtracted 1 is added by default in the
         # hardware via the `ds_offset` setting, thereby finally giving
-        # delta_i = 2048 = 0.5 * 2**12.
+        # `delta_i = 2048 = 0.5 * 2**12`.
         # Set up threshold high, such that there are no output spikes. By
         # default the threshold value here is left-shifted by 6.
         neur = ATRLIF(shape=shape,
@@ -505,9 +510,10 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         Tests fixed point ATRLIF ProcessModel's impulse response with no
         current decay and input activation at the very first time-step.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 8
-        # send activation of 128. at timestep = 1
+        # Send activation of 128. at timestep = 1
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=128 * np.ones(shape, dtype=np.int32),
                              send_at_times=np.array([True, False, False,
@@ -587,13 +593,14 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         Tests fixed point ATRLIF ProcessModel's behavior for instant decay
         of the threshold variable in the presence of constant bias.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 20
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=float),
                              send_at_times=np.ones((num_steps,), dtype=bool))
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps, then less often due to the refractor-
         # iness. For the test implementation below, `theta_0` has to be a
         # multiple of `bias`. Following a spike, the threshold `theta` is
@@ -641,13 +648,14 @@ class TestATRLIFProcessModelsFixed(unittest.TestCase):
         Tests fixed point ATRLIF ProcessModel's behavior for instant decay
         of the refractory variable in the presence of constant bias.
         """
-        shape = (1,)  # a single neuron
+        # Use a single neuron
+        shape = (1,)
         num_steps = 20
         # Set up external input to 0
         sps = VecSendProcess(shape=shape, num_steps=num_steps,
                              vec_to_send=np.zeros(shape, dtype=float),
                              send_at_times=np.ones((num_steps,), dtype=bool))
-        # delta_i and delta_v = 0 => bias driven neurons spike first after
+        # `delta_i` and `delta_v` = 0 => bias driven neurons spike first after
         # `theta_0 / bias` time steps. Following a spike, the threshold `theta`
         # is automatically increased by `2 * theta`, but this remains without
         # effect due to the instant decay (`delta_r=1`).
