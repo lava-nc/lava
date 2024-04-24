@@ -55,5 +55,6 @@ class ConnectionConfig:
     spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
     num_time_buckets: int = 1 << 16
     ethernet_mac_address: str = "0x90e2ba01214c"
+    loihi_mac_address: str = "0x0015edbeefed"
     ethernet_chip_id: ty.Optional[ty.Tuple[int, int, int]] = None
     ethernet_chip_idx: ty.Optional[int] = None
