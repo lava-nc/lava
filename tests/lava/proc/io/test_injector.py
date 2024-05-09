@@ -79,9 +79,6 @@ class TestInjector(unittest.TestCase):
         self.assertEqual(config.receive_empty, utils.ReceiveEmpty.BLOCKING)
         self.assertEqual(config.receive_not_empty, utils.ReceiveNotEmpty.FIFO)
 
-        self.assertIsInstance(injector.proc_params["p_to_pm_dst_port"],
-                              CspRecvPort)
-
         self.assertIsInstance(injector.out_port, OutPort)
         self.assertEqual(injector.out_port.shape, out_shape)
 
@@ -212,6 +209,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = injector.compile(run_cfg=run_cfg)
+        injector.create_runtime(run_cfg=run_cfg, executable=ex)
 
         shared_queue = Queue(2)
 
@@ -299,6 +298,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = injector.compile(run_cfg=run_cfg)
+        injector.create_runtime(run_cfg=run_cfg, executable=ex)
 
         injector.send(np.ones(data_shape))
         injector.run(condition=run_condition, run_cfg=run_cfg)
@@ -405,6 +406,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = injector.compile(run_cfg=run_cfg)
+        injector.create_runtime(run_cfg=run_cfg, executable=ex)
 
         injector.send(send_data[0])
         injector.send(send_data[1])
@@ -457,6 +460,8 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = injector.compile(run_cfg=run_cfg)
+        injector.create_runtime(run_cfg=run_cfg, executable=ex)
 
         def thread_2_fn() -> None:
             for send_data_single_item in data:
@@ -468,6 +473,7 @@ class TestPyLoihiInjectorModel(unittest.TestCase):
         injector.run(condition=run_condition, run_cfg=run_cfg)
         recv_var_data = recv.var.get()
         injector.stop()
+        thread_2.join()
 
         np.testing.assert_equal(recv_var_data, data)
 

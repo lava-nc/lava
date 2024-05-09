@@ -69,7 +69,7 @@ class Sparse(AbstractProcess):
                          log_config=log_config,
                          **kwargs)
 
-        weights = self._create_csr_matrix_from_weights(weights)
+        weights = self._create_csr_matrix(weights)
         shape = weights.shape
 
         # Ports
@@ -77,18 +77,18 @@ class Sparse(AbstractProcess):
         self.a_out = OutPort(shape=(shape[0],))
 
         # Variables
-        self.weights = Var(shape=shape, init=weights)
+        self.weights = Var(shape=shape, init=weights.copy())
         self.a_buff = Var(shape=(shape[0],), init=0)
         self.num_message_bits = Var(shape=(1,), init=num_message_bits)
 
     @staticmethod
-    def _create_csr_matrix_from_weights(weights):
+    def _create_csr_matrix(matrix):
         # Transform weights to csr matrix
-        if isinstance(weights, np.ndarray):
-            weights = csr_matrix(weights)
+        if isinstance(matrix, np.ndarray):
+            matrix = csr_matrix(matrix)
         else:
-            weights = weights.tocsr()
-        return weights
+            matrix = matrix.tocsr()
+        return matrix
 
 
 class LearningSparse(LearningConnectionProcess, Sparse):
@@ -160,6 +160,8 @@ class LearningSparse(LearningConnectionProcess, Sparse):
     def __init__(self,
                  *,
                  weights: ty.Union[spmatrix, np.ndarray],
+                 tag_2: ty.Optional[ty.Union[spmatrix, np.ndarray]] = None,
+                 tag_1: ty.Optional[ty.Union[spmatrix, np.ndarray]] = None,
                  name: ty.Optional[str] = None,
                  num_message_bits: ty.Optional[int] = 0,
                  log_config: ty.Optional[LogConfig] = None,
@@ -172,6 +174,8 @@ class LearningSparse(LearningConnectionProcess, Sparse):
             learning_rule.x1_impulse = 0
 
         super().__init__(weights=weights,
+                         tag_2=tag_2,
+                         tag_1=tag_1,
                          shape=weights.shape,
                          num_message_bits=num_message_bits,
                          name=name,
@@ -180,17 +184,23 @@ class LearningSparse(LearningConnectionProcess, Sparse):
                          graded_spike_cfg=graded_spike_cfg,
                          **kwargs)
 
-        weights = self._create_csr_matrix_from_weights(weights)
-        shape = weights.shape
+        if tag_2 is None:
+            tag_2 = np.zeros(weights.shape)
 
-        # Ports
-        self.s_in = InPort(shape=(shape[1],))
-        self.a_out = OutPort(shape=(shape[0],))
+        if tag_1 is None:
+            tag_1 = np.zeros(weights.shape)
 
-        # Variables
-        self.weights = Var(shape=shape, init=weights)
-        self.a_buff = Var(shape=(shape[0],), init=0)
-        self.num_message_bits = Var(shape=(1,), init=num_message_bits)
+        tag_2 = self._create_csr_matrix(tag_2)
+        tag_1 = self._create_csr_matrix(tag_1)
+
+        self.tag_2.init = tag_2.copy()
+        self.tag_1.init = tag_1.copy()
+
+        self.proc_params["x_idx_active_syn_vars"] = {
+            "weights": weights.nonzero()[1],
+            "tag_2": tag_2.nonzero()[1],
+            "tag_1": tag_1.nonzero()[1]
+        }
 
 
 class DelaySparse(Sparse):
