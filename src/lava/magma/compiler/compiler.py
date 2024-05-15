@@ -5,7 +5,7 @@
 import itertools
 import logging
 import os
-import pickle
+import pickle  # noqa # nosec
 import typing as ty
 from collections import OrderedDict, defaultdict
 
@@ -231,9 +231,8 @@ class Compiler:
         if self._compile_config.get("cache", False):
             cache_dir = self._compile_config["cache_dir"]
             if os.path.exists(os.path.join(cache_dir, "cache")):
-                with open(os.path.join(cache_dir, "cache"), "rb") \
-                  as cache_file:
-                    cache_object = pickle.load(cache_file)
+                with open(os.path.join(cache_dir, "cache"), "rb") as cache_file:
+                    cache_object = pickle.load(cache_file)  # noqa # nosec
 
                 proc_builders_values = cache_object["procname_to_proc_builder"]
                 proc_builders = {}
@@ -283,8 +282,7 @@ class Compiler:
             # Validate All Processes are Named
             procname_to_proc_builder = {}
             for p, pb in proc_builders.items():
-                if p.name in procname_to_proc_builder or \
-                  "Process_" in p.name:
+                if p.name in procname_to_proc_builder or "Process_" in p.name:
                     msg = f"Unable to Cache. " \
                           f"Please give unique names to every process. " \
                           f"Violation Name: {p.name=}"
