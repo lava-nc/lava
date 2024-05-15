@@ -55,6 +55,7 @@ class AlgebraicMatrix(Network):
     """AlgebraicMatrix
     Provides matrix operator syntax for Networks.
     """
+
     def __matmul__(self, other):
         if isinstance(other, AlgebraicVector):
             other.out_port.connect(self.in_port)
@@ -72,17 +73,16 @@ class AlgebraicMatrix(Network):
             return NotImplemented
     # when chaining operations this is used for [weights1, weights2] + weights3
     __radd__ = __add__
-    
+
     def __mul__(self, other):
         if isinstance(other, AlgebraicMatrix):
-            ## create the product network
+            # create the product network
             print('prod', self.exp)
             # how to pass in exp?
             prod_layer = ProductVec(shape=self.shape, vth=1, exp=0)
-        
+
             prod_layer << (self, other)
-            
+
             return prod_layer
         else:
             return NotImplemented
-

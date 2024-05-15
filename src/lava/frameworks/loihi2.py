@@ -5,7 +5,7 @@
 from lava.networks.gradedvecnetwork import (InputVec, OutputVec, GradedVec,
                                             GradedDense, GradedSparse,
                                             ProductVec,
-                                            LIFVec, 
+                                            LIFVec,
                                             NormalizeNet)
 
 from lava.networks.resfire import ResFireVec

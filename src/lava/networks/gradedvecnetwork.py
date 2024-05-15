@@ -138,13 +138,15 @@ class GradedVec(AlgebraicVector):
         self.main = GradedVecProc(shape=self.shape, vth=self.vth, exp=self.exp)
         self.in_port = self.main.a_in
         self.out_port = self.main.s_out
-        
+
+        super().__init__()
+
     def __mul__(self, other):
         if isinstance(other, GradedVec):
-            ## create the product network
+            # create the product network
             print('prod', self.exp)
             prod_layer = ProductVec(shape=self.shape, vth=1, exp=self.exp)
-        
+
             weightsI = np.eye(self.shape[0])
 
             weights_A = GradedSparse(weights=weightsI)

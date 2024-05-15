@@ -13,7 +13,7 @@ class TestNetworks(unittest.TestCase):
     def test_networks_instantiate(self):
         inputvec = lv.InputVec(np.ones((1,)), shape=(1,))
         outputvec = lv.OutputVec(shape=(1,), buffer=1)
-        threshvec = lv.ThreshVec(shape=(1,))
+        threshvec = lv.GradedVec(shape=(1,))
         gradeddense = lv.GradedDense(weights=np.ones((1, 1)))
         gradedsparse = lv.GradedSparse(weights=csr_matrix(np.ones((1, 1))))
         productvec = lv.ProductVec(shape=(1,))
