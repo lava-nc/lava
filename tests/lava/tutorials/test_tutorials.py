@@ -1,4 +1,5 @@
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2024 Jannik Luboeinski
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -284,6 +285,11 @@ class TestTutorials(unittest.TestCase):
     def test_in_depth_11_serialization(self):
         """Test tutorial serialization."""
         self._run_notebook("tutorial11_serialization.ipynb")
+
+    @unittest.skipIf(system_name != "linux", "Tests work on linux")
+    def test_in_depth_12_adaptive_neurons(self):
+        """Test tutorial adaptive_neurons."""
+        self._run_notebook("tutorial12_adaptive_neurons.ipynb")
 
     @unittest.skipIf(system_name != "linux", "Tests work on linux")
     def test_in_depth_clp_01(self):

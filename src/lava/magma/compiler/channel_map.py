@@ -4,7 +4,7 @@
 
 import itertools
 import os
-import pickle
+import pickle  # noqa # nosec
 import typing as ty
 from collections import defaultdict
 from dataclasses import dataclass
@@ -32,6 +32,7 @@ class Payload:
 
 def lmt_init_id():
     return -1
+
 
 class ChannelMap(dict):
     """The ChannelMap is used by the SubCompilers during compilation to
@@ -193,15 +194,15 @@ class ChannelMap(dict):
             src_port_process: AbstractProcess = procname_to_proc_map[
                 src_port_info[0]]
             src: AbstractPort = getattr(src_port_process,
-                                             src_port_info[1])
+                                        src_port_info[1])
             dst_port_process: AbstractProcess = procname_to_proc_map[
                 dst_port_info[0]]
             dst: AbstractPort = getattr(dst_port_process,
-                                             dst_port_info[1])
+                                        dst_port_info[1])
             for port_pair, pld in self.items():
                 s, d = port_pair.src, port_pair.dst
                 if s.name == src.name and d.name == dst.name and \
                     s.process.name == src_port_process.name and \
-                    d.process.name == dst_port_process.name:
+                        d.process.name == dst_port_process.name:
                     pld.src_port_initializer = payload.src_port_initializer
                     pld.dst_port_initializer = payload.dst_port_initializer

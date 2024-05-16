@@ -179,8 +179,11 @@ def create_mock_proc_groups() -> ty.List[ProcGroup]:
     ]
 
     # Add mock PyProcModel instances to each of the Processes.
+    j = 1
     for p, pm_type in zip(proc_list, proc_model_types):
         type(p).model_class = PropertyMock(return_value=pm_type)
+        type(p).name = PropertyMock(return_value=f"Process{j}")
+        j += 1
         seal(p)
 
     proc_groups = [
