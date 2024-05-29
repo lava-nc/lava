@@ -8,6 +8,16 @@ from lava.magma.core.process.process import AbstractProcess
 import numpy as np
 from scipy.sparse import csr_matrix
 
+
+class NetworkList(list):
+    """NetworkList
+    This is a list subclass to keep track of Network objects that 
+    are added using the '+' operator.
+    """
+    def __init__(self, iterable):
+        super().__init__(iterable)
+
+        
 class Network:
     """Network
     Abstract Network object.
@@ -30,13 +40,24 @@ class Network:
             print('connecting network')
             other.out_port.connect(self.in_port)
             return self
-        elif isinstance(other, (list, tuple)):
+        elif isinstance(other, NetworkList):
             for o in other:
                 #o.out_port.connect(self.in_port)
                 self << o
             return self
         else:
             return NotImplemented
+    
+    def __add__(self, other):
+        if isinstance(other, Network):
+            return NetworkList([self, other])
+        elif isinstance(other, NetworkList):
+            other.append(self)
+            return other
+        else:
+            return NotImplemented
+    # When chaining operations this is used for [weights1, weights2] + weights3
+    __radd__ = __add__
 
 
 class AlgebraicVector(Network):
@@ -68,7 +89,7 @@ class AlgebraicVector(Network):
             print('connecting')
             other.out_port.connect(self.in_port)
             return self
-        elif isinstance(other, (list, tuple)):
+        elif isinstance(other, NetworkList):
             for o in other:
                 #o.out_port.connect(self.in_port)
                 self << o
@@ -89,19 +110,10 @@ class AlgebraicMatrix(Network):
         else:
             return NotImplemented
 
-    def __add__(self, other):
-        if isinstance(other, AlgebraicMatrix):
-            return [self, other]
-        elif isinstance(other, list):
-            other.append(self)
-            return other
-        else:
-            return NotImplemented
-    # when chaining operations this is used for [weights1, weights2] + weights3
-    __radd__ = __add__
-
+    # I'm not sure this works or has been tested...
     def __mul__(self, other):
         if isinstance(other, AlgebraicMatrix):
+            from lava.networks.gradedvecnetwork import ProductVec
             # create the product network
             print('prod', self.exp)
             # how to pass in exp?
