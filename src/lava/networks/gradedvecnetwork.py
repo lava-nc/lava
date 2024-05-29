@@ -18,7 +18,7 @@ from lava.proc import embedded_io as eio
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
-from .network import AlgebraicVector, AlgebraicMatrix
+from .network import Network, AlgebraicVector, AlgebraicMatrix
 
 
 class InputVec(AlgebraicVector):
@@ -60,7 +60,7 @@ class InputVec(AlgebraicVector):
         return NotImplemented
 
 
-class OutputVec(AlgebraicVector):
+class OutputVec(Network):
     """OutputVec
     Records spike output. Adds algebraic syntax to RingBuffer
 

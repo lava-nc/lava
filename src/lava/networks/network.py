@@ -5,6 +5,8 @@
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.process import AbstractProcess
 
+import numpy as np
+from scipy.sparse import csr_matrix
 
 class Network:
     """Network
@@ -22,6 +24,19 @@ class Network:
 
     def stop(self, **kwargs):
         self.main.stop(**kwargs)
+        
+    def __lshift__(self, other):
+        if isinstance(other, Network):
+            print('connecting network')
+            other.out_port.connect(self.in_port)
+            return self
+        elif isinstance(other, (list, tuple)):
+            for o in other:
+                #o.out_port.connect(self.in_port)
+                self << o
+            return self
+        else:
+            return NotImplemented
 
 
 class AlgebraicVector(Network):
@@ -39,13 +54,24 @@ class AlgebraicVector(Network):
         is higher than i.e. "^" which would not work. Comparisons have even
         lower precedence, "<=" could be better.
         """
-        if isinstance(other, Network):
+
+        if isinstance(other, AlgebraicVector):
+            # This import statement needs to be here to avoid a circular import error
+            from lava.networks.gradedvecnetwork import GradedSparse
+            print('v2v creating identity synapses')
+            weightsI = csr_matrix(np.eye(np.prod(self.shape)))
+            I_syn = GradedSparse(weights=weightsI)
+            other.out_port.connect(I_syn.in_port)
+            I_syn.out_port.connect(self.in_port)
+            return self
+        elif isinstance(other, Network):
             print('connecting')
             other.out_port.connect(self.in_port)
             return self
         elif isinstance(other, (list, tuple)):
             for o in other:
-                o.out_port.connect(self.in_port)
+                #o.out_port.connect(self.in_port)
+                self << o
             return self
         else:
             return NotImplemented
