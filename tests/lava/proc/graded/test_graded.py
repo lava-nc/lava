@@ -6,7 +6,8 @@ import unittest
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from lava.proc.graded.process import GradedVec, GradedReluVec, NormVecDelay, InvSqrt
+from lava.proc.graded.process import (GradedVec, GradedReluVec,
+                                      NormVecDelay, InvSqrt)
 from lava.proc.graded.models import inv_sqrt
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse
@@ -139,7 +140,7 @@ class TestGradedReluVecProc(unittest.TestCase):
 
         ww = np.floor(weights1 / 2) * 2
         expected_out = np.floor((ww @ inp_data) / 2**weight_exp)
-        expected_out *= expected_out > 0
+        expected_out *= expected_out > v_thresh
 
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 
@@ -180,7 +181,7 @@ class TestGradedReluVecProc(unittest.TestCase):
 
         ww = np.floor(weights1 / 2) * 2
         expected_out = np.floor((ww @ inp_data) / 2**weight_exp)
-        expected_out *= expected_out > 0
+        expected_out *= expected_out > v_thresh
 
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 

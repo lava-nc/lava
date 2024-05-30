@@ -11,7 +11,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
-from lava.proc.graded.process import GradedVec, GradedReluVec, NormVecDelay, InvSqrt
+from lava.proc.graded.process import (GradedVec, GradedReluVec,
+                                      NormVecDelay, InvSqrt)
 
 
 class AbstractGradedVecModel(PyLoihiProcessModel):
