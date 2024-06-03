@@ -105,7 +105,6 @@ class TestGradedReluVecProc(unittest.TestCase):
 
     def test_gradedreluvec_dot_dense(self):
         """Tests that GradedReluVec and Dense computes dot product"""
-        """Tests that GradedVec and Dense computes dot product"""
         num_steps = 10
         v_thresh = 1
 
