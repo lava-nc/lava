@@ -17,7 +17,7 @@ class AbstractSubCompiler(ABC):
     backend."""
 
     @abstractmethod
-    def compile(self, channel_map: ChannelMap) -> ChannelMap:
+    def compile(self, channel_map: ChannelMap, partitioning: ty.Dict={}) -> ChannelMap:
         """Partitions all Processes in the SubCompiler's ProcGroup onto the
         available resources."""
 
