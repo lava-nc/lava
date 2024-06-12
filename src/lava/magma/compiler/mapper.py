@@ -53,6 +53,11 @@ class Mapper:
         l_addrs: ty.List[NcLogicalAddress] = mappable.get_logical()
         p_addrs: ty.List[NcVirtualAddress] = []
         for l_addr in l_addrs:
+            # TODO (JM) : Hack placed for Yolo+CLP Integration
+            # This bypasses any remapping and straight honors the compilers
+            # Won't work in case of multiple NcProcCompilers associated with
+            # a single topology
+            self.mapper_core_dict[l_addr.core_id] = int(l_addr.core_id)
             if l_addr.core_id not in self.mapper_core_dict:
                 self.mapper_core_dict[l_addr.core_id] = self.mapper_core_offset
                 l_addr.core_id = self.mapper_core_offset
@@ -89,6 +94,11 @@ class Mapper:
             p_addrs: ty.List[ResourceAddress] = []
             for resource in ncb.compiled_resources:
                 l_addr: ResourceAddress = resource.l_address
+                # TODO (JM) : Hack placed for Yolo+CLP Integration
+                # This bypasses any remapping and straight honors the compilers
+                # Won't work in case of multiple NcProcCompilers associated with
+                # a single topology
+                self.mapper_core_dict[l_addr.core_id] = int(l_addr.core_id)
                 if l_addr.core_id not in self.mapper_core_dict:
                     self.mapper_core_dict[
                         l_addr.core_id] = self.mapper_core_offset
@@ -112,7 +122,8 @@ class Mapper:
 
             for var_port_initializer in ncb.var_ports.values():
                 self._set_virtual_address_nc(var_port_initializer, num_cores)
-            self.mapper_core_dict.clear()
+            # TODO: (JM) Hack to not clear out the dictionary for Yolo+CLP Integration
+            #self.mapper_core_dict.clear()
 
         # Iterate over all the cbuilder and map them
         for cb in c_builders.values():
