@@ -14,7 +14,6 @@ from lava.proc.prodneuron.process import ProdNeuron
 from lava.proc.graded.process import GradedVec as GradedVecProc
 from lava.proc.lif.process import LIF
 from lava.proc.io import sink, source
-from lava.proc import embedded_io as eio
 
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
@@ -52,6 +51,7 @@ class InputVec(AlgebraicVector):
         self.inport_plug = source.RingBuffer(data=np.atleast_2d(vec))
 
         if self.loihi2:
+            from lava.proc import embedded_io as eio
             self.inport_adapter = eio.spike.PyToNxAdapter(
                 shape=(self.shape[0],),
                 num_message_bits=24)
@@ -99,6 +99,7 @@ class OutputVec(Network):
             shape=self.shape, buffer=self.buffer, **kwargs)
 
         if self.loihi2:
+            from lava.proc import embedded_io as eio
             self.outport_adapter = eio.spike.NxToPyAdapter(
                 shape=self.shape, num_message_bits=self.num_message_bits)
             self.outport_adapter.out.connect(self.outport_plug.a_in)
