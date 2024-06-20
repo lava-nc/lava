@@ -7,7 +7,10 @@ import numpy as np
 
 
 class TestFrameworks(unittest.TestCase):
+    """Tests for framework import."""
+
     def test_frameworks_loihi2_import(self):
+        """Tests if framework import fails."""
         import lava.frameworks.loihi2 as lv
 
 

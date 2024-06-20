@@ -3,6 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+import typing as ty
 from scipy.sparse import csr_matrix
 
 from lava.proc.graded.process import InvSqrt
@@ -27,20 +28,25 @@ class InputVec(AlgebraicVector):
 
     Parameters
     ----------
-    vec: np.ndarray
+    vec : np.ndarray
         NxM array of input values. Input will repeat every M steps.
-    loihi2=False: bool
+    exp : int, optional
+        Set the fixed point base value
+    loihi2 : bool, optional
         Flag to create the adapters for loihi 2.
     """
 
-    def __init__(self, vec, **kwargs):
+    def __init__(self,
+                 vec: np.ndarray,
+                 loihi2: ty.Optional[bool] = False,
+                 exp: ty.Optional[int] = 0,
+                 **kwargs) -> None:
 
-        self.loihi2 = kwargs.pop('loihi2', False)
+        self.loihi2 = loihi2
         self.shape = np.atleast_2d(vec).shape
-        self.exp = kwargs.pop('exp', 0)
-        print(self.shape)
+        self.exp = exp
 
-        # convert it to fixed point base
+        # Convert it to fixed point base
         vec *= 2**self.exp
 
         self.inport_plug = source.RingBuffer(data=np.atleast_2d(vec))
@@ -56,7 +62,7 @@ class InputVec(AlgebraicVector):
             self.out_port = self.inport_plug.s_out
 
     def __lshift__(self, other):
-        # maybe this could be done with a numpy array and call set_data?
+        # Maybe this could be done with a numpy array and call set_data?
         return NotImplemented
 
 
@@ -66,23 +72,28 @@ class OutputVec(Network):
 
     Parameters
     ----------
-    shape=(1,): tuple(int)
+    shape : tuple(int)
         shape of the output to record
-    buffer=1: int
+    buffer : int, optional
         length of the recording.
         (buffer is overwritten if shorter than sim time).
-    loihi2=False: bool
+    loihi2 : bool, optional
         Flag to create the adapters for loihi 2.
-    num_message_bits=24: int
+    num_message_bits : int
         size of output message. ("0" is for unary spike event).
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 shape: ty.Tuple[int, ...],
+                 buffer: int = 1,
+                 loihi2: ty.Optional[bool] = False,
+                 num_message_bits: ty.Optional[int] = 24,
+                 **kwargs) -> None:
 
-        self.shape = kwargs.pop('shape', (1,))
-        self.buffer = kwargs.pop('buffer', 1)
-        self.loihi2 = kwargs.pop('loihi2', False)
-        self.num_message_bits = kwargs.pop('num_message_bits', 24)
+        self.shape = shape
+        self.buffer = buffer
+        self.loihi2 = loihi2
+        self.num_message_bits = num_message_bits
 
         self.outport_plug = sink.RingBuffer(
             shape=self.shape, buffer=self.buffer, **kwargs)
@@ -121,19 +132,23 @@ class GradedVec(AlgebraicVector):
 
     Parameters
     ----------
-    shape=(1,): tuple(int)
+    shape : tuple(int)
         Number and topology of neurons.
-    vth=10: int
+    vth : int, optional
         Threshold for spiking.
-    exp=0: int
+    exp : int, optional
         Fixed point base of the vector.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 shape: ty.Tuple[int, ...],
+                 vth: int = 10,
+                 exp: int = 0,
+                 **kwargs):
 
-        self.shape = kwargs.pop('shape', (1,))
-        self.vth = kwargs.pop('vth', 10)
-        self.exp = kwargs.pop('exp', 0)
+        self.shape = shape
+        self.vth = vth
+        self.exp = exp
 
         self.main = GradedVecProc(shape=self.shape, vth=self.vth, exp=self.exp)
         self.in_port = self.main.a_in
@@ -143,8 +158,7 @@ class GradedVec(AlgebraicVector):
 
     def __mul__(self, other):
         if isinstance(other, GradedVec):
-            # create the product network
-            print('prod', self.exp)
+            # Create the product network
             prod_layer = ProductVec(shape=self.shape, vth=1, exp=self.exp)
 
             weightsI = np.eye(self.shape[0])
@@ -167,18 +181,22 @@ class ProductVec(AlgebraicVector):
 
     Parameters
     ----------
-    shape: tuple(int)
+    shape : tuple(int)
         Number and topology of neurons.
-    vth=10: int
+    vth : int
         Threshold for spiking.
-    exp=0: int
+    exp : int
         Fixed point base of the vector.
     """
 
-    def __init__(self, **kwargs):
-        self.vth = kwargs.pop('vth', 10)
-        self.shape = kwargs.pop('shape', (1,))
-        self.exp = kwargs.pop('exp', 0)
+    def __init__(self,
+                 shape: ty.Tuple[int, ...],
+                 vth: ty.Optional[int] = 10,
+                 exp: ty.Optional[int] = 0,
+                 **kwargs):
+        self.shape = shape
+        self.vth = vth
+        self.exp = exp
 
         self.main = ProdNeuron(shape=self.shape, vth=self.vth, exp=self.exp)
 
@@ -188,12 +206,12 @@ class ProductVec(AlgebraicVector):
         self.out_port = self.main.s_out
 
     def __lshift__(self, other):
-        # we're going to override the behavior here
-        # since theres two ports the API idea is:
+        # We're going to override the behavior here,
+        # since there are two ports the API idea is:
         # prod_layer << (conn1, conn2)
         if isinstance(other, (list, tuple)):
-            # it should be only length 2, and a Network object,
-            # add checks
+            # It should be only length 2, and a Network object,
+            # TODO: add checks
             other[0].out_port.connect(self.in_port)
             other[1].out_port.connect(self.in_port2)
         else:
@@ -207,13 +225,21 @@ class GradedDense(AlgebraicMatrix):
     Parameters
     ----------
     See lava.proc.dense.process.Dense
+
+    weights : numpy.ndarray
+        Weight matrix expressed as floating point. Weights will be automatically
+        reconfigured to fixed point (may lead to changes due to rounding).
+    exp : int, optional
+        Fixed point base of the weight (reconfigures weights/weight_exp).
     """
 
-    def __init__(self, **kwargs):
-        weights = kwargs.pop("weights", 0)
-        self.exp = kwargs.pop("exp", 7)
+    def __init__(self,
+                 weights: np.ndarray,
+                 exp: int = 7,
+                 **kwargs):
+        self.exp = exp
 
-        # adjust the weights to the fixed point
+        # Adjust the weights to the fixed point
         w = weights * 2 ** self.exp
 
         self.main = Dense(weights=w,
@@ -232,11 +258,20 @@ class GradedSparse(AlgebraicMatrix):
     Parameters
     ----------
     See lava.proc.sparse.process.Sparse
+
+    weights : numpy.ndarray
+        Weight matrix expressed as floating point. Weights will be automatically
+        reconfigured to fixed point (may lead to changes due to rounding).
+    exp : int, optional
+        Fixed point base of the weight (reconfigures weights/weight_exp).
     """
 
-    def __init__(self, **kwargs):
-        weights = kwargs.pop("weights", 0)
-        self.exp = kwargs.pop("exp", 7)
+    def __init__(self,
+                 weights: np.ndarray,
+                 exp: int = 7,
+                 **kwargs):
+
+        self.exp = exp
 
         # Adjust the weights to the fixed point
         w = weights * 2 ** self.exp
@@ -255,15 +290,18 @@ class NormalizeNet(AlgebraicVector):
 
     Parameters
     ----------
-    shape: tuple(int)
+    shape : tuple(int)
         Number and topology of neurons.
-    exp: int
+    exp : int
         Fixed point base of the vector.
     """
 
-    def __init__(self, **kwargs):
-        self.shape = kwargs.pop('shape', (1,))
-        self.fpb = kwargs.pop('exp', 12)
+    def __init__(self,
+                 shape: ty.Tuple[int, ...],
+                 exp: ty.Optional[int] = 12,
+                 **kwargs):
+        self.shape = shape
+        self.fpb = exp
 
         vec_to_fpinv_w = np.ones((1, self.shape[0]))
         fpinv_to_vec_w = np.ones((self.shape[0], 1))

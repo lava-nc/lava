@@ -10,7 +10,10 @@ import lava.frameworks.loihi2 as lv
 
 
 class TestNetworks(unittest.TestCase):
+    """Tests for LVA Networks."""
+
     def test_networks_instantiate(self):
+        """Tests if LVA Networks can be instantiated."""
         inputvec = lv.InputVec(np.ones((1,)), shape=(1,))
         outputvec = lv.OutputVec(shape=(1,), buffer=1)
         threshvec = lv.GradedVec(shape=(1,))
