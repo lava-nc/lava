@@ -3,7 +3,7 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
-from .network import AlgebraicVector, AlgebraicMatrix
+from .network import AlgebraicVector
 from lava.proc.resfire.process import RFZero
 
 

@@ -4,7 +4,6 @@
 
 import numpy as np
 import typing as ty
-from scipy.sparse import csr_matrix
 
 from lava.proc.graded.process import InvSqrt
 from lava.proc.graded.process import NormVecDelay
@@ -14,9 +13,6 @@ from lava.proc.prodneuron.process import ProdNeuron
 from lava.proc.graded.process import GradedVec as GradedVecProc
 from lava.proc.lif.process import LIF
 from lava.proc.io import sink, source
-
-from lava.magma.core.process.variable import Var
-from lava.magma.core.process.ports.ports import InPort, OutPort
 
 from .network import Network, AlgebraicVector, AlgebraicMatrix
 

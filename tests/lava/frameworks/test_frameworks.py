@@ -3,7 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import unittest
-import numpy as np
 
 
 class TestFrameworks(unittest.TestCase):
