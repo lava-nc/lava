@@ -1,5 +1,4 @@
 # Copyright (C) 2022-2024 Intel Corporation
-# Copyright (C) 2024 Jannik Luboeinski
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
@@ -16,7 +15,7 @@ from test import support
 import lava
 import nbformat
 
-import tutorials  # wtf is this?
+import tutorials
 
 
 class TestTutorials(unittest.TestCase):
@@ -158,12 +157,6 @@ class TestTutorials(unittest.TestCase):
         cwd = os.getcwd()
         tutorials_temp_directory = tutorials.__path__.__dict__["_path"][0]
         tutorials_directory = ""
-
-        # WHYYYYYY?????
-        # if not e2e_tutorial:
-        #    tutorials_temp_directory = tutorials_temp_directory + "/in_depth"
-        # else:
-        #    tutorials_temp_directory = tutorials_temp_directory + "/end_to_end"
 
         tutorials_directory = os.path.realpath(tutorials_temp_directory)
         os.chdir(tutorials_directory)
