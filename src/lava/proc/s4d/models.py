@@ -7,14 +7,91 @@ from typing import Any, Dict
 from lava.proc.sdn.models import AbstractSigmaDeltaModel
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer
+from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer, S4d
 from lava.magma.core.resources import CPU
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.proc.sparse.process import Sparse
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 
+@implements(proc=S4d, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class S4dModel(PyLoihiProcessModel):
+    a_in = LavaPyType(PyInPort.VEC_DENSE, float)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
 
+    state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    s4_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+
+    # S4 vaiables
+    s4_state: np.ndarray = LavaPyType(np.ndarray, complex)
+    a: np.ndarray = LavaPyType(np.ndarray, complex)
+    b: np.ndarray = LavaPyType(np.ndarray, complex)
+    c: np.ndarray = LavaPyType(np.ndarray, complex)
+
+    def __init__(self, proc_params: Dict[str, Any]) -> None:
+        """
+        Neuron model that implements S4D
+        (as described by Gu et al., 2022) dynamics as its activation function.
+
+        Relevant parameters in proc_params
+        --------------------------
+        a: np.ndarray
+            Diagonal elements of the state matrix of the S4D model.
+        b: np.ndarray
+            Diagonal elements of the input matrix of the S4D model.
+        c: np.ndarray
+            Diagonal elements of the output matrix of the S4D model.
+        s4_state: np.ndarray
+            State vector of the S4D model.
+        """
+        super().__init__(proc_params)
+        self.a = self.proc_params['a']
+        self.b = self.proc_params['b']
+        self.c = self.proc_params['c']
+        self.s4_state = self.proc_params['s4_state']
+        if np.any(np.iscomplex(self.a)):
+            self.iscomplex = True
+            self.a_imag = self.a.imag
+            self.a_real = self.a.real
+            self.b_imag = self.b.imag
+            self.b_real = self.b.real
+            self.c_imag = self.c.imag
+            self.c_real = self.c.real
+            self.s4_state_imag = 0
+            self.s4_state_real = 0
+        else: 
+            self.iscomplex = False
+
+    def run_spk(self) -> None:
+        a_in_data = self.a_in.recv()
+        # Receive synaptic input
+        if False: # self.iscomplex:
+            self.s4_state_real_copy = np.copy(self.s4_state_real)
+            self.s4_state_imag_copy = np.copy(self.s4_state_imag)
+            self.s4_state_real = self.s4_state_real * self.a_real - self.s4_state_imag_copy * self.a_imag + a_in_data * self.b_real 
+            self.s4_state_imag = self.s4_state_imag * self.a_real + self.s4_state_real_copy * self.a_imag + a_in_data * self.b_imag
+            out_val = (2* self.c_real * self.s4_state_real) - (2* self.c_imag * self.s4_state_imag)
+
+            #out_val = (2* self.c_real * self.s4_state_real )
+            
+            
+            #self.s4_state = (self.s4_state * self.a + a_in_data * self.b).astype(np.csingle)
+            #self.s4_state_imag = self.s4_state_imag * self.a_real + a_in_data * self.b_imag
+
+            #old_out_val = np.real(self.c * self.s4_state * 2)
+
+            #print(f"{out_val=}")
+            #print(f"{old_out_val=}")
+            self.s_out.send(out_val)         
+
+        else:
+            self.s4_state = (self.s4_state * self.a + a_in_data * self.b)#.astype(np.csingle)
+            #self.s_out.send(np.real(self.s4_state))
+            self.s_out.send(np.real(self.c * self.s4_state * 2)) #.astype(np.csingle)))
+                        
 class AbstractSigmaS4dDeltaModel(AbstractSigmaDeltaModel):
     a_in = None
     s_out = None
