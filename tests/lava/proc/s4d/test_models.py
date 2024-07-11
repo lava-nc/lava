@@ -35,7 +35,7 @@ class TestS4DModel(unittest.TestCase):
 
         # Setup network: input -> expansion -> S4D neuron -> output
         kron_matrix = np.kron(np.eye(model_dim), np.ones((d_states, )))
-        spiker = io.source.RingBufferBuffer(data=inp)
+        spiker = io.source.RingBuffer(data=inp)
         sparse_1 = Sparse(weights=kron_matrix.T, num_message_bits=24)
         neuron = S4d(shape=((model_dim * d_states,)),
                      a=a,
