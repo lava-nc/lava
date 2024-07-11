@@ -90,14 +90,14 @@ class TestS4DModel(unittest.TestCase):
     def test_s4d_real_model_single_hidden_state(self) -> None:
         self.compare_s4d_model_to_original_equations(is_real=True, d_states=1)
 
-    def test_s4d_complex_model_multiple_hidden_state(self) -> None:
-        self.compare_s4d_model_to_original_equations(is_real=False, d_states=5)
-
-    def test_s4d_real_model_single_hidden_state(self) -> None:
-        self.compare_s4d_model_to_original_equations(is_real=True, d_states=1)
-
     def test_s4d_real_model_multiple_hidden_state(self) -> None:
         self.compare_s4d_model_to_original_equations(is_real=True, d_states=5)
+
+    def test_s4d_complex_model_single_hidden_state(self) -> None:
+        self.compare_s4d_model_to_original_equations(is_real=False, d_states=1)
+
+    def test_s4d_complex_model_multiple_hidden_state(self) -> None:
+        self.compare_s4d_model_to_original_equations(is_real=False, d_states=5)
 
 
 class TestSigmaS4DDeltaModels(unittest.TestCase):
