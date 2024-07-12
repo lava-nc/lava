@@ -92,7 +92,7 @@ class NormVecDelayModel(PyLoihiProcessModel):
 
 @implements(proc=InvSqrt, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('float')
+@tag('floating_pt')
 class InvSqrtModelFloat(PyLoihiProcessModel):
     """Implementation of InvSqrt in floating point"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
@@ -111,9 +111,19 @@ class InvSqrtModelFloat(PyLoihiProcessModel):
         self.s_out.send(sp_out)
 
 
-def make_fpinv_table(fp_base):
+def make_fpinv_table(fp_base: int) -> np.ndarray:
     """
-    Creates the table for fp inverse algorithm.
+    Creates the table for fp inverse square root algorithm.
+
+    Parameters
+    ----------
+    fp_base : int
+        Base of the fixed point.
+
+    Returns
+    -------
+    Y_est : np.ndarray
+        Initialization look-up table for fp inverse square root.
     """
     n_bits = 24
     B = 2**fp_base
@@ -121,22 +131,49 @@ def make_fpinv_table(fp_base):
     Y_est = np.zeros((n_bits), dtype='int')
     n_adj = 1.238982962
 
-    for m in range(n_bits):  # span the 24 bits, negate the decimal base
+    for m in range(n_bits):  # Span the 24 bits, negate the decimal base
         Y_est[n_bits - m - 1] = 2 * int(B / (2**((m - fp_base) / 2) * n_adj))
 
     return Y_est
 
 
-def clz(val):
+def clz(val: int) -> int:
     """
     Count lead zeros.
+
+    Parameters
+    ----------
+    val : int
+        Integer value for counting lead zeros.
+
+    Returns
+    -------
+    out_val : int
+        Number of leading zeros.
     """
-    return (24 - (int(np.log2(val)) + 1))
+    out_val = (24 - (int(np.log2(val)) + 1))
+    return out_val
 
 
-def inv_sqrt(s_fp, n_iters=5, b_fraction=12):
+def inv_sqrt(s_fp: int,
+             n_iters: int = 5,
+             b_fraction: int = 12) -> int:
     """
-    Runs the fixed point inverse square root algorithm
+    Runs the fixed point inverse square root algorithm.
+
+    Parameters
+    ----------
+    s_fp : int
+        Fixed point value to calulate inverse square root.
+    n_iters : int, optional
+        Number of iterations for fixed point inverse square root algorithm.
+    b_fraction : int, optional
+        Fixed point base.
+
+    Returns
+    -------
+    y_i : int
+        Approximate inverse square root in fixed point.
     """
     Y_est = make_fpinv_table(b_fraction)
     m = clz(s_fp)

@@ -17,10 +17,10 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 
 
 class TestGradedVecProc(unittest.TestCase):
-    """Tests for GradedVec"""
+    """Tests for GradedVec."""
 
     def test_gradedvec_dot_dense(self):
-        """Tests that GradedVec and Dense computes dot product"""
+        """Tests that GradedVec and Dense computes dot product."""
         num_steps = 10
         v_thresh = 1
 
@@ -59,7 +59,7 @@ class TestGradedVecProc(unittest.TestCase):
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 
     def test_gradedvec_dot_sparse(self):
-        """Tests that GradedVec and Dense computes dot product"""
+        """Tests that GradedVec and Dense computes dot product."""
         num_steps = 10
         v_thresh = 1
 
@@ -103,8 +103,8 @@ class TestInvSqrtProc(unittest.TestCase):
     """Tests for inverse square process."""
 
     def test_invsqrt_calc(self):
-        """Checks the InvSqrt calculation"""
-        fp_base = 12  # base of the decimal point
+        """Checks the InvSqrt calculation."""
+        fp_base = 12  # Base of the decimal point
 
         num_steps = 25
         weights1 = np.zeros((1, 1))
@@ -147,10 +147,10 @@ class TestInvSqrtProc(unittest.TestCase):
 
 
 class TestNormVecDelayProc(unittest.TestCase):
-    """Tests for NormVecDelay"""
+    """Tests for NormVecDelay."""
 
     def test_norm_vec_delay_out1(self):
-        """Checks the first channel output of NormVecDelay"""
+        """Checks the first channel output of NormVecDelay."""
         weight_exp = 7
         num_steps = 10
 
@@ -203,17 +203,19 @@ class TestNormVecDelayProc(unittest.TestCase):
         ch1 = (weights1 @ inp_data1) / 2**weight_exp
         ch2 = (weights2 @ inp_data2) / 2**weight_exp
 
-        # I'm using roll to account for the two step delay but hacky
-        # be careful if inputs change
-        # hmm.. there seems to be a delay step missing compared to
+        # I'm using roll to account for the two step delay in NormVecDelay.
+        # However, this is a hack, as the inputs need to be 0 at the end
+        # of the simulation, since roll wraps the values.
+        # Be wary that this potentially won't be correct with different inputs.
+        # There seems to be a delay step missing compared to
         # ncmodel, not sure where the delay should go...
         expected_out = np.roll(ch1, 1) * ch2
 
-        # Then there is one extra timestep from hardware
+        # Then there is one extra delay timestep from hardware
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
     def test_norm_vec_delay_out2(self):
-        """Checks the second channel output of NormVecDelay"""
+        """Checks the second channel output of NormVecDelay."""
         weight_exp = 7
         num_steps = 10
 
@@ -265,7 +267,7 @@ class TestNormVecDelayProc(unittest.TestCase):
 
         ch1 = (weights1 @ inp_data1) / 2**weight_exp
         expected_out = ch1 ** 2
-        # then there is one extra timestep from hardware
+        # Then there is one extra timestep from hardware
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
 
