@@ -14,7 +14,10 @@ from lava.magma.core.run_configs import Loihi2SimCfg
 
 
 class TestProdNeuronProc(unittest.TestCase):
+    """Tests for ProdNeuron."""
+
     def test_prod_neuron_out(self):
+        """Tests prod neuron calcultion is correct."""
         weight_exp = 7
         num_steps = 10
 
@@ -68,7 +71,7 @@ class TestProdNeuronProc(unittest.TestCase):
         ch2 = (weights2 @ inp_data2) / 2**weight_exp
 
         expected_out = ch1 * ch2
-        # then there is one extra timestep from hardware
+        # Then there is one extra timestep from hardware
         self.assertTrue(np.all(expected_out[:, :-1] == out_data[:, 1:]))
 
 

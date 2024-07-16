@@ -20,7 +20,7 @@ class ProdNeuron(AbstractProcess):
         Multiplies two graded inputs and outputs result as graded spike.
 
         v[t] = (a_in1 * a_in2) >> exp
-        s_out = v[t] * (v[t] > vth)
+        s_out = v[t] * (|v[t]| > vth)
 
         Parameters
         ----------

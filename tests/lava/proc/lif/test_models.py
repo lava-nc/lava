@@ -837,12 +837,13 @@ class TestLIFRefractory(unittest.TestCase):
         refractory_period = 1
 
         # Two neurons with different biases
+        # No Input current provided to make the voltage dependent on the bias
         lif_refractory = LIFRefractory(shape=(num_neurons,),
-                                       u=np.arange(num_neurons),
+                                       u=np.zeros(num_neurons),
                                        bias_mant=np.arange(num_neurons) + 1,
                                        bias_exp=np.ones(
                                            (num_neurons,), dtype=float),
-                                       vth=4.,
+                                       vth=4,
                                        refractory_period=refractory_period)
 
         v_logger = io.sink.Read(buffer=num_steps)
@@ -856,6 +857,6 @@ class TestLIFRefractory(unittest.TestCase):
 
         # Voltage is expected to remain at reset level for two time steps
         v_expected = np.array([[1, 2, 3, 4, 0, 0, 1, 2],
-                               [2, 0, 0, 2, 0, 0, 2, 0]], dtype=float)
+                               [2, 4, 0, 0, 2, 4, 0, 0]], dtype=float)
 
         assert_almost_equal(v, v_expected)

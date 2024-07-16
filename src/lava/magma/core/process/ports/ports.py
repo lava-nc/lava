@@ -432,6 +432,17 @@ class OutPort(AbstractIOPort, AbstractSrcPort):
     sub processes.
     """
 
+    def __init__(self, shape: ty.Tuple[int, ...]):
+        super().__init__(shape)
+        self.external_pipe_flag = False
+        self.external_pipe_buffer_size = 64
+
+    def flag_external_pipe(self, buffer_size=None):
+        self.external_pipe_flag = True
+
+        if buffer_size is not None:
+            self.external_pipe_buffer_size = buffer_size
+
     def connect(
             self,
             ports: ty.Union["AbstractIOPort", ty.List["AbstractIOPort"]],
@@ -492,6 +503,15 @@ class InPort(AbstractIOPort, AbstractDstPort):
     ):
         super().__init__(shape)
         self._reduce_op = reduce_op
+
+        self.external_pipe_flag = False
+        self.external_pipe_buffer_size = 64
+
+    def flag_external_pipe(self, buffer_size=None):
+        self.external_pipe_flag = True
+
+        if buffer_size is not None:
+            self.external_pipe_buffer_size = buffer_size
 
     def connect(self,
                 ports: ty.Union["InPort", ty.List["InPort"]],
