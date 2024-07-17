@@ -21,7 +21,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.5.8_py3.10
+      uses: lava-nc/ci-setup-composite-action@v1.5.9_py3.10
       with:
         repository: 'Lava'    
 
@@ -39,7 +39,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.5.8_py3.10
+      uses: lava-nc/ci-setup-composite-action@v1.5.9_py3.10
       with:
         repository: 'Lava'
 
@@ -62,7 +62,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.5.8_py3.10
+      uses: lava-nc/ci-setup-composite-action@v1.5.9_py3.10
       with:
         repository: 'Lava'
 
