@@ -23,6 +23,7 @@ class S4dModel(PyLoihiProcessModel):
     a_in = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
     s4_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    inp_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
 
     # S4 variables
     s4_state: np.ndarray = LavaPyType(np.ndarray, complex)

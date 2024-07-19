@@ -18,7 +18,8 @@ class S4d(AbstractProcess):
             b: float,
             c: float,
             s4_state: ty.Optional[int] = 0,
-            s4_exp: ty.Optional[int] = 0) -> None:
+            s4_exp: ty.Optional[int] = 0,
+            inp_exp: ty.Optional[int] = 0) -> None:
         """
         Neuron process that implements S4D (described by
         Gu et al., 2022) dynamics.
@@ -55,6 +56,10 @@ class S4d(AbstractProcess):
             Scaling exponent with base 2 for the S4 state variables.
             Note: This should only be used for nc models.
             Default is 0.
+        inp_exp: int
+            Bit precision of the input signal.
+            Note: This should only be used for nc models.
+            Default is 0.
         """
 
         super().__init__(shape=shape,
@@ -62,7 +67,8 @@ class S4d(AbstractProcess):
                          b=b,
                          c=c,
                          s4_state=s4_state,
-                         s4_exp=s4_exp)
+                         s4_exp=s4_exp,
+                         inp_exp=inp_exp)
         # Ports
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
@@ -71,8 +77,9 @@ class S4d(AbstractProcess):
         self.a = Var(shape=shape, init=a)
         self.b = Var(shape=shape, init=b)
         self.c = Var(shape=shape, init=c)
-        self.s4_state = Var(shape=shape, init=0)
+        self.s4_state = Var(shape=shape, init=s4_state)
         self.s4_exp = Var(shape=(1,), init=s4_exp)
+        self.inp_exp = Var(shape=(1,), init=inp_exp)
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
