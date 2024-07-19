@@ -477,9 +477,8 @@ class PyLifRefractoryModelFloat(AbstractPyLifModelFloat):
         self.u[:] = self.u * (1 - self.du)
         self.u[:] += activation_in
         non_refractory = self.refractory_period_end < self.time_step
-        self.v[non_refractory] = (self.v[non_refractory] * (
-            (1 - self.dv) + self.u[non_refractory])
-            + self.bias_mant[non_refractory])
+        self.v[non_refractory] = self.v[non_refractory] * (1 - self.dv) + (
+            self.u[non_refractory] + self.bias_mant[non_refractory])
 
     def process_spikes(self, spike_vector: np.ndarray):
         self.refractory_period_end[spike_vector] = (self.time_step
