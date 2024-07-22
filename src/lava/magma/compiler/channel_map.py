@@ -4,6 +4,7 @@
 
 import itertools
 import os
+
 import pickle  # noqa # nosec
 import typing as ty
 from collections import defaultdict
