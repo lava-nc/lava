@@ -5,7 +5,7 @@
 import itertools
 import logging
 import os
-import pickle
+import pickle  # noqa: S403 # nosec
 import typing as ty
 from collections import OrderedDict, defaultdict
 
@@ -232,8 +232,8 @@ class Compiler:
             cache_dir = self._compile_config["cache_dir"]
             if os.path.exists(os.path.join(cache_dir, "cache")):
                 with open(os.path.join(cache_dir, "cache"), "rb") \
-                  as cache_file:
-                    cache_object = pickle.load(cache_file)
+                        as cache_file:
+                    cache_object = pickle.load(cache_file)  # noqa: S301 # nosec
 
                 proc_builders_values = cache_object["procname_to_proc_builder"]
                 proc_builders = {}
@@ -284,7 +284,7 @@ class Compiler:
             procname_to_proc_builder = {}
             for p, pb in proc_builders.items():
                 if p.name in procname_to_proc_builder or \
-                  "Process_" in p.name:
+                        "Process_" in p.name:
                     msg = f"Unable to Cache. " \
                           f"Please give unique names to every process. " \
                           f"Violation Name: {p.name=}"
@@ -763,8 +763,8 @@ class Compiler:
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
                 rs_kwargs = {
-                    "c_builders" : list(c_builders.values()),
-                    "nc_builders" : list(nc_builders.values())
+                    "c_builders": list(c_builders.values()),
+                    "nc_builders": list(nc_builders.values())
                 }
                 if isinstance(run_cfg, AbstractLoihiHWRunCfg):
                     rs_kwargs["callback_fxs"] = run_cfg.callback_fxs
