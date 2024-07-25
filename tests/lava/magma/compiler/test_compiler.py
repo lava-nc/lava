@@ -170,7 +170,7 @@ def create_mock_proc_groups() -> ty.List[ProcGroup]:
     py_pg2_p1 = Mock(spec_set=AbstractProcess())
     py_pg2_p2 = Mock(spec_set=AbstractProcess())
 
-    py_pg1_p1.configure_mock(name='py_pg1_p1') 
+    py_pg1_p1.configure_mock(name='py_pg1_p1')
     py_pg2_p1.configure_mock(name='py_pg2_p1')
     py_pg2_p2.configure_mock(name='py_pg2_p2')
 
