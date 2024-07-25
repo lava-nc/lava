@@ -119,8 +119,7 @@ class ChannelMap(dict):
 
     def set_port_initializer(self,
                              port: AbstractPort,
-                             port_initializer: PortInitializer
-    ):
+                             port_initializer: PortInitializer):
         if port in self._initializers_lookup.keys():
             raise AssertionError(
                 "An initializer for this port has already " "been assigned."
