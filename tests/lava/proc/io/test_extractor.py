@@ -61,9 +61,9 @@ class PySendProcModel(PyLoihiProcessModel):
 class TestExtractor(unittest.TestCase):
     def test_init(self):
         """Test that the Extractor Process is instantiated correctly."""
-        in_shape = (1,)
+        shape = (1,)
 
-        extractor = Extractor(shape=in_shape)
+        extractor = Extractor(shape=shape)
 
         self.assertIsInstance(extractor, Extractor)
 
@@ -73,11 +73,10 @@ class TestExtractor(unittest.TestCase):
         self.assertEqual(config.receive_empty, utils.ReceiveEmpty.BLOCKING)
         self.assertEqual(config.receive_not_empty, utils.ReceiveNotEmpty.FIFO)
 
-        self.assertIsInstance(extractor.proc_params["pm_to_p_src_port"],
-                              CspSendPort)
-
         self.assertIsInstance(extractor.in_port, InPort)
-        self.assertEqual(extractor.in_port.shape, in_shape)
+        self.assertEqual(extractor.in_port.shape, shape)
+        self.assertIsInstance(extractor.out_port, OutPort)
+        self.assertEqual(extractor.out_port.shape, shape)
 
     def test_invalid_shape(self):
         """Test that instantiating the Extractor Process with an invalid
@@ -142,20 +141,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
     def test_init(self):
         """Test that the PyLoihiExtractorModel ProcessModel is instantiated
         correctly."""
-        shape = (1, )
-        buffer_size = 10
 
-        multi_processing = MultiProcessing()
-        multi_processing.start()
-        channel = PyPyChannel(message_infrastructure=multi_processing,
-                              src_name="src",
-                              dst_name="dst",
-                              shape=shape,
-                              dtype=float,
-                              size=buffer_size)
-
-        proc_params = {"channel_config": utils.ChannelConfig(),
-                       "pm_to_p_src_port": channel.src_port}
+        proc_params = {"channel_config": utils.ChannelConfig()}
 
         pm = PyLoihiExtractorModel(proc_params)
 
@@ -295,6 +282,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = extractor.compile(run_cfg=run_cfg)
+        extractor.create_runtime(run_cfg=run_cfg, executable=ex)
 
         shared_queue = Queue(2)
 
@@ -345,7 +334,14 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
         extractor = Extractor(shape=data_shape, buffer_size=buffer_size,
                               channel_config=channel_config)
 
+        run_cfg = Loihi2SimCfg()
+        run_condition = RunSteps(num_steps=1)
+        ex = extractor.compile(run_cfg=run_cfg)
+        extractor.create_runtime(run_cfg=run_cfg, executable=ex)
+
         recv_data = extractor.receive()
+        extractor.run(condition=run_condition)
+        extractor.stop()
 
         np.testing.assert_equal(recv_data, np.zeros(data_shape))
 
@@ -440,6 +436,8 @@ class TestPyLoihiExtractorModel(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
+        ex = extractor.compile(run_cfg=run_cfg)
+        extractor.create_runtime(run_cfg=run_cfg, executable=ex)
 
         shared_queue = Queue(num_steps)
 
@@ -531,9 +529,6 @@ class TestVarWire(unittest.TestCase):
         self.assertEqual(config.send_full, utils.SendFull.BLOCKING)
         self.assertEqual(config.receive_empty, utils.ReceiveEmpty.BLOCKING)
         self.assertEqual(config.receive_not_empty, utils.ReceiveNotEmpty.FIFO)
-
-        self.assertIsInstance(listener.proc_params["pm_to_p_src_port"],
-                              CspSendPort)
 
         self.assertIsInstance(listener.wire_tap, RefPort)
         self.assertEqual(listener.wire_tap.shape, lif.u.shape)
