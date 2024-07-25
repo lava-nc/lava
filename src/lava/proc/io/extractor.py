@@ -10,7 +10,9 @@ from lava.magma.core.process.ports.ports import InPort, OutPort, RefPort, Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.model import PyAsyncProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort, PyRefPort
 from lava.magma.compiler.channels.pypychannel import PyPyChannel
@@ -122,6 +124,30 @@ class PyLoihiExtractorModel(PyLoihiProcessModel):
     def run_spk(self) -> None:
         self._send(self.out_port.csp_ports[-1],
                    self.in_port.recv())
+
+
+@implements(proc=Extractor, protocol=AsyncProtocol)
+@requires(CPU)
+class PyLoihiExtractorModelAsync(PyAsyncProcessModel):
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+
+    def __init__(self, proc_params: dict) -> None:
+        super().__init__(proc_params=proc_params)
+
+        channel_config = self.proc_params["channel_config"]
+        self._pm_to_p_src_port = self.proc_params["pm_to_p_src_port"]
+        self._pm_to_p_src_port.start()
+
+        self._send = channel_config.get_send_full_function()
+        self.time_step = 1
+
+    def run_async(self) -> None:
+        while self.time_step != self.num_steps + 1:
+            self._send(self._pm_to_p_src_port, self.in_port.recv())
+            self.time_step += 1
+
+    def __del__(self) -> None:
+        self._pm_to_p_src_port.join()
 
 
 class VarWire(AbstractProcess):

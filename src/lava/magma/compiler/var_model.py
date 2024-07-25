@@ -269,6 +269,14 @@ class NcSpikeIOVarModel(NcVarModel):
     interface: SpikeIOInterface = SpikeIOInterface.ETHERNET
     spike_io_port: SpikeIOPort = SpikeIOPort.ETHERNET
     spike_io_mode: SpikeIOMode = SpikeIOMode.TIME_COMPARE
+    ethernet_chip_id: ty.Optional[ty.Tuple[int, int, int]] = None
+    ethernet_chip_idx: ty.Optional[int] = None
     decode_config: ty.Optional[DecodeConfig] = None
     time_compare: ty.Optional[TimeCompare] = None
     spike_encoder: ty.Optional[SpikeEncoder] = None
+
+
+@dataclass
+class NcConvSpikeInVarModel(NcSpikeIOVarModel):
+    # Tuple will be in the order of [atom_paylod, atom_axon, addr_idx]
+    region_map: ty.List[ty.List[ty.Tuple[int, int, int]]] = None
