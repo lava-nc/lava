@@ -96,7 +96,7 @@ class ChannelMap(dict):
         return channel_map
 
     @classmethod
-    def _get_port_pairs_from_proc_groups(self,
+    def _get_port_pairs_from_proc_groups(cls,
                                          proc_groups: ty.List[ProcGroup]):
         """Loop over processes connectivity and get all connected port pairs."""
         processes = list(itertools.chain.from_iterable(proc_groups))
@@ -108,7 +108,7 @@ class ChannelMap(dict):
             for src_port in src_ports:
                 dst_ports = src_port.get_dst_ports()
                 for dst_port in dst_ports:
-                    if self._is_leaf_process_port(dst_port, processes):
+                    if cls._is_leaf_process_port(dst_port, processes):
                         port_pairs.append(PortPair(src=src_port, dst=dst_port))
         return port_pairs
 
