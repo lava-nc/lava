@@ -10,7 +10,9 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.model import PyAsyncProcessModel
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.sync.protocols.async_protocol import AsyncProtocol
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.proc.io import utils
@@ -122,3 +124,48 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
                 elements_in_buffer)
 
         self.out_port.send(data)
+
+    def __del__(self) -> None:
+        self._p_to_pm_dst_port.join()
+
+
+@implements(proc=Injector, protocol=AsyncProtocol)
+@requires(CPU)
+class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
+    """PyAsyncProcessModel for the Injector Process."""
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
+
+    def __init__(self, proc_params: dict) -> None:
+        super().__init__(proc_params=proc_params)
+
+        shape = self.proc_params["shape"]
+        channel_config = self.proc_params["channel_config"]
+        self._p_to_pm_dst_port = self.proc_params["p_to_pm_dst_port"]
+        self._p_to_pm_dst_port.start()
+
+        self._zeros = np.zeros(shape)
+
+        self._receive_when_empty = channel_config.get_receive_empty_function()
+        self._receive_when_not_empty = \
+            channel_config.get_receive_not_empty_function()
+        self.time_step = 1
+
+    def run_async(self) -> None:
+        while self.time_step != self.num_steps + 1:
+            self._zeros.fill(0)
+            elements_in_buffer = self._p_to_pm_dst_port._queue.qsize()
+
+            if elements_in_buffer == 0:
+                data = self._receive_when_empty(
+                    self._p_to_pm_dst_port,
+                    self._zeros)
+            else:
+                data = self._receive_when_not_empty(
+                    self._p_to_pm_dst_port,
+                    self._zeros,
+                    elements_in_buffer)
+            self.out_port.send(data)
+            self.time_step += 1
+
+    def __del__(self) -> None:
+        self._p_to_pm_dst_port.join()

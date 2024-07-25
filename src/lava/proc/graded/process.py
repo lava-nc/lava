@@ -10,12 +10,23 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
-def loihi2round(vv):
+def loihi2round(vv: np.ndarray) -> np.ndarray:
     """
     Round values in numpy array the way loihi 2
     performs rounding/truncation.
+
+    Parameters
+    ----------
+    vv : np.ndarray
+        Input values to be rounded consistent with loihi2 rouding.
+
+    Returns
+    -------
+    vv_r : np.ndarray
+        Output values rounded consistent with loihi2 rouding.
     """
-    return np.fix(vv + (vv > 0) - 0.5).astype('int')
+    vv_r = np.fix(vv + (vv > 0) - 0.5).astype('int')
+    return vv_r
 
 
 class GradedVec(AbstractProcess):
@@ -67,12 +78,12 @@ class GradedReluVec(AbstractProcess):
 
     Parameters
     ----------
-    shape: tuple(int)
-        number and topology of neurons
-    vth: int
-        threshold for spiking
-    exp: int
-        fixed point base
+    shape : tuple(int)
+        Number and topology of neurons.
+    vth : int
+        Threshold for spiking.
+    exp : int
+        Fixed point base.
     """
 
     def __init__(
@@ -117,12 +128,12 @@ class NormVecDelay(AbstractProcess):
 
     Parameters
     ----------
-    shape: tuple(int)
-        number and topology of neurons
-    vth: int
-        threshold for spiking
-    exp: int
-        fixed point base
+    shape : tuple(int)
+        Number and topology of neurons.
+    vth : int
+        Threshold for spiking.
+    exp : int
+        Fixed point base.
     """
 
     def __init__(
@@ -162,8 +173,11 @@ class InvSqrt(AbstractProcess):
 
     Parameters
     ----------
+    shape : tuple(int)
+        Number and topology of neurons.
+
     fp_base : int
-        Base of the fixed-point representation
+        Base of the fixed-point representation.
     """
 
     def __init__(
@@ -172,7 +186,7 @@ class InvSqrt(AbstractProcess):
             fp_base: ty.Optional[int] = 12) -> None:
         super().__init__(shape=shape)
 
-        # base of the decimal point
+        # Base of the decimal point
         self.fp_base = Var(shape=(1,), init=fp_base)
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)

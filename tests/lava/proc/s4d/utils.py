@@ -4,16 +4,23 @@
 
 import os
 import numpy as np
-from typing import Tuple
+from typing import List, Tuple
 
 
-def get_coefficients() -> [np.ndarray, np.ndarray, np.ndarray]:
+def get_coefficients(
+        is_real: bool = True) -> [np.ndarray, np.ndarray, np.ndarray]:
     curr_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # Initialize A, B and C with values trained on efficientnet features.
-    s4d_A = np.load(curr_dir + "/s4d_A.dat.npy").flatten()
-    s4d_B = np.load(curr_dir + "/s4d_B.dat.npy").flatten()
-    s4d_C = np.load(curr_dir + "/s4d_C.dat.npy").flatten().flatten()
+    # Initialize A, B and C with values
+    if is_real:
+        s4d_A = np.load(curr_dir + "/s4d_A.dat.npy").flatten()
+        s4d_B = np.load(curr_dir + "/s4d_B.dat.npy").flatten()
+        s4d_C = np.load(curr_dir + "/s4d_C.dat.npy").flatten().flatten()
+    else:
+        s4d_A = np.load(curr_dir + "/dA_complex.npy").flatten()
+        s4d_B = np.load(curr_dir + "/dB_complex.npy").flatten()
+        s4d_C = np.load(curr_dir + "/dC_complex.npy").flatten().flatten()
+
     return s4d_A, s4d_B, s4d_C
 
 
@@ -24,9 +31,10 @@ def run_original_model(
         d_states: int,
         a: np.ndarray,
         b: np.ndarray,
-        c: np.ndarray) -> Tuple[np.ndarray]:
+        c: np.ndarray,
+        perform_reduction: bool = True) -> Tuple[np.ndarray]:
     """
-    Run original S4d model.
+    Run original S4d model in full precision.
 
     This function simulates the behavior of a linear time-invariant system
     with diagonalized state-space representation. (S4D)
@@ -50,7 +58,7 @@ def run_original_model(
 
     Parameters
     ----------
-    input: np.ndarray
+    inp: np.ndarray
         Input signal to the model.
     num_steps: int
         Number of time steps to simulate the model.
@@ -79,9 +87,10 @@ def run_original_model(
     out = np.zeros((model_dim * d_states, num_steps))
     s4_state = np.zeros((model_dim * d_states,)).flatten()
 
-    for idx, inp in enumerate(expanded_inp.T):
-        s4_state = np.multiply(s4_state, a) + np.multiply(inp, b)
-        out[:, idx] = np.multiply(c, s4_state) * 2
+    for idx, data_in in enumerate(expanded_inp.T):
+        s4_state = s4_state * a + data_in * b
+        out[:, idx] = np.real(c * s4_state * 2)
 
-    out = np.matmul(expansion_weights, out)
+    if perform_reduction:
+        out = np.matmul(expansion_weights, out)
     return out

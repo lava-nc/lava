@@ -4,7 +4,34 @@
 
 import unittest
 import numpy as np
-from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer
+from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer, S4d
+
+
+class TestS4dProcess(unittest.TestCase):
+    """Tests for S4d Class"""
+
+    def test_init(self) -> None:
+        """Tests instantiation of S4d"""
+        shape = 10
+        s4_exp = 12
+        inp_exp = 8
+        a = np.ones(shape) * 0.5
+        b = np.ones(shape) * 0.8
+        c = np.ones(shape) * 0.9
+        s4d = S4d(shape=(shape,),
+                  s4_exp=s4_exp,
+                  inp_exp=inp_exp,
+                  a=a,
+                  b=b,
+                  c=c)
+
+        self.assertEqual(s4d.shape, (shape,))
+        self.assertEqual(s4d.s4_exp.init, s4_exp)
+        self.assertEqual(s4d.inp_exp.init, inp_exp)
+        np.testing.assert_array_equal(s4d.a.init, a)
+        np.testing.assert_array_equal(s4d.b.init, b)
+        np.testing.assert_array_equal(s4d.c.init, c)
+        self.assertEqual(s4d.s4_state.init, 0)
 
 
 class TestSigmaS4dDeltaProcess(unittest.TestCase):
@@ -37,7 +64,7 @@ class TestSigmaS4dDeltaProcess(unittest.TestCase):
         self.assertEqual(sigma_s4_delta.state_exp.init, state_exp)
         self.assertEqual(sigma_s4_delta.s4_state.init, 0)
 
-        # default sigmadelta params - inherited from SigmaDelta class
+        # default sigma-delta params - inherited from SigmaDelta class
         self.assertEqual(sigma_s4_delta.cum_error.init, False)
         self.assertEqual(sigma_s4_delta.spike_exp.init, 0)
         self.assertEqual(sigma_s4_delta.bias.init, 0)

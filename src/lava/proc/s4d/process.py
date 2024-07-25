@@ -10,6 +10,83 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.proc.sdn.process import ActivationMode, SigmaDelta
 
 
+class S4d(AbstractProcess):
+    def __init__(
+            self,
+            shape: ty.Tuple[int, ...],
+            a: float,
+            b: float,
+            c: float,
+            s4_state: ty.Optional[int] = 0,
+            s4_exp: ty.Optional[int] = 0,
+            inp_exp: ty.Optional[int] = 0) -> None:
+        """
+        Neuron process that implements S4D (described by
+        Gu et al., 2022) dynamics.
+
+        This process simulates the behavior of a linear time-invariant system
+        with diagonal state-space representation.
+        The state-space equations are given by:
+        s4_state_{k+1} = A * s4_state_k + B * inp_k
+        act_k = C * s4_state_k
+
+        where:
+        - s4_state_k is the state vector at time step k,
+        - inp_k is the input vector at time step k,
+        - act_k is the output vector at time step k,
+        - A is the diagonal state matrix,
+        - B is the diagonal input matrix,
+        - C is the diagonal output matrix.
+
+        Parameters
+        ----------
+        shape: Tuple
+            Shape of the sigma process.
+        vth: int or float
+            Threshold of the delta encoder.
+        a: np.ndarray
+            Diagonal elements of the state matrix of the S4D model.
+        b: np.ndarray
+            Diagonal elements of the input matrix of the S4D model.
+        c: np.ndarray
+            Diagonal elements of the output matrix of the S4D model.
+        s4_state: int or float
+            Initial state of the S4D model.
+        s4_exp: int
+            Scaling exponent with base 2 for the S4 state variables.
+            Note: This should only be used for nc models.
+            Default is 0.
+        inp_exp: int
+            Bit precision of the input signal.
+            Note: This should only be used for nc models.
+            Default is 0.
+        """
+
+        super().__init__(shape=shape,
+                         a=a,
+                         b=b,
+                         c=c,
+                         s4_state=s4_state,
+                         s4_exp=s4_exp,
+                         inp_exp=inp_exp)
+        # Ports
+        self.a_in = InPort(shape=shape)
+        self.s_out = OutPort(shape=shape)
+
+        # Variables for S4
+        self.a = Var(shape=shape, init=a)
+        self.b = Var(shape=shape, init=b)
+        self.c = Var(shape=shape, init=c)
+        self.s4_state = Var(shape=shape, init=s4_state)
+        self.s4_exp = Var(shape=(1,), init=s4_exp)
+        self.inp_exp = Var(shape=(1,), init=inp_exp)
+
+    @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        """Return shape of the Process."""
+        return self.proc_params['shape']
+
+
 class SigmaS4dDelta(SigmaDelta, AbstractProcess):
     def __init__(
             self,

@@ -7,12 +7,77 @@ from typing import Any, Dict
 from lava.proc.sdn.models import AbstractSigmaDeltaModel
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer
+from lava.proc.s4d.process import SigmaS4dDelta, SigmaS4dDeltaLayer, S4d
 from lava.magma.core.resources import CPU
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.sub.model import AbstractSubProcessModel
 from lava.proc.sparse.process import Sparse
+from lava.magma.core.model.py.model import PyLoihiProcessModel
+
+
+@implements(proc=S4d, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('floating_pt')
+class S4dModel(PyLoihiProcessModel):
+    a_in = LavaPyType(PyInPort.VEC_DENSE, float)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, float)
+    s4_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    inp_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+
+    # S4 variables
+    s4_state: np.ndarray = LavaPyType(np.ndarray, complex)
+    a: np.ndarray = LavaPyType(np.ndarray, complex)
+    b: np.ndarray = LavaPyType(np.ndarray, complex)
+    c: np.ndarray = LavaPyType(np.ndarray, complex)
+
+    def __init__(self, proc_params: Dict[str, Any]) -> None:
+        """
+        Neuron model that implements S4D
+        (as described by Gu et al., 2022) dynamics.
+
+        Relevant parameters in proc_params
+        --------------------------
+        a: np.ndarray
+            Diagonal elements of the state matrix of the discretized S4D model.
+        b: np.ndarray
+            Diagonal elements of the input matrix of the discretized S4D model.
+        c: np.ndarray
+            Diagonal elements of the output matrix of the discretized S4D model.
+        s4_state: np.ndarray
+            State vector of the S4D discretized model.
+        """
+        super().__init__(proc_params)
+        self.a = self.proc_params['a']
+        self.b = self.proc_params['b']
+        self.c = self.proc_params['c']
+        self.s4_state = self.proc_params['s4_state']
+
+    def run_spk(self) -> None:
+        """Performs S4D dynamics.
+
+        This function simulates the behavior of a linear time-invariant system
+        with diagonalized state-space representation.
+        (For reference see Gu et al., 2022)
+
+        The state-space equations are given by:
+        s4_state_{k+1} = A * s4_state_k + B * input_k
+        act_k = C * s4_state_k
+
+        where:
+        - s4_state_k is the state vector at time step k,
+        - input_k is the input vector at time step k,
+        - act_k is the output vector at time step k,
+        - A is the diagonal state matrix,
+        - B is the diagonal input matrix,
+        - C is the diagonal output matrix.
+
+        The function computes the next output step of the
+        system for the given input signal.
+        """
+        inp = self.a_in.recv()
+        self.s4_state = (self.s4_state * self.a + inp * self.b)
+        self.s_out.send(np.real(self.c * self.s4_state * 2))
 
 
 class AbstractSigmaS4dDeltaModel(AbstractSigmaDeltaModel):
