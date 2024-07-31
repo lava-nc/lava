@@ -391,7 +391,7 @@ class TestCompiler(unittest.TestCase):
         subcompilers = [py_proc_compiler]
 
         # Call the method to be tested.
-        self.compiler._compile_proc_group(subcompilers, channel_map)
+        self.compiler._compile_proc_group(subcompilers, channel_map, None)
 
         # Check that it called compile() on every SubCompiler instance
         # exactly once. After that, the while loop should exit because the
@@ -424,7 +424,8 @@ class TestCompiler(unittest.TestCase):
         subcompilers = [py_proc_compiler]
 
         # Call the method to be tested.
-        self.compiler._compile_proc_group(subcompilers, channel_map)
+        self.compiler._compile_proc_group(subcompilers, channel_map,
+                                          None)
 
         # Check that it called compile() on every SubCompiler instance
         # exactly once. After that, the while loop should exit because the
@@ -511,7 +512,7 @@ class TestCompiler(unittest.TestCase):
         with py_patch:
             # Call the method to be tested.
             proc_builders, channel_map = self.compiler._compile_proc_groups(
-                proc_groups, channel_map
+                proc_groups, channel_map, None
             )
 
         # There should be six Process Builders...
