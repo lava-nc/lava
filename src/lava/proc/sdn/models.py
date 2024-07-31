@@ -309,8 +309,7 @@ class PySigmaDeltaModelFixedCorrected(AbstractSigmaDeltaModel):
         self.sigma = self.sigma_dynamics(a_in_data)
         act = self.activation_dynamics(self.sigma)
         delta = act - self.act
-        abs_delta = np.abs(delta)
-        s_out_scaled = np.where(abs_delta >= self.vth, delta, 0)
+        s_out_scaled = np.where(np.abs(delta) >= self.vth, delta, 0)
         s_out = np.right_shift(s_out_scaled, self.state_exp)
         delta = np.left_shift(s_out, self.state_exp)
         self.act += delta
