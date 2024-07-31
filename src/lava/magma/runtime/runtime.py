@@ -26,7 +26,7 @@ from lava.magma.runtime.runtime_services.runtime_service import \
 if ty.TYPE_CHECKING:
     from lava.magma.core.process.process import AbstractProcess
 from lava.magma.compiler.channels.pypychannel import CspRecvPort, CspSendPort, \
-    CspSelector
+    CspSelector, PyPyChannel
 from lava.magma.compiler.builders.channel_builder import (
     ChannelBuilderMp, RuntimeChannelBuilderMp, ServiceChannelBuilderMp,
     ChannelBuilderPyNc)
@@ -38,10 +38,11 @@ from lava.magma.compiler.channels.interfaces import AbstractCspPort, Channel, \
     ChannelType
 from lava.magma.compiler.executable import Executable
 from lava.magma.compiler.node import NodeConfig
-from lava.magma.core.process.ports.ports import create_port_id
+from lava.magma.core.process.ports.ports import create_port_id, InPort, OutPort
 from lava.magma.core.run_conditions import (AbstractRunCondition,
                                             RunContinuous, RunSteps)
 from lava.magma.compiler.channels.watchdog import WatchdogManagerInterface
+from multiprocessing import Queue
 
 """Defines a Runtime which takes a lava executable and a pluggable message
 passing infrastructure (for instance multiprocessing+shared memory or ray in
@@ -94,13 +95,15 @@ def target_fn(*args, **kwargs):
     """
     try:
         builder = kwargs.pop("builder")
+        exception_q = kwargs.pop('exception_q')
         actor = builder.build()
+        # No exception occured
+        exception_q.put(None)
         actor.start(*args, **kwargs)
     except Exception as e:
-        print("Encountered Fatal Exception: " + str(e))
-        print("Traceback: ")
-        print(traceback.format_exc())
-        raise e
+        e.trace = traceback.format_exc()
+        exception_q.put(e)
+        raise(e)
 
 
 class Runtime:
@@ -134,6 +137,7 @@ class Runtime:
         self.num_steps: int = 0
 
         self._watchdog_manager = None
+        self.exception_q = []
 
     def __del__(self):
         """On destruction, terminate Runtime automatically to
@@ -160,6 +164,15 @@ class Runtime:
         self._build_processes()
         self._build_runtime_services()
         self._start_ports()
+
+        # Check if any exception was thrown
+        for q in self.exception_q:
+            e = q.get()
+            if e:
+                print(str(e), e.trace)
+                raise(e)
+        del self.exception_q
+
         self.log.debug("Runtime Initialization Complete")
         self._is_initialized = True
 
@@ -293,17 +306,64 @@ class Runtime:
                 if isinstance(proc_builder, PyProcessBuilder):
                     # Assign current Runtime to process
                     proc._runtime = self
+                    exception_q = Queue()
+                    self.exception_q.append(exception_q)
+
+                    # Create any external pypychannels
+                    self._create_external_channels(proc, proc_builder)
+
                     self._messaging_infrastructure.build_actor(target_fn,
-                                                               proc_builder)
+                                                               proc_builder,
+                                                               exception_q)
 
     def _build_runtime_services(self):
         """Builds the runtime services"""
         runtime_service_builders = self._executable.runtime_service_builders
         if self._executable.runtime_service_builders:
             for _, rs_builder in runtime_service_builders.items():
+                self.exception_q.append(Queue())
                 self._messaging_infrastructure. \
                     build_actor(target_fn,
-                                rs_builder)
+                                rs_builder,
+                                self.exception_q[-1])
+
+    def _create_external_channels(self,
+                                  proc: AbstractProcess,
+                                  proc_builder: AbstractProcessBuilder):
+        """Creates a csp channel which can be connected to/from a
+        non-procss/Lava python environment. This enables I/O to Lava from
+        external sources."""
+        for name, py_port in proc_builder.py_ports.items():
+            port = getattr(proc, name)
+
+            if port.external_pipe_flag:
+                if isinstance(port, InPort):
+                    pypychannel = PyPyChannel(
+                        message_infrastructure=self._messaging_infrastructure,
+                        src_name="src",
+                        dst_name=name,
+                        shape=py_port.shape,
+                        dtype=py_port.d_type,
+                        size=port.external_pipe_buffer_size)
+
+                    proc_builder.set_csp_ports([pypychannel.dst_port])
+
+                    port.external_pipe_csp_send_port = pypychannel.src_port
+                    port.external_pipe_csp_send_port.start()
+
+                if isinstance(port, OutPort):
+                    pypychannel = PyPyChannel(
+                        message_infrastructure=self._messaging_infrastructure,
+                        src_name=name,
+                        dst_name="dst",
+                        shape=py_port.shape,
+                        dtype=py_port.d_type,
+                        size=port.external_pipe_buffer_size)
+
+                    proc_builder.set_csp_ports([pypychannel.src_port])
+
+                    port.external_pipe_csp_recv_port = pypychannel.dst_port
+                    port.external_pipe_csp_recv_port.start()
 
     def _get_resp_for_run(self):
         """

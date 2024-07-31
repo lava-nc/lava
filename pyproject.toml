@@ -10,7 +10,7 @@ packages = [
     {include = "tests"}
 ]
 include = ["tutorials"]
-version = "0.9.0"
+version = "0.9.0.dev0"
 readme = "README.md"
 description = "A Software Framework for Neuromorphic Computing"
 homepage = "https://lava-nc.org/"
@@ -46,13 +46,13 @@ classifiers = [
 "Discussions" = "https://github.com/lava-nc/lava/discussions"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
+python = ">=3.10, <3.11"
 
 numpy = "^1.24.4"
 scipy = "^1.10.1"
 networkx = "<=2.8.7"
 asteval = "^0.9.31"
-scikit-learn = "^1.3.1"
+scikit-learn = "^1.5.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "1.7.4"

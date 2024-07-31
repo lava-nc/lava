@@ -1,4 +1,5 @@
 name: Run CI
+permissions: read-all
 on:
   push:
     branches:
@@ -20,7 +21,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.5.10_py3.10
       with:
         repository: 'Lava'    
 
@@ -38,7 +39,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.5.10_py3.10
       with:
         repository: 'Lava'
 
@@ -54,14 +55,14 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+        operating-system: [ubuntu-latest, windows-latest, macos-13]
     steps:
     - uses: actions/checkout@v3
       with:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.5.10_py3.10
       with:
         repository: 'Lava'
 
