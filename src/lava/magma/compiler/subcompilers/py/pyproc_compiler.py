@@ -90,7 +90,7 @@ class PyProcCompiler(SubCompiler):
         self._spike_io_counter_offset: Offset = Offset()
 
     def compile(self, channel_map: ChannelMap,
-                partitioning: ty.Dict = {}) -> ChannelMap:
+                partitioning: ty.Dict = None) -> ChannelMap:
         return self._update_channel_map(channel_map)
 
     def __del__(self):
