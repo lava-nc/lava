@@ -432,7 +432,8 @@ class TestCompiler(unittest.TestCase):
         # exactly once. After that, the while loop should exit because the
         # ChannelMap instance has not changed.
         for sc in subcompilers:
-            sc.compile.assert_called_with({**channel_map1, **channel_map2}, None)
+            sc.compile.assert_called_with({**channel_map1, **channel_map2},
+                                          None)
             self.assertEqual(sc.compile.call_count, 3)
 
     def test_extract_proc_builders(self) -> None:
