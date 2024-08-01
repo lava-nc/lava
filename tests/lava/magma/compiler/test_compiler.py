@@ -217,7 +217,8 @@ def create_patches(
     and the compile() method returns the given ChannelMap unchanged.
     ."""
 
-    def compile_return(channel_map: ChannelMap) -> ChannelMap:
+    def compile_return(channel_map: ChannelMap,
+                       partitioning=None) -> ChannelMap:
         return channel_map
 
     py_patch = patch(
@@ -397,7 +398,7 @@ class TestCompiler(unittest.TestCase):
         # exactly once. After that, the while loop should exit because the
         # ChannelMap instance has not changed.
         for sc in subcompilers:
-            sc.compile.assert_called_once_with({})
+            sc.compile.assert_called_once_with({}, None)
 
     def test_compile_proc_group_multiple_loops(self) -> None:
         """Test whether the correct methods are called on all objects when
@@ -431,7 +432,7 @@ class TestCompiler(unittest.TestCase):
         # exactly once. After that, the while loop should exit because the
         # ChannelMap instance has not changed.
         for sc in subcompilers:
-            sc.compile.assert_called_with({**channel_map1, **channel_map2})
+            sc.compile.assert_called_with({**channel_map1, **channel_map2}, None)
             self.assertEqual(sc.compile.call_count, 3)
 
     def test_extract_proc_builders(self) -> None:
@@ -512,7 +513,7 @@ class TestCompiler(unittest.TestCase):
         with py_patch:
             # Call the method to be tested.
             proc_builders, channel_map = self.compiler._compile_proc_groups(
-                proc_groups, channel_map, None
+                proc_groups, channel_map
             )
 
         # There should be six Process Builders...
