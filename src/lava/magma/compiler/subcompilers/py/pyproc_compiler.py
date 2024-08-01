@@ -89,7 +89,8 @@ class PyProcCompiler(SubCompiler):
         super().__init__(proc_group, compile_config)
         self._spike_io_counter_offset: Offset = Offset()
 
-    def compile(self, channel_map: ChannelMap) -> ChannelMap:
+    def compile(self, channel_map: ChannelMap,
+                partitioning: ty.Dict = None) -> ChannelMap:
         return self._update_channel_map(channel_map)
 
     def __del__(self):
