@@ -11,7 +11,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
-from lava.proc.graded.process import GradedVec, NormVecDelay, InvSqrt
+from lava.proc.graded.process import (GradedVec, GradedReluVec,
+                                      NormVecDelay, InvSqrt)
 
 
 class AbstractGradedVecModel(PyLoihiProcessModel):
@@ -43,6 +44,43 @@ class AbstractGradedVecModel(PyLoihiProcessModel):
 @requires(CPU)
 @tag('fixed_pt')
 class PyGradedVecModelFixed(AbstractGradedVecModel):
+    """Fixed point implementation of GradedVec"""
+    a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+    vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+
+
+class AbstractGradedReluVecModel(PyLoihiProcessModel):
+    """Implementation of GradedReluVec"""
+
+    a_in = None
+    s_out = None
+    v = None
+    vth = None
+    exp = None
+
+    def run_spk(self) -> None:
+        """The run function that performs the actual computation during
+        execution orchestrated by a PyLoihiProcessModel using the
+        LoihiProtocol.
+        """
+        a_in_data = self.a_in.recv()
+        self.v += a_in_data
+
+        is_spike = self.v > self.vth
+        sp_out = self.v * is_spike
+
+        self.v[:] = 0
+
+        self.s_out.send(sp_out)
+
+
+@implements(proc=GradedReluVec, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('fixed_pt')
+class PyGradedReluVecModelFixed(AbstractGradedReluVecModel):
     """Fixed point implementation of GradedVec"""
     a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
     s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
