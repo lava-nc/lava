@@ -46,6 +46,7 @@ class Injector(AbstractProcess):
         buffer is full and how the dst_port behaves when the buffer is empty
         and not empty.
     """
+
     def __init__(self,
                  shape: ty.Tuple[int, ...],
                  buffer_size: ty.Optional[int] = 50,
@@ -133,6 +134,7 @@ class PyLoihiInjectorModel(PyLoihiProcessModel):
 @requires(CPU)
 class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
     """PyAsyncProcessModel for the Injector Process."""
+    in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     def __init__(self, proc_params: dict) -> None:
@@ -140,9 +142,6 @@ class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
 
         shape = self.proc_params["shape"]
         channel_config = self.proc_params["channel_config"]
-        self._p_to_pm_dst_port = self.proc_params["p_to_pm_dst_port"]
-        self._p_to_pm_dst_port.start()
-
         self._zeros = np.zeros(shape)
 
         self._receive_when_empty = channel_config.get_receive_empty_function()
@@ -153,19 +152,21 @@ class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
     def run_async(self) -> None:
         while self.time_step != self.num_steps + 1:
             self._zeros.fill(0)
-            elements_in_buffer = self._p_to_pm_dst_port._queue.qsize()
+            elements_in_buffer = self.in_port.csp_ports[-1]._queue.qsize()
 
             if elements_in_buffer == 0:
                 data = self._receive_when_empty(
-                    self._p_to_pm_dst_port,
+                    self.in_port,
                     self._zeros)
             else:
                 data = self._receive_when_not_empty(
-                    self._p_to_pm_dst_port,
+                    self.in_port,
                     self._zeros,
                     elements_in_buffer)
+
             self.out_port.send(data)
             self.time_step += 1
 
     def __del__(self) -> None:
         self._p_to_pm_dst_port.join()
+        self.time_step = 1
