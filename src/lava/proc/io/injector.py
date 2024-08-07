@@ -169,4 +169,3 @@ class PyLoihiInjectorModelAsync(PyAsyncProcessModel):
 
     def __del__(self) -> None:
         self._p_to_pm_dst_port.join()
-        self.time_step = 1
