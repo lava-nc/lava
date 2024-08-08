@@ -130,24 +130,21 @@ class PyLoihiExtractorModel(PyLoihiProcessModel):
 @requires(CPU)
 class PyLoihiExtractorModelAsync(PyAsyncProcessModel):
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
+    out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
 
     def __init__(self, proc_params: dict) -> None:
         super().__init__(proc_params=proc_params)
 
         channel_config = self.proc_params["channel_config"]
-        self._pm_to_p_src_port = self.proc_params["pm_to_p_src_port"]
-        self._pm_to_p_src_port.start()
 
         self._send = channel_config.get_send_full_function()
         self.time_step = 1
 
     def run_async(self) -> None:
         while self.time_step != self.num_steps + 1:
-            self._send(self._pm_to_p_src_port, self.in_port.recv())
+            self._send(self.out_port.csp_ports[-1],
+                       self.in_port.recv())
             self.time_step += 1
-
-    def __del__(self) -> None:
-        self._pm_to_p_src_port.join()
 
 
 class VarWire(AbstractProcess):
