@@ -759,6 +759,10 @@ def PyLoihiModelToPyAsyncModel(
             if py_loihi_model.post_guard(self):
                 py_loihi_model.run_post_mgmt(self)
             self.time_step += 1
+            # self.advance_to_time_step(self.time_step)
+            for port in self.py_ports:
+                if isinstance(port, PyOutPort):
+                    port.advance_to_time_step(self.time_step)
 
     py_async_model = type(
         name,

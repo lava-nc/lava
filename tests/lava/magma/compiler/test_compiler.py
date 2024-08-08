@@ -170,6 +170,10 @@ def create_mock_proc_groups() -> ty.List[ProcGroup]:
     py_pg2_p1 = Mock(spec_set=AbstractProcess())
     py_pg2_p2 = Mock(spec_set=AbstractProcess())
 
+    py_pg1_p1.configure_mock(name='py_pg1_p1')
+    py_pg2_p1.configure_mock(name='py_pg2_p1')
+    py_pg2_p2.configure_mock(name='py_pg2_p2')
+
     proc_list = [py_pg1_p1, py_pg2_p1, py_pg2_p2]
 
     proc_model_types = [
@@ -213,7 +217,8 @@ def create_patches(
     and the compile() method returns the given ChannelMap unchanged.
     ."""
 
-    def compile_return(channel_map: ChannelMap) -> ChannelMap:
+    def compile_return(channel_map: ChannelMap,
+                       partitioning=None) -> ChannelMap:
         return channel_map
 
     py_patch = patch(
@@ -387,13 +392,13 @@ class TestCompiler(unittest.TestCase):
         subcompilers = [py_proc_compiler]
 
         # Call the method to be tested.
-        self.compiler._compile_proc_group(subcompilers, channel_map)
+        self.compiler._compile_proc_group(subcompilers, channel_map, None)
 
         # Check that it called compile() on every SubCompiler instance
         # exactly once. After that, the while loop should exit because the
         # ChannelMap instance has not changed.
         for sc in subcompilers:
-            sc.compile.assert_called_once_with({})
+            sc.compile.assert_called_once_with({}, None)
 
     def test_compile_proc_group_multiple_loops(self) -> None:
         """Test whether the correct methods are called on all objects when
@@ -420,13 +425,15 @@ class TestCompiler(unittest.TestCase):
         subcompilers = [py_proc_compiler]
 
         # Call the method to be tested.
-        self.compiler._compile_proc_group(subcompilers, channel_map)
+        self.compiler._compile_proc_group(subcompilers, channel_map,
+                                          None)
 
         # Check that it called compile() on every SubCompiler instance
         # exactly once. After that, the while loop should exit because the
         # ChannelMap instance has not changed.
         for sc in subcompilers:
-            sc.compile.assert_called_with({**channel_map1, **channel_map2})
+            sc.compile.assert_called_with({**channel_map1, **channel_map2},
+                                          None)
             self.assertEqual(sc.compile.call_count, 3)
 
     def test_extract_proc_builders(self) -> None:

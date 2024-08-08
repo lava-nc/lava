@@ -10,12 +10,23 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 
 
-def loihi2round(vv):
+def loihi2round(vv: np.ndarray) -> np.ndarray:
     """
     Round values in numpy array the way loihi 2
     performs rounding/truncation.
+
+    Parameters
+    ----------
+    vv : np.ndarray
+        Input values to be rounded consistent with loihi2 rouding.
+
+    Returns
+    -------
+    vv_r : np.ndarray
+        Output values rounded consistent with loihi2 rouding.
     """
-    return np.fix(vv + (vv > 0) - 0.5).astype('int')
+    vv_r = np.fix(vv + (vv > 0) - 0.5).astype('int')
+    return vv_r
 
 
 class GradedVec(AbstractProcess):
@@ -24,7 +35,7 @@ class GradedVec(AbstractProcess):
     graded spike with no dynamics.
 
     v[t] = a_in
-    s_out = v[t] * (v[t] > vth)
+    s_out = v[t] * (|v[t]| > vth)
 
     Parameters
     ----------
@@ -34,6 +45,45 @@ class GradedVec(AbstractProcess):
         threshold for spiking
     exp: int
         fixed point base
+    """
+
+    def __init__(
+            self,
+            shape: ty.Tuple[int, ...],
+            vth: ty.Optional[int] = 1,
+            exp: ty.Optional[int] = 0) -> None:
+
+        super().__init__(shape=shape)
+
+        self.a_in = InPort(shape=shape)
+        self.s_out = OutPort(shape=shape)
+
+        self.v = Var(shape=shape, init=0)
+        self.vth = Var(shape=(1,), init=vth)
+        self.exp = Var(shape=(1,), init=exp)
+
+    @property
+    def shape(self) -> ty.Tuple[int, ...]:
+        """Return shape of the Process."""
+        return self.proc_params['shape']
+
+
+class GradedReluVec(AbstractProcess):
+    """GradedReluVec
+    Graded spike vector layer. Transmits accumulated input as
+    graded spike with no dynamics.
+
+    v[t] = a_in
+    s_out = v[t] * (v[t] > vth)
+
+    Parameters
+    ----------
+    shape : tuple(int)
+        Number and topology of neurons.
+    vth : int
+        Threshold for spiking.
+    exp : int
+        Fixed point base.
     """
 
     def __init__(
@@ -78,12 +128,12 @@ class NormVecDelay(AbstractProcess):
 
     Parameters
     ----------
-    shape: tuple(int)
-        number and topology of neurons
-    vth: int
-        threshold for spiking
-    exp: int
-        fixed point base
+    shape : tuple(int)
+        Number and topology of neurons.
+    vth : int
+        Threshold for spiking.
+    exp : int
+        Fixed point base.
     """
 
     def __init__(
@@ -123,8 +173,11 @@ class InvSqrt(AbstractProcess):
 
     Parameters
     ----------
+    shape : tuple(int)
+        Number and topology of neurons.
+
     fp_base : int
-        Base of the fixed-point representation
+        Base of the fixed-point representation.
     """
 
     def __init__(
@@ -133,7 +186,7 @@ class InvSqrt(AbstractProcess):
             fp_base: ty.Optional[int] = 12) -> None:
         super().__init__(shape=shape)
 
-        # base of the decimal point
+        # Base of the decimal point
         self.fp_base = Var(shape=(1,), init=fp_base)
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
