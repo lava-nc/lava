@@ -282,3 +282,35 @@ class PySigmaDeltaModelFixed(AbstractSigmaDeltaModel):
         s_out_scaled = self.dynamics(a_in_data)
         s_out = np.right_shift(s_out_scaled, self.state_exp)
         self.s_out.send(s_out)
+
+
+@implements(proc=SigmaDelta, protocol=LoihiProtocol)
+@requires(CPU)
+@tag('fixed_pt')
+class PySigmaDeltaModelFixedCorrected(AbstractSigmaDeltaModel):
+    """Fixed point implementation of Sigma Delta neuron."""
+    a_in = LavaPyType(PyInPort.VEC_DENSE, np.int32, precision=24)
+    s_out = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
+
+    vth: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    sigma: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    act: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    residue: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    error: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    bias: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=16)
+
+    spike_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    state_exp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=3)
+    cum_error: np.ndarray = LavaPyType(np.ndarray, bool, precision=1)
+
+    def run_spk(self) -> None:
+        # Receive synaptic input
+        a_in_data = self.a_in.recv()
+        self.sigma = self.sigma_dynamics(a_in_data)
+        act = self.activation_dynamics(self.sigma)
+        delta = act - self.act
+        s_out_scaled = np.where(np.abs(delta) >= self.vth, delta, 0)
+        s_out = np.right_shift(s_out_scaled, self.state_exp)
+        delta = np.left_shift(s_out, self.state_exp)
+        self.act += delta
+        self.s_out.send(s_out)
