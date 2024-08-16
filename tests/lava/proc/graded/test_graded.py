@@ -6,7 +6,8 @@ import unittest
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from lava.proc.graded.process import GradedVec, NormVecDelay, InvSqrt
+from lava.proc.graded.process import (GradedVec, GradedReluVec,
+                                      NormVecDelay, InvSqrt)
 from lava.proc.graded.models import inv_sqrt
 from lava.proc.dense.process import Dense
 from lava.proc.sparse.process import Sparse
@@ -59,7 +60,7 @@ class TestGradedVecProc(unittest.TestCase):
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 
     def test_gradedvec_dot_sparse(self):
-        """Tests that GradedVec and Dense computes dot product."""
+        """Tests that GradedVec and Sparse computes dot product"""
         num_steps = 10
         v_thresh = 1
 
@@ -95,6 +96,91 @@ class TestGradedVecProc(unittest.TestCase):
 
         ww = np.floor(weights1 / 2) * 2
         expected_out = np.floor((ww @ inp_data) / 2**weight_exp)
+
+        self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
+
+
+class TestGradedReluVecProc(unittest.TestCase):
+    """Tests for GradedReluVec"""
+
+    def test_gradedreluvec_dot_dense(self):
+        """Tests that GradedReluVec and Dense computes dot product"""
+        num_steps = 10
+        v_thresh = 1
+
+        weights1 = np.zeros((10, 1))
+        weights1[:, 0] = (np.arange(10) - 5) * 0.2
+
+        inp_data = np.zeros((weights1.shape[1], num_steps))
+        inp_data[:, 2] = 1000
+        inp_data[:, 6] = 20000
+
+        weight_exp = 7
+        weights1 *= 2**weight_exp
+        weights1 = weights1.astype('int')
+
+        dense1 = Dense(weights=weights1, num_message_bits=24,
+                       weight_exp=-weight_exp)
+        vec1 = GradedReluVec(shape=(weights1.shape[0],),
+                             vth=v_thresh)
+
+        generator = io.source.RingBuffer(data=inp_data)
+        logger = io.sink.RingBuffer(shape=(weights1.shape[0],),
+                                    buffer=num_steps)
+
+        generator.s_out.connect(dense1.s_in)
+        dense1.a_out.connect(vec1.a_in)
+        vec1.s_out.connect(logger.a_in)
+
+        vec1.run(condition=RunSteps(num_steps=num_steps),
+                 run_cfg=Loihi2SimCfg(select_tag='fixed_pt'))
+        out_data = logger.data.get().astype('int')
+        vec1.stop()
+
+        ww = np.floor(weights1 / 2) * 2
+        expected_out = np.floor((ww @ inp_data) / 2**weight_exp)
+        expected_out *= expected_out > v_thresh
+
+        self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
+
+    def test_gradedreluvec_dot_sparse(self):
+        """Tests that GradedReluVec and Sparse computes dot product"""
+        num_steps = 10
+        v_thresh = 1
+
+        weights1 = np.zeros((10, 1))
+        weights1[:, 0] = (np.arange(10) - 5) * 0.2
+
+        inp_data = np.zeros((weights1.shape[1], num_steps))
+        inp_data[:, 2] = 1000
+        inp_data[:, 6] = 20000
+
+        weight_exp = 7
+        weights1 *= 2**weight_exp
+        weights1 = weights1.astype('int')
+
+        sparse1 = Sparse(weights=csr_matrix(weights1),
+                         num_message_bits=24,
+                         weight_exp=-weight_exp)
+        vec1 = GradedReluVec(shape=(weights1.shape[0],),
+                             vth=v_thresh)
+
+        generator = io.source.RingBuffer(data=inp_data)
+        logger = io.sink.RingBuffer(shape=(weights1.shape[0],),
+                                    buffer=num_steps)
+
+        generator.s_out.connect(sparse1.s_in)
+        sparse1.a_out.connect(vec1.a_in)
+        vec1.s_out.connect(logger.a_in)
+
+        vec1.run(condition=RunSteps(num_steps=num_steps),
+                 run_cfg=Loihi2SimCfg(select_tag='fixed_pt'))
+        out_data = logger.data.get().astype('int')
+        vec1.stop()
+
+        ww = np.floor(weights1 / 2) * 2
+        expected_out = np.floor((ww @ inp_data) / 2**weight_exp)
+        expected_out *= expected_out > v_thresh
 
         self.assertTrue(np.all(out_data[:, (3, 7)] == expected_out[:, (2, 6)]))
 
