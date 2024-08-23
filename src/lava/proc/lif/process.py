@@ -10,6 +10,7 @@ from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import LearningNeuronProcess
+from lava.proc.io.utils import convert_to_numpy_array
 
 
 class AbstractLIF(AbstractProcess):
@@ -413,6 +414,251 @@ class LIFRefractory(LIF):
 
         if refractory_period < 1:
             raise ValueError("Refractory period must be > 0.")
+
+        self.proc_params["refractory_period"] = refractory_period
+        self.refractory_period_end = Var(shape=shape, init=0)
+
+
+class AbstractEILIF(AbstractProcess):
+    """Abstract class for variables common to all neurons with Excitatory/Inhibitory 
+    leaky integrator dynamics and configurable time constants"""
+
+    def __init__(
+        self,
+        *,
+        shape: ty.Tuple[int, ...],
+        u_exc: ty.Union[float, list, np.ndarray],
+        u_inh: ty.Union[float, list, np.ndarray],
+        v: ty.Union[float, list, np.ndarray],
+        du_exc: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        du_inh: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        dv: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        bias_mant: ty.Union[float, list, np.ndarray],
+        bias_exp: ty.Union[float, list, np.ndarray],
+        name: str,
+        log_config: LogConfig,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u_exc=u_exc,
+            u_inh=u_inh,
+            v=v,
+            du_exc=du_exc,
+            du_inh=du_inh,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            name=name,
+            log_config=log_config,
+            **kwargs,
+        )
+
+        self.a_in = InPort(shape=shape)
+        self.s_out = OutPort(shape=shape)
+        self.u_exc = Var(shape=shape, init=u_exc)
+        self.u_inh = Var(shape=shape, init=u_inh)
+        self.u = Var(shape=shape, init=u_exc + u_inh)     # neuron total current (u_inh is negative)
+        self.v = Var(shape=shape, init=v)
+        self.du_exc = Var(shape=shape, init=du_exc)     # Shape of du_exc must match the shape of the neurons
+        self.du_inh = Var(shape=shape, init=du_inh)     # Shape of du_inh must match the shape of the neurons
+        self.dv = Var(shape=shape, init=dv)     # Shape of dv must match the shape of the neurons
+        self.bias_exp = Var(shape=shape, init=bias_exp)
+        self.bias_mant = Var(shape=shape, init=bias_mant)
+
+
+class EILIF(AbstractEILIF):
+    """Exctitatory/Inhibitory Leaky-Integrate-and-Fire (LIF) neural Process.
+    This neuron model receives 2 input currents, one excitatory and one inhibitory.
+    The neuron's total current is the sum of the excitatory and inhibitory currents.
+    Each current has its own decay time-constant and it is independent on a neuron-to-neuron basis.
+
+    LIF dynamics abstracts to:
+    u_exc[t] = u_exc[t-1] * (1-du_exc) + a_in (excitatory spike)         # neuron excitatory current
+    u_inh[t] = u_inh[t-1] * (1-du_inh) + a_in (inhibitory spike)        # neuron inhibitory current
+
+    u[t] = u_exc[t] + u_inh[t]                               # neuron total current (u_inh[t] is negative)
+    v[t] = v[t-1] * (1-dv) + u[t] + bias  # neuron voltage
+    s_out = v[t] > vth                    # spike if threshold is exceeded
+    v[t] = 0                              # reset at spike
+
+    Parameters
+    ----------
+    shape : tuple(int)
+        Number and topology of LIF neurons.
+    u_exc : float, list, numpy.ndarray, optional
+        Initial value of the neurons' excitatory current.
+    u_inh : float, list, numpy.ndarray, optional
+        Initial value of the neurons' inhibitory current.
+    v : float, list, numpy.ndarray, optional
+        Initial value of the neurons' voltage (membrane potential).
+    du_exc : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for excitatory current decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    du_inh : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for inhibitory current decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    dv : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for voltage decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    bias_mant : float, list, numpy.ndarray, optional
+        Mantissa part of neuron bias.
+    bias_exp : float, list, numpy.ndarray, optional
+        Exponent part of neuron bias, if needed. Mostly for fixed point
+        implementations. Ignored for floating point implementations.
+    vth : float, optional
+        Neuron threshold voltage, exceeding which, the neuron will spike.
+        Currently, only a single threshold can be set for the entire
+        population of neurons.
+
+    Example
+    -------
+    >>> ei_lif = EILIF(shape=(200, 15), du_exc=0.1, du_inh=0.2, dv=5)
+    This will create 200x15 EILIF neurons that all have the same excitatory and 
+    inhibitory current decays (0.1 and 0.2, respectively) and voltage decay of 5.
+    """
+    def __init__(
+            self,
+            *,
+            shape: ty.Tuple[int, ...],
+            v: ty.Union[float, list, np.ndarray],
+            u_exc: ty.Union[float, list, np.ndarray] = 0,
+            u_inh: ty.Union[float, list, np.ndarray] = 0,
+            du_exc: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            du_inh: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            dv: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            vth: ty.Optional[float] = 10,
+            name: ty.Optional[str] = None,
+            log_config: ty.Optional[LogConfig] = None,
+            **kwargs,
+    ) -> None:
+        # Try to convert du_exc, du_inh and dv to numpy arrays if they are not already
+        # If unsuccessful, it will raise a ValueError
+        du_exc = convert_to_numpy_array(du_exc, shape, "du_exc", verbose=True)
+        du_inh = convert_to_numpy_array(du_inh, shape, "du_inh", verbose=True)
+        dv = convert_to_numpy_array(dv, shape, "dv", verbose=True)
+        
+        super().__init__(
+            shape=shape,
+            u_exc=u_exc,
+            u_inh=u_inh,
+            v=v,
+            du_exc=du_exc,
+            du_inh=du_inh,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            vth=vth,
+            name=name,
+            log_config=log_config,
+            **kwargs,
+        )
+
+        # Add the vth variable to the process
+        self.vth = Var(shape=(1,), init=vth)
+
+class EILIFRefractory(EILIF):
+    """Exctitatory/Inhibitory Leaky-Integrate-and-Fire (LIF) neural Process with refractory period.
+    This neuron model receives 2 input currents, one excitatory and one inhibitory.
+    The neuron's total current is the sum of the excitatory and inhibitory currents.
+    Each current has its own decay time-constant and it is independent on a neuron-to-neuron basis.
+
+    LIF dynamics abstracts to:
+    u_exc[t] = u_exc[t-1] * (1-du_exc) + a_in (excitatory spike)         # neuron excitatory current
+    u_inh[t] = u_inh[t-1] * (1-du_inh) + a_in (inhibitory spike)        # neuron inhibitory current
+
+    u[t] = u_exc[t] + u_inh[t]                               # neuron total current (u_inh[t] is negative)
+    v[t] = v[t-1] * (1-dv) + u[t] + bias  # neuron voltage
+    s_out = v[t] > vth                    # spike if threshold is exceeded
+    v[t] = 0                              # reset at spike
+
+    Parameters
+    ----------
+    shape : tuple(int)
+        Number and topology of LIF neurons.
+    u_exc : float, list, numpy.ndarray, optional
+        Initial value of the neurons' excitatory current.
+    u_inh : float, list, numpy.ndarray, optional
+        Initial value of the neurons' inhibitory current.
+    v : float, list, numpy.ndarray, optional
+        Initial value of the neurons' voltage (membrane potential).
+    du_exc : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for excitatory current decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    du_inh : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for inhibitory current decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    dv : float, list, numpy.ndarray, optional
+        Inverse of decay time-constant for voltage decay. This can be a scalar, list,
+        or numpy array. Anyhow, it will be converted to a np array representing the 
+        time-constants of each neuron.
+    bias_mant : float, list, numpy.ndarray, optional
+        Mantissa part of neuron bias.
+    bias_exp : float, list, numpy.ndarray, optional
+        Exponent part of neuron bias, if needed. Mostly for fixed point
+        implementations. Ignored for floating point implementations.
+    vth : float, optional
+        Neuron threshold voltage, exceeding which, the neuron will spike.
+        Currently, only a single threshold can be set for the entire
+        population of neurons.
+    refractory_period : int, optional
+        The interval of the refractory period. 1 timestep by default.
+
+    Example
+    -------
+    >>> refrac_ei_lif = EILIFRefractory(shape=(200, 15), du_exc=0.1, du_inh=0.2, dv=5)
+    This will create 200x15 EILIF neurons that all have the same excitatory and 
+    inhibitory current decays (0.1 and 0.2, respectively), voltage decay of 5.
+    and refractory period of 1 timestep.
+    """
+    def __init__(
+            self,
+            *,
+            shape: ty.Tuple[int, ...],
+            v: ty.Union[float, list, np.ndarray],
+            u_exc: ty.Union[float, list, np.ndarray] = 0,
+            u_inh: ty.Union[float, list, np.ndarray] = 0,
+            du_exc: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            du_inh: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            dv: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+            vth: ty.Optional[float] = 10,
+            refractory_period: ty.Optional[int] = 1,
+            name: ty.Optional[str] = None,
+            log_config: ty.Optional[LogConfig] = None,
+            **kwargs,
+    ) -> None:
+        super().__init__(
+            shape=shape,
+            u_exc=u_exc,
+            u_inh=u_inh,
+            v=v,
+            du_exc=du_exc,
+            du_inh=du_inh,
+            dv=dv,
+            bias_mant=bias_mant,
+            bias_exp=bias_exp,
+            vth=vth,
+            name=name,
+            log_config=log_config,
+            **kwargs,
+        )
+
+        # Validate the refractory period
+        if refractory_period < 1:   # TODO: Change to 0
+            raise ValueError("Refractory period must be > 0.")
+        # Check if the refractory period is a float
+        if isinstance(refractory_period, float):
+            print("Refractory period must be an integer. Converting to integer...")
+            refractory_period = int(refractory_period)
 
         self.proc_params["refractory_period"] = refractory_period
         self.refractory_period_end = Var(shape=shape, init=0)
