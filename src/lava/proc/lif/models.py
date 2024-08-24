@@ -575,7 +575,8 @@ class AbstractPyEILifModelFloat(PyLoihiProcessModel):
     s_out = None  # This will be an OutPort of different LavaPyTypes
     u_exc: np.ndarray = LavaPyType(np.ndarray, float)
     u_inh: np.ndarray = LavaPyType(np.ndarray, float)
-    u: np.ndarray = LavaPyType(np.ndarray, float)   # Net current (u_exc + u_inh)
+    # Net current (u_exc + u_inh)
+    u: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
@@ -594,7 +595,7 @@ class AbstractPyEILifModelFloat(PyLoihiProcessModel):
 
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Common sub-threshold dynamics of current and voltage variables for
-        all Configurable Time Constants LIF models. 
+        all Configurable Time Constants LIF models.
         This is where the 'leaky integration' happens.
         """
         # Get the excitatory input from a_in -- Positive values increase u_exc
@@ -610,7 +611,8 @@ class AbstractPyEILifModelFloat(PyLoihiProcessModel):
         self.u_inh[:] += inh_a_in
 
         # Update the voltage
-        # Calculate the net current by adding the excitatory and inhibitory currents
+        # Calculate the net current by adding the
+        # excitatory and inhibitory currents
         self.u = self.u_exc + self.u_inh   # u_inh is negative
         self.v[:] = self.v * (1 - self.dv) + self.u + self.bias_mant
 
@@ -632,27 +634,29 @@ class AbstractPyEILifModelFloat(PyLoihiProcessModel):
         self.reset_voltage(spike_vector=self.s_out_buff)
         self.s_out.send(self.s_out_buff)
 
+
 @implements(proc=EILIF, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyEILifFloat(AbstractPyEILifModelFloat):
     """Implementation of Excitatory/Inhibitory Leaky-Integrate-and-Fire
-    neural process in floating  point precision. This short and simple 
+    neural process in floating  point precision. This short and simple
     ProcessModel can be used for quick algorithmic prototyping, without
     engaging with the nuances of a fixed point implementation.
     """
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
-    
+
     def spiking_activation(self):
         """Spiking activation function for LIF."""
         return self.v > self.vth
-           
+
+
 @implements(proc=EILIFRefractory, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
-    """Implementation of Excitatory/Inhibitory Refractory 
+    """Implementation of Excitatory/Inhibitory Refractory
     Leaky-Integrate-and-Fire neural process in floating  point precision.
     This short and simple ProcessModel can be used for quick algorithmic
     prototyping, without engaging with the nuances of a fixed
@@ -661,7 +665,7 @@ class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
     vth: float = LavaPyType(float, float)
     refractory_period_end: np.ndarray = LavaPyType(np.ndarray, int)
-    
+
     def __init__(self, proc_params):
         super(PyEILifRefractoryFloat, self).__init__(proc_params)
         self.refractory_period = proc_params["refractory_period"]
@@ -669,7 +673,7 @@ class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
     def spiking_activation(self):
         """Spiking activation function for LIF."""
         return self.v > self.vth
-    
+
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Sub-threshold dynamics of current and voltage variables for
         ConfigTimeConstantsLIF
@@ -692,18 +696,18 @@ class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
 
         # Check which neurons are not in refractory period
         non_refractory = self.refractory_period_end < self.time_step
-        """ non_refrac_idx = np.where(non_refractory == False)[0]
-        if len(non_refrac_idx) > 0:
-            print(f"Time step: {self.time_step} has neurons in refractory period -> {non_refrac_idx}")
-            print(f"{self.u[non_refrac_idx[0]]} {self.v[non_refrac_idx[0]]}")  """
 
         # Update the voltage of the non-refractory neurons
-        # Calculate the net current by adding the excitatory and inhibitory currents
+        # Calculate the net current by adding the excitatory
+        # and inhibitory currents
         self.u = self.u_exc + self.u_inh   # u_inh is negative
 
-        self.v[non_refractory] = self.v[non_refractory] * (1 - self.dv[non_refractory]) + (
-            self.u[non_refractory] + self.bias_mant[non_refractory])
-        
+        self.v[non_refractory] = (
+            self.v[non_refractory] * (1 - self.dv[non_refractory]) + (
+                self.u[non_refractory] + self.bias_mant[non_refractory]
+            )
+        )
+
     def process_spikes(self, spike_vector: np.ndarray):
         """
         Set the refractory_period_end for the neurons that spiked and
@@ -712,7 +716,7 @@ class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
         self.refractory_period_end[spike_vector] = (self.time_step
                                                     + self.refractory_period)
         super().reset_voltage(spike_vector)
-    
+
     def run_spk(self):
         """The run function that performs the actual computation during
         execution orchestrated by a PyLoihiProcessModel using the
@@ -722,8 +726,7 @@ class PyEILifRefractoryFloat(AbstractPyEILifModelFloat):
 
         self.subthr_dynamics(activation_in=a_in_data)
         spike_vector = self.spiking_activation()
-        """ if np.max(spike_vector) > 0:
-            print(f"Time step: {self.time_step} has a neuron spike.") """
 
-        self.process_spikes(spike_vector=spike_vector)    # Reset voltage of spiked neurons to 0 and update refractory period
+        # Reset voltage of spiked neurons to 0 and update refractory period
+        self.process_spikes(spike_vector=spike_vector)
         self.s_out.send(spike_vector)
