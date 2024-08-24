@@ -17,7 +17,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LIFRefractory, EILIF
+from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LIFRefractory, EILIF, EILIFRefractory
 from lava.proc import io
 
 
@@ -932,10 +932,88 @@ class TestEILIFFloat(unittest.TestCase):
         v = v_logger.data.get()
         ei_lif.stop()
 
-        print("V: ", v)
-
         # Voltage is expected to remain at reset level for two time steps
         v_expected = np.array([[1, 2.9, 4.61, 5.149, 4.73, 3.54, 2.71, 2.16],
+                               [1, 2.8, 4.24, 4.39, 3.61, 2.16, 1.22, 0.62]], dtype=float)
+
+        assert_almost_equal(v, v_expected, decimal=2)
+
+class TestEILIFRefractoryFloat(unittest.TestCase):
+    """Test EILIFRefractory process model"""
+
+    def test_no_decays(self):
+        """Test float model"""
+        num_neurons = 2
+        num_steps = 8
+        refractory_period = 1
+
+        # Two neurons with different biases
+        # No Input current provided to make the voltage dependent on the bias
+        ei_lif = EILIFRefractory(shape=(num_neurons,),
+                                       u_exc=np.zeros(num_neurons),
+                                       u_inh=np.zeros(num_neurons), 
+                                       bias_mant=np.arange(num_neurons) + 1,
+                                       bias_exp=np.ones(
+                                           (num_neurons,), dtype=float),
+                                       vth=4,
+                                       refractory_period=refractory_period)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                           run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2, 3, 4, 0, 0, 1, 2],
+                               [2, 4, 0, 0, 2, 4, 0, 0]], dtype=float)
+
+        assert_almost_equal(v, v_expected)
+
+    def test_different_decays(self):
+        """Test float model with different decays per neuron"""
+        num_neurons = 2
+        num_steps = 8
+        refractory_period = 1
+
+        du_exc_arr = np.array([0.1, 0.2])
+        du_inh_arr = np.array([0.2, 0.3])
+
+        # Neuron 1 will spike, while neuron 2 will not due to different decay rates.
+        ei_lif = EILIFRefractory(shape=(num_neurons,),
+                                       du_exc=du_exc_arr,
+                                       du_inh=du_inh_arr, 
+                                       vth=5,
+                                       refractory_period=refractory_period)
+        
+        # Setup external input
+        positive_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                             vec_to_send=np.full(shape=(num_neurons), fill_value=1),
+                             send_at_times=[1, 1, 0, 0, 0, 0, 0 , 0], dtype=bool)
+        
+        negative_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                             vec_to_send=np.full(shape=(num_neurons), fill_value=-1),
+                             send_at_times=[0, 0, 0, 1, 1, 1, 0 , 0], dtype=bool)
+        
+        
+        # Connect external input to the EILIF model
+        positive_sps.s_out.connect(ei_lif.a_in)
+        negative_sps.s_out.connect(ei_lif.a_in)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                           run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2.9, 4.61, 0, 0, -1.19341, -2.02, -2.57],
                                [1, 2.8, 4.24, 4.39, 3.61, 2.16, 1.22, 0.62]], dtype=float)
 
         assert_almost_equal(v, v_expected, decimal=2)

@@ -284,12 +284,24 @@ def validate_channel_config(channel_config: ChannelConfig) -> None:
 def convert_to_numpy_array(val, shape, name = "value", verbose=False):
     """
     Converts a given value to a numpy array if it is not already
-    @param val: The value to convert. Can be a scalar, list, or numpy array
-    @param shape: The shape of the array to convert to
-    @param verbose: Whether to print debug messages
 
-    @return: The value as a numpy array
-    @raises ValueError: If the value cannot be converted to a numpy array
+     Parameters
+    ----------
+    val : scalar | list | np.ndarray
+        The value to convert. Can be a scalar, list, or numpy array
+    shape : tuple
+        The shape of the array to convert to
+    verbose : bool
+        Whether to print debug messages
+
+    Returns
+    ----------
+    value: np.ndarray
+        The value as a numpy array
+
+    Raises
+    ----------
+    ValueError: If the value cannot be converted to a numpy array
     """
     if np.isscalar(val):
         if verbose:

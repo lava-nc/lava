@@ -535,13 +535,14 @@ class EILIF(AbstractEILIF):
             vth: ty.Optional[float] = 10,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
+            verbose: ty.Optional[bool] = False,
             **kwargs,
     ) -> None:
         # Try to convert du_exc, du_inh and dv to numpy arrays if they are not already
         # If unsuccessful, it will raise a ValueError
-        du_exc = convert_to_numpy_array(du_exc, shape, "du_exc", verbose=True)
-        du_inh = convert_to_numpy_array(du_inh, shape, "du_inh", verbose=True)
-        dv = convert_to_numpy_array(dv, shape, "dv", verbose=True)
+        du_exc = convert_to_numpy_array(du_exc, shape, "du_exc", verbose=verbose)
+        du_inh = convert_to_numpy_array(du_inh, shape, "du_inh", verbose=verbose)
+        dv = convert_to_numpy_array(dv, shape, "dv", verbose=verbose)
         
         super().__init__(
             shape=shape,
@@ -563,7 +564,7 @@ class EILIF(AbstractEILIF):
         self.vth = Var(shape=(1,), init=vth)
 
 class EILIFRefractory(EILIF):
-    """Exctitatory/Inhibitory Leaky-Integrate-and-Fire (LIF) neural Process with refractory period.
+    """Excitatory/Inhibitory Leaky-Integrate-and-Fire (LIF) neural Process with refractory period.
     This neuron model receives 2 input currents, one excitatory and one inhibitory.
     The neuron's total current is the sum of the excitatory and inhibitory currents.
     Each current has its own decay time-constant and it is independent on a neuron-to-neuron basis.
@@ -622,7 +623,7 @@ class EILIFRefractory(EILIF):
             self,
             *,
             shape: ty.Tuple[int, ...],
-            v: ty.Union[float, list, np.ndarray],
+            v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
             u_exc: ty.Union[float, list, np.ndarray] = 0,
             u_inh: ty.Union[float, list, np.ndarray] = 0,
             du_exc: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
@@ -634,6 +635,7 @@ class EILIFRefractory(EILIF):
             refractory_period: ty.Optional[int] = 1,
             name: ty.Optional[str] = None,
             log_config: ty.Optional[LogConfig] = None,
+            verbose: ty.Optional[bool] = False,
             **kwargs,
     ) -> None:
         super().__init__(
@@ -649,6 +651,7 @@ class EILIFRefractory(EILIF):
             vth=vth,
             name=name,
             log_config=log_config,
+            verbose=verbose,
             **kwargs,
         )
 
@@ -657,7 +660,8 @@ class EILIFRefractory(EILIF):
             raise ValueError("Refractory period must be > 0.")
         # Check if the refractory period is a float
         if isinstance(refractory_period, float):
-            print("Refractory period must be an integer. Converting to integer...")
+            if verbose:
+                print("Refractory period must be an integer. Converting to integer...")
             refractory_period = int(refractory_period)
 
         self.proc_params["refractory_period"] = refractory_period
