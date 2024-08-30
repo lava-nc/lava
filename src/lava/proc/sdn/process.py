@@ -24,7 +24,9 @@ class Sigma(AbstractProcess):
     def __init__(
             self,
             *,
-            shape: ty.Tuple[int, ...]) -> None:
+            shape: ty.Tuple[int, ...],
+            t_interval: ty.Optional[int] = 0,
+            t_offset: ty.Optional[int] = 0) -> None:
         """Sigma integration unit process definition. A sigma process is simply
         a cumulative accumulator over time.
 
@@ -36,6 +38,15 @@ class Sigma(AbstractProcess):
         ----------
         shape: Tuple
             shape of the sigma process. Default is (1,).
+        t_interval: int
+            Number of time steps between computation of the neuron model.
+            Can be used to freeze the neuron state for given number of time
+            steps.
+            Default is 0.
+        t_offset: int
+            Number of time steps to wait before computation of the neuron model
+            starts.
+            Default is 0.
         """
         super().__init__(shape=shape)
 
@@ -43,6 +54,8 @@ class Sigma(AbstractProcess):
         self.s_out = OutPort(shape=shape)
 
         self.sigma = Var(shape=shape, init=0)
+        self.t_interval = Var(shape=(1,), init=t_interval)
+        self.t_offset = Var(shape=(1,), init=t_offset)
 
     @property
     def shape(self) -> ty.Tuple[int, ...]:
@@ -126,7 +139,9 @@ class SigmaDelta(AbstractProcess):
             act_mode: ty.Optional[ActivationMode] = ActivationMode.RELU,
             cum_error: ty.Optional[bool] = False,
             spike_exp: ty.Optional[int] = 0,
-            state_exp: ty.Optional[int] = 0) -> None:
+            state_exp: ty.Optional[int] = 0,
+            t_interval: ty.Optional[int] = 0,
+            t_offset: ty.Optional[int] = 0) -> None:
         """Sigma delta neuron process. At the moment only ReLu activation is
         supported. Spike mechanism based on accumulated error is also supported.
 
@@ -170,6 +185,15 @@ class SigmaDelta(AbstractProcess):
             Scaling exponent with base 2 for the state variables.
             Note: This should only be used for fixed point models.
             Default is 0.
+        t_interval: int
+            Number of time steps between computation of the neuron model.
+            Can be used to freeze the neuron state for given number of time
+            steps.
+            Default is 0.
+        t_offset: int
+            Number of time steps to wait before computation of the neuron model
+            starts.
+            Default is 0.
         """
         super().__init__(shape=shape, vth=vth, bias=bias,
                          act_mode=act_mode, cum_error=cum_error,
@@ -189,6 +213,8 @@ class SigmaDelta(AbstractProcess):
         self.bias = Var(shape=shape, init=bias)
         self.spike_exp = Var(shape=(1,), init=spike_exp)
         self.state_exp = Var(shape=(1,), init=state_exp)
+        self.t_interval = Var(shape=(1,), init=t_interval)
+        self.t_offset = Var(shape=(1,), init=t_offset)
         self.cum_error = Var(shape=(1,), init=cum_error)
 
     @property
