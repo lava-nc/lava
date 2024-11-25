@@ -14,7 +14,7 @@ jobs:
      name: codacy-coverage-reporter
      steps:
        - name: Download artifact
-         uses: dawidd6/action-download-artifact@v2
+         uses: dawidd6/action-download-artifact@v6
          with:
            workflow: ci.yml
            workflow_conclusion: "success"
