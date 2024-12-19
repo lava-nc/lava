@@ -838,12 +838,11 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         for mod_name in module_names:
             try: 
                 module = importlib.import_module(mod_name)
-                if module != proc_module:
-                    pm = ProcGroupDiGraphs._find_proc_models_in_module(
-                        proc, module)
-                    for proc_model in pm:
-                        if proc_model not in proc_models:
-                            proc_models.append(proc_model)
+                pm = ProcGroupDiGraphs._find_proc_models_in_module(
+                    proc, module)
+                for proc_model in pm:
+                    if proc_model not in proc_models:
+                        proc_models.append(proc_model)
             except Exception:
                 warnings.warn(
                     f"Cannot import module '{module}' when searching "
