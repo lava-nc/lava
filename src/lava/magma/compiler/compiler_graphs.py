@@ -836,7 +836,7 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # check each module for proc modules
         proc_models = []
         for mod_name in module_names:
-            try: 
+            try:
                 module = importlib.import_module(mod_name)
                 pm = ProcGroupDiGraphs._find_proc_models_in_module(
                     proc, module)
