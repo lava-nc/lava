@@ -19,7 +19,7 @@ if os.path.dirname(__file__) not in sys.path:
 
 from lava.magma.compiler.compiler_graphs import ProcGroupDiGraphs
 
-from test_package.proc.test.process import TestProcess
+from test_package.proc.test.process import TestProcess, TestModelSameFile
 from test_package.proc.test.models_absolute import TestModelAbsolute
 from test_package.proc.test.models_relative import TestModelRelative
 
@@ -34,10 +34,11 @@ class TestProcGroupDiGraphs(unittest.TestCase):
         proc = TestProcess(name="test")
 
         proc_models = ProcGroupDiGraphs._find_proc_models(proc)
-        expected_models = [TestModelAbsolute, TestModelRelative]
-
-        print(f"{proc_models=}")
-        print(f"{expected_models=}")
+        expected_models = [
+            TestModelAbsolute,
+            TestModelRelative,
+            TestModelSameFile
+        ]
 
         self.assertTrue(all(pm in proc_models for pm in expected_models))
 
