@@ -16,7 +16,7 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         lfs: true
 
@@ -34,7 +34,7 @@ jobs:
     name: Security Lint Code
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         lfs: true
 
@@ -57,7 +57,7 @@ jobs:
       matrix:
         operating-system: [ubuntu-latest, macos-13]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         lfs: true
 
@@ -78,7 +78,7 @@ jobs:
 
     - name: Archive coverage report
       if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage
         path: coverage.xml
