@@ -34,7 +34,7 @@ jobs:
     name: Security Lint Code
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         lfs: true
 
@@ -57,7 +57,7 @@ jobs:
       matrix:
         operating-system: [ubuntu-latest, macos-13]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         lfs: true
 
