@@ -17,13 +17,16 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.run_configs import Loihi2SimCfg, RunConfig
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.proc.lif.process import LIF, LIFReset, TernaryLIF, LIFRefractory
+from lava.proc.lif.process import (
+    LIF, LIFReset, TernaryLIF, LIFRefractory, EILIF, EILIFRefractory
+)
 from lava.proc import io
 
 
 class LifRunConfig(RunConfig):
     """Run configuration selects appropriate LIF ProcessModel based on tag:
     floating point precision or Loihi bit-accurate fixed point precision"""
+
     def __init__(self, custom_sync_domains=None, select_tag='fixed_pt'):
         super().__init__(custom_sync_domains=custom_sync_domains)
         self.select_tag = select_tag
@@ -46,6 +49,7 @@ class VecSendProcess(AbstractProcess):
     send_at_times: np.ndarray, vector bools. Send the `vec_to_send` at times
     when there is a True
     """
+
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs.pop("shape", (1,))
@@ -67,6 +71,7 @@ class VecRecvProcess(AbstractProcess):
     ----------
     shape: tuple, shape of the process
     """
+
     def __init__(self, **kwargs):
         super().__init__()
         shape = kwargs.get("shape", (1,))
@@ -143,6 +148,7 @@ class PySpkRecvModelFixed(PyLoihiProcessModel):
 
 class TestLIFProcessModelsFloat(unittest.TestCase):
     """Tests for floating point ProcessModels of LIF"""
+
     def test_float_pm_no_decay(self):
         """
         Tests floating point LIF ProcessModel with no current or voltage
@@ -251,13 +257,15 @@ class TestLIFProcessModelsFloat(unittest.TestCase):
         lif.stop()
         # Gold standard for testing: voltage decay of 0.5 should integrate
         # the voltage from 128. to 255., with steps of 64., 32., 16., etc.
-        expected_v_timeseries = [128., 192., 224., 240., 248., 252., 254., 255.]
+        expected_v_timeseries = [128., 192.,
+                                 224., 240., 248., 252., 254., 255.]
         self.assertListEqual(expected_v_timeseries, lif_v)
 
 
 class TestLIFProcessModelsFixed(unittest.TestCase):
     """Tests for fixed point, ProcessModels of LIF, which are bit-accurate
     with Loihi hardware"""
+
     def test_bitacc_pm_no_decay(self):
         """
         Tests fixed point LIF ProcessModel (bit-accurate
@@ -418,6 +426,7 @@ class TestLIFProcessModelsFixed(unittest.TestCase):
 
 class TestTLIFProcessModelsFloat(unittest.TestCase):
     """Tests for ternary LIF floating point neuron model"""
+
     def test_float_pm_neg_no_decay_1(self):
         """Tests floating point ternary LIF model with negative bias
         driving a neuron without any decay of current and voltage states."""
@@ -566,6 +575,7 @@ class TestTLIFProcessModelsFloat(unittest.TestCase):
 
 class TestTLIFProcessModelsFixed(unittest.TestCase):
     """Tests for ternary LIF fixed point neuron model"""
+
     def test_fixed_pm_neg_no_decay_1(self):
         """Tests fixed point ProcessModel for ternary LIF neurons without any
         current or voltage decay, solely driven by (negative) bias"""
@@ -860,3 +870,171 @@ class TestLIFRefractory(unittest.TestCase):
                                [2, 4, 0, 0, 2, 4, 0, 0]], dtype=float)
 
         assert_almost_equal(v, v_expected)
+
+
+class TestEILIFFloat(unittest.TestCase):
+    """Test EILIF process model"""
+
+    def test_no_decays(self):
+        """Test float model"""
+        num_neurons = 2
+        num_steps = 8
+
+        # Two neurons with different biases
+        # No Input current provided to make the voltage dependent on the bias
+        ei_lif = EILIF(shape=(num_neurons,),
+                       u_exc=np.zeros(num_neurons),
+                       u_inh=np.zeros(num_neurons),
+                       bias_mant=np.arange(num_neurons) + 1,
+                       bias_exp=np.ones(
+            (num_neurons,), dtype=float),
+            vth=4,)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                   run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2, 3, 4, 0, 1, 2, 3],
+                               [2, 4, 0, 2, 4, 0, 2, 4]], dtype=float)
+
+        assert_almost_equal(v, v_expected)
+
+    def test_different_decays(self):
+        """Test float model"""
+        num_neurons = 2
+        num_steps = 8
+
+        du_exc_arr = np.array([0.1, 0.2])
+        du_inh_arr = np.array([0.2, 0.3])
+
+        # Two neurons with different biases
+        # No Input current provided to make the voltage dependent on the bias
+        ei_lif = EILIF(shape=(num_neurons,),
+                       du_exc=du_exc_arr,
+                       du_inh=du_inh_arr,
+                       vth=6,)
+
+        # Setup external input
+        positive_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                                      vec_to_send=np.full(
+                                          shape=(num_neurons), fill_value=1),
+                                      send_at_times=[1, 1, 0, 0, 0, 0, 0, 0],
+                                      dtype=bool)
+
+        negative_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                                      vec_to_send=np.full(
+                                          shape=(num_neurons), fill_value=-1),
+                                      send_at_times=[0, 0, 0, 1, 1, 1, 0, 0],
+                                      dtype=bool)
+
+        # Connect external input to the EILIF model
+        positive_sps.s_out.connect(ei_lif.a_in)
+        negative_sps.s_out.connect(ei_lif.a_in)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                   run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2.9, 4.61, 5.149, 4.73, 3.54, 2.71, 2.16],
+                               [1, 2.8, 4.24, 4.39, 3.61, 2.16, 1.22, 0.62]],
+                              dtype=float)
+
+        assert_almost_equal(v, v_expected, decimal=2)
+
+
+class TestEILIFRefractoryFloat(unittest.TestCase):
+    """Test EILIFRefractory process model"""
+
+    def test_no_decays(self):
+        """Test float model"""
+        num_neurons = 2
+        num_steps = 8
+        refractory_period = 1
+
+        # Two neurons with different biases
+        # No Input current provided to make the voltage dependent on the bias
+        ei_lif = EILIFRefractory(shape=(num_neurons,),
+                                 u_exc=np.zeros(num_neurons),
+                                 u_inh=np.zeros(num_neurons),
+                                 bias_mant=np.arange(num_neurons) + 1,
+                                 bias_exp=np.ones(
+            (num_neurons,), dtype=float),
+            vth=4,
+            refractory_period=refractory_period)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                   run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2, 3, 4, 0, 0, 1, 2],
+                               [2, 4, 0, 0, 2, 4, 0, 0]], dtype=float)
+
+        assert_almost_equal(v, v_expected)
+
+    def test_different_decays(self):
+        """Test float model with different decays per neuron"""
+        num_neurons = 2
+        num_steps = 8
+        refractory_period = 1
+
+        du_exc_arr = np.array([0.1, 0.2])
+        du_inh_arr = np.array([0.2, 0.3])
+
+        # Neuron 1 will spike, while neuron 2 will not due
+        # to different decay rates.
+        ei_lif = EILIFRefractory(shape=(num_neurons,),
+                                 du_exc=du_exc_arr,
+                                 du_inh=du_inh_arr,
+                                 vth=5,
+                                 refractory_period=refractory_period)
+
+        # Setup external input
+        positive_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                                      vec_to_send=np.full(
+                                          shape=(num_neurons), fill_value=1),
+                                      send_at_times=[1, 1, 0, 0, 0, 0, 0, 0],
+                                      dtype=bool)
+
+        negative_sps = VecSendProcess(shape=(num_neurons,), num_steps=num_steps,
+                                      vec_to_send=np.full(
+                                          shape=(num_neurons), fill_value=-1),
+                                      send_at_times=[0, 0, 0, 1, 1, 1, 0, 0],
+                                      dtype=bool)
+
+        # Connect external input to the EILIF model
+        positive_sps.s_out.connect(ei_lif.a_in)
+        negative_sps.s_out.connect(ei_lif.a_in)
+
+        v_logger = io.sink.Read(buffer=num_steps)
+        v_logger.connect_var(ei_lif.v)
+
+        ei_lif.run(condition=RunSteps(num_steps),
+                   run_cfg=Loihi2SimCfg(select_tag="floating_pt"))
+
+        v = v_logger.data.get()
+        ei_lif.stop()
+
+        # Voltage is expected to remain at reset level for two time steps
+        v_expected = np.array([[1, 2.9, 4.61, 0, 0, -1.19341, -2.02, -2.57],
+                               [1, 2.8, 4.24, 4.39, 3.61, 2.16, 1.22, 0.62]],
+                              dtype=float)
+
+        assert_almost_equal(v, v_expected, decimal=2)
