@@ -182,3 +182,8 @@ pycodestyle = ["+*", "-W503", "-E203"]
 pycodestyle = ["-F401"]                     # Disable a check
 flake8-bandit = ["-S101"]                   # Ignore asserts for tests
 pyflakes = ["-*"]                           # Disable a plugin
+
+[dependency-groups]
+dev = [
+    "mypy (>=1.20.1,<2.0.0)"
+]
