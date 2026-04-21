@@ -83,7 +83,7 @@ sphinx_rtd_theme = { extras = ["toml"], version = "^1.0.0" }
 autopep8 = "^1.6.0"
 ipykernel = "^6.15.0"
 nbformat = "^5.3.0"
-nbconvert = ">=7.2.10,<7.18"
+nbconvert = ">=7.17.1,<7.18"
 
 [tool.black]
 line-length = 80
