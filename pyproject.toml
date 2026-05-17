@@ -75,7 +75,7 @@ pep8-naming = "^0.12.1"
 poetry = "^1.1.13"
 unittest2 = "^1.1.0"
 pandas = "^1.4.2"
-pytest = "^7.2.0"
+pytest = "^9.0.3"
 pytest-cov = "^3.0.0"
 sphinx = { extras = ["toml"], version = "^4.4.0" }
 sphinx-tabs = { extras = ["toml"], version = "^3.2.0" }
