@@ -11,6 +11,9 @@ from lava.magma.core.resources import AbstractNode, Loihi1NeuroCore, \
     Loihi2NeuroCore, NeuroCore
 from lava.magma.core.model.py.model import AbstractPyProcessModel
 from lava.magma.core.callback_fx import CallbackFx
+from lava.magma.core.resources import (
+    AbstractComputeResource, CPU, Loihi2System
+)
 
 try:
     from lava.magma.core.model.c.model import CLoihiProcessModel
@@ -477,3 +480,41 @@ class Loihi2HwCfg(AbstractLoihiHWRunCfg):
             or ((NeuroCore in pm.required_resources or Loihi2NeuroCore in
                  pm.required_resources)
                 and issubclass(pm, AbstractNcProcessModel))
+
+
+class GeneralRunCfg(RunConfig):
+    """Selects appropriate `RunConfig` subclass for provided hardware."""
+
+    hardware_map = {
+        CPU: Loihi2SimCfg,
+        Loihi2System: Loihi2HwCfg
+    }
+
+    def __new__(
+        cls,
+        hardware: ty.Type[AbstractComputeResource],
+        *args,
+        **kwargs
+    ) -> RunConfig:
+        args, kwargs = cls._process_args(hardware, args, kwargs)
+        try:
+            return cls.hardware_map[hardware](*args, **kwargs)
+        except KeyError as kerr:
+            raise kerr
+
+    @classmethod
+    def _process_args(cls, hardware, args, kwargs):
+        valid_keys: list[str] = [
+            'custom_sync_domains',
+            'select_tag',
+            'select_sub_proc_model',
+            'exception_proc_model_map',
+            'loglevel',
+        ]
+        # add valid args for LOIHI2
+        if hardware is Loihi2System:
+            valid_keys.extend(['callback_fxs', 'embedded_allocation_order'])
+
+        _kwargs = {_k: _v for _k , _v in kwargs.items() if _k in valid_keys}
+
+        return args, _kwargs
